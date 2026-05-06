@@ -9,6 +9,7 @@ Current prototype:
 - Auto attack while the app is open
 - Local save data via PlayerPrefs
 - Basic offline gold calculation when reopening the app
+- Mobile app shell with Home, Battle, Heroes, Summon, and Shop tabs
 
 Development target:
 - Android and iOS mobile idle game

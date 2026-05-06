@@ -5,6 +5,15 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour
 {
+    private enum AppScreen
+    {
+        Home,
+        Battle,
+        Heroes,
+        Summon,
+        Shop
+    }
+
     private const string GoldKey = "Mythwake.Prototype.Gold";
     private const string DamageKey = "Mythwake.Prototype.Damage";
     private const string EnemyLevelKey = "Mythwake.Prototype.EnemyLevel";
@@ -29,6 +38,9 @@ public class IdlePrototypeController : MonoBehaviour
     [Header("UI")]
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text goldText;
+    [SerializeField] private TMP_Text homeGoldText;
+    [SerializeField] private TMP_Text homeStageText;
+    [SerializeField] private TMP_Text homePowerText;
     [SerializeField] private TMP_Text damageText;
     [SerializeField] private TMP_Text enemyText;
     [SerializeField] private TMP_Text enemyHpText;
@@ -39,14 +51,30 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Button resetButton;
 
+    [Header("Navigation")]
+    [SerializeField] private GameObject homePanel;
+    [SerializeField] private GameObject battlePanel;
+    [SerializeField] private GameObject heroesPanel;
+    [SerializeField] private GameObject summonPanel;
+    [SerializeField] private GameObject shopPanel;
+    [SerializeField] private Button homeTabButton;
+    [SerializeField] private Button battleTabButton;
+    [SerializeField] private Button heroesTabButton;
+    [SerializeField] private Button summonTabButton;
+    [SerializeField] private Button shopTabButton;
+    [SerializeField] private Color activeTabColor = new Color(0.22f, 0.48f, 0.86f);
+    [SerializeField] private Color inactiveTabColor = new Color(0.11f, 0.14f, 0.2f);
+
     private float autoAttackTimer;
     private int lastOfflineReward;
     private int lastOfflineSeconds;
+    private AppScreen activeScreen = AppScreen.Home;
 
     private void Awake()
     {
         LoadProgress();
         ClaimOfflineRewards();
+        RegisterNavigation();
 
         if (fightButton != null)
         {
@@ -64,6 +92,7 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         RefreshUi();
+        ShowScreen(activeScreen);
     }
 
     private void Update()
@@ -101,6 +130,33 @@ public class IdlePrototypeController : MonoBehaviour
         {
             resetButton.onClick.RemoveListener(ResetProgress);
         }
+
+        UnregisterNavigation();
+    }
+
+    public void ShowHome()
+    {
+        ShowScreen(AppScreen.Home);
+    }
+
+    public void ShowBattle()
+    {
+        ShowScreen(AppScreen.Battle);
+    }
+
+    public void ShowHeroes()
+    {
+        ShowScreen(AppScreen.Heroes);
+    }
+
+    public void ShowSummon()
+    {
+        ShowScreen(AppScreen.Summon);
+    }
+
+    public void ShowShop()
+    {
+        ShowScreen(AppScreen.Shop);
     }
 
     public void Fight()
@@ -248,6 +304,21 @@ public class IdlePrototypeController : MonoBehaviour
             goldText.text = $"Gold: {gold}";
         }
 
+        if (homeGoldText != null)
+        {
+            homeGoldText.text = $"{gold} Gold";
+        }
+
+        if (homeStageText != null)
+        {
+            homeStageText.text = $"Campaign {enemyLevel}";
+        }
+
+        if (homePowerText != null)
+        {
+            homePowerText.text = $"Power {GetPrototypePower()}";
+        }
+
         if (damageText != null)
         {
             damageText.text = $"Damage: {damage}";
@@ -275,6 +346,102 @@ public class IdlePrototypeController : MonoBehaviour
         {
             upgradeButton.interactable = gold >= upgradeCost;
         }
+    }
+
+    private void RegisterNavigation()
+    {
+        if (homeTabButton != null)
+        {
+            homeTabButton.onClick.AddListener(ShowHome);
+        }
+
+        if (battleTabButton != null)
+        {
+            battleTabButton.onClick.AddListener(ShowBattle);
+        }
+
+        if (heroesTabButton != null)
+        {
+            heroesTabButton.onClick.AddListener(ShowHeroes);
+        }
+
+        if (summonTabButton != null)
+        {
+            summonTabButton.onClick.AddListener(ShowSummon);
+        }
+
+        if (shopTabButton != null)
+        {
+            shopTabButton.onClick.AddListener(ShowShop);
+        }
+    }
+
+    private void UnregisterNavigation()
+    {
+        if (homeTabButton != null)
+        {
+            homeTabButton.onClick.RemoveListener(ShowHome);
+        }
+
+        if (battleTabButton != null)
+        {
+            battleTabButton.onClick.RemoveListener(ShowBattle);
+        }
+
+        if (heroesTabButton != null)
+        {
+            heroesTabButton.onClick.RemoveListener(ShowHeroes);
+        }
+
+        if (summonTabButton != null)
+        {
+            summonTabButton.onClick.RemoveListener(ShowSummon);
+        }
+
+        if (shopTabButton != null)
+        {
+            shopTabButton.onClick.RemoveListener(ShowShop);
+        }
+    }
+
+    private void ShowScreen(AppScreen screen)
+    {
+        activeScreen = screen;
+
+        SetPanel(homePanel, screen == AppScreen.Home);
+        SetPanel(battlePanel, screen == AppScreen.Battle);
+        SetPanel(heroesPanel, screen == AppScreen.Heroes);
+        SetPanel(summonPanel, screen == AppScreen.Summon);
+        SetPanel(shopPanel, screen == AppScreen.Shop);
+
+        SetTabState(homeTabButton, screen == AppScreen.Home);
+        SetTabState(battleTabButton, screen == AppScreen.Battle);
+        SetTabState(heroesTabButton, screen == AppScreen.Heroes);
+        SetTabState(summonTabButton, screen == AppScreen.Summon);
+        SetTabState(shopTabButton, screen == AppScreen.Shop);
+    }
+
+    private void SetPanel(GameObject panel, bool isVisible)
+    {
+        if (panel != null)
+        {
+            panel.SetActive(isVisible);
+        }
+    }
+
+    private void SetTabState(Button button, bool isActive)
+    {
+        if (button == null || button.targetGraphic == null)
+        {
+            return;
+        }
+
+        button.targetGraphic.color = isActive ? activeTabColor : inactiveTabColor;
+    }
+
+    private int GetPrototypePower()
+    {
+        return (damage * 10) + (enemyLevel * 4);
     }
 
     private void RefreshAutoAttackUi()
