@@ -10,13 +10,13 @@ public class IdlePrototypeController : MonoBehaviour
     {
         public string enemyName;
         public int maxHp;
-        public int goldReward;
+        public int essenceReward;
 
-        public StageDefinition(string enemyName, int maxHp, int goldReward)
+        public StageDefinition(string enemyName, int maxHp, int essenceReward)
         {
             this.enemyName = enemyName;
             this.maxHp = maxHp;
-            this.goldReward = goldReward;
+            this.essenceReward = essenceReward;
         }
     }
 
@@ -30,6 +30,8 @@ public class IdlePrototypeController : MonoBehaviour
     }
 
     private const string GoldKey = "Mythwake.Prototype.Gold";
+    private const string GemsKey = "Mythwake.Prototype.Gems";
+    private const string MythEssenceKey = "Mythwake.Prototype.MythEssence";
     private const string DamageKey = "Mythwake.Prototype.Damage";
     private const string EnemyLevelKey = "Mythwake.Prototype.EnemyLevel";
     private const string EnemyHpKey = "Mythwake.Prototype.EnemyHp";
@@ -52,7 +54,9 @@ public class IdlePrototypeController : MonoBehaviour
     private const int DailyMissionCount = 3;
     private const int BattlePassRewardCount = 5;
     private const int BattlePassXpPerDailyClaim = 40;
-    private const int SummonCost = 60;
+    private const int SummonCost = 30;
+    private const int StarterGems = 30;
+    private const int StarterMythEssence = 20;
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
     private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
@@ -64,12 +68,18 @@ public class IdlePrototypeController : MonoBehaviour
     private static readonly int[] LegendaryHeroIndexes = { 4 };
     private static readonly string[] DailyMissionTitles = { "Battle 20 times", "Clear 3 stages", "Summon 1 hero" };
     private static readonly int[] DailyMissionTargets = { 20, 3, 1 };
-    private static readonly int[] DailyMissionRewards = { 75, 120, 80 };
+    private static readonly int[] DailyMissionGoldRewards = { 25, 50, 25 };
+    private static readonly int[] DailyMissionGemRewards = { 5, 10, 15 };
+    private static readonly int[] DailyMissionEssenceRewards = { 80, 120, 60 };
     private static readonly int[] BattlePassRewardXp = { 40, 80, 120, 180, 240 };
     private static readonly int[] BattlePassGoldRewards = { 100, 125, 175, 225, 350 };
+    private static readonly int[] BattlePassGemRewards = { 10, 15, 20, 25, 40 };
+    private static readonly int[] BattlePassEssenceRewards = { 0, 120, 0, 180, 300 };
 
     [Header("Stats")]
     [SerializeField] private int gold;
+    [SerializeField] private int gems;
+    [SerializeField] private int mythEssence;
     [SerializeField] private int damage = 1;
     [SerializeField] private int enemyLevel = 1;
     [SerializeField] private int enemyHp = 10;
@@ -112,6 +122,8 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text goldText;
     [SerializeField] private TMP_Text homeGoldText;
+    [SerializeField] private TMP_Text gemsText;
+    [SerializeField] private TMP_Text mythEssenceText;
     [SerializeField] private TMP_Text homeStageText;
     [SerializeField] private TMP_Text homePowerText;
     [SerializeField] private TMP_Text[] teamSlotTexts;
@@ -296,13 +308,13 @@ public class IdlePrototypeController : MonoBehaviour
         selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
 
-        if (gold < upgradeCost)
+        if (mythEssence < upgradeCost)
         {
             RefreshUi();
             return;
         }
 
-        gold -= upgradeCost;
+        mythEssence -= upgradeCost;
         heroLevels[selectedHeroIndex]++;
         damage = GetTeamDamage();
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
@@ -334,16 +346,16 @@ public class IdlePrototypeController : MonoBehaviour
 
     public void SummonOnce()
     {
-        if (gold < SummonCost)
+        if (gems < SummonCost)
         {
-            SetSummonResult($"Need {SummonCost} Gold for a summon.");
+            SetSummonResult($"Need {SummonCost} Gems for a summon.");
             RefreshUi();
             return;
         }
 
         EnsureHeroShards();
 
-        gold -= SummonCost;
+        gems -= SummonCost;
         summonCount++;
         dailySummonCount++;
 
@@ -401,6 +413,8 @@ public class IdlePrototypeController : MonoBehaviour
     public void ResetProgress()
     {
         gold = 0;
+        gems = StarterGems;
+        mythEssence = StarterMythEssence;
         damage = 1;
         enemyLevel = 1;
         enemyMaxHp = GetStageMaxHp(enemyLevel);
@@ -468,7 +482,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (enemyHp <= 0)
         {
-            gold += GetStageReward(enemyLevel);
+            mythEssence += GetStageReward(enemyLevel);
             enemyLevel++;
             dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
@@ -486,6 +500,18 @@ public class IdlePrototypeController : MonoBehaviour
     private void LoadProgress()
     {
         gold = PlayerPrefs.GetInt(GoldKey, gold);
+        gems = PlayerPrefs.GetInt(GemsKey, gems);
+        mythEssence = PlayerPrefs.GetInt(MythEssenceKey, mythEssence);
+        if (!PlayerPrefs.HasKey(GemsKey))
+        {
+            gems = StarterGems;
+        }
+
+        if (!PlayerPrefs.HasKey(MythEssenceKey))
+        {
+            mythEssence = Mathf.Max(StarterMythEssence, gold);
+        }
+
         enemyLevel = Mathf.Max(1, PlayerPrefs.GetInt(EnemyLevelKey, enemyLevel));
         enemyMaxHp = Mathf.Max(GetStageMaxHp(enemyLevel), PlayerPrefs.GetInt(EnemyMaxHpKey, enemyMaxHp));
         enemyHp = Mathf.Clamp(PlayerPrefs.GetInt(EnemyHpKey, enemyHp), 1, enemyMaxHp);
@@ -510,6 +536,8 @@ public class IdlePrototypeController : MonoBehaviour
     private void SaveProgress()
     {
         PlayerPrefs.SetInt(GoldKey, gold);
+        PlayerPrefs.SetInt(GemsKey, gems);
+        PlayerPrefs.SetInt(MythEssenceKey, mythEssence);
         PlayerPrefs.SetInt(DamageKey, damage);
         PlayerPrefs.SetInt(EnemyLevelKey, enemyLevel);
         PlayerPrefs.SetInt(EnemyHpKey, enemyHp);
@@ -572,7 +600,7 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         lastOfflineReward = CalculateOfflineReward(lastOfflineSeconds);
-        gold += lastOfflineReward;
+        mythEssence += lastOfflineReward;
         SaveProgress();
     }
 
@@ -598,14 +626,14 @@ public class IdlePrototypeController : MonoBehaviour
         var lastStage = stages[stages.Length - 1];
         var overflow = stage - stages.Length;
         var hp = Mathf.CeilToInt(lastStage.maxHp * Mathf.Pow(1.18f, overflow));
-        var reward = Mathf.CeilToInt(lastStage.goldReward * Mathf.Pow(1.12f, overflow));
+        var reward = Mathf.CeilToInt(lastStage.essenceReward * Mathf.Pow(1.12f, overflow));
 
         return new StageDefinition($"Rift Echo {stage}", hp, reward);
     }
 
     private int GetStageReward(int stage)
     {
-        return Mathf.Max(1, GetStageDefinition(stage).goldReward);
+        return Mathf.Max(1, GetStageDefinition(stage).essenceReward);
     }
 
     private int GetStageMaxHp(int stage)
@@ -626,12 +654,22 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (goldText != null)
         {
-            goldText.text = $"Gold: {gold}";
+            goldText.text = $"Gold {gold}   Gems {gems}   Essence {mythEssence}";
         }
 
         if (homeGoldText != null)
         {
             homeGoldText.text = $"{gold} Gold";
+        }
+
+        if (gemsText != null)
+        {
+            gemsText.text = $"{gems} Gems";
+        }
+
+        if (mythEssenceText != null)
+        {
+            mythEssenceText.text = $"{mythEssence} Myth Essence";
         }
 
         if (homeStageText != null)
@@ -653,7 +691,7 @@ public class IdlePrototypeController : MonoBehaviour
         if (enemyText != null)
         {
             var stage = GetStageDefinition(enemyLevel);
-            enemyText.text = $"Stage {enemyLevel}: {stage.enemyName}\nReward {stage.goldReward} Gold";
+            enemyText.text = $"Stage {enemyLevel}: {stage.enemyName}\nReward {stage.essenceReward} Essence";
         }
 
         if (enemyHpText != null)
@@ -670,12 +708,12 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (upgradeCostText != null)
         {
-            upgradeCostText.text = $"Upgrade {HeroNames[selectedHeroIndex]} ({upgradeCost} Gold)";
+            upgradeCostText.text = $"Upgrade {HeroNames[selectedHeroIndex]} ({upgradeCost} Essence)";
         }
 
         if (heroUpgradeCostText != null)
         {
-            heroUpgradeCostText.text = $"Upgrade {HeroNames[selectedHeroIndex]} ({upgradeCost} Gold)";
+            heroUpgradeCostText.text = $"Upgrade {HeroNames[selectedHeroIndex]} ({upgradeCost} Essence)";
         }
 
         if (heroAscendCostText != null)
@@ -685,12 +723,12 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (upgradeButton != null)
         {
-            upgradeButton.interactable = gold >= upgradeCost;
+            upgradeButton.interactable = mythEssence >= upgradeCost;
         }
 
         if (heroUpgradeButton != null)
         {
-            heroUpgradeButton.interactable = gold >= upgradeCost;
+            heroUpgradeButton.interactable = mythEssence >= upgradeCost;
         }
 
         if (heroAscendButton != null)
@@ -700,7 +738,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (summonButton != null)
         {
-            summonButton.interactable = gold >= SummonCost;
+            summonButton.interactable = gems >= SummonCost;
         }
     }
 
@@ -1039,7 +1077,9 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         dailyMissionClaimed[missionIndex] = true;
-        gold += DailyMissionRewards[missionIndex];
+        gold += DailyMissionGoldRewards[missionIndex];
+        gems += DailyMissionGemRewards[missionIndex];
+        mythEssence += DailyMissionEssenceRewards[missionIndex];
         battlePassXp += BattlePassXpPerDailyClaim;
 
         SaveProgress();
@@ -1059,6 +1099,8 @@ public class IdlePrototypeController : MonoBehaviour
 
         battlePassRewardsClaimed[rewardIndex] = true;
         gold += BattlePassGoldRewards[rewardIndex];
+        gems += BattlePassGemRewards[rewardIndex];
+        mythEssence += BattlePassEssenceRewards[rewardIndex];
 
         SaveProgress();
         RefreshUi();
@@ -1199,14 +1241,14 @@ public class IdlePrototypeController : MonoBehaviour
             return;
         }
 
-        offlineRewardText.text = $"Offline: +{lastOfflineReward} Gold ({FormatDuration(lastOfflineSeconds)})";
+        offlineRewardText.text = $"Offline: +{lastOfflineReward} Essence ({FormatDuration(lastOfflineSeconds)})";
     }
 
     private void RefreshSummonUi()
     {
         if (summonCostText != null)
         {
-            summonCostText.text = $"Cost: {SummonCost} Gold";
+            summonCostText.text = $"Cost: {SummonCost} Gems";
         }
 
         if (summonRatesText != null)
@@ -1235,7 +1277,7 @@ public class IdlePrototypeController : MonoBehaviour
             var isComplete = progress >= DailyMissionTargets[i];
             var isClaimed = dailyMissionClaimed[i];
             var state = isClaimed ? "Claimed" : isComplete ? "Claim" : $"{progress}/{DailyMissionTargets[i]}";
-            var text = $"{DailyMissionTitles[i]}\n{state}  Reward {DailyMissionRewards[i]} Gold";
+            var text = $"{DailyMissionTitles[i]}\n{state}  Reward {FormatReward(DailyMissionGoldRewards[i], DailyMissionGemRewards[i], DailyMissionEssenceRewards[i])}";
 
             if (dailyMissionTexts != null && i < dailyMissionTexts.Length && dailyMissionTexts[i] != null)
             {
@@ -1263,7 +1305,7 @@ public class IdlePrototypeController : MonoBehaviour
             var isReady = battlePassXp >= BattlePassRewardXp[i];
             var isClaimed = battlePassRewardsClaimed[i];
             var state = isClaimed ? "Claimed" : isReady ? "Claim" : $"{battlePassXp}/{BattlePassRewardXp[i]} XP";
-            var text = $"Level {i + 1}  {state}\nReward {BattlePassGoldRewards[i]} Gold";
+            var text = $"Level {i + 1}  {state}\nReward {FormatReward(BattlePassGoldRewards[i], BattlePassGemRewards[i], BattlePassEssenceRewards[i])}";
 
             if (battlePassRewardTexts != null && i < battlePassRewardTexts.Length && battlePassRewardTexts[i] != null)
             {
@@ -1327,6 +1369,28 @@ public class IdlePrototypeController : MonoBehaviour
         {
             summonResultText.text = result;
         }
+    }
+
+    private string FormatReward(int goldReward, int gemReward, int essenceReward)
+    {
+        var reward = string.Empty;
+
+        if (goldReward > 0)
+        {
+            reward = $"{goldReward} Gold";
+        }
+
+        if (gemReward > 0)
+        {
+            reward = string.IsNullOrEmpty(reward) ? $"{gemReward} Gems" : $"{reward}, {gemReward} Gems";
+        }
+
+        if (essenceReward > 0)
+        {
+            reward = string.IsNullOrEmpty(reward) ? $"{essenceReward} Essence" : $"{reward}, {essenceReward} Essence";
+        }
+
+        return string.IsNullOrEmpty(reward) ? "None" : reward;
     }
 
     private string FormatDuration(int seconds)

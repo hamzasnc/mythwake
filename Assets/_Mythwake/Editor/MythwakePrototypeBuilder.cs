@@ -49,7 +49,7 @@ public static class MythwakePrototypeBuilder
         var title = CreateText("Title", root.transform, "Mythwake", 72, FontStyles.Bold);
         SetRect(title.rectTransform, new Vector2(0, -70), new Vector2(920, 100), new Vector2(0.5f, 1f));
 
-        var gold = CreateText("Gold Text", root.transform, "Gold: 0", 46, FontStyles.Bold);
+        var gold = CreateText("Gold Text", root.transform, "Gold 0   Gems 0   Essence 0", 36, FontStyles.Bold);
         SetRect(gold.rectTransform, new Vector2(0, -155), new Vector2(920, 70), new Vector2(0.5f, 1f));
 
         var homePanel = CreateScreen("Home Panel", root.transform);
@@ -62,22 +62,30 @@ public static class MythwakePrototypeBuilder
         SetRect(homeHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
 
         var homeCard = CreatePanel("Idle Chest Panel", homePanel.transform, PanelColor);
-        SetRect(homeCard.rectTransform, new Vector2(0, -210), new Vector2(860, 250), new Vector2(0.5f, 1f));
+        SetRect(homeCard.rectTransform, new Vector2(0, -230), new Vector2(860, 300), new Vector2(0.5f, 1f));
 
         var homeStage = CreateText("Home Stage Text", homeCard.transform, "Campaign 1", 44, FontStyles.Bold);
         SetRect(homeStage.rectTransform, new Vector2(0, -45), new Vector2(780, 60), new Vector2(0.5f, 1f));
 
-        var homeGold = CreateText("Home Gold Text", homeCard.transform, "0 Gold", 38, FontStyles.Normal);
-        SetRect(homeGold.rectTransform, new Vector2(0, -115), new Vector2(780, 55), new Vector2(0.5f, 1f));
+        var homeGold = CreateText("Home Gold Text", homeCard.transform, "0 Gold", 34, FontStyles.Normal);
+        SetRect(homeGold.rectTransform, new Vector2(0, -115), new Vector2(780, 45), new Vector2(0.5f, 1f));
+
+        var homeGems = CreateText("Home Gems Text", homeCard.transform, "0 Gems", 34, FontStyles.Normal);
+        SetRect(homeGems.rectTransform, new Vector2(0, -165), new Vector2(780, 45), new Vector2(0.5f, 1f));
+        homeGems.color = new Color(0.72f, 0.86f, 1f);
+
+        var homeEssence = CreateText("Home Myth Essence Text", homeCard.transform, "0 Myth Essence", 34, FontStyles.Normal);
+        SetRect(homeEssence.rectTransform, new Vector2(0, -215), new Vector2(780, 45), new Vector2(0.5f, 1f));
+        homeEssence.color = new Color(0.82f, 0.76f, 0.52f);
 
         var homePower = CreateText("Home Power Text", homeCard.transform, "Power 14", 34, FontStyles.Normal);
-        SetRect(homePower.rectTransform, new Vector2(0, -175), new Vector2(780, 55), new Vector2(0.5f, 1f));
+        SetRect(homePower.rectTransform, new Vector2(0, -265), new Vector2(780, 45), new Vector2(0.5f, 1f));
 
         var offlineReward = CreateText("Offline Reward Text", homePanel.transform, "Offline: no reward yet", 32, FontStyles.Bold);
-        SetRect(offlineReward.rectTransform, new Vector2(0, -405), new Vector2(860, 80), new Vector2(0.5f, 1f));
+        SetRect(offlineReward.rectTransform, new Vector2(0, -440), new Vector2(860, 80), new Vector2(0.5f, 1f));
         offlineReward.color = new Color(0.82f, 0.76f, 0.52f);
 
-        var teamSlotTexts = CreateHeroSlotRow(homePanel.transform, -610, "Team Preview");
+        var teamSlotTexts = CreateHeroSlotRow(homePanel.transform, -645, "Team Preview");
 
         var dailyHeader = CreateText("Daily Missions Header", homePanel.transform, "Daily Missions", 34, FontStyles.Bold);
         SetRect(dailyHeader.rectTransform, new Vector2(0, -900), new Vector2(860, 50), new Vector2(0.5f, 1f));
@@ -116,7 +124,7 @@ public static class MythwakePrototypeBuilder
         var fightButton = CreateButton("Fight Button", battlePanel.transform, "Fight", ButtonColor);
         SetRect(fightButton.GetComponent<RectTransform>(), new Vector2(0, -760), new Vector2(760, 145), new Vector2(0.5f, 1f));
 
-        var upgradeButton = CreateButton("Upgrade Button", battlePanel.transform, "Upgrade Astra (12 Gold)", UpgradeButtonColor);
+        var upgradeButton = CreateButton("Upgrade Button", battlePanel.transform, "Upgrade Astra (12 Essence)", UpgradeButtonColor);
         SetRect(upgradeButton.GetComponent<RectTransform>(), new Vector2(0, -935), new Vector2(760, 125), new Vector2(0.5f, 1f));
 
         var resetButton = CreateButton("Reset Button", battlePanel.transform, "Reset Prototype", ResetButtonColor);
@@ -132,7 +140,7 @@ public static class MythwakePrototypeBuilder
         var selectedHeroText = CreateText("Selected Hero Text", selectedHeroCard.transform, "Astra  Lv. 1\nEpic Warrior\nPower 55", 32, FontStyles.Bold);
         SetRect(selectedHeroText.rectTransform, new Vector2(0, -55), new Vector2(780, 150), new Vector2(0.5f, 1f));
 
-        var heroUpgradeButton = CreateButton("Hero Upgrade Button", heroesPanel.transform, "Upgrade Astra (12 Gold)", UpgradeButtonColor);
+        var heroUpgradeButton = CreateButton("Hero Upgrade Button", heroesPanel.transform, "Upgrade Astra (12 Essence)", UpgradeButtonColor);
         SetRect(heroUpgradeButton.GetComponent<RectTransform>(), new Vector2(0, -355), new Vector2(760, 100), new Vector2(0.5f, 1f));
 
         var heroAscendButton = CreateButton("Hero Ascend Button", heroesPanel.transform, "Ascend Astra (20 Shards)", ButtonColor);
@@ -159,7 +167,7 @@ public static class MythwakePrototypeBuilder
         var summonTitle = CreateText("Summon Title", summonBanner.transform, "Awaken Heroes", 44, FontStyles.Bold);
         SetRect(summonTitle.rectTransform, new Vector2(0, -55), new Vector2(780, 60), new Vector2(0.5f, 1f));
 
-        var summonCost = CreateText("Summon Cost Text", summonBanner.transform, "Cost: 60 Gold", 34, FontStyles.Normal);
+        var summonCost = CreateText("Summon Cost Text", summonBanner.transform, "Cost: 30 Gems", 34, FontStyles.Normal);
         SetRect(summonCost.rectTransform, new Vector2(0, -125), new Vector2(780, 50), new Vector2(0.5f, 1f));
         summonCost.color = new Color(0.82f, 0.76f, 0.52f);
 
@@ -223,6 +231,8 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "titleText", title);
         SetObject(serializedController, "goldText", gold);
         SetObject(serializedController, "homeGoldText", homeGold);
+        SetObject(serializedController, "gemsText", homeGems);
+        SetObject(serializedController, "mythEssenceText", homeEssence);
         SetObject(serializedController, "homeStageText", homeStage);
         SetObject(serializedController, "homePowerText", homePower);
         SetObjectArray(serializedController, "teamSlotTexts", teamSlotTexts);

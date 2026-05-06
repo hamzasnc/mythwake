@@ -5,21 +5,22 @@ Mobile idle RPG prototype built with Unity.
 Current prototype:
 - Android build profile
 - Simple portrait UI
-- First core loop: fight enemies, earn gold, upgrade damage
+- First core loop: fight enemies, earn Myth Essence, upgrade heroes
 - Auto attack while the app is open
 - Local save data via PlayerPrefs
-- Basic offline gold calculation when reopening the app
+- Basic offline Myth Essence calculation when reopening the app
 - Mobile app shell with Home, Battle, Heroes, Summon, and Shop tabs
 - Starter hero collection with 5 heroes
 - Team power drives battle damage
-- Hero upgrades saved locally
-- Campaign stages now use named enemy data with HP and gold rewards
+- Gold, Gems, Myth Essence, Pass XP, and Hero Shards are separated
+- Hero upgrades use Myth Essence and are saved locally
+- Campaign stages now use named enemy data with HP and Myth Essence rewards
 - Campaign continues scaling after the starter stages
-- Basic summon flow with rarity rates, hero shards, and saved summon count
+- Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
 - Hero shards add minor team power immediately
 - Hero ascension consumes shards for larger saved power upgrades
 - Daily missions track battles, stage clears, and summons
-- Daily mission claims reward gold and reset by UTC day
+- Daily mission claims reward Gold, Gems, Myth Essence, and reset by UTC day
 - Mission Track XP is earned from daily mission claims
 - Mission Track rewards can be claimed in the Shop tab
 
