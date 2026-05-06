@@ -2,6 +2,9 @@
 
 Mobile idle RPG prototype built with Unity.
 
+Prototype version: 0.2.0
+Local save version: 1
+
 Current prototype:
 - Android build profile
 - Simple portrait UI
@@ -9,7 +12,9 @@ Current prototype:
 - Auto attack while the app is open
 - Local save data via PlayerPrefs
 - Basic offline Gold and Myth Essence calculation when reopening the app
-- Mobile app shell with Home, Battle, Heroes, Summon, and Shop tabs
+- Mobile app shell with Home, Battle, Heroes, Gear, Summon, and Shop tabs
+- Visible prototype/save version text for quick test builds
+- Debug resource buttons for adding small Gold, Gems, Myth Essence, and accessory test amounts
 - Starter hero collection with 5 heroes
 - Each starter hero has role-flavored Attack and HP stats
 - Team Attack and Team HP are summed from the active hero roster
@@ -40,6 +45,9 @@ Current prototype:
 - Daily mission claims reward Gold, Gems, Myth Essence, and reset by UTC day
 - Mission Track XP is earned from daily mission claims
 - Mission Track rewards can be claimed in the Shop tab
+
+Changelog:
+- 0.2.0: Added visible prototype/save version UI, Batch 1 debug resource buttons, compact dungeon labels, and a reset path that clears known local prototype save keys before writing a fresh save.
 
 Development target:
 - Android and iOS mobile idle game

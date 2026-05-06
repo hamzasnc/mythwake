@@ -26,6 +26,8 @@ Client:
 - Unity 6 mobile portrait prototype
 - Android build profile working
 - Local `PlayerPrefs` save data
+- Visible prototype/save version text
+- Debug buttons for small Gold, Gems, Myth Essence, and accessory test amounts
 - Bottom-tab app shell
 - Current tabs: Home, Battle, Heroes, Gear, Summon, Shop
 
@@ -102,6 +104,12 @@ The core is considered clean when these are true:
 
 Goal:
 Make the existing client loop easier to test and less fragile.
+
+Progress:
+- Prototype version/save version text is visible in the UI.
+- Debug resource buttons can add small Gold, Gems, Myth Essence, and selected accessory copy test amounts.
+- Reset now deletes known local prototype save keys before writing a fresh save.
+- Dungeon labels/result text are more compact for mobile readability.
 
 Tasks:
 - Add a basic debug/reset panel or debug buttons for adding small test amounts of resources.

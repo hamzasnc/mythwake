@@ -5,6 +5,9 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour
 {
+    public const string PrototypeVersion = "0.2.0";
+    public const int CurrentSaveVersion = 1;
+
     [Serializable]
     private struct StageDefinition
     {
@@ -76,6 +79,7 @@ public class IdlePrototypeController : MonoBehaviour
         Shop
     }
 
+    private const string SaveVersionKey = "Mythwake.Prototype.SaveVersion";
     private const string GoldKey = "Mythwake.Prototype.Gold";
     private const string GemsKey = "Mythwake.Prototype.Gems";
     private const string MythEssenceKey = "Mythwake.Prototype.MythEssence";
@@ -131,6 +135,37 @@ public class IdlePrototypeController : MonoBehaviour
     private const int AccessoryBaseMaxLevel = 20;
     private const int AccessoryMaxLevelPerRarity = 10;
     private const int AccessoryFuseCost = 3;
+    private const int DebugGoldAmount = 500;
+    private const int DebugGemAmount = 30;
+    private const int DebugEssenceAmount = 250;
+
+    private static readonly string[] ScalarSaveKeys =
+    {
+        SaveVersionKey,
+        GoldKey,
+        GemsKey,
+        MythEssenceKey,
+        DamageKey,
+        EnemyLevelKey,
+        EnemyHpKey,
+        EnemyMaxHpKey,
+        UpgradeCostKey,
+        GoldDungeonFloorKey,
+        EssenceDungeonFloorKey,
+        GearDungeonFloorKey,
+        WeaponLevelKey,
+        ArmorLevelKey,
+        SelectedAccessorySlotKey,
+        SelectedAccessoryRarityKey,
+        LastSeenUtcKey,
+        SelectedHeroKey,
+        SummonCountKey,
+        DailyDateKey,
+        DailyFightCountKey,
+        DailyStageClearCountKey,
+        DailySummonCountKey,
+        BattlePassXpKey
+    };
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
     private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
@@ -164,6 +199,7 @@ public class IdlePrototypeController : MonoBehaviour
     };
 
     [Header("Stats")]
+    [SerializeField] private int saveVersion = CurrentSaveVersion;
     [SerializeField] private int gold;
     [SerializeField] private int gems;
     [SerializeField] private int mythEssence;
@@ -217,6 +253,7 @@ public class IdlePrototypeController : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private TMP_Text titleText;
+    [SerializeField] private TMP_Text versionText;
     [SerializeField] private TMP_Text goldText;
     [SerializeField] private TMP_Text homeGoldText;
     [SerializeField] private TMP_Text gemsText;
@@ -273,6 +310,10 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private Button accessoryFuseButton;
     [SerializeField] private Button summonButton;
     [SerializeField] private Button resetButton;
+    [SerializeField] private Button debugGoldButton;
+    [SerializeField] private Button debugEssenceButton;
+    [SerializeField] private Button debugGemsButton;
+    [SerializeField] private Button debugAccessoryButton;
     [SerializeField] private Button[] heroSelectButtons;
     [SerializeField] private Button[] dailyMissionButtons;
     [SerializeField] private Button[] battlePassRewardButtons;
@@ -302,6 +343,7 @@ public class IdlePrototypeController : MonoBehaviour
     {
         LoadProgress();
         ClaimOfflineRewards();
+        EnsureRuntimeDebugUi();
         RegisterNavigation();
         RegisterHeroButtons();
         RegisterDailyMissionButtons();
@@ -395,6 +437,26 @@ public class IdlePrototypeController : MonoBehaviour
         if (resetButton != null)
         {
             resetButton.onClick.AddListener(ResetProgress);
+        }
+
+        if (debugGoldButton != null)
+        {
+            debugGoldButton.onClick.AddListener(AddDebugGold);
+        }
+
+        if (debugEssenceButton != null)
+        {
+            debugEssenceButton.onClick.AddListener(AddDebugEssence);
+        }
+
+        if (debugGemsButton != null)
+        {
+            debugGemsButton.onClick.AddListener(AddDebugGems);
+        }
+
+        if (debugAccessoryButton != null)
+        {
+            debugAccessoryButton.onClick.AddListener(AddDebugAccessoryCopy);
         }
 
         RefreshUi();
@@ -510,6 +572,26 @@ public class IdlePrototypeController : MonoBehaviour
         if (resetButton != null)
         {
             resetButton.onClick.RemoveListener(ResetProgress);
+        }
+
+        if (debugGoldButton != null)
+        {
+            debugGoldButton.onClick.RemoveListener(AddDebugGold);
+        }
+
+        if (debugEssenceButton != null)
+        {
+            debugEssenceButton.onClick.RemoveListener(AddDebugEssence);
+        }
+
+        if (debugGemsButton != null)
+        {
+            debugGemsButton.onClick.RemoveListener(AddDebugGems);
+        }
+
+        if (debugAccessoryButton != null)
+        {
+            debugAccessoryButton.onClick.RemoveListener(AddDebugAccessoryCopy);
         }
 
         UnregisterNavigation();
@@ -844,8 +926,37 @@ public class IdlePrototypeController : MonoBehaviour
         ClaimBattlePassReward(4);
     }
 
+    public void AddDebugGold()
+    {
+        AddDebugResources(DebugGoldAmount, 0, 0);
+    }
+
+    public void AddDebugEssence()
+    {
+        AddDebugResources(0, 0, DebugEssenceAmount);
+    }
+
+    public void AddDebugGems()
+    {
+        AddDebugResources(0, DebugGemAmount, 0);
+    }
+
+    public void AddDebugAccessoryCopy()
+    {
+        EnsureAccessories();
+        var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
+        var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+        AddAccessoryInventory(slot, rarity, 1);
+
+        SaveProgress();
+        RefreshUi();
+        SetDungeonResult($"Debug: +1 {AccessoryRarityNames[rarity]} {AccessorySlots[slot].name} copy.");
+    }
+
     public void ResetProgress()
     {
+        ClearPrototypePlayerPrefs();
+        saveVersion = CurrentSaveVersion;
         gold = 0;
         gems = StarterGems;
         mythEssence = StarterMythEssence;
@@ -912,6 +1023,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         SaveProgress();
         RefreshUi();
+        SetDungeonResult("Prototype reset to fresh save.\nCurrencies, heroes, gear, missions cleared.");
     }
 
     private void OnApplicationPause(bool isPaused)
@@ -961,6 +1073,7 @@ public class IdlePrototypeController : MonoBehaviour
 
     private void LoadProgress()
     {
+        saveVersion = Mathf.Max(1, PlayerPrefs.GetInt(SaveVersionKey, CurrentSaveVersion));
         gold = PlayerPrefs.GetInt(GoldKey, gold);
         gems = PlayerPrefs.GetInt(GemsKey, gems);
         mythEssence = PlayerPrefs.GetInt(MythEssenceKey, mythEssence);
@@ -1020,6 +1133,8 @@ public class IdlePrototypeController : MonoBehaviour
 
     private void SaveProgress()
     {
+        saveVersion = CurrentSaveVersion;
+        PlayerPrefs.SetInt(SaveVersionKey, saveVersion);
         PlayerPrefs.SetInt(GoldKey, gold);
         PlayerPrefs.SetInt(GemsKey, gems);
         PlayerPrefs.SetInt(MythEssenceKey, mythEssence);
@@ -1295,7 +1410,7 @@ public class IdlePrototypeController : MonoBehaviour
     private string FormatCombatResult(CombatResult result)
     {
         var executeText = result.executed ? "  Execute" : string.Empty;
-        return $"Dealt {result.damageDealt}  Took {result.damageTaken}  Healed {result.healingDone}{executeText}";
+        return $"DMG {result.damageDealt}  Took {result.damageTaken}  Heal {result.healingDone}{executeText}";
     }
 
     private int GetGoldDungeonReward(int floor)
@@ -1348,7 +1463,11 @@ public class IdlePrototypeController : MonoBehaviour
     {
         if (dungeonResultText != null)
         {
-            dungeonResultText.fontSize = 26;
+            dungeonResultText.enableAutoSizing = true;
+            dungeonResultText.fontSizeMin = 18;
+            dungeonResultText.fontSizeMax = 24;
+            dungeonResultText.fontSize = 24;
+            dungeonResultText.textWrappingMode = TextWrappingModes.Normal;
             dungeonResultText.text = result;
         }
     }
@@ -1364,9 +1483,16 @@ public class IdlePrototypeController : MonoBehaviour
             titleText.text = "Mythwake";
         }
 
+        if (versionText != null)
+        {
+            versionText.text = GetVersionLabel();
+        }
+
         if (goldText != null)
         {
-            goldText.text = $"Gold {gold}   Gems {gems}   Essence {mythEssence}";
+            var resourceText = $"Gold {gold}   Gems {gems}   Essence {mythEssence}";
+            goldText.fontSize = versionText == null ? 30 : 36;
+            goldText.text = versionText == null ? $"{resourceText}\n{GetVersionLabel()}" : resourceText;
         }
 
         if (homeGoldText != null)
@@ -2475,17 +2601,17 @@ public class IdlePrototypeController : MonoBehaviour
     {
         if (goldDungeonText != null)
         {
-            goldDungeonText.text = $"Gold Dungeon\nFloor {goldDungeonFloor}  Rec. Power {GetDungeonRecommendedPower(goldDungeonFloor)}\nReward {GetGoldDungeonReward(goldDungeonFloor)} Gold";
+            goldDungeonText.text = $"Gold Dungeon F{goldDungeonFloor}  Rec {GetDungeonRecommendedPower(goldDungeonFloor)}\n+{GetGoldDungeonReward(goldDungeonFloor)} Gold";
         }
 
         if (essenceDungeonText != null)
         {
-            essenceDungeonText.text = $"Essence Dungeon\nFloor {essenceDungeonFloor}  Rec. Power {GetDungeonRecommendedPower(essenceDungeonFloor)}\nReward {GetEssenceDungeonReward(essenceDungeonFloor)} Essence";
+            essenceDungeonText.text = $"Essence Dungeon F{essenceDungeonFloor}  Rec {GetDungeonRecommendedPower(essenceDungeonFloor)}\n+{GetEssenceDungeonReward(essenceDungeonFloor)} Essence";
         }
 
         if (gearDungeonText != null)
         {
-            gearDungeonText.text = $"Gear Dungeon\nFloor {gearDungeonFloor}  Rec. Power {GetGearDungeonRecommendedPower(gearDungeonFloor)}\nRandom accessory drop";
+            gearDungeonText.text = $"Gear Dungeon F{gearDungeonFloor}  Rec {GetGearDungeonRecommendedPower(gearDungeonFloor)}\nRandom accessory drop";
         }
 
         if (dungeonResultText != null && string.IsNullOrWhiteSpace(dungeonResultText.text))
@@ -2657,6 +2783,123 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         return string.IsNullOrEmpty(reward) ? "None" : reward;
+    }
+
+    private void AddDebugResources(int goldAmount, int gemAmount, int essenceAmount)
+    {
+        gold += Mathf.Max(0, goldAmount);
+        gems += Mathf.Max(0, gemAmount);
+        mythEssence += Mathf.Max(0, essenceAmount);
+
+        SaveProgress();
+        RefreshUi();
+        SetDungeonResult($"Debug: +{FormatReward(goldAmount, gemAmount, essenceAmount)}.");
+    }
+
+    private void ClearPrototypePlayerPrefs()
+    {
+        foreach (var key in ScalarSaveKeys)
+        {
+            PlayerPrefs.DeleteKey(key);
+        }
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            PlayerPrefs.DeleteKey($"{HeroLevelKeyPrefix}{i}");
+            PlayerPrefs.DeleteKey($"{HeroShardKeyPrefix}{i}");
+            PlayerPrefs.DeleteKey($"{HeroAscensionKeyPrefix}{i}");
+        }
+
+        for (var i = 0; i < DailyMissionCount; i++)
+        {
+            PlayerPrefs.DeleteKey($"{DailyMissionClaimedKeyPrefix}{i}");
+        }
+
+        for (var i = 0; i < BattlePassRewardCount; i++)
+        {
+            PlayerPrefs.DeleteKey($"{BattlePassClaimedKeyPrefix}{i}");
+        }
+
+        for (var i = 0; i < AccessorySlotCount; i++)
+        {
+            PlayerPrefs.DeleteKey($"{EquippedAccessoryRarityKeyPrefix}{i}");
+            PlayerPrefs.DeleteKey($"{EquippedAccessoryLevelKeyPrefix}{i}");
+        }
+
+        for (var i = 0; i < AccessorySlotCount * AccessoryRarityCount; i++)
+        {
+            PlayerPrefs.DeleteKey($"{AccessoryInventoryKeyPrefix}{i}");
+        }
+
+        PlayerPrefs.Save();
+    }
+
+    private string GetVersionLabel()
+    {
+        return $"Prototype v{PrototypeVersion}  Save v{saveVersion}";
+    }
+
+    private void EnsureRuntimeDebugUi()
+    {
+        if (battlePanel == null || debugGoldButton != null)
+        {
+            return;
+        }
+
+        var panelObject = new GameObject("Debug Resource Panel", typeof(RectTransform));
+        panelObject.transform.SetParent(battlePanel.transform, false);
+        SetRuntimeRect(panelObject.GetComponent<RectTransform>(), new Vector2(0, -1430), new Vector2(860, 72), new Vector2(0.5f, 1f));
+
+        debugGoldButton = CreateRuntimeDebugButton(panelObject.transform, "Debug Gold Button", "+Gold", -315);
+        debugEssenceButton = CreateRuntimeDebugButton(panelObject.transform, "Debug Essence Button", "+Essence", -105);
+        debugGemsButton = CreateRuntimeDebugButton(panelObject.transform, "Debug Gems Button", "+Gems", 105);
+        debugAccessoryButton = CreateRuntimeDebugButton(panelObject.transform, "Debug Accessory Button", "+Gear", 315);
+    }
+
+    private static Button CreateRuntimeDebugButton(Transform parent, string name, string label, float xPosition)
+    {
+        var buttonObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        buttonObject.transform.SetParent(parent, false);
+        SetRuntimeRect(buttonObject.GetComponent<RectTransform>(), new Vector2(xPosition, 0), new Vector2(190, 64), new Vector2(0.5f, 0.5f));
+
+        var image = buttonObject.GetComponent<Image>();
+        image.color = new Color(0.11f, 0.14f, 0.2f, 0.98f);
+
+        var button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = image;
+
+        var textObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(buttonObject.transform, false);
+        var text = textObject.GetComponent<TextMeshProUGUI>();
+        text.text = label;
+        text.fontSize = 24;
+        text.fontSizeMin = 16;
+        text.fontSizeMax = 24;
+        text.enableAutoSizing = true;
+        text.fontStyle = FontStyles.Bold;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+        text.textWrappingMode = TextWrappingModes.Normal;
+        StretchRuntime(text.rectTransform, new Vector2(18, 10));
+
+        return button;
+    }
+
+    private static void SetRuntimeRect(RectTransform rectTransform, Vector2 anchoredPosition, Vector2 size, Vector2 anchor)
+    {
+        rectTransform.anchorMin = anchor;
+        rectTransform.anchorMax = anchor;
+        rectTransform.pivot = anchor;
+        rectTransform.anchoredPosition = anchoredPosition;
+        rectTransform.sizeDelta = size;
+    }
+
+    private static void StretchRuntime(RectTransform rectTransform, Vector2 padding)
+    {
+        rectTransform.anchorMin = Vector2.zero;
+        rectTransform.anchorMax = Vector2.one;
+        rectTransform.offsetMin = padding;
+        rectTransform.offsetMax = -padding;
     }
 
     private string FormatDuration(int seconds)

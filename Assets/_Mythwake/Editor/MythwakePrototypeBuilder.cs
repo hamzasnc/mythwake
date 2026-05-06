@@ -49,6 +49,10 @@ public static class MythwakePrototypeBuilder
         var title = CreateText("Title", root.transform, "Mythwake", 72, FontStyles.Bold);
         SetRect(title.rectTransform, new Vector2(0, -70), new Vector2(920, 100), new Vector2(0.5f, 1f));
 
+        var version = CreateText("Prototype Version Text", root.transform, $"Prototype v{IdlePrototypeController.PrototypeVersion}  Save v{IdlePrototypeController.CurrentSaveVersion}", 22, FontStyles.Bold);
+        SetRect(version.rectTransform, new Vector2(340, -38), new Vector2(500, 38), new Vector2(0.5f, 1f));
+        version.color = new Color(0.72f, 0.78f, 0.88f);
+
         var gold = CreateText("Gold Text", root.transform, "Gold 0   Gems 0   Essence 0", 36, FontStyles.Bold);
         SetRect(gold.rectTransform, new Vector2(0, -155), new Vector2(920, 70), new Vector2(0.5f, 1f));
 
@@ -130,8 +134,11 @@ public static class MythwakePrototypeBuilder
         SetRect(fightButton.GetComponent<RectTransform>(), new Vector2(0, -560), new Vector2(760, 110), new Vector2(0.5f, 1f));
 
         var dungeonResult = CreateText("Dungeon Result Text", battlePanel.transform, "Dungeons are the active resource source.", 26, FontStyles.Bold);
-        SetRect(dungeonResult.rectTransform, new Vector2(0, -695), new Vector2(860, 120), new Vector2(0.5f, 1f));
+        SetRect(dungeonResult.rectTransform, new Vector2(0, -695), new Vector2(860, 125), new Vector2(0.5f, 1f));
         dungeonResult.color = new Color(0.72f, 0.86f, 1f);
+        dungeonResult.enableAutoSizing = true;
+        dungeonResult.fontSizeMin = 18;
+        dungeonResult.fontSizeMax = 24;
 
         var goldDungeonButton = CreateButton("Gold Dungeon Button", battlePanel.transform, "Gold Dungeon", new Color(0.45f, 0.34f, 0.12f));
         SetRect(goldDungeonButton.GetComponent<RectTransform>(), new Vector2(0, -825), new Vector2(860, 105), new Vector2(0.5f, 1f));
@@ -158,6 +165,22 @@ public static class MythwakePrototypeBuilder
         var resetButton = CreateButton("Reset Button", battlePanel.transform, "Reset Prototype", ResetButtonColor);
         SetRect(resetButton.GetComponent<RectTransform>(), new Vector2(0, -1320), new Vector2(560, 80), new Vector2(0.5f, 1f));
         resetButton.GetComponentInChildren<TMP_Text>().fontSize = 26;
+
+        var debugGoldButton = CreateButton("Debug Gold Button", battlePanel.transform, "+Gold", NavButtonColor);
+        SetRect(debugGoldButton.GetComponent<RectTransform>(), new Vector2(-315, -1430), new Vector2(190, 64), new Vector2(0.5f, 1f));
+        debugGoldButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
+
+        var debugEssenceButton = CreateButton("Debug Essence Button", battlePanel.transform, "+Essence", NavButtonColor);
+        SetRect(debugEssenceButton.GetComponent<RectTransform>(), new Vector2(-105, -1430), new Vector2(190, 64), new Vector2(0.5f, 1f));
+        debugEssenceButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
+
+        var debugGemsButton = CreateButton("Debug Gems Button", battlePanel.transform, "+Gems", NavButtonColor);
+        SetRect(debugGemsButton.GetComponent<RectTransform>(), new Vector2(105, -1430), new Vector2(190, 64), new Vector2(0.5f, 1f));
+        debugGemsButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
+
+        var debugAccessoryButton = CreateButton("Debug Accessory Button", battlePanel.transform, "+Gear", NavButtonColor);
+        SetRect(debugAccessoryButton.GetComponent<RectTransform>(), new Vector2(315, -1430), new Vector2(190, 64), new Vector2(0.5f, 1f));
+        debugAccessoryButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
 
         var heroHeader = CreateText("Hero Header", heroesPanel.transform, "Heroes", 42, FontStyles.Bold);
         SetRect(heroHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
@@ -316,6 +339,7 @@ public static class MythwakePrototypeBuilder
         var controller = controllerObject.AddComponent<IdlePrototypeController>();
         var serializedController = new SerializedObject(controller);
         SetObject(serializedController, "titleText", title);
+        SetObject(serializedController, "versionText", version);
         SetObject(serializedController, "goldText", gold);
         SetObject(serializedController, "homeGoldText", homeGold);
         SetObject(serializedController, "gemsText", homeGems);
@@ -372,6 +396,10 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "accessoryFuseButton", fuseAccessoryButton);
         SetObject(serializedController, "summonButton", summonButton);
         SetObject(serializedController, "resetButton", resetButton);
+        SetObject(serializedController, "debugGoldButton", debugGoldButton);
+        SetObject(serializedController, "debugEssenceButton", debugEssenceButton);
+        SetObject(serializedController, "debugGemsButton", debugGemsButton);
+        SetObject(serializedController, "debugAccessoryButton", debugAccessoryButton);
         SetObjectArray(serializedController, "heroSelectButtons", heroButtons);
         SetObjectArray(serializedController, "dailyMissionButtons", dailyMissionButtons);
         SetObjectArray(serializedController, "battlePassRewardButtons", battlePassRewardButtons);
@@ -507,6 +535,9 @@ public static class MythwakePrototypeBuilder
         button.targetGraphic = image;
 
         var buttonLabel = CreateText("Label", buttonObject.transform, label, 36, FontStyles.Bold);
+        buttonLabel.enableAutoSizing = true;
+        buttonLabel.fontSizeMin = 16;
+        buttonLabel.fontSizeMax = 36;
         Stretch(buttonLabel.rectTransform, new Vector2(42, 20));
 
         return button;
