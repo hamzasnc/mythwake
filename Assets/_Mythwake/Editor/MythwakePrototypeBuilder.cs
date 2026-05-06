@@ -166,14 +166,14 @@ public static class MythwakePrototypeBuilder
         var equipmentPanel = CreatePanel("Equipment Panel", heroesPanel.transform, PanelColor);
         SetRect(equipmentPanel.rectTransform, new Vector2(0, -655), new Vector2(860, 230), new Vector2(0.5f, 1f));
 
-        var equipmentSummary = CreateText("Equipment Summary Text", equipmentPanel.transform, "Equipment\nWeapon Lv. 1  +8 ATK\nArmor Lv. 1  +90 HP", 28, FontStyles.Bold);
+        var equipmentSummary = CreateText("Equipment Summary Text", equipmentPanel.transform, "Equipment\nWeapon Lv. 1  +8 ATK\nArmor Lv. 1  +80 HP", 28, FontStyles.Bold);
         SetRect(equipmentSummary.rectTransform, new Vector2(0, -68), new Vector2(780, 105), new Vector2(0.5f, 1f));
 
-        var weaponUpgradeButton = CreateButton("Weapon Upgrade Button", equipmentPanel.transform, "Weapon +1\n60 Gold", UpgradeButtonColor);
+        var weaponUpgradeButton = CreateButton("Weapon Upgrade Button", equipmentPanel.transform, "Weapon +1\n80 Gold", UpgradeButtonColor);
         SetRect(weaponUpgradeButton.GetComponent<RectTransform>(), new Vector2(-210, -165), new Vector2(360, 78), new Vector2(0.5f, 1f));
         weaponUpgradeButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
 
-        var armorUpgradeButton = CreateButton("Armor Upgrade Button", equipmentPanel.transform, "Armor +1\n55 Gold", UpgradeButtonColor);
+        var armorUpgradeButton = CreateButton("Armor Upgrade Button", equipmentPanel.transform, "Armor +1\n75 Gold", UpgradeButtonColor);
         SetRect(armorUpgradeButton.GetComponent<RectTransform>(), new Vector2(210, -165), new Vector2(360, 78), new Vector2(0.5f, 1f));
         armorUpgradeButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
 

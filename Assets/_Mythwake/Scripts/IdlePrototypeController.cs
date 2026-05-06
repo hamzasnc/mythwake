@@ -32,6 +32,26 @@ public class IdlePrototypeController : MonoBehaviour
         public int healingDone;
     }
 
+    private struct EquipmentTrackDefinition
+    {
+        public string name;
+        public string statLabel;
+        public int baseBonus;
+        public int bonusPerLevel;
+        public int baseCost;
+        public float costGrowth;
+
+        public EquipmentTrackDefinition(string name, string statLabel, int baseBonus, int bonusPerLevel, int baseCost, float costGrowth)
+        {
+            this.name = name;
+            this.statLabel = statLabel;
+            this.baseBonus = baseBonus;
+            this.bonusPerLevel = bonusPerLevel;
+            this.baseCost = baseCost;
+            this.costGrowth = costGrowth;
+        }
+    }
+
     private enum AppScreen
     {
         Home,
@@ -81,6 +101,8 @@ public class IdlePrototypeController : MonoBehaviour
     private const float SupportHealRate = 0.04f;
     private const float RangerExecuteThresholdRate = 0.12f;
     private const int StarterEquipmentLevel = 1;
+    private const float CampaignOverflowHpGrowth = 1.25f;
+    private const float CampaignOverflowRewardGrowth = 1.14f;
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
     private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
@@ -101,6 +123,8 @@ public class IdlePrototypeController : MonoBehaviour
     private static readonly int[] BattlePassGoldRewards = { 100, 125, 175, 225, 350 };
     private static readonly int[] BattlePassGemRewards = { 10, 15, 20, 25, 40 };
     private static readonly int[] BattlePassEssenceRewards = { 0, 120, 0, 180, 300 };
+    private static readonly EquipmentTrackDefinition WeaponTrack = new EquipmentTrackDefinition("Weapon", "ATK", 8, 9, 80, 1.45f);
+    private static readonly EquipmentTrackDefinition ArmorTrack = new EquipmentTrackDefinition("Armor", "HP", 80, 65, 75, 1.42f);
 
     [Header("Stats")]
     [SerializeField] private int gold;
@@ -132,15 +156,15 @@ public class IdlePrototypeController : MonoBehaviour
     private StageDefinition[] stages =
     {
         new StageDefinition("Fallen Scout", 50, 7),
-        new StageDefinition("Hollow Guard", 75, 10),
-        new StageDefinition("Ashborne Rogue", 105, 14),
-        new StageDefinition("Rift Hound", 145, 19),
-        new StageDefinition("Veil Shaman", 195, 25),
-        new StageDefinition("Dusk Knight", 260, 33),
-        new StageDefinition("Cursed Warden", 345, 43),
-        new StageDefinition("Abyss Herald", 455, 56),
-        new StageDefinition("Eclipse Beast", 600, 73),
-        new StageDefinition("Mythfallen Tyrant", 790, 95)
+        new StageDefinition("Hollow Guard", 110, 11),
+        new StageDefinition("Ashborne Rogue", 165, 16),
+        new StageDefinition("Rift Hound", 240, 23),
+        new StageDefinition("Veil Shaman", 340, 31),
+        new StageDefinition("Dusk Knight", 480, 42),
+        new StageDefinition("Cursed Warden", 675, 56),
+        new StageDefinition("Abyss Herald", 930, 74),
+        new StageDefinition("Eclipse Beast", 1275, 97),
+        new StageDefinition("Mythfallen Tyrant", 1725, 125)
     };
 
     [Header("Idle")]
@@ -778,8 +802,8 @@ public class IdlePrototypeController : MonoBehaviour
 
         var lastStage = stages[stages.Length - 1];
         var overflow = stage - stages.Length;
-        var hp = Mathf.CeilToInt(lastStage.maxHp * Mathf.Pow(1.18f, overflow));
-        var reward = Mathf.CeilToInt(lastStage.essenceReward * Mathf.Pow(1.12f, overflow));
+        var hp = Mathf.CeilToInt(lastStage.maxHp * Mathf.Pow(CampaignOverflowHpGrowth, overflow));
+        var reward = Mathf.CeilToInt(lastStage.essenceReward * Mathf.Pow(CampaignOverflowRewardGrowth, overflow));
 
         return new StageDefinition($"Rift Echo {stage}", hp, reward);
     }
@@ -792,6 +816,18 @@ public class IdlePrototypeController : MonoBehaviour
     private int GetStageMaxHp(int stage)
     {
         return Mathf.Max(1, GetStageDefinition(stage).maxHp);
+    }
+
+    private int GetStageRecommendedPower(int stage)
+    {
+        stage = Mathf.Max(1, stage);
+        return 95 + Mathf.FloorToInt(48 * Mathf.Pow(stage, 1.18f));
+    }
+
+    private int GetDungeonRecommendedPower(int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        return 125 + Mathf.FloorToInt(54 * Mathf.Pow(floor, 1.2f));
     }
 
     private void RunDungeon(bool isGoldDungeon)
@@ -829,19 +865,19 @@ public class IdlePrototypeController : MonoBehaviour
     private int GetDungeonEnemyHp(int floor)
     {
         floor = Mathf.Max(1, floor);
-        return 180 + Mathf.FloorToInt(85 * Mathf.Pow(floor, 1.18f));
+        return 220 + Mathf.FloorToInt(110 * Mathf.Pow(floor, 1.22f));
     }
 
     private int GetDungeonEnemyDamage(int floor)
     {
         floor = Mathf.Max(1, floor);
-        return 18 + Mathf.FloorToInt(8 * Mathf.Pow(floor, 1.12f));
+        return 24 + Mathf.FloorToInt(10 * Mathf.Pow(floor, 1.15f));
     }
 
     private int GetCampaignEnemyDamage(int stage)
     {
         stage = Mathf.Max(1, stage);
-        return 8 + Mathf.FloorToInt(3.5f * Mathf.Pow(stage, 1.08f));
+        return 12 + Mathf.FloorToInt(6.5f * Mathf.Pow(stage, 1.18f));
     }
 
     private CombatResult SimulateCombat(int targetEnemyHp, int enemyDamage)
@@ -912,13 +948,13 @@ public class IdlePrototypeController : MonoBehaviour
     private int GetGoldDungeonReward(int floor)
     {
         floor = Mathf.Max(1, floor);
-        return 45 + Mathf.FloorToInt(18 * Mathf.Pow(floor, 1.12f));
+        return 80 + Mathf.FloorToInt(30 * Mathf.Pow(floor, 1.15f));
     }
 
     private int GetEssenceDungeonReward(int floor)
     {
         floor = Mathf.Max(1, floor);
-        return 55 + Mathf.FloorToInt(22 * Mathf.Pow(floor, 1.12f));
+        return 100 + Mathf.FloorToInt(36 * Mathf.Pow(floor, 1.15f));
     }
 
     private void SetDungeonResult(string result)
@@ -983,7 +1019,7 @@ public class IdlePrototypeController : MonoBehaviour
         if (enemyText != null)
         {
             var stage = GetStageDefinition(enemyLevel);
-            enemyText.text = $"Stage {enemyLevel}: {stage.enemyName}\nCampaign progress only";
+            enemyText.text = $"Stage {enemyLevel}: {stage.enemyName}\nRecommended Power {GetStageRecommendedPower(enemyLevel)}";
         }
 
         if (enemyHpText != null)
@@ -1271,17 +1307,17 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (equipmentSummaryText != null)
         {
-            equipmentSummaryText.text = $"Equipment\nWeapon Lv. {weaponLevel}  +{GetEquipmentAttackBonus()} ATK\nArmor Lv. {armorLevel}  +{GetEquipmentHealthBonus()} HP";
+            equipmentSummaryText.text = $"Equipment\n{WeaponTrack.name} Lv. {weaponLevel}  +{GetEquipmentAttackBonus()} {WeaponTrack.statLabel}\n{ArmorTrack.name} Lv. {armorLevel}  +{GetEquipmentHealthBonus()} {ArmorTrack.statLabel}";
         }
 
         if (weaponUpgradeCostText != null)
         {
-            weaponUpgradeCostText.text = $"Weapon +1\n{GetWeaponUpgradeCost()} Gold";
+            weaponUpgradeCostText.text = $"{WeaponTrack.name} +1\n{GetWeaponUpgradeCost()} Gold";
         }
 
         if (armorUpgradeCostText != null)
         {
-            armorUpgradeCostText.text = $"Armor +1\n{GetArmorUpgradeCost()} Gold";
+            armorUpgradeCostText.text = $"{ArmorTrack.name} +1\n{GetArmorUpgradeCost()} Gold";
         }
     }
 
@@ -1460,10 +1496,15 @@ public class IdlePrototypeController : MonoBehaviour
         stages = new StageDefinition[]
         {
             new StageDefinition("Fallen Scout", 50, 7),
-            new StageDefinition("Hollow Guard", 75, 10),
-            new StageDefinition("Ashborne Rogue", 105, 14),
-            new StageDefinition("Rift Hound", 145, 19),
-            new StageDefinition("Veil Shaman", 195, 25)
+            new StageDefinition("Hollow Guard", 110, 11),
+            new StageDefinition("Ashborne Rogue", 165, 16),
+            new StageDefinition("Rift Hound", 240, 23),
+            new StageDefinition("Veil Shaman", 340, 31),
+            new StageDefinition("Dusk Knight", 480, 42),
+            new StageDefinition("Cursed Warden", 675, 56),
+            new StageDefinition("Abyss Herald", 930, 74),
+            new StageDefinition("Eclipse Beast", 1275, 97),
+            new StageDefinition("Mythfallen Tyrant", 1725, 125)
         };
     }
 
@@ -1524,14 +1565,18 @@ public class IdlePrototypeController : MonoBehaviour
 
     private int GetEquipmentAttackBonus()
     {
-        var level = Mathf.Max(StarterEquipmentLevel, weaponLevel);
-        return 8 + ((level - 1) * 7);
+        return GetEquipmentBonus(WeaponTrack, weaponLevel);
     }
 
     private int GetEquipmentHealthBonus()
     {
-        var level = Mathf.Max(StarterEquipmentLevel, armorLevel);
-        return 90 + ((level - 1) * 55);
+        return GetEquipmentBonus(ArmorTrack, armorLevel);
+    }
+
+    private int GetEquipmentBonus(EquipmentTrackDefinition track, int level)
+    {
+        level = Mathf.Max(StarterEquipmentLevel, level);
+        return track.baseBonus + ((level - 1) * track.bonusPerLevel);
     }
 
     private int GetHeroAttack(int index)
@@ -1587,14 +1632,18 @@ public class IdlePrototypeController : MonoBehaviour
 
     private int GetWeaponUpgradeCost()
     {
-        var level = Mathf.Max(StarterEquipmentLevel, weaponLevel);
-        return Mathf.CeilToInt(60 * Mathf.Pow(1.36f, level - 1));
+        return GetEquipmentUpgradeCost(WeaponTrack, weaponLevel);
     }
 
     private int GetArmorUpgradeCost()
     {
-        var level = Mathf.Max(StarterEquipmentLevel, armorLevel);
-        return Mathf.CeilToInt(55 * Mathf.Pow(1.34f, level - 1));
+        return GetEquipmentUpgradeCost(ArmorTrack, armorLevel);
+    }
+
+    private int GetEquipmentUpgradeCost(EquipmentTrackDefinition track, int level)
+    {
+        level = Mathf.Max(StarterEquipmentLevel, level);
+        return Mathf.CeilToInt(track.baseCost * Mathf.Pow(track.costGrowth, level - 1));
     }
 
     private int GetHeroAscensionAttack(int index)
@@ -1698,12 +1747,12 @@ public class IdlePrototypeController : MonoBehaviour
     {
         if (goldDungeonText != null)
         {
-            goldDungeonText.text = $"Gold Dungeon\nFloor {goldDungeonFloor}  HP {GetDungeonEnemyHp(goldDungeonFloor)}  DMG {GetDungeonEnemyDamage(goldDungeonFloor)}\nReward {GetGoldDungeonReward(goldDungeonFloor)} Gold";
+            goldDungeonText.text = $"Gold Dungeon\nFloor {goldDungeonFloor}  Rec. Power {GetDungeonRecommendedPower(goldDungeonFloor)}\nReward {GetGoldDungeonReward(goldDungeonFloor)} Gold";
         }
 
         if (essenceDungeonText != null)
         {
-            essenceDungeonText.text = $"Essence Dungeon\nFloor {essenceDungeonFloor}  HP {GetDungeonEnemyHp(essenceDungeonFloor)}  DMG {GetDungeonEnemyDamage(essenceDungeonFloor)}\nReward {GetEssenceDungeonReward(essenceDungeonFloor)} Essence";
+            essenceDungeonText.text = $"Essence Dungeon\nFloor {essenceDungeonFloor}  Rec. Power {GetDungeonRecommendedPower(essenceDungeonFloor)}\nReward {GetEssenceDungeonReward(essenceDungeonFloor)} Essence";
         }
 
         if (dungeonResultText != null && string.IsNullOrWhiteSpace(dungeonResultText.text))

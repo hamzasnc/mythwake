@@ -17,8 +17,10 @@ Current prototype:
 - Gold, Gems, Myth Essence, Pass XP, and Hero Shards are separated
 - Gold can be spent on starter Weapon and Armor equipment upgrades
 - Equipment upgrades are saved locally and add team-wide ATK and HP
+- Starter equipment balance is defined through small data structs to prepare for later server/database config
 - Hero upgrades use Myth Essence and are saved locally
 - Campaign stages now use named enemy data with HP and progression-only clears
+- Campaign and dungeon scaling now create clearer upgrade walls with recommended power labels
 - Campaign continues scaling after the starter stages
 - Gold Dungeon and Essence Dungeon are endless tower prototypes
 - Dungeon floors scale up in enemy HP, enemy damage, and rewards
