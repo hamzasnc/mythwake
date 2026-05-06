@@ -278,6 +278,15 @@ Backend stack:
 - PostgreSQL
 - Redis
 
+Current backend state:
+- Added initial `backend/` Go module.
+- Added `cmd/api` entrypoint.
+- Added environment-based config.
+- Added standard-library HTTP router.
+- Added `GET /health`.
+- Added graceful shutdown.
+- PostgreSQL and Redis are not connected yet.
+
 Recommended Go shape:
 - `cmd/api`
 - `internal/config`
@@ -441,7 +450,7 @@ Recommended order:
 3. Clean local save into versioned state.
 4. Tune first 30-60 minutes.
 5. Add local service layer.
-6. Start Go backend skeleton.
+6. Start Go backend skeleton. (in progress)
 7. Add PostgreSQL definitions and player state tables.
 8. Add Redis for sessions/rate limits.
 9. Move economy actions server-side one by one.

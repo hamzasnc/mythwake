@@ -55,7 +55,15 @@ Current prototype:
 - Mission Track XP is earned from daily mission claims
 - Mission Track rewards can be claimed in the Shop tab
 
+Backend:
+- Go API skeleton in `backend/`
+- Standard-library HTTP server
+- Config via environment variables
+- `GET /health`
+- PostgreSQL and Redis are planned but not connected yet
+
 Changelog:
+- Backend 0.1.0: Added the first Go API skeleton with config, health endpoint, and graceful shutdown.
 - 0.2.9: Routed hero progression, starter equipment upgrades, daily mission claims, and Mission Track claims through service action-result methods.
 - 0.2.8: Routed accessory equip, level, and fusion through inventory service action-result methods for backend-ready item validation.
 - 0.2.7: Routed campaign fights, dungeon runs, and summons through local action-result methods that match the future backend response shape.
