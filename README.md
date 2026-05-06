@@ -8,14 +8,16 @@ Current prototype:
 - First core loop: fight enemies, earn Myth Essence, upgrade heroes
 - Auto attack while the app is open
 - Local save data via PlayerPrefs
-- Basic offline Myth Essence calculation when reopening the app
+- Basic offline Gold and Myth Essence calculation when reopening the app
 - Mobile app shell with Home, Battle, Heroes, Summon, and Shop tabs
 - Starter hero collection with 5 heroes
 - Team power drives battle damage
 - Gold, Gems, Myth Essence, Pass XP, and Hero Shards are separated
 - Hero upgrades use Myth Essence and are saved locally
-- Campaign stages now use named enemy data with HP and Myth Essence rewards
+- Campaign stages now use named enemy data with HP and progression-only clears
 - Campaign continues scaling after the starter stages
+- Gold Dungeon and Essence Dungeon are endless tower prototypes
+- Dungeon floors scale up in required team power and rewards
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
 - Hero shards add minor team power immediately
 - Hero ascension consumes shards for larger saved power upgrades

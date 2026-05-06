@@ -37,6 +37,8 @@ public class IdlePrototypeController : MonoBehaviour
     private const string EnemyHpKey = "Mythwake.Prototype.EnemyHp";
     private const string EnemyMaxHpKey = "Mythwake.Prototype.EnemyMaxHp";
     private const string UpgradeCostKey = "Mythwake.Prototype.UpgradeCost";
+    private const string GoldDungeonFloorKey = "Mythwake.Prototype.Dungeon.GoldFloor";
+    private const string EssenceDungeonFloorKey = "Mythwake.Prototype.Dungeon.EssenceFloor";
     private const string LastSeenUtcKey = "Mythwake.Prototype.LastSeenUtc";
     private const string SelectedHeroKey = "Mythwake.Prototype.SelectedHero";
     private const string HeroLevelKeyPrefix = "Mythwake.Prototype.HeroLevel.";
@@ -57,6 +59,7 @@ public class IdlePrototypeController : MonoBehaviour
     private const int SummonCost = 30;
     private const int StarterGems = 30;
     private const int StarterMythEssence = 20;
+    private const float OfflineGoldRewardRate = 0.65f;
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
     private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
@@ -85,6 +88,8 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private int enemyHp = 10;
     [SerializeField] private int enemyMaxHp = 10;
     [SerializeField] private int upgradeCost = 10;
+    [SerializeField] private int goldDungeonFloor = 1;
+    [SerializeField] private int essenceDungeonFloor = 1;
     [SerializeField] private int selectedHeroIndex;
     [SerializeField] private int[] heroLevels = new int[HeroCount];
     [SerializeField] private int[] heroShards = new int[HeroCount];
@@ -132,6 +137,9 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text damageText;
     [SerializeField] private TMP_Text enemyText;
     [SerializeField] private TMP_Text enemyHpText;
+    [SerializeField] private TMP_Text dungeonResultText;
+    [SerializeField] private TMP_Text goldDungeonText;
+    [SerializeField] private TMP_Text essenceDungeonText;
     [SerializeField] private TMP_Text autoAttackText;
     [SerializeField] private TMP_Text offlineRewardText;
     [SerializeField] private TMP_Text upgradeCostText;
@@ -145,6 +153,8 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text battlePassProgressText;
     [SerializeField] private TMP_Text[] battlePassRewardTexts;
     [SerializeField] private Button fightButton;
+    [SerializeField] private Button goldDungeonButton;
+    [SerializeField] private Button essenceDungeonButton;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Button heroUpgradeButton;
     [SerializeField] private Button heroAscendButton;
@@ -185,6 +195,16 @@ public class IdlePrototypeController : MonoBehaviour
         if (fightButton != null)
         {
             fightButton.onClick.AddListener(Fight);
+        }
+
+        if (goldDungeonButton != null)
+        {
+            goldDungeonButton.onClick.AddListener(RunGoldDungeon);
+        }
+
+        if (essenceDungeonButton != null)
+        {
+            essenceDungeonButton.onClick.AddListener(RunEssenceDungeon);
         }
 
         if (upgradeButton != null)
@@ -240,6 +260,16 @@ public class IdlePrototypeController : MonoBehaviour
         if (fightButton != null)
         {
             fightButton.onClick.RemoveListener(Fight);
+        }
+
+        if (goldDungeonButton != null)
+        {
+            goldDungeonButton.onClick.RemoveListener(RunGoldDungeon);
+        }
+
+        if (essenceDungeonButton != null)
+        {
+            essenceDungeonButton.onClick.RemoveListener(RunEssenceDungeon);
         }
 
         if (upgradeButton != null)
@@ -301,6 +331,16 @@ public class IdlePrototypeController : MonoBehaviour
     public void Fight()
     {
         Fight(saveProgress: true);
+    }
+
+    public void RunGoldDungeon()
+    {
+        RunDungeon(isGoldDungeon: true);
+    }
+
+    public void RunEssenceDungeon()
+    {
+        RunDungeon(isGoldDungeon: false);
     }
 
     public void UpgradeDamage()
@@ -417,6 +457,8 @@ public class IdlePrototypeController : MonoBehaviour
         mythEssence = StarterMythEssence;
         damage = 1;
         enemyLevel = 1;
+        goldDungeonFloor = 1;
+        essenceDungeonFloor = 1;
         enemyMaxHp = GetStageMaxHp(enemyLevel);
         enemyHp = enemyMaxHp;
         selectedHeroIndex = 0;
@@ -482,7 +524,6 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (enemyHp <= 0)
         {
-            mythEssence += GetStageReward(enemyLevel);
             enemyLevel++;
             dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
@@ -512,6 +553,8 @@ public class IdlePrototypeController : MonoBehaviour
             mythEssence = Mathf.Max(StarterMythEssence, gold);
         }
 
+        goldDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(GoldDungeonFloorKey, goldDungeonFloor));
+        essenceDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(EssenceDungeonFloorKey, essenceDungeonFloor));
         enemyLevel = Mathf.Max(1, PlayerPrefs.GetInt(EnemyLevelKey, enemyLevel));
         enemyMaxHp = Mathf.Max(GetStageMaxHp(enemyLevel), PlayerPrefs.GetInt(EnemyMaxHpKey, enemyMaxHp));
         enemyHp = Mathf.Clamp(PlayerPrefs.GetInt(EnemyHpKey, enemyHp), 1, enemyMaxHp);
@@ -539,6 +582,8 @@ public class IdlePrototypeController : MonoBehaviour
         PlayerPrefs.SetInt(GemsKey, gems);
         PlayerPrefs.SetInt(MythEssenceKey, mythEssence);
         PlayerPrefs.SetInt(DamageKey, damage);
+        PlayerPrefs.SetInt(GoldDungeonFloorKey, goldDungeonFloor);
+        PlayerPrefs.SetInt(EssenceDungeonFloorKey, essenceDungeonFloor);
         PlayerPrefs.SetInt(EnemyLevelKey, enemyLevel);
         PlayerPrefs.SetInt(EnemyHpKey, enemyHp);
         PlayerPrefs.SetInt(EnemyMaxHpKey, enemyMaxHp);
@@ -600,6 +645,8 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         lastOfflineReward = CalculateOfflineReward(lastOfflineSeconds);
+        var offlineGoldReward = CalculateOfflineGoldReward(lastOfflineReward);
+        gold += offlineGoldReward;
         mythEssence += lastOfflineReward;
         SaveProgress();
     }
@@ -611,6 +658,11 @@ public class IdlePrototypeController : MonoBehaviour
         var enemyKills = Mathf.Max(0, attacks / enemyClearSeconds);
 
         return enemyKills * GetStageReward(enemyLevel);
+    }
+
+    private int CalculateOfflineGoldReward(int offlineEssenceReward)
+    {
+        return Mathf.Max(0, Mathf.FloorToInt(offlineEssenceReward * OfflineGoldRewardRate));
     }
 
     private StageDefinition GetStageDefinition(int stage)
@@ -639,6 +691,63 @@ public class IdlePrototypeController : MonoBehaviour
     private int GetStageMaxHp(int stage)
     {
         return Mathf.Max(1, GetStageDefinition(stage).maxHp);
+    }
+
+    private void RunDungeon(bool isGoldDungeon)
+    {
+        var floor = isGoldDungeon ? goldDungeonFloor : essenceDungeonFloor;
+        var requiredPower = GetDungeonRequiredPower(floor);
+        var teamPower = GetTeamPower();
+
+        if (teamPower < requiredPower)
+        {
+            SetDungeonResult($"{(isGoldDungeon ? "Gold" : "Essence")} Dungeon Floor {floor} failed\nNeed {requiredPower} Power, team has {teamPower}");
+            RefreshUi();
+            return;
+        }
+
+        var reward = isGoldDungeon ? GetGoldDungeonReward(floor) : GetEssenceDungeonReward(floor);
+        if (isGoldDungeon)
+        {
+            gold += reward;
+            goldDungeonFloor++;
+            SetDungeonResult($"Gold Dungeon Floor {floor} cleared\n+{reward} Gold");
+        }
+        else
+        {
+            mythEssence += reward;
+            essenceDungeonFloor++;
+            SetDungeonResult($"Essence Dungeon Floor {floor} cleared\n+{reward} Essence");
+        }
+
+        SaveProgress();
+        RefreshUi();
+    }
+
+    private int GetDungeonRequiredPower(int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        return 180 + Mathf.FloorToInt(65 * Mathf.Pow(floor, 1.16f));
+    }
+
+    private int GetGoldDungeonReward(int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        return 45 + Mathf.FloorToInt(18 * Mathf.Pow(floor, 1.12f));
+    }
+
+    private int GetEssenceDungeonReward(int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        return 55 + Mathf.FloorToInt(22 * Mathf.Pow(floor, 1.12f));
+    }
+
+    private void SetDungeonResult(string result)
+    {
+        if (dungeonResultText != null)
+        {
+            dungeonResultText.text = result;
+        }
     }
 
     private void RefreshUi()
@@ -688,10 +797,12 @@ public class IdlePrototypeController : MonoBehaviour
             damageText.text = $"Team Damage: {damage}";
         }
 
+        RefreshDungeonUi();
+
         if (enemyText != null)
         {
             var stage = GetStageDefinition(enemyLevel);
-            enemyText.text = $"Stage {enemyLevel}: {stage.enemyName}\nReward {stage.essenceReward} Essence";
+            enemyText.text = $"Stage {enemyLevel}: {stage.enemyName}\nCampaign progress only";
         }
 
         if (enemyHpText != null)
@@ -1228,6 +1339,24 @@ public class IdlePrototypeController : MonoBehaviour
         autoAttackText.text = $"Auto Attack: {remaining:0.0}s";
     }
 
+    private void RefreshDungeonUi()
+    {
+        if (goldDungeonText != null)
+        {
+            goldDungeonText.text = $"Gold Dungeon\nFloor {goldDungeonFloor}  Need {GetDungeonRequiredPower(goldDungeonFloor)} Power\nReward {GetGoldDungeonReward(goldDungeonFloor)} Gold";
+        }
+
+        if (essenceDungeonText != null)
+        {
+            essenceDungeonText.text = $"Essence Dungeon\nFloor {essenceDungeonFloor}  Need {GetDungeonRequiredPower(essenceDungeonFloor)} Power\nReward {GetEssenceDungeonReward(essenceDungeonFloor)} Essence";
+        }
+
+        if (dungeonResultText != null && string.IsNullOrWhiteSpace(dungeonResultText.text))
+        {
+            dungeonResultText.text = "Dungeons are the active resource source.";
+        }
+    }
+
     private void RefreshOfflineRewardUi()
     {
         if (offlineRewardText == null)
@@ -1241,7 +1370,7 @@ public class IdlePrototypeController : MonoBehaviour
             return;
         }
 
-        offlineRewardText.text = $"Offline: +{lastOfflineReward} Essence ({FormatDuration(lastOfflineSeconds)})";
+        offlineRewardText.text = $"Offline: +{CalculateOfflineGoldReward(lastOfflineReward)} Gold, +{lastOfflineReward} Essence ({FormatDuration(lastOfflineSeconds)})";
     }
 
     private void RefreshSummonUi()

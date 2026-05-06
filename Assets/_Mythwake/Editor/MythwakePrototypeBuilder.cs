@@ -113,23 +113,40 @@ public static class MythwakePrototypeBuilder
         autoAttack.color = new Color(0.72f, 0.86f, 1f);
 
         var enemyPanel = CreatePanel("Enemy Panel", battlePanel.transform, PanelColor);
-        SetRect(enemyPanel.rectTransform, new Vector2(0, -390), new Vector2(860, 300), new Vector2(0.5f, 1f));
+        SetRect(enemyPanel.rectTransform, new Vector2(0, -330), new Vector2(860, 230), new Vector2(0.5f, 1f));
 
         var enemyName = CreateText("Enemy Text", enemyPanel.transform, "Enemy Lv. 1", 46, FontStyles.Bold);
-        SetRect(enemyName.rectTransform, new Vector2(0, -70), new Vector2(780, 70), new Vector2(0.5f, 1f));
+        SetRect(enemyName.rectTransform, new Vector2(0, -60), new Vector2(780, 80), new Vector2(0.5f, 1f));
 
         var enemyHp = CreateText("Enemy HP Text", enemyPanel.transform, "HP: 10 / 10", 40, FontStyles.Normal);
-        SetRect(enemyHp.rectTransform, new Vector2(0, -160), new Vector2(780, 70), new Vector2(0.5f, 1f));
+        SetRect(enemyHp.rectTransform, new Vector2(0, -150), new Vector2(780, 60), new Vector2(0.5f, 1f));
 
         var fightButton = CreateButton("Fight Button", battlePanel.transform, "Fight", ButtonColor);
-        SetRect(fightButton.GetComponent<RectTransform>(), new Vector2(0, -760), new Vector2(760, 145), new Vector2(0.5f, 1f));
+        SetRect(fightButton.GetComponent<RectTransform>(), new Vector2(0, -560), new Vector2(760, 110), new Vector2(0.5f, 1f));
+
+        var dungeonResult = CreateText("Dungeon Result Text", battlePanel.transform, "Dungeons are the active resource source.", 28, FontStyles.Bold);
+        SetRect(dungeonResult.rectTransform, new Vector2(0, -695), new Vector2(860, 85), new Vector2(0.5f, 1f));
+        dungeonResult.color = new Color(0.72f, 0.86f, 1f);
+
+        var goldDungeonButton = CreateButton("Gold Dungeon Button", battlePanel.transform, "Gold Dungeon", new Color(0.45f, 0.34f, 0.12f));
+        SetRect(goldDungeonButton.GetComponent<RectTransform>(), new Vector2(0, -825), new Vector2(860, 105), new Vector2(0.5f, 1f));
+        var goldDungeonText = goldDungeonButton.GetComponentInChildren<TMP_Text>();
+        goldDungeonText.fontSize = 24;
+        goldDungeonText.alignment = TextAlignmentOptions.Left;
+
+        var essenceDungeonButton = CreateButton("Essence Dungeon Button", battlePanel.transform, "Essence Dungeon", UpgradeButtonColor);
+        SetRect(essenceDungeonButton.GetComponent<RectTransform>(), new Vector2(0, -950), new Vector2(860, 105), new Vector2(0.5f, 1f));
+        var essenceDungeonText = essenceDungeonButton.GetComponentInChildren<TMP_Text>();
+        essenceDungeonText.fontSize = 24;
+        essenceDungeonText.alignment = TextAlignmentOptions.Left;
 
         var upgradeButton = CreateButton("Upgrade Button", battlePanel.transform, "Upgrade Astra (12 Essence)", UpgradeButtonColor);
-        SetRect(upgradeButton.GetComponent<RectTransform>(), new Vector2(0, -935), new Vector2(760, 125), new Vector2(0.5f, 1f));
+        SetRect(upgradeButton.GetComponent<RectTransform>(), new Vector2(0, -1080), new Vector2(760, 95), new Vector2(0.5f, 1f));
+        upgradeButton.GetComponentInChildren<TMP_Text>().fontSize = 30;
 
         var resetButton = CreateButton("Reset Button", battlePanel.transform, "Reset Prototype", ResetButtonColor);
-        SetRect(resetButton.GetComponent<RectTransform>(), new Vector2(0, -1085), new Vector2(560, 90), new Vector2(0.5f, 1f));
-        resetButton.GetComponentInChildren<TMP_Text>().fontSize = 28;
+        SetRect(resetButton.GetComponent<RectTransform>(), new Vector2(0, -1195), new Vector2(560, 80), new Vector2(0.5f, 1f));
+        resetButton.GetComponentInChildren<TMP_Text>().fontSize = 26;
 
         var heroHeader = CreateText("Hero Header", heroesPanel.transform, "Heroes", 42, FontStyles.Bold);
         SetRect(heroHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
@@ -242,6 +259,9 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "damageText", damage);
         SetObject(serializedController, "enemyText", enemyName);
         SetObject(serializedController, "enemyHpText", enemyHp);
+        SetObject(serializedController, "dungeonResultText", dungeonResult);
+        SetObject(serializedController, "goldDungeonText", goldDungeonText);
+        SetObject(serializedController, "essenceDungeonText", essenceDungeonText);
         SetObject(serializedController, "autoAttackText", autoAttack);
         SetObject(serializedController, "offlineRewardText", offlineReward);
         SetObject(serializedController, "upgradeCostText", upgradeButton.GetComponentInChildren<TMP_Text>());
@@ -254,6 +274,8 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "battlePassProgressText", battlePassProgress);
         SetObjectArray(serializedController, "battlePassRewardTexts", battlePassRewardTexts);
         SetObject(serializedController, "fightButton", fightButton);
+        SetObject(serializedController, "goldDungeonButton", goldDungeonButton);
+        SetObject(serializedController, "essenceDungeonButton", essenceDungeonButton);
         SetObject(serializedController, "upgradeButton", upgradeButton);
         SetObject(serializedController, "heroUpgradeButton", heroUpgradeButton);
         SetObject(serializedController, "heroAscendButton", heroAscendButton);
