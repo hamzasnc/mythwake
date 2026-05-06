@@ -85,6 +85,10 @@ public static class MythwakePrototypeBuilder
         SetRect(offlineReward.rectTransform, new Vector2(0, -440), new Vector2(860, 80), new Vector2(0.5f, 1f));
         offlineReward.color = new Color(0.82f, 0.76f, 0.52f);
 
+        var nextGoal = CreateText("Next Goal Text", homePanel.transform, "Next Goal\nPush Campaign Stage 1", 26, FontStyles.Bold);
+        SetRect(nextGoal.rectTransform, new Vector2(0, -540), new Vector2(860, 90), new Vector2(0.5f, 1f));
+        nextGoal.color = new Color(0.72f, 0.86f, 1f);
+
         var teamSlotTexts = CreateHeroSlotRow(homePanel.transform, -645, "Team Preview");
 
         var dailyHeader = CreateText("Daily Missions Header", homePanel.transform, "Daily Missions", 34, FontStyles.Bold);
@@ -266,6 +270,7 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "mythEssenceText", homeEssence);
         SetObject(serializedController, "homeStageText", homeStage);
         SetObject(serializedController, "homePowerText", homePower);
+        SetObject(serializedController, "nextGoalText", nextGoal);
         SetObjectArray(serializedController, "teamSlotTexts", teamSlotTexts);
         SetObjectArray(serializedController, "dailyMissionTexts", dailyMissionTexts);
         SetObject(serializedController, "selectedHeroText", selectedHeroText);

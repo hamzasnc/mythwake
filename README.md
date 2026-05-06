@@ -19,10 +19,13 @@ Current prototype:
 - Equipment upgrades are saved locally and add team-wide ATK and HP
 - Starter equipment balance is defined through small data structs to prepare for later server/database config
 - Hero upgrades use Myth Essence and are saved locally
+- Home screen shows a Next Goal hint for the current progression bottleneck
 - Campaign stages now use named enemy data with HP and progression-only clears
 - Campaign and dungeon scaling now create clearer upgrade walls with recommended power labels
+- Campaign milestones reward Gems and Mission Track XP every 5 stages
 - Campaign continues scaling after the starter stages
 - Gold Dungeon and Essence Dungeon are endless tower prototypes
+- Dungeon bonus floors pay extra resources every 5 floors
 - Dungeon floors scale up in enemy HP, enemy damage, and rewards
 - Campaign and dungeon fights now simulate win/loss with team HP and enemy damage
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count

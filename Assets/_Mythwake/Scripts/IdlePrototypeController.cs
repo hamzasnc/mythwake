@@ -103,6 +103,8 @@ public class IdlePrototypeController : MonoBehaviour
     private const int StarterEquipmentLevel = 1;
     private const float CampaignOverflowHpGrowth = 1.25f;
     private const float CampaignOverflowRewardGrowth = 1.14f;
+    private const int CampaignMilestoneInterval = 5;
+    private const int DungeonBonusInterval = 5;
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
     private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
@@ -180,6 +182,7 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text mythEssenceText;
     [SerializeField] private TMP_Text homeStageText;
     [SerializeField] private TMP_Text homePowerText;
+    [SerializeField] private TMP_Text nextGoalText;
     [SerializeField] private TMP_Text[] teamSlotTexts;
     [SerializeField] private TMP_Text selectedHeroText;
     [SerializeField] private TMP_Text[] heroCardTexts;
@@ -638,11 +641,13 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (result.won)
         {
+            var clearedStage = enemyLevel;
+            var milestoneText = GrantCampaignMilestoneReward(clearedStage);
             enemyLevel++;
             dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
-            SetDungeonResult($"Campaign Stage {enemyLevel - 1} cleared in {result.rounds} rounds\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}");
+            SetDungeonResult($"Campaign Stage {clearedStage} cleared in {result.rounds} rounds\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{milestoneText}");
         }
         else
         {
@@ -845,17 +850,18 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         var reward = isGoldDungeon ? GetGoldDungeonReward(floor) : GetEssenceDungeonReward(floor);
+        var bonusText = GrantDungeonBonusReward(isGoldDungeon, floor);
         if (isGoldDungeon)
         {
             gold += reward;
             goldDungeonFloor++;
-            SetDungeonResult($"Gold Dungeon Floor {floor} cleared in {result.rounds} rounds (+{reward} Gold)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}");
+            SetDungeonResult($"Gold Dungeon Floor {floor} cleared in {result.rounds} rounds (+{reward} Gold)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}");
         }
         else
         {
             mythEssence += reward;
             essenceDungeonFloor++;
-            SetDungeonResult($"Essence Dungeon Floor {floor} cleared in {result.rounds} rounds (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}");
+            SetDungeonResult($"Essence Dungeon Floor {floor} cleared in {result.rounds} rounds (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}");
         }
 
         SaveProgress();
@@ -957,6 +963,40 @@ public class IdlePrototypeController : MonoBehaviour
         return 100 + Mathf.FloorToInt(36 * Mathf.Pow(floor, 1.15f));
     }
 
+    private string GrantCampaignMilestoneReward(int clearedStage)
+    {
+        if (clearedStage <= 0 || clearedStage % CampaignMilestoneInterval != 0)
+        {
+            return string.Empty;
+        }
+
+        var rewardGems = 10 + Mathf.FloorToInt(clearedStage * 1.5f);
+        var rewardPassXp = 20;
+        gems += rewardGems;
+        battlePassXp += rewardPassXp;
+
+        return $"  Milestone +{rewardGems} Gems +{rewardPassXp} XP";
+    }
+
+    private string GrantDungeonBonusReward(bool isGoldDungeon, int clearedFloor)
+    {
+        if (clearedFloor <= 0 || clearedFloor % DungeonBonusInterval != 0)
+        {
+            return string.Empty;
+        }
+
+        if (isGoldDungeon)
+        {
+            var bonusGold = Mathf.CeilToInt(GetGoldDungeonReward(clearedFloor) * 0.75f);
+            gold += bonusGold;
+            return $"  Bonus +{bonusGold} Gold";
+        }
+
+        var bonusEssence = Mathf.CeilToInt(GetEssenceDungeonReward(clearedFloor) * 0.75f);
+        mythEssence += bonusEssence;
+        return $"  Bonus +{bonusEssence} Essence";
+    }
+
     private void SetDungeonResult(string result)
     {
         if (dungeonResultText != null)
@@ -1007,6 +1047,8 @@ public class IdlePrototypeController : MonoBehaviour
         {
             homePowerText.text = $"Team Power {GetTeamPower()}";
         }
+
+        RefreshNextGoalUi();
 
         if (damageText != null)
         {
@@ -1298,6 +1340,51 @@ public class IdlePrototypeController : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void RefreshNextGoalUi()
+    {
+        if (nextGoalText == null)
+        {
+            return;
+        }
+
+        nextGoalText.fontSize = 26;
+        nextGoalText.text = $"Next Goal\n{GetNextGoalText()}";
+    }
+
+    private string GetNextGoalText()
+    {
+        if (gems >= SummonCost)
+        {
+            return $"Summon x1 to gain shards ({gems}/{SummonCost} Gems)";
+        }
+
+        var weaponCost = GetWeaponUpgradeCost();
+        if (gold >= weaponCost)
+        {
+            return $"Upgrade Weapon for more ATK ({gold}/{weaponCost} Gold)";
+        }
+
+        var armorCost = GetArmorUpgradeCost();
+        if (gold >= armorCost)
+        {
+            return $"Upgrade Armor for more HP ({gold}/{armorCost} Gold)";
+        }
+
+        if (mythEssence >= upgradeCost)
+        {
+            return $"Level {HeroNames[selectedHeroIndex]} with Myth Essence";
+        }
+
+        if (GetTeamPower() >= GetStageRecommendedPower(enemyLevel))
+        {
+            return $"Push Campaign Stage {enemyLevel}";
+        }
+
+        var goldGap = Mathf.Max(0, Mathf.Min(weaponCost, armorCost) - gold);
+        var essenceGap = Mathf.Max(0, upgradeCost - mythEssence);
+        return $"Farm dungeons: need {goldGap} Gold or {essenceGap} Essence";
     }
 
     private void RefreshEquipmentUi()
