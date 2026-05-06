@@ -11,6 +11,7 @@ public static class MythwakePrototypeBuilder
     private static readonly Color PanelColor = new Color(0.12f, 0.16f, 0.24f, 0.95f);
     private static readonly Color ButtonColor = new Color(0.17f, 0.39f, 0.72f);
     private static readonly Color UpgradeButtonColor = new Color(0.19f, 0.5f, 0.31f);
+    private static readonly Color ResetButtonColor = new Color(0.35f, 0.17f, 0.22f);
 
     [MenuItem("Tools/Mythwake/Build Prototype UI")]
     public static void BuildPrototypeUi()
@@ -21,6 +22,12 @@ public static class MythwakePrototypeBuilder
         if (oldRoot != null)
         {
             Object.DestroyImmediate(oldRoot);
+        }
+
+        var oldController = GameObject.Find("Idle Prototype Controller");
+        if (oldController != null)
+        {
+            Object.DestroyImmediate(oldController);
         }
 
         var root = new GameObject("Prototype UI");
@@ -47,6 +54,10 @@ public static class MythwakePrototypeBuilder
         var damage = CreateText("Damage Text", root.transform, "Damage: 1", 36, FontStyles.Normal);
         SetRect(damage.rectTransform, new Vector2(0, -370), new Vector2(920, 60), new Vector2(0.5f, 1f));
 
+        var autoAttack = CreateText("Auto Attack Text", root.transform, "Auto Attack: 1.0s", 30, FontStyles.Normal);
+        SetRect(autoAttack.rectTransform, new Vector2(0, -430), new Vector2(920, 52), new Vector2(0.5f, 1f));
+        autoAttack.color = new Color(0.72f, 0.86f, 1f);
+
         var enemyPanel = CreatePanel("Enemy Panel", root.transform, PanelColor);
         SetRect(enemyPanel.rectTransform, new Vector2(0, -650), new Vector2(860, 300), new Vector2(0.5f, 1f));
 
@@ -62,8 +73,12 @@ public static class MythwakePrototypeBuilder
         var upgradeButton = CreateButton("Upgrade Button", root.transform, "Upgrade Damage (10 Gold)", UpgradeButtonColor);
         SetRect(upgradeButton.GetComponent<RectTransform>(), new Vector2(0, -1210), new Vector2(760, 135), new Vector2(0.5f, 1f));
 
-        var hint = CreateText("Hint Text", root.transform, "Tap Fight, earn Gold, then upgrade Damage.", 28, FontStyles.Normal);
-        SetRect(hint.rectTransform, new Vector2(0, -1390), new Vector2(880, 80), new Vector2(0.5f, 1f));
+        var resetButton = CreateButton("Reset Button", root.transform, "Reset Prototype", ResetButtonColor);
+        SetRect(resetButton.GetComponent<RectTransform>(), new Vector2(0, -1370), new Vector2(560, 90), new Vector2(0.5f, 1f));
+        resetButton.GetComponentInChildren<TMP_Text>().fontSize = 28;
+
+        var hint = CreateText("Hint Text", root.transform, "Fight manually or let Auto Attack earn Gold while the app is open.", 28, FontStyles.Normal);
+        SetRect(hint.rectTransform, new Vector2(0, -1510), new Vector2(880, 90), new Vector2(0.5f, 1f));
         hint.color = new Color(0.72f, 0.78f, 0.88f);
 
         var controllerObject = new GameObject("Idle Prototype Controller");
@@ -74,9 +89,11 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "damageText", damage);
         SetObject(serializedController, "enemyText", enemyName);
         SetObject(serializedController, "enemyHpText", enemyHp);
+        SetObject(serializedController, "autoAttackText", autoAttack);
         SetObject(serializedController, "upgradeCostText", upgradeButton.GetComponentInChildren<TMP_Text>());
         SetObject(serializedController, "fightButton", fightButton);
         SetObject(serializedController, "upgradeButton", upgradeButton);
+        SetObject(serializedController, "resetButton", resetButton);
         serializedController.ApplyModifiedPropertiesWithoutUndo();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
