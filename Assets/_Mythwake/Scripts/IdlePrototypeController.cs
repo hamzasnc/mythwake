@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour
 {
-    public const string PrototypeVersion = "0.2.1";
+    public const string PrototypeVersion = "0.2.2";
     public const int CurrentSaveVersion = 1;
 
     [Serializable]
@@ -282,6 +282,44 @@ public class IdlePrototypeController : MonoBehaviour
         }
     }
 
+    private struct AccessoryDefinition
+    {
+        public string accessoryId;
+        public string itemSlotId;
+        public string rarityId;
+        public int slotIndex;
+        public int rarityIndex;
+        public int levelCap;
+        public int attackPerLevel;
+        public int healthPerLevel;
+        public int dropWeight;
+        public string fuseTargetAccessoryId;
+
+        public AccessoryDefinition(
+            string accessoryId,
+            string itemSlotId,
+            string rarityId,
+            int slotIndex,
+            int rarityIndex,
+            int levelCap,
+            int attackPerLevel,
+            int healthPerLevel,
+            int dropWeight,
+            string fuseTargetAccessoryId)
+        {
+            this.accessoryId = accessoryId;
+            this.itemSlotId = itemSlotId;
+            this.rarityId = rarityId;
+            this.slotIndex = slotIndex;
+            this.rarityIndex = rarityIndex;
+            this.levelCap = levelCap;
+            this.attackPerLevel = attackPerLevel;
+            this.healthPerLevel = healthPerLevel;
+            this.dropWeight = dropWeight;
+            this.fuseTargetAccessoryId = fuseTargetAccessoryId;
+        }
+    }
+
     private struct SummonRateDefinition
     {
         public string rarityId;
@@ -475,6 +513,8 @@ public class IdlePrototypeController : MonoBehaviour
         new AccessorySlotDefinition("item_slot_gloves", "Handschuhe", 4, 2),
         new AccessorySlotDefinition("item_slot_shoes", "Schuhe", 1, 15)
     };
+
+    private static readonly AccessoryDefinition[] AccessoryDefinitions = CreateAccessoryDefinitions();
 
     private static readonly DungeonDefinition GoldDungeonDefinition = new DungeonDefinition("gold_dungeon", "Gold Dungeon", GoldCurrencyId, 220, 110f, 1.22f, 24, 10f, 1.15f, 125, 54f, 1.2f, 80, 30f, 1.15f);
     private static readonly DungeonDefinition EssenceDungeonDefinition = new DungeonDefinition("essence_dungeon", "Essence Dungeon", MythEssenceCurrencyId, 220, 110f, 1.22f, 24, 10f, 1.15f, 125, 54f, 1.2f, 100, 36f, 1.15f);
@@ -967,12 +1007,11 @@ public class IdlePrototypeController : MonoBehaviour
             return;
         }
 
-        var slot = UnityEngine.Random.Range(0, AccessorySlotCount);
-        var rarity = RollAccessoryRarity(floor);
-        AddAccessoryInventory(slot, rarity, 1);
+        var accessory = RollAccessoryDrop(floor);
+        AddAccessoryInventory(accessory.slotIndex, accessory.rarityIndex, 1);
         gearDungeonFloor++;
 
-        SetDungeonResult($"Gear Dungeon Floor {floor} cleared in {result.rounds} rounds\nDrop: {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}");
+        SetDungeonResult($"Gear Dungeon Floor {floor} cleared in {result.rounds} rounds\nDrop: {GetAccessoryRarityName(accessory.rarityIndex)} {AccessorySlots[accessory.slotIndex].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}");
         SaveProgress();
         RefreshUi();
     }
@@ -1153,16 +1192,18 @@ public class IdlePrototypeController : MonoBehaviour
         EnsureAccessories();
         var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+        var accessory = GetAccessoryDefinition(slot, rarity);
 
-        if (rarity >= AccessoryRarityCount - 1 || GetAccessoryInventoryCount(slot, rarity) < AccessoryFuseCost)
+        if (string.IsNullOrEmpty(accessory.fuseTargetAccessoryId) || GetAccessoryInventoryCount(slot, rarity) < AccessoryFuseCost)
         {
             RefreshUi();
             return;
         }
 
+        var fuseTarget = GetAccessoryDefinitionById(accessory.fuseTargetAccessoryId);
         AddAccessoryInventory(slot, rarity, -AccessoryFuseCost);
-        AddAccessoryInventory(slot, rarity + 1, 1);
-        selectedAccessoryRarity = rarity + 1;
+        AddAccessoryInventory(fuseTarget.slotIndex, fuseTarget.rarityIndex, 1);
+        selectedAccessoryRarity = fuseTarget.rarityIndex;
 
         SaveProgress();
         RefreshUi();
@@ -1601,6 +1642,36 @@ public class IdlePrototypeController : MonoBehaviour
     private int GetGearDungeonRecommendedPower(int floor)
     {
         return GetDungeonRecommendedPower(GearDungeonDefinition, floor);
+    }
+
+    private AccessoryDefinition RollAccessoryDrop(int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        var totalWeight = 0;
+
+        for (var i = 0; i < AccessoryDefinitions.Length; i++)
+        {
+            totalWeight += GetAccessoryDropWeight(AccessoryDefinitions[i], floor);
+        }
+
+        if (totalWeight <= 0)
+        {
+            return AccessoryDefinitions[0];
+        }
+
+        var roll = UnityEngine.Random.Range(0, totalWeight);
+        var cumulativeWeight = 0;
+
+        for (var i = 0; i < AccessoryDefinitions.Length; i++)
+        {
+            cumulativeWeight += GetAccessoryDropWeight(AccessoryDefinitions[i], floor);
+            if (roll < cumulativeWeight)
+            {
+                return AccessoryDefinitions[i];
+            }
+        }
+
+        return AccessoryDefinitions[AccessoryDefinitions.Length - 1];
     }
 
     private void RunDungeon(bool isGoldDungeon)
@@ -2240,7 +2311,10 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (accessoryFuseText != null)
         {
-            var nextTier = rarity >= AccessoryRarityCount - 1 ? "Max" : GetAccessoryRarityName(rarity + 1);
+            var accessory = GetAccessoryDefinition(slot, rarity);
+            var nextTier = string.IsNullOrEmpty(accessory.fuseTargetAccessoryId)
+                ? "Max"
+                : GetAccessoryRarityName(GetAccessoryDefinitionById(accessory.fuseTargetAccessoryId).rarityIndex);
             accessoryFuseText.text = $"Fuse {AccessoryFuseCost}x {GetAccessoryRarityName(rarity)}\nInto {nextTier}";
         }
     }
@@ -2265,7 +2339,8 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (accessoryFuseButton != null)
         {
-            accessoryFuseButton.interactable = rarity < AccessoryRarityCount - 1 && GetAccessoryInventoryCount(slot, rarity) >= AccessoryFuseCost;
+            var accessory = GetAccessoryDefinition(slot, rarity);
+            accessoryFuseButton.interactable = !string.IsNullOrEmpty(accessory.fuseTargetAccessoryId) && GetAccessoryInventoryCount(slot, rarity) >= AccessoryFuseCost;
         }
     }
 
@@ -2548,9 +2623,107 @@ public class IdlePrototypeController : MonoBehaviour
         return AccessoryRarities[rarity];
     }
 
+    private static AccessoryDefinition GetAccessoryDefinition(int slot, int rarity)
+    {
+        return AccessoryDefinitions[GetAccessoryDefinitionIndex(slot, rarity)];
+    }
+
+    private static AccessoryDefinition GetAccessoryDefinitionById(string accessoryId)
+    {
+        for (var i = 0; i < AccessoryDefinitions.Length; i++)
+        {
+            if (AccessoryDefinitions[i].accessoryId == accessoryId)
+            {
+                return AccessoryDefinitions[i];
+            }
+        }
+
+        return AccessoryDefinitions[0];
+    }
+
+    private static int GetAccessoryDefinitionIndex(int slot, int rarity)
+    {
+        slot = Mathf.Clamp(slot, 0, AccessorySlotCount - 1);
+        rarity = Mathf.Clamp(rarity, 0, AccessoryRarityCount - 1);
+        return (slot * AccessoryRarityCount) + rarity;
+    }
+
     private static string GetAccessoryRarityName(int rarity)
     {
         return GetAccessoryRarityDefinition(rarity).displayName;
+    }
+
+    private static AccessoryDefinition[] CreateAccessoryDefinitions()
+    {
+        var definitions = new AccessoryDefinition[AccessorySlotCount * AccessoryRarityCount];
+
+        for (var slot = 0; slot < AccessorySlotCount; slot++)
+        {
+            for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
+            {
+                var slotDefinition = AccessorySlots[slot];
+                var rarityDefinition = AccessoryRarities[rarity];
+                var fuseTargetAccessoryId = rarity >= AccessoryRarityCount - 1
+                    ? string.Empty
+                    : CreateAccessoryId(slotDefinition, AccessoryRarities[rarity + 1]);
+
+                definitions[GetAccessoryDefinitionIndex(slot, rarity)] = new AccessoryDefinition(
+                    CreateAccessoryId(slotDefinition, rarityDefinition),
+                    slotDefinition.itemSlotId,
+                    rarityDefinition.rarityId,
+                    slot,
+                    rarity,
+                    rarityDefinition.maxLevel,
+                    slotDefinition.attackPerLevel * rarityDefinition.statMultiplier,
+                    slotDefinition.healthPerLevel * rarityDefinition.statMultiplier,
+                    GetAccessoryBaseDropWeight(rarity),
+                    fuseTargetAccessoryId);
+            }
+        }
+
+        return definitions;
+    }
+
+    private static string CreateAccessoryId(AccessorySlotDefinition slot, AccessoryRarityDefinition rarity)
+    {
+        return $"{slot.itemSlotId.Replace("item_slot_", "accessory_")}_{rarity.displayName.ToLowerInvariant()}";
+    }
+
+    private static int GetAccessoryBaseDropWeight(int rarity)
+    {
+        switch (Mathf.Clamp(rarity, 0, AccessoryRarityCount - 1))
+        {
+            case 0:
+                return 440;
+            case 1:
+                return 330;
+            case 2:
+                return 155;
+            case 3:
+                return 70;
+            default:
+                return 5;
+        }
+    }
+
+    private static int GetAccessoryDropWeight(AccessoryDefinition definition, int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        var tier = Mathf.Clamp(definition.rarityIndex, 0, AccessoryRarityCount - 1);
+
+        switch (tier)
+        {
+            case 0:
+                return Mathf.Max(80, definition.dropWeight - Mathf.Min(240, floor * 8));
+            case 1:
+                return definition.dropWeight + Mathf.Min(80, floor * 2);
+            case 2:
+                return definition.dropWeight + Mathf.Min(110, floor * 3);
+            case 3:
+                return definition.dropWeight + Mathf.Min(120, floor * 4);
+            default:
+                return definition.dropWeight + Mathf.Min(45, floor);
+        }
     }
 
     private static string GetHeroRarityName(string rarityId)
@@ -2738,8 +2911,8 @@ public class IdlePrototypeController : MonoBehaviour
             return 0;
         }
 
-        var rarityDefinition = GetAccessoryRarityDefinition(rarity);
-        return AccessorySlots[slot].attackPerLevel * level * rarityDefinition.statMultiplier;
+        var definition = GetAccessoryDefinition(slot, rarity);
+        return definition.attackPerLevel * level;
     }
 
     private int GetAccessoryHealthFor(int slot, int rarity, int level)
@@ -2749,13 +2922,13 @@ public class IdlePrototypeController : MonoBehaviour
             return 0;
         }
 
-        var rarityDefinition = GetAccessoryRarityDefinition(rarity);
-        return AccessorySlots[slot].healthPerLevel * level * rarityDefinition.statMultiplier;
+        var definition = GetAccessoryDefinition(slot, rarity);
+        return definition.healthPerLevel * level;
     }
 
     private int GetAccessoryMaxLevel(int rarity)
     {
-        return GetAccessoryRarityDefinition(rarity).maxLevel;
+        return GetAccessoryDefinition(0, rarity).levelCap;
     }
 
     private int GetAccessoryLevelCost(int slot)
@@ -2776,7 +2949,7 @@ public class IdlePrototypeController : MonoBehaviour
     {
         slot = Mathf.Clamp(slot, 0, AccessorySlotCount - 1);
         rarity = Mathf.Clamp(rarity, 0, AccessoryRarityCount - 1);
-        return (slot * AccessoryRarityCount) + rarity;
+        return GetAccessoryDefinitionIndex(slot, rarity);
     }
 
     private int GetAccessoryInventoryCount(int slot, int rarity)
@@ -2790,38 +2963,6 @@ public class IdlePrototypeController : MonoBehaviour
         EnsureAccessories();
         var index = GetAccessoryInventoryIndex(slot, rarity);
         accessoryInventory[index] = Mathf.Max(0, accessoryInventory[index] + amount);
-    }
-
-    private int RollAccessoryRarity(int floor)
-    {
-        floor = Mathf.Max(1, floor);
-        var roll = UnityEngine.Random.Range(0, 1000);
-        var r4Threshold = Mathf.Min(45, Mathf.FloorToInt(floor * 1.1f));
-        var r3Threshold = 75 + Mathf.Min(120, Mathf.FloorToInt(floor * 2.5f));
-        var r2Threshold = 230 + Mathf.Min(160, Mathf.FloorToInt(floor * 3.2f));
-        var r1Threshold = 560 + Mathf.Min(120, Mathf.FloorToInt(floor * 2.2f));
-
-        if (roll < r4Threshold)
-        {
-            return 4;
-        }
-
-        if (roll < r3Threshold)
-        {
-            return 3;
-        }
-
-        if (roll < r2Threshold)
-        {
-            return 2;
-        }
-
-        if (roll < r1Threshold)
-        {
-            return 1;
-        }
-
-        return 0;
     }
 
     private int GetEquipmentBonus(EquipmentTrackDefinition track, int level)

@@ -68,6 +68,7 @@ Gear:
 - Accessory rarities: R0-R4
 - R0 max level 20
 - Each rarity adds +10 max levels
+- Slot/rarity accessory pairs have item-like definition rows with stable IDs, level caps, stat scaling, drop weights, and fuse targets
 - Accessories can be equipped and leveled
 - Gear Dungeon drops random accessory copies
 - 3 copies of the same slot and rarity fuse into the next rarity
@@ -161,6 +162,11 @@ Done when:
 
 Goal:
 Prepare the accessory system for real inventory later.
+
+Progress:
+- Added item-like `AccessoryDefinition` rows for every current slot/rarity pair while keeping the current copy-count inventory.
+- Accessory definitions now carry slot, rarity, level cap, attack scaling, health scaling, drop weight, and fuse target data.
+- Gear Dungeon drops, accessory stat calculation, inventory indexing, and fusion now route through accessory definitions.
 
 Current state:
 - Accessories are stored as copy counts per slot and rarity.
