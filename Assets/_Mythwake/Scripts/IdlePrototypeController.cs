@@ -51,6 +51,8 @@ public class IdlePrototypeController : MonoBehaviour
     private const string UpgradeCostKey = "Mythwake.Prototype.UpgradeCost";
     private const string GoldDungeonFloorKey = "Mythwake.Prototype.Dungeon.GoldFloor";
     private const string EssenceDungeonFloorKey = "Mythwake.Prototype.Dungeon.EssenceFloor";
+    private const string WeaponLevelKey = "Mythwake.Prototype.Equipment.WeaponLevel";
+    private const string ArmorLevelKey = "Mythwake.Prototype.Equipment.ArmorLevel";
     private const string LastSeenUtcKey = "Mythwake.Prototype.LastSeenUtc";
     private const string SelectedHeroKey = "Mythwake.Prototype.SelectedHero";
     private const string HeroLevelKeyPrefix = "Mythwake.Prototype.HeroLevel.";
@@ -78,6 +80,7 @@ public class IdlePrototypeController : MonoBehaviour
     private const float TankDamageReductionRate = 0.18f;
     private const float SupportHealRate = 0.04f;
     private const float RangerExecuteThresholdRate = 0.12f;
+    private const int StarterEquipmentLevel = 1;
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
     private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
@@ -110,6 +113,8 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private int upgradeCost = 10;
     [SerializeField] private int goldDungeonFloor = 1;
     [SerializeField] private int essenceDungeonFloor = 1;
+    [SerializeField] private int weaponLevel = StarterEquipmentLevel;
+    [SerializeField] private int armorLevel = StarterEquipmentLevel;
     [SerializeField] private int selectedHeroIndex;
     [SerializeField] private int[] heroLevels = new int[HeroCount];
     [SerializeField] private int[] heroShards = new int[HeroCount];
@@ -165,6 +170,9 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private TMP_Text heroUpgradeCostText;
     [SerializeField] private TMP_Text heroAscendCostText;
+    [SerializeField] private TMP_Text equipmentSummaryText;
+    [SerializeField] private TMP_Text weaponUpgradeCostText;
+    [SerializeField] private TMP_Text armorUpgradeCostText;
     [SerializeField] private TMP_Text summonCostText;
     [SerializeField] private TMP_Text summonResultText;
     [SerializeField] private TMP_Text summonRatesText;
@@ -178,6 +186,8 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Button heroUpgradeButton;
     [SerializeField] private Button heroAscendButton;
+    [SerializeField] private Button weaponUpgradeButton;
+    [SerializeField] private Button armorUpgradeButton;
     [SerializeField] private Button summonButton;
     [SerializeField] private Button resetButton;
     [SerializeField] private Button[] heroSelectButtons;
@@ -240,6 +250,16 @@ public class IdlePrototypeController : MonoBehaviour
         if (heroAscendButton != null)
         {
             heroAscendButton.onClick.AddListener(AscendSelectedHero);
+        }
+
+        if (weaponUpgradeButton != null)
+        {
+            weaponUpgradeButton.onClick.AddListener(UpgradeWeapon);
+        }
+
+        if (armorUpgradeButton != null)
+        {
+            armorUpgradeButton.onClick.AddListener(UpgradeArmor);
         }
 
         if (summonButton != null)
@@ -305,6 +325,16 @@ public class IdlePrototypeController : MonoBehaviour
         if (heroAscendButton != null)
         {
             heroAscendButton.onClick.RemoveListener(AscendSelectedHero);
+        }
+
+        if (weaponUpgradeButton != null)
+        {
+            weaponUpgradeButton.onClick.RemoveListener(UpgradeWeapon);
+        }
+
+        if (armorUpgradeButton != null)
+        {
+            armorUpgradeButton.onClick.RemoveListener(UpgradeArmor);
         }
 
         if (summonButton != null)
@@ -404,6 +434,43 @@ public class IdlePrototypeController : MonoBehaviour
         RefreshUi();
     }
 
+    public void UpgradeWeapon()
+    {
+        weaponLevel = Mathf.Max(StarterEquipmentLevel, weaponLevel);
+        var cost = GetWeaponUpgradeCost();
+
+        if (gold < cost)
+        {
+            RefreshUi();
+            return;
+        }
+
+        gold -= cost;
+        weaponLevel++;
+        damage = GetTeamDamage();
+
+        SaveProgress();
+        RefreshUi();
+    }
+
+    public void UpgradeArmor()
+    {
+        armorLevel = Mathf.Max(StarterEquipmentLevel, armorLevel);
+        var cost = GetArmorUpgradeCost();
+
+        if (gold < cost)
+        {
+            RefreshUi();
+            return;
+        }
+
+        gold -= cost;
+        armorLevel++;
+
+        SaveProgress();
+        RefreshUi();
+    }
+
     public void SummonOnce()
     {
         if (gems < SummonCost)
@@ -479,6 +546,8 @@ public class IdlePrototypeController : MonoBehaviour
         enemyLevel = 1;
         goldDungeonFloor = 1;
         essenceDungeonFloor = 1;
+        weaponLevel = StarterEquipmentLevel;
+        armorLevel = StarterEquipmentLevel;
         enemyMaxHp = GetStageMaxHp(enemyLevel);
         enemyHp = enemyMaxHp;
         selectedHeroIndex = 0;
@@ -583,6 +652,8 @@ public class IdlePrototypeController : MonoBehaviour
 
         goldDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(GoldDungeonFloorKey, goldDungeonFloor));
         essenceDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(EssenceDungeonFloorKey, essenceDungeonFloor));
+        weaponLevel = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt(WeaponLevelKey, weaponLevel));
+        armorLevel = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt(ArmorLevelKey, armorLevel));
         enemyLevel = Mathf.Max(1, PlayerPrefs.GetInt(EnemyLevelKey, enemyLevel));
         enemyMaxHp = Mathf.Max(GetStageMaxHp(enemyLevel), PlayerPrefs.GetInt(EnemyMaxHpKey, enemyMaxHp));
         enemyHp = Mathf.Clamp(PlayerPrefs.GetInt(EnemyHpKey, enemyHp), 1, enemyMaxHp);
@@ -612,6 +683,8 @@ public class IdlePrototypeController : MonoBehaviour
         PlayerPrefs.SetInt(DamageKey, damage);
         PlayerPrefs.SetInt(GoldDungeonFloorKey, goldDungeonFloor);
         PlayerPrefs.SetInt(EssenceDungeonFloorKey, essenceDungeonFloor);
+        PlayerPrefs.SetInt(WeaponLevelKey, weaponLevel);
+        PlayerPrefs.SetInt(ArmorLevelKey, armorLevel);
         PlayerPrefs.SetInt(EnemyLevelKey, enemyLevel);
         PlayerPrefs.SetInt(EnemyHpKey, enemyHp);
         PlayerPrefs.SetInt(EnemyMaxHpKey, enemyMaxHp);
@@ -921,6 +994,7 @@ public class IdlePrototypeController : MonoBehaviour
         RefreshAutoAttackUi();
         RefreshOfflineRewardUi();
         RefreshHeroUi();
+        RefreshEquipmentUi();
         RefreshSummonUi();
         RefreshDailyMissionUi();
         RefreshBattlePassUi();
@@ -953,6 +1027,16 @@ public class IdlePrototypeController : MonoBehaviour
         if (heroAscendButton != null)
         {
             heroAscendButton.interactable = heroShards[selectedHeroIndex] >= GetHeroAscensionCost(selectedHeroIndex);
+        }
+
+        if (weaponUpgradeButton != null)
+        {
+            weaponUpgradeButton.interactable = gold >= GetWeaponUpgradeCost();
+        }
+
+        if (armorUpgradeButton != null)
+        {
+            armorUpgradeButton.interactable = gold >= GetArmorUpgradeCost();
         }
 
         if (summonButton != null)
@@ -1180,6 +1264,27 @@ public class IdlePrototypeController : MonoBehaviour
         }
     }
 
+    private void RefreshEquipmentUi()
+    {
+        weaponLevel = Mathf.Max(StarterEquipmentLevel, weaponLevel);
+        armorLevel = Mathf.Max(StarterEquipmentLevel, armorLevel);
+
+        if (equipmentSummaryText != null)
+        {
+            equipmentSummaryText.text = $"Equipment\nWeapon Lv. {weaponLevel}  +{GetEquipmentAttackBonus()} ATK\nArmor Lv. {armorLevel}  +{GetEquipmentHealthBonus()} HP";
+        }
+
+        if (weaponUpgradeCostText != null)
+        {
+            weaponUpgradeCostText.text = $"Weapon +1\n{GetWeaponUpgradeCost()} Gold";
+        }
+
+        if (armorUpgradeCostText != null)
+        {
+            armorUpgradeCostText.text = $"Armor +1\n{GetArmorUpgradeCost()} Gold";
+        }
+    }
+
     private void EnsureHeroLevels()
     {
         if (heroLevels == null || heroLevels.Length != HeroCount)
@@ -1371,7 +1476,7 @@ public class IdlePrototypeController : MonoBehaviour
             power += GetHeroPower(i);
         }
 
-        return power;
+        return power + GetEquipmentPower();
     }
 
     private int GetTeamDamage()
@@ -1380,7 +1485,7 @@ public class IdlePrototypeController : MonoBehaviour
             + (CountHeroesWithRole("Warrior") * WarriorDamageBonusRate)
             + (CountHeroesWithRole("Mage") * MageDamageBonusRate);
 
-        return Mathf.Max(1, Mathf.FloorToInt(GetTeamBaseAttack() * multiplier));
+        return Mathf.Max(1, Mathf.FloorToInt((GetTeamBaseAttack() + GetEquipmentAttackBonus()) * multiplier));
     }
 
     private int GetTeamHealth()
@@ -1392,7 +1497,7 @@ public class IdlePrototypeController : MonoBehaviour
             health += GetHeroHealth(i);
         }
 
-        return Mathf.Max(1, health);
+        return Mathf.Max(1, health + GetEquipmentHealthBonus());
     }
 
     private int GetTeamBaseAttack()
@@ -1410,6 +1515,23 @@ public class IdlePrototypeController : MonoBehaviour
     private int GetHeroPower(int index)
     {
         return GetHeroAttack(index) + Mathf.FloorToInt(GetHeroHealth(index) / 8f);
+    }
+
+    private int GetEquipmentPower()
+    {
+        return GetEquipmentAttackBonus() + Mathf.FloorToInt(GetEquipmentHealthBonus() / 8f);
+    }
+
+    private int GetEquipmentAttackBonus()
+    {
+        var level = Mathf.Max(StarterEquipmentLevel, weaponLevel);
+        return 8 + ((level - 1) * 7);
+    }
+
+    private int GetEquipmentHealthBonus()
+    {
+        var level = Mathf.Max(StarterEquipmentLevel, armorLevel);
+        return 90 + ((level - 1) * 55);
     }
 
     private int GetHeroAttack(int index)
@@ -1461,6 +1583,18 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         return baseCost + (heroAscensions[index] * 15);
+    }
+
+    private int GetWeaponUpgradeCost()
+    {
+        var level = Mathf.Max(StarterEquipmentLevel, weaponLevel);
+        return Mathf.CeilToInt(60 * Mathf.Pow(1.36f, level - 1));
+    }
+
+    private int GetArmorUpgradeCost()
+    {
+        var level = Mathf.Max(StarterEquipmentLevel, armorLevel);
+        return Mathf.CeilToInt(55 * Mathf.Pow(1.34f, level - 1));
     }
 
     private int GetHeroAscensionAttack(int index)

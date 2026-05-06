@@ -163,12 +163,26 @@ public static class MythwakePrototypeBuilder
         var heroAscendButton = CreateButton("Hero Ascend Button", heroesPanel.transform, "Ascend Astra (20 Shards)", ButtonColor);
         SetRect(heroAscendButton.GetComponent<RectTransform>(), new Vector2(0, -475), new Vector2(760, 100), new Vector2(0.5f, 1f));
 
+        var equipmentPanel = CreatePanel("Equipment Panel", heroesPanel.transform, PanelColor);
+        SetRect(equipmentPanel.rectTransform, new Vector2(0, -655), new Vector2(860, 230), new Vector2(0.5f, 1f));
+
+        var equipmentSummary = CreateText("Equipment Summary Text", equipmentPanel.transform, "Equipment\nWeapon Lv. 1  +8 ATK\nArmor Lv. 1  +90 HP", 28, FontStyles.Bold);
+        SetRect(equipmentSummary.rectTransform, new Vector2(0, -68), new Vector2(780, 105), new Vector2(0.5f, 1f));
+
+        var weaponUpgradeButton = CreateButton("Weapon Upgrade Button", equipmentPanel.transform, "Weapon +1\n60 Gold", UpgradeButtonColor);
+        SetRect(weaponUpgradeButton.GetComponent<RectTransform>(), new Vector2(-210, -165), new Vector2(360, 78), new Vector2(0.5f, 1f));
+        weaponUpgradeButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
+
+        var armorUpgradeButton = CreateButton("Armor Upgrade Button", equipmentPanel.transform, "Armor +1\n55 Gold", UpgradeButtonColor);
+        SetRect(armorUpgradeButton.GetComponent<RectTransform>(), new Vector2(210, -165), new Vector2(360, 78), new Vector2(0.5f, 1f));
+        armorUpgradeButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
+
         var heroCardTexts = new TMP_Text[5];
         var heroButtons = new Button[5];
         for (var i = 0; i < heroButtons.Length; i++)
         {
             heroButtons[i] = CreateButton($"Hero Card Button {i + 1}", heroesPanel.transform, "Hero", new Color(0.1f, 0.13f, 0.2f, 0.95f));
-            SetRect(heroButtons[i].GetComponent<RectTransform>(), new Vector2(0, -625 - (i * 120)), new Vector2(860, 100), new Vector2(0.5f, 1f));
+            SetRect(heroButtons[i].GetComponent<RectTransform>(), new Vector2(0, -825 - (i * 112)), new Vector2(860, 92), new Vector2(0.5f, 1f));
 
             heroCardTexts[i] = heroButtons[i].GetComponentInChildren<TMP_Text>();
             heroCardTexts[i].fontSize = 24;
@@ -267,6 +281,9 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "upgradeCostText", upgradeButton.GetComponentInChildren<TMP_Text>());
         SetObject(serializedController, "heroUpgradeCostText", heroUpgradeButton.GetComponentInChildren<TMP_Text>());
         SetObject(serializedController, "heroAscendCostText", heroAscendButton.GetComponentInChildren<TMP_Text>());
+        SetObject(serializedController, "equipmentSummaryText", equipmentSummary);
+        SetObject(serializedController, "weaponUpgradeCostText", weaponUpgradeButton.GetComponentInChildren<TMP_Text>());
+        SetObject(serializedController, "armorUpgradeCostText", armorUpgradeButton.GetComponentInChildren<TMP_Text>());
         SetObject(serializedController, "summonCostText", summonCost);
         SetObject(serializedController, "summonResultText", summonResult);
         SetObject(serializedController, "summonRatesText", summonRates);
@@ -279,6 +296,8 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "upgradeButton", upgradeButton);
         SetObject(serializedController, "heroUpgradeButton", heroUpgradeButton);
         SetObject(serializedController, "heroAscendButton", heroAscendButton);
+        SetObject(serializedController, "weaponUpgradeButton", weaponUpgradeButton);
+        SetObject(serializedController, "armorUpgradeButton", armorUpgradeButton);
         SetObject(serializedController, "summonButton", summonButton);
         SetObject(serializedController, "resetButton", resetButton);
         SetObjectArray(serializedController, "heroSelectButtons", heroButtons);

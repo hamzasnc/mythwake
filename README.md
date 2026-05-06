@@ -15,6 +15,8 @@ Current prototype:
 - Team Attack and Team HP are summed from the active hero roster
 - Starter roles now affect combat: Warrior and Mage add damage, Tank reduces incoming damage, Support heals, Ranger executes weak enemies
 - Gold, Gems, Myth Essence, Pass XP, and Hero Shards are separated
+- Gold can be spent on starter Weapon and Armor equipment upgrades
+- Equipment upgrades are saved locally and add team-wide ATK and HP
 - Hero upgrades use Myth Essence and are saved locally
 - Campaign stages now use named enemy data with HP and progression-only clears
 - Campaign continues scaling after the starter stages
