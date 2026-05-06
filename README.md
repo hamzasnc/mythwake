@@ -62,9 +62,13 @@ Backend:
 - `GET /health`
 - `GET /player/state` dev response using the same player-state shape as the Unity service contract
 - In-memory pre-PostgreSQL action endpoints for auth, campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
-- PostgreSQL and Redis are planned but not connected yet
+- Optional PostgreSQL connection using `MYTHWAKE_DATABASE_URL`
+- Embedded PostgreSQL migrations for first core tables and definition seeds
+- First PostgreSQL player state snapshot store for the dev player
+- Redis is planned but not connected yet
 
 Changelog:
+- Backend 0.2.1: Added PostgreSQL connection, migrations, definition seed tables, Docker Compose Postgres, and player state snapshot persistence.
 - Backend 0.2.0: Added in-memory action endpoints up to the PostgreSQL boundary.
 - Backend 0.1.1: Added shared API response types and a dev `GET /player/state` endpoint.
 - Backend 0.1.0: Added the first Go API skeleton with config, health endpoint, and graceful shutdown.

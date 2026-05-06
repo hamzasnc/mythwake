@@ -51,6 +51,7 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 	writeJSON(response, http.StatusOK, map[string]string{
 		"service":     router.config.ServiceName,
 		"status":      "ok",
+		"database":    router.config.DatabaseStatus,
 		"environment": router.config.Environment,
 		"version":     router.config.Version,
 		"time_utc":    time.Now().UTC().Format(time.RFC3339),

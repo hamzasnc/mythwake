@@ -11,14 +11,37 @@ import (
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/config"
+	"github.com/hamzasnc/mythwake/backend/internal/database"
 	apihttp "github.com/hamzasnc/mythwake/backend/internal/http"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
+	"github.com/hamzasnc/mythwake/backend/internal/store/postgres"
 )
 
 func main() {
 	cfg := config.Load()
 	logger := log.New(os.Stdout, "mythwake-api ", log.LstdFlags|log.LUTC)
 	playerService := player.NewService()
+
+	if cfg.DatabaseURL != "" {
+		setupContext, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		db, err := database.Open(setupContext, cfg.DatabaseURL)
+		if err != nil {
+			cancel()
+			logger.Fatalf("database connection failed: %v", err)
+		}
+		defer db.Close()
+
+		if err := database.Migrate(setupContext, db); err != nil {
+			cancel()
+			logger.Fatalf("database migration failed: %v", err)
+		}
+		if err := playerService.UseStateStore(setupContext, postgres.NewPlayerStateStore(db)); err != nil {
+			cancel()
+			logger.Fatalf("player state store failed: %v", err)
+		}
+		cancel()
+		cfg.DatabaseStatus = "connected"
+	}
 
 	server := &http.Server{
 		Addr:              cfg.Addr,

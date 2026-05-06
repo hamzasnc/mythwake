@@ -9,19 +9,32 @@ Current scope:
 - Dev player state endpoint
 - In-memory guest auth
 - In-memory action endpoints for campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
+- Optional PostgreSQL connection via `MYTHWAKE_DATABASE_URL`
+- Embedded SQL migrations
+- First PostgreSQL player state snapshot store
+- Seeded definition tables for currencies, dungeons, accessory slots, accessory rarities, and accessories
 - Graceful shutdown
 
 Not included yet:
-- PostgreSQL connection
 - Redis connection
 - Real auth/session persistence
-- Player state persistence
-- Production balance definitions
+- Full normalized player state persistence
+- Production-ready balance tooling/admin flow
 
-Run later with Go installed:
+Run local API without PostgreSQL:
 
 ```powershell
 cd backend
+go run ./cmd/api
+```
+
+Run local API with PostgreSQL:
+
+```powershell
+cd ..
+docker compose up -d postgres
+cd backend
+$env:MYTHWAKE_DATABASE_URL='postgres://mythwake:mythwake@localhost:5432/mythwake?sslmode=disable'
 go run ./cmd/api
 ```
 
@@ -32,6 +45,12 @@ Optional environment variables:
 - `MYTHWAKE_API_ADDR`
 - `MYTHWAKE_ENV`
 - `MYTHWAKE_API_VERSION`
+- `MYTHWAKE_DATABASE_URL`
+
+Database behavior:
+- If `MYTHWAKE_DATABASE_URL` is empty, the API uses the current in-memory dev state.
+- If `MYTHWAKE_DATABASE_URL` is set, startup connects to PostgreSQL, runs embedded migrations, and stores the dev player state snapshot.
+- `GET /health` reports `database: disabled` or `database: connected`.
 
 Endpoints:
 - `POST /auth/guest`

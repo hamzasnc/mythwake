@@ -290,7 +290,13 @@ Current backend state:
 - Added in-memory action endpoints for campaign, dungeons, heroes, equipment, accessories, summons, missions, and Mission Track.
 - Added HTTP route tests for health, guest auth, campaign fight, and accessory request validation.
 - Added graceful shutdown.
-- PostgreSQL and Redis are not connected yet.
+- Added local Docker Compose service for PostgreSQL.
+- Added optional PostgreSQL connection through `MYTHWAKE_DATABASE_URL`.
+- Added embedded SQL migrations.
+- Added first core PostgreSQL tables for players, player state snapshots, economy transactions, currencies, dungeons, accessory slots, accessory rarities, and accessory definitions.
+- Seeded the current currency, dungeon, accessory slot, rarity, and accessory definition IDs.
+- Added first PostgreSQL player state snapshot store for the dev player.
+- Redis is not connected yet.
 
 Recommended Go shape:
 - `cmd/api`
@@ -446,6 +452,36 @@ Backend migration:
 - For public builds, new accounts should start server-authoritative.
 - Do not allow arbitrary local save import in production.
 
+## PostgreSQL Batch State
+
+Goal:
+Create the durable database foundation before moving individual economy actions server-side.
+
+Progress:
+- Added `docker-compose.yml` with local PostgreSQL.
+- Added `backend/internal/database` with PostgreSQL open/ping and embedded migration runner.
+- Added migration `0001_core.sql`.
+- Added definition seed tables for current currencies, dungeons, accessory slots, accessory rarities, and accessory definitions.
+- Added `player_state_snapshots` as a pragmatic first persistence layer for the current prototype state.
+- Added `backend/internal/store/postgres` with a player state store.
+- Server startup now connects, migrates, and wires persistence when `MYTHWAKE_DATABASE_URL` is set.
+- Existing backend tests still run without a database.
+
+Next useful step:
+- Replace the snapshot store piece by piece with normalized player tables:
+  - currencies
+  - dungeon progress
+  - heroes
+  - hero shards
+  - accessories
+  - reward claims
+- Add Redis after the first PostgreSQL path is stable.
+
+Done when:
+- A local Postgres-backed API can restart without losing player state.
+- Definition rows exist in SQL with stable IDs.
+- The next Redis/session batch can start without touching core persistence setup.
+
 ## Useful Next Batches
 
 Recommended order:
@@ -455,8 +491,8 @@ Recommended order:
 3. Clean local save into versioned state.
 4. Tune first 30-60 minutes.
 5. Add local service layer.
-6. Start Go backend skeleton. (done up to PostgreSQL boundary)
-7. Add PostgreSQL definitions and player state tables.
+6. Start Go backend skeleton. (done)
+7. Add PostgreSQL definitions and player state tables. (first pass done)
 8. Add Redis for sessions/rate limits.
 9. Move economy actions server-side one by one.
 10. Prepare for real assets and better UI.

@@ -1,6 +1,7 @@
 package player
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -9,14 +10,22 @@ import (
 )
 
 const (
+	defaultPlayerID  = "dev-player-1"
 	goldDungeonID    = "gold_dungeon"
 	essenceDungeonID = "essence_dungeon"
 	gearDungeonID    = "gear_dungeon"
 	heroBannerID     = "hero_shard_standard"
 )
 
+type StateStore interface {
+	LoadState(ctx context.Context, playerID string) (api.PlayerState, bool, error)
+	SaveState(ctx context.Context, playerID string, state api.PlayerState) error
+}
+
 type Service struct {
 	mu                 sync.Mutex
+	playerID           string
+	stateStore         StateStore
 	state              api.PlayerState
 	heroLevels         map[string]int
 	heroShards         map[string]int
@@ -30,6 +39,7 @@ type Service struct {
 
 func NewService() *Service {
 	return &Service{
+		playerID: defaultPlayerID,
 		state: api.PlayerState{
 			SaveVersion:         1,
 			Gold:                0,
@@ -62,12 +72,29 @@ func NewService() *Service {
 	}
 }
 
+func (service *Service) UseStateStore(ctx context.Context, store StateStore) error {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	service.stateStore = store
+	state, found, err := store.LoadState(ctx, service.playerID)
+	if err != nil {
+		return err
+	}
+	if found {
+		service.state = state
+		return nil
+	}
+
+	return store.SaveState(ctx, service.playerID, service.state)
+}
+
 func (service *Service) GuestAuth() api.GuestAuthResponse {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
 	return api.GuestAuthResponse{
-		PlayerID:     "dev-player-1",
+		PlayerID:     service.playerID,
 		SessionToken: "dev-session-token",
 		PlayerState:  service.state,
 	}
@@ -321,6 +348,19 @@ func (service *Service) grantReward(reward api.Reward) {
 }
 
 func (service *Service) result(success bool, actionID string, errorCode string, message string, reward api.Reward) api.ActionResult {
+	if success {
+		if err := service.saveState(); err != nil {
+			return api.ActionResult{
+				Success:     false,
+				ActionID:    actionID,
+				ErrorCode:   "persistence_failed",
+				Message:     fmt.Sprintf("Action succeeded locally but could not be saved: %v", err),
+				PlayerState: service.state,
+				Reward:      api.Reward{},
+			}
+		}
+	}
+
 	return api.ActionResult{
 		Success:     success,
 		ActionID:    actionID,
@@ -329,6 +369,14 @@ func (service *Service) result(success bool, actionID string, errorCode string, 
 		PlayerState: service.state,
 		Reward:      reward,
 	}
+}
+
+func (service *Service) saveState() error {
+	if service.stateStore == nil {
+		return nil
+	}
+
+	return service.stateStore.SaveState(context.Background(), service.playerID, service.state)
 }
 
 func (service *Service) recalculatePower() {
