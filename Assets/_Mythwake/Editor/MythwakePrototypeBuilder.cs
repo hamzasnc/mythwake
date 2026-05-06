@@ -79,6 +79,21 @@ public static class MythwakePrototypeBuilder
 
         var teamSlotTexts = CreateHeroSlotRow(homePanel.transform, -610, "Team Preview");
 
+        var dailyHeader = CreateText("Daily Missions Header", homePanel.transform, "Daily Missions", 34, FontStyles.Bold);
+        SetRect(dailyHeader.rectTransform, new Vector2(0, -900), new Vector2(860, 50), new Vector2(0.5f, 1f));
+
+        var dailyMissionTexts = new TMP_Text[3];
+        var dailyMissionButtons = new Button[3];
+        for (var i = 0; i < dailyMissionButtons.Length; i++)
+        {
+            dailyMissionButtons[i] = CreateButton($"Daily Mission Button {i + 1}", homePanel.transform, "Daily Mission", new Color(0.1f, 0.13f, 0.2f, 0.95f));
+            SetRect(dailyMissionButtons[i].GetComponent<RectTransform>(), new Vector2(0, -990 - (i * 115)), new Vector2(860, 92), new Vector2(0.5f, 1f));
+
+            dailyMissionTexts[i] = dailyMissionButtons[i].GetComponentInChildren<TMP_Text>();
+            dailyMissionTexts[i].fontSize = 24;
+            dailyMissionTexts[i].alignment = TextAlignmentOptions.Left;
+        }
+
         var battleHeader = CreateText("Battle Header", battlePanel.transform, "Battle", 42, FontStyles.Bold);
         SetRect(battleHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
 
@@ -185,6 +200,7 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "homeStageText", homeStage);
         SetObject(serializedController, "homePowerText", homePower);
         SetObjectArray(serializedController, "teamSlotTexts", teamSlotTexts);
+        SetObjectArray(serializedController, "dailyMissionTexts", dailyMissionTexts);
         SetObject(serializedController, "selectedHeroText", selectedHeroText);
         SetObjectArray(serializedController, "heroCardTexts", heroCardTexts);
         SetObject(serializedController, "damageText", damage);
@@ -206,6 +222,7 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "summonButton", summonButton);
         SetObject(serializedController, "resetButton", resetButton);
         SetObjectArray(serializedController, "heroSelectButtons", heroButtons);
+        SetObjectArray(serializedController, "dailyMissionButtons", dailyMissionButtons);
         SetObject(serializedController, "homePanel", homePanel);
         SetObject(serializedController, "battlePanel", battlePanel);
         SetObject(serializedController, "heroesPanel", heroesPanel);

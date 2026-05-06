@@ -41,7 +41,13 @@ public class IdlePrototypeController : MonoBehaviour
     private const string HeroShardKeyPrefix = "Mythwake.Prototype.HeroShard.";
     private const string HeroAscensionKeyPrefix = "Mythwake.Prototype.HeroAscension.";
     private const string SummonCountKey = "Mythwake.Prototype.SummonCount";
+    private const string DailyDateKey = "Mythwake.Prototype.Daily.Date";
+    private const string DailyFightCountKey = "Mythwake.Prototype.Daily.FightCount";
+    private const string DailyStageClearCountKey = "Mythwake.Prototype.Daily.StageClearCount";
+    private const string DailySummonCountKey = "Mythwake.Prototype.Daily.SummonCount";
+    private const string DailyMissionClaimedKeyPrefix = "Mythwake.Prototype.Daily.MissionClaimed.";
     private const int HeroCount = 5;
+    private const int DailyMissionCount = 3;
     private const int SummonCost = 60;
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
@@ -52,6 +58,9 @@ public class IdlePrototypeController : MonoBehaviour
     private static readonly int[] RareHeroIndexes = { 1, 3 };
     private static readonly int[] EpicHeroIndexes = { 0, 2 };
     private static readonly int[] LegendaryHeroIndexes = { 4 };
+    private static readonly string[] DailyMissionTitles = { "Battle 20 times", "Clear 3 stages", "Summon 1 hero" };
+    private static readonly int[] DailyMissionTargets = { 20, 3, 1 };
+    private static readonly int[] DailyMissionRewards = { 75, 120, 80 };
 
     [Header("Stats")]
     [SerializeField] private int gold;
@@ -65,6 +74,10 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private int[] heroShards = new int[HeroCount];
     [SerializeField] private int[] heroAscensions = new int[HeroCount];
     [SerializeField] private int summonCount;
+    [SerializeField] private int dailyFightCount;
+    [SerializeField] private int dailyStageClearCount;
+    [SerializeField] private int dailySummonCount;
+    [SerializeField] private bool[] dailyMissionClaimed = new bool[DailyMissionCount];
 
     [Header("Campaign")]
     [SerializeField]
@@ -108,6 +121,7 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text summonResultText;
     [SerializeField] private TMP_Text summonRatesText;
     [SerializeField] private TMP_Text summonCountText;
+    [SerializeField] private TMP_Text[] dailyMissionTexts;
     [SerializeField] private Button fightButton;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Button heroUpgradeButton;
@@ -115,6 +129,7 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private Button summonButton;
     [SerializeField] private Button resetButton;
     [SerializeField] private Button[] heroSelectButtons;
+    [SerializeField] private Button[] dailyMissionButtons;
 
     [Header("Navigation")]
     [SerializeField] private GameObject homePanel;
@@ -141,6 +156,7 @@ public class IdlePrototypeController : MonoBehaviour
         ClaimOfflineRewards();
         RegisterNavigation();
         RegisterHeroButtons();
+        RegisterDailyMissionButtons();
 
         if (fightButton != null)
         {
@@ -229,6 +245,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         UnregisterNavigation();
         UnregisterHeroButtons();
+        UnregisterDailyMissionButtons();
     }
 
     public void ShowHome()
@@ -315,6 +332,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         gold -= SummonCost;
         summonCount++;
+        dailySummonCount++;
 
         var heroIndex = RollSummonHero();
         var shards = GetSummonShardReward(heroIndex);
@@ -325,6 +343,21 @@ public class IdlePrototypeController : MonoBehaviour
         SetSummonResult($"{HeroRarities[heroIndex]} pull: {HeroNames[heroIndex]}\n+{shards} shards");
         SaveProgress();
         RefreshUi();
+    }
+
+    public void ClaimDailyBattleMission()
+    {
+        ClaimDailyMission(0);
+    }
+
+    public void ClaimDailyStageMission()
+    {
+        ClaimDailyMission(1);
+    }
+
+    public void ClaimDailySummonMission()
+    {
+        ClaimDailyMission(2);
     }
 
     public void ResetProgress()
@@ -350,6 +383,15 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         summonCount = 0;
+        dailyFightCount = 0;
+        dailyStageClearCount = 0;
+        dailySummonCount = 0;
+        EnsureDailyMissionClaims();
+        for (var i = 0; i < dailyMissionClaimed.Length; i++)
+        {
+            dailyMissionClaimed[i] = false;
+        }
+
         damage = GetTeamDamage();
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
         autoAttackTimer = 0f;
@@ -377,11 +419,13 @@ public class IdlePrototypeController : MonoBehaviour
     {
         damage = GetTeamDamage();
         enemyHp -= damage;
+        dailyFightCount++;
 
         if (enemyHp <= 0)
         {
             gold += GetStageReward(enemyLevel);
             enemyLevel++;
+            dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
         }
@@ -413,6 +457,7 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         summonCount = Mathf.Max(0, PlayerPrefs.GetInt(SummonCountKey, summonCount));
+        LoadDailyProgress();
         damage = GetTeamDamage();
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
     }
@@ -427,15 +472,25 @@ public class IdlePrototypeController : MonoBehaviour
         PlayerPrefs.SetInt(UpgradeCostKey, upgradeCost);
         PlayerPrefs.SetInt(SelectedHeroKey, selectedHeroIndex);
         PlayerPrefs.SetInt(SummonCountKey, summonCount);
+        PlayerPrefs.SetString(DailyDateKey, GetDailyDateKey());
+        PlayerPrefs.SetInt(DailyFightCountKey, dailyFightCount);
+        PlayerPrefs.SetInt(DailyStageClearCountKey, dailyStageClearCount);
+        PlayerPrefs.SetInt(DailySummonCountKey, dailySummonCount);
 
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureDailyMissionClaims();
         for (var i = 0; i < heroLevels.Length; i++)
         {
             PlayerPrefs.SetInt($"{HeroLevelKeyPrefix}{i}", heroLevels[i]);
             PlayerPrefs.SetInt($"{HeroShardKeyPrefix}{i}", heroShards[i]);
             PlayerPrefs.SetInt($"{HeroAscensionKeyPrefix}{i}", heroAscensions[i]);
+        }
+
+        for (var i = 0; i < dailyMissionClaimed.Length; i++)
+        {
+            PlayerPrefs.SetInt($"{DailyMissionClaimedKeyPrefix}{i}", dailyMissionClaimed[i] ? 1 : 0);
         }
 
         PlayerPrefs.SetString(LastSeenUtcKey, DateTime.UtcNow.Ticks.ToString());
@@ -558,6 +613,7 @@ public class IdlePrototypeController : MonoBehaviour
         RefreshOfflineRewardUi();
         RefreshHeroUi();
         RefreshSummonUi();
+        RefreshDailyMissionUi();
 
         if (upgradeCostText != null)
         {
@@ -621,6 +677,30 @@ public class IdlePrototypeController : MonoBehaviour
         if (heroSelectButtons.Length > 2 && heroSelectButtons[2] != null) heroSelectButtons[2].onClick.RemoveListener(SelectHero2);
         if (heroSelectButtons.Length > 3 && heroSelectButtons[3] != null) heroSelectButtons[3].onClick.RemoveListener(SelectHero3);
         if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.RemoveListener(SelectHero4);
+    }
+
+    private void RegisterDailyMissionButtons()
+    {
+        if (dailyMissionButtons == null || dailyMissionButtons.Length == 0)
+        {
+            return;
+        }
+
+        if (dailyMissionButtons.Length > 0 && dailyMissionButtons[0] != null) dailyMissionButtons[0].onClick.AddListener(ClaimDailyBattleMission);
+        if (dailyMissionButtons.Length > 1 && dailyMissionButtons[1] != null) dailyMissionButtons[1].onClick.AddListener(ClaimDailyStageMission);
+        if (dailyMissionButtons.Length > 2 && dailyMissionButtons[2] != null) dailyMissionButtons[2].onClick.AddListener(ClaimDailySummonMission);
+    }
+
+    private void UnregisterDailyMissionButtons()
+    {
+        if (dailyMissionButtons == null || dailyMissionButtons.Length == 0)
+        {
+            return;
+        }
+
+        if (dailyMissionButtons.Length > 0 && dailyMissionButtons[0] != null) dailyMissionButtons[0].onClick.RemoveListener(ClaimDailyBattleMission);
+        if (dailyMissionButtons.Length > 1 && dailyMissionButtons[1] != null) dailyMissionButtons[1].onClick.RemoveListener(ClaimDailyStageMission);
+        if (dailyMissionButtons.Length > 2 && dailyMissionButtons[2] != null) dailyMissionButtons[2].onClick.RemoveListener(ClaimDailySummonMission);
     }
 
     private void SelectHero0() => SelectHero(0);
@@ -810,6 +890,80 @@ public class IdlePrototypeController : MonoBehaviour
         }
     }
 
+    private void EnsureDailyMissionClaims()
+    {
+        if (dailyMissionClaimed == null || dailyMissionClaimed.Length != DailyMissionCount)
+        {
+            dailyMissionClaimed = new bool[DailyMissionCount];
+        }
+    }
+
+    private void LoadDailyProgress()
+    {
+        EnsureDailyMissionClaims();
+
+        var today = GetDailyDateKey();
+        var savedDate = PlayerPrefs.GetString(DailyDateKey, string.Empty);
+        if (savedDate != today)
+        {
+            dailyFightCount = 0;
+            dailyStageClearCount = 0;
+            dailySummonCount = 0;
+            for (var i = 0; i < dailyMissionClaimed.Length; i++)
+            {
+                dailyMissionClaimed[i] = false;
+            }
+
+            return;
+        }
+
+        dailyFightCount = Mathf.Max(0, PlayerPrefs.GetInt(DailyFightCountKey, dailyFightCount));
+        dailyStageClearCount = Mathf.Max(0, PlayerPrefs.GetInt(DailyStageClearCountKey, dailyStageClearCount));
+        dailySummonCount = Mathf.Max(0, PlayerPrefs.GetInt(DailySummonCountKey, dailySummonCount));
+        for (var i = 0; i < dailyMissionClaimed.Length; i++)
+        {
+            dailyMissionClaimed[i] = PlayerPrefs.GetInt($"{DailyMissionClaimedKeyPrefix}{i}", 0) == 1;
+        }
+    }
+
+    private void ClaimDailyMission(int missionIndex)
+    {
+        missionIndex = Mathf.Clamp(missionIndex, 0, DailyMissionCount - 1);
+        EnsureDailyMissionClaims();
+
+        if (dailyMissionClaimed[missionIndex] || GetDailyMissionProgress(missionIndex) < DailyMissionTargets[missionIndex])
+        {
+            RefreshUi();
+            return;
+        }
+
+        dailyMissionClaimed[missionIndex] = true;
+        gold += DailyMissionRewards[missionIndex];
+
+        SaveProgress();
+        RefreshUi();
+    }
+
+    private int GetDailyMissionProgress(int missionIndex)
+    {
+        switch (missionIndex)
+        {
+            case 0:
+                return dailyFightCount;
+            case 1:
+                return dailyStageClearCount;
+            case 2:
+                return dailySummonCount;
+            default:
+                return 0;
+        }
+    }
+
+    private string GetDailyDateKey()
+    {
+        return DateTime.UtcNow.ToString("yyyyMMdd");
+    }
+
     private void EnsureStages()
     {
         if (stages != null && stages.Length > 0)
@@ -948,6 +1102,30 @@ public class IdlePrototypeController : MonoBehaviour
         if (summonResultText != null && string.IsNullOrWhiteSpace(summonResultText.text))
         {
             summonResultText.text = "Summon heroes to collect shards and raise team power.";
+        }
+    }
+
+    private void RefreshDailyMissionUi()
+    {
+        EnsureDailyMissionClaims();
+
+        for (var i = 0; i < DailyMissionCount; i++)
+        {
+            var progress = Mathf.Min(GetDailyMissionProgress(i), DailyMissionTargets[i]);
+            var isComplete = progress >= DailyMissionTargets[i];
+            var isClaimed = dailyMissionClaimed[i];
+            var state = isClaimed ? "Claimed" : isComplete ? "Claim" : $"{progress}/{DailyMissionTargets[i]}";
+            var text = $"{DailyMissionTitles[i]}\n{state}  Reward {DailyMissionRewards[i]} Gold";
+
+            if (dailyMissionTexts != null && i < dailyMissionTexts.Length && dailyMissionTexts[i] != null)
+            {
+                dailyMissionTexts[i].text = text;
+            }
+
+            if (dailyMissionButtons != null && i < dailyMissionButtons.Length && dailyMissionButtons[i] != null)
+            {
+                dailyMissionButtons[i].interactable = isComplete && !isClaimed;
+            }
         }
     }
 

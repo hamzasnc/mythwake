@@ -18,6 +18,8 @@ Current prototype:
 - Basic summon flow with rarity rates, hero shards, and saved summon count
 - Hero shards add minor team power immediately
 - Hero ascension consumes shards for larger saved power upgrades
+- Daily missions track battles, stage clears, and summons
+- Daily mission claims reward gold and reset by UTC day
 
 Development target:
 - Android and iOS mobile idle game
