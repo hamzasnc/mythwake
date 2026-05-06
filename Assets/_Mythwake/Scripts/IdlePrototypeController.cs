@@ -20,6 +20,14 @@ public class IdlePrototypeController : MonoBehaviour
         }
     }
 
+    private struct CombatResult
+    {
+        public bool won;
+        public int rounds;
+        public int teamHpRemaining;
+        public int enemyHpRemaining;
+    }
+
     private enum AppScreen
     {
         Home,
@@ -60,6 +68,7 @@ public class IdlePrototypeController : MonoBehaviour
     private const int StarterGems = 30;
     private const int StarterMythEssence = 20;
     private const float OfflineGoldRewardRate = 0.65f;
+    private const int MaxCombatRounds = 45;
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
     private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
@@ -519,15 +528,23 @@ public class IdlePrototypeController : MonoBehaviour
     private void Fight(bool saveProgress)
     {
         damage = GetTeamDamage();
-        enemyHp -= damage;
         dailyFightCount++;
+        var stage = GetStageDefinition(enemyLevel);
+        var result = SimulateCombat(stage.maxHp, GetCampaignEnemyDamage(enemyLevel));
 
-        if (enemyHp <= 0)
+        if (result.won)
         {
             enemyLevel++;
             dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
+            SetDungeonResult($"Campaign Stage {enemyLevel - 1} cleared in {result.rounds} rounds\nTeam HP left {result.teamHpRemaining}/{GetTeamHealth()}");
+        }
+        else
+        {
+            enemyMaxHp = stage.maxHp;
+            enemyHp = enemyMaxHp;
+            SetDungeonResult($"Campaign Stage {enemyLevel} failed after {result.rounds} rounds\nEnemy HP left {result.enemyHpRemaining}/{stage.maxHp}");
         }
 
         if (saveProgress)
@@ -696,12 +713,13 @@ public class IdlePrototypeController : MonoBehaviour
     private void RunDungeon(bool isGoldDungeon)
     {
         var floor = isGoldDungeon ? goldDungeonFloor : essenceDungeonFloor;
-        var requiredPower = GetDungeonRequiredPower(floor);
-        var teamPower = GetTeamPower();
+        var enemyHp = GetDungeonEnemyHp(floor);
+        var enemyDamage = GetDungeonEnemyDamage(floor);
+        var result = SimulateCombat(enemyHp, enemyDamage);
 
-        if (teamPower < requiredPower)
+        if (!result.won)
         {
-            SetDungeonResult($"{(isGoldDungeon ? "Gold" : "Essence")} Dungeon Floor {floor} failed\nNeed {requiredPower} Power, team has {teamPower}");
+            SetDungeonResult($"{(isGoldDungeon ? "Gold" : "Essence")} Dungeon Floor {floor} failed after {result.rounds} rounds\nEnemy HP left {result.enemyHpRemaining}/{enemyHp}");
             RefreshUi();
             return;
         }
@@ -711,23 +729,73 @@ public class IdlePrototypeController : MonoBehaviour
         {
             gold += reward;
             goldDungeonFloor++;
-            SetDungeonResult($"Gold Dungeon Floor {floor} cleared\n+{reward} Gold");
+            SetDungeonResult($"Gold Dungeon Floor {floor} cleared in {result.rounds} rounds\n+{reward} Gold");
         }
         else
         {
             mythEssence += reward;
             essenceDungeonFloor++;
-            SetDungeonResult($"Essence Dungeon Floor {floor} cleared\n+{reward} Essence");
+            SetDungeonResult($"Essence Dungeon Floor {floor} cleared in {result.rounds} rounds\n+{reward} Essence");
         }
 
         SaveProgress();
         RefreshUi();
     }
 
-    private int GetDungeonRequiredPower(int floor)
+    private int GetDungeonEnemyHp(int floor)
     {
         floor = Mathf.Max(1, floor);
-        return 180 + Mathf.FloorToInt(65 * Mathf.Pow(floor, 1.16f));
+        return 180 + Mathf.FloorToInt(85 * Mathf.Pow(floor, 1.18f));
+    }
+
+    private int GetDungeonEnemyDamage(int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        return 18 + Mathf.FloorToInt(8 * Mathf.Pow(floor, 1.12f));
+    }
+
+    private int GetCampaignEnemyDamage(int stage)
+    {
+        stage = Mathf.Max(1, stage);
+        return 8 + Mathf.FloorToInt(3.5f * Mathf.Pow(stage, 1.08f));
+    }
+
+    private CombatResult SimulateCombat(int targetEnemyHp, int enemyDamage)
+    {
+        var result = new CombatResult();
+        var teamHp = GetTeamHealth();
+        var enemyHpValue = Mathf.Max(1, targetEnemyHp);
+        var teamDamage = GetTeamDamage();
+        enemyDamage = Mathf.Max(1, enemyDamage);
+
+        for (var round = 1; round <= MaxCombatRounds; round++)
+        {
+            enemyHpValue -= teamDamage;
+            if (enemyHpValue <= 0)
+            {
+                result.won = true;
+                result.rounds = round;
+                result.teamHpRemaining = Mathf.Max(0, teamHp);
+                result.enemyHpRemaining = 0;
+                return result;
+            }
+
+            teamHp -= enemyDamage;
+            if (teamHp <= 0)
+            {
+                result.won = false;
+                result.rounds = round;
+                result.teamHpRemaining = 0;
+                result.enemyHpRemaining = Mathf.Max(0, enemyHpValue);
+                return result;
+            }
+        }
+
+        result.won = false;
+        result.rounds = MaxCombatRounds;
+        result.teamHpRemaining = Mathf.Max(0, teamHp);
+        result.enemyHpRemaining = Mathf.Max(0, enemyHpValue);
+        return result;
     }
 
     private int GetGoldDungeonReward(int floor)
@@ -794,7 +862,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (damageText != null)
         {
-            damageText.text = $"Team Damage: {damage}";
+            damageText.text = $"Team Damage: {damage}   Team HP: {GetTeamHealth()}";
         }
 
         RefreshDungeonUi();
@@ -807,7 +875,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (enemyHpText != null)
         {
-            enemyHpText.text = $"HP: {Mathf.Max(enemyHp, 0)} / {enemyMaxHp}";
+            enemyHpText.text = $"Enemy HP: {enemyMaxHp}   Enemy Damage: {GetCampaignEnemyDamage(enemyLevel)}";
         }
 
         RefreshAutoAttackUi();
@@ -1268,7 +1336,12 @@ public class IdlePrototypeController : MonoBehaviour
 
     private int GetTeamDamage()
     {
-        return Mathf.Max(1, Mathf.FloorToInt(GetTeamPower() / 28f));
+        return Mathf.Max(1, Mathf.FloorToInt(GetTeamPower() / 16f));
+    }
+
+    private int GetTeamHealth()
+    {
+        return 520 + Mathf.FloorToInt(GetTeamPower() * 4.8f);
     }
 
     private int GetHeroPower(int index)
@@ -1343,12 +1416,12 @@ public class IdlePrototypeController : MonoBehaviour
     {
         if (goldDungeonText != null)
         {
-            goldDungeonText.text = $"Gold Dungeon\nFloor {goldDungeonFloor}  Need {GetDungeonRequiredPower(goldDungeonFloor)} Power\nReward {GetGoldDungeonReward(goldDungeonFloor)} Gold";
+            goldDungeonText.text = $"Gold Dungeon\nFloor {goldDungeonFloor}  HP {GetDungeonEnemyHp(goldDungeonFloor)}  DMG {GetDungeonEnemyDamage(goldDungeonFloor)}\nReward {GetGoldDungeonReward(goldDungeonFloor)} Gold";
         }
 
         if (essenceDungeonText != null)
         {
-            essenceDungeonText.text = $"Essence Dungeon\nFloor {essenceDungeonFloor}  Need {GetDungeonRequiredPower(essenceDungeonFloor)} Power\nReward {GetEssenceDungeonReward(essenceDungeonFloor)} Essence";
+            essenceDungeonText.text = $"Essence Dungeon\nFloor {essenceDungeonFloor}  HP {GetDungeonEnemyHp(essenceDungeonFloor)}  DMG {GetDungeonEnemyDamage(essenceDungeonFloor)}\nReward {GetEssenceDungeonReward(essenceDungeonFloor)} Essence";
         }
 
         if (dungeonResultText != null && string.IsNullOrWhiteSpace(dungeonResultText.text))
