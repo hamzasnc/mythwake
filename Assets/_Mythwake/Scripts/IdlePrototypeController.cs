@@ -3,9 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakeEconomyService
+public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService
 {
-    public const string PrototypeVersion = "0.2.6";
+    public const string PrototypeVersion = "0.2.7";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1060,20 +1060,56 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void Fight()
     {
-        Fight(saveProgress: true);
+        FightCampaign();
     }
 
     public void RunGoldDungeon()
     {
-        RunDungeon(isGoldDungeon: true);
+        RunDungeon(GoldDungeonDefinition.dungeonId);
     }
 
     public void RunEssenceDungeon()
     {
-        RunDungeon(isGoldDungeon: false);
+        RunDungeon(EssenceDungeonDefinition.dungeonId);
     }
 
     public void RunGearDungeon()
+    {
+        RunDungeon(GearDungeonDefinition.dungeonId);
+    }
+
+    public MythwakeActionResultDto FightCampaign()
+    {
+        var result = ExecuteCampaignFight();
+        SaveProgress();
+        RefreshUi();
+        return result;
+    }
+
+    public MythwakeActionResultDto RunDungeon(string dungeonId)
+    {
+        if (dungeonId == GoldDungeonDefinition.dungeonId)
+        {
+            return ExecuteResourceDungeon(isGoldDungeon: true);
+        }
+
+        if (dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return ExecuteResourceDungeon(isGoldDungeon: false);
+        }
+
+        if (dungeonId == GearDungeonDefinition.dungeonId)
+        {
+            return ExecuteGearDungeon();
+        }
+
+        var result = CreateActionResult(false, "run_dungeon", "invalid_dungeon", $"Unknown dungeon: {dungeonId}");
+        SetDungeonResult(result.message);
+        RefreshUi();
+        return result;
+    }
+
+    private MythwakeActionResultDto ExecuteGearDungeon()
     {
         var floor = Mathf.Max(1, gearDungeonFloor);
         var enemyHp = GetGearDungeonEnemyHp(floor);
@@ -1082,18 +1118,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (!result.won)
         {
-            SetDungeonResult($"Gear Dungeon Floor {floor} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}");
+            var failMessage = $"Gear Dungeon Floor {floor} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
+            SetDungeonResult(failMessage);
             RefreshUi();
-            return;
+            return CreateActionResult(false, "gear_dungeon_run", "combat_lost", failMessage);
         }
 
         var accessory = RollAccessoryDrop(floor);
         AddAccessoryInventory(accessory.slotIndex, accessory.rarityIndex, 1);
         gearDungeonFloor++;
 
-        SetDungeonResult($"Gear Dungeon Floor {floor} cleared in {result.rounds} rounds\nDrop: {GetAccessoryRarityName(accessory.rarityIndex)} {AccessorySlots[accessory.slotIndex].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}");
+        var message = $"Gear Dungeon Floor {floor} cleared in {result.rounds} rounds\nDrop: {GetAccessoryRarityName(accessory.rarityIndex)} {AccessorySlots[accessory.slotIndex].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}";
+        SetDungeonResult(message);
         SaveProgress();
         RefreshUi();
+        return CreateActionResult(true, "gear_dungeon_run", string.Empty, message);
     }
 
     public void UpgradeDamage()
@@ -1287,12 +1326,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void SummonOnce()
     {
+        Pull(HeroShardBanner.bannerId);
+    }
+
+    public MythwakeActionResultDto Pull(string bannerId)
+    {
+        if (bannerId != HeroShardBanner.bannerId)
+        {
+            var invalidBanner = CreateActionResult(false, "summon_pull", "invalid_banner", $"Unknown banner: {bannerId}");
+            SetSummonResult(invalidBanner.message);
+            RefreshUi();
+            return invalidBanner;
+        }
+
         var summonCost = GetSummonCost();
         if (!TrySpendCurrency(GemsCurrencyId, summonCost))
         {
-            SetSummonResult($"Need {summonCost} Gems for a summon.");
+            var failMessage = $"Need {summonCost} Gems for a summon.";
+            SetSummonResult(failMessage);
             RefreshUi();
-            return;
+            return CreateActionResult(false, "summon_pull", "insufficient_currency", failMessage);
         }
 
         EnsureHeroShards();
@@ -1307,9 +1360,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         damage = GetTeamDamage();
         var hero = GetHeroDefinition(heroIndex);
 
-        SetSummonResult($"{hero.rarityName} pull: {hero.name}\n+{shards} shards");
+        var message = $"{hero.rarityName} pull: {hero.name}\n+{shards} shards";
+        SetSummonResult(message);
         SaveProgress();
         RefreshUi();
+        return CreateActionResult(true, "summon_pull", string.Empty, message);
     }
 
     public void ClaimDailyBattleMission()
@@ -1467,6 +1522,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void Fight(bool saveProgress)
     {
+        ExecuteCampaignFight();
+
+        if (saveProgress)
+        {
+            SaveProgress();
+        }
+
+        RefreshUi();
+    }
+
+    private MythwakeActionResultDto ExecuteCampaignFight()
+    {
         damage = GetTeamDamage();
         dailyFightCount++;
         var stage = GetStageDefinition(enemyLevel);
@@ -1480,21 +1547,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
-            SetDungeonResult($"Campaign Stage {clearedStage} cleared in {result.rounds} rounds\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{milestoneText}");
+            var winMessage = $"Campaign Stage {clearedStage} cleared in {result.rounds} rounds\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{milestoneText}";
+            SetDungeonResult(winMessage);
+            return CreateActionResult(true, "campaign_fight", string.Empty, winMessage);
         }
         else
         {
             enemyMaxHp = stage.maxHp;
             enemyHp = enemyMaxHp;
-            SetDungeonResult($"Campaign Stage {enemyLevel} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{stage.maxHp}  {FormatCombatResult(result)}");
+            var failMessage = $"Campaign Stage {enemyLevel} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{stage.maxHp}  {FormatCombatResult(result)}";
+            SetDungeonResult(failMessage);
+            return CreateActionResult(false, "campaign_fight", "combat_lost", failMessage);
         }
-
-        if (saveProgress)
-        {
-            SaveProgress();
-        }
-
-        RefreshUi();
     }
 
     private void LoadProgress()
@@ -1875,7 +1939,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return AccessoryDefinitions[AccessoryDefinitions.Length - 1];
     }
 
-    private void RunDungeon(bool isGoldDungeon)
+    private MythwakeActionResultDto ExecuteResourceDungeon(bool isGoldDungeon)
     {
         var dungeon = isGoldDungeon ? GoldDungeonDefinition : EssenceDungeonDefinition;
         var floor = isGoldDungeon ? goldDungeonFloor : essenceDungeonFloor;
@@ -1885,28 +1949,37 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (!result.won)
         {
-            SetDungeonResult($"{dungeon.displayName} Floor {floor} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}");
+            var failMessage = $"{dungeon.displayName} Floor {floor} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
+            SetDungeonResult(failMessage);
             RefreshUi();
-            return;
+            return CreateActionResult(false, $"{dungeon.dungeonId}_run", "combat_lost", failMessage);
         }
 
         var reward = GetDungeonReward(dungeon, floor);
-        var bonusText = GrantDungeonBonusReward(isGoldDungeon, floor);
+        var bonusReward = GetDungeonBonusReward(isGoldDungeon, floor);
+        GrantReward(bonusReward);
+        var bonusText = FormatDungeonBonusReward(bonusReward);
+        MythwakeRewardDto rewardDto;
+        string message;
         if (isGoldDungeon)
         {
             GrantCurrency(GoldCurrencyId, reward);
             goldDungeonFloor++;
-            SetDungeonResult($"{dungeon.displayName} Floor {floor} cleared in {result.rounds} rounds (+{reward} Gold)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}");
+            rewardDto = new MythwakeRewardDto { rewardId = $"reward_{dungeon.dungeonId}_floor_{floor}", gold = reward + bonusReward.gold };
+            message = $"{dungeon.displayName} Floor {floor} cleared in {result.rounds} rounds (+{reward} Gold)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
         }
         else
         {
             GrantCurrency(MythEssenceCurrencyId, reward);
             essenceDungeonFloor++;
-            SetDungeonResult($"{dungeon.displayName} Floor {floor} cleared in {result.rounds} rounds (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}");
+            rewardDto = new MythwakeRewardDto { rewardId = $"reward_{dungeon.dungeonId}_floor_{floor}", mythEssence = reward + bonusReward.mythEssence };
+            message = $"{dungeon.displayName} Floor {floor} cleared in {result.rounds} rounds (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
         }
 
+        SetDungeonResult(message);
         SaveProgress();
         RefreshUi();
+        return CreateActionResult(true, $"{dungeon.dungeonId}_run", string.Empty, message, rewardDto);
     }
 
     private int GetCampaignEnemyDamage(int stage)
@@ -2005,23 +2078,36 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return $"  Milestone +{rewardGems} Gems +{rewardPassXp} XP";
     }
 
-    private string GrantDungeonBonusReward(bool isGoldDungeon, int clearedFloor)
+    private RewardDefinition GetDungeonBonusReward(bool isGoldDungeon, int clearedFloor)
     {
         if (clearedFloor <= 0 || clearedFloor % DungeonBonusInterval != 0)
         {
-            return string.Empty;
+            return new RewardDefinition(string.Empty, 0, 0, 0);
         }
 
         if (isGoldDungeon)
         {
             var bonusGold = Mathf.CeilToInt(GetGoldDungeonReward(clearedFloor) * 0.75f);
-            GrantReward(new RewardDefinition($"reward_gold_dungeon_bonus_{clearedFloor}", bonusGold, 0, 0));
-            return $"  Bonus +{bonusGold} Gold";
+            return new RewardDefinition($"reward_gold_dungeon_bonus_{clearedFloor}", bonusGold, 0, 0);
         }
 
         var bonusEssence = Mathf.CeilToInt(GetEssenceDungeonReward(clearedFloor) * 0.75f);
-        GrantReward(new RewardDefinition($"reward_essence_dungeon_bonus_{clearedFloor}", 0, 0, bonusEssence));
-        return $"  Bonus +{bonusEssence} Essence";
+        return new RewardDefinition($"reward_essence_dungeon_bonus_{clearedFloor}", 0, 0, bonusEssence);
+    }
+
+    private string FormatDungeonBonusReward(RewardDefinition reward)
+    {
+        if (reward.gold > 0)
+        {
+            return $"  Bonus +{reward.gold} Gold";
+        }
+
+        if (reward.mythEssence > 0)
+        {
+            return $"  Bonus +{reward.mythEssence} Essence";
+        }
+
+        return string.Empty;
     }
 
     private void SetDungeonResult(string result)
@@ -3098,6 +3184,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             teamPower = GetTeamPower(),
             teamAttack = GetTeamDamage(),
             teamHealth = GetTeamHealth()
+        };
+    }
+
+    private MythwakeActionResultDto CreateActionResult(bool success, string actionId, string errorCode, string message)
+    {
+        return CreateActionResult(success, actionId, errorCode, message, new MythwakeRewardDto());
+    }
+
+    private MythwakeActionResultDto CreateActionResult(bool success, string actionId, string errorCode, string message, MythwakeRewardDto reward)
+    {
+        return new MythwakeActionResultDto
+        {
+            success = success,
+            actionId = actionId,
+            errorCode = errorCode,
+            message = message,
+            playerState = GetPlayerState(),
+            reward = reward
         };
     }
 
