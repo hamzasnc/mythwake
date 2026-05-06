@@ -30,6 +30,7 @@ Client:
 - Local economy boundary methods now handle currency spends, currency grants, and reward grants
 - Shared service contracts define player state, rewards, action results, economy, battle, summon, and inventory boundaries
 - Campaign fights, dungeon runs, and summons now return local action-result DTOs shaped like future backend responses
+- Accessory equip, level, and fuse actions now return local action-result DTOs for future server-side inventory validation
 - Visible prototype/save version text
 - Debug buttons for small Gold, Gems, Myth Essence, and accessory test amounts
 - Code-side definition rows with stable IDs for early client balance data
@@ -251,6 +252,7 @@ Progress:
 - Added shared service contract DTOs/interfaces for player state, economy, battle, summons, and inventory.
 - The prototype controller now exposes player state and local economy service methods using those contracts.
 - Campaign fights, resource dungeons, Gear Dungeon, and summons now route through local action-result methods with success/error/message/player-state output.
+- Accessory equip, accessory leveling, and accessory fusion now route through inventory service action-result methods.
 
 Tasks:
 - Add service-style classes/interfaces for:

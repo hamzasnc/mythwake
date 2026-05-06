@@ -3,9 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService
+public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService
 {
-    public const string PrototypeVersion = "0.2.7";
+    public const string PrototypeVersion = "0.2.8";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1240,20 +1240,34 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void EquipSelectedAccessory()
     {
-        EnsureAccessories();
         var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+        EquipAccessory(GetAccessoryDefinition(slot, rarity).accessoryId);
+    }
+
+    public MythwakeActionResultDto EquipAccessory(string accessoryId)
+    {
+        EnsureAccessories();
+        if (!TryGetAccessoryDefinitionById(accessoryId, out var accessory))
+        {
+            var invalidResult = CreateActionResult(false, "accessory_equip", "invalid_accessory", $"Unknown accessory: {accessoryId}");
+            RefreshUi();
+            return invalidResult;
+        }
+
+        var slot = accessory.slotIndex;
+        var rarity = accessory.rarityIndex;
 
         if (GetAccessoryInventoryCount(slot, rarity) <= 0)
         {
             RefreshUi();
-            return;
+            return CreateActionResult(false, "accessory_equip", "missing_item", $"No {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} copy to equip.");
         }
 
         if (equippedAccessoryRarities[slot] == rarity)
         {
             RefreshUi();
-            return;
+            return CreateActionResult(false, "accessory_equip", "already_equipped", $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is already equipped.");
         }
 
         if (equippedAccessoryRarities[slot] >= 0)
@@ -1267,6 +1281,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
+        return CreateActionResult(true, "accessory_equip", string.Empty, $"Equipped {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name}.");
     }
 
     public void LevelSelectedAccessory()
@@ -1274,25 +1289,41 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAccessories();
         var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         var rarity = equippedAccessoryRarities[slot];
+        var accessoryId = rarity >= 0 ? GetAccessoryDefinition(slot, rarity).accessoryId : string.Empty;
+        LevelAccessory(accessoryId);
+    }
 
-        if (rarity < 0)
+    public MythwakeActionResultDto LevelAccessory(string accessoryId)
+    {
+        EnsureAccessories();
+        if (!TryGetAccessoryDefinitionById(accessoryId, out var accessory))
+        {
+            var invalidResult = CreateActionResult(false, "accessory_level", "invalid_accessory", $"Unknown accessory: {accessoryId}");
+            RefreshUi();
+            return invalidResult;
+        }
+
+        var slot = accessory.slotIndex;
+        var rarity = accessory.rarityIndex;
+
+        if (equippedAccessoryRarities[slot] != rarity)
         {
             RefreshUi();
-            return;
+            return CreateActionResult(false, "accessory_level", "not_equipped", $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is not equipped.");
         }
 
         var maxLevel = GetAccessoryMaxLevel(rarity);
         if (equippedAccessoryLevels[slot] >= maxLevel)
         {
             RefreshUi();
-            return;
+            return CreateActionResult(false, "accessory_level", "max_level", $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is already max level.");
         }
 
         var cost = GetAccessoryLevelCost(slot);
         if (!TrySpendCurrency(GoldCurrencyId, cost))
         {
             RefreshUi();
-            return;
+            return CreateActionResult(false, "accessory_level", "insufficient_currency", $"Need {cost} Gold to level {AccessorySlots[slot].name}.");
         }
 
         equippedAccessoryLevels[slot]++;
@@ -1300,6 +1331,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
+        return CreateActionResult(true, "accessory_level", string.Empty, $"Leveled {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} to Lv. {equippedAccessoryLevels[slot]}.");
     }
 
     public void FuseSelectedAccessory()
@@ -1307,12 +1339,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAccessories();
         var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
-        var accessory = GetAccessoryDefinition(slot, rarity);
+        FuseAccessory(GetAccessoryDefinition(slot, rarity).accessoryId);
+    }
+
+    public MythwakeActionResultDto FuseAccessory(string accessoryId)
+    {
+        EnsureAccessories();
+        if (!TryGetAccessoryDefinitionById(accessoryId, out var accessory))
+        {
+            var invalidResult = CreateActionResult(false, "accessory_fuse", "invalid_accessory", $"Unknown accessory: {accessoryId}");
+            RefreshUi();
+            return invalidResult;
+        }
+
+        var slot = accessory.slotIndex;
+        var rarity = accessory.rarityIndex;
 
         if (string.IsNullOrEmpty(accessory.fuseTargetAccessoryId) || GetAccessoryInventoryCount(slot, rarity) < AccessoryFuseCost)
         {
             RefreshUi();
-            return;
+            return CreateActionResult(false, "accessory_fuse", "missing_items", $"Need {AccessoryFuseCost}x {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} to fuse.");
         }
 
         var fuseTarget = GetAccessoryDefinitionById(accessory.fuseTargetAccessoryId);
@@ -1322,6 +1368,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
+        return CreateActionResult(true, "accessory_fuse", string.Empty, $"Fused into {GetAccessoryRarityName(fuseTarget.rarityIndex)} {AccessorySlots[fuseTarget.slotIndex].name}.");
     }
 
     public void SummonOnce()
@@ -2917,15 +2964,22 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static AccessoryDefinition GetAccessoryDefinitionById(string accessoryId)
     {
+        return TryGetAccessoryDefinitionById(accessoryId, out var definition) ? definition : AccessoryDefinitions[0];
+    }
+
+    private static bool TryGetAccessoryDefinitionById(string accessoryId, out AccessoryDefinition definition)
+    {
         for (var i = 0; i < AccessoryDefinitions.Length; i++)
         {
             if (AccessoryDefinitions[i].accessoryId == accessoryId)
             {
-                return AccessoryDefinitions[i];
+                definition = AccessoryDefinitions[i];
+                return true;
             }
         }
 
-        return AccessoryDefinitions[0];
+        definition = AccessoryDefinitions[0];
+        return false;
     }
 
     private static int GetAccessoryDefinitionIndex(int slot, int rarity)
