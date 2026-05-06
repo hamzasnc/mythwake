@@ -10,6 +10,9 @@ Current prototype:
 - Local save data via PlayerPrefs
 - Basic offline gold calculation when reopening the app
 - Mobile app shell with Home, Battle, Heroes, Summon, and Shop tabs
+- Starter hero collection with 5 heroes
+- Team power drives battle damage
+- Hero upgrades saved locally
 
 Development target:
 - Android and iOS mobile idle game

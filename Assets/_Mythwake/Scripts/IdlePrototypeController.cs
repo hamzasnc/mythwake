@@ -21,6 +21,15 @@ public class IdlePrototypeController : MonoBehaviour
     private const string EnemyMaxHpKey = "Mythwake.Prototype.EnemyMaxHp";
     private const string UpgradeCostKey = "Mythwake.Prototype.UpgradeCost";
     private const string LastSeenUtcKey = "Mythwake.Prototype.LastSeenUtc";
+    private const string SelectedHeroKey = "Mythwake.Prototype.SelectedHero";
+    private const string HeroLevelKeyPrefix = "Mythwake.Prototype.HeroLevel.";
+    private const int HeroCount = 5;
+
+    private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
+    private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
+    private static readonly string[] HeroRarities = { "Epic", "Rare", "Epic", "Rare", "Legendary" };
+    private static readonly int[] HeroBasePower = { 42, 50, 46, 38, 58 };
+    private static readonly int[] HeroPowerGrowth = { 13, 10, 15, 12, 11 };
 
     [Header("Stats")]
     [SerializeField] private int gold;
@@ -29,6 +38,8 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private int enemyHp = 10;
     [SerializeField] private int enemyMaxHp = 10;
     [SerializeField] private int upgradeCost = 10;
+    [SerializeField] private int selectedHeroIndex;
+    [SerializeField] private int[] heroLevels = new int[HeroCount];
 
     [Header("Idle")]
     [SerializeField] private bool autoAttackEnabled = true;
@@ -41,15 +52,21 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text homeGoldText;
     [SerializeField] private TMP_Text homeStageText;
     [SerializeField] private TMP_Text homePowerText;
+    [SerializeField] private TMP_Text[] teamSlotTexts;
+    [SerializeField] private TMP_Text selectedHeroText;
+    [SerializeField] private TMP_Text[] heroCardTexts;
     [SerializeField] private TMP_Text damageText;
     [SerializeField] private TMP_Text enemyText;
     [SerializeField] private TMP_Text enemyHpText;
     [SerializeField] private TMP_Text autoAttackText;
     [SerializeField] private TMP_Text offlineRewardText;
     [SerializeField] private TMP_Text upgradeCostText;
+    [SerializeField] private TMP_Text heroUpgradeCostText;
     [SerializeField] private Button fightButton;
     [SerializeField] private Button upgradeButton;
+    [SerializeField] private Button heroUpgradeButton;
     [SerializeField] private Button resetButton;
+    [SerializeField] private Button[] heroSelectButtons;
 
     [Header("Navigation")]
     [SerializeField] private GameObject homePanel;
@@ -75,6 +92,7 @@ public class IdlePrototypeController : MonoBehaviour
         LoadProgress();
         ClaimOfflineRewards();
         RegisterNavigation();
+        RegisterHeroButtons();
 
         if (fightButton != null)
         {
@@ -84,6 +102,11 @@ public class IdlePrototypeController : MonoBehaviour
         if (upgradeButton != null)
         {
             upgradeButton.onClick.AddListener(UpgradeDamage);
+        }
+
+        if (heroUpgradeButton != null)
+        {
+            heroUpgradeButton.onClick.AddListener(UpgradeDamage);
         }
 
         if (resetButton != null)
@@ -126,12 +149,18 @@ public class IdlePrototypeController : MonoBehaviour
             upgradeButton.onClick.RemoveListener(UpgradeDamage);
         }
 
+        if (heroUpgradeButton != null)
+        {
+            heroUpgradeButton.onClick.RemoveListener(UpgradeDamage);
+        }
+
         if (resetButton != null)
         {
             resetButton.onClick.RemoveListener(ResetProgress);
         }
 
         UnregisterNavigation();
+        UnregisterHeroButtons();
     }
 
     public void ShowHome()
@@ -166,6 +195,9 @@ public class IdlePrototypeController : MonoBehaviour
 
     public void UpgradeDamage()
     {
+        selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+        upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
+
         if (gold < upgradeCost)
         {
             RefreshUi();
@@ -173,8 +205,9 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         gold -= upgradeCost;
-        damage++;
-        upgradeCost = Mathf.CeilToInt(upgradeCost * 1.35f);
+        heroLevels[selectedHeroIndex]++;
+        damage = GetTeamDamage();
+        upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
 
         SaveProgress();
         RefreshUi();
@@ -185,9 +218,17 @@ public class IdlePrototypeController : MonoBehaviour
         gold = 0;
         damage = 1;
         enemyLevel = 1;
-        enemyMaxHp = 10;
+        enemyMaxHp = GetEnemyMaxHp(enemyLevel);
         enemyHp = enemyMaxHp;
-        upgradeCost = 10;
+        selectedHeroIndex = 0;
+        EnsureHeroLevels();
+        for (var i = 0; i < heroLevels.Length; i++)
+        {
+            heroLevels[i] = 1;
+        }
+
+        damage = GetTeamDamage();
+        upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
         autoAttackTimer = 0f;
         lastOfflineReward = 0;
         lastOfflineSeconds = 0;
@@ -211,13 +252,14 @@ public class IdlePrototypeController : MonoBehaviour
 
     private void Fight(bool saveProgress)
     {
+        damage = GetTeamDamage();
         enemyHp -= damage;
 
         if (enemyHp <= 0)
         {
             gold += GetEnemyReward();
             enemyLevel++;
-            enemyMaxHp = 10 + ((enemyLevel - 1) * 5);
+            enemyMaxHp = GetEnemyMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
         }
 
@@ -232,11 +274,19 @@ public class IdlePrototypeController : MonoBehaviour
     private void LoadProgress()
     {
         gold = PlayerPrefs.GetInt(GoldKey, gold);
-        damage = Mathf.Max(1, PlayerPrefs.GetInt(DamageKey, damage));
         enemyLevel = Mathf.Max(1, PlayerPrefs.GetInt(EnemyLevelKey, enemyLevel));
-        enemyMaxHp = Mathf.Max(1, PlayerPrefs.GetInt(EnemyMaxHpKey, enemyMaxHp));
+        enemyMaxHp = Mathf.Max(GetEnemyMaxHp(enemyLevel), PlayerPrefs.GetInt(EnemyMaxHpKey, enemyMaxHp));
         enemyHp = Mathf.Clamp(PlayerPrefs.GetInt(EnemyHpKey, enemyHp), 1, enemyMaxHp);
-        upgradeCost = Mathf.Max(1, PlayerPrefs.GetInt(UpgradeCostKey, upgradeCost));
+        selectedHeroIndex = Mathf.Clamp(PlayerPrefs.GetInt(SelectedHeroKey, selectedHeroIndex), 0, HeroCount - 1);
+        EnsureHeroLevels();
+
+        for (var i = 0; i < heroLevels.Length; i++)
+        {
+            heroLevels[i] = Mathf.Max(1, PlayerPrefs.GetInt($"{HeroLevelKeyPrefix}{i}", 1));
+        }
+
+        damage = GetTeamDamage();
+        upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
     }
 
     private void SaveProgress()
@@ -247,6 +297,14 @@ public class IdlePrototypeController : MonoBehaviour
         PlayerPrefs.SetInt(EnemyHpKey, enemyHp);
         PlayerPrefs.SetInt(EnemyMaxHpKey, enemyMaxHp);
         PlayerPrefs.SetInt(UpgradeCostKey, upgradeCost);
+        PlayerPrefs.SetInt(SelectedHeroKey, selectedHeroIndex);
+
+        EnsureHeroLevels();
+        for (var i = 0; i < heroLevels.Length; i++)
+        {
+            PlayerPrefs.SetInt($"{HeroLevelKeyPrefix}{i}", heroLevels[i]);
+        }
+
         PlayerPrefs.SetString(LastSeenUtcKey, DateTime.UtcNow.Ticks.ToString());
         PlayerPrefs.Save();
     }
@@ -281,7 +339,7 @@ public class IdlePrototypeController : MonoBehaviour
     private int CalculateOfflineReward(int offlineSeconds)
     {
         var attacks = Mathf.FloorToInt(offlineSeconds / Mathf.Max(0.1f, autoAttackInterval));
-        var enemyClearSeconds = Mathf.Max(1, Mathf.CeilToInt(enemyMaxHp / (float)Mathf.Max(1, damage)));
+        var enemyClearSeconds = Mathf.Max(1, Mathf.CeilToInt(enemyMaxHp / (float)Mathf.Max(1, GetTeamDamage())));
         var enemyKills = Mathf.Max(0, attacks / enemyClearSeconds);
 
         return enemyKills * GetEnemyReward();
@@ -292,8 +350,17 @@ public class IdlePrototypeController : MonoBehaviour
         return 5 + (enemyLevel * 2);
     }
 
+    private int GetEnemyMaxHp(int stage)
+    {
+        return 50 + ((stage - 1) * 22);
+    }
+
     private void RefreshUi()
     {
+        EnsureHeroLevels();
+        damage = GetTeamDamage();
+        upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
+
         if (titleText != null)
         {
             titleText.text = "Mythwake";
@@ -316,12 +383,12 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (homePowerText != null)
         {
-            homePowerText.text = $"Power {GetPrototypePower()}";
+            homePowerText.text = $"Team Power {GetTeamPower()}";
         }
 
         if (damageText != null)
         {
-            damageText.text = $"Damage: {damage}";
+            damageText.text = $"Team Damage: {damage}";
         }
 
         if (enemyText != null)
@@ -336,16 +403,68 @@ public class IdlePrototypeController : MonoBehaviour
 
         RefreshAutoAttackUi();
         RefreshOfflineRewardUi();
+        RefreshHeroUi();
 
         if (upgradeCostText != null)
         {
-            upgradeCostText.text = $"Upgrade Damage ({upgradeCost} Gold)";
+            upgradeCostText.text = $"Upgrade {HeroNames[selectedHeroIndex]} ({upgradeCost} Gold)";
+        }
+
+        if (heroUpgradeCostText != null)
+        {
+            heroUpgradeCostText.text = $"Upgrade {HeroNames[selectedHeroIndex]} ({upgradeCost} Gold)";
         }
 
         if (upgradeButton != null)
         {
             upgradeButton.interactable = gold >= upgradeCost;
         }
+
+        if (heroUpgradeButton != null)
+        {
+            heroUpgradeButton.interactable = gold >= upgradeCost;
+        }
+    }
+
+    private void RegisterHeroButtons()
+    {
+        if (heroSelectButtons == null || heroSelectButtons.Length == 0)
+        {
+            return;
+        }
+
+        if (heroSelectButtons.Length > 0 && heroSelectButtons[0] != null) heroSelectButtons[0].onClick.AddListener(SelectHero0);
+        if (heroSelectButtons.Length > 1 && heroSelectButtons[1] != null) heroSelectButtons[1].onClick.AddListener(SelectHero1);
+        if (heroSelectButtons.Length > 2 && heroSelectButtons[2] != null) heroSelectButtons[2].onClick.AddListener(SelectHero2);
+        if (heroSelectButtons.Length > 3 && heroSelectButtons[3] != null) heroSelectButtons[3].onClick.AddListener(SelectHero3);
+        if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.AddListener(SelectHero4);
+    }
+
+    private void UnregisterHeroButtons()
+    {
+        if (heroSelectButtons == null || heroSelectButtons.Length == 0)
+        {
+            return;
+        }
+
+        if (heroSelectButtons.Length > 0 && heroSelectButtons[0] != null) heroSelectButtons[0].onClick.RemoveListener(SelectHero0);
+        if (heroSelectButtons.Length > 1 && heroSelectButtons[1] != null) heroSelectButtons[1].onClick.RemoveListener(SelectHero1);
+        if (heroSelectButtons.Length > 2 && heroSelectButtons[2] != null) heroSelectButtons[2].onClick.RemoveListener(SelectHero2);
+        if (heroSelectButtons.Length > 3 && heroSelectButtons[3] != null) heroSelectButtons[3].onClick.RemoveListener(SelectHero3);
+        if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.RemoveListener(SelectHero4);
+    }
+
+    private void SelectHero0() => SelectHero(0);
+    private void SelectHero1() => SelectHero(1);
+    private void SelectHero2() => SelectHero(2);
+    private void SelectHero3() => SelectHero(3);
+    private void SelectHero4() => SelectHero(4);
+
+    private void SelectHero(int index)
+    {
+        selectedHeroIndex = Mathf.Clamp(index, 0, HeroCount - 1);
+        SaveProgress();
+        RefreshUi();
     }
 
     private void RegisterNavigation()
@@ -439,9 +558,84 @@ public class IdlePrototypeController : MonoBehaviour
         button.targetGraphic.color = isActive ? activeTabColor : inactiveTabColor;
     }
 
-    private int GetPrototypePower()
+    private void RefreshHeroUi()
     {
-        return (damage * 10) + (enemyLevel * 4);
+        EnsureHeroLevels();
+
+        if (teamSlotTexts != null)
+        {
+            for (var i = 0; i < Mathf.Min(teamSlotTexts.Length, HeroCount); i++)
+            {
+                if (teamSlotTexts[i] != null)
+                {
+                    teamSlotTexts[i].text = $"{HeroNames[i]}\nLv. {heroLevels[i]}";
+                }
+            }
+        }
+
+        if (selectedHeroText != null)
+        {
+            selectedHeroText.text = $"{HeroNames[selectedHeroIndex]}  Lv. {heroLevels[selectedHeroIndex]}\n{HeroRarities[selectedHeroIndex]} {HeroRoles[selectedHeroIndex]}\nPower {GetHeroPower(selectedHeroIndex)}";
+        }
+
+        if (heroCardTexts != null)
+        {
+            for (var i = 0; i < Mathf.Min(heroCardTexts.Length, HeroCount); i++)
+            {
+                if (heroCardTexts[i] != null)
+                {
+                    var marker = i == selectedHeroIndex ? "> " : string.Empty;
+                    heroCardTexts[i].text = $"{marker}{HeroNames[i]}  Lv. {heroLevels[i]}\n{HeroRarities[i]} {HeroRoles[i]}  Power {GetHeroPower(i)}";
+                }
+            }
+        }
+    }
+
+    private void EnsureHeroLevels()
+    {
+        if (heroLevels == null || heroLevels.Length != HeroCount)
+        {
+            heroLevels = new int[HeroCount];
+        }
+
+        for (var i = 0; i < heroLevels.Length; i++)
+        {
+            if (heroLevels[i] <= 0)
+            {
+                heroLevels[i] = 1;
+            }
+        }
+    }
+
+    private int GetTeamPower()
+    {
+        var power = 0;
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            power += GetHeroPower(i);
+        }
+
+        return power;
+    }
+
+    private int GetTeamDamage()
+    {
+        return Mathf.Max(1, Mathf.FloorToInt(GetTeamPower() / 28f));
+    }
+
+    private int GetHeroPower(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        EnsureHeroLevels();
+        return HeroBasePower[index] + (heroLevels[index] * HeroPowerGrowth[index]);
+    }
+
+    private int GetHeroUpgradeCost(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        EnsureHeroLevels();
+        return Mathf.CeilToInt(12 * Mathf.Pow(1.32f, heroLevels[index] - 1));
     }
 
     private void RefreshAutoAttackUi()

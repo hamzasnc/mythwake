@@ -77,7 +77,7 @@ public static class MythwakePrototypeBuilder
         SetRect(offlineReward.rectTransform, new Vector2(0, -405), new Vector2(860, 80), new Vector2(0.5f, 1f));
         offlineReward.color = new Color(0.82f, 0.76f, 0.52f);
 
-        CreateHeroSlotRow(homePanel.transform, -610, "Team Preview");
+        var teamSlotTexts = CreateHeroSlotRow(homePanel.transform, -610, "Team Preview");
 
         var battleHeader = CreateText("Battle Header", battlePanel.transform, "Battle", 42, FontStyles.Bold);
         SetRect(battleHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
@@ -101,15 +101,37 @@ public static class MythwakePrototypeBuilder
         var fightButton = CreateButton("Fight Button", battlePanel.transform, "Fight", ButtonColor);
         SetRect(fightButton.GetComponent<RectTransform>(), new Vector2(0, -760), new Vector2(760, 145), new Vector2(0.5f, 1f));
 
-        var upgradeButton = CreateButton("Upgrade Button", battlePanel.transform, "Upgrade Damage (10 Gold)", UpgradeButtonColor);
+        var upgradeButton = CreateButton("Upgrade Button", battlePanel.transform, "Upgrade Astra (12 Gold)", UpgradeButtonColor);
         SetRect(upgradeButton.GetComponent<RectTransform>(), new Vector2(0, -935), new Vector2(760, 125), new Vector2(0.5f, 1f));
 
         var resetButton = CreateButton("Reset Button", battlePanel.transform, "Reset Prototype", ResetButtonColor);
         SetRect(resetButton.GetComponent<RectTransform>(), new Vector2(0, -1085), new Vector2(560, 90), new Vector2(0.5f, 1f));
         resetButton.GetComponentInChildren<TMP_Text>().fontSize = 28;
 
-        CreateHeroSlotRow(heroesPanel.transform, -160, "Hero Collection");
-        CreatePlaceholderCard(heroesPanel.transform, "Team Slots", "5 hero team setup comes next.", -500);
+        var heroHeader = CreateText("Hero Header", heroesPanel.transform, "Heroes", 42, FontStyles.Bold);
+        SetRect(heroHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
+
+        var selectedHeroCard = CreatePanel("Selected Hero Card", heroesPanel.transform, PanelColor);
+        SetRect(selectedHeroCard.rectTransform, new Vector2(0, -190), new Vector2(860, 230), new Vector2(0.5f, 1f));
+
+        var selectedHeroText = CreateText("Selected Hero Text", selectedHeroCard.transform, "Astra  Lv. 1\nEpic Warrior\nPower 55", 32, FontStyles.Bold);
+        SetRect(selectedHeroText.rectTransform, new Vector2(0, -55), new Vector2(780, 150), new Vector2(0.5f, 1f));
+
+        var heroUpgradeButton = CreateButton("Hero Upgrade Button", heroesPanel.transform, "Upgrade Astra (12 Gold)", UpgradeButtonColor);
+        SetRect(heroUpgradeButton.GetComponent<RectTransform>(), new Vector2(0, -380), new Vector2(760, 110), new Vector2(0.5f, 1f));
+
+        var heroCardTexts = new TMP_Text[5];
+        var heroButtons = new Button[5];
+        for (var i = 0; i < heroButtons.Length; i++)
+        {
+            heroButtons[i] = CreateButton($"Hero Card Button {i + 1}", heroesPanel.transform, "Hero", new Color(0.1f, 0.13f, 0.2f, 0.95f));
+            SetRect(heroButtons[i].GetComponent<RectTransform>(), new Vector2(0, -540 - (i * 135)), new Vector2(860, 115), new Vector2(0.5f, 1f));
+
+            heroCardTexts[i] = heroButtons[i].GetComponentInChildren<TMP_Text>();
+            heroCardTexts[i].fontSize = 27;
+            heroCardTexts[i].alignment = TextAlignmentOptions.Left;
+        }
+
         CreatePlaceholderCard(summonPanel.transform, "Summon", "Basic gacha placeholder comes next.", -240);
         CreatePlaceholderCard(summonPanel.transform, "Rates", "Common / Rare / Epic / Legendary.", -540);
         CreatePlaceholderCard(shopPanel.transform, "Shop", "Currencies, bundles, and ad rewards later.", -240);
@@ -132,15 +154,21 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "homeGoldText", homeGold);
         SetObject(serializedController, "homeStageText", homeStage);
         SetObject(serializedController, "homePowerText", homePower);
+        SetObjectArray(serializedController, "teamSlotTexts", teamSlotTexts);
+        SetObject(serializedController, "selectedHeroText", selectedHeroText);
+        SetObjectArray(serializedController, "heroCardTexts", heroCardTexts);
         SetObject(serializedController, "damageText", damage);
         SetObject(serializedController, "enemyText", enemyName);
         SetObject(serializedController, "enemyHpText", enemyHp);
         SetObject(serializedController, "autoAttackText", autoAttack);
         SetObject(serializedController, "offlineRewardText", offlineReward);
         SetObject(serializedController, "upgradeCostText", upgradeButton.GetComponentInChildren<TMP_Text>());
+        SetObject(serializedController, "heroUpgradeCostText", heroUpgradeButton.GetComponentInChildren<TMP_Text>());
         SetObject(serializedController, "fightButton", fightButton);
         SetObject(serializedController, "upgradeButton", upgradeButton);
+        SetObject(serializedController, "heroUpgradeButton", heroUpgradeButton);
         SetObject(serializedController, "resetButton", resetButton);
+        SetObjectArray(serializedController, "heroSelectButtons", heroButtons);
         SetObject(serializedController, "homePanel", homePanel);
         SetObject(serializedController, "battlePanel", battlePanel);
         SetObject(serializedController, "heroesPanel", heroesPanel);
@@ -195,8 +223,9 @@ public static class MythwakePrototypeBuilder
         return screen;
     }
 
-    private static void CreateHeroSlotRow(Transform parent, float topOffset, string heading)
+    private static TMP_Text[] CreateHeroSlotRow(Transform parent, float topOffset, string heading)
     {
+        var labels = new TMP_Text[5];
         var header = CreateText($"{heading} Header", parent, heading, 34, FontStyles.Bold);
         SetRect(header.rectTransform, new Vector2(0, topOffset), new Vector2(860, 60), new Vector2(0.5f, 1f));
 
@@ -207,7 +236,10 @@ public static class MythwakePrototypeBuilder
 
             var label = CreateText($"Hero Slot {i + 1} Label", slot.transform, i == 0 ? "Hero" : "Empty", 24, FontStyles.Bold);
             SetRect(label.rectTransform, new Vector2(0, -82), new Vector2(120, 44), new Vector2(0.5f, 1f));
+            labels[i] = label;
         }
+
+        return labels;
     }
 
     private static void CreatePlaceholderCard(Transform parent, string title, string body, float topOffset)
@@ -300,5 +332,16 @@ public static class MythwakePrototypeBuilder
     private static void SetObject(SerializedObject serializedObject, string propertyName, Object value)
     {
         serializedObject.FindProperty(propertyName).objectReferenceValue = value;
+    }
+
+    private static void SetObjectArray(SerializedObject serializedObject, string propertyName, Object[] values)
+    {
+        var property = serializedObject.FindProperty(propertyName);
+        property.arraySize = values.Length;
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            property.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+        }
     }
 }
