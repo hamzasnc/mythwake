@@ -55,6 +55,7 @@ public static class MythwakePrototypeBuilder
         var homePanel = CreateScreen("Home Panel", root.transform);
         var battlePanel = CreateScreen("Battle Panel", root.transform);
         var heroesPanel = CreateScreen("Heroes Panel", root.transform);
+        var gearPanel = CreateScreen("Gear Panel", root.transform);
         var summonPanel = CreateScreen("Summon Panel", root.transform);
         var shopPanel = CreateScreen("Shop Panel", root.transform);
 
@@ -144,12 +145,18 @@ public static class MythwakePrototypeBuilder
         essenceDungeonText.fontSize = 24;
         essenceDungeonText.alignment = TextAlignmentOptions.Left;
 
+        var gearDungeonButton = CreateButton("Gear Dungeon Button", battlePanel.transform, "Gear Dungeon", new Color(0.24f, 0.29f, 0.52f));
+        SetRect(gearDungeonButton.GetComponent<RectTransform>(), new Vector2(0, -1075), new Vector2(860, 105), new Vector2(0.5f, 1f));
+        var gearDungeonText = gearDungeonButton.GetComponentInChildren<TMP_Text>();
+        gearDungeonText.fontSize = 24;
+        gearDungeonText.alignment = TextAlignmentOptions.Left;
+
         var upgradeButton = CreateButton("Upgrade Button", battlePanel.transform, "Upgrade Astra (12 Essence)", UpgradeButtonColor);
-        SetRect(upgradeButton.GetComponent<RectTransform>(), new Vector2(0, -1080), new Vector2(760, 95), new Vector2(0.5f, 1f));
+        SetRect(upgradeButton.GetComponent<RectTransform>(), new Vector2(0, -1205), new Vector2(760, 95), new Vector2(0.5f, 1f));
         upgradeButton.GetComponentInChildren<TMP_Text>().fontSize = 30;
 
         var resetButton = CreateButton("Reset Button", battlePanel.transform, "Reset Prototype", ResetButtonColor);
-        SetRect(resetButton.GetComponent<RectTransform>(), new Vector2(0, -1195), new Vector2(560, 80), new Vector2(0.5f, 1f));
+        SetRect(resetButton.GetComponent<RectTransform>(), new Vector2(0, -1320), new Vector2(560, 80), new Vector2(0.5f, 1f));
         resetButton.GetComponentInChildren<TMP_Text>().fontSize = 26;
 
         var heroHeader = CreateText("Hero Header", heroesPanel.transform, "Heroes", 42, FontStyles.Bold);
@@ -192,6 +199,50 @@ public static class MythwakePrototypeBuilder
             heroCardTexts[i].fontSize = 24;
             heroCardTexts[i].alignment = TextAlignmentOptions.Left;
         }
+
+        var gearHeader = CreateText("Gear Header", gearPanel.transform, "Gear", 42, FontStyles.Bold);
+        SetRect(gearHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
+
+        var accessorySummary = CreateText("Accessory Summary Text", gearPanel.transform, "Accessories\nATK +0  HP +0\nGear Dungeon Floor 1", 34, FontStyles.Bold);
+        SetRect(accessorySummary.rectTransform, new Vector2(0, -145), new Vector2(860, 145), new Vector2(0.5f, 1f));
+
+        var accessoryCard = CreatePanel("Accessory Card", gearPanel.transform, PanelColor);
+        SetRect(accessoryCard.rectTransform, new Vector2(0, -410), new Vector2(860, 300), new Vector2(0.5f, 1f));
+
+        var accessorySelected = CreateText("Accessory Selected Text", accessoryCard.transform, "Ohrringe\nEquipped: None\nSelected Fuse Tier: R0", 31, FontStyles.Bold);
+        SetRect(accessorySelected.rectTransform, new Vector2(0, -85), new Vector2(780, 145), new Vector2(0.5f, 1f));
+
+        var accessoryInventory = CreateText("Accessory Inventory Text", accessoryCard.transform, "Inventory Copies\nR0: 0\nR1: 0\nR2: 0\nR3: 0\nR4: 0", 25, FontStyles.Normal);
+        SetRect(accessoryInventory.rectTransform, new Vector2(0, -215), new Vector2(780, 125), new Vector2(0.5f, 1f));
+        accessoryInventory.alignment = TextAlignmentOptions.Left;
+
+        var previousSlotButton = CreateButton("Accessory Previous Slot Button", gearPanel.transform, "Prev Slot", ButtonColor);
+        SetRect(previousSlotButton.GetComponent<RectTransform>(), new Vector2(-290, -610), new Vector2(250, 76), new Vector2(0.5f, 1f));
+        previousSlotButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
+
+        var nextSlotButton = CreateButton("Accessory Next Slot Button", gearPanel.transform, "Next Slot", ButtonColor);
+        SetRect(nextSlotButton.GetComponent<RectTransform>(), new Vector2(0, -610), new Vector2(250, 76), new Vector2(0.5f, 1f));
+        nextSlotButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
+
+        var equipAccessoryButton = CreateButton("Accessory Equip Button", gearPanel.transform, "Equip Selected", UpgradeButtonColor);
+        SetRect(equipAccessoryButton.GetComponent<RectTransform>(), new Vector2(290, -610), new Vector2(250, 76), new Vector2(0.5f, 1f));
+        equipAccessoryButton.GetComponentInChildren<TMP_Text>().fontSize = 23;
+
+        var previousRarityButton = CreateButton("Accessory Previous Rarity Button", gearPanel.transform, "Prev Rarity", ButtonColor);
+        SetRect(previousRarityButton.GetComponent<RectTransform>(), new Vector2(-290, -720), new Vector2(250, 76), new Vector2(0.5f, 1f));
+        previousRarityButton.GetComponentInChildren<TMP_Text>().fontSize = 23;
+
+        var nextRarityButton = CreateButton("Accessory Next Rarity Button", gearPanel.transform, "Next Rarity", ButtonColor);
+        SetRect(nextRarityButton.GetComponent<RectTransform>(), new Vector2(0, -720), new Vector2(250, 76), new Vector2(0.5f, 1f));
+        nextRarityButton.GetComponentInChildren<TMP_Text>().fontSize = 23;
+
+        var fuseAccessoryButton = CreateButton("Accessory Fuse Button", gearPanel.transform, "Fuse 3 Copies", UpgradeButtonColor);
+        SetRect(fuseAccessoryButton.GetComponent<RectTransform>(), new Vector2(290, -720), new Vector2(250, 76), new Vector2(0.5f, 1f));
+        fuseAccessoryButton.GetComponentInChildren<TMP_Text>().fontSize = 23;
+
+        var levelAccessoryButton = CreateButton("Accessory Level Button", gearPanel.transform, "Level Equipped", UpgradeButtonColor);
+        SetRect(levelAccessoryButton.GetComponent<RectTransform>(), new Vector2(0, -840), new Vector2(760, 95), new Vector2(0.5f, 1f));
+        levelAccessoryButton.GetComponentInChildren<TMP_Text>().fontSize = 28;
 
         var summonHeader = CreateText("Summon Header", summonPanel.transform, "Summon", 42, FontStyles.Bold);
         SetRect(summonHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
@@ -254,11 +305,12 @@ public static class MythwakePrototypeBuilder
         var navPanel = CreatePanel("Bottom Navigation", root.transform, new Color(0.06f, 0.08f, 0.12f, 0.98f));
         SetRect(navPanel.rectTransform, new Vector2(0, 0), new Vector2(1080, 190), new Vector2(0.5f, 0f));
 
-        var homeTab = CreateNavButton("Home Tab", navPanel.transform, "Home", -432);
-        var battleTab = CreateNavButton("Battle Tab", navPanel.transform, "Battle", -216);
-        var heroesTab = CreateNavButton("Heroes Tab", navPanel.transform, "Heroes", 0);
-        var summonTab = CreateNavButton("Summon Tab", navPanel.transform, "Summon", 216);
-        var shopTab = CreateNavButton("Shop Tab", navPanel.transform, "Shop", 432);
+        var homeTab = CreateNavButton("Home Tab", navPanel.transform, "Home", -450);
+        var battleTab = CreateNavButton("Battle Tab", navPanel.transform, "Battle", -270);
+        var heroesTab = CreateNavButton("Heroes Tab", navPanel.transform, "Heroes", -90);
+        var gearTab = CreateNavButton("Gear Tab", navPanel.transform, "Gear", 90);
+        var summonTab = CreateNavButton("Summon Tab", navPanel.transform, "Summon", 270);
+        var shopTab = CreateNavButton("Shop Tab", navPanel.transform, "Shop", 450);
 
         var controllerObject = new GameObject("Idle Prototype Controller");
         var controller = controllerObject.AddComponent<IdlePrototypeController>();
@@ -281,6 +333,7 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "dungeonResultText", dungeonResult);
         SetObject(serializedController, "goldDungeonText", goldDungeonText);
         SetObject(serializedController, "essenceDungeonText", essenceDungeonText);
+        SetObject(serializedController, "gearDungeonText", gearDungeonText);
         SetObject(serializedController, "autoAttackText", autoAttack);
         SetObject(serializedController, "offlineRewardText", offlineReward);
         SetObject(serializedController, "upgradeCostText", upgradeButton.GetComponentInChildren<TMP_Text>());
@@ -289,6 +342,12 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "equipmentSummaryText", equipmentSummary);
         SetObject(serializedController, "weaponUpgradeCostText", weaponUpgradeButton.GetComponentInChildren<TMP_Text>());
         SetObject(serializedController, "armorUpgradeCostText", armorUpgradeButton.GetComponentInChildren<TMP_Text>());
+        SetObject(serializedController, "accessorySummaryText", accessorySummary);
+        SetObject(serializedController, "accessorySelectedText", accessorySelected);
+        SetObject(serializedController, "accessoryInventoryText", accessoryInventory);
+        SetObject(serializedController, "accessoryEquipText", equipAccessoryButton.GetComponentInChildren<TMP_Text>());
+        SetObject(serializedController, "accessoryLevelText", levelAccessoryButton.GetComponentInChildren<TMP_Text>());
+        SetObject(serializedController, "accessoryFuseText", fuseAccessoryButton.GetComponentInChildren<TMP_Text>());
         SetObject(serializedController, "summonCostText", summonCost);
         SetObject(serializedController, "summonResultText", summonResult);
         SetObject(serializedController, "summonRatesText", summonRates);
@@ -298,11 +357,19 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "fightButton", fightButton);
         SetObject(serializedController, "goldDungeonButton", goldDungeonButton);
         SetObject(serializedController, "essenceDungeonButton", essenceDungeonButton);
+        SetObject(serializedController, "gearDungeonButton", gearDungeonButton);
         SetObject(serializedController, "upgradeButton", upgradeButton);
         SetObject(serializedController, "heroUpgradeButton", heroUpgradeButton);
         SetObject(serializedController, "heroAscendButton", heroAscendButton);
         SetObject(serializedController, "weaponUpgradeButton", weaponUpgradeButton);
         SetObject(serializedController, "armorUpgradeButton", armorUpgradeButton);
+        SetObject(serializedController, "accessoryPreviousSlotButton", previousSlotButton);
+        SetObject(serializedController, "accessoryNextSlotButton", nextSlotButton);
+        SetObject(serializedController, "accessoryPreviousRarityButton", previousRarityButton);
+        SetObject(serializedController, "accessoryNextRarityButton", nextRarityButton);
+        SetObject(serializedController, "accessoryEquipButton", equipAccessoryButton);
+        SetObject(serializedController, "accessoryLevelButton", levelAccessoryButton);
+        SetObject(serializedController, "accessoryFuseButton", fuseAccessoryButton);
         SetObject(serializedController, "summonButton", summonButton);
         SetObject(serializedController, "resetButton", resetButton);
         SetObjectArray(serializedController, "heroSelectButtons", heroButtons);
@@ -311,11 +378,13 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "homePanel", homePanel);
         SetObject(serializedController, "battlePanel", battlePanel);
         SetObject(serializedController, "heroesPanel", heroesPanel);
+        SetObject(serializedController, "gearPanel", gearPanel);
         SetObject(serializedController, "summonPanel", summonPanel);
         SetObject(serializedController, "shopPanel", shopPanel);
         SetObject(serializedController, "homeTabButton", homeTab);
         SetObject(serializedController, "battleTabButton", battleTab);
         SetObject(serializedController, "heroesTabButton", heroesTab);
+        SetObject(serializedController, "gearTabButton", gearTab);
         SetObject(serializedController, "summonTabButton", summonTab);
         SetObject(serializedController, "shopTabButton", shopTab);
         serializedController.ApplyModifiedPropertiesWithoutUndo();
@@ -397,10 +466,10 @@ public static class MythwakePrototypeBuilder
     private static Button CreateNavButton(string name, Transform parent, string label, float xPosition)
     {
         var button = CreateButton(name, parent, label, NavButtonColor);
-        SetRect(button.GetComponent<RectTransform>(), new Vector2(xPosition, 0), new Vector2(190, 130), new Vector2(0.5f, 0.5f));
+        SetRect(button.GetComponent<RectTransform>(), new Vector2(xPosition, 0), new Vector2(160, 130), new Vector2(0.5f, 0.5f));
 
         var text = button.GetComponentInChildren<TMP_Text>();
-        text.fontSize = 26;
+        text.fontSize = 24;
 
         return button;
     }

@@ -18,6 +18,11 @@ Current prototype:
 - Gold can be spent on starter Weapon and Armor equipment upgrades
 - Equipment upgrades are saved locally and add team-wide ATK and HP
 - Starter equipment balance is defined through small data structs to prepare for later server/database config
+- Accessory gear system with Ohrringe, Kette, Armband, Handschuhe, and Schuhe slots
+- Accessory items have rarity tiers R0-R4, can be equipped, leveled, and saved locally
+- Accessory max level starts at 20 for R0 and increases by 10 per rarity tier
+- Gear Dungeon drops random accessory copies
+- Three copies of the same slot and rarity can be fused into the next rarity
 - Hero upgrades use Myth Essence and are saved locally
 - Home screen shows a Next Goal hint for the current progression bottleneck
 - Campaign stages now use named enemy data with HP and progression-only clears

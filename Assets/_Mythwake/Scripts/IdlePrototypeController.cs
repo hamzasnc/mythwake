@@ -52,11 +52,26 @@ public class IdlePrototypeController : MonoBehaviour
         }
     }
 
+    private struct AccessorySlotDefinition
+    {
+        public string name;
+        public int attackPerLevel;
+        public int healthPerLevel;
+
+        public AccessorySlotDefinition(string name, int attackPerLevel, int healthPerLevel)
+        {
+            this.name = name;
+            this.attackPerLevel = attackPerLevel;
+            this.healthPerLevel = healthPerLevel;
+        }
+    }
+
     private enum AppScreen
     {
         Home,
         Battle,
         Heroes,
+        Gear,
         Summon,
         Shop
     }
@@ -71,8 +86,14 @@ public class IdlePrototypeController : MonoBehaviour
     private const string UpgradeCostKey = "Mythwake.Prototype.UpgradeCost";
     private const string GoldDungeonFloorKey = "Mythwake.Prototype.Dungeon.GoldFloor";
     private const string EssenceDungeonFloorKey = "Mythwake.Prototype.Dungeon.EssenceFloor";
+    private const string GearDungeonFloorKey = "Mythwake.Prototype.Dungeon.GearFloor";
     private const string WeaponLevelKey = "Mythwake.Prototype.Equipment.WeaponLevel";
     private const string ArmorLevelKey = "Mythwake.Prototype.Equipment.ArmorLevel";
+    private const string SelectedAccessorySlotKey = "Mythwake.Prototype.Accessory.SelectedSlot";
+    private const string SelectedAccessoryRarityKey = "Mythwake.Prototype.Accessory.SelectedRarity";
+    private const string EquippedAccessoryRarityKeyPrefix = "Mythwake.Prototype.Accessory.EquippedRarity.";
+    private const string EquippedAccessoryLevelKeyPrefix = "Mythwake.Prototype.Accessory.EquippedLevel.";
+    private const string AccessoryInventoryKeyPrefix = "Mythwake.Prototype.Accessory.Inventory.";
     private const string LastSeenUtcKey = "Mythwake.Prototype.LastSeenUtc";
     private const string SelectedHeroKey = "Mythwake.Prototype.SelectedHero";
     private const string HeroLevelKeyPrefix = "Mythwake.Prototype.HeroLevel.";
@@ -89,6 +110,8 @@ public class IdlePrototypeController : MonoBehaviour
     private const int HeroCount = 5;
     private const int DailyMissionCount = 3;
     private const int BattlePassRewardCount = 5;
+    private const int AccessorySlotCount = 5;
+    private const int AccessoryRarityCount = 5;
     private const int BattlePassXpPerDailyClaim = 40;
     private const int SummonCost = 30;
     private const int StarterGems = 30;
@@ -105,6 +128,9 @@ public class IdlePrototypeController : MonoBehaviour
     private const float CampaignOverflowRewardGrowth = 1.14f;
     private const int CampaignMilestoneInterval = 5;
     private const int DungeonBonusInterval = 5;
+    private const int AccessoryBaseMaxLevel = 20;
+    private const int AccessoryMaxLevelPerRarity = 10;
+    private const int AccessoryFuseCost = 3;
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
     private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
@@ -127,6 +153,15 @@ public class IdlePrototypeController : MonoBehaviour
     private static readonly int[] BattlePassEssenceRewards = { 0, 120, 0, 180, 300 };
     private static readonly EquipmentTrackDefinition WeaponTrack = new EquipmentTrackDefinition("Weapon", "ATK", 8, 9, 80, 1.45f);
     private static readonly EquipmentTrackDefinition ArmorTrack = new EquipmentTrackDefinition("Armor", "HP", 80, 65, 75, 1.42f);
+    private static readonly string[] AccessoryRarityNames = { "R0", "R1", "R2", "R3", "R4" };
+    private static readonly AccessorySlotDefinition[] AccessorySlots =
+    {
+        new AccessorySlotDefinition("Ohrringe", 3, 4),
+        new AccessorySlotDefinition("Kette", 1, 18),
+        new AccessorySlotDefinition("Armband", 2, 10),
+        new AccessorySlotDefinition("Handschuhe", 4, 2),
+        new AccessorySlotDefinition("Schuhe", 1, 15)
+    };
 
     [Header("Stats")]
     [SerializeField] private int gold;
@@ -139,8 +174,14 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private int upgradeCost = 10;
     [SerializeField] private int goldDungeonFloor = 1;
     [SerializeField] private int essenceDungeonFloor = 1;
+    [SerializeField] private int gearDungeonFloor = 1;
     [SerializeField] private int weaponLevel = StarterEquipmentLevel;
     [SerializeField] private int armorLevel = StarterEquipmentLevel;
+    [SerializeField] private int selectedAccessorySlot;
+    [SerializeField] private int selectedAccessoryRarity;
+    [SerializeField] private int[] equippedAccessoryRarities = new int[AccessorySlotCount];
+    [SerializeField] private int[] equippedAccessoryLevels = new int[AccessorySlotCount];
+    [SerializeField] private int[] accessoryInventory = new int[AccessorySlotCount * AccessoryRarityCount];
     [SerializeField] private int selectedHeroIndex;
     [SerializeField] private int[] heroLevels = new int[HeroCount];
     [SerializeField] private int[] heroShards = new int[HeroCount];
@@ -192,6 +233,7 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text dungeonResultText;
     [SerializeField] private TMP_Text goldDungeonText;
     [SerializeField] private TMP_Text essenceDungeonText;
+    [SerializeField] private TMP_Text gearDungeonText;
     [SerializeField] private TMP_Text autoAttackText;
     [SerializeField] private TMP_Text offlineRewardText;
     [SerializeField] private TMP_Text upgradeCostText;
@@ -200,6 +242,12 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text equipmentSummaryText;
     [SerializeField] private TMP_Text weaponUpgradeCostText;
     [SerializeField] private TMP_Text armorUpgradeCostText;
+    [SerializeField] private TMP_Text accessorySummaryText;
+    [SerializeField] private TMP_Text accessorySelectedText;
+    [SerializeField] private TMP_Text accessoryInventoryText;
+    [SerializeField] private TMP_Text accessoryEquipText;
+    [SerializeField] private TMP_Text accessoryLevelText;
+    [SerializeField] private TMP_Text accessoryFuseText;
     [SerializeField] private TMP_Text summonCostText;
     [SerializeField] private TMP_Text summonResultText;
     [SerializeField] private TMP_Text summonRatesText;
@@ -210,11 +258,19 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private Button fightButton;
     [SerializeField] private Button goldDungeonButton;
     [SerializeField] private Button essenceDungeonButton;
+    [SerializeField] private Button gearDungeonButton;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Button heroUpgradeButton;
     [SerializeField] private Button heroAscendButton;
     [SerializeField] private Button weaponUpgradeButton;
     [SerializeField] private Button armorUpgradeButton;
+    [SerializeField] private Button accessoryPreviousSlotButton;
+    [SerializeField] private Button accessoryNextSlotButton;
+    [SerializeField] private Button accessoryPreviousRarityButton;
+    [SerializeField] private Button accessoryNextRarityButton;
+    [SerializeField] private Button accessoryEquipButton;
+    [SerializeField] private Button accessoryLevelButton;
+    [SerializeField] private Button accessoryFuseButton;
     [SerializeField] private Button summonButton;
     [SerializeField] private Button resetButton;
     [SerializeField] private Button[] heroSelectButtons;
@@ -225,11 +281,13 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private GameObject homePanel;
     [SerializeField] private GameObject battlePanel;
     [SerializeField] private GameObject heroesPanel;
+    [SerializeField] private GameObject gearPanel;
     [SerializeField] private GameObject summonPanel;
     [SerializeField] private GameObject shopPanel;
     [SerializeField] private Button homeTabButton;
     [SerializeField] private Button battleTabButton;
     [SerializeField] private Button heroesTabButton;
+    [SerializeField] private Button gearTabButton;
     [SerializeField] private Button summonTabButton;
     [SerializeField] private Button shopTabButton;
     [SerializeField] private Color activeTabColor = new Color(0.22f, 0.48f, 0.86f);
@@ -264,6 +322,11 @@ public class IdlePrototypeController : MonoBehaviour
             essenceDungeonButton.onClick.AddListener(RunEssenceDungeon);
         }
 
+        if (gearDungeonButton != null)
+        {
+            gearDungeonButton.onClick.AddListener(RunGearDungeon);
+        }
+
         if (upgradeButton != null)
         {
             upgradeButton.onClick.AddListener(UpgradeDamage);
@@ -287,6 +350,41 @@ public class IdlePrototypeController : MonoBehaviour
         if (armorUpgradeButton != null)
         {
             armorUpgradeButton.onClick.AddListener(UpgradeArmor);
+        }
+
+        if (accessoryPreviousSlotButton != null)
+        {
+            accessoryPreviousSlotButton.onClick.AddListener(PreviousAccessorySlot);
+        }
+
+        if (accessoryNextSlotButton != null)
+        {
+            accessoryNextSlotButton.onClick.AddListener(NextAccessorySlot);
+        }
+
+        if (accessoryPreviousRarityButton != null)
+        {
+            accessoryPreviousRarityButton.onClick.AddListener(PreviousAccessoryRarity);
+        }
+
+        if (accessoryNextRarityButton != null)
+        {
+            accessoryNextRarityButton.onClick.AddListener(NextAccessoryRarity);
+        }
+
+        if (accessoryEquipButton != null)
+        {
+            accessoryEquipButton.onClick.AddListener(EquipSelectedAccessory);
+        }
+
+        if (accessoryLevelButton != null)
+        {
+            accessoryLevelButton.onClick.AddListener(LevelSelectedAccessory);
+        }
+
+        if (accessoryFuseButton != null)
+        {
+            accessoryFuseButton.onClick.AddListener(FuseSelectedAccessory);
         }
 
         if (summonButton != null)
@@ -339,6 +437,11 @@ public class IdlePrototypeController : MonoBehaviour
             essenceDungeonButton.onClick.RemoveListener(RunEssenceDungeon);
         }
 
+        if (gearDungeonButton != null)
+        {
+            gearDungeonButton.onClick.RemoveListener(RunGearDungeon);
+        }
+
         if (upgradeButton != null)
         {
             upgradeButton.onClick.RemoveListener(UpgradeDamage);
@@ -362,6 +465,41 @@ public class IdlePrototypeController : MonoBehaviour
         if (armorUpgradeButton != null)
         {
             armorUpgradeButton.onClick.RemoveListener(UpgradeArmor);
+        }
+
+        if (accessoryPreviousSlotButton != null)
+        {
+            accessoryPreviousSlotButton.onClick.RemoveListener(PreviousAccessorySlot);
+        }
+
+        if (accessoryNextSlotButton != null)
+        {
+            accessoryNextSlotButton.onClick.RemoveListener(NextAccessorySlot);
+        }
+
+        if (accessoryPreviousRarityButton != null)
+        {
+            accessoryPreviousRarityButton.onClick.RemoveListener(PreviousAccessoryRarity);
+        }
+
+        if (accessoryNextRarityButton != null)
+        {
+            accessoryNextRarityButton.onClick.RemoveListener(NextAccessoryRarity);
+        }
+
+        if (accessoryEquipButton != null)
+        {
+            accessoryEquipButton.onClick.RemoveListener(EquipSelectedAccessory);
+        }
+
+        if (accessoryLevelButton != null)
+        {
+            accessoryLevelButton.onClick.RemoveListener(LevelSelectedAccessory);
+        }
+
+        if (accessoryFuseButton != null)
+        {
+            accessoryFuseButton.onClick.RemoveListener(FuseSelectedAccessory);
         }
 
         if (summonButton != null)
@@ -395,6 +533,11 @@ public class IdlePrototypeController : MonoBehaviour
         ShowScreen(AppScreen.Heroes);
     }
 
+    public void ShowGear()
+    {
+        ShowScreen(AppScreen.Gear);
+    }
+
     public void ShowSummon()
     {
         ShowScreen(AppScreen.Summon);
@@ -418,6 +561,30 @@ public class IdlePrototypeController : MonoBehaviour
     public void RunEssenceDungeon()
     {
         RunDungeon(isGoldDungeon: false);
+    }
+
+    public void RunGearDungeon()
+    {
+        var floor = Mathf.Max(1, gearDungeonFloor);
+        var enemyHp = GetGearDungeonEnemyHp(floor);
+        var enemyDamage = GetGearDungeonEnemyDamage(floor);
+        var result = SimulateCombat(enemyHp, enemyDamage);
+
+        if (!result.won)
+        {
+            SetDungeonResult($"Gear Dungeon Floor {floor} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}");
+            RefreshUi();
+            return;
+        }
+
+        var slot = UnityEngine.Random.Range(0, AccessorySlotCount);
+        var rarity = RollAccessoryRarity(floor);
+        AddAccessoryInventory(slot, rarity, 1);
+        gearDungeonFloor++;
+
+        SetDungeonResult($"Gear Dungeon Floor {floor} cleared in {result.rounds} rounds\nDrop: {AccessoryRarityNames[rarity]} {AccessorySlots[slot].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}");
+        SaveProgress();
+        RefreshUi();
     }
 
     public void UpgradeDamage()
@@ -498,6 +665,119 @@ public class IdlePrototypeController : MonoBehaviour
         RefreshUi();
     }
 
+    public void PreviousAccessorySlot()
+    {
+        selectedAccessorySlot = (selectedAccessorySlot + AccessorySlotCount - 1) % AccessorySlotCount;
+        SaveProgress();
+        RefreshUi();
+    }
+
+    public void NextAccessorySlot()
+    {
+        selectedAccessorySlot = (selectedAccessorySlot + 1) % AccessorySlotCount;
+        SaveProgress();
+        RefreshUi();
+    }
+
+    public void PreviousAccessoryRarity()
+    {
+        selectedAccessoryRarity = (selectedAccessoryRarity + AccessoryRarityCount - 1) % AccessoryRarityCount;
+        SaveProgress();
+        RefreshUi();
+    }
+
+    public void NextAccessoryRarity()
+    {
+        selectedAccessoryRarity = (selectedAccessoryRarity + 1) % AccessoryRarityCount;
+        SaveProgress();
+        RefreshUi();
+    }
+
+    public void EquipSelectedAccessory()
+    {
+        EnsureAccessories();
+        var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
+        var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+
+        if (GetAccessoryInventoryCount(slot, rarity) <= 0)
+        {
+            RefreshUi();
+            return;
+        }
+
+        if (equippedAccessoryRarities[slot] == rarity)
+        {
+            RefreshUi();
+            return;
+        }
+
+        if (equippedAccessoryRarities[slot] >= 0)
+        {
+            AddAccessoryInventory(slot, equippedAccessoryRarities[slot], 1);
+        }
+
+        AddAccessoryInventory(slot, rarity, -1);
+        equippedAccessoryRarities[slot] = rarity;
+        equippedAccessoryLevels[slot] = 1;
+
+        SaveProgress();
+        RefreshUi();
+    }
+
+    public void LevelSelectedAccessory()
+    {
+        EnsureAccessories();
+        var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
+        var rarity = equippedAccessoryRarities[slot];
+
+        if (rarity < 0)
+        {
+            RefreshUi();
+            return;
+        }
+
+        var maxLevel = GetAccessoryMaxLevel(rarity);
+        if (equippedAccessoryLevels[slot] >= maxLevel)
+        {
+            RefreshUi();
+            return;
+        }
+
+        var cost = GetAccessoryLevelCost(slot);
+        if (gold < cost)
+        {
+            RefreshUi();
+            return;
+        }
+
+        gold -= cost;
+        equippedAccessoryLevels[slot]++;
+        damage = GetTeamDamage();
+
+        SaveProgress();
+        RefreshUi();
+    }
+
+    public void FuseSelectedAccessory()
+    {
+        EnsureAccessories();
+        var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
+        var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+
+        if (rarity >= AccessoryRarityCount - 1 || GetAccessoryInventoryCount(slot, rarity) < AccessoryFuseCost)
+        {
+            RefreshUi();
+            return;
+        }
+
+        AddAccessoryInventory(slot, rarity, -AccessoryFuseCost);
+        AddAccessoryInventory(slot, rarity + 1, 1);
+        selectedAccessoryRarity = rarity + 1;
+
+        SaveProgress();
+        RefreshUi();
+    }
+
     public void SummonOnce()
     {
         if (gems < SummonCost)
@@ -573,8 +853,11 @@ public class IdlePrototypeController : MonoBehaviour
         enemyLevel = 1;
         goldDungeonFloor = 1;
         essenceDungeonFloor = 1;
+        gearDungeonFloor = 1;
         weaponLevel = StarterEquipmentLevel;
         armorLevel = StarterEquipmentLevel;
+        selectedAccessorySlot = 0;
+        selectedAccessoryRarity = 0;
         enemyMaxHp = GetStageMaxHp(enemyLevel);
         enemyHp = enemyMaxHp;
         selectedHeroIndex = 0;
@@ -586,10 +869,22 @@ public class IdlePrototypeController : MonoBehaviour
 
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureAccessories();
         for (var i = 0; i < heroShards.Length; i++)
         {
             heroShards[i] = 0;
             heroAscensions[i] = 0;
+        }
+
+        for (var i = 0; i < AccessorySlotCount; i++)
+        {
+            equippedAccessoryRarities[i] = -1;
+            equippedAccessoryLevels[i] = 0;
+        }
+
+        for (var i = 0; i < accessoryInventory.Length; i++)
+        {
+            accessoryInventory[i] = 0;
         }
 
         summonCount = 0;
@@ -681,8 +976,11 @@ public class IdlePrototypeController : MonoBehaviour
 
         goldDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(GoldDungeonFloorKey, goldDungeonFloor));
         essenceDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(EssenceDungeonFloorKey, essenceDungeonFloor));
+        gearDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(GearDungeonFloorKey, gearDungeonFloor));
         weaponLevel = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt(WeaponLevelKey, weaponLevel));
         armorLevel = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt(ArmorLevelKey, armorLevel));
+        selectedAccessorySlot = Mathf.Clamp(PlayerPrefs.GetInt(SelectedAccessorySlotKey, selectedAccessorySlot), 0, AccessorySlotCount - 1);
+        selectedAccessoryRarity = Mathf.Clamp(PlayerPrefs.GetInt(SelectedAccessoryRarityKey, selectedAccessoryRarity), 0, AccessoryRarityCount - 1);
         enemyLevel = Mathf.Max(1, PlayerPrefs.GetInt(EnemyLevelKey, enemyLevel));
         enemyMaxHp = Mathf.Max(GetStageMaxHp(enemyLevel), PlayerPrefs.GetInt(EnemyMaxHpKey, enemyMaxHp));
         enemyHp = Mathf.Clamp(PlayerPrefs.GetInt(EnemyHpKey, enemyHp), 1, enemyMaxHp);
@@ -690,12 +988,28 @@ public class IdlePrototypeController : MonoBehaviour
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureAccessories();
 
         for (var i = 0; i < heroLevels.Length; i++)
         {
             heroLevels[i] = Mathf.Max(1, PlayerPrefs.GetInt($"{HeroLevelKeyPrefix}{i}", 1));
             heroShards[i] = Mathf.Max(0, PlayerPrefs.GetInt($"{HeroShardKeyPrefix}{i}", 0));
             heroAscensions[i] = Mathf.Max(0, PlayerPrefs.GetInt($"{HeroAscensionKeyPrefix}{i}", 0));
+        }
+
+        for (var i = 0; i < AccessorySlotCount; i++)
+        {
+            equippedAccessoryRarities[i] = Mathf.Clamp(PlayerPrefs.GetInt($"{EquippedAccessoryRarityKeyPrefix}{i}", -1), -1, AccessoryRarityCount - 1);
+            equippedAccessoryLevels[i] = Mathf.Clamp(PlayerPrefs.GetInt($"{EquippedAccessoryLevelKeyPrefix}{i}", 0), 0, GetAccessoryMaxLevel(Mathf.Max(0, equippedAccessoryRarities[i])));
+            if (equippedAccessoryRarities[i] < 0)
+            {
+                equippedAccessoryLevels[i] = 0;
+            }
+        }
+
+        for (var i = 0; i < accessoryInventory.Length; i++)
+        {
+            accessoryInventory[i] = Mathf.Max(0, PlayerPrefs.GetInt($"{AccessoryInventoryKeyPrefix}{i}", accessoryInventory[i]));
         }
 
         summonCount = Mathf.Max(0, PlayerPrefs.GetInt(SummonCountKey, summonCount));
@@ -712,8 +1026,11 @@ public class IdlePrototypeController : MonoBehaviour
         PlayerPrefs.SetInt(DamageKey, damage);
         PlayerPrefs.SetInt(GoldDungeonFloorKey, goldDungeonFloor);
         PlayerPrefs.SetInt(EssenceDungeonFloorKey, essenceDungeonFloor);
+        PlayerPrefs.SetInt(GearDungeonFloorKey, gearDungeonFloor);
         PlayerPrefs.SetInt(WeaponLevelKey, weaponLevel);
         PlayerPrefs.SetInt(ArmorLevelKey, armorLevel);
+        PlayerPrefs.SetInt(SelectedAccessorySlotKey, selectedAccessorySlot);
+        PlayerPrefs.SetInt(SelectedAccessoryRarityKey, selectedAccessoryRarity);
         PlayerPrefs.SetInt(EnemyLevelKey, enemyLevel);
         PlayerPrefs.SetInt(EnemyHpKey, enemyHp);
         PlayerPrefs.SetInt(EnemyMaxHpKey, enemyMaxHp);
@@ -729,6 +1046,7 @@ public class IdlePrototypeController : MonoBehaviour
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureAccessories();
         EnsureDailyMissionClaims();
         EnsureBattlePassRewardClaims();
         for (var i = 0; i < heroLevels.Length; i++)
@@ -746,6 +1064,17 @@ public class IdlePrototypeController : MonoBehaviour
         for (var i = 0; i < battlePassRewardsClaimed.Length; i++)
         {
             PlayerPrefs.SetInt($"{BattlePassClaimedKeyPrefix}{i}", battlePassRewardsClaimed[i] ? 1 : 0);
+        }
+
+        for (var i = 0; i < AccessorySlotCount; i++)
+        {
+            PlayerPrefs.SetInt($"{EquippedAccessoryRarityKeyPrefix}{i}", equippedAccessoryRarities[i]);
+            PlayerPrefs.SetInt($"{EquippedAccessoryLevelKeyPrefix}{i}", equippedAccessoryLevels[i]);
+        }
+
+        for (var i = 0; i < accessoryInventory.Length; i++)
+        {
+            PlayerPrefs.SetInt($"{AccessoryInventoryKeyPrefix}{i}", accessoryInventory[i]);
         }
 
         PlayerPrefs.SetString(LastSeenUtcKey, DateTime.UtcNow.Ticks.ToString());
@@ -833,6 +1162,24 @@ public class IdlePrototypeController : MonoBehaviour
     {
         floor = Mathf.Max(1, floor);
         return 125 + Mathf.FloorToInt(54 * Mathf.Pow(floor, 1.2f));
+    }
+
+    private int GetGearDungeonEnemyHp(int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        return 260 + Mathf.FloorToInt(135 * Mathf.Pow(floor, 1.23f));
+    }
+
+    private int GetGearDungeonEnemyDamage(int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        return 28 + Mathf.FloorToInt(12 * Mathf.Pow(floor, 1.16f));
+    }
+
+    private int GetGearDungeonRecommendedPower(int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        return 145 + Mathf.FloorToInt(62 * Mathf.Pow(floor, 1.2f));
     }
 
     private void RunDungeon(bool isGoldDungeon)
@@ -1073,6 +1420,7 @@ public class IdlePrototypeController : MonoBehaviour
         RefreshOfflineRewardUi();
         RefreshHeroUi();
         RefreshEquipmentUi();
+        RefreshAccessoryUi();
         RefreshSummonUi();
         RefreshDailyMissionUi();
         RefreshBattlePassUi();
@@ -1116,6 +1464,8 @@ public class IdlePrototypeController : MonoBehaviour
         {
             armorUpgradeButton.interactable = gold >= GetArmorUpgradeCost();
         }
+
+        RefreshAccessoryButtonStates();
 
         if (summonButton != null)
         {
@@ -1233,6 +1583,11 @@ public class IdlePrototypeController : MonoBehaviour
             heroesTabButton.onClick.AddListener(ShowHeroes);
         }
 
+        if (gearTabButton != null)
+        {
+            gearTabButton.onClick.AddListener(ShowGear);
+        }
+
         if (summonTabButton != null)
         {
             summonTabButton.onClick.AddListener(ShowSummon);
@@ -1261,6 +1616,11 @@ public class IdlePrototypeController : MonoBehaviour
             heroesTabButton.onClick.RemoveListener(ShowHeroes);
         }
 
+        if (gearTabButton != null)
+        {
+            gearTabButton.onClick.RemoveListener(ShowGear);
+        }
+
         if (summonTabButton != null)
         {
             summonTabButton.onClick.RemoveListener(ShowSummon);
@@ -1279,12 +1639,14 @@ public class IdlePrototypeController : MonoBehaviour
         SetPanel(homePanel, screen == AppScreen.Home);
         SetPanel(battlePanel, screen == AppScreen.Battle);
         SetPanel(heroesPanel, screen == AppScreen.Heroes);
+        SetPanel(gearPanel, screen == AppScreen.Gear);
         SetPanel(summonPanel, screen == AppScreen.Summon);
         SetPanel(shopPanel, screen == AppScreen.Shop);
 
         SetTabState(homeTabButton, screen == AppScreen.Home);
         SetTabState(battleTabButton, screen == AppScreen.Battle);
         SetTabState(heroesTabButton, screen == AppScreen.Heroes);
+        SetTabState(gearTabButton, screen == AppScreen.Gear);
         SetTabState(summonTabButton, screen == AppScreen.Summon);
         SetTabState(shopTabButton, screen == AppScreen.Shop);
     }
@@ -1377,6 +1739,17 @@ public class IdlePrototypeController : MonoBehaviour
             return $"Level {HeroNames[selectedHeroIndex]} with Myth Essence";
         }
 
+        if (HasAccessoryCopiesToEquip())
+        {
+            return "Open Gear tab and equip new accessory drops";
+        }
+
+        var accessorySlot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
+        if (equippedAccessoryRarities[accessorySlot] >= 0 && gold >= GetAccessoryLevelCost(accessorySlot))
+        {
+            return "Level equipped accessories for extra stats";
+        }
+
         if (GetTeamPower() >= GetStageRecommendedPower(enemyLevel))
         {
             return $"Push Campaign Stage {enemyLevel}";
@@ -1384,7 +1757,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         var goldGap = Mathf.Max(0, Mathf.Min(weaponCost, armorCost) - gold);
         var essenceGap = Mathf.Max(0, upgradeCost - mythEssence);
-        return $"Farm dungeons: need {goldGap} Gold or {essenceGap} Essence";
+        return $"Farm dungeons: need {goldGap} Gold, {essenceGap} Essence, or Gear drops";
     }
 
     private void RefreshEquipmentUi()
@@ -1406,6 +1779,112 @@ public class IdlePrototypeController : MonoBehaviour
         {
             armorUpgradeCostText.text = $"{ArmorTrack.name} +1\n{GetArmorUpgradeCost()} Gold";
         }
+    }
+
+    private void RefreshAccessoryUi()
+    {
+        EnsureAccessories();
+        var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
+        var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+
+        if (accessorySummaryText != null)
+        {
+            accessorySummaryText.text = $"Accessories\nATK +{GetAccessoryAttackBonus()}  HP +{GetAccessoryHealthBonus()}\nGear Dungeon Floor {gearDungeonFloor}";
+        }
+
+        if (accessorySelectedText != null)
+        {
+            var equippedText = GetEquippedAccessoryText(slot);
+            accessorySelectedText.text = $"{AccessorySlots[slot].name}\nEquipped: {equippedText}\nSelected Fuse Tier: {AccessoryRarityNames[rarity]}";
+        }
+
+        if (accessoryInventoryText != null)
+        {
+            accessoryInventoryText.text = GetAccessoryInventoryText(slot);
+        }
+
+        if (accessoryEquipText != null)
+        {
+            accessoryEquipText.text = $"Equip {AccessoryRarityNames[rarity]}\nCopies {GetAccessoryInventoryCount(slot, rarity)}";
+        }
+
+        if (accessoryLevelText != null)
+        {
+            var equippedRarity = equippedAccessoryRarities[slot];
+            accessoryLevelText.text = equippedRarity < 0
+                ? "Level Equipped\nNo item"
+                : $"Level Equipped\n{GetAccessoryLevelCost(slot)} Gold";
+        }
+
+        if (accessoryFuseText != null)
+        {
+            var nextTier = rarity >= AccessoryRarityCount - 1 ? "Max" : AccessoryRarityNames[rarity + 1];
+            accessoryFuseText.text = $"Fuse {AccessoryFuseCost}x {AccessoryRarityNames[rarity]}\nInto {nextTier}";
+        }
+    }
+
+    private void RefreshAccessoryButtonStates()
+    {
+        EnsureAccessories();
+        var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
+        var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+        var equippedRarity = equippedAccessoryRarities[slot];
+        var canLevel = equippedRarity >= 0 && equippedAccessoryLevels[slot] < GetAccessoryMaxLevel(equippedRarity) && gold >= GetAccessoryLevelCost(slot);
+
+        if (accessoryEquipButton != null)
+        {
+            accessoryEquipButton.interactable = equippedAccessoryRarities[slot] != rarity && GetAccessoryInventoryCount(slot, rarity) > 0;
+        }
+
+        if (accessoryLevelButton != null)
+        {
+            accessoryLevelButton.interactable = canLevel;
+        }
+
+        if (accessoryFuseButton != null)
+        {
+            accessoryFuseButton.interactable = rarity < AccessoryRarityCount - 1 && GetAccessoryInventoryCount(slot, rarity) >= AccessoryFuseCost;
+        }
+    }
+
+    private string GetEquippedAccessoryText(int slot)
+    {
+        var rarity = equippedAccessoryRarities[slot];
+        if (rarity < 0)
+        {
+            return "None";
+        }
+
+        var level = equippedAccessoryLevels[slot];
+        return $"{AccessoryRarityNames[rarity]} Lv. {level}/{GetAccessoryMaxLevel(rarity)} (+{GetAccessoryAttackFor(slot, rarity, level)} ATK, +{GetAccessoryHealthFor(slot, rarity, level)} HP)";
+    }
+
+    private string GetAccessoryInventoryText(int slot)
+    {
+        var text = "Inventory Copies";
+        for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
+        {
+            text += $"\n{AccessoryRarityNames[rarity]}: {GetAccessoryInventoryCount(slot, rarity)}";
+        }
+
+        return text;
+    }
+
+    private bool HasAccessoryCopiesToEquip()
+    {
+        EnsureAccessories();
+        for (var slot = 0; slot < AccessorySlotCount; slot++)
+        {
+            for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
+            {
+                if (accessoryInventory[GetAccessoryInventoryIndex(slot, rarity)] > 0 && equippedAccessoryRarities[slot] != rarity)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private void EnsureHeroLevels()
@@ -1453,6 +1932,46 @@ public class IdlePrototypeController : MonoBehaviour
             {
                 heroAscensions[i] = 0;
             }
+        }
+    }
+
+    private void EnsureAccessories()
+    {
+        if (equippedAccessoryRarities == null || equippedAccessoryRarities.Length != AccessorySlotCount)
+        {
+            equippedAccessoryRarities = new int[AccessorySlotCount];
+            for (var i = 0; i < equippedAccessoryRarities.Length; i++)
+            {
+                equippedAccessoryRarities[i] = -1;
+            }
+        }
+
+        if (equippedAccessoryLevels == null || equippedAccessoryLevels.Length != AccessorySlotCount)
+        {
+            equippedAccessoryLevels = new int[AccessorySlotCount];
+        }
+
+        if (accessoryInventory == null || accessoryInventory.Length != AccessorySlotCount * AccessoryRarityCount)
+        {
+            accessoryInventory = new int[AccessorySlotCount * AccessoryRarityCount];
+        }
+
+        for (var i = 0; i < AccessorySlotCount; i++)
+        {
+            equippedAccessoryRarities[i] = Mathf.Clamp(equippedAccessoryRarities[i], -1, AccessoryRarityCount - 1);
+            if (equippedAccessoryRarities[i] < 0)
+            {
+                equippedAccessoryLevels[i] = 0;
+            }
+            else
+            {
+                equippedAccessoryLevels[i] = Mathf.Clamp(equippedAccessoryLevels[i], 1, GetAccessoryMaxLevel(equippedAccessoryRarities[i]));
+            }
+        }
+
+        for (var i = 0; i < accessoryInventory.Length; i++)
+        {
+            accessoryInventory[i] = Mathf.Max(0, accessoryInventory[i]);
         }
     }
 
@@ -1604,7 +2123,7 @@ public class IdlePrototypeController : MonoBehaviour
             power += GetHeroPower(i);
         }
 
-        return power + GetEquipmentPower();
+        return power + GetEquipmentPower() + GetAccessoryPower();
     }
 
     private int GetTeamDamage()
@@ -1613,7 +2132,7 @@ public class IdlePrototypeController : MonoBehaviour
             + (CountHeroesWithRole("Warrior") * WarriorDamageBonusRate)
             + (CountHeroesWithRole("Mage") * MageDamageBonusRate);
 
-        return Mathf.Max(1, Mathf.FloorToInt((GetTeamBaseAttack() + GetEquipmentAttackBonus()) * multiplier));
+        return Mathf.Max(1, Mathf.FloorToInt((GetTeamBaseAttack() + GetEquipmentAttackBonus() + GetAccessoryAttackBonus()) * multiplier));
     }
 
     private int GetTeamHealth()
@@ -1625,7 +2144,7 @@ public class IdlePrototypeController : MonoBehaviour
             health += GetHeroHealth(i);
         }
 
-        return Mathf.Max(1, health + GetEquipmentHealthBonus());
+        return Mathf.Max(1, health + GetEquipmentHealthBonus() + GetAccessoryHealthBonus());
     }
 
     private int GetTeamBaseAttack()
@@ -1650,6 +2169,11 @@ public class IdlePrototypeController : MonoBehaviour
         return GetEquipmentAttackBonus() + Mathf.FloorToInt(GetEquipmentHealthBonus() / 8f);
     }
 
+    private int GetAccessoryPower()
+    {
+        return GetAccessoryAttackBonus() + Mathf.FloorToInt(GetAccessoryHealthBonus() / 8f);
+    }
+
     private int GetEquipmentAttackBonus()
     {
         return GetEquipmentBonus(WeaponTrack, weaponLevel);
@@ -1658,6 +2182,123 @@ public class IdlePrototypeController : MonoBehaviour
     private int GetEquipmentHealthBonus()
     {
         return GetEquipmentBonus(ArmorTrack, armorLevel);
+    }
+
+    private int GetAccessoryAttackBonus()
+    {
+        EnsureAccessories();
+        var attack = 0;
+
+        for (var slot = 0; slot < AccessorySlotCount; slot++)
+        {
+            attack += GetAccessoryAttackFor(slot, equippedAccessoryRarities[slot], equippedAccessoryLevels[slot]);
+        }
+
+        return attack;
+    }
+
+    private int GetAccessoryHealthBonus()
+    {
+        EnsureAccessories();
+        var health = 0;
+
+        for (var slot = 0; slot < AccessorySlotCount; slot++)
+        {
+            health += GetAccessoryHealthFor(slot, equippedAccessoryRarities[slot], equippedAccessoryLevels[slot]);
+        }
+
+        return health;
+    }
+
+    private int GetAccessoryAttackFor(int slot, int rarity, int level)
+    {
+        if (rarity < 0 || level <= 0)
+        {
+            return 0;
+        }
+
+        return AccessorySlots[slot].attackPerLevel * level * (rarity + 1);
+    }
+
+    private int GetAccessoryHealthFor(int slot, int rarity, int level)
+    {
+        if (rarity < 0 || level <= 0)
+        {
+            return 0;
+        }
+
+        return AccessorySlots[slot].healthPerLevel * level * (rarity + 1);
+    }
+
+    private int GetAccessoryMaxLevel(int rarity)
+    {
+        rarity = Mathf.Clamp(rarity, 0, AccessoryRarityCount - 1);
+        return AccessoryBaseMaxLevel + (rarity * AccessoryMaxLevelPerRarity);
+    }
+
+    private int GetAccessoryLevelCost(int slot)
+    {
+        EnsureAccessories();
+        var rarity = equippedAccessoryRarities[slot];
+        if (rarity < 0)
+        {
+            return 0;
+        }
+
+        var level = Mathf.Max(1, equippedAccessoryLevels[slot]);
+        return Mathf.CeilToInt(35 * (rarity + 1) * Mathf.Pow(1.18f + (rarity * 0.015f), level - 1));
+    }
+
+    private int GetAccessoryInventoryIndex(int slot, int rarity)
+    {
+        slot = Mathf.Clamp(slot, 0, AccessorySlotCount - 1);
+        rarity = Mathf.Clamp(rarity, 0, AccessoryRarityCount - 1);
+        return (slot * AccessoryRarityCount) + rarity;
+    }
+
+    private int GetAccessoryInventoryCount(int slot, int rarity)
+    {
+        EnsureAccessories();
+        return accessoryInventory[GetAccessoryInventoryIndex(slot, rarity)];
+    }
+
+    private void AddAccessoryInventory(int slot, int rarity, int amount)
+    {
+        EnsureAccessories();
+        var index = GetAccessoryInventoryIndex(slot, rarity);
+        accessoryInventory[index] = Mathf.Max(0, accessoryInventory[index] + amount);
+    }
+
+    private int RollAccessoryRarity(int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        var roll = UnityEngine.Random.Range(0, 1000);
+        var r4Threshold = Mathf.Min(45, Mathf.FloorToInt(floor * 1.1f));
+        var r3Threshold = 75 + Mathf.Min(120, Mathf.FloorToInt(floor * 2.5f));
+        var r2Threshold = 230 + Mathf.Min(160, Mathf.FloorToInt(floor * 3.2f));
+        var r1Threshold = 560 + Mathf.Min(120, Mathf.FloorToInt(floor * 2.2f));
+
+        if (roll < r4Threshold)
+        {
+            return 4;
+        }
+
+        if (roll < r3Threshold)
+        {
+            return 3;
+        }
+
+        if (roll < r2Threshold)
+        {
+            return 2;
+        }
+
+        if (roll < r1Threshold)
+        {
+            return 1;
+        }
+
+        return 0;
     }
 
     private int GetEquipmentBonus(EquipmentTrackDefinition track, int level)
@@ -1840,6 +2481,11 @@ public class IdlePrototypeController : MonoBehaviour
         if (essenceDungeonText != null)
         {
             essenceDungeonText.text = $"Essence Dungeon\nFloor {essenceDungeonFloor}  Rec. Power {GetDungeonRecommendedPower(essenceDungeonFloor)}\nReward {GetEssenceDungeonReward(essenceDungeonFloor)} Essence";
+        }
+
+        if (gearDungeonText != null)
+        {
+            gearDungeonText.text = $"Gear Dungeon\nFloor {gearDungeonFloor}  Rec. Power {GetGearDungeonRecommendedPower(gearDungeonFloor)}\nRandom accessory drop";
         }
 
         if (dungeonResultText != null && string.IsNullOrWhiteSpace(dungeonResultText.text))
