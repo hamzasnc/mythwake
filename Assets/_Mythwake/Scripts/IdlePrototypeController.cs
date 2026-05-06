@@ -5,6 +5,21 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour
 {
+    [Serializable]
+    private struct StageDefinition
+    {
+        public string enemyName;
+        public int maxHp;
+        public int goldReward;
+
+        public StageDefinition(string enemyName, int maxHp, int goldReward)
+        {
+            this.enemyName = enemyName;
+            this.maxHp = maxHp;
+            this.goldReward = goldReward;
+        }
+    }
+
     private enum AppScreen
     {
         Home,
@@ -40,6 +55,22 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private int upgradeCost = 10;
     [SerializeField] private int selectedHeroIndex;
     [SerializeField] private int[] heroLevels = new int[HeroCount];
+
+    [Header("Campaign")]
+    [SerializeField]
+    private StageDefinition[] stages =
+    {
+        new StageDefinition("Fallen Scout", 50, 7),
+        new StageDefinition("Hollow Guard", 75, 10),
+        new StageDefinition("Ashborne Rogue", 105, 14),
+        new StageDefinition("Rift Hound", 145, 19),
+        new StageDefinition("Veil Shaman", 195, 25),
+        new StageDefinition("Dusk Knight", 260, 33),
+        new StageDefinition("Cursed Warden", 345, 43),
+        new StageDefinition("Abyss Herald", 455, 56),
+        new StageDefinition("Eclipse Beast", 600, 73),
+        new StageDefinition("Mythfallen Tyrant", 790, 95)
+    };
 
     [Header("Idle")]
     [SerializeField] private bool autoAttackEnabled = true;
@@ -218,7 +249,7 @@ public class IdlePrototypeController : MonoBehaviour
         gold = 0;
         damage = 1;
         enemyLevel = 1;
-        enemyMaxHp = GetEnemyMaxHp(enemyLevel);
+        enemyMaxHp = GetStageMaxHp(enemyLevel);
         enemyHp = enemyMaxHp;
         selectedHeroIndex = 0;
         EnsureHeroLevels();
@@ -257,9 +288,9 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (enemyHp <= 0)
         {
-            gold += GetEnemyReward();
+            gold += GetStageReward(enemyLevel);
             enemyLevel++;
-            enemyMaxHp = GetEnemyMaxHp(enemyLevel);
+            enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
         }
 
@@ -275,7 +306,7 @@ public class IdlePrototypeController : MonoBehaviour
     {
         gold = PlayerPrefs.GetInt(GoldKey, gold);
         enemyLevel = Mathf.Max(1, PlayerPrefs.GetInt(EnemyLevelKey, enemyLevel));
-        enemyMaxHp = Mathf.Max(GetEnemyMaxHp(enemyLevel), PlayerPrefs.GetInt(EnemyMaxHpKey, enemyMaxHp));
+        enemyMaxHp = Mathf.Max(GetStageMaxHp(enemyLevel), PlayerPrefs.GetInt(EnemyMaxHpKey, enemyMaxHp));
         enemyHp = Mathf.Clamp(PlayerPrefs.GetInt(EnemyHpKey, enemyHp), 1, enemyMaxHp);
         selectedHeroIndex = Mathf.Clamp(PlayerPrefs.GetInt(SelectedHeroKey, selectedHeroIndex), 0, HeroCount - 1);
         EnsureHeroLevels();
@@ -342,17 +373,35 @@ public class IdlePrototypeController : MonoBehaviour
         var enemyClearSeconds = Mathf.Max(1, Mathf.CeilToInt(enemyMaxHp / (float)Mathf.Max(1, GetTeamDamage())));
         var enemyKills = Mathf.Max(0, attacks / enemyClearSeconds);
 
-        return enemyKills * GetEnemyReward();
+        return enemyKills * GetStageReward(enemyLevel);
     }
 
-    private int GetEnemyReward()
+    private StageDefinition GetStageDefinition(int stage)
     {
-        return 5 + (enemyLevel * 2);
+        stage = Mathf.Max(1, stage);
+        EnsureStages();
+
+        if (stage <= stages.Length)
+        {
+            return stages[stage - 1];
+        }
+
+        var lastStage = stages[stages.Length - 1];
+        var overflow = stage - stages.Length;
+        var hp = Mathf.CeilToInt(lastStage.maxHp * Mathf.Pow(1.18f, overflow));
+        var reward = Mathf.CeilToInt(lastStage.goldReward * Mathf.Pow(1.12f, overflow));
+
+        return new StageDefinition($"Rift Echo {stage}", hp, reward);
     }
 
-    private int GetEnemyMaxHp(int stage)
+    private int GetStageReward(int stage)
     {
-        return 50 + ((stage - 1) * 22);
+        return Mathf.Max(1, GetStageDefinition(stage).goldReward);
+    }
+
+    private int GetStageMaxHp(int stage)
+    {
+        return Mathf.Max(1, GetStageDefinition(stage).maxHp);
     }
 
     private void RefreshUi()
@@ -378,7 +427,8 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (homeStageText != null)
         {
-            homeStageText.text = $"Campaign {enemyLevel}";
+            var stage = GetStageDefinition(enemyLevel);
+            homeStageText.text = $"Campaign {enemyLevel}\n{stage.enemyName}";
         }
 
         if (homePowerText != null)
@@ -393,7 +443,8 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (enemyText != null)
         {
-            enemyText.text = $"Enemy Lv. {enemyLevel}";
+            var stage = GetStageDefinition(enemyLevel);
+            enemyText.text = $"Stage {enemyLevel}: {stage.enemyName}\nReward {stage.goldReward} Gold";
         }
 
         if (enemyHpText != null)
@@ -605,6 +656,23 @@ public class IdlePrototypeController : MonoBehaviour
                 heroLevels[i] = 1;
             }
         }
+    }
+
+    private void EnsureStages()
+    {
+        if (stages != null && stages.Length > 0)
+        {
+            return;
+        }
+
+        stages = new StageDefinition[]
+        {
+            new StageDefinition("Fallen Scout", 50, 7),
+            new StageDefinition("Hollow Guard", 75, 10),
+            new StageDefinition("Ashborne Rogue", 105, 14),
+            new StageDefinition("Rift Hound", 145, 19),
+            new StageDefinition("Veil Shaman", 195, 25)
+        };
     }
 
     private int GetTeamPower()

@@ -47,3 +47,7 @@ desktop.ini
 # Imported sample content that is not needed for the game repo
 Assets/TextMesh Pro/Examples & Extras/
 Assets/TextMesh Pro/Examples & Extras.meta
+
+# Unity/Microsoft GDK generated editor metadata
+Assets/Resources/GDKEditionAutoGen/
+Assets/Resources/GDKEditionAutoGen.meta

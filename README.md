@@ -13,6 +13,8 @@ Current prototype:
 - Starter hero collection with 5 heroes
 - Team power drives battle damage
 - Hero upgrades saved locally
+- Campaign stages now use named enemy data with HP and gold rewards
+- Campaign continues scaling after the starter stages
 
 Development target:
 - Android and iOS mobile idle game
