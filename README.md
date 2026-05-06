@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.0
+Prototype version: 0.2.1
 Local save version: 1
 
 Current prototype:
@@ -23,6 +23,7 @@ Current prototype:
 - Gold can be spent on starter Weapon and Armor equipment upgrades
 - Equipment upgrades are saved locally and add team-wide ATK and HP
 - Starter equipment balance is defined through small data structs to prepare for later server/database config
+- Core prototype balance is being reshaped into code-side definition rows with stable IDs for later database migration
 - Accessory gear system with Ohrringe, Kette, Armband, Handschuhe, and Schuhe slots
 - Accessory items have rarity tiers R0-R4, can be equipped, leveled, and saved locally
 - Accessory max level starts at 20 for R0 and increases by 10 per rarity tier
@@ -47,6 +48,7 @@ Current prototype:
 - Mission Track rewards can be claimed in the Shop tab
 
 Changelog:
+- 0.2.1: Started Batch 2 data shaping with ID-based client definitions for currencies, heroes, stages, dungeons, rewards, missions, accessory slots/rarities, and the summon banner.
 - 0.2.0: Added visible prototype/save version UI, Batch 1 debug resource buttons, compact dungeon labels, and a reset path that clears known local prototype save keys before writing a fresh save.
 
 Development target:

@@ -28,6 +28,7 @@ Client:
 - Local `PlayerPrefs` save data
 - Visible prototype/save version text
 - Debug buttons for small Gold, Gems, Myth Essence, and accessory test amounts
+- Code-side definition rows with stable IDs for early client balance data
 - Bottom-tab app shell
 - Current tabs: Home, Battle, Heroes, Gear, Summon, Shop
 
@@ -127,6 +128,11 @@ Done when:
 
 Goal:
 Move core balancing data away from scattered methods and toward table-like definitions.
+
+Progress:
+- Added ID-based definition structs for currencies, heroes, rewards, daily missions, mission track rewards, dungeons, accessory slots, accessory rarities, summon rates, and summon banners.
+- Added `stage_id`, `hero_id`, `currency_id`, `item_slot_id`, `rarity_id`, `dungeon_id`, and `reward_id` style fields in code-side data rows.
+- Replaced parallel hero, daily mission, battle pass, summon rate, dungeon scaling, and accessory rarity arrays with definition-driven lookups where practical.
 
 Tasks:
 - Create data structs/classes for:

@@ -5,21 +5,204 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour
 {
-    public const string PrototypeVersion = "0.2.0";
+    public const string PrototypeVersion = "0.2.1";
     public const int CurrentSaveVersion = 1;
 
     [Serializable]
     private struct StageDefinition
     {
+        public string stageId;
+        public int stageNumber;
         public string enemyName;
         public int maxHp;
         public int essenceReward;
 
-        public StageDefinition(string enemyName, int maxHp, int essenceReward)
+        public StageDefinition(int stageNumber, string enemyName, int maxHp, int essenceReward)
         {
+            this.stageNumber = stageNumber;
+            this.stageId = $"campaign_stage_{stageNumber:000}";
             this.enemyName = enemyName;
             this.maxHp = maxHp;
             this.essenceReward = essenceReward;
+        }
+    }
+
+    private struct CurrencyDefinition
+    {
+        public string currencyId;
+        public string displayName;
+        public string saveKey;
+        public int starterAmount;
+
+        public CurrencyDefinition(string currencyId, string displayName, string saveKey, int starterAmount)
+        {
+            this.currencyId = currencyId;
+            this.displayName = displayName;
+            this.saveKey = saveKey;
+            this.starterAmount = starterAmount;
+        }
+    }
+
+    private struct RewardDefinition
+    {
+        public string rewardId;
+        public int gold;
+        public int gems;
+        public int mythEssence;
+        public int passXp;
+
+        public RewardDefinition(string rewardId, int gold, int gems, int mythEssence, int passXp = 0)
+        {
+            this.rewardId = rewardId;
+            this.gold = gold;
+            this.gems = gems;
+            this.mythEssence = mythEssence;
+            this.passXp = passXp;
+        }
+    }
+
+    private enum DailyMissionProgressType
+    {
+        Fight,
+        StageClear,
+        Summon
+    }
+
+    private struct HeroDefinition
+    {
+        public string heroId;
+        public string name;
+        public string roleId;
+        public string roleName;
+        public string rarityId;
+        public string rarityName;
+        public int baseAttack;
+        public int attackGrowth;
+        public int baseHealth;
+        public int healthGrowth;
+        public int summonShardReward;
+        public int ascensionBaseCost;
+        public int ascensionCostGrowth;
+        public int ascensionAttack;
+        public int ascensionHealth;
+
+        public HeroDefinition(
+            string heroId,
+            string name,
+            string roleId,
+            string roleName,
+            string rarityId,
+            string rarityName,
+            int baseAttack,
+            int attackGrowth,
+            int baseHealth,
+            int healthGrowth,
+            int summonShardReward,
+            int ascensionBaseCost,
+            int ascensionCostGrowth,
+            int ascensionAttack,
+            int ascensionHealth)
+        {
+            this.heroId = heroId;
+            this.name = name;
+            this.roleId = roleId;
+            this.roleName = roleName;
+            this.rarityId = rarityId;
+            this.rarityName = rarityName;
+            this.baseAttack = baseAttack;
+            this.attackGrowth = attackGrowth;
+            this.baseHealth = baseHealth;
+            this.healthGrowth = healthGrowth;
+            this.summonShardReward = summonShardReward;
+            this.ascensionBaseCost = ascensionBaseCost;
+            this.ascensionCostGrowth = ascensionCostGrowth;
+            this.ascensionAttack = ascensionAttack;
+            this.ascensionHealth = ascensionHealth;
+        }
+    }
+
+    private struct DailyMissionDefinition
+    {
+        public string missionId;
+        public string title;
+        public DailyMissionProgressType progressType;
+        public int target;
+        public RewardDefinition reward;
+
+        public DailyMissionDefinition(string missionId, string title, DailyMissionProgressType progressType, int target, RewardDefinition reward)
+        {
+            this.missionId = missionId;
+            this.title = title;
+            this.progressType = progressType;
+            this.target = target;
+            this.reward = reward;
+        }
+    }
+
+    private struct BattlePassRewardDefinition
+    {
+        public string rewardId;
+        public int requiredXp;
+        public RewardDefinition reward;
+
+        public BattlePassRewardDefinition(string rewardId, int requiredXp, RewardDefinition reward)
+        {
+            this.rewardId = rewardId;
+            this.requiredXp = requiredXp;
+            this.reward = reward;
+        }
+    }
+
+    private struct DungeonDefinition
+    {
+        public string dungeonId;
+        public string displayName;
+        public string rewardCurrencyId;
+        public int baseEnemyHp;
+        public float enemyHpScale;
+        public float enemyHpGrowth;
+        public int baseEnemyDamage;
+        public float enemyDamageScale;
+        public float enemyDamageGrowth;
+        public int baseRecommendedPower;
+        public float recommendedPowerScale;
+        public float recommendedPowerGrowth;
+        public int baseReward;
+        public float rewardScale;
+        public float rewardGrowth;
+
+        public DungeonDefinition(
+            string dungeonId,
+            string displayName,
+            string rewardCurrencyId,
+            int baseEnemyHp,
+            float enemyHpScale,
+            float enemyHpGrowth,
+            int baseEnemyDamage,
+            float enemyDamageScale,
+            float enemyDamageGrowth,
+            int baseRecommendedPower,
+            float recommendedPowerScale,
+            float recommendedPowerGrowth,
+            int baseReward,
+            float rewardScale,
+            float rewardGrowth)
+        {
+            this.dungeonId = dungeonId;
+            this.displayName = displayName;
+            this.rewardCurrencyId = rewardCurrencyId;
+            this.baseEnemyHp = baseEnemyHp;
+            this.enemyHpScale = enemyHpScale;
+            this.enemyHpGrowth = enemyHpGrowth;
+            this.baseEnemyDamage = baseEnemyDamage;
+            this.enemyDamageScale = enemyDamageScale;
+            this.enemyDamageGrowth = enemyDamageGrowth;
+            this.baseRecommendedPower = baseRecommendedPower;
+            this.recommendedPowerScale = recommendedPowerScale;
+            this.recommendedPowerGrowth = recommendedPowerGrowth;
+            this.baseReward = baseReward;
+            this.rewardScale = rewardScale;
+            this.rewardGrowth = rewardGrowth;
         }
     }
 
@@ -37,17 +220,21 @@ public class IdlePrototypeController : MonoBehaviour
 
     private struct EquipmentTrackDefinition
     {
+        public string equipmentId;
         public string name;
         public string statLabel;
+        public string currencyId;
         public int baseBonus;
         public int bonusPerLevel;
         public int baseCost;
         public float costGrowth;
 
-        public EquipmentTrackDefinition(string name, string statLabel, int baseBonus, int bonusPerLevel, int baseCost, float costGrowth)
+        public EquipmentTrackDefinition(string equipmentId, string name, string statLabel, string currencyId, int baseBonus, int bonusPerLevel, int baseCost, float costGrowth)
         {
+            this.equipmentId = equipmentId;
             this.name = name;
             this.statLabel = statLabel;
+            this.currencyId = currencyId;
             this.baseBonus = baseBonus;
             this.bonusPerLevel = bonusPerLevel;
             this.baseCost = baseCost;
@@ -57,15 +244,73 @@ public class IdlePrototypeController : MonoBehaviour
 
     private struct AccessorySlotDefinition
     {
+        public string itemSlotId;
         public string name;
         public int attackPerLevel;
         public int healthPerLevel;
 
-        public AccessorySlotDefinition(string name, int attackPerLevel, int healthPerLevel)
+        public AccessorySlotDefinition(string itemSlotId, string name, int attackPerLevel, int healthPerLevel)
         {
+            this.itemSlotId = itemSlotId;
             this.name = name;
             this.attackPerLevel = attackPerLevel;
             this.healthPerLevel = healthPerLevel;
+        }
+    }
+
+    private struct AccessoryRarityDefinition
+    {
+        public string rarityId;
+        public string displayName;
+        public int tier;
+        public int maxLevel;
+        public int statMultiplier;
+        public int levelCostBase;
+        public float levelCostGrowth;
+        public string fuseTargetRarityId;
+
+        public AccessoryRarityDefinition(string rarityId, string displayName, int tier, int maxLevel, int statMultiplier, int levelCostBase, float levelCostGrowth, string fuseTargetRarityId)
+        {
+            this.rarityId = rarityId;
+            this.displayName = displayName;
+            this.tier = tier;
+            this.maxLevel = maxLevel;
+            this.statMultiplier = statMultiplier;
+            this.levelCostBase = levelCostBase;
+            this.levelCostGrowth = levelCostGrowth;
+            this.fuseTargetRarityId = fuseTargetRarityId;
+        }
+    }
+
+    private struct SummonRateDefinition
+    {
+        public string rarityId;
+        public int cumulativeChance;
+        public int[] heroIndexes;
+
+        public SummonRateDefinition(string rarityId, int cumulativeChance, int[] heroIndexes)
+        {
+            this.rarityId = rarityId;
+            this.cumulativeChance = cumulativeChance;
+            this.heroIndexes = heroIndexes;
+        }
+    }
+
+    private struct SummonBannerDefinition
+    {
+        public string bannerId;
+        public string displayName;
+        public string costCurrencyId;
+        public int costAmount;
+        public SummonRateDefinition[] rates;
+
+        public SummonBannerDefinition(string bannerId, string displayName, string costCurrencyId, int costAmount, SummonRateDefinition[] rates)
+        {
+            this.bannerId = bannerId;
+            this.displayName = displayName;
+            this.costCurrencyId = costCurrencyId;
+            this.costAmount = costAmount;
+            this.rates = rates;
         }
     }
 
@@ -111,6 +356,18 @@ public class IdlePrototypeController : MonoBehaviour
     private const string DailyMissionClaimedKeyPrefix = "Mythwake.Prototype.Daily.MissionClaimed.";
     private const string BattlePassXpKey = "Mythwake.Prototype.BattlePass.Xp";
     private const string BattlePassClaimedKeyPrefix = "Mythwake.Prototype.BattlePass.Claimed.";
+    private const string GoldCurrencyId = "gold";
+    private const string GemsCurrencyId = "gems";
+    private const string MythEssenceCurrencyId = "myth_essence";
+    private const string PassXpCurrencyId = "pass_xp";
+    private const string WarriorRoleId = "warrior";
+    private const string TankRoleId = "tank";
+    private const string MageRoleId = "mage";
+    private const string RangerRoleId = "ranger";
+    private const string SupportRoleId = "support";
+    private const string RareRarityId = "rare";
+    private const string EpicRarityId = "epic";
+    private const string LegendaryRarityId = "legendary";
     private const int HeroCount = 5;
     private const int DailyMissionCount = 3;
     private const int BattlePassRewardCount = 5;
@@ -132,8 +389,6 @@ public class IdlePrototypeController : MonoBehaviour
     private const float CampaignOverflowRewardGrowth = 1.14f;
     private const int CampaignMilestoneInterval = 5;
     private const int DungeonBonusInterval = 5;
-    private const int AccessoryBaseMaxLevel = 20;
-    private const int AccessoryMaxLevelPerRarity = 10;
     private const int AccessoryFuseCost = 3;
     private const int DebugGoldAmount = 500;
     private const int DebugGemAmount = 30;
@@ -167,35 +422,88 @@ public class IdlePrototypeController : MonoBehaviour
         BattlePassXpKey
     };
 
-    private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
-    private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
-    private static readonly string[] HeroRarities = { "Epic", "Rare", "Epic", "Rare", "Legendary" };
-    private static readonly int[] HeroBaseAttack = { 18, 10, 22, 20, 12 };
-    private static readonly int[] HeroAttackGrowth = { 5, 3, 7, 6, 4 };
-    private static readonly int[] HeroBaseHealth = { 150, 230, 110, 125, 165 };
-    private static readonly int[] HeroHealthGrowth = { 28, 42, 20, 23, 34 };
-    private static readonly int[] RareHeroIndexes = { 1, 3 };
-    private static readonly int[] EpicHeroIndexes = { 0, 2 };
-    private static readonly int[] LegendaryHeroIndexes = { 4 };
-    private static readonly string[] DailyMissionTitles = { "Battle 20 times", "Clear 3 stages", "Summon 1 hero" };
-    private static readonly int[] DailyMissionTargets = { 20, 3, 1 };
-    private static readonly int[] DailyMissionGoldRewards = { 25, 50, 25 };
-    private static readonly int[] DailyMissionGemRewards = { 5, 10, 15 };
-    private static readonly int[] DailyMissionEssenceRewards = { 80, 120, 60 };
-    private static readonly int[] BattlePassRewardXp = { 40, 80, 120, 180, 240 };
-    private static readonly int[] BattlePassGoldRewards = { 100, 125, 175, 225, 350 };
-    private static readonly int[] BattlePassGemRewards = { 10, 15, 20, 25, 40 };
-    private static readonly int[] BattlePassEssenceRewards = { 0, 120, 0, 180, 300 };
-    private static readonly EquipmentTrackDefinition WeaponTrack = new EquipmentTrackDefinition("Weapon", "ATK", 8, 9, 80, 1.45f);
-    private static readonly EquipmentTrackDefinition ArmorTrack = new EquipmentTrackDefinition("Armor", "HP", 80, 65, 75, 1.42f);
-    private static readonly string[] AccessoryRarityNames = { "R0", "R1", "R2", "R3", "R4" };
+    private static readonly CurrencyDefinition[] CurrencyDefinitions =
+    {
+        new CurrencyDefinition(GoldCurrencyId, "Gold", GoldKey, 0),
+        new CurrencyDefinition(GemsCurrencyId, "Gems", GemsKey, StarterGems),
+        new CurrencyDefinition(MythEssenceCurrencyId, "Myth Essence", MythEssenceKey, StarterMythEssence),
+        new CurrencyDefinition(PassXpCurrencyId, "Pass XP", BattlePassXpKey, 0)
+    };
+
+    private static readonly HeroDefinition[] HeroDefinitions =
+    {
+        new HeroDefinition("hero_astra", "Astra", WarriorRoleId, "Warrior", EpicRarityId, "Epic", 18, 5, 150, 28, 7, 25, 15, 11, 70),
+        new HeroDefinition("hero_borin", "Borin", TankRoleId, "Tank", RareRarityId, "Rare", 10, 3, 230, 42, 10, 20, 15, 8, 55),
+        new HeroDefinition("hero_cyra", "Cyra", MageRoleId, "Mage", EpicRarityId, "Epic", 22, 7, 110, 20, 7, 25, 15, 11, 70),
+        new HeroDefinition("hero_dante", "Dante", RangerRoleId, "Ranger", RareRarityId, "Rare", 20, 6, 125, 23, 10, 20, 15, 8, 55),
+        new HeroDefinition("hero_elowen", "Elowen", SupportRoleId, "Support", LegendaryRarityId, "Legendary", 12, 4, 165, 34, 5, 30, 15, 14, 90)
+    };
+
+    private static readonly DailyMissionDefinition[] DailyMissionDefinitions =
+    {
+        new DailyMissionDefinition("daily_battles_20", "Battle 20 times", DailyMissionProgressType.Fight, 20, new RewardDefinition("reward_daily_battles_20", 25, 5, 80, BattlePassXpPerDailyClaim)),
+        new DailyMissionDefinition("daily_stage_clears_3", "Clear 3 stages", DailyMissionProgressType.StageClear, 3, new RewardDefinition("reward_daily_stage_clears_3", 50, 10, 120, BattlePassXpPerDailyClaim)),
+        new DailyMissionDefinition("daily_summon_1", "Summon 1 hero", DailyMissionProgressType.Summon, 1, new RewardDefinition("reward_daily_summon_1", 25, 15, 60, BattlePassXpPerDailyClaim))
+    };
+
+    private static readonly BattlePassRewardDefinition[] BattlePassRewardDefinitions =
+    {
+        new BattlePassRewardDefinition("mission_track_reward_01", 40, new RewardDefinition("reward_mission_track_01", 100, 10, 0)),
+        new BattlePassRewardDefinition("mission_track_reward_02", 80, new RewardDefinition("reward_mission_track_02", 125, 15, 120)),
+        new BattlePassRewardDefinition("mission_track_reward_03", 120, new RewardDefinition("reward_mission_track_03", 175, 20, 0)),
+        new BattlePassRewardDefinition("mission_track_reward_04", 180, new RewardDefinition("reward_mission_track_04", 225, 25, 180)),
+        new BattlePassRewardDefinition("mission_track_reward_05", 240, new RewardDefinition("reward_mission_track_05", 350, 40, 300))
+    };
+
+    private static readonly EquipmentTrackDefinition WeaponTrack = new EquipmentTrackDefinition("equipment_weapon", "Weapon", "ATK", GoldCurrencyId, 8, 9, 80, 1.45f);
+    private static readonly EquipmentTrackDefinition ArmorTrack = new EquipmentTrackDefinition("equipment_armor", "Armor", "HP", GoldCurrencyId, 80, 65, 75, 1.42f);
+
+    private static readonly AccessoryRarityDefinition[] AccessoryRarities =
+    {
+        new AccessoryRarityDefinition("accessory_r0", "R0", 0, 20, 1, 35, 1.18f, "accessory_r1"),
+        new AccessoryRarityDefinition("accessory_r1", "R1", 1, 30, 2, 70, 1.195f, "accessory_r2"),
+        new AccessoryRarityDefinition("accessory_r2", "R2", 2, 40, 3, 105, 1.21f, "accessory_r3"),
+        new AccessoryRarityDefinition("accessory_r3", "R3", 3, 50, 4, 140, 1.225f, "accessory_r4"),
+        new AccessoryRarityDefinition("accessory_r4", "R4", 4, 60, 5, 175, 1.24f, string.Empty)
+    };
+
     private static readonly AccessorySlotDefinition[] AccessorySlots =
     {
-        new AccessorySlotDefinition("Ohrringe", 3, 4),
-        new AccessorySlotDefinition("Kette", 1, 18),
-        new AccessorySlotDefinition("Armband", 2, 10),
-        new AccessorySlotDefinition("Handschuhe", 4, 2),
-        new AccessorySlotDefinition("Schuhe", 1, 15)
+        new AccessorySlotDefinition("item_slot_earrings", "Ohrringe", 3, 4),
+        new AccessorySlotDefinition("item_slot_necklace", "Kette", 1, 18),
+        new AccessorySlotDefinition("item_slot_bracelet", "Armband", 2, 10),
+        new AccessorySlotDefinition("item_slot_gloves", "Handschuhe", 4, 2),
+        new AccessorySlotDefinition("item_slot_shoes", "Schuhe", 1, 15)
+    };
+
+    private static readonly DungeonDefinition GoldDungeonDefinition = new DungeonDefinition("gold_dungeon", "Gold Dungeon", GoldCurrencyId, 220, 110f, 1.22f, 24, 10f, 1.15f, 125, 54f, 1.2f, 80, 30f, 1.15f);
+    private static readonly DungeonDefinition EssenceDungeonDefinition = new DungeonDefinition("essence_dungeon", "Essence Dungeon", MythEssenceCurrencyId, 220, 110f, 1.22f, 24, 10f, 1.15f, 125, 54f, 1.2f, 100, 36f, 1.15f);
+    private static readonly DungeonDefinition GearDungeonDefinition = new DungeonDefinition("gear_dungeon", "Gear Dungeon", string.Empty, 260, 135f, 1.23f, 28, 12f, 1.16f, 145, 62f, 1.2f, 0, 0f, 1f);
+
+    private static readonly SummonBannerDefinition HeroShardBanner = new SummonBannerDefinition(
+        "hero_shard_standard",
+        "Awaken Heroes",
+        GemsCurrencyId,
+        SummonCost,
+        new[]
+        {
+            new SummonRateDefinition(LegendaryRarityId, 10, new[] { 4 }),
+            new SummonRateDefinition(EpicRarityId, 45, new[] { 0, 2 }),
+            new SummonRateDefinition(RareRarityId, 100, new[] { 1, 3 })
+        });
+
+    private static readonly StageDefinition[] StarterStageDefinitions =
+    {
+        new StageDefinition(1, "Fallen Scout", 50, 7),
+        new StageDefinition(2, "Hollow Guard", 110, 11),
+        new StageDefinition(3, "Ashborne Rogue", 165, 16),
+        new StageDefinition(4, "Rift Hound", 240, 23),
+        new StageDefinition(5, "Veil Shaman", 340, 31),
+        new StageDefinition(6, "Dusk Knight", 480, 42),
+        new StageDefinition(7, "Cursed Warden", 675, 56),
+        new StageDefinition(8, "Abyss Herald", 930, 74),
+        new StageDefinition(9, "Eclipse Beast", 1275, 97),
+        new StageDefinition(10, "Mythfallen Tyrant", 1725, 125)
     };
 
     [Header("Stats")]
@@ -234,16 +542,16 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField]
     private StageDefinition[] stages =
     {
-        new StageDefinition("Fallen Scout", 50, 7),
-        new StageDefinition("Hollow Guard", 110, 11),
-        new StageDefinition("Ashborne Rogue", 165, 16),
-        new StageDefinition("Rift Hound", 240, 23),
-        new StageDefinition("Veil Shaman", 340, 31),
-        new StageDefinition("Dusk Knight", 480, 42),
-        new StageDefinition("Cursed Warden", 675, 56),
-        new StageDefinition("Abyss Herald", 930, 74),
-        new StageDefinition("Eclipse Beast", 1275, 97),
-        new StageDefinition("Mythfallen Tyrant", 1725, 125)
+        new StageDefinition(1, "Fallen Scout", 50, 7),
+        new StageDefinition(2, "Hollow Guard", 110, 11),
+        new StageDefinition(3, "Ashborne Rogue", 165, 16),
+        new StageDefinition(4, "Rift Hound", 240, 23),
+        new StageDefinition(5, "Veil Shaman", 340, 31),
+        new StageDefinition(6, "Dusk Knight", 480, 42),
+        new StageDefinition(7, "Cursed Warden", 675, 56),
+        new StageDefinition(8, "Abyss Herald", 930, 74),
+        new StageDefinition(9, "Eclipse Beast", 1275, 97),
+        new StageDefinition(10, "Mythfallen Tyrant", 1725, 125)
     };
 
     [Header("Idle")]
@@ -664,7 +972,7 @@ public class IdlePrototypeController : MonoBehaviour
         AddAccessoryInventory(slot, rarity, 1);
         gearDungeonFloor++;
 
-        SetDungeonResult($"Gear Dungeon Floor {floor} cleared in {result.rounds} rounds\nDrop: {AccessoryRarityNames[rarity]} {AccessorySlots[slot].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}");
+        SetDungeonResult($"Gear Dungeon Floor {floor} cleared in {result.rounds} rounds\nDrop: {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}");
         SaveProgress();
         RefreshUi();
     }
@@ -862,16 +1170,17 @@ public class IdlePrototypeController : MonoBehaviour
 
     public void SummonOnce()
     {
-        if (gems < SummonCost)
+        var summonCost = GetSummonCost();
+        if (gems < summonCost)
         {
-            SetSummonResult($"Need {SummonCost} Gems for a summon.");
+            SetSummonResult($"Need {summonCost} Gems for a summon.");
             RefreshUi();
             return;
         }
 
         EnsureHeroShards();
 
-        gems -= SummonCost;
+        gems -= summonCost;
         summonCount++;
         dailySummonCount++;
 
@@ -880,8 +1189,9 @@ public class IdlePrototypeController : MonoBehaviour
         heroShards[heroIndex] += shards;
         selectedHeroIndex = heroIndex;
         damage = GetTeamDamage();
+        var hero = GetHeroDefinition(heroIndex);
 
-        SetSummonResult($"{HeroRarities[heroIndex]} pull: {HeroNames[heroIndex]}\n+{shards} shards");
+        SetSummonResult($"{hero.rarityName} pull: {hero.name}\n+{shards} shards");
         SaveProgress();
         RefreshUi();
     }
@@ -950,16 +1260,16 @@ public class IdlePrototypeController : MonoBehaviour
 
         SaveProgress();
         RefreshUi();
-        SetDungeonResult($"Debug: +1 {AccessoryRarityNames[rarity]} {AccessorySlots[slot].name} copy.");
+        SetDungeonResult($"Debug: +1 {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} copy.");
     }
 
     public void ResetProgress()
     {
         ClearPrototypePlayerPrefs();
         saveVersion = CurrentSaveVersion;
-        gold = 0;
-        gems = StarterGems;
-        mythEssence = StarterMythEssence;
+        gold = GetCurrencyDefinition(GoldCurrencyId).starterAmount;
+        gems = GetCurrencyDefinition(GemsCurrencyId).starterAmount;
+        mythEssence = GetCurrencyDefinition(MythEssenceCurrencyId).starterAmount;
         damage = 1;
         enemyLevel = 1;
         goldDungeonFloor = 1;
@@ -1079,12 +1389,12 @@ public class IdlePrototypeController : MonoBehaviour
         mythEssence = PlayerPrefs.GetInt(MythEssenceKey, mythEssence);
         if (!PlayerPrefs.HasKey(GemsKey))
         {
-            gems = StarterGems;
+            gems = GetCurrencyDefinition(GemsCurrencyId).starterAmount;
         }
 
         if (!PlayerPrefs.HasKey(MythEssenceKey))
         {
-            mythEssence = Mathf.Max(StarterMythEssence, gold);
+            mythEssence = Mathf.Max(GetCurrencyDefinition(MythEssenceCurrencyId).starterAmount, gold);
         }
 
         goldDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(GoldDungeonFloorKey, goldDungeonFloor));
@@ -1254,7 +1564,7 @@ public class IdlePrototypeController : MonoBehaviour
         var hp = Mathf.CeilToInt(lastStage.maxHp * Mathf.Pow(CampaignOverflowHpGrowth, overflow));
         var reward = Mathf.CeilToInt(lastStage.essenceReward * Mathf.Pow(CampaignOverflowRewardGrowth, overflow));
 
-        return new StageDefinition($"Rift Echo {stage}", hp, reward);
+        return new StageDefinition(stage, $"Rift Echo {stage}", hp, reward);
     }
 
     private int GetStageReward(int stage)
@@ -1275,71 +1585,56 @@ public class IdlePrototypeController : MonoBehaviour
 
     private int GetDungeonRecommendedPower(int floor)
     {
-        floor = Mathf.Max(1, floor);
-        return 125 + Mathf.FloorToInt(54 * Mathf.Pow(floor, 1.2f));
+        return GetDungeonRecommendedPower(GoldDungeonDefinition, floor);
     }
 
     private int GetGearDungeonEnemyHp(int floor)
     {
-        floor = Mathf.Max(1, floor);
-        return 260 + Mathf.FloorToInt(135 * Mathf.Pow(floor, 1.23f));
+        return GetDungeonEnemyHp(GearDungeonDefinition, floor);
     }
 
     private int GetGearDungeonEnemyDamage(int floor)
     {
-        floor = Mathf.Max(1, floor);
-        return 28 + Mathf.FloorToInt(12 * Mathf.Pow(floor, 1.16f));
+        return GetDungeonEnemyDamage(GearDungeonDefinition, floor);
     }
 
     private int GetGearDungeonRecommendedPower(int floor)
     {
-        floor = Mathf.Max(1, floor);
-        return 145 + Mathf.FloorToInt(62 * Mathf.Pow(floor, 1.2f));
+        return GetDungeonRecommendedPower(GearDungeonDefinition, floor);
     }
 
     private void RunDungeon(bool isGoldDungeon)
     {
+        var dungeon = isGoldDungeon ? GoldDungeonDefinition : EssenceDungeonDefinition;
         var floor = isGoldDungeon ? goldDungeonFloor : essenceDungeonFloor;
-        var enemyHp = GetDungeonEnemyHp(floor);
-        var enemyDamage = GetDungeonEnemyDamage(floor);
+        var enemyHp = GetDungeonEnemyHp(dungeon, floor);
+        var enemyDamage = GetDungeonEnemyDamage(dungeon, floor);
         var result = SimulateCombat(enemyHp, enemyDamage);
 
         if (!result.won)
         {
-            SetDungeonResult($"{(isGoldDungeon ? "Gold" : "Essence")} Dungeon Floor {floor} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}");
+            SetDungeonResult($"{dungeon.displayName} Floor {floor} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}");
             RefreshUi();
             return;
         }
 
-        var reward = isGoldDungeon ? GetGoldDungeonReward(floor) : GetEssenceDungeonReward(floor);
+        var reward = GetDungeonReward(dungeon, floor);
         var bonusText = GrantDungeonBonusReward(isGoldDungeon, floor);
         if (isGoldDungeon)
         {
             gold += reward;
             goldDungeonFloor++;
-            SetDungeonResult($"Gold Dungeon Floor {floor} cleared in {result.rounds} rounds (+{reward} Gold)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}");
+            SetDungeonResult($"{dungeon.displayName} Floor {floor} cleared in {result.rounds} rounds (+{reward} Gold)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}");
         }
         else
         {
             mythEssence += reward;
             essenceDungeonFloor++;
-            SetDungeonResult($"Essence Dungeon Floor {floor} cleared in {result.rounds} rounds (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}");
+            SetDungeonResult($"{dungeon.displayName} Floor {floor} cleared in {result.rounds} rounds (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}");
         }
 
         SaveProgress();
         RefreshUi();
-    }
-
-    private int GetDungeonEnemyHp(int floor)
-    {
-        floor = Mathf.Max(1, floor);
-        return 220 + Mathf.FloorToInt(110 * Mathf.Pow(floor, 1.22f));
-    }
-
-    private int GetDungeonEnemyDamage(int floor)
-    {
-        floor = Mathf.Max(1, floor);
-        return 24 + Mathf.FloorToInt(10 * Mathf.Pow(floor, 1.15f));
     }
 
     private int GetCampaignEnemyDamage(int stage)
@@ -1415,14 +1710,12 @@ public class IdlePrototypeController : MonoBehaviour
 
     private int GetGoldDungeonReward(int floor)
     {
-        floor = Mathf.Max(1, floor);
-        return 80 + Mathf.FloorToInt(30 * Mathf.Pow(floor, 1.15f));
+        return GetDungeonReward(GoldDungeonDefinition, floor);
     }
 
     private int GetEssenceDungeonReward(int floor)
     {
-        floor = Mathf.Max(1, floor);
-        return 100 + Mathf.FloorToInt(36 * Mathf.Pow(floor, 1.15f));
+        return GetDungeonReward(EssenceDungeonDefinition, floor);
     }
 
     private string GrantCampaignMilestoneReward(int clearedStage)
@@ -1434,8 +1727,8 @@ public class IdlePrototypeController : MonoBehaviour
 
         var rewardGems = 10 + Mathf.FloorToInt(clearedStage * 1.5f);
         var rewardPassXp = 20;
-        gems += rewardGems;
-        battlePassXp += rewardPassXp;
+        var reward = new RewardDefinition($"reward_campaign_milestone_{clearedStage}", 0, rewardGems, 0, rewardPassXp);
+        GrantReward(reward);
 
         return $"  Milestone +{rewardGems} Gems +{rewardPassXp} XP";
     }
@@ -1450,12 +1743,12 @@ public class IdlePrototypeController : MonoBehaviour
         if (isGoldDungeon)
         {
             var bonusGold = Mathf.CeilToInt(GetGoldDungeonReward(clearedFloor) * 0.75f);
-            gold += bonusGold;
+            GrantReward(new RewardDefinition($"reward_gold_dungeon_bonus_{clearedFloor}", bonusGold, 0, 0));
             return $"  Bonus +{bonusGold} Gold";
         }
 
         var bonusEssence = Mathf.CeilToInt(GetEssenceDungeonReward(clearedFloor) * 0.75f);
-        mythEssence += bonusEssence;
+        GrantReward(new RewardDefinition($"reward_essence_dungeon_bonus_{clearedFloor}", 0, 0, bonusEssence));
         return $"  Bonus +{bonusEssence} Essence";
     }
 
@@ -1553,17 +1846,17 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (upgradeCostText != null)
         {
-            upgradeCostText.text = $"Upgrade {HeroNames[selectedHeroIndex]} ({upgradeCost} Essence)";
+            upgradeCostText.text = $"Upgrade {GetHeroDefinition(selectedHeroIndex).name} ({upgradeCost} Essence)";
         }
 
         if (heroUpgradeCostText != null)
         {
-            heroUpgradeCostText.text = $"Upgrade {HeroNames[selectedHeroIndex]} ({upgradeCost} Essence)";
+            heroUpgradeCostText.text = $"Upgrade {GetHeroDefinition(selectedHeroIndex).name} ({upgradeCost} Essence)";
         }
 
         if (heroAscendCostText != null)
         {
-            heroAscendCostText.text = $"Ascend {HeroNames[selectedHeroIndex]} ({GetHeroAscensionCost(selectedHeroIndex)} Shards)";
+            heroAscendCostText.text = $"Ascend {GetHeroDefinition(selectedHeroIndex).name} ({GetHeroAscensionCost(selectedHeroIndex)} Shards)";
         }
 
         if (upgradeButton != null)
@@ -1595,7 +1888,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (summonButton != null)
         {
-            summonButton.interactable = gems >= SummonCost;
+            summonButton.interactable = gems >= GetSummonCost();
         }
     }
 
@@ -1807,14 +2100,15 @@ public class IdlePrototypeController : MonoBehaviour
             {
                 if (teamSlotTexts[i] != null)
                 {
-                    teamSlotTexts[i].text = $"{HeroNames[i]}\nATK {GetHeroAttack(i)}\nHP {GetHeroHealth(i)}";
+                    teamSlotTexts[i].text = $"{GetHeroDefinition(i).name}\nATK {GetHeroAttack(i)}\nHP {GetHeroHealth(i)}";
                 }
             }
         }
 
         if (selectedHeroText != null)
         {
-            selectedHeroText.text = $"{HeroNames[selectedHeroIndex]}  Lv. {heroLevels[selectedHeroIndex]}  Asc. {heroAscensions[selectedHeroIndex]}\n{HeroRarities[selectedHeroIndex]} {HeroRoles[selectedHeroIndex]}  Power {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroAttack(selectedHeroIndex)}  HP {GetHeroHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
+            var hero = GetHeroDefinition(selectedHeroIndex);
+            selectedHeroText.text = $"{hero.name}  Lv. {heroLevels[selectedHeroIndex]}  Asc. {heroAscensions[selectedHeroIndex]}\n{hero.rarityName} {hero.roleName}  Power {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroAttack(selectedHeroIndex)}  HP {GetHeroHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
         }
 
         if (heroCardTexts != null)
@@ -1823,8 +2117,9 @@ public class IdlePrototypeController : MonoBehaviour
             {
                 if (heroCardTexts[i] != null)
                 {
+                    var hero = GetHeroDefinition(i);
                     var marker = i == selectedHeroIndex ? "> " : string.Empty;
-                    heroCardTexts[i].text = $"{marker}{HeroNames[i]}  Lv. {heroLevels[i]}  A{heroAscensions[i]}  Shards {heroShards[i]}\n{HeroRarities[i]} {HeroRoles[i]}  ATK {GetHeroAttack(i)}  HP {GetHeroHealth(i)}";
+                    heroCardTexts[i].text = $"{marker}{hero.name}  Lv. {heroLevels[i]}  A{heroAscensions[i]}  Shards {heroShards[i]}\n{hero.rarityName} {hero.roleName}  ATK {GetHeroAttack(i)}  HP {GetHeroHealth(i)}";
                 }
             }
         }
@@ -1843,9 +2138,10 @@ public class IdlePrototypeController : MonoBehaviour
 
     private string GetNextGoalText()
     {
-        if (gems >= SummonCost)
+        var summonCost = GetSummonCost();
+        if (gems >= summonCost)
         {
-            return $"Summon x1 to gain shards ({gems}/{SummonCost} Gems)";
+            return $"Summon x1 to gain shards ({gems}/{summonCost} Gems)";
         }
 
         var weaponCost = GetWeaponUpgradeCost();
@@ -1862,7 +2158,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (mythEssence >= upgradeCost)
         {
-            return $"Level {HeroNames[selectedHeroIndex]} with Myth Essence";
+            return $"Level {GetHeroDefinition(selectedHeroIndex).name} with Myth Essence";
         }
 
         if (HasAccessoryCopiesToEquip())
@@ -1921,7 +2217,7 @@ public class IdlePrototypeController : MonoBehaviour
         if (accessorySelectedText != null)
         {
             var equippedText = GetEquippedAccessoryText(slot);
-            accessorySelectedText.text = $"{AccessorySlots[slot].name}\nEquipped: {equippedText}\nSelected Fuse Tier: {AccessoryRarityNames[rarity]}";
+            accessorySelectedText.text = $"{AccessorySlots[slot].name}\nEquipped: {equippedText}\nSelected Fuse Tier: {GetAccessoryRarityName(rarity)}";
         }
 
         if (accessoryInventoryText != null)
@@ -1931,7 +2227,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (accessoryEquipText != null)
         {
-            accessoryEquipText.text = $"Equip {AccessoryRarityNames[rarity]}\nCopies {GetAccessoryInventoryCount(slot, rarity)}";
+            accessoryEquipText.text = $"Equip {GetAccessoryRarityName(rarity)}\nCopies {GetAccessoryInventoryCount(slot, rarity)}";
         }
 
         if (accessoryLevelText != null)
@@ -1944,8 +2240,8 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (accessoryFuseText != null)
         {
-            var nextTier = rarity >= AccessoryRarityCount - 1 ? "Max" : AccessoryRarityNames[rarity + 1];
-            accessoryFuseText.text = $"Fuse {AccessoryFuseCost}x {AccessoryRarityNames[rarity]}\nInto {nextTier}";
+            var nextTier = rarity >= AccessoryRarityCount - 1 ? "Max" : GetAccessoryRarityName(rarity + 1);
+            accessoryFuseText.text = $"Fuse {AccessoryFuseCost}x {GetAccessoryRarityName(rarity)}\nInto {nextTier}";
         }
     }
 
@@ -1982,7 +2278,7 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         var level = equippedAccessoryLevels[slot];
-        return $"{AccessoryRarityNames[rarity]} Lv. {level}/{GetAccessoryMaxLevel(rarity)} (+{GetAccessoryAttackFor(slot, rarity, level)} ATK, +{GetAccessoryHealthFor(slot, rarity, level)} HP)";
+        return $"{GetAccessoryRarityName(rarity)} Lv. {level}/{GetAccessoryMaxLevel(rarity)} (+{GetAccessoryAttackFor(slot, rarity, level)} ATK, +{GetAccessoryHealthFor(slot, rarity, level)} HP)";
     }
 
     private string GetAccessoryInventoryText(int slot)
@@ -1990,7 +2286,7 @@ public class IdlePrototypeController : MonoBehaviour
         var text = "Inventory Copies";
         for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
         {
-            text += $"\n{AccessoryRarityNames[rarity]}: {GetAccessoryInventoryCount(slot, rarity)}";
+            text += $"\n{GetAccessoryRarityName(rarity)}: {GetAccessoryInventoryCount(slot, rarity)}";
         }
 
         return text;
@@ -2161,18 +2457,16 @@ public class IdlePrototypeController : MonoBehaviour
     {
         missionIndex = Mathf.Clamp(missionIndex, 0, DailyMissionCount - 1);
         EnsureDailyMissionClaims();
+        var mission = GetDailyMissionDefinition(missionIndex);
 
-        if (dailyMissionClaimed[missionIndex] || GetDailyMissionProgress(missionIndex) < DailyMissionTargets[missionIndex])
+        if (dailyMissionClaimed[missionIndex] || GetDailyMissionProgress(missionIndex) < mission.target)
         {
             RefreshUi();
             return;
         }
 
         dailyMissionClaimed[missionIndex] = true;
-        gold += DailyMissionGoldRewards[missionIndex];
-        gems += DailyMissionGemRewards[missionIndex];
-        mythEssence += DailyMissionEssenceRewards[missionIndex];
-        battlePassXp += BattlePassXpPerDailyClaim;
+        GrantReward(mission.reward);
 
         SaveProgress();
         RefreshUi();
@@ -2182,17 +2476,16 @@ public class IdlePrototypeController : MonoBehaviour
     {
         rewardIndex = Mathf.Clamp(rewardIndex, 0, BattlePassRewardCount - 1);
         EnsureBattlePassRewardClaims();
+        var rewardDefinition = GetBattlePassRewardDefinition(rewardIndex);
 
-        if (battlePassRewardsClaimed[rewardIndex] || battlePassXp < BattlePassRewardXp[rewardIndex])
+        if (battlePassRewardsClaimed[rewardIndex] || battlePassXp < rewardDefinition.requiredXp)
         {
             RefreshUi();
             return;
         }
 
         battlePassRewardsClaimed[rewardIndex] = true;
-        gold += BattlePassGoldRewards[rewardIndex];
-        gems += BattlePassGemRewards[rewardIndex];
-        mythEssence += BattlePassEssenceRewards[rewardIndex];
+        GrantReward(rewardDefinition.reward);
 
         SaveProgress();
         RefreshUi();
@@ -2200,13 +2493,13 @@ public class IdlePrototypeController : MonoBehaviour
 
     private int GetDailyMissionProgress(int missionIndex)
     {
-        switch (missionIndex)
+        switch (GetDailyMissionDefinition(missionIndex).progressType)
         {
-            case 0:
+            case DailyMissionProgressType.Fight:
                 return dailyFightCount;
-            case 1:
+            case DailyMissionProgressType.StageClear:
                 return dailyStageClearCount;
-            case 2:
+            case DailyMissionProgressType.Summon:
                 return dailySummonCount;
             default:
                 return 0;
@@ -2218,26 +2511,128 @@ public class IdlePrototypeController : MonoBehaviour
         return DateTime.UtcNow.ToString("yyyyMMdd");
     }
 
+    private static CurrencyDefinition GetCurrencyDefinition(string currencyId)
+    {
+        for (var i = 0; i < CurrencyDefinitions.Length; i++)
+        {
+            if (CurrencyDefinitions[i].currencyId == currencyId)
+            {
+                return CurrencyDefinitions[i];
+            }
+        }
+
+        return CurrencyDefinitions[0];
+    }
+
+    private static HeroDefinition GetHeroDefinition(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroDefinitions.Length - 1);
+        return HeroDefinitions[index];
+    }
+
+    private static DailyMissionDefinition GetDailyMissionDefinition(int index)
+    {
+        index = Mathf.Clamp(index, 0, DailyMissionDefinitions.Length - 1);
+        return DailyMissionDefinitions[index];
+    }
+
+    private static BattlePassRewardDefinition GetBattlePassRewardDefinition(int index)
+    {
+        index = Mathf.Clamp(index, 0, BattlePassRewardDefinitions.Length - 1);
+        return BattlePassRewardDefinitions[index];
+    }
+
+    private static AccessoryRarityDefinition GetAccessoryRarityDefinition(int rarity)
+    {
+        rarity = Mathf.Clamp(rarity, 0, AccessoryRarities.Length - 1);
+        return AccessoryRarities[rarity];
+    }
+
+    private static string GetAccessoryRarityName(int rarity)
+    {
+        return GetAccessoryRarityDefinition(rarity).displayName;
+    }
+
+    private static string GetHeroRarityName(string rarityId)
+    {
+        for (var i = 0; i < HeroDefinitions.Length; i++)
+        {
+            if (HeroDefinitions[i].rarityId == rarityId)
+            {
+                return HeroDefinitions[i].rarityName;
+            }
+        }
+
+        return rarityId;
+    }
+
+    private static int GetSummonCost()
+    {
+        return HeroShardBanner.costAmount;
+    }
+
+    private static string GetSummonRatesText()
+    {
+        var text = "Rates";
+
+        if (HeroShardBanner.rates == null || HeroShardBanner.rates.Length == 0)
+        {
+            return text;
+        }
+
+        for (var i = HeroShardBanner.rates.Length - 1; i >= 0; i--)
+        {
+            var lowerBound = i > 0 ? HeroShardBanner.rates[i - 1].cumulativeChance : 0;
+            var chance = Mathf.Max(0, HeroShardBanner.rates[i].cumulativeChance - lowerBound);
+            text += i == HeroShardBanner.rates.Length - 1 ? "\n" : "  ";
+            text += $"{GetHeroRarityName(HeroShardBanner.rates[i].rarityId)} {chance}%";
+        }
+
+        return text;
+    }
+
+    private static int GetDungeonEnemyHp(DungeonDefinition dungeon, int floor)
+    {
+        return GetScaledDefinitionValue(dungeon.baseEnemyHp, dungeon.enemyHpScale, dungeon.enemyHpGrowth, floor);
+    }
+
+    private static int GetDungeonEnemyDamage(DungeonDefinition dungeon, int floor)
+    {
+        return GetScaledDefinitionValue(dungeon.baseEnemyDamage, dungeon.enemyDamageScale, dungeon.enemyDamageGrowth, floor);
+    }
+
+    private static int GetDungeonRecommendedPower(DungeonDefinition dungeon, int floor)
+    {
+        return GetScaledDefinitionValue(dungeon.baseRecommendedPower, dungeon.recommendedPowerScale, dungeon.recommendedPowerGrowth, floor);
+    }
+
+    private static int GetDungeonReward(DungeonDefinition dungeon, int floor)
+    {
+        return GetScaledDefinitionValue(dungeon.baseReward, dungeon.rewardScale, dungeon.rewardGrowth, floor);
+    }
+
+    private static int GetScaledDefinitionValue(int baseValue, float scale, float growth, int index)
+    {
+        index = Mathf.Max(1, index);
+        return baseValue + Mathf.FloorToInt(scale * Mathf.Pow(index, growth));
+    }
+
+    private void GrantReward(RewardDefinition reward)
+    {
+        gold += reward.gold;
+        gems += reward.gems;
+        mythEssence += reward.mythEssence;
+        battlePassXp += reward.passXp;
+    }
+
     private void EnsureStages()
     {
-        if (stages != null && stages.Length > 0)
+        if (stages != null && stages.Length > 0 && !string.IsNullOrWhiteSpace(stages[0].stageId))
         {
             return;
         }
 
-        stages = new StageDefinition[]
-        {
-            new StageDefinition("Fallen Scout", 50, 7),
-            new StageDefinition("Hollow Guard", 110, 11),
-            new StageDefinition("Ashborne Rogue", 165, 16),
-            new StageDefinition("Rift Hound", 240, 23),
-            new StageDefinition("Veil Shaman", 340, 31),
-            new StageDefinition("Dusk Knight", 480, 42),
-            new StageDefinition("Cursed Warden", 675, 56),
-            new StageDefinition("Abyss Herald", 930, 74),
-            new StageDefinition("Eclipse Beast", 1275, 97),
-            new StageDefinition("Mythfallen Tyrant", 1725, 125)
-        };
+        stages = StarterStageDefinitions;
     }
 
     private int GetTeamPower()
@@ -2255,8 +2650,8 @@ public class IdlePrototypeController : MonoBehaviour
     private int GetTeamDamage()
     {
         var multiplier = 1f
-            + (CountHeroesWithRole("Warrior") * WarriorDamageBonusRate)
-            + (CountHeroesWithRole("Mage") * MageDamageBonusRate);
+            + (CountHeroesWithRole(WarriorRoleId) * WarriorDamageBonusRate)
+            + (CountHeroesWithRole(MageRoleId) * MageDamageBonusRate);
 
         return Mathf.Max(1, Mathf.FloorToInt((GetTeamBaseAttack() + GetEquipmentAttackBonus() + GetAccessoryAttackBonus()) * multiplier));
     }
@@ -2343,7 +2738,8 @@ public class IdlePrototypeController : MonoBehaviour
             return 0;
         }
 
-        return AccessorySlots[slot].attackPerLevel * level * (rarity + 1);
+        var rarityDefinition = GetAccessoryRarityDefinition(rarity);
+        return AccessorySlots[slot].attackPerLevel * level * rarityDefinition.statMultiplier;
     }
 
     private int GetAccessoryHealthFor(int slot, int rarity, int level)
@@ -2353,13 +2749,13 @@ public class IdlePrototypeController : MonoBehaviour
             return 0;
         }
 
-        return AccessorySlots[slot].healthPerLevel * level * (rarity + 1);
+        var rarityDefinition = GetAccessoryRarityDefinition(rarity);
+        return AccessorySlots[slot].healthPerLevel * level * rarityDefinition.statMultiplier;
     }
 
     private int GetAccessoryMaxLevel(int rarity)
     {
-        rarity = Mathf.Clamp(rarity, 0, AccessoryRarityCount - 1);
-        return AccessoryBaseMaxLevel + (rarity * AccessoryMaxLevelPerRarity);
+        return GetAccessoryRarityDefinition(rarity).maxLevel;
     }
 
     private int GetAccessoryLevelCost(int slot)
@@ -2372,7 +2768,8 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         var level = Mathf.Max(1, equippedAccessoryLevels[slot]);
-        return Mathf.CeilToInt(35 * (rarity + 1) * Mathf.Pow(1.18f + (rarity * 0.015f), level - 1));
+        var rarityDefinition = GetAccessoryRarityDefinition(rarity);
+        return Mathf.CeilToInt(rarityDefinition.levelCostBase * Mathf.Pow(rarityDefinition.levelCostGrowth, level - 1));
     }
 
     private int GetAccessoryInventoryIndex(int slot, int rarity)
@@ -2439,11 +2836,12 @@ public class IdlePrototypeController : MonoBehaviour
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        var hero = GetHeroDefinition(index);
 
-        return HeroBaseAttack[index]
-            + (heroLevels[index] * HeroAttackGrowth[index])
+        return hero.baseAttack
+            + (heroLevels[index] * hero.attackGrowth)
             + Mathf.FloorToInt(heroShards[index] * 0.25f)
-            + (heroAscensions[index] * GetHeroAscensionAttack(index));
+            + (heroAscensions[index] * hero.ascensionAttack);
     }
 
     private int GetHeroHealth(int index)
@@ -2452,11 +2850,12 @@ public class IdlePrototypeController : MonoBehaviour
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        var hero = GetHeroDefinition(index);
 
-        return HeroBaseHealth[index]
-            + (heroLevels[index] * HeroHealthGrowth[index])
+        return hero.baseHealth
+            + (heroLevels[index] * hero.healthGrowth)
             + Mathf.FloorToInt(heroShards[index] * 1.2f)
-            + (heroAscensions[index] * GetHeroAscensionHealth(index));
+            + (heroAscensions[index] * hero.ascensionHealth);
     }
 
     private int GetHeroUpgradeCost(int index)
@@ -2470,18 +2869,8 @@ public class IdlePrototypeController : MonoBehaviour
     {
         index = Mathf.Clamp(index, 0, HeroCount - 1);
         EnsureHeroAscensions();
-
-        var baseCost = 20;
-        if (HeroRarities[index] == "Epic")
-        {
-            baseCost = 25;
-        }
-        else if (HeroRarities[index] == "Legendary")
-        {
-            baseCost = 30;
-        }
-
-        return baseCost + (heroAscensions[index] * 15);
+        var hero = GetHeroDefinition(index);
+        return hero.ascensionBaseCost + (heroAscensions[index] * hero.ascensionCostGrowth);
     }
 
     private int GetWeaponUpgradeCost()
@@ -2500,47 +2889,13 @@ public class IdlePrototypeController : MonoBehaviour
         return Mathf.CeilToInt(track.baseCost * Mathf.Pow(track.costGrowth, level - 1));
     }
 
-    private int GetHeroAscensionAttack(int index)
-    {
-        index = Mathf.Clamp(index, 0, HeroCount - 1);
-
-        if (HeroRarities[index] == "Legendary")
-        {
-            return 14;
-        }
-
-        if (HeroRarities[index] == "Epic")
-        {
-            return 11;
-        }
-
-        return 8;
-    }
-
-    private int GetHeroAscensionHealth(int index)
-    {
-        index = Mathf.Clamp(index, 0, HeroCount - 1);
-
-        if (HeroRarities[index] == "Legendary")
-        {
-            return 90;
-        }
-
-        if (HeroRarities[index] == "Epic")
-        {
-            return 70;
-        }
-
-        return 55;
-    }
-
-    private int CountHeroesWithRole(string role)
+    private int CountHeroesWithRole(string roleId)
     {
         var count = 0;
 
         for (var i = 0; i < HeroCount; i++)
         {
-            if (HeroRoles[i] == role)
+            if (GetHeroDefinition(i).roleId == roleId)
             {
                 count++;
             }
@@ -2551,7 +2906,7 @@ public class IdlePrototypeController : MonoBehaviour
 
     private bool ShouldExecuteEnemy(int enemyHpRemaining, int enemyMaxHp)
     {
-        if (CountHeroesWithRole("Ranger") <= 0)
+        if (CountHeroesWithRole(RangerRoleId) <= 0)
         {
             return false;
         }
@@ -2571,7 +2926,7 @@ public class IdlePrototypeController : MonoBehaviour
 
     private int GetSupportHealPerRound(int maxTeamHealth)
     {
-        var supports = CountHeroesWithRole("Support");
+        var supports = CountHeroesWithRole(SupportRoleId);
         if (supports <= 0)
         {
             return 0;
@@ -2601,17 +2956,17 @@ public class IdlePrototypeController : MonoBehaviour
     {
         if (goldDungeonText != null)
         {
-            goldDungeonText.text = $"Gold Dungeon F{goldDungeonFloor}  Rec {GetDungeonRecommendedPower(goldDungeonFloor)}\n+{GetGoldDungeonReward(goldDungeonFloor)} Gold";
+            goldDungeonText.text = $"{GoldDungeonDefinition.displayName} F{goldDungeonFloor}  Rec {GetDungeonRecommendedPower(goldDungeonFloor)}\n+{GetGoldDungeonReward(goldDungeonFloor)} {GetCurrencyDefinition(GoldDungeonDefinition.rewardCurrencyId).displayName}";
         }
 
         if (essenceDungeonText != null)
         {
-            essenceDungeonText.text = $"Essence Dungeon F{essenceDungeonFloor}  Rec {GetDungeonRecommendedPower(essenceDungeonFloor)}\n+{GetEssenceDungeonReward(essenceDungeonFloor)} Essence";
+            essenceDungeonText.text = $"{EssenceDungeonDefinition.displayName} F{essenceDungeonFloor}  Rec {GetDungeonRecommendedPower(essenceDungeonFloor)}\n+{GetEssenceDungeonReward(essenceDungeonFloor)} {GetCurrencyDefinition(EssenceDungeonDefinition.rewardCurrencyId).displayName}";
         }
 
         if (gearDungeonText != null)
         {
-            gearDungeonText.text = $"Gear Dungeon F{gearDungeonFloor}  Rec {GetGearDungeonRecommendedPower(gearDungeonFloor)}\nRandom accessory drop";
+            gearDungeonText.text = $"{GearDungeonDefinition.displayName} F{gearDungeonFloor}  Rec {GetGearDungeonRecommendedPower(gearDungeonFloor)}\nRandom accessory drop";
         }
 
         if (dungeonResultText != null && string.IsNullOrWhiteSpace(dungeonResultText.text))
@@ -2640,12 +2995,12 @@ public class IdlePrototypeController : MonoBehaviour
     {
         if (summonCostText != null)
         {
-            summonCostText.text = $"Cost: {SummonCost} Gems";
+            summonCostText.text = $"Cost: {GetSummonCost()} Gems";
         }
 
         if (summonRatesText != null)
         {
-            summonRatesText.text = "Rates\nRare 55%  Epic 35%  Legendary 10%";
+            summonRatesText.text = GetSummonRatesText();
         }
 
         if (summonCountText != null)
@@ -2665,11 +3020,12 @@ public class IdlePrototypeController : MonoBehaviour
 
         for (var i = 0; i < DailyMissionCount; i++)
         {
-            var progress = Mathf.Min(GetDailyMissionProgress(i), DailyMissionTargets[i]);
-            var isComplete = progress >= DailyMissionTargets[i];
+            var mission = GetDailyMissionDefinition(i);
+            var progress = Mathf.Min(GetDailyMissionProgress(i), mission.target);
+            var isComplete = progress >= mission.target;
             var isClaimed = dailyMissionClaimed[i];
-            var state = isClaimed ? "Claimed" : isComplete ? "Claim" : $"{progress}/{DailyMissionTargets[i]}";
-            var text = $"{DailyMissionTitles[i]}\n{state}  Reward {FormatReward(DailyMissionGoldRewards[i], DailyMissionGemRewards[i], DailyMissionEssenceRewards[i])}";
+            var state = isClaimed ? "Claimed" : isComplete ? "Claim" : $"{progress}/{mission.target}";
+            var text = $"{mission.title}\n{state}  Reward {FormatReward(mission.reward)}";
 
             if (dailyMissionTexts != null && i < dailyMissionTexts.Length && dailyMissionTexts[i] != null)
             {
@@ -2694,10 +3050,11 @@ public class IdlePrototypeController : MonoBehaviour
 
         for (var i = 0; i < BattlePassRewardCount; i++)
         {
-            var isReady = battlePassXp >= BattlePassRewardXp[i];
+            var rewardDefinition = GetBattlePassRewardDefinition(i);
+            var isReady = battlePassXp >= rewardDefinition.requiredXp;
             var isClaimed = battlePassRewardsClaimed[i];
-            var state = isClaimed ? "Claimed" : isReady ? "Claim" : $"{battlePassXp}/{BattlePassRewardXp[i]} XP";
-            var text = $"Level {i + 1}  {state}\nReward {FormatReward(BattlePassGoldRewards[i], BattlePassGemRewards[i], BattlePassEssenceRewards[i])}";
+            var state = isClaimed ? "Claimed" : isReady ? "Claim" : $"{battlePassXp}/{rewardDefinition.requiredXp} XP";
+            var text = $"Level {i + 1}  {state}\nReward {FormatReward(rewardDefinition.reward)}";
 
             if (battlePassRewardTexts != null && i < battlePassRewardTexts.Length && battlePassRewardTexts[i] != null)
             {
@@ -2715,17 +3072,18 @@ public class IdlePrototypeController : MonoBehaviour
     {
         var roll = UnityEngine.Random.Range(0, 100);
 
-        if (roll < 10)
+        if (HeroShardBanner.rates != null)
         {
-            return PickRandomHero(LegendaryHeroIndexes);
+            for (var i = 0; i < HeroShardBanner.rates.Length; i++)
+            {
+                if (roll < HeroShardBanner.rates[i].cumulativeChance)
+                {
+                    return PickRandomHero(HeroShardBanner.rates[i].heroIndexes);
+                }
+            }
         }
 
-        if (roll < 45)
-        {
-            return PickRandomHero(EpicHeroIndexes);
-        }
-
-        return PickRandomHero(RareHeroIndexes);
+        return 0;
     }
 
     private int PickRandomHero(int[] heroIndexes)
@@ -2740,19 +3098,7 @@ public class IdlePrototypeController : MonoBehaviour
 
     private int GetSummonShardReward(int heroIndex)
     {
-        var rarity = HeroRarities[Mathf.Clamp(heroIndex, 0, HeroCount - 1)];
-
-        if (rarity == "Legendary")
-        {
-            return 5;
-        }
-
-        if (rarity == "Epic")
-        {
-            return 7;
-        }
-
-        return 10;
+        return GetHeroDefinition(heroIndex).summonShardReward;
     }
 
     private void SetSummonResult(string result)
@@ -2783,6 +3129,11 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         return string.IsNullOrEmpty(reward) ? "None" : reward;
+    }
+
+    private string FormatReward(RewardDefinition reward)
+    {
+        return FormatReward(reward.gold, reward.gems, reward.mythEssence);
     }
 
     private void AddDebugResources(int goldAmount, int gemAmount, int essenceAmount)
