@@ -46,8 +46,12 @@ public class IdlePrototypeController : MonoBehaviour
     private const string DailyStageClearCountKey = "Mythwake.Prototype.Daily.StageClearCount";
     private const string DailySummonCountKey = "Mythwake.Prototype.Daily.SummonCount";
     private const string DailyMissionClaimedKeyPrefix = "Mythwake.Prototype.Daily.MissionClaimed.";
+    private const string BattlePassXpKey = "Mythwake.Prototype.BattlePass.Xp";
+    private const string BattlePassClaimedKeyPrefix = "Mythwake.Prototype.BattlePass.Claimed.";
     private const int HeroCount = 5;
     private const int DailyMissionCount = 3;
+    private const int BattlePassRewardCount = 5;
+    private const int BattlePassXpPerDailyClaim = 40;
     private const int SummonCost = 60;
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
@@ -61,6 +65,8 @@ public class IdlePrototypeController : MonoBehaviour
     private static readonly string[] DailyMissionTitles = { "Battle 20 times", "Clear 3 stages", "Summon 1 hero" };
     private static readonly int[] DailyMissionTargets = { 20, 3, 1 };
     private static readonly int[] DailyMissionRewards = { 75, 120, 80 };
+    private static readonly int[] BattlePassRewardXp = { 40, 80, 120, 180, 240 };
+    private static readonly int[] BattlePassGoldRewards = { 100, 125, 175, 225, 350 };
 
     [Header("Stats")]
     [SerializeField] private int gold;
@@ -78,6 +84,8 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private int dailyStageClearCount;
     [SerializeField] private int dailySummonCount;
     [SerializeField] private bool[] dailyMissionClaimed = new bool[DailyMissionCount];
+    [SerializeField] private int battlePassXp;
+    [SerializeField] private bool[] battlePassRewardsClaimed = new bool[BattlePassRewardCount];
 
     [Header("Campaign")]
     [SerializeField]
@@ -122,6 +130,8 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text summonRatesText;
     [SerializeField] private TMP_Text summonCountText;
     [SerializeField] private TMP_Text[] dailyMissionTexts;
+    [SerializeField] private TMP_Text battlePassProgressText;
+    [SerializeField] private TMP_Text[] battlePassRewardTexts;
     [SerializeField] private Button fightButton;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Button heroUpgradeButton;
@@ -130,6 +140,7 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private Button resetButton;
     [SerializeField] private Button[] heroSelectButtons;
     [SerializeField] private Button[] dailyMissionButtons;
+    [SerializeField] private Button[] battlePassRewardButtons;
 
     [Header("Navigation")]
     [SerializeField] private GameObject homePanel;
@@ -157,6 +168,7 @@ public class IdlePrototypeController : MonoBehaviour
         RegisterNavigation();
         RegisterHeroButtons();
         RegisterDailyMissionButtons();
+        RegisterBattlePassRewardButtons();
 
         if (fightButton != null)
         {
@@ -246,6 +258,7 @@ public class IdlePrototypeController : MonoBehaviour
         UnregisterNavigation();
         UnregisterHeroButtons();
         UnregisterDailyMissionButtons();
+        UnregisterBattlePassRewardButtons();
     }
 
     public void ShowHome()
@@ -360,6 +373,31 @@ public class IdlePrototypeController : MonoBehaviour
         ClaimDailyMission(2);
     }
 
+    public void ClaimBattlePassReward1()
+    {
+        ClaimBattlePassReward(0);
+    }
+
+    public void ClaimBattlePassReward2()
+    {
+        ClaimBattlePassReward(1);
+    }
+
+    public void ClaimBattlePassReward3()
+    {
+        ClaimBattlePassReward(2);
+    }
+
+    public void ClaimBattlePassReward4()
+    {
+        ClaimBattlePassReward(3);
+    }
+
+    public void ClaimBattlePassReward5()
+    {
+        ClaimBattlePassReward(4);
+    }
+
     public void ResetProgress()
     {
         gold = 0;
@@ -390,6 +428,13 @@ public class IdlePrototypeController : MonoBehaviour
         for (var i = 0; i < dailyMissionClaimed.Length; i++)
         {
             dailyMissionClaimed[i] = false;
+        }
+
+        battlePassXp = 0;
+        EnsureBattlePassRewardClaims();
+        for (var i = 0; i < battlePassRewardsClaimed.Length; i++)
+        {
+            battlePassRewardsClaimed[i] = false;
         }
 
         damage = GetTeamDamage();
@@ -476,11 +521,13 @@ public class IdlePrototypeController : MonoBehaviour
         PlayerPrefs.SetInt(DailyFightCountKey, dailyFightCount);
         PlayerPrefs.SetInt(DailyStageClearCountKey, dailyStageClearCount);
         PlayerPrefs.SetInt(DailySummonCountKey, dailySummonCount);
+        PlayerPrefs.SetInt(BattlePassXpKey, battlePassXp);
 
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
         EnsureDailyMissionClaims();
+        EnsureBattlePassRewardClaims();
         for (var i = 0; i < heroLevels.Length; i++)
         {
             PlayerPrefs.SetInt($"{HeroLevelKeyPrefix}{i}", heroLevels[i]);
@@ -491,6 +538,11 @@ public class IdlePrototypeController : MonoBehaviour
         for (var i = 0; i < dailyMissionClaimed.Length; i++)
         {
             PlayerPrefs.SetInt($"{DailyMissionClaimedKeyPrefix}{i}", dailyMissionClaimed[i] ? 1 : 0);
+        }
+
+        for (var i = 0; i < battlePassRewardsClaimed.Length; i++)
+        {
+            PlayerPrefs.SetInt($"{BattlePassClaimedKeyPrefix}{i}", battlePassRewardsClaimed[i] ? 1 : 0);
         }
 
         PlayerPrefs.SetString(LastSeenUtcKey, DateTime.UtcNow.Ticks.ToString());
@@ -614,6 +666,7 @@ public class IdlePrototypeController : MonoBehaviour
         RefreshHeroUi();
         RefreshSummonUi();
         RefreshDailyMissionUi();
+        RefreshBattlePassUi();
 
         if (upgradeCostText != null)
         {
@@ -701,6 +754,34 @@ public class IdlePrototypeController : MonoBehaviour
         if (dailyMissionButtons.Length > 0 && dailyMissionButtons[0] != null) dailyMissionButtons[0].onClick.RemoveListener(ClaimDailyBattleMission);
         if (dailyMissionButtons.Length > 1 && dailyMissionButtons[1] != null) dailyMissionButtons[1].onClick.RemoveListener(ClaimDailyStageMission);
         if (dailyMissionButtons.Length > 2 && dailyMissionButtons[2] != null) dailyMissionButtons[2].onClick.RemoveListener(ClaimDailySummonMission);
+    }
+
+    private void RegisterBattlePassRewardButtons()
+    {
+        if (battlePassRewardButtons == null || battlePassRewardButtons.Length == 0)
+        {
+            return;
+        }
+
+        if (battlePassRewardButtons.Length > 0 && battlePassRewardButtons[0] != null) battlePassRewardButtons[0].onClick.AddListener(ClaimBattlePassReward1);
+        if (battlePassRewardButtons.Length > 1 && battlePassRewardButtons[1] != null) battlePassRewardButtons[1].onClick.AddListener(ClaimBattlePassReward2);
+        if (battlePassRewardButtons.Length > 2 && battlePassRewardButtons[2] != null) battlePassRewardButtons[2].onClick.AddListener(ClaimBattlePassReward3);
+        if (battlePassRewardButtons.Length > 3 && battlePassRewardButtons[3] != null) battlePassRewardButtons[3].onClick.AddListener(ClaimBattlePassReward4);
+        if (battlePassRewardButtons.Length > 4 && battlePassRewardButtons[4] != null) battlePassRewardButtons[4].onClick.AddListener(ClaimBattlePassReward5);
+    }
+
+    private void UnregisterBattlePassRewardButtons()
+    {
+        if (battlePassRewardButtons == null || battlePassRewardButtons.Length == 0)
+        {
+            return;
+        }
+
+        if (battlePassRewardButtons.Length > 0 && battlePassRewardButtons[0] != null) battlePassRewardButtons[0].onClick.RemoveListener(ClaimBattlePassReward1);
+        if (battlePassRewardButtons.Length > 1 && battlePassRewardButtons[1] != null) battlePassRewardButtons[1].onClick.RemoveListener(ClaimBattlePassReward2);
+        if (battlePassRewardButtons.Length > 2 && battlePassRewardButtons[2] != null) battlePassRewardButtons[2].onClick.RemoveListener(ClaimBattlePassReward3);
+        if (battlePassRewardButtons.Length > 3 && battlePassRewardButtons[3] != null) battlePassRewardButtons[3].onClick.RemoveListener(ClaimBattlePassReward4);
+        if (battlePassRewardButtons.Length > 4 && battlePassRewardButtons[4] != null) battlePassRewardButtons[4].onClick.RemoveListener(ClaimBattlePassReward5);
     }
 
     private void SelectHero0() => SelectHero(0);
@@ -898,9 +979,18 @@ public class IdlePrototypeController : MonoBehaviour
         }
     }
 
+    private void EnsureBattlePassRewardClaims()
+    {
+        if (battlePassRewardsClaimed == null || battlePassRewardsClaimed.Length != BattlePassRewardCount)
+        {
+            battlePassRewardsClaimed = new bool[BattlePassRewardCount];
+        }
+    }
+
     private void LoadDailyProgress()
     {
         EnsureDailyMissionClaims();
+        LoadBattlePassProgress();
 
         var today = GetDailyDateKey();
         var savedDate = PlayerPrefs.GetString(DailyDateKey, string.Empty);
@@ -926,6 +1016,17 @@ public class IdlePrototypeController : MonoBehaviour
         }
     }
 
+    private void LoadBattlePassProgress()
+    {
+        EnsureBattlePassRewardClaims();
+
+        battlePassXp = Mathf.Max(0, PlayerPrefs.GetInt(BattlePassXpKey, battlePassXp));
+        for (var i = 0; i < battlePassRewardsClaimed.Length; i++)
+        {
+            battlePassRewardsClaimed[i] = PlayerPrefs.GetInt($"{BattlePassClaimedKeyPrefix}{i}", 0) == 1;
+        }
+    }
+
     private void ClaimDailyMission(int missionIndex)
     {
         missionIndex = Mathf.Clamp(missionIndex, 0, DailyMissionCount - 1);
@@ -939,6 +1040,25 @@ public class IdlePrototypeController : MonoBehaviour
 
         dailyMissionClaimed[missionIndex] = true;
         gold += DailyMissionRewards[missionIndex];
+        battlePassXp += BattlePassXpPerDailyClaim;
+
+        SaveProgress();
+        RefreshUi();
+    }
+
+    private void ClaimBattlePassReward(int rewardIndex)
+    {
+        rewardIndex = Mathf.Clamp(rewardIndex, 0, BattlePassRewardCount - 1);
+        EnsureBattlePassRewardClaims();
+
+        if (battlePassRewardsClaimed[rewardIndex] || battlePassXp < BattlePassRewardXp[rewardIndex])
+        {
+            RefreshUi();
+            return;
+        }
+
+        battlePassRewardsClaimed[rewardIndex] = true;
+        gold += BattlePassGoldRewards[rewardIndex];
 
         SaveProgress();
         RefreshUi();
@@ -1125,6 +1245,34 @@ public class IdlePrototypeController : MonoBehaviour
             if (dailyMissionButtons != null && i < dailyMissionButtons.Length && dailyMissionButtons[i] != null)
             {
                 dailyMissionButtons[i].interactable = isComplete && !isClaimed;
+            }
+        }
+    }
+
+    private void RefreshBattlePassUi()
+    {
+        EnsureBattlePassRewardClaims();
+
+        if (battlePassProgressText != null)
+        {
+            battlePassProgressText.text = $"Mission Track XP: {battlePassXp}\nDaily claims give +{BattlePassXpPerDailyClaim} XP";
+        }
+
+        for (var i = 0; i < BattlePassRewardCount; i++)
+        {
+            var isReady = battlePassXp >= BattlePassRewardXp[i];
+            var isClaimed = battlePassRewardsClaimed[i];
+            var state = isClaimed ? "Claimed" : isReady ? "Claim" : $"{battlePassXp}/{BattlePassRewardXp[i]} XP";
+            var text = $"Level {i + 1}  {state}\nReward {BattlePassGoldRewards[i]} Gold";
+
+            if (battlePassRewardTexts != null && i < battlePassRewardTexts.Length && battlePassRewardTexts[i] != null)
+            {
+                battlePassRewardTexts[i].text = text;
+            }
+
+            if (battlePassRewardButtons != null && i < battlePassRewardButtons.Length && battlePassRewardButtons[i] != null)
+            {
+                battlePassRewardButtons[i].interactable = isReady && !isClaimed;
             }
         }
     }

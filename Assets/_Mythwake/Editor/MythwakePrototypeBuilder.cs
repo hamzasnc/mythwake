@@ -179,8 +179,34 @@ public static class MythwakePrototypeBuilder
         var summonRates = CreateText("Summon Rates Text", summonRatesCard.transform, "Rates\nRare 55%  Epic 35%  Legendary 10%", 31, FontStyles.Normal);
         SetRect(summonRates.rectTransform, new Vector2(0, -88), new Vector2(780, 110), new Vector2(0.5f, 1f));
 
-        CreatePlaceholderCard(shopPanel.transform, "Shop", "Currencies, bundles, and ad rewards later.", -240);
-        CreatePlaceholderCard(shopPanel.transform, "Battle Pass", "Mission track placeholder.", -540);
+        var shopHeader = CreateText("Shop Header", shopPanel.transform, "Shop", 42, FontStyles.Bold);
+        SetRect(shopHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
+
+        var battlePassPanel = CreatePanel("Mission Track Panel", shopPanel.transform, PanelColor);
+        SetRect(battlePassPanel.rectTransform, new Vector2(0, -260), new Vector2(860, 330), new Vector2(0.5f, 1f));
+
+        var battlePassTitle = CreateText("Mission Track Title", battlePassPanel.transform, "Mission Track", 44, FontStyles.Bold);
+        SetRect(battlePassTitle.rectTransform, new Vector2(0, -60), new Vector2(780, 60), new Vector2(0.5f, 1f));
+
+        var battlePassProgress = CreateText("Mission Track Progress Text", battlePassPanel.transform, "Mission Track XP: 0", 32, FontStyles.Normal);
+        SetRect(battlePassProgress.rectTransform, new Vector2(0, -150), new Vector2(780, 90), new Vector2(0.5f, 1f));
+        battlePassProgress.color = new Color(0.82f, 0.76f, 0.52f);
+
+        var shopInfo = CreateText("Shop Info Text", battlePassPanel.transform, "Claim daily missions to unlock this reward track.", 28, FontStyles.Normal);
+        SetRect(shopInfo.rectTransform, new Vector2(0, -250), new Vector2(780, 60), new Vector2(0.5f, 1f));
+        shopInfo.color = new Color(0.72f, 0.78f, 0.88f);
+
+        var battlePassRewardTexts = new TMP_Text[5];
+        var battlePassRewardButtons = new Button[5];
+        for (var i = 0; i < battlePassRewardButtons.Length; i++)
+        {
+            battlePassRewardButtons[i] = CreateButton($"Mission Track Reward Button {i + 1}", shopPanel.transform, "Reward", new Color(0.1f, 0.13f, 0.2f, 0.95f));
+            SetRect(battlePassRewardButtons[i].GetComponent<RectTransform>(), new Vector2(0, -510 - (i * 115)), new Vector2(860, 92), new Vector2(0.5f, 1f));
+
+            battlePassRewardTexts[i] = battlePassRewardButtons[i].GetComponentInChildren<TMP_Text>();
+            battlePassRewardTexts[i].fontSize = 24;
+            battlePassRewardTexts[i].alignment = TextAlignmentOptions.Left;
+        }
 
         var navPanel = CreatePanel("Bottom Navigation", root.transform, new Color(0.06f, 0.08f, 0.12f, 0.98f));
         SetRect(navPanel.rectTransform, new Vector2(0, 0), new Vector2(1080, 190), new Vector2(0.5f, 0f));
@@ -215,6 +241,8 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "summonResultText", summonResult);
         SetObject(serializedController, "summonRatesText", summonRates);
         SetObject(serializedController, "summonCountText", summonCount);
+        SetObject(serializedController, "battlePassProgressText", battlePassProgress);
+        SetObjectArray(serializedController, "battlePassRewardTexts", battlePassRewardTexts);
         SetObject(serializedController, "fightButton", fightButton);
         SetObject(serializedController, "upgradeButton", upgradeButton);
         SetObject(serializedController, "heroUpgradeButton", heroUpgradeButton);
@@ -223,6 +251,7 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "resetButton", resetButton);
         SetObjectArray(serializedController, "heroSelectButtons", heroButtons);
         SetObjectArray(serializedController, "dailyMissionButtons", dailyMissionButtons);
+        SetObjectArray(serializedController, "battlePassRewardButtons", battlePassRewardButtons);
         SetObject(serializedController, "homePanel", homePanel);
         SetObject(serializedController, "battlePanel", battlePanel);
         SetObject(serializedController, "heroesPanel", heroesPanel);

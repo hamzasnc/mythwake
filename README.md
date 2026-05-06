@@ -20,6 +20,8 @@ Current prototype:
 - Hero ascension consumes shards for larger saved power upgrades
 - Daily missions track battles, stage clears, and summons
 - Daily mission claims reward gold and reset by UTC day
+- Mission Track XP is earned from daily mission claims
+- Mission Track rewards can be claimed in the Shop tab
 
 Development target:
 - Android and iOS mobile idle game
