@@ -11,7 +11,8 @@ Current prototype:
 - Basic offline Gold and Myth Essence calculation when reopening the app
 - Mobile app shell with Home, Battle, Heroes, Summon, and Shop tabs
 - Starter hero collection with 5 heroes
-- Team power drives battle damage and team HP
+- Each starter hero has role-flavored Attack and HP stats
+- Team Attack and Team HP are summed from the active hero roster
 - Gold, Gems, Myth Essence, Pass XP, and Hero Shards are separated
 - Hero upgrades use Myth Essence and are saved locally
 - Campaign stages now use named enemy data with HP and progression-only clears
@@ -20,8 +21,8 @@ Current prototype:
 - Dungeon floors scale up in enemy HP, enemy damage, and rewards
 - Campaign and dungeon fights now simulate win/loss with team HP and enemy damage
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
-- Hero shards add minor team power immediately
-- Hero ascension consumes shards for larger saved power upgrades
+- Hero shards add minor Attack and HP immediately
+- Hero ascension consumes shards for larger saved stat upgrades
 - Daily missions track battles, stage clears, and summons
 - Daily mission claims reward Gold, Gems, Myth Essence, and reset by UTC day
 - Mission Track XP is earned from daily mission claims

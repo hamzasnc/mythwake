@@ -73,8 +73,10 @@ public class IdlePrototypeController : MonoBehaviour
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
     private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
     private static readonly string[] HeroRarities = { "Epic", "Rare", "Epic", "Rare", "Legendary" };
-    private static readonly int[] HeroBasePower = { 42, 50, 46, 38, 58 };
-    private static readonly int[] HeroPowerGrowth = { 13, 10, 15, 12, 11 };
+    private static readonly int[] HeroBaseAttack = { 18, 10, 22, 20, 12 };
+    private static readonly int[] HeroAttackGrowth = { 5, 3, 7, 6, 4 };
+    private static readonly int[] HeroBaseHealth = { 150, 230, 110, 125, 165 };
+    private static readonly int[] HeroHealthGrowth = { 28, 42, 20, 23, 34 };
     private static readonly int[] RareHeroIndexes = { 1, 3 };
     private static readonly int[] EpicHeroIndexes = { 0, 2 };
     private static readonly int[] LegendaryHeroIndexes = { 4 };
@@ -1117,14 +1119,14 @@ public class IdlePrototypeController : MonoBehaviour
             {
                 if (teamSlotTexts[i] != null)
                 {
-                    teamSlotTexts[i].text = $"{HeroNames[i]}\nLv. {heroLevels[i]}  A{heroAscensions[i]}";
+                    teamSlotTexts[i].text = $"{HeroNames[i]}\nATK {GetHeroAttack(i)}\nHP {GetHeroHealth(i)}";
                 }
             }
         }
 
         if (selectedHeroText != null)
         {
-            selectedHeroText.text = $"{HeroNames[selectedHeroIndex]}  Lv. {heroLevels[selectedHeroIndex]}  Asc. {heroAscensions[selectedHeroIndex]}\n{HeroRarities[selectedHeroIndex]} {HeroRoles[selectedHeroIndex]}\nPower {GetHeroPower(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
+            selectedHeroText.text = $"{HeroNames[selectedHeroIndex]}  Lv. {heroLevels[selectedHeroIndex]}  Asc. {heroAscensions[selectedHeroIndex]}\n{HeroRarities[selectedHeroIndex]} {HeroRoles[selectedHeroIndex]}  Power {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroAttack(selectedHeroIndex)}  HP {GetHeroHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
         }
 
         if (heroCardTexts != null)
@@ -1134,7 +1136,7 @@ public class IdlePrototypeController : MonoBehaviour
                 if (heroCardTexts[i] != null)
                 {
                     var marker = i == selectedHeroIndex ? "> " : string.Empty;
-                    heroCardTexts[i].text = $"{marker}{HeroNames[i]}  Lv. {heroLevels[i]}  A{heroAscensions[i]}\n{HeroRarities[i]} {HeroRoles[i]}  Power {GetHeroPower(i)}  Shards {heroShards[i]}";
+                    heroCardTexts[i].text = $"{marker}{HeroNames[i]}  Lv. {heroLevels[i]}  A{heroAscensions[i]}  Shards {heroShards[i]}\n{HeroRarities[i]} {HeroRoles[i]}  ATK {GetHeroAttack(i)}  HP {GetHeroHealth(i)}";
                 }
             }
         }
@@ -1336,21 +1338,57 @@ public class IdlePrototypeController : MonoBehaviour
 
     private int GetTeamDamage()
     {
-        return Mathf.Max(1, Mathf.FloorToInt(GetTeamPower() / 16f));
+        var attack = 0;
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            attack += GetHeroAttack(i);
+        }
+
+        return Mathf.Max(1, attack);
     }
 
     private int GetTeamHealth()
     {
-        return 520 + Mathf.FloorToInt(GetTeamPower() * 4.8f);
+        var health = 0;
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            health += GetHeroHealth(i);
+        }
+
+        return Mathf.Max(1, health);
     }
 
     private int GetHeroPower(int index)
+    {
+        return GetHeroAttack(index) + Mathf.FloorToInt(GetHeroHealth(index) / 8f);
+    }
+
+    private int GetHeroAttack(int index)
     {
         index = Mathf.Clamp(index, 0, HeroCount - 1);
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
-        return HeroBasePower[index] + (heroLevels[index] * HeroPowerGrowth[index]) + Mathf.FloorToInt(heroShards[index] * 0.5f) + (heroAscensions[index] * GetHeroAscensionPower(index));
+
+        return HeroBaseAttack[index]
+            + (heroLevels[index] * HeroAttackGrowth[index])
+            + Mathf.FloorToInt(heroShards[index] * 0.25f)
+            + (heroAscensions[index] * GetHeroAscensionAttack(index));
+    }
+
+    private int GetHeroHealth(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        EnsureHeroLevels();
+        EnsureHeroShards();
+        EnsureHeroAscensions();
+
+        return HeroBaseHealth[index]
+            + (heroLevels[index] * HeroHealthGrowth[index])
+            + Mathf.FloorToInt(heroShards[index] * 1.2f)
+            + (heroAscensions[index] * GetHeroAscensionHealth(index));
     }
 
     private int GetHeroUpgradeCost(int index)
@@ -1378,21 +1416,38 @@ public class IdlePrototypeController : MonoBehaviour
         return baseCost + (heroAscensions[index] * 15);
     }
 
-    private int GetHeroAscensionPower(int index)
+    private int GetHeroAscensionAttack(int index)
     {
         index = Mathf.Clamp(index, 0, HeroCount - 1);
 
         if (HeroRarities[index] == "Legendary")
         {
-            return 65;
+            return 14;
         }
 
         if (HeroRarities[index] == "Epic")
         {
-            return 52;
+            return 11;
         }
 
-        return 42;
+        return 8;
+    }
+
+    private int GetHeroAscensionHealth(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+
+        if (HeroRarities[index] == "Legendary")
+        {
+            return 90;
+        }
+
+        if (HeroRarities[index] == "Epic")
+        {
+            return 70;
+        }
+
+        return 55;
     }
 
     private void RefreshAutoAttackUi()

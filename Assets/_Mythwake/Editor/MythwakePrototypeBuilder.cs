@@ -154,7 +154,7 @@ public static class MythwakePrototypeBuilder
         var selectedHeroCard = CreatePanel("Selected Hero Card", heroesPanel.transform, PanelColor);
         SetRect(selectedHeroCard.rectTransform, new Vector2(0, -190), new Vector2(860, 230), new Vector2(0.5f, 1f));
 
-        var selectedHeroText = CreateText("Selected Hero Text", selectedHeroCard.transform, "Astra  Lv. 1\nEpic Warrior\nPower 55", 32, FontStyles.Bold);
+        var selectedHeroText = CreateText("Selected Hero Text", selectedHeroCard.transform, "Astra  Lv. 1\nEpic Warrior\nATK 23  HP 178", 32, FontStyles.Bold);
         SetRect(selectedHeroText.rectTransform, new Vector2(0, -55), new Vector2(780, 150), new Vector2(0.5f, 1f));
 
         var heroUpgradeButton = CreateButton("Hero Upgrade Button", heroesPanel.transform, "Upgrade Astra (12 Essence)", UpgradeButtonColor);
@@ -350,7 +350,7 @@ public static class MythwakePrototypeBuilder
             SetRect(slot.rectTransform, new Vector2(-344 + (i * 172), topOffset - 145), new Vector2(145, 160), new Vector2(0.5f, 1f));
 
             var label = CreateText($"Hero Slot {i + 1} Label", slot.transform, i == 0 ? "Hero" : "Empty", 24, FontStyles.Bold);
-            SetRect(label.rectTransform, new Vector2(0, -82), new Vector2(120, 44), new Vector2(0.5f, 1f));
+            SetRect(label.rectTransform, new Vector2(0, -88), new Vector2(130, 115), new Vector2(0.5f, 1f));
             labels[i] = label;
         }
 
