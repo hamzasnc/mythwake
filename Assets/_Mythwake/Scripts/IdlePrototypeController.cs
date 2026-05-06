@@ -23,9 +23,13 @@ public class IdlePrototypeController : MonoBehaviour
     private struct CombatResult
     {
         public bool won;
+        public bool executed;
         public int rounds;
         public int teamHpRemaining;
         public int enemyHpRemaining;
+        public int damageDealt;
+        public int damageTaken;
+        public int healingDone;
     }
 
     private enum AppScreen
@@ -69,6 +73,11 @@ public class IdlePrototypeController : MonoBehaviour
     private const int StarterMythEssence = 20;
     private const float OfflineGoldRewardRate = 0.65f;
     private const int MaxCombatRounds = 45;
+    private const float WarriorDamageBonusRate = 0.06f;
+    private const float MageDamageBonusRate = 0.1f;
+    private const float TankDamageReductionRate = 0.18f;
+    private const float SupportHealRate = 0.04f;
+    private const float RangerExecuteThresholdRate = 0.12f;
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
     private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
@@ -540,13 +549,13 @@ public class IdlePrototypeController : MonoBehaviour
             dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
-            SetDungeonResult($"Campaign Stage {enemyLevel - 1} cleared in {result.rounds} rounds\nTeam HP left {result.teamHpRemaining}/{GetTeamHealth()}");
+            SetDungeonResult($"Campaign Stage {enemyLevel - 1} cleared in {result.rounds} rounds\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}");
         }
         else
         {
             enemyMaxHp = stage.maxHp;
             enemyHp = enemyMaxHp;
-            SetDungeonResult($"Campaign Stage {enemyLevel} failed after {result.rounds} rounds\nEnemy HP left {result.enemyHpRemaining}/{stage.maxHp}");
+            SetDungeonResult($"Campaign Stage {enemyLevel} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{stage.maxHp}  {FormatCombatResult(result)}");
         }
 
         if (saveProgress)
@@ -721,7 +730,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (!result.won)
         {
-            SetDungeonResult($"{(isGoldDungeon ? "Gold" : "Essence")} Dungeon Floor {floor} failed after {result.rounds} rounds\nEnemy HP left {result.enemyHpRemaining}/{enemyHp}");
+            SetDungeonResult($"{(isGoldDungeon ? "Gold" : "Essence")} Dungeon Floor {floor} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}");
             RefreshUi();
             return;
         }
@@ -731,13 +740,13 @@ public class IdlePrototypeController : MonoBehaviour
         {
             gold += reward;
             goldDungeonFloor++;
-            SetDungeonResult($"Gold Dungeon Floor {floor} cleared in {result.rounds} rounds\n+{reward} Gold");
+            SetDungeonResult($"Gold Dungeon Floor {floor} cleared in {result.rounds} rounds (+{reward} Gold)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}");
         }
         else
         {
             mythEssence += reward;
             essenceDungeonFloor++;
-            SetDungeonResult($"Essence Dungeon Floor {floor} cleared in {result.rounds} rounds\n+{reward} Essence");
+            SetDungeonResult($"Essence Dungeon Floor {floor} cleared in {result.rounds} rounds (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}");
         }
 
         SaveProgress();
@@ -765,14 +774,26 @@ public class IdlePrototypeController : MonoBehaviour
     private CombatResult SimulateCombat(int targetEnemyHp, int enemyDamage)
     {
         var result = new CombatResult();
-        var teamHp = GetTeamHealth();
+        var maxTeamHp = GetTeamHealth();
+        var teamHp = maxTeamHp;
         var enemyHpValue = Mathf.Max(1, targetEnemyHp);
         var teamDamage = GetTeamDamage();
+        var supportHeal = GetSupportHealPerRound(maxTeamHp);
         enemyDamage = Mathf.Max(1, enemyDamage);
 
         for (var round = 1; round <= MaxCombatRounds; round++)
         {
+            var enemyHpBeforeAttack = enemyHpValue;
             enemyHpValue -= teamDamage;
+            result.damageDealt += Mathf.Min(enemyHpBeforeAttack, teamDamage);
+
+            if (enemyHpValue > 0 && ShouldExecuteEnemy(enemyHpValue, targetEnemyHp))
+            {
+                result.executed = true;
+                result.damageDealt += enemyHpValue;
+                enemyHpValue = 0;
+            }
+
             if (enemyHpValue <= 0)
             {
                 result.won = true;
@@ -782,7 +803,9 @@ public class IdlePrototypeController : MonoBehaviour
                 return result;
             }
 
-            teamHp -= enemyDamage;
+            var mitigatedDamage = GetMitigatedEnemyDamage(enemyDamage);
+            result.damageTaken += Mathf.Min(teamHp, mitigatedDamage);
+            teamHp -= mitigatedDamage;
             if (teamHp <= 0)
             {
                 result.won = false;
@@ -791,6 +814,13 @@ public class IdlePrototypeController : MonoBehaviour
                 result.enemyHpRemaining = Mathf.Max(0, enemyHpValue);
                 return result;
             }
+
+            if (supportHeal > 0 && teamHp < maxTeamHp)
+            {
+                var actualHeal = Mathf.Min(supportHeal, maxTeamHp - teamHp);
+                teamHp += actualHeal;
+                result.healingDone += actualHeal;
+            }
         }
 
         result.won = false;
@@ -798,6 +828,12 @@ public class IdlePrototypeController : MonoBehaviour
         result.teamHpRemaining = Mathf.Max(0, teamHp);
         result.enemyHpRemaining = Mathf.Max(0, enemyHpValue);
         return result;
+    }
+
+    private string FormatCombatResult(CombatResult result)
+    {
+        var executeText = result.executed ? "  Execute" : string.Empty;
+        return $"Dealt {result.damageDealt}  Took {result.damageTaken}  Healed {result.healingDone}{executeText}";
     }
 
     private int GetGoldDungeonReward(int floor)
@@ -816,6 +852,7 @@ public class IdlePrototypeController : MonoBehaviour
     {
         if (dungeonResultText != null)
         {
+            dungeonResultText.fontSize = 26;
             dungeonResultText.text = result;
         }
     }
@@ -864,7 +901,8 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (damageText != null)
         {
-            damageText.text = $"Team Damage: {damage}   Team HP: {GetTeamHealth()}";
+            damageText.fontSize = 32;
+            damageText.text = $"ATK {damage}   HP {GetTeamHealth()}   Guard -{Mathf.RoundToInt(GetTankDamageReductionRate() * 100f)}%   Heal {GetSupportHealPerRound(GetTeamHealth())}";
         }
 
         RefreshDungeonUi();
@@ -1338,14 +1376,11 @@ public class IdlePrototypeController : MonoBehaviour
 
     private int GetTeamDamage()
     {
-        var attack = 0;
+        var multiplier = 1f
+            + (CountHeroesWithRole("Warrior") * WarriorDamageBonusRate)
+            + (CountHeroesWithRole("Mage") * MageDamageBonusRate);
 
-        for (var i = 0; i < HeroCount; i++)
-        {
-            attack += GetHeroAttack(i);
-        }
-
-        return Mathf.Max(1, attack);
+        return Mathf.Max(1, Mathf.FloorToInt(GetTeamBaseAttack() * multiplier));
     }
 
     private int GetTeamHealth()
@@ -1358,6 +1393,18 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         return Mathf.Max(1, health);
+    }
+
+    private int GetTeamBaseAttack()
+    {
+        var attack = 0;
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            attack += GetHeroAttack(i);
+        }
+
+        return attack;
     }
 
     private int GetHeroPower(int index)
@@ -1448,6 +1495,52 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         return 55;
+    }
+
+    private int CountHeroesWithRole(string role)
+    {
+        var count = 0;
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            if (HeroRoles[i] == role)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private bool ShouldExecuteEnemy(int enemyHpRemaining, int enemyMaxHp)
+    {
+        if (CountHeroesWithRole("Ranger") <= 0)
+        {
+            return false;
+        }
+
+        return enemyHpRemaining <= Mathf.FloorToInt(Mathf.Max(1, enemyMaxHp) * RangerExecuteThresholdRate);
+    }
+
+    private int GetMitigatedEnemyDamage(int enemyDamage)
+    {
+        return Mathf.Max(1, Mathf.CeilToInt(enemyDamage * (1f - GetTankDamageReductionRate())));
+    }
+
+    private float GetTankDamageReductionRate()
+    {
+        return Mathf.Min(0.5f, CountHeroesWithRole("Tank") * TankDamageReductionRate);
+    }
+
+    private int GetSupportHealPerRound(int maxTeamHealth)
+    {
+        var supports = CountHeroesWithRole("Support");
+        if (supports <= 0)
+        {
+            return 0;
+        }
+
+        return Mathf.Max(1, Mathf.FloorToInt(maxTeamHealth * SupportHealRate * supports));
     }
 
     private void RefreshAutoAttackUi()

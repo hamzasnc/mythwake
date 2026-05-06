@@ -105,7 +105,7 @@ public static class MythwakePrototypeBuilder
         var battleHeader = CreateText("Battle Header", battlePanel.transform, "Battle", 42, FontStyles.Bold);
         SetRect(battleHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
 
-        var damage = CreateText("Damage Text", battlePanel.transform, "Damage: 1", 36, FontStyles.Normal);
+        var damage = CreateText("Damage Text", battlePanel.transform, "ATK 1   HP 1   Guard -0%   Heal 0", 32, FontStyles.Normal);
         SetRect(damage.rectTransform, new Vector2(0, -105), new Vector2(920, 60), new Vector2(0.5f, 1f));
 
         var autoAttack = CreateText("Auto Attack Text", battlePanel.transform, "Auto Attack: 1.0s", 30, FontStyles.Normal);
@@ -124,8 +124,8 @@ public static class MythwakePrototypeBuilder
         var fightButton = CreateButton("Fight Button", battlePanel.transform, "Fight", ButtonColor);
         SetRect(fightButton.GetComponent<RectTransform>(), new Vector2(0, -560), new Vector2(760, 110), new Vector2(0.5f, 1f));
 
-        var dungeonResult = CreateText("Dungeon Result Text", battlePanel.transform, "Dungeons are the active resource source.", 28, FontStyles.Bold);
-        SetRect(dungeonResult.rectTransform, new Vector2(0, -695), new Vector2(860, 85), new Vector2(0.5f, 1f));
+        var dungeonResult = CreateText("Dungeon Result Text", battlePanel.transform, "Dungeons are the active resource source.", 26, FontStyles.Bold);
+        SetRect(dungeonResult.rectTransform, new Vector2(0, -695), new Vector2(860, 120), new Vector2(0.5f, 1f));
         dungeonResult.color = new Color(0.72f, 0.86f, 1f);
 
         var goldDungeonButton = CreateButton("Gold Dungeon Button", battlePanel.transform, "Gold Dungeon", new Color(0.45f, 0.34f, 0.12f));

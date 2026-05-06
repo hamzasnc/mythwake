@@ -13,6 +13,7 @@ Current prototype:
 - Starter hero collection with 5 heroes
 - Each starter hero has role-flavored Attack and HP stats
 - Team Attack and Team HP are summed from the active hero roster
+- Starter roles now affect combat: Warrior and Mage add damage, Tank reduces incoming damage, Support heals, Ranger executes weak enemies
 - Gold, Gems, Myth Essence, Pass XP, and Hero Shards are separated
 - Hero upgrades use Myth Essence and are saved locally
 - Campaign stages now use named enemy data with HP and progression-only clears
