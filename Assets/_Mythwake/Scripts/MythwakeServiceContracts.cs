@@ -67,3 +67,16 @@ public interface IMythwakeInventoryService
     MythwakeActionResultDto LevelAccessory(string accessoryId);
     MythwakeActionResultDto FuseAccessory(string accessoryId);
 }
+
+public interface IMythwakeProgressionService
+{
+    MythwakeActionResultDto LevelHero(string heroId);
+    MythwakeActionResultDto AscendHero(string heroId);
+    MythwakeActionResultDto LevelEquipment(string equipmentId);
+}
+
+public interface IMythwakeMissionService
+{
+    MythwakeActionResultDto ClaimDailyMission(string missionId);
+    MythwakeActionResultDto ClaimBattlePassReward(string rewardId);
+}

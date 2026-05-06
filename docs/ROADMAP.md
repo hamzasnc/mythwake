@@ -31,6 +31,7 @@ Client:
 - Shared service contracts define player state, rewards, action results, economy, battle, summon, and inventory boundaries
 - Campaign fights, dungeon runs, and summons now return local action-result DTOs shaped like future backend responses
 - Accessory equip, level, and fuse actions now return local action-result DTOs for future server-side inventory validation
+- Hero progression, starter equipment upgrades, daily mission claims, and Mission Track claims now return local action-result DTOs
 - Visible prototype/save version text
 - Debug buttons for small Gold, Gems, Myth Essence, and accessory test amounts
 - Code-side definition rows with stable IDs for early client balance data
@@ -253,6 +254,7 @@ Progress:
 - The prototype controller now exposes player state and local economy service methods using those contracts.
 - Campaign fights, resource dungeons, Gear Dungeon, and summons now route through local action-result methods with success/error/message/player-state output.
 - Accessory equip, accessory leveling, and accessory fusion now route through inventory service action-result methods.
+- Hero leveling, hero ascension, starter equipment leveling, daily claims, and Mission Track claims now route through progression/mission service action-result methods.
 
 Tasks:
 - Add service-style classes/interfaces for:

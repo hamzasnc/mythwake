@@ -3,9 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService
+public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.8";
+    public const string PrototypeVersion = "0.2.9";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1138,12 +1138,41 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     public void UpgradeDamage()
     {
         selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
-        upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
+        LevelHero(GetHeroDefinition(selectedHeroIndex).heroId);
+    }
 
+    public void AscendSelectedHero()
+    {
+        selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+        AscendHero(GetHeroDefinition(selectedHeroIndex).heroId);
+    }
+
+    public void UpgradeWeapon()
+    {
+        LevelEquipment(WeaponTrack.equipmentId);
+    }
+
+    public void UpgradeArmor()
+    {
+        LevelEquipment(ArmorTrack.equipmentId);
+    }
+
+    public MythwakeActionResultDto LevelHero(string heroId)
+    {
+        if (!TryGetHeroIndexById(heroId, out var heroIndex))
+        {
+            var invalidResult = CreateActionResult(false, "hero_level", "invalid_hero", $"Unknown hero: {heroId}");
+            RefreshUi();
+            return invalidResult;
+        }
+
+        selectedHeroIndex = heroIndex;
+        upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
         if (!TrySpendCurrency(MythEssenceCurrencyId, upgradeCost))
         {
+            var failMessage = $"Need {upgradeCost} Essence to level {GetHeroDefinition(heroIndex).name}.";
             RefreshUi();
-            return;
+            return CreateActionResult(false, "hero_level", "insufficient_currency", failMessage);
         }
 
         heroLevels[selectedHeroIndex]++;
@@ -1152,19 +1181,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
+        return CreateActionResult(true, "hero_level", string.Empty, $"{GetHeroDefinition(heroIndex).name} reached Lv. {heroLevels[heroIndex]}.");
     }
 
-    public void AscendSelectedHero()
+    public MythwakeActionResultDto AscendHero(string heroId)
     {
-        selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+        if (!TryGetHeroIndexById(heroId, out var heroIndex))
+        {
+            var invalidResult = CreateActionResult(false, "hero_ascend", "invalid_hero", $"Unknown hero: {heroId}");
+            RefreshUi();
+            return invalidResult;
+        }
+
+        selectedHeroIndex = heroIndex;
         EnsureHeroShards();
         EnsureHeroAscensions();
 
         var ascendCost = GetHeroAscensionCost(selectedHeroIndex);
         if (heroShards[selectedHeroIndex] < ascendCost)
         {
+            var failMessage = $"Need {ascendCost} shards to ascend {GetHeroDefinition(heroIndex).name}.";
             RefreshUi();
-            return;
+            return CreateActionResult(false, "hero_ascend", "insufficient_shards", failMessage);
         }
 
         heroShards[selectedHeroIndex] -= ascendCost;
@@ -1173,41 +1211,53 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
+        return CreateActionResult(true, "hero_ascend", string.Empty, $"{GetHeroDefinition(heroIndex).name} ascended to +{heroAscensions[heroIndex]}.");
     }
 
-    public void UpgradeWeapon()
+    public MythwakeActionResultDto LevelEquipment(string equipmentId)
     {
-        weaponLevel = Mathf.Max(StarterEquipmentLevel, weaponLevel);
-        var cost = GetWeaponUpgradeCost();
+        if (equipmentId == WeaponTrack.equipmentId)
+        {
+            return LevelEquipmentTrack(WeaponTrack, isWeapon: true);
+        }
+
+        if (equipmentId == ArmorTrack.equipmentId)
+        {
+            return LevelEquipmentTrack(ArmorTrack, isWeapon: false);
+        }
+
+        var invalidResult = CreateActionResult(false, "equipment_level", "invalid_equipment", $"Unknown equipment: {equipmentId}");
+        RefreshUi();
+        return invalidResult;
+    }
+
+    private MythwakeActionResultDto LevelEquipmentTrack(EquipmentTrackDefinition track, bool isWeapon)
+    {
+        var currentLevel = isWeapon ? weaponLevel : armorLevel;
+        currentLevel = Mathf.Max(StarterEquipmentLevel, currentLevel);
+        var cost = GetEquipmentUpgradeCost(track, currentLevel);
 
         if (!TrySpendCurrency(GoldCurrencyId, cost))
         {
+            var failMessage = $"Need {cost} Gold to level {track.name}.";
             RefreshUi();
-            return;
+            return CreateActionResult(false, "equipment_level", "insufficient_currency", failMessage);
         }
 
-        weaponLevel++;
-        damage = GetTeamDamage();
-
-        SaveProgress();
-        RefreshUi();
-    }
-
-    public void UpgradeArmor()
-    {
-        armorLevel = Mathf.Max(StarterEquipmentLevel, armorLevel);
-        var cost = GetArmorUpgradeCost();
-
-        if (!TrySpendCurrency(GoldCurrencyId, cost))
+        if (isWeapon)
         {
-            RefreshUi();
-            return;
+            weaponLevel = currentLevel + 1;
+            damage = GetTeamDamage();
         }
-
-        armorLevel++;
+        else
+        {
+            armorLevel = currentLevel + 1;
+        }
 
         SaveProgress();
         RefreshUi();
+        var newLevel = isWeapon ? weaponLevel : armorLevel;
+        return CreateActionResult(true, "equipment_level", string.Empty, $"{track.name} reached Lv. {newLevel}.");
     }
 
     public void PreviousAccessorySlot()
@@ -2865,13 +2915,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void ClaimDailyMission(int missionIndex)
     {
         missionIndex = Mathf.Clamp(missionIndex, 0, DailyMissionCount - 1);
+        ClaimDailyMission(GetDailyMissionDefinition(missionIndex).missionId);
+    }
+
+    public MythwakeActionResultDto ClaimDailyMission(string missionId)
+    {
         EnsureDailyMissionClaims();
+        if (!TryGetDailyMissionIndexById(missionId, out var missionIndex))
+        {
+            var invalidResult = CreateActionResult(false, "daily_mission_claim", "invalid_mission", $"Unknown daily mission: {missionId}");
+            RefreshUi();
+            return invalidResult;
+        }
+
         var mission = GetDailyMissionDefinition(missionIndex);
 
-        if (dailyMissionClaimed[missionIndex] || GetDailyMissionProgress(missionIndex) < mission.target)
+        if (dailyMissionClaimed[missionIndex])
         {
             RefreshUi();
-            return;
+            return CreateActionResult(false, "daily_mission_claim", "already_claimed", $"{mission.title} already claimed.");
+        }
+
+        if (GetDailyMissionProgress(missionIndex) < mission.target)
+        {
+            RefreshUi();
+            return CreateActionResult(false, "daily_mission_claim", "not_complete", $"{mission.title} is not complete yet.");
         }
 
         dailyMissionClaimed[missionIndex] = true;
@@ -2879,18 +2947,37 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
+        return CreateActionResult(true, "daily_mission_claim", string.Empty, $"Claimed {mission.title}.", ToRewardDto(mission.reward));
     }
 
     private void ClaimBattlePassReward(int rewardIndex)
     {
         rewardIndex = Mathf.Clamp(rewardIndex, 0, BattlePassRewardCount - 1);
+        ClaimBattlePassReward(GetBattlePassRewardDefinition(rewardIndex).rewardId);
+    }
+
+    public MythwakeActionResultDto ClaimBattlePassReward(string rewardId)
+    {
         EnsureBattlePassRewardClaims();
+        if (!TryGetBattlePassRewardIndexById(rewardId, out var rewardIndex))
+        {
+            var invalidResult = CreateActionResult(false, "battle_pass_claim", "invalid_reward", $"Unknown mission track reward: {rewardId}");
+            RefreshUi();
+            return invalidResult;
+        }
+
         var rewardDefinition = GetBattlePassRewardDefinition(rewardIndex);
 
-        if (battlePassRewardsClaimed[rewardIndex] || battlePassXp < rewardDefinition.requiredXp)
+        if (battlePassRewardsClaimed[rewardIndex])
         {
             RefreshUi();
-            return;
+            return CreateActionResult(false, "battle_pass_claim", "already_claimed", $"Mission Track reward {rewardIndex + 1} already claimed.");
+        }
+
+        if (battlePassXp < rewardDefinition.requiredXp)
+        {
+            RefreshUi();
+            return CreateActionResult(false, "battle_pass_claim", "not_unlocked", $"Need {rewardDefinition.requiredXp} Mission Track XP.");
         }
 
         battlePassRewardsClaimed[rewardIndex] = true;
@@ -2898,6 +2985,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
+        return CreateActionResult(true, "battle_pass_claim", string.Empty, $"Claimed Mission Track reward {rewardIndex + 1}.", ToRewardDto(rewardDefinition.reward));
     }
 
     private int GetDailyMissionProgress(int missionIndex)
@@ -2939,16 +3027,61 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return HeroDefinitions[index];
     }
 
+    private static bool TryGetHeroIndexById(string heroId, out int heroIndex)
+    {
+        for (var i = 0; i < HeroDefinitions.Length; i++)
+        {
+            if (HeroDefinitions[i].heroId == heroId)
+            {
+                heroIndex = i;
+                return true;
+            }
+        }
+
+        heroIndex = 0;
+        return false;
+    }
+
     private static DailyMissionDefinition GetDailyMissionDefinition(int index)
     {
         index = Mathf.Clamp(index, 0, DailyMissionDefinitions.Length - 1);
         return DailyMissionDefinitions[index];
     }
 
+    private static bool TryGetDailyMissionIndexById(string missionId, out int missionIndex)
+    {
+        for (var i = 0; i < DailyMissionDefinitions.Length; i++)
+        {
+            if (DailyMissionDefinitions[i].missionId == missionId)
+            {
+                missionIndex = i;
+                return true;
+            }
+        }
+
+        missionIndex = 0;
+        return false;
+    }
+
     private static BattlePassRewardDefinition GetBattlePassRewardDefinition(int index)
     {
         index = Mathf.Clamp(index, 0, BattlePassRewardDefinitions.Length - 1);
         return BattlePassRewardDefinitions[index];
+    }
+
+    private static bool TryGetBattlePassRewardIndexById(string rewardId, out int rewardIndex)
+    {
+        for (var i = 0; i < BattlePassRewardDefinitions.Length; i++)
+        {
+            if (BattlePassRewardDefinitions[i].rewardId == rewardId)
+            {
+                rewardIndex = i;
+                return true;
+            }
+        }
+
+        rewardIndex = 0;
+        return false;
     }
 
     private static AccessoryRarityDefinition GetAccessoryRarityDefinition(int rarity)
@@ -3137,6 +3270,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         GrantCurrency(GemsCurrencyId, reward.gems);
         GrantCurrency(MythEssenceCurrencyId, reward.mythEssence);
         GrantCurrency(PassXpCurrencyId, reward.passXp);
+    }
+
+    private static MythwakeRewardDto ToRewardDto(RewardDefinition reward)
+    {
+        return new MythwakeRewardDto
+        {
+            rewardId = reward.rewardId,
+            gold = reward.gold,
+            gems = reward.gems,
+            mythEssence = reward.mythEssence,
+            passXp = reward.passXp
+        };
     }
 
     private bool TrySpendCurrency(string currencyId, int amount)

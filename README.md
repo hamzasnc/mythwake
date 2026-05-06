@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.8
+Prototype version: 0.2.9
 Local save version: 2
 
 Current prototype:
@@ -16,6 +16,7 @@ Current prototype:
 - Shared service contracts now define player state, reward, action result, economy, battle, summon, and inventory boundaries
 - Campaign fights, dungeon runs, and summons now return local action-result DTOs
 - Accessory equip, level, and fuse actions now return local action-result DTOs
+- Hero leveling, hero ascension, equipment leveling, daily claims, and mission track claims now return local action-result DTOs
 - Basic offline Gold and Myth Essence calculation when reopening the app
 - Mobile app shell with Home, Battle, Heroes, Gear, Summon, and Shop tabs
 - Visible prototype/save version text for quick test builds
@@ -55,6 +56,7 @@ Current prototype:
 - Mission Track rewards can be claimed in the Shop tab
 
 Changelog:
+- 0.2.9: Routed hero progression, starter equipment upgrades, daily mission claims, and Mission Track claims through service action-result methods.
 - 0.2.8: Routed accessory equip, level, and fusion through inventory service action-result methods for backend-ready item validation.
 - 0.2.7: Routed campaign fights, dungeon runs, and summons through local action-result methods that match the future backend response shape.
 - 0.2.6: Added shared service contracts and made the prototype controller expose player state/economy services for the future backend boundary.
