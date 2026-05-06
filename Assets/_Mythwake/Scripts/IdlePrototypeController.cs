@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,6 +11,7 @@ public class IdlePrototypeController : MonoBehaviour
     private const string EnemyHpKey = "Mythwake.Prototype.EnemyHp";
     private const string EnemyMaxHpKey = "Mythwake.Prototype.EnemyMaxHp";
     private const string UpgradeCostKey = "Mythwake.Prototype.UpgradeCost";
+    private const string LastSeenUtcKey = "Mythwake.Prototype.LastSeenUtc";
 
     [Header("Stats")]
     [SerializeField] private int gold;
@@ -22,6 +24,7 @@ public class IdlePrototypeController : MonoBehaviour
     [Header("Idle")]
     [SerializeField] private bool autoAttackEnabled = true;
     [SerializeField] private float autoAttackInterval = 1f;
+    [SerializeField] private int maxOfflineSeconds = 8 * 60 * 60;
 
     [Header("UI")]
     [SerializeField] private TMP_Text titleText;
@@ -30,16 +33,20 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text enemyText;
     [SerializeField] private TMP_Text enemyHpText;
     [SerializeField] private TMP_Text autoAttackText;
+    [SerializeField] private TMP_Text offlineRewardText;
     [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private Button fightButton;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Button resetButton;
 
     private float autoAttackTimer;
+    private int lastOfflineReward;
+    private int lastOfflineSeconds;
 
     private void Awake()
     {
         LoadProgress();
+        ClaimOfflineRewards();
 
         if (fightButton != null)
         {
@@ -126,6 +133,8 @@ public class IdlePrototypeController : MonoBehaviour
         enemyHp = enemyMaxHp;
         upgradeCost = 10;
         autoAttackTimer = 0f;
+        lastOfflineReward = 0;
+        lastOfflineSeconds = 0;
 
         SaveProgress();
         RefreshUi();
@@ -182,7 +191,44 @@ public class IdlePrototypeController : MonoBehaviour
         PlayerPrefs.SetInt(EnemyHpKey, enemyHp);
         PlayerPrefs.SetInt(EnemyMaxHpKey, enemyMaxHp);
         PlayerPrefs.SetInt(UpgradeCostKey, upgradeCost);
+        PlayerPrefs.SetString(LastSeenUtcKey, DateTime.UtcNow.Ticks.ToString());
         PlayerPrefs.Save();
+    }
+
+    private void ClaimOfflineRewards()
+    {
+        lastOfflineReward = 0;
+        lastOfflineSeconds = 0;
+
+        var rawTicks = PlayerPrefs.GetString(LastSeenUtcKey, string.Empty);
+        if (!long.TryParse(rawTicks, out var ticks))
+        {
+            SaveProgress();
+            return;
+        }
+
+        var lastSeenUtc = new DateTime(ticks, DateTimeKind.Utc);
+        var elapsedSeconds = Mathf.FloorToInt((float)(DateTime.UtcNow - lastSeenUtc).TotalSeconds);
+        lastOfflineSeconds = Mathf.Clamp(elapsedSeconds, 0, maxOfflineSeconds);
+
+        if (lastOfflineSeconds <= 0)
+        {
+            SaveProgress();
+            return;
+        }
+
+        lastOfflineReward = CalculateOfflineReward(lastOfflineSeconds);
+        gold += lastOfflineReward;
+        SaveProgress();
+    }
+
+    private int CalculateOfflineReward(int offlineSeconds)
+    {
+        var attacks = Mathf.FloorToInt(offlineSeconds / Mathf.Max(0.1f, autoAttackInterval));
+        var enemyClearSeconds = Mathf.Max(1, Mathf.CeilToInt(enemyMaxHp / (float)Mathf.Max(1, damage)));
+        var enemyKills = Mathf.Max(0, attacks / enemyClearSeconds);
+
+        return enemyKills * GetEnemyReward();
     }
 
     private int GetEnemyReward()
@@ -218,6 +264,7 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         RefreshAutoAttackUi();
+        RefreshOfflineRewardUi();
 
         if (upgradeCostText != null)
         {
@@ -245,5 +292,38 @@ public class IdlePrototypeController : MonoBehaviour
 
         var remaining = Mathf.Max(0f, autoAttackInterval - autoAttackTimer);
         autoAttackText.text = $"Auto Attack: {remaining:0.0}s";
+    }
+
+    private void RefreshOfflineRewardUi()
+    {
+        if (offlineRewardText == null)
+        {
+            return;
+        }
+
+        if (lastOfflineReward <= 0)
+        {
+            offlineRewardText.text = "Offline: no reward yet";
+            return;
+        }
+
+        offlineRewardText.text = $"Offline: +{lastOfflineReward} Gold ({FormatDuration(lastOfflineSeconds)})";
+    }
+
+    private string FormatDuration(int seconds)
+    {
+        var time = TimeSpan.FromSeconds(seconds);
+
+        if (time.TotalHours >= 1)
+        {
+            return $"{(int)time.TotalHours}h {time.Minutes}m";
+        }
+
+        if (time.TotalMinutes >= 1)
+        {
+            return $"{time.Minutes}m {time.Seconds}s";
+        }
+
+        return $"{time.Seconds}s";
     }
 }

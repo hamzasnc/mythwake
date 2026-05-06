@@ -6,6 +6,9 @@ Current prototype:
 - Android build profile
 - Simple portrait UI
 - First core loop: fight enemies, earn gold, upgrade damage
+- Auto attack while the app is open
+- Local save data via PlayerPrefs
+- Basic offline gold calculation when reopening the app
 
 Development target:
 - Android and iOS mobile idle game
