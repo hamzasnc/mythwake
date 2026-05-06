@@ -15,6 +15,8 @@ Current prototype:
 - Hero upgrades saved locally
 - Campaign stages now use named enemy data with HP and gold rewards
 - Campaign continues scaling after the starter stages
+- Basic summon flow with rarity rates, hero shards, and saved summon count
+- Hero shards add team power immediately
 
 Development target:
 - Android and iOS mobile idle game

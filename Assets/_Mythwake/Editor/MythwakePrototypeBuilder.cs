@@ -132,8 +132,35 @@ public static class MythwakePrototypeBuilder
             heroCardTexts[i].alignment = TextAlignmentOptions.Left;
         }
 
-        CreatePlaceholderCard(summonPanel.transform, "Summon", "Basic gacha placeholder comes next.", -240);
-        CreatePlaceholderCard(summonPanel.transform, "Rates", "Common / Rare / Epic / Legendary.", -540);
+        var summonHeader = CreateText("Summon Header", summonPanel.transform, "Summon", 42, FontStyles.Bold);
+        SetRect(summonHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
+
+        var summonBanner = CreatePanel("Summon Banner", summonPanel.transform, PanelColor);
+        SetRect(summonBanner.rectTransform, new Vector2(0, -245), new Vector2(860, 310), new Vector2(0.5f, 1f));
+
+        var summonTitle = CreateText("Summon Title", summonBanner.transform, "Awaken Heroes", 44, FontStyles.Bold);
+        SetRect(summonTitle.rectTransform, new Vector2(0, -55), new Vector2(780, 60), new Vector2(0.5f, 1f));
+
+        var summonCost = CreateText("Summon Cost Text", summonBanner.transform, "Cost: 60 Gold", 34, FontStyles.Normal);
+        SetRect(summonCost.rectTransform, new Vector2(0, -125), new Vector2(780, 50), new Vector2(0.5f, 1f));
+        summonCost.color = new Color(0.82f, 0.76f, 0.52f);
+
+        var summonCount = CreateText("Summon Count Text", summonBanner.transform, "Summons: 0", 30, FontStyles.Normal);
+        SetRect(summonCount.rectTransform, new Vector2(0, -180), new Vector2(780, 45), new Vector2(0.5f, 1f));
+
+        var summonResult = CreateText("Summon Result Text", summonBanner.transform, "Summon heroes to collect shards and raise team power.", 30, FontStyles.Bold);
+        SetRect(summonResult.rectTransform, new Vector2(0, -245), new Vector2(780, 80), new Vector2(0.5f, 1f));
+        summonResult.color = new Color(0.72f, 0.86f, 1f);
+
+        var summonButton = CreateButton("Summon Button", summonPanel.transform, "Summon x1", ButtonColor);
+        SetRect(summonButton.GetComponent<RectTransform>(), new Vector2(0, -560), new Vector2(760, 135), new Vector2(0.5f, 1f));
+
+        var summonRatesCard = CreatePanel("Summon Rates Card", summonPanel.transform, PanelColor);
+        SetRect(summonRatesCard.rectTransform, new Vector2(0, -780), new Vector2(860, 175), new Vector2(0.5f, 1f));
+
+        var summonRates = CreateText("Summon Rates Text", summonRatesCard.transform, "Rates\nRare 55%  Epic 35%  Legendary 10%", 31, FontStyles.Normal);
+        SetRect(summonRates.rectTransform, new Vector2(0, -88), new Vector2(780, 110), new Vector2(0.5f, 1f));
+
         CreatePlaceholderCard(shopPanel.transform, "Shop", "Currencies, bundles, and ad rewards later.", -240);
         CreatePlaceholderCard(shopPanel.transform, "Battle Pass", "Mission track placeholder.", -540);
 
@@ -164,9 +191,14 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "offlineRewardText", offlineReward);
         SetObject(serializedController, "upgradeCostText", upgradeButton.GetComponentInChildren<TMP_Text>());
         SetObject(serializedController, "heroUpgradeCostText", heroUpgradeButton.GetComponentInChildren<TMP_Text>());
+        SetObject(serializedController, "summonCostText", summonCost);
+        SetObject(serializedController, "summonResultText", summonResult);
+        SetObject(serializedController, "summonRatesText", summonRates);
+        SetObject(serializedController, "summonCountText", summonCount);
         SetObject(serializedController, "fightButton", fightButton);
         SetObject(serializedController, "upgradeButton", upgradeButton);
         SetObject(serializedController, "heroUpgradeButton", heroUpgradeButton);
+        SetObject(serializedController, "summonButton", summonButton);
         SetObject(serializedController, "resetButton", resetButton);
         SetObjectArray(serializedController, "heroSelectButtons", heroButtons);
         SetObject(serializedController, "homePanel", homePanel);

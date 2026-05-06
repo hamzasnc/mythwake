@@ -38,13 +38,19 @@ public class IdlePrototypeController : MonoBehaviour
     private const string LastSeenUtcKey = "Mythwake.Prototype.LastSeenUtc";
     private const string SelectedHeroKey = "Mythwake.Prototype.SelectedHero";
     private const string HeroLevelKeyPrefix = "Mythwake.Prototype.HeroLevel.";
+    private const string HeroShardKeyPrefix = "Mythwake.Prototype.HeroShard.";
+    private const string SummonCountKey = "Mythwake.Prototype.SummonCount";
     private const int HeroCount = 5;
+    private const int SummonCost = 60;
 
     private static readonly string[] HeroNames = { "Astra", "Borin", "Cyra", "Dante", "Elowen" };
     private static readonly string[] HeroRoles = { "Warrior", "Tank", "Mage", "Ranger", "Support" };
     private static readonly string[] HeroRarities = { "Epic", "Rare", "Epic", "Rare", "Legendary" };
     private static readonly int[] HeroBasePower = { 42, 50, 46, 38, 58 };
     private static readonly int[] HeroPowerGrowth = { 13, 10, 15, 12, 11 };
+    private static readonly int[] RareHeroIndexes = { 1, 3 };
+    private static readonly int[] EpicHeroIndexes = { 0, 2 };
+    private static readonly int[] LegendaryHeroIndexes = { 4 };
 
     [Header("Stats")]
     [SerializeField] private int gold;
@@ -55,6 +61,8 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private int upgradeCost = 10;
     [SerializeField] private int selectedHeroIndex;
     [SerializeField] private int[] heroLevels = new int[HeroCount];
+    [SerializeField] private int[] heroShards = new int[HeroCount];
+    [SerializeField] private int summonCount;
 
     [Header("Campaign")]
     [SerializeField]
@@ -93,9 +101,14 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private TMP_Text offlineRewardText;
     [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private TMP_Text heroUpgradeCostText;
+    [SerializeField] private TMP_Text summonCostText;
+    [SerializeField] private TMP_Text summonResultText;
+    [SerializeField] private TMP_Text summonRatesText;
+    [SerializeField] private TMP_Text summonCountText;
     [SerializeField] private Button fightButton;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Button heroUpgradeButton;
+    [SerializeField] private Button summonButton;
     [SerializeField] private Button resetButton;
     [SerializeField] private Button[] heroSelectButtons;
 
@@ -138,6 +151,11 @@ public class IdlePrototypeController : MonoBehaviour
         if (heroUpgradeButton != null)
         {
             heroUpgradeButton.onClick.AddListener(UpgradeDamage);
+        }
+
+        if (summonButton != null)
+        {
+            summonButton.onClick.AddListener(SummonOnce);
         }
 
         if (resetButton != null)
@@ -183,6 +201,11 @@ public class IdlePrototypeController : MonoBehaviour
         if (heroUpgradeButton != null)
         {
             heroUpgradeButton.onClick.RemoveListener(UpgradeDamage);
+        }
+
+        if (summonButton != null)
+        {
+            summonButton.onClick.RemoveListener(SummonOnce);
         }
 
         if (resetButton != null)
@@ -244,6 +267,31 @@ public class IdlePrototypeController : MonoBehaviour
         RefreshUi();
     }
 
+    public void SummonOnce()
+    {
+        if (gold < SummonCost)
+        {
+            SetSummonResult($"Need {SummonCost} Gold for a summon.");
+            RefreshUi();
+            return;
+        }
+
+        EnsureHeroShards();
+
+        gold -= SummonCost;
+        summonCount++;
+
+        var heroIndex = RollSummonHero();
+        var shards = GetSummonShardReward(heroIndex);
+        heroShards[heroIndex] += shards;
+        selectedHeroIndex = heroIndex;
+        damage = GetTeamDamage();
+
+        SetSummonResult($"{HeroRarities[heroIndex]} pull: {HeroNames[heroIndex]}\n+{shards} shards");
+        SaveProgress();
+        RefreshUi();
+    }
+
     public void ResetProgress()
     {
         gold = 0;
@@ -258,6 +306,13 @@ public class IdlePrototypeController : MonoBehaviour
             heroLevels[i] = 1;
         }
 
+        EnsureHeroShards();
+        for (var i = 0; i < heroShards.Length; i++)
+        {
+            heroShards[i] = 0;
+        }
+
+        summonCount = 0;
         damage = GetTeamDamage();
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
         autoAttackTimer = 0f;
@@ -310,12 +365,15 @@ public class IdlePrototypeController : MonoBehaviour
         enemyHp = Mathf.Clamp(PlayerPrefs.GetInt(EnemyHpKey, enemyHp), 1, enemyMaxHp);
         selectedHeroIndex = Mathf.Clamp(PlayerPrefs.GetInt(SelectedHeroKey, selectedHeroIndex), 0, HeroCount - 1);
         EnsureHeroLevels();
+        EnsureHeroShards();
 
         for (var i = 0; i < heroLevels.Length; i++)
         {
             heroLevels[i] = Mathf.Max(1, PlayerPrefs.GetInt($"{HeroLevelKeyPrefix}{i}", 1));
+            heroShards[i] = Mathf.Max(0, PlayerPrefs.GetInt($"{HeroShardKeyPrefix}{i}", 0));
         }
 
+        summonCount = Mathf.Max(0, PlayerPrefs.GetInt(SummonCountKey, summonCount));
         damage = GetTeamDamage();
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
     }
@@ -329,11 +387,14 @@ public class IdlePrototypeController : MonoBehaviour
         PlayerPrefs.SetInt(EnemyMaxHpKey, enemyMaxHp);
         PlayerPrefs.SetInt(UpgradeCostKey, upgradeCost);
         PlayerPrefs.SetInt(SelectedHeroKey, selectedHeroIndex);
+        PlayerPrefs.SetInt(SummonCountKey, summonCount);
 
         EnsureHeroLevels();
+        EnsureHeroShards();
         for (var i = 0; i < heroLevels.Length; i++)
         {
             PlayerPrefs.SetInt($"{HeroLevelKeyPrefix}{i}", heroLevels[i]);
+            PlayerPrefs.SetInt($"{HeroShardKeyPrefix}{i}", heroShards[i]);
         }
 
         PlayerPrefs.SetString(LastSeenUtcKey, DateTime.UtcNow.Ticks.ToString());
@@ -455,6 +516,7 @@ public class IdlePrototypeController : MonoBehaviour
         RefreshAutoAttackUi();
         RefreshOfflineRewardUi();
         RefreshHeroUi();
+        RefreshSummonUi();
 
         if (upgradeCostText != null)
         {
@@ -474,6 +536,11 @@ public class IdlePrototypeController : MonoBehaviour
         if (heroUpgradeButton != null)
         {
             heroUpgradeButton.interactable = gold >= upgradeCost;
+        }
+
+        if (summonButton != null)
+        {
+            summonButton.interactable = gold >= SummonCost;
         }
     }
 
@@ -612,6 +679,7 @@ public class IdlePrototypeController : MonoBehaviour
     private void RefreshHeroUi()
     {
         EnsureHeroLevels();
+        EnsureHeroShards();
 
         if (teamSlotTexts != null)
         {
@@ -626,7 +694,7 @@ public class IdlePrototypeController : MonoBehaviour
 
         if (selectedHeroText != null)
         {
-            selectedHeroText.text = $"{HeroNames[selectedHeroIndex]}  Lv. {heroLevels[selectedHeroIndex]}\n{HeroRarities[selectedHeroIndex]} {HeroRoles[selectedHeroIndex]}\nPower {GetHeroPower(selectedHeroIndex)}";
+            selectedHeroText.text = $"{HeroNames[selectedHeroIndex]}  Lv. {heroLevels[selectedHeroIndex]}\n{HeroRarities[selectedHeroIndex]} {HeroRoles[selectedHeroIndex]}\nPower {GetHeroPower(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
         }
 
         if (heroCardTexts != null)
@@ -636,7 +704,7 @@ public class IdlePrototypeController : MonoBehaviour
                 if (heroCardTexts[i] != null)
                 {
                     var marker = i == selectedHeroIndex ? "> " : string.Empty;
-                    heroCardTexts[i].text = $"{marker}{HeroNames[i]}  Lv. {heroLevels[i]}\n{HeroRarities[i]} {HeroRoles[i]}  Power {GetHeroPower(i)}";
+                    heroCardTexts[i].text = $"{marker}{HeroNames[i]}  Lv. {heroLevels[i]}\n{HeroRarities[i]} {HeroRoles[i]}  Power {GetHeroPower(i)}  Shards {heroShards[i]}";
                 }
             }
         }
@@ -654,6 +722,22 @@ public class IdlePrototypeController : MonoBehaviour
             if (heroLevels[i] <= 0)
             {
                 heroLevels[i] = 1;
+            }
+        }
+    }
+
+    private void EnsureHeroShards()
+    {
+        if (heroShards == null || heroShards.Length != HeroCount)
+        {
+            heroShards = new int[HeroCount];
+        }
+
+        for (var i = 0; i < heroShards.Length; i++)
+        {
+            if (heroShards[i] < 0)
+            {
+                heroShards[i] = 0;
             }
         }
     }
@@ -696,7 +780,8 @@ public class IdlePrototypeController : MonoBehaviour
     {
         index = Mathf.Clamp(index, 0, HeroCount - 1);
         EnsureHeroLevels();
-        return HeroBasePower[index] + (heroLevels[index] * HeroPowerGrowth[index]);
+        EnsureHeroShards();
+        return HeroBasePower[index] + (heroLevels[index] * HeroPowerGrowth[index]) + heroShards[index];
     }
 
     private int GetHeroUpgradeCost(int index)
@@ -737,6 +822,81 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         offlineRewardText.text = $"Offline: +{lastOfflineReward} Gold ({FormatDuration(lastOfflineSeconds)})";
+    }
+
+    private void RefreshSummonUi()
+    {
+        if (summonCostText != null)
+        {
+            summonCostText.text = $"Cost: {SummonCost} Gold";
+        }
+
+        if (summonRatesText != null)
+        {
+            summonRatesText.text = "Rates\nRare 55%  Epic 35%  Legendary 10%";
+        }
+
+        if (summonCountText != null)
+        {
+            summonCountText.text = $"Summons: {summonCount}";
+        }
+
+        if (summonResultText != null && string.IsNullOrWhiteSpace(summonResultText.text))
+        {
+            summonResultText.text = "Summon heroes to collect shards and raise team power.";
+        }
+    }
+
+    private int RollSummonHero()
+    {
+        var roll = UnityEngine.Random.Range(0, 100);
+
+        if (roll < 10)
+        {
+            return PickRandomHero(LegendaryHeroIndexes);
+        }
+
+        if (roll < 45)
+        {
+            return PickRandomHero(EpicHeroIndexes);
+        }
+
+        return PickRandomHero(RareHeroIndexes);
+    }
+
+    private int PickRandomHero(int[] heroIndexes)
+    {
+        if (heroIndexes == null || heroIndexes.Length == 0)
+        {
+            return 0;
+        }
+
+        return heroIndexes[UnityEngine.Random.Range(0, heroIndexes.Length)];
+    }
+
+    private int GetSummonShardReward(int heroIndex)
+    {
+        var rarity = HeroRarities[Mathf.Clamp(heroIndex, 0, HeroCount - 1)];
+
+        if (rarity == "Legendary")
+        {
+            return 5;
+        }
+
+        if (rarity == "Epic")
+        {
+            return 7;
+        }
+
+        return 10;
+    }
+
+    private void SetSummonResult(string result)
+    {
+        if (summonResultText != null)
+        {
+            summonResultText.text = result;
+        }
     }
 
     private string FormatDuration(int seconds)
