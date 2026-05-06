@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.5
+Prototype version: 0.2.6
 Local save version: 2
 
 Current prototype:
@@ -13,6 +13,7 @@ Current prototype:
 - Local save data via a versioned JSON blob stored in PlayerPrefs
 - Legacy PlayerPrefs scalar keys are migrated into the JSON save on load
 - Currency spend/grant actions now go through local economy boundary methods for backend migration
+- Shared service contracts now define player state, reward, action result, economy, battle, summon, and inventory boundaries
 - Basic offline Gold and Myth Essence calculation when reopening the app
 - Mobile app shell with Home, Battle, Heroes, Gear, Summon, and Shop tabs
 - Visible prototype/save version text for quick test builds
@@ -52,6 +53,7 @@ Current prototype:
 - Mission Track rewards can be claimed in the Shop tab
 
 Changelog:
+- 0.2.6: Added shared service contracts and made the prototype controller expose player state/economy services for the future backend boundary.
 - 0.2.5: Started backend-readiness by routing currency spends, reward grants, dungeon rewards, offline rewards, debug rewards, and summons through centralized economy methods.
 - 0.2.4: Cleaned the local save into one versioned JSON save blob with legacy PlayerPrefs migration, preparing the client for service/backend boundaries.
 - 0.2.3: Tuned early Campaign, dungeon, summon, daily mission, gear drop, and offline reward pacing for the first Balance Pass.

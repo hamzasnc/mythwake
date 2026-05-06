@@ -3,9 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class IdlePrototypeController : MonoBehaviour
+public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakeEconomyService
 {
-    public const string PrototypeVersion = "0.2.5";
+    public const string PrototypeVersion = "0.2.6";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -438,51 +438,6 @@ public class IdlePrototypeController : MonoBehaviour
         public int[] accessoryInventory;
         public bool[] dailyMissionClaimed;
         public bool[] battlePassRewardsClaimed;
-    }
-
-    [Serializable]
-    private struct PlayerStateSnapshot
-    {
-        public int saveVersion;
-        public int gold;
-        public int gems;
-        public int mythEssence;
-        public int battlePassXp;
-        public int campaignStage;
-        public int goldDungeonFloor;
-        public int essenceDungeonFloor;
-        public int gearDungeonFloor;
-        public int teamPower;
-        public int teamAttack;
-        public int teamHealth;
-
-        public PlayerStateSnapshot(
-            int saveVersion,
-            int gold,
-            int gems,
-            int mythEssence,
-            int battlePassXp,
-            int campaignStage,
-            int goldDungeonFloor,
-            int essenceDungeonFloor,
-            int gearDungeonFloor,
-            int teamPower,
-            int teamAttack,
-            int teamHealth)
-        {
-            this.saveVersion = saveVersion;
-            this.gold = gold;
-            this.gems = gems;
-            this.mythEssence = mythEssence;
-            this.battlePassXp = battlePassXp;
-            this.campaignStage = campaignStage;
-            this.goldDungeonFloor = goldDungeonFloor;
-            this.essenceDungeonFloor = essenceDungeonFloor;
-            this.gearDungeonFloor = gearDungeonFloor;
-            this.teamPower = teamPower;
-            this.teamAttack = teamAttack;
-            this.teamHealth = teamHealth;
-        }
     }
 
     private const string SaveJsonKey = "Mythwake.Prototype.SaveJson";
@@ -3038,11 +2993,6 @@ public class IdlePrototypeController : MonoBehaviour
 
     private void GrantReward(RewardDefinition reward)
     {
-        GrantReward(reward, reward.rewardId);
-    }
-
-    private void GrantReward(RewardDefinition reward, string sourceId)
-    {
         GrantCurrency(GoldCurrencyId, reward.gold);
         GrantCurrency(GemsCurrencyId, reward.gems);
         GrantCurrency(MythEssenceCurrencyId, reward.mythEssence);
@@ -3067,6 +3017,11 @@ public class IdlePrototypeController : MonoBehaviour
         return true;
     }
 
+    bool IMythwakeEconomyService.TrySpendCurrency(string currencyId, int amount)
+    {
+        return TrySpendCurrency(currencyId, amount);
+    }
+
     private void GrantCurrency(string currencyId, int amount)
     {
         amount = Mathf.Max(0, amount);
@@ -3076,6 +3031,17 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         SetCurrencyAmount(currencyId, GetCurrencyAmount(currencyId) + amount);
+    }
+
+    void IMythwakeEconomyService.GrantCurrency(string currencyId, int amount)
+    {
+        GrantCurrency(currencyId, amount);
+    }
+
+    MythwakeRewardDto IMythwakeEconomyService.GrantReward(MythwakeRewardDto reward)
+    {
+        GrantReward(new RewardDefinition(reward.rewardId, reward.gold, reward.gems, reward.mythEssence, reward.passXp));
+        return reward;
     }
 
     private int GetCurrencyAmount(string currencyId)
@@ -3115,22 +3081,24 @@ public class IdlePrototypeController : MonoBehaviour
         }
     }
 
-    private PlayerStateSnapshot CreatePlayerStateSnapshot()
+    public MythwakePlayerStateDto GetPlayerState()
     {
         NormalizeLoadedState();
-        return new PlayerStateSnapshot(
-            saveVersion,
-            gold,
-            gems,
-            mythEssence,
-            battlePassXp,
-            enemyLevel,
-            goldDungeonFloor,
-            essenceDungeonFloor,
-            gearDungeonFloor,
-            GetTeamPower(),
-            GetTeamDamage(),
-            GetTeamHealth());
+        return new MythwakePlayerStateDto
+        {
+            saveVersion = saveVersion,
+            gold = gold,
+            gems = gems,
+            mythEssence = mythEssence,
+            passXp = battlePassXp,
+            campaignStage = enemyLevel,
+            goldDungeonFloor = goldDungeonFloor,
+            essenceDungeonFloor = essenceDungeonFloor,
+            gearDungeonFloor = gearDungeonFloor,
+            teamPower = GetTeamPower(),
+            teamAttack = GetTeamDamage(),
+            teamHealth = GetTeamHealth()
+        };
     }
 
     private void EnsureStages()
