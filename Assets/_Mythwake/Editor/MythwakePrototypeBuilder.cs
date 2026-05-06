@@ -118,17 +118,20 @@ public static class MythwakePrototypeBuilder
         SetRect(selectedHeroText.rectTransform, new Vector2(0, -55), new Vector2(780, 150), new Vector2(0.5f, 1f));
 
         var heroUpgradeButton = CreateButton("Hero Upgrade Button", heroesPanel.transform, "Upgrade Astra (12 Gold)", UpgradeButtonColor);
-        SetRect(heroUpgradeButton.GetComponent<RectTransform>(), new Vector2(0, -380), new Vector2(760, 110), new Vector2(0.5f, 1f));
+        SetRect(heroUpgradeButton.GetComponent<RectTransform>(), new Vector2(0, -355), new Vector2(760, 100), new Vector2(0.5f, 1f));
+
+        var heroAscendButton = CreateButton("Hero Ascend Button", heroesPanel.transform, "Ascend Astra (20 Shards)", ButtonColor);
+        SetRect(heroAscendButton.GetComponent<RectTransform>(), new Vector2(0, -475), new Vector2(760, 100), new Vector2(0.5f, 1f));
 
         var heroCardTexts = new TMP_Text[5];
         var heroButtons = new Button[5];
         for (var i = 0; i < heroButtons.Length; i++)
         {
             heroButtons[i] = CreateButton($"Hero Card Button {i + 1}", heroesPanel.transform, "Hero", new Color(0.1f, 0.13f, 0.2f, 0.95f));
-            SetRect(heroButtons[i].GetComponent<RectTransform>(), new Vector2(0, -540 - (i * 135)), new Vector2(860, 115), new Vector2(0.5f, 1f));
+            SetRect(heroButtons[i].GetComponent<RectTransform>(), new Vector2(0, -625 - (i * 120)), new Vector2(860, 100), new Vector2(0.5f, 1f));
 
             heroCardTexts[i] = heroButtons[i].GetComponentInChildren<TMP_Text>();
-            heroCardTexts[i].fontSize = 27;
+            heroCardTexts[i].fontSize = 24;
             heroCardTexts[i].alignment = TextAlignmentOptions.Left;
         }
 
@@ -191,6 +194,7 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "offlineRewardText", offlineReward);
         SetObject(serializedController, "upgradeCostText", upgradeButton.GetComponentInChildren<TMP_Text>());
         SetObject(serializedController, "heroUpgradeCostText", heroUpgradeButton.GetComponentInChildren<TMP_Text>());
+        SetObject(serializedController, "heroAscendCostText", heroAscendButton.GetComponentInChildren<TMP_Text>());
         SetObject(serializedController, "summonCostText", summonCost);
         SetObject(serializedController, "summonResultText", summonResult);
         SetObject(serializedController, "summonRatesText", summonRates);
@@ -198,6 +202,7 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "fightButton", fightButton);
         SetObject(serializedController, "upgradeButton", upgradeButton);
         SetObject(serializedController, "heroUpgradeButton", heroUpgradeButton);
+        SetObject(serializedController, "heroAscendButton", heroAscendButton);
         SetObject(serializedController, "summonButton", summonButton);
         SetObject(serializedController, "resetButton", resetButton);
         SetObjectArray(serializedController, "heroSelectButtons", heroButtons);
