@@ -193,6 +193,11 @@ Done when:
 Goal:
 Make the first 30-60 minutes of progression feel intentional.
 
+Progress:
+- Added a first campaign balance definition row for recommended power, enemy damage, milestone rewards, and overflow growth.
+- Tuned Gold, Essence, and Gear Dungeon difficulty/reward curves against current upgrade costs.
+- Adjusted summon cost, starter Gems, daily Gem income, daily mission targets, gear drop weights, and offline reward cap.
+
 Tasks:
 - Tune Campaign HP/damage growth.
 - Tune Gold Dungeon rewards against Weapon/Armor/accessory costs.

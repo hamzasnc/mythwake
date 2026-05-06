@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour
 {
-    public const string PrototypeVersion = "0.2.2";
+    public const string PrototypeVersion = "0.2.3";
     public const int CurrentSaveVersion = 1;
 
     [Serializable]
@@ -203,6 +203,47 @@ public class IdlePrototypeController : MonoBehaviour
             this.baseReward = baseReward;
             this.rewardScale = rewardScale;
             this.rewardGrowth = rewardGrowth;
+        }
+    }
+
+    private struct CampaignBalanceDefinition
+    {
+        public int baseRecommendedPower;
+        public float recommendedPowerScale;
+        public float recommendedPowerGrowth;
+        public int baseEnemyDamage;
+        public float enemyDamageScale;
+        public float enemyDamageGrowth;
+        public int milestoneGemBase;
+        public float milestoneGemScale;
+        public int milestonePassXp;
+        public float overflowHpGrowth;
+        public float overflowRewardGrowth;
+
+        public CampaignBalanceDefinition(
+            int baseRecommendedPower,
+            float recommendedPowerScale,
+            float recommendedPowerGrowth,
+            int baseEnemyDamage,
+            float enemyDamageScale,
+            float enemyDamageGrowth,
+            int milestoneGemBase,
+            float milestoneGemScale,
+            int milestonePassXp,
+            float overflowHpGrowth,
+            float overflowRewardGrowth)
+        {
+            this.baseRecommendedPower = baseRecommendedPower;
+            this.recommendedPowerScale = recommendedPowerScale;
+            this.recommendedPowerGrowth = recommendedPowerGrowth;
+            this.baseEnemyDamage = baseEnemyDamage;
+            this.enemyDamageScale = enemyDamageScale;
+            this.enemyDamageGrowth = enemyDamageGrowth;
+            this.milestoneGemBase = milestoneGemBase;
+            this.milestoneGemScale = milestoneGemScale;
+            this.milestonePassXp = milestonePassXp;
+            this.overflowHpGrowth = overflowHpGrowth;
+            this.overflowRewardGrowth = overflowRewardGrowth;
         }
     }
 
@@ -412,10 +453,10 @@ public class IdlePrototypeController : MonoBehaviour
     private const int AccessorySlotCount = 5;
     private const int AccessoryRarityCount = 5;
     private const int BattlePassXpPerDailyClaim = 40;
-    private const int SummonCost = 30;
-    private const int StarterGems = 30;
+    private const int SummonCost = 35;
+    private const int StarterGems = 35;
     private const int StarterMythEssence = 20;
-    private const float OfflineGoldRewardRate = 0.65f;
+    private const float OfflineGoldRewardRate = 0.5f;
     private const int MaxCombatRounds = 45;
     private const float WarriorDamageBonusRate = 0.06f;
     private const float MageDamageBonusRate = 0.1f;
@@ -423,8 +464,6 @@ public class IdlePrototypeController : MonoBehaviour
     private const float SupportHealRate = 0.04f;
     private const float RangerExecuteThresholdRate = 0.12f;
     private const int StarterEquipmentLevel = 1;
-    private const float CampaignOverflowHpGrowth = 1.25f;
-    private const float CampaignOverflowRewardGrowth = 1.14f;
     private const int CampaignMilestoneInterval = 5;
     private const int DungeonBonusInterval = 5;
     private const int AccessoryFuseCost = 3;
@@ -479,9 +518,9 @@ public class IdlePrototypeController : MonoBehaviour
 
     private static readonly DailyMissionDefinition[] DailyMissionDefinitions =
     {
-        new DailyMissionDefinition("daily_battles_20", "Battle 20 times", DailyMissionProgressType.Fight, 20, new RewardDefinition("reward_daily_battles_20", 25, 5, 80, BattlePassXpPerDailyClaim)),
-        new DailyMissionDefinition("daily_stage_clears_3", "Clear 3 stages", DailyMissionProgressType.StageClear, 3, new RewardDefinition("reward_daily_stage_clears_3", 50, 10, 120, BattlePassXpPerDailyClaim)),
-        new DailyMissionDefinition("daily_summon_1", "Summon 1 hero", DailyMissionProgressType.Summon, 1, new RewardDefinition("reward_daily_summon_1", 25, 15, 60, BattlePassXpPerDailyClaim))
+        new DailyMissionDefinition("daily_battles_15", "Battle 15 times", DailyMissionProgressType.Fight, 15, new RewardDefinition("reward_daily_battles_15", 40, 5, 70, BattlePassXpPerDailyClaim)),
+        new DailyMissionDefinition("daily_stage_clears_3", "Clear 3 stages", DailyMissionProgressType.StageClear, 3, new RewardDefinition("reward_daily_stage_clears_3", 70, 10, 110, BattlePassXpPerDailyClaim)),
+        new DailyMissionDefinition("daily_summon_1", "Summon 1 hero", DailyMissionProgressType.Summon, 1, new RewardDefinition("reward_daily_summon_1", 35, 20, 55, BattlePassXpPerDailyClaim))
     };
 
     private static readonly BattlePassRewardDefinition[] BattlePassRewardDefinitions =
@@ -493,8 +532,8 @@ public class IdlePrototypeController : MonoBehaviour
         new BattlePassRewardDefinition("mission_track_reward_05", 240, new RewardDefinition("reward_mission_track_05", 350, 40, 300))
     };
 
-    private static readonly EquipmentTrackDefinition WeaponTrack = new EquipmentTrackDefinition("equipment_weapon", "Weapon", "ATK", GoldCurrencyId, 8, 9, 80, 1.45f);
-    private static readonly EquipmentTrackDefinition ArmorTrack = new EquipmentTrackDefinition("equipment_armor", "Armor", "HP", GoldCurrencyId, 80, 65, 75, 1.42f);
+    private static readonly EquipmentTrackDefinition WeaponTrack = new EquipmentTrackDefinition("equipment_weapon", "Weapon", "ATK", GoldCurrencyId, 8, 9, 80, 1.42f);
+    private static readonly EquipmentTrackDefinition ArmorTrack = new EquipmentTrackDefinition("equipment_armor", "Armor", "HP", GoldCurrencyId, 80, 65, 75, 1.39f);
 
     private static readonly AccessoryRarityDefinition[] AccessoryRarities =
     {
@@ -516,9 +555,10 @@ public class IdlePrototypeController : MonoBehaviour
 
     private static readonly AccessoryDefinition[] AccessoryDefinitions = CreateAccessoryDefinitions();
 
-    private static readonly DungeonDefinition GoldDungeonDefinition = new DungeonDefinition("gold_dungeon", "Gold Dungeon", GoldCurrencyId, 220, 110f, 1.22f, 24, 10f, 1.15f, 125, 54f, 1.2f, 80, 30f, 1.15f);
-    private static readonly DungeonDefinition EssenceDungeonDefinition = new DungeonDefinition("essence_dungeon", "Essence Dungeon", MythEssenceCurrencyId, 220, 110f, 1.22f, 24, 10f, 1.15f, 125, 54f, 1.2f, 100, 36f, 1.15f);
-    private static readonly DungeonDefinition GearDungeonDefinition = new DungeonDefinition("gear_dungeon", "Gear Dungeon", string.Empty, 260, 135f, 1.23f, 28, 12f, 1.16f, 145, 62f, 1.2f, 0, 0f, 1f);
+    private static readonly DungeonDefinition GoldDungeonDefinition = new DungeonDefinition("gold_dungeon", "Gold Dungeon", GoldCurrencyId, 200, 100f, 1.2f, 22, 9f, 1.12f, 115, 50f, 1.18f, 95, 34f, 1.14f);
+    private static readonly DungeonDefinition EssenceDungeonDefinition = new DungeonDefinition("essence_dungeon", "Essence Dungeon", MythEssenceCurrencyId, 210, 104f, 1.2f, 22, 9.5f, 1.12f, 118, 51f, 1.18f, 110, 40f, 1.13f);
+    private static readonly DungeonDefinition GearDungeonDefinition = new DungeonDefinition("gear_dungeon", "Gear Dungeon", string.Empty, 235, 120f, 1.21f, 24, 10f, 1.14f, 130, 56f, 1.18f, 0, 0f, 1f);
+    private static readonly CampaignBalanceDefinition CampaignBalance = new CampaignBalanceDefinition(90, 46f, 1.17f, 10, 5.8f, 1.16f, 12, 1.6f, 25, 1.23f, 1.15f);
 
     private static readonly SummonBannerDefinition HeroShardBanner = new SummonBannerDefinition(
         "hero_shard_standard",
@@ -597,7 +637,7 @@ public class IdlePrototypeController : MonoBehaviour
     [Header("Idle")]
     [SerializeField] private bool autoAttackEnabled = true;
     [SerializeField] private float autoAttackInterval = 1f;
-    [SerializeField] private int maxOfflineSeconds = 8 * 60 * 60;
+    [SerializeField] private int maxOfflineSeconds = 6 * 60 * 60;
 
     [Header("UI")]
     [SerializeField] private TMP_Text titleText;
@@ -1602,8 +1642,8 @@ public class IdlePrototypeController : MonoBehaviour
 
         var lastStage = stages[stages.Length - 1];
         var overflow = stage - stages.Length;
-        var hp = Mathf.CeilToInt(lastStage.maxHp * Mathf.Pow(CampaignOverflowHpGrowth, overflow));
-        var reward = Mathf.CeilToInt(lastStage.essenceReward * Mathf.Pow(CampaignOverflowRewardGrowth, overflow));
+        var hp = Mathf.CeilToInt(lastStage.maxHp * Mathf.Pow(CampaignBalance.overflowHpGrowth, overflow));
+        var reward = Mathf.CeilToInt(lastStage.essenceReward * Mathf.Pow(CampaignBalance.overflowRewardGrowth, overflow));
 
         return new StageDefinition(stage, $"Rift Echo {stage}", hp, reward);
     }
@@ -1621,7 +1661,7 @@ public class IdlePrototypeController : MonoBehaviour
     private int GetStageRecommendedPower(int stage)
     {
         stage = Mathf.Max(1, stage);
-        return 95 + Mathf.FloorToInt(48 * Mathf.Pow(stage, 1.18f));
+        return CampaignBalance.baseRecommendedPower + Mathf.FloorToInt(CampaignBalance.recommendedPowerScale * Mathf.Pow(stage, CampaignBalance.recommendedPowerGrowth));
     }
 
     private int GetDungeonRecommendedPower(int floor)
@@ -1711,7 +1751,7 @@ public class IdlePrototypeController : MonoBehaviour
     private int GetCampaignEnemyDamage(int stage)
     {
         stage = Mathf.Max(1, stage);
-        return 12 + Mathf.FloorToInt(6.5f * Mathf.Pow(stage, 1.18f));
+        return CampaignBalance.baseEnemyDamage + Mathf.FloorToInt(CampaignBalance.enemyDamageScale * Mathf.Pow(stage, CampaignBalance.enemyDamageGrowth));
     }
 
     private CombatResult SimulateCombat(int targetEnemyHp, int enemyDamage)
@@ -1796,8 +1836,8 @@ public class IdlePrototypeController : MonoBehaviour
             return string.Empty;
         }
 
-        var rewardGems = 10 + Mathf.FloorToInt(clearedStage * 1.5f);
-        var rewardPassXp = 20;
+        var rewardGems = CampaignBalance.milestoneGemBase + Mathf.FloorToInt(clearedStage * CampaignBalance.milestoneGemScale);
+        var rewardPassXp = CampaignBalance.milestonePassXp;
         var reward = new RewardDefinition($"reward_campaign_milestone_{clearedStage}", 0, rewardGems, 0, rewardPassXp);
         GrantReward(reward);
 
@@ -2694,13 +2734,13 @@ public class IdlePrototypeController : MonoBehaviour
         switch (Mathf.Clamp(rarity, 0, AccessoryRarityCount - 1))
         {
             case 0:
-                return 440;
+                return 455;
             case 1:
-                return 330;
+                return 335;
             case 2:
-                return 155;
+                return 160;
             case 3:
-                return 70;
+                return 45;
             default:
                 return 5;
         }
@@ -2714,15 +2754,15 @@ public class IdlePrototypeController : MonoBehaviour
         switch (tier)
         {
             case 0:
-                return Mathf.Max(80, definition.dropWeight - Mathf.Min(240, floor * 8));
+                return Mathf.Max(95, definition.dropWeight - Mathf.Min(230, floor * 7));
             case 1:
-                return definition.dropWeight + Mathf.Min(80, floor * 2);
+                return definition.dropWeight + Mathf.Min(90, floor * 2);
             case 2:
-                return definition.dropWeight + Mathf.Min(110, floor * 3);
-            case 3:
                 return definition.dropWeight + Mathf.Min(120, floor * 4);
+            case 3:
+                return definition.dropWeight + Mathf.Min(150, floor * 5);
             default:
-                return definition.dropWeight + Mathf.Min(45, floor);
+                return definition.dropWeight + Mathf.Min(35, floor);
         }
     }
 
@@ -3003,7 +3043,7 @@ public class IdlePrototypeController : MonoBehaviour
     {
         index = Mathf.Clamp(index, 0, HeroCount - 1);
         EnsureHeroLevels();
-        return Mathf.CeilToInt(12 * Mathf.Pow(1.32f, heroLevels[index] - 1));
+        return Mathf.CeilToInt(14 * Mathf.Pow(1.34f, heroLevels[index] - 1));
     }
 
     private int GetHeroAscensionCost(int index)

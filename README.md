@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.2
+Prototype version: 0.2.3
 Local save version: 1
 
 Current prototype:
@@ -34,6 +34,7 @@ Current prototype:
 - Home screen shows a Next Goal hint for the current progression bottleneck
 - Campaign stages now use named enemy data with HP and progression-only clears
 - Campaign and dungeon scaling now create clearer upgrade walls with recommended power labels
+- First balance pass tunes Campaign pressure, dungeon rewards, summon pacing, daily missions, and offline reward caps for the early loop
 - Campaign milestones reward Gems and Mission Track XP every 5 stages
 - Campaign continues scaling after the starter stages
 - Gold Dungeon and Essence Dungeon are endless tower prototypes
@@ -49,6 +50,7 @@ Current prototype:
 - Mission Track rewards can be claimed in the Shop tab
 
 Changelog:
+- 0.2.3: Tuned early Campaign, dungeon, summon, daily mission, gear drop, and offline reward pacing for the first Balance Pass.
 - 0.2.2: Added item-like accessory definitions while keeping the current copy-count inventory, so drops, stats, and fusion now have stable accessory IDs for future item instances.
 - 0.2.1: Started Batch 2 data shaping with ID-based client definitions for currencies, heroes, stages, dungeons, rewards, missions, accessory slots/rarities, and the summon banner.
 - 0.2.0: Added visible prototype/save version UI, Batch 1 debug resource buttons, compact dungeon labels, and a reset path that clears known local prototype save keys before writing a fresh save.
