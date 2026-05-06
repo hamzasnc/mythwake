@@ -286,6 +286,9 @@ Current backend state:
 - Added `GET /health`.
 - Added shared API response types for player state, rewards, and action results.
 - Added dev `GET /player/state` endpoint.
+- Added in-memory guest auth endpoint.
+- Added in-memory action endpoints for campaign, dungeons, heroes, equipment, accessories, summons, missions, and Mission Track.
+- Added HTTP route tests for health, guest auth, campaign fight, and accessory request validation.
 - Added graceful shutdown.
 - PostgreSQL and Redis are not connected yet.
 
@@ -452,7 +455,7 @@ Recommended order:
 3. Clean local save into versioned state.
 4. Tune first 30-60 minutes.
 5. Add local service layer.
-6. Start Go backend skeleton. (in progress)
+6. Start Go backend skeleton. (done up to PostgreSQL boundary)
 7. Add PostgreSQL definitions and player state tables.
 8. Add Redis for sessions/rate limits.
 9. Move economy actions server-side one by one.

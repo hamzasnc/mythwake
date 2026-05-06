@@ -61,9 +61,11 @@ Backend:
 - Config via environment variables
 - `GET /health`
 - `GET /player/state` dev response using the same player-state shape as the Unity service contract
+- In-memory pre-PostgreSQL action endpoints for auth, campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
 - PostgreSQL and Redis are planned but not connected yet
 
 Changelog:
+- Backend 0.2.0: Added in-memory action endpoints up to the PostgreSQL boundary.
 - Backend 0.1.1: Added shared API response types and a dev `GET /player/state` endpoint.
 - Backend 0.1.0: Added the first Go API skeleton with config, health endpoint, and graceful shutdown.
 - 0.2.9: Routed hero progression, starter equipment upgrades, daily mission claims, and Mission Track claims through service action-result methods.

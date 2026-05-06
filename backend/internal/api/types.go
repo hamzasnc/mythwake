@@ -31,3 +31,13 @@ type ActionResult struct {
 	PlayerState PlayerState `json:"playerState"`
 	Reward      Reward      `json:"reward"`
 }
+
+type GuestAuthResponse struct {
+	PlayerID     string      `json:"playerId"`
+	SessionToken string      `json:"sessionToken"`
+	PlayerState  PlayerState `json:"playerState"`
+}
+
+type AccessoryRequest struct {
+	AccessoryID string `json:"accessoryId"`
+}
