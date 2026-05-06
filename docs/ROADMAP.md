@@ -25,7 +25,8 @@ Core pillars:
 Client:
 - Unity 6 mobile portrait prototype
 - Android build profile working
-- Local `PlayerPrefs` save data
+- Versioned local JSON save data stored in `PlayerPrefs`
+- Legacy scalar `PlayerPrefs` keys migrate into the JSON save on load
 - Visible prototype/save version text
 - Debug buttons for small Gold, Gems, Myth Essence, and accessory test amounts
 - Code-side definition rows with stable IDs for early client balance data
@@ -214,6 +215,13 @@ Done when:
 
 Goal:
 Stop relying on scattered `PlayerPrefs` keys before the save grows too much.
+
+Progress:
+- Introduced local save version 2.
+- Added a single `PrototypeSaveData` JSON blob stored under one `PlayerPrefs` key.
+- Legacy scalar `PlayerPrefs` saves still load and migrate through the normal save path.
+- Save/load now copies fixed-size arrays for heroes, accessories, daily missions, and mission track rewards into one state object.
+- Offline reward timing now reads from the loaded save state instead of reaching directly into scattered keys.
 
 Tasks:
 - Introduce a save version number.

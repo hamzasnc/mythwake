@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour
 {
-    public const string PrototypeVersion = "0.2.3";
-    public const int CurrentSaveVersion = 1;
+    public const string PrototypeVersion = "0.2.4";
+    public const int CurrentSaveVersion = 2;
 
     [Serializable]
     private struct StageDefinition
@@ -403,6 +403,44 @@ public class IdlePrototypeController : MonoBehaviour
         Shop
     }
 
+    [Serializable]
+    private sealed class PrototypeSaveData
+    {
+        public int saveVersion;
+        public int gold;
+        public int gems;
+        public int mythEssence;
+        public int damage;
+        public int enemyLevel;
+        public int enemyHp;
+        public int enemyMaxHp;
+        public int upgradeCost;
+        public int goldDungeonFloor;
+        public int essenceDungeonFloor;
+        public int gearDungeonFloor;
+        public int weaponLevel;
+        public int armorLevel;
+        public int selectedAccessorySlot;
+        public int selectedAccessoryRarity;
+        public int selectedHeroIndex;
+        public int summonCount;
+        public string dailyDate;
+        public int dailyFightCount;
+        public int dailyStageClearCount;
+        public int dailySummonCount;
+        public int battlePassXp;
+        public string lastSeenUtcTicks;
+        public int[] heroLevels;
+        public int[] heroShards;
+        public int[] heroAscensions;
+        public int[] equippedAccessoryRarities;
+        public int[] equippedAccessoryLevels;
+        public int[] accessoryInventory;
+        public bool[] dailyMissionClaimed;
+        public bool[] battlePassRewardsClaimed;
+    }
+
+    private const string SaveJsonKey = "Mythwake.Prototype.SaveJson";
     private const string SaveVersionKey = "Mythwake.Prototype.SaveVersion";
     private const string GoldKey = "Mythwake.Prototype.Gold";
     private const string GemsKey = "Mythwake.Prototype.Gems";
@@ -471,8 +509,9 @@ public class IdlePrototypeController : MonoBehaviour
     private const int DebugGemAmount = 30;
     private const int DebugEssenceAmount = 250;
 
-    private static readonly string[] ScalarSaveKeys =
+    private static readonly string[] SaveKeys =
     {
+        SaveJsonKey,
         SaveVersionKey,
         GoldKey,
         GemsKey,
@@ -617,6 +656,7 @@ public class IdlePrototypeController : MonoBehaviour
     [SerializeField] private bool[] dailyMissionClaimed = new bool[DailyMissionCount];
     [SerializeField] private int battlePassXp;
     [SerializeField] private bool[] battlePassRewardsClaimed = new bool[BattlePassRewardCount];
+    [SerializeField] private string lastSeenUtcTicks = string.Empty;
 
     [Header("Campaign")]
     [SerializeField]
@@ -1464,6 +1504,41 @@ public class IdlePrototypeController : MonoBehaviour
 
     private void LoadProgress()
     {
+        if (TryLoadSaveJson())
+        {
+            return;
+        }
+
+        LoadLegacyProgress();
+    }
+
+    private bool TryLoadSaveJson()
+    {
+        var json = PlayerPrefs.GetString(SaveJsonKey, string.Empty);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return false;
+        }
+
+        try
+        {
+            var data = JsonUtility.FromJson<PrototypeSaveData>(json);
+            if (data == null || data.saveVersion <= 0)
+            {
+                return false;
+            }
+
+            ApplySaveData(data);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+    }
+
+    private void LoadLegacyProgress()
+    {
         saveVersion = Mathf.Max(1, PlayerPrefs.GetInt(SaveVersionKey, CurrentSaveVersion));
         gold = PlayerPrefs.GetInt(GoldKey, gold);
         gems = PlayerPrefs.GetInt(GemsKey, gems);
@@ -1517,74 +1592,166 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         summonCount = Mathf.Max(0, PlayerPrefs.GetInt(SummonCountKey, summonCount));
+        lastSeenUtcTicks = PlayerPrefs.GetString(LastSeenUtcKey, string.Empty);
         LoadDailyProgress();
-        damage = GetTeamDamage();
-        upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
+        NormalizeLoadedState();
     }
 
     private void SaveProgress()
     {
+        NormalizeLoadedState();
         saveVersion = CurrentSaveVersion;
-        PlayerPrefs.SetInt(SaveVersionKey, saveVersion);
-        PlayerPrefs.SetInt(GoldKey, gold);
-        PlayerPrefs.SetInt(GemsKey, gems);
-        PlayerPrefs.SetInt(MythEssenceKey, mythEssence);
-        PlayerPrefs.SetInt(DamageKey, damage);
-        PlayerPrefs.SetInt(GoldDungeonFloorKey, goldDungeonFloor);
-        PlayerPrefs.SetInt(EssenceDungeonFloorKey, essenceDungeonFloor);
-        PlayerPrefs.SetInt(GearDungeonFloorKey, gearDungeonFloor);
-        PlayerPrefs.SetInt(WeaponLevelKey, weaponLevel);
-        PlayerPrefs.SetInt(ArmorLevelKey, armorLevel);
-        PlayerPrefs.SetInt(SelectedAccessorySlotKey, selectedAccessorySlot);
-        PlayerPrefs.SetInt(SelectedAccessoryRarityKey, selectedAccessoryRarity);
-        PlayerPrefs.SetInt(EnemyLevelKey, enemyLevel);
-        PlayerPrefs.SetInt(EnemyHpKey, enemyHp);
-        PlayerPrefs.SetInt(EnemyMaxHpKey, enemyMaxHp);
-        PlayerPrefs.SetInt(UpgradeCostKey, upgradeCost);
-        PlayerPrefs.SetInt(SelectedHeroKey, selectedHeroIndex);
-        PlayerPrefs.SetInt(SummonCountKey, summonCount);
-        PlayerPrefs.SetString(DailyDateKey, GetDailyDateKey());
-        PlayerPrefs.SetInt(DailyFightCountKey, dailyFightCount);
-        PlayerPrefs.SetInt(DailyStageClearCountKey, dailyStageClearCount);
-        PlayerPrefs.SetInt(DailySummonCountKey, dailySummonCount);
-        PlayerPrefs.SetInt(BattlePassXpKey, battlePassXp);
+        lastSeenUtcTicks = DateTime.UtcNow.Ticks.ToString();
+        var saveData = CreateSaveData();
 
+        PlayerPrefs.SetInt(SaveVersionKey, saveVersion);
+        PlayerPrefs.SetString(SaveJsonKey, JsonUtility.ToJson(saveData));
+        PlayerPrefs.Save();
+    }
+
+    private PrototypeSaveData CreateSaveData()
+    {
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
         EnsureAccessories();
         EnsureDailyMissionClaims();
         EnsureBattlePassRewardClaims();
-        for (var i = 0; i < heroLevels.Length; i++)
+
+        return new PrototypeSaveData
         {
-            PlayerPrefs.SetInt($"{HeroLevelKeyPrefix}{i}", heroLevels[i]);
-            PlayerPrefs.SetInt($"{HeroShardKeyPrefix}{i}", heroShards[i]);
-            PlayerPrefs.SetInt($"{HeroAscensionKeyPrefix}{i}", heroAscensions[i]);
+            saveVersion = CurrentSaveVersion,
+            gold = gold,
+            gems = gems,
+            mythEssence = mythEssence,
+            damage = damage,
+            enemyLevel = enemyLevel,
+            enemyHp = enemyHp,
+            enemyMaxHp = enemyMaxHp,
+            upgradeCost = upgradeCost,
+            goldDungeonFloor = goldDungeonFloor,
+            essenceDungeonFloor = essenceDungeonFloor,
+            gearDungeonFloor = gearDungeonFloor,
+            weaponLevel = weaponLevel,
+            armorLevel = armorLevel,
+            selectedAccessorySlot = selectedAccessorySlot,
+            selectedAccessoryRarity = selectedAccessoryRarity,
+            selectedHeroIndex = selectedHeroIndex,
+            summonCount = summonCount,
+            dailyDate = GetDailyDateKey(),
+            dailyFightCount = dailyFightCount,
+            dailyStageClearCount = dailyStageClearCount,
+            dailySummonCount = dailySummonCount,
+            battlePassXp = battlePassXp,
+            lastSeenUtcTicks = lastSeenUtcTicks,
+            heroLevels = CopyIntArray(heroLevels, HeroCount, 1),
+            heroShards = CopyIntArray(heroShards, HeroCount, 0),
+            heroAscensions = CopyIntArray(heroAscensions, HeroCount, 0),
+            equippedAccessoryRarities = CopyIntArray(equippedAccessoryRarities, AccessorySlotCount, -1),
+            equippedAccessoryLevels = CopyIntArray(equippedAccessoryLevels, AccessorySlotCount, 0),
+            accessoryInventory = CopyIntArray(accessoryInventory, AccessorySlotCount * AccessoryRarityCount, 0),
+            dailyMissionClaimed = CopyBoolArray(dailyMissionClaimed, DailyMissionCount),
+            battlePassRewardsClaimed = CopyBoolArray(battlePassRewardsClaimed, BattlePassRewardCount)
+        };
+    }
+
+    private void ApplySaveData(PrototypeSaveData data)
+    {
+        saveVersion = Mathf.Max(1, data.saveVersion);
+        gold = Mathf.Max(0, data.gold);
+        gems = Mathf.Max(0, data.gems);
+        mythEssence = Mathf.Max(0, data.mythEssence);
+        damage = Mathf.Max(1, data.damage);
+        enemyLevel = Mathf.Max(1, data.enemyLevel);
+        enemyMaxHp = Mathf.Max(GetStageMaxHp(enemyLevel), data.enemyMaxHp);
+        enemyHp = Mathf.Clamp(data.enemyHp, 1, enemyMaxHp);
+        upgradeCost = Mathf.Max(1, data.upgradeCost);
+        goldDungeonFloor = Mathf.Max(1, data.goldDungeonFloor);
+        essenceDungeonFloor = Mathf.Max(1, data.essenceDungeonFloor);
+        gearDungeonFloor = Mathf.Max(1, data.gearDungeonFloor);
+        weaponLevel = Mathf.Max(StarterEquipmentLevel, data.weaponLevel);
+        armorLevel = Mathf.Max(StarterEquipmentLevel, data.armorLevel);
+        selectedAccessorySlot = Mathf.Clamp(data.selectedAccessorySlot, 0, AccessorySlotCount - 1);
+        selectedAccessoryRarity = Mathf.Clamp(data.selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+        selectedHeroIndex = Mathf.Clamp(data.selectedHeroIndex, 0, HeroCount - 1);
+        summonCount = Mathf.Max(0, data.summonCount);
+        battlePassXp = Mathf.Max(0, data.battlePassXp);
+        lastSeenUtcTicks = data.lastSeenUtcTicks ?? string.Empty;
+        heroLevels = CopyIntArray(data.heroLevels, HeroCount, 1);
+        heroShards = CopyIntArray(data.heroShards, HeroCount, 0);
+        heroAscensions = CopyIntArray(data.heroAscensions, HeroCount, 0);
+        equippedAccessoryRarities = CopyIntArray(data.equippedAccessoryRarities, AccessorySlotCount, -1);
+        equippedAccessoryLevels = CopyIntArray(data.equippedAccessoryLevels, AccessorySlotCount, 0);
+        accessoryInventory = CopyIntArray(data.accessoryInventory, AccessorySlotCount * AccessoryRarityCount, 0);
+        dailyMissionClaimed = CopyBoolArray(data.dailyMissionClaimed, DailyMissionCount);
+        battlePassRewardsClaimed = CopyBoolArray(data.battlePassRewardsClaimed, BattlePassRewardCount);
+
+        if (data.dailyDate == GetDailyDateKey())
+        {
+            dailyFightCount = Mathf.Max(0, data.dailyFightCount);
+            dailyStageClearCount = Mathf.Max(0, data.dailyStageClearCount);
+            dailySummonCount = Mathf.Max(0, data.dailySummonCount);
+        }
+        else
+        {
+            dailyFightCount = 0;
+            dailyStageClearCount = 0;
+            dailySummonCount = 0;
+            dailyMissionClaimed = new bool[DailyMissionCount];
         }
 
-        for (var i = 0; i < dailyMissionClaimed.Length; i++)
+        NormalizeLoadedState();
+    }
+
+    private void NormalizeLoadedState()
+    {
+        EnsureHeroLevels();
+        EnsureHeroShards();
+        EnsureHeroAscensions();
+        EnsureAccessories();
+        EnsureDailyMissionClaims();
+        EnsureBattlePassRewardClaims();
+
+        gold = Mathf.Max(0, gold);
+        gems = Mathf.Max(0, gems);
+        mythEssence = Mathf.Max(0, mythEssence);
+        enemyLevel = Mathf.Max(1, enemyLevel);
+        enemyMaxHp = Mathf.Max(GetStageMaxHp(enemyLevel), enemyMaxHp);
+        enemyHp = Mathf.Clamp(enemyHp, 1, enemyMaxHp);
+        goldDungeonFloor = Mathf.Max(1, goldDungeonFloor);
+        essenceDungeonFloor = Mathf.Max(1, essenceDungeonFloor);
+        gearDungeonFloor = Mathf.Max(1, gearDungeonFloor);
+        weaponLevel = Mathf.Max(StarterEquipmentLevel, weaponLevel);
+        armorLevel = Mathf.Max(StarterEquipmentLevel, armorLevel);
+        selectedAccessorySlot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
+        selectedAccessoryRarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+        selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+        summonCount = Mathf.Max(0, summonCount);
+        battlePassXp = Mathf.Max(0, battlePassXp);
+        damage = GetTeamDamage();
+        upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
+    }
+
+    private static int[] CopyIntArray(int[] source, int length, int defaultValue)
+    {
+        var target = new int[length];
+        for (var i = 0; i < target.Length; i++)
         {
-            PlayerPrefs.SetInt($"{DailyMissionClaimedKeyPrefix}{i}", dailyMissionClaimed[i] ? 1 : 0);
+            target[i] = source != null && i < source.Length ? source[i] : defaultValue;
         }
 
-        for (var i = 0; i < battlePassRewardsClaimed.Length; i++)
+        return target;
+    }
+
+    private static bool[] CopyBoolArray(bool[] source, int length)
+    {
+        var target = new bool[length];
+        for (var i = 0; i < target.Length; i++)
         {
-            PlayerPrefs.SetInt($"{BattlePassClaimedKeyPrefix}{i}", battlePassRewardsClaimed[i] ? 1 : 0);
+            target[i] = source != null && i < source.Length && source[i];
         }
 
-        for (var i = 0; i < AccessorySlotCount; i++)
-        {
-            PlayerPrefs.SetInt($"{EquippedAccessoryRarityKeyPrefix}{i}", equippedAccessoryRarities[i]);
-            PlayerPrefs.SetInt($"{EquippedAccessoryLevelKeyPrefix}{i}", equippedAccessoryLevels[i]);
-        }
-
-        for (var i = 0; i < accessoryInventory.Length; i++)
-        {
-            PlayerPrefs.SetInt($"{AccessoryInventoryKeyPrefix}{i}", accessoryInventory[i]);
-        }
-
-        PlayerPrefs.SetString(LastSeenUtcKey, DateTime.UtcNow.Ticks.ToString());
-        PlayerPrefs.Save();
+        return target;
     }
 
     private void ClaimOfflineRewards()
@@ -1592,8 +1759,7 @@ public class IdlePrototypeController : MonoBehaviour
         lastOfflineReward = 0;
         lastOfflineSeconds = 0;
 
-        var rawTicks = PlayerPrefs.GetString(LastSeenUtcKey, string.Empty);
-        if (!long.TryParse(rawTicks, out var ticks))
+        if (!long.TryParse(lastSeenUtcTicks, out var ticks))
         {
             SaveProgress();
             return;
@@ -3330,7 +3496,7 @@ public class IdlePrototypeController : MonoBehaviour
 
     private void ClearPrototypePlayerPrefs()
     {
-        foreach (var key in ScalarSaveKeys)
+        foreach (var key in SaveKeys)
         {
             PlayerPrefs.DeleteKey(key);
         }
