@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour
 {
-    public const string PrototypeVersion = "0.2.4";
+    public const string PrototypeVersion = "0.2.5";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -438,6 +438,51 @@ public class IdlePrototypeController : MonoBehaviour
         public int[] accessoryInventory;
         public bool[] dailyMissionClaimed;
         public bool[] battlePassRewardsClaimed;
+    }
+
+    [Serializable]
+    private struct PlayerStateSnapshot
+    {
+        public int saveVersion;
+        public int gold;
+        public int gems;
+        public int mythEssence;
+        public int battlePassXp;
+        public int campaignStage;
+        public int goldDungeonFloor;
+        public int essenceDungeonFloor;
+        public int gearDungeonFloor;
+        public int teamPower;
+        public int teamAttack;
+        public int teamHealth;
+
+        public PlayerStateSnapshot(
+            int saveVersion,
+            int gold,
+            int gems,
+            int mythEssence,
+            int battlePassXp,
+            int campaignStage,
+            int goldDungeonFloor,
+            int essenceDungeonFloor,
+            int gearDungeonFloor,
+            int teamPower,
+            int teamAttack,
+            int teamHealth)
+        {
+            this.saveVersion = saveVersion;
+            this.gold = gold;
+            this.gems = gems;
+            this.mythEssence = mythEssence;
+            this.battlePassXp = battlePassXp;
+            this.campaignStage = campaignStage;
+            this.goldDungeonFloor = goldDungeonFloor;
+            this.essenceDungeonFloor = essenceDungeonFloor;
+            this.gearDungeonFloor = gearDungeonFloor;
+            this.teamPower = teamPower;
+            this.teamAttack = teamAttack;
+            this.teamHealth = teamHealth;
+        }
     }
 
     private const string SaveJsonKey = "Mythwake.Prototype.SaveJson";
@@ -1101,13 +1146,12 @@ public class IdlePrototypeController : MonoBehaviour
         selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
 
-        if (mythEssence < upgradeCost)
+        if (!TrySpendCurrency(MythEssenceCurrencyId, upgradeCost))
         {
             RefreshUi();
             return;
         }
 
-        mythEssence -= upgradeCost;
         heroLevels[selectedHeroIndex]++;
         damage = GetTeamDamage();
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
@@ -1142,13 +1186,12 @@ public class IdlePrototypeController : MonoBehaviour
         weaponLevel = Mathf.Max(StarterEquipmentLevel, weaponLevel);
         var cost = GetWeaponUpgradeCost();
 
-        if (gold < cost)
+        if (!TrySpendCurrency(GoldCurrencyId, cost))
         {
             RefreshUi();
             return;
         }
 
-        gold -= cost;
         weaponLevel++;
         damage = GetTeamDamage();
 
@@ -1161,13 +1204,12 @@ public class IdlePrototypeController : MonoBehaviour
         armorLevel = Mathf.Max(StarterEquipmentLevel, armorLevel);
         var cost = GetArmorUpgradeCost();
 
-        if (gold < cost)
+        if (!TrySpendCurrency(GoldCurrencyId, cost))
         {
             RefreshUi();
             return;
         }
 
-        gold -= cost;
         armorLevel++;
 
         SaveProgress();
@@ -1253,13 +1295,12 @@ public class IdlePrototypeController : MonoBehaviour
         }
 
         var cost = GetAccessoryLevelCost(slot);
-        if (gold < cost)
+        if (!TrySpendCurrency(GoldCurrencyId, cost))
         {
             RefreshUi();
             return;
         }
 
-        gold -= cost;
         equippedAccessoryLevels[slot]++;
         damage = GetTeamDamage();
 
@@ -1292,7 +1333,7 @@ public class IdlePrototypeController : MonoBehaviour
     public void SummonOnce()
     {
         var summonCost = GetSummonCost();
-        if (gems < summonCost)
+        if (!TrySpendCurrency(GemsCurrencyId, summonCost))
         {
             SetSummonResult($"Need {summonCost} Gems for a summon.");
             RefreshUi();
@@ -1301,7 +1342,6 @@ public class IdlePrototypeController : MonoBehaviour
 
         EnsureHeroShards();
 
-        gems -= summonCost;
         summonCount++;
         dailySummonCount++;
 
@@ -1777,8 +1817,8 @@ public class IdlePrototypeController : MonoBehaviour
 
         lastOfflineReward = CalculateOfflineReward(lastOfflineSeconds);
         var offlineGoldReward = CalculateOfflineGoldReward(lastOfflineReward);
-        gold += offlineGoldReward;
-        mythEssence += lastOfflineReward;
+        GrantCurrency(GoldCurrencyId, offlineGoldReward);
+        GrantCurrency(MythEssenceCurrencyId, lastOfflineReward);
         SaveProgress();
     }
 
@@ -1899,13 +1939,13 @@ public class IdlePrototypeController : MonoBehaviour
         var bonusText = GrantDungeonBonusReward(isGoldDungeon, floor);
         if (isGoldDungeon)
         {
-            gold += reward;
+            GrantCurrency(GoldCurrencyId, reward);
             goldDungeonFloor++;
             SetDungeonResult($"{dungeon.displayName} Floor {floor} cleared in {result.rounds} rounds (+{reward} Gold)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}");
         }
         else
         {
-            mythEssence += reward;
+            GrantCurrency(MythEssenceCurrencyId, reward);
             essenceDungeonFloor++;
             SetDungeonResult($"{dungeon.displayName} Floor {floor} cleared in {result.rounds} rounds (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}");
         }
@@ -2998,10 +3038,99 @@ public class IdlePrototypeController : MonoBehaviour
 
     private void GrantReward(RewardDefinition reward)
     {
-        gold += reward.gold;
-        gems += reward.gems;
-        mythEssence += reward.mythEssence;
-        battlePassXp += reward.passXp;
+        GrantReward(reward, reward.rewardId);
+    }
+
+    private void GrantReward(RewardDefinition reward, string sourceId)
+    {
+        GrantCurrency(GoldCurrencyId, reward.gold);
+        GrantCurrency(GemsCurrencyId, reward.gems);
+        GrantCurrency(MythEssenceCurrencyId, reward.mythEssence);
+        GrantCurrency(PassXpCurrencyId, reward.passXp);
+    }
+
+    private bool TrySpendCurrency(string currencyId, int amount)
+    {
+        amount = Mathf.Max(0, amount);
+        if (amount == 0)
+        {
+            return true;
+        }
+
+        var currentAmount = GetCurrencyAmount(currencyId);
+        if (currentAmount < amount)
+        {
+            return false;
+        }
+
+        SetCurrencyAmount(currencyId, currentAmount - amount);
+        return true;
+    }
+
+    private void GrantCurrency(string currencyId, int amount)
+    {
+        amount = Mathf.Max(0, amount);
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        SetCurrencyAmount(currencyId, GetCurrencyAmount(currencyId) + amount);
+    }
+
+    private int GetCurrencyAmount(string currencyId)
+    {
+        switch (currencyId)
+        {
+            case GoldCurrencyId:
+                return gold;
+            case GemsCurrencyId:
+                return gems;
+            case MythEssenceCurrencyId:
+                return mythEssence;
+            case PassXpCurrencyId:
+                return battlePassXp;
+            default:
+                return 0;
+        }
+    }
+
+    private void SetCurrencyAmount(string currencyId, int amount)
+    {
+        amount = Mathf.Max(0, amount);
+        switch (currencyId)
+        {
+            case GoldCurrencyId:
+                gold = amount;
+                break;
+            case GemsCurrencyId:
+                gems = amount;
+                break;
+            case MythEssenceCurrencyId:
+                mythEssence = amount;
+                break;
+            case PassXpCurrencyId:
+                battlePassXp = amount;
+                break;
+        }
+    }
+
+    private PlayerStateSnapshot CreatePlayerStateSnapshot()
+    {
+        NormalizeLoadedState();
+        return new PlayerStateSnapshot(
+            saveVersion,
+            gold,
+            gems,
+            mythEssence,
+            battlePassXp,
+            enemyLevel,
+            goldDungeonFloor,
+            essenceDungeonFloor,
+            gearDungeonFloor,
+            GetTeamPower(),
+            GetTeamDamage(),
+            GetTeamHealth());
     }
 
     private void EnsureStages()
@@ -3485,9 +3614,9 @@ public class IdlePrototypeController : MonoBehaviour
 
     private void AddDebugResources(int goldAmount, int gemAmount, int essenceAmount)
     {
-        gold += Mathf.Max(0, goldAmount);
-        gems += Mathf.Max(0, gemAmount);
-        mythEssence += Mathf.Max(0, essenceAmount);
+        GrantCurrency(GoldCurrencyId, goldAmount);
+        GrantCurrency(GemsCurrencyId, gemAmount);
+        GrantCurrency(MythEssenceCurrencyId, essenceAmount);
 
         SaveProgress();
         RefreshUi();

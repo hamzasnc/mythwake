@@ -27,6 +27,7 @@ Client:
 - Android build profile working
 - Versioned local JSON save data stored in `PlayerPrefs`
 - Legacy scalar `PlayerPrefs` keys migrate into the JSON save on load
+- Local economy boundary methods now handle currency spends, currency grants, and reward grants
 - Visible prototype/save version text
 - Debug buttons for small Gold, Gems, Myth Essence, and accessory test amounts
 - Code-side definition rows with stable IDs for early client balance data
@@ -237,6 +238,14 @@ Done when:
 
 Goal:
 Create the client boundary that later talks to the backend.
+
+Progress:
+- Added central local economy methods:
+  - `TrySpendCurrency`
+  - `GrantCurrency`
+  - `GrantReward`
+- Routed hero leveling, equipment leveling, accessory leveling, summons, dungeon rewards, offline rewards, debug rewards, campaign milestones, daily claims, and mission track claims through those methods.
+- Added a compact player state snapshot shape for future load/state endpoint work.
 
 Tasks:
 - Add service-style classes/interfaces for:
