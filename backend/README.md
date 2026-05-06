@@ -6,6 +6,7 @@ Current scope:
 - Standard-library HTTP server
 - Environment-based config
 - Health endpoint
+- Dev player state endpoint
 - Graceful shutdown
 
 Not included yet:
@@ -32,3 +33,4 @@ Optional environment variables:
 
 Endpoints:
 - `GET /health`
+- `GET /player/state`

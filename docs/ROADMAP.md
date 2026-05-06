@@ -284,6 +284,8 @@ Current backend state:
 - Added environment-based config.
 - Added standard-library HTTP router.
 - Added `GET /health`.
+- Added shared API response types for player state, rewards, and action results.
+- Added dev `GET /player/state` endpoint.
 - Added graceful shutdown.
 - PostgreSQL and Redis are not connected yet.
 

@@ -60,9 +60,11 @@ Backend:
 - Standard-library HTTP server
 - Config via environment variables
 - `GET /health`
+- `GET /player/state` dev response using the same player-state shape as the Unity service contract
 - PostgreSQL and Redis are planned but not connected yet
 
 Changelog:
+- Backend 0.1.1: Added shared API response types and a dev `GET /player/state` endpoint.
 - Backend 0.1.0: Added the first Go API skeleton with config, health endpoint, and graceful shutdown.
 - 0.2.9: Routed hero progression, starter equipment upgrades, daily mission claims, and Mission Track claims through service action-result methods.
 - 0.2.8: Routed accessory equip, level, and fusion through inventory service action-result methods for backend-ready item validation.

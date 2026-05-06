@@ -7,19 +7,22 @@ import (
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/config"
+	"github.com/hamzasnc/mythwake/backend/internal/player"
 )
 
 type Router struct {
-	config config.Config
-	logger *log.Logger
-	mux    *http.ServeMux
+	config        config.Config
+	logger        *log.Logger
+	mux           *http.ServeMux
+	playerService *player.Service
 }
 
-func NewRouter(cfg config.Config, logger *log.Logger) http.Handler {
+func NewRouter(cfg config.Config, logger *log.Logger, playerService *player.Service) http.Handler {
 	router := &Router{
-		config: cfg,
-		logger: logger,
-		mux:    http.NewServeMux(),
+		config:        cfg,
+		logger:        logger,
+		mux:           http.NewServeMux(),
+		playerService: playerService,
 	}
 
 	router.routes()
@@ -28,6 +31,7 @@ func NewRouter(cfg config.Config, logger *log.Logger) http.Handler {
 
 func (router *Router) routes() {
 	router.mux.HandleFunc("GET /health", router.handleHealth)
+	router.mux.HandleFunc("GET /player/state", router.handlePlayerState)
 }
 
 func (router *Router) handleHealth(response http.ResponseWriter, request *http.Request) {
@@ -38,6 +42,10 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 		"version":     router.config.Version,
 		"time_utc":    time.Now().UTC().Format(time.RFC3339),
 	})
+}
+
+func (router *Router) handlePlayerState(response http.ResponseWriter, request *http.Request) {
+	writeJSON(response, http.StatusOK, router.playerService.GetState())
 }
 
 func (router *Router) logRequests(next http.Handler) http.Handler {

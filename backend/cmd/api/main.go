@@ -12,15 +12,17 @@ import (
 
 	"github.com/hamzasnc/mythwake/backend/internal/config"
 	apihttp "github.com/hamzasnc/mythwake/backend/internal/http"
+	"github.com/hamzasnc/mythwake/backend/internal/player"
 )
 
 func main() {
 	cfg := config.Load()
 	logger := log.New(os.Stdout, "mythwake-api ", log.LstdFlags|log.LUTC)
+	playerService := player.NewService()
 
 	server := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           apihttp.NewRouter(cfg, logger),
+		Handler:           apihttp.NewRouter(cfg, logger, playerService),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
