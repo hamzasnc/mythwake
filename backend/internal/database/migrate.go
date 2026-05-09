@@ -22,7 +22,13 @@ func Migrate(ctx context.Context, db *sql.DB) error {
 	defer tx.Rollback()
 
 	if _, err := tx.ExecContext(ctx, `
-		CREATE TABLE IF NOT EXISTS schema_migrations (
+		CREATE SCHEMA IF NOT EXISTS common
+	`); err != nil {
+		return err
+	}
+
+	if _, err := tx.ExecContext(ctx, `
+		CREATE TABLE IF NOT EXISTS common.schema_migrations (
 			version text PRIMARY KEY,
 			applied_at timestamptz NOT NULL DEFAULT now()
 		)
@@ -53,7 +59,7 @@ func Migrate(ctx context.Context, db *sql.DB) error {
 		if _, err := tx.ExecContext(ctx, string(statement)); err != nil {
 			return fmt.Errorf("apply migration %s: %w", version, err)
 		}
-		if _, err := tx.ExecContext(ctx, `INSERT INTO schema_migrations (version) VALUES ($1)`, version); err != nil {
+		if _, err := tx.ExecContext(ctx, `INSERT INTO common.schema_migrations (version) VALUES ($1)`, version); err != nil {
 			return err
 		}
 	}
@@ -63,6 +69,6 @@ func Migrate(ctx context.Context, db *sql.DB) error {
 
 func migrationApplied(ctx context.Context, tx *sql.Tx, version string) (bool, error) {
 	var applied bool
-	err := tx.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = $1)`, version).Scan(&applied)
+	err := tx.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM common.schema_migrations WHERE version = $1)`, version).Scan(&applied)
 	return applied, err
 }

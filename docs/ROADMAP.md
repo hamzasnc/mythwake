@@ -298,6 +298,9 @@ Current backend state:
 - Added first PostgreSQL player state snapshot store for the dev player.
 - Added normalized player progression tables for currencies, campaign progress, dungeon progress, hero levels, hero ascensions, and hero shards.
 - Backend load/save now uses normalized progression tables first and keeps the JSON snapshot as fallback/debug mirror.
+- Added PostgreSQL schemas for account, common definitions, player state, logs, and debug views.
+- Added Navicat-friendly debug views for player overview, hero overview, and economy history.
+- Added economy transaction logging for currency deltas.
 - Redis is not connected yet.
 
 Recommended Go shape:
@@ -471,6 +474,14 @@ Progress:
 - Server startup now connects, migrates, and wires persistence when `MYTHWAKE_DATABASE_URL` is set.
 - Existing backend tests still run without a database.
 - Local PostgreSQL smoke test confirmed state survives an API restart.
+- Added schema namespace migration:
+  - `account`
+  - `common`
+  - `player`
+  - `logs`
+  - `debug`
+- Added `debug.v_player_overview`, `debug.v_player_hero_overview`, and `debug.v_player_economy_overview`.
+- Added economy transaction logs for currency delta inspection.
 
 Next useful step:
 - Move economy actions server-side one by one against the normalized tables:

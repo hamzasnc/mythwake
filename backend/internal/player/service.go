@@ -19,7 +19,7 @@ const (
 
 type StateStore interface {
 	LoadState(ctx context.Context, playerID string) (PersistentState, bool, error)
-	SaveState(ctx context.Context, playerID string, state PersistentState) error
+	SaveState(ctx context.Context, playerID string, state PersistentState, source StateSaveSource) error
 }
 
 type PersistentState struct {
@@ -27,6 +27,11 @@ type PersistentState struct {
 	HeroLevels     map[string]int
 	HeroShards     map[string]int
 	HeroAscensions map[string]int
+}
+
+type StateSaveSource struct {
+	ActionID string
+	RewardID string
 }
 
 type Service struct {
@@ -93,7 +98,7 @@ func (service *Service) UseStateStore(ctx context.Context, store StateStore) err
 		return nil
 	}
 
-	return store.SaveState(ctx, service.playerID, service.persistentState())
+	return store.SaveState(ctx, service.playerID, service.persistentState(), StateSaveSource{ActionID: "player_state_seed"})
 }
 
 func (service *Service) GuestAuth() api.GuestAuthResponse {
@@ -356,7 +361,7 @@ func (service *Service) grantReward(reward api.Reward) {
 
 func (service *Service) result(success bool, actionID string, errorCode string, message string, reward api.Reward) api.ActionResult {
 	if success {
-		if err := service.saveState(); err != nil {
+		if err := service.saveState(actionID, reward); err != nil {
 			return api.ActionResult{
 				Success:     false,
 				ActionID:    actionID,
@@ -378,12 +383,15 @@ func (service *Service) result(success bool, actionID string, errorCode string, 
 	}
 }
 
-func (service *Service) saveState() error {
+func (service *Service) saveState(actionID string, reward api.Reward) error {
 	if service.stateStore == nil {
 		return nil
 	}
 
-	return service.stateStore.SaveState(context.Background(), service.playerID, service.persistentState())
+	return service.stateStore.SaveState(context.Background(), service.playerID, service.persistentState(), StateSaveSource{
+		ActionID: actionID,
+		RewardID: reward.RewardID,
+	})
 }
 
 func (service *Service) persistentState() PersistentState {

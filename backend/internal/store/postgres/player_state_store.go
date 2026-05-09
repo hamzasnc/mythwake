@@ -27,7 +27,7 @@ func (store *PlayerStateStore) LoadState(ctx context.Context, playerID string) (
 	return store.loadSnapshotState(ctx, playerID)
 }
 
-func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, state player.PersistentState) error {
+func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, state player.PersistentState, source player.StateSaveSource) error {
 	rawState, err := json.Marshal(state.PlayerState)
 	if err != nil {
 		return err
@@ -40,10 +40,15 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	defer tx.Rollback()
 
 	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO players (id)
+		INSERT INTO account.players (id)
 		VALUES ($1)
 		ON CONFLICT (id) DO UPDATE SET updated_at = now()
 	`, playerID); err != nil {
+		return err
+	}
+
+	previousCurrencies, err := store.loadCurrenciesForUpdate(ctx, tx, playerID)
+	if err != nil {
 		return err
 	}
 
@@ -53,8 +58,11 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	if err := store.saveHeroState(ctx, tx, playerID, state); err != nil {
 		return err
 	}
+	if err := store.saveEconomyTransaction(ctx, tx, playerID, previousCurrencies, state.PlayerState, source); err != nil {
+		return err
+	}
 	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO player_state_snapshots (player_id, state, updated_at)
+		INSERT INTO player.player_state_snapshots (player_id, state, updated_at)
 		VALUES ($1, $2, now())
 		ON CONFLICT (player_id) DO UPDATE SET
 			state = EXCLUDED.state,
@@ -70,7 +78,7 @@ func (store *PlayerStateStore) loadSnapshotState(ctx context.Context, playerID s
 	var rawState []byte
 	err := store.db.QueryRowContext(ctx, `
 		SELECT state
-		FROM player_state_snapshots
+		FROM player.player_state_snapshots
 		WHERE player_id = $1
 	`, playerID).Scan(&rawState)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -92,7 +100,7 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	var state api.PlayerState
 	err := store.db.QueryRowContext(ctx, `
 		SELECT save_version, team_power, team_attack, team_health
-		FROM player_combat_stats
+		FROM player.player_combat_stats
 		WHERE player_id = $1
 	`, playerID).Scan(&state.SaveVersion, &state.TeamPower, &state.TeamAttack, &state.TeamHealth)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -104,7 +112,7 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 
 	if err := store.db.QueryRowContext(ctx, `
 		SELECT current_stage
-		FROM player_campaign_progress
+		FROM player.player_campaign_progress
 		WHERE player_id = $1
 	`, playerID).Scan(&state.CampaignStage); err != nil {
 		return player.PersistentState{}, false, err
@@ -146,7 +154,7 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 
 func (store *PlayerStateStore) saveCoreState(ctx context.Context, tx *sql.Tx, playerID string, state api.PlayerState) error {
 	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO player_combat_stats (player_id, save_version, team_power, team_attack, team_health, updated_at)
+		INSERT INTO player.player_combat_stats (player_id, save_version, team_power, team_attack, team_health, updated_at)
 		VALUES ($1, $2, $3, $4, $5, now())
 		ON CONFLICT (player_id) DO UPDATE SET
 			save_version = EXCLUDED.save_version,
@@ -159,7 +167,7 @@ func (store *PlayerStateStore) saveCoreState(ctx context.Context, tx *sql.Tx, pl
 	}
 
 	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO player_campaign_progress (player_id, current_stage, updated_at)
+		INSERT INTO player.player_campaign_progress (player_id, current_stage, updated_at)
 		VALUES ($1, $2, now())
 		ON CONFLICT (player_id) DO UPDATE SET
 			current_stage = EXCLUDED.current_stage,
@@ -176,7 +184,7 @@ func (store *PlayerStateStore) saveCoreState(ctx context.Context, tx *sql.Tx, pl
 	}
 	for currencyID, amount := range currencies {
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO player_currencies (player_id, currency_id, amount, updated_at)
+			INSERT INTO player.player_currencies (player_id, currency_id, amount, updated_at)
 			VALUES ($1, $2, $3, now())
 			ON CONFLICT (player_id, currency_id) DO UPDATE SET
 				amount = EXCLUDED.amount,
@@ -193,7 +201,7 @@ func (store *PlayerStateStore) saveCoreState(ctx context.Context, tx *sql.Tx, pl
 	}
 	for dungeonID, floor := range dungeons {
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO player_dungeon_progress (player_id, dungeon_id, current_floor, updated_at)
+			INSERT INTO player.player_dungeon_progress (player_id, dungeon_id, current_floor, updated_at)
 			VALUES ($1, $2, $3, now())
 			ON CONFLICT (player_id, dungeon_id) DO UPDATE SET
 				current_floor = EXCLUDED.current_floor,
@@ -209,7 +217,7 @@ func (store *PlayerStateStore) saveCoreState(ctx context.Context, tx *sql.Tx, pl
 func (store *PlayerStateStore) saveHeroState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
 	for heroID, level := range state.HeroLevels {
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO player_heroes (player_id, hero_id, level, ascension, updated_at)
+			INSERT INTO player.player_heroes (player_id, hero_id, level, ascension, updated_at)
 			VALUES ($1, $2, $3, $4, now())
 			ON CONFLICT (player_id, hero_id) DO UPDATE SET
 				level = EXCLUDED.level,
@@ -222,7 +230,7 @@ func (store *PlayerStateStore) saveHeroState(ctx context.Context, tx *sql.Tx, pl
 
 	for heroID, shards := range state.HeroShards {
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO player_hero_shards (player_id, hero_id, shards, updated_at)
+			INSERT INTO player.player_hero_shards (player_id, hero_id, shards, updated_at)
 			VALUES ($1, $2, $3, now())
 			ON CONFLICT (player_id, hero_id) DO UPDATE SET
 				shards = EXCLUDED.shards,
@@ -235,11 +243,64 @@ func (store *PlayerStateStore) saveHeroState(ctx context.Context, tx *sql.Tx, pl
 	return nil
 }
 
+func (store *PlayerStateStore) saveEconomyTransaction(ctx context.Context, tx *sql.Tx, playerID string, previous map[string]int, state api.PlayerState, source player.StateSaveSource) error {
+	if source.ActionID == "" {
+		source.ActionID = "player_state_save"
+	}
+
+	goldDelta := state.Gold - previous["gold"]
+	gemsDelta := state.Gems - previous["gems"]
+	mythEssenceDelta := state.MythEssence - previous["myth_essence"]
+	passXPDelta := state.PassXP - previous["pass_xp"]
+	if goldDelta == 0 && gemsDelta == 0 && mythEssenceDelta == 0 && passXPDelta == 0 {
+		return nil
+	}
+
+	_, err := tx.ExecContext(ctx, `
+		INSERT INTO logs.economy_transactions (
+			player_id,
+			action_id,
+			reward_id,
+			gold_delta,
+			gems_delta,
+			myth_essence_delta,
+			pass_xp_delta
+		)
+		VALUES ($1, $2, NULLIF($3, ''), $4, $5, $6, $7)
+	`, playerID, source.ActionID, source.RewardID, goldDelta, gemsDelta, mythEssenceDelta, passXPDelta)
+	return err
+}
+
 func (store *PlayerStateStore) loadCurrencies(ctx context.Context, playerID string) (map[string]int, error) {
 	rows, err := store.db.QueryContext(ctx, `
 		SELECT currency_id, amount
-		FROM player_currencies
+		FROM player.player_currencies
 		WHERE player_id = $1
+	`, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	currencies := map[string]int{}
+	for rows.Next() {
+		var currencyID string
+		var amount int
+		if err := rows.Scan(&currencyID, &amount); err != nil {
+			return nil, err
+		}
+		currencies[currencyID] = amount
+	}
+
+	return currencies, rows.Err()
+}
+
+func (store *PlayerStateStore) loadCurrenciesForUpdate(ctx context.Context, tx *sql.Tx, playerID string) (map[string]int, error) {
+	rows, err := tx.QueryContext(ctx, `
+		SELECT currency_id, amount
+		FROM player.player_currencies
+		WHERE player_id = $1
+		FOR UPDATE
 	`, playerID)
 	if err != nil {
 		return nil, err
@@ -262,7 +323,7 @@ func (store *PlayerStateStore) loadCurrencies(ctx context.Context, playerID stri
 func (store *PlayerStateStore) loadDungeons(ctx context.Context, playerID string) (map[string]int, error) {
 	rows, err := store.db.QueryContext(ctx, `
 		SELECT dungeon_id, current_floor
-		FROM player_dungeon_progress
+		FROM player.player_dungeon_progress
 		WHERE player_id = $1
 	`, playerID)
 	if err != nil {
@@ -286,7 +347,7 @@ func (store *PlayerStateStore) loadDungeons(ctx context.Context, playerID string
 func (store *PlayerStateStore) loadHeroes(ctx context.Context, playerID string) (map[string]int, map[string]int, error) {
 	rows, err := store.db.QueryContext(ctx, `
 		SELECT hero_id, level, ascension
-		FROM player_heroes
+		FROM player.player_heroes
 		WHERE player_id = $1
 	`, playerID)
 	if err != nil {
@@ -313,7 +374,7 @@ func (store *PlayerStateStore) loadHeroes(ctx context.Context, playerID string) 
 func (store *PlayerStateStore) loadHeroShards(ctx context.Context, playerID string) (map[string]int, error) {
 	rows, err := store.db.QueryContext(ctx, `
 		SELECT hero_id, shards
-		FROM player_hero_shards
+		FROM player.player_hero_shards
 		WHERE player_id = $1
 	`, playerID)
 	if err != nil {

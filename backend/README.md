@@ -14,6 +14,17 @@ Current scope:
 - PostgreSQL player progress tables for currencies, campaign, dungeons, heroes, ascensions, and hero shards
 - JSON player state snapshot mirror for fallback/debugging
 - Seeded definition tables for currencies, dungeons, accessory slots, accessory rarities, and accessories
+- PostgreSQL schemas:
+  - `account`
+  - `common`
+  - `player`
+  - `logs`
+  - `debug`
+- Navicat-friendly debug views:
+  - `debug.v_player_overview`
+  - `debug.v_player_hero_overview`
+  - `debug.v_player_economy_overview`
+- Economy transaction logging for currency deltas
 - Graceful shutdown
 
 Not included yet:
@@ -67,6 +78,7 @@ Database behavior:
 - If `MYTHWAKE_DATABASE_URL` is empty, the API uses the current in-memory dev state.
 - If `MYTHWAKE_DATABASE_URL` is set, startup connects to PostgreSQL, runs embedded migrations, and stores the dev player state in normalized progression tables.
 - The JSON player state snapshot is still written as a fallback/debug mirror.
+- Currency changes are written to `logs.economy_transactions`.
 - `GET /health` reports `database: disabled` or `database: connected`.
 
 Endpoints:

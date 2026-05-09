@@ -31,7 +31,7 @@ func (store *fakeStateStore) LoadState(context.Context, string) (PersistentState
 	return PersistentState{}, false, nil
 }
 
-func (store *fakeStateStore) SaveState(_ context.Context, _ string, state PersistentState) error {
+func (store *fakeStateStore) SaveState(_ context.Context, _ string, state PersistentState, _ StateSaveSource) error {
 	store.saved = state
 	return nil
 }

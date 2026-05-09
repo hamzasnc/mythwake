@@ -66,12 +66,15 @@ Backend:
 - Embedded PostgreSQL migrations for first core tables and definition seeds
 - PostgreSQL player progress tables for currencies, campaign, dungeons, heroes, ascensions, and hero shards
 - JSON player state snapshot remains as a debug/fallback mirror
+- PostgreSQL schemas split tables into `account`, `common`, `player`, `logs`, and `debug`
+- Navicat-friendly debug views expose player overview, hero overview, and economy history
 - Redis is planned but not connected yet
 - Windows helper scripts:
   - `scripts/start-backend.cmd`
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.4: Added PostgreSQL schemas, debug views, and economy transaction logging.
 - Backend 0.2.3: Added normalized PostgreSQL player progression tables and load/save flow for core player state.
 - Backend 0.2.2: Added Windows helper scripts to start and smoke-test the local backend without Docker.
 - Backend 0.2.1: Added PostgreSQL connection, migrations, definition seed tables, Docker Compose Postgres, and player state snapshot persistence.
