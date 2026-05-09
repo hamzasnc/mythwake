@@ -25,6 +25,9 @@ Current scope:
   - `debug.v_player_hero_overview`
   - `debug.v_player_economy_overview`
 - Economy transaction logging for currency deltas
+- Accessory inventory, accessory levels, and equipped accessories persisted in PostgreSQL
+- Navicat-friendly accessory view:
+  - `debug.v_player_accessory_overview`
 - Graceful shutdown
 
 Not included yet:

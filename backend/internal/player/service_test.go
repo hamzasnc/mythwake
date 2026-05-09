@@ -23,6 +23,23 @@ func TestServicePersistsSuccessfulActionWhenStoreIsAttached(t *testing.T) {
 	}
 }
 
+func TestAccessoryFuseTargetUsesNextRarityID(t *testing.T) {
+	target, ok := accessoryFuseTarget("accessory_earrings_r0")
+	if !ok {
+		t.Fatal("expected r0 accessory to have a fuse target")
+	}
+
+	if target != "accessory_earrings_r1" {
+		t.Fatalf("expected accessory_earrings_r1, got %s", target)
+	}
+}
+
+func TestAccessoryFuseTargetStopsAtR4(t *testing.T) {
+	if target, ok := accessoryFuseTarget("accessory_earrings_r4"); ok {
+		t.Fatalf("expected r4 accessory to have no fuse target, got %s", target)
+	}
+}
+
 type fakeStateStore struct {
 	saved PersistentState
 }

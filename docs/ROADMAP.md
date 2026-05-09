@@ -301,6 +301,8 @@ Current backend state:
 - Added PostgreSQL schemas for account, common definitions, player state, logs, and debug views.
 - Added Navicat-friendly debug views for player overview, hero overview, and economy history.
 - Added economy transaction logging for currency deltas.
+- Added normalized accessory inventory/equipped persistence and a debug accessory overview view.
+- Fixed accessory fusion to produce the next real rarity ID instead of a placeholder `_fused` ID.
 - Redis is not connected yet.
 
 Recommended Go shape:
@@ -482,6 +484,7 @@ Progress:
   - `debug`
 - Added `debug.v_player_overview`, `debug.v_player_hero_overview`, and `debug.v_player_economy_overview`.
 - Added economy transaction logs for currency delta inspection.
+- Added `player.player_accessory_inventory`, `player.player_equipped_accessories`, and `debug.v_player_accessory_overview`.
 
 Next useful step:
 - Move economy actions server-side one by one against the normalized tables:

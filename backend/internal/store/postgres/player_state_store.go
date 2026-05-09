@@ -58,6 +58,9 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	if err := store.saveHeroState(ctx, tx, playerID, state); err != nil {
 		return err
 	}
+	if err := store.saveAccessoryState(ctx, tx, playerID, state); err != nil {
+		return err
+	}
 	if err := store.saveEconomyTransaction(ctx, tx, playerID, previousCurrencies, state.PlayerState, source); err != nil {
 		return err
 	}
@@ -143,12 +146,23 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
+	accessoryInventory, accessoryLevels, err := store.loadAccessoryInventory(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
+	equippedAccessory, err := store.loadEquippedAccessories(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
 
 	return player.PersistentState{
-		PlayerState:    state,
-		HeroLevels:     heroLevels,
-		HeroShards:     heroShards,
-		HeroAscensions: heroAscensions,
+		PlayerState:        state,
+		HeroLevels:         heroLevels,
+		HeroShards:         heroShards,
+		HeroAscensions:     heroAscensions,
+		AccessoryInventory: accessoryInventory,
+		AccessoryLevels:    accessoryLevels,
+		EquippedAccessory:  equippedAccessory,
 	}, true, nil
 }
 
@@ -269,6 +283,67 @@ func (store *PlayerStateStore) saveEconomyTransaction(ctx context.Context, tx *s
 		VALUES ($1, $2, NULLIF($3, ''), $4, $5, $6, $7)
 	`, playerID, source.ActionID, source.RewardID, goldDelta, gemsDelta, mythEssenceDelta, passXPDelta)
 	return err
+}
+
+func (store *PlayerStateStore) saveAccessoryState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
+	if _, err := tx.ExecContext(ctx, `
+		DELETE FROM player.player_accessory_inventory
+		WHERE player_id = $1
+	`, playerID); err != nil {
+		return err
+	}
+
+	for accessoryID, copies := range state.AccessoryInventory {
+		level := state.AccessoryLevels[accessoryID]
+		if copies <= 0 && level <= 0 && !accessoryIsEquipped(state.EquippedAccessory, accessoryID) {
+			continue
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO player.player_accessory_inventory (player_id, accessory_id, copies, level, updated_at)
+			VALUES ($1, $2, $3, $4, now())
+		`, playerID, accessoryID, copies, level); err != nil {
+			return err
+		}
+	}
+
+	for accessoryID, level := range state.AccessoryLevels {
+		if _, ok := state.AccessoryInventory[accessoryID]; ok {
+			continue
+		}
+		if level <= 0 && !accessoryIsEquipped(state.EquippedAccessory, accessoryID) {
+			continue
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO player.player_accessory_inventory (player_id, accessory_id, copies, level, updated_at)
+			VALUES ($1, $2, 0, $3, now())
+		`, playerID, accessoryID, level); err != nil {
+			return err
+		}
+	}
+
+	if _, err := tx.ExecContext(ctx, `
+		DELETE FROM player.player_equipped_accessories
+		WHERE player_id = $1
+	`, playerID); err != nil {
+		return err
+	}
+
+	for slotID, accessoryID := range state.EquippedAccessory {
+		if accessoryID == "" {
+			continue
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO player.player_equipped_accessories (player_id, slot_id, accessory_id, updated_at)
+			VALUES ($1, $2, $3, now())
+		`, playerID, slotID, accessoryID); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (store *PlayerStateStore) loadCurrencies(ctx context.Context, playerID string) (map[string]int, error) {
@@ -393,4 +468,64 @@ func (store *PlayerStateStore) loadHeroShards(ctx context.Context, playerID stri
 	}
 
 	return shards, rows.Err()
+}
+
+func (store *PlayerStateStore) loadAccessoryInventory(ctx context.Context, playerID string) (map[string]int, map[string]int, error) {
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT accessory_id, copies, level
+		FROM player.player_accessory_inventory
+		WHERE player_id = $1
+	`, playerID)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	inventory := map[string]int{}
+	levels := map[string]int{}
+	for rows.Next() {
+		var accessoryID string
+		var copies int
+		var level int
+		if err := rows.Scan(&accessoryID, &copies, &level); err != nil {
+			return nil, nil, err
+		}
+		inventory[accessoryID] = copies
+		levels[accessoryID] = level
+	}
+
+	return inventory, levels, rows.Err()
+}
+
+func (store *PlayerStateStore) loadEquippedAccessories(ctx context.Context, playerID string) (map[string]string, error) {
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT slot_id, accessory_id
+		FROM player.player_equipped_accessories
+		WHERE player_id = $1
+	`, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	equipped := map[string]string{}
+	for rows.Next() {
+		var slotID string
+		var accessoryID string
+		if err := rows.Scan(&slotID, &accessoryID); err != nil {
+			return nil, err
+		}
+		equipped[slotID] = accessoryID
+	}
+
+	return equipped, rows.Err()
+}
+
+func accessoryIsEquipped(equipped map[string]string, accessoryID string) bool {
+	for _, equippedAccessoryID := range equipped {
+		if equippedAccessoryID == accessoryID {
+			return true
+		}
+	}
+	return false
 }

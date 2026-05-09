@@ -23,10 +23,13 @@ type StateStore interface {
 }
 
 type PersistentState struct {
-	PlayerState    api.PlayerState
-	HeroLevels     map[string]int
-	HeroShards     map[string]int
-	HeroAscensions map[string]int
+	PlayerState        api.PlayerState
+	HeroLevels         map[string]int
+	HeroShards         map[string]int
+	HeroAscensions     map[string]int
+	AccessoryInventory map[string]int
+	AccessoryLevels    map[string]int
+	EquippedAccessory  map[string]string
 }
 
 type StateSaveSource struct {
@@ -43,6 +46,7 @@ type Service struct {
 	heroShards         map[string]int
 	heroAscensions     map[string]int
 	accessoryInventory map[string]int
+	accessoryLevels    map[string]int
 	equippedAccessory  map[string]string
 	claimedDaily       map[string]bool
 	claimedBattlePass  map[string]bool
@@ -78,6 +82,7 @@ func NewService() *Service {
 		},
 		heroAscensions:     map[string]int{},
 		accessoryInventory: map[string]int{},
+		accessoryLevels:    map[string]int{},
 		equippedAccessory:  map[string]string{},
 		claimedDaily:       map[string]bool{},
 		claimedBattlePass:  map[string]bool{},
@@ -244,13 +249,18 @@ func (service *Service) LevelAccessory(accessoryID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	if service.accessoryInventory[accessoryID] <= 0 && !service.accessoryIsEquipped(accessoryID) {
+		return service.result(false, "accessory_level", "missing_item", fmt.Sprintf("Missing accessory: %s.", accessoryID), api.Reward{})
+	}
+
 	if service.state.Gold < 35 {
 		return service.result(false, "accessory_level", "insufficient_currency", "Need 35 Gold.", api.Reward{})
 	}
 
 	service.state.Gold -= 35
+	service.accessoryLevels[accessoryID]++
 	service.recalculatePower()
-	return service.result(true, "accessory_level", "", fmt.Sprintf("Leveled %s.", accessoryID), api.Reward{})
+	return service.result(true, "accessory_level", "", fmt.Sprintf("%s reached Lv. %d.", accessoryID, service.accessoryLevels[accessoryID]), api.Reward{})
 }
 
 func (service *Service) FuseAccessory(accessoryID string) api.ActionResult {
@@ -262,7 +272,11 @@ func (service *Service) FuseAccessory(accessoryID string) api.ActionResult {
 	}
 
 	service.accessoryInventory[accessoryID] -= 3
-	fusedID := accessoryID + "_fused"
+	fusedID, ok := accessoryFuseTarget(accessoryID)
+	if !ok {
+		return service.result(false, "accessory_fuse", "max_rarity", fmt.Sprintf("%s cannot be fused further.", accessoryID), api.Reward{})
+	}
+
 	service.accessoryInventory[fusedID]++
 	return service.result(true, "accessory_fuse", "", fmt.Sprintf("Fused into %s.", fusedID), api.Reward{})
 }
@@ -396,10 +410,13 @@ func (service *Service) saveState(actionID string, reward api.Reward) error {
 
 func (service *Service) persistentState() PersistentState {
 	return PersistentState{
-		PlayerState:    service.state,
-		HeroLevels:     cloneIntMap(service.heroLevels),
-		HeroShards:     cloneIntMap(service.heroShards),
-		HeroAscensions: cloneIntMap(service.heroAscensions),
+		PlayerState:        service.state,
+		HeroLevels:         cloneIntMap(service.heroLevels),
+		HeroShards:         cloneIntMap(service.heroShards),
+		HeroAscensions:     cloneIntMap(service.heroAscensions),
+		AccessoryInventory: cloneIntMap(service.accessoryInventory),
+		AccessoryLevels:    cloneIntMap(service.accessoryLevels),
+		EquippedAccessory:  cloneStringMap(service.equippedAccessory),
 	}
 }
 
@@ -408,6 +425,9 @@ func (service *Service) applyPersistentState(state PersistentState) {
 	service.heroLevels = mergeIntMaps(service.heroLevels, state.HeroLevels)
 	service.heroShards = mergeIntMaps(service.heroShards, state.HeroShards)
 	service.heroAscensions = mergeIntMaps(service.heroAscensions, state.HeroAscensions)
+	service.accessoryInventory = mergeIntMaps(service.accessoryInventory, state.AccessoryInventory)
+	service.accessoryLevels = mergeIntMaps(service.accessoryLevels, state.AccessoryLevels)
+	service.equippedAccessory = mergeStringMaps(service.equippedAccessory, state.EquippedAccessory)
 	service.recalculatePower()
 }
 
@@ -427,6 +447,22 @@ func mergeIntMaps(defaults map[string]int, persisted map[string]int) map[string]
 	return merged
 }
 
+func cloneStringMap(values map[string]string) map[string]string {
+	cloned := make(map[string]string, len(values))
+	for key, value := range values {
+		cloned[key] = value
+	}
+	return cloned
+}
+
+func mergeStringMaps(defaults map[string]string, persisted map[string]string) map[string]string {
+	merged := cloneStringMap(defaults)
+	for key, value := range persisted {
+		merged[key] = value
+	}
+	return merged
+}
+
 func (service *Service) recalculatePower() {
 	power := 148
 	for _, level := range service.heroLevels {
@@ -438,6 +474,15 @@ func (service *Service) recalculatePower() {
 	service.state.TeamPower = power
 	service.state.TeamAttack = 96 + (power / 8)
 	service.state.TeamHealth = 780 + (power * 2)
+}
+
+func (service *Service) accessoryIsEquipped(accessoryID string) bool {
+	for _, equippedAccessoryID := range service.equippedAccessory {
+		if equippedAccessoryID == accessoryID {
+			return true
+		}
+	}
+	return false
 }
 
 func accessorySlot(accessoryID string) string {
@@ -454,5 +499,20 @@ func accessorySlot(accessoryID string) string {
 		return "shoes"
 	default:
 		return "unknown"
+	}
+}
+
+func accessoryFuseTarget(accessoryID string) (string, bool) {
+	switch {
+	case strings.HasSuffix(accessoryID, "_r0"):
+		return strings.TrimSuffix(accessoryID, "_r0") + "_r1", true
+	case strings.HasSuffix(accessoryID, "_r1"):
+		return strings.TrimSuffix(accessoryID, "_r1") + "_r2", true
+	case strings.HasSuffix(accessoryID, "_r2"):
+		return strings.TrimSuffix(accessoryID, "_r2") + "_r3", true
+	case strings.HasSuffix(accessoryID, "_r3"):
+		return strings.TrimSuffix(accessoryID, "_r3") + "_r4", true
+	default:
+		return "", false
 	}
 }
