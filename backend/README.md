@@ -31,11 +31,26 @@ go run ./cmd/api
 Run local API with PostgreSQL:
 
 ```powershell
-cd ..
-docker compose up -d postgres
-cd backend
+cd "C:\Users\Hamza\Desktop\Idle Game\Mythwake\backend"
 $env:MYTHWAKE_DATABASE_URL='postgres://mythwake:mythwake@localhost:5432/mythwake?sslmode=disable'
 go run ./cmd/api
+```
+
+Shortcut scripts from the repo root:
+
+```powershell
+.\scripts\start-backend.cmd
+.\scripts\check-backend.cmd
+```
+
+`start-backend.cmd` sets the local environment variables, checks PostgreSQL, tries to start the local `postgresql*` Windows service if needed, then runs the API.
+
+Optional script modes:
+
+```powershell
+.\scripts\start-backend.cmd -NoDatabase
+.\scripts\start-backend.cmd -DatabaseUrl "postgres://mythwake:mythwake@localhost:5432/mythwake?sslmode=disable"
+.\scripts\check-backend.cmd -BaseUrl "http://localhost:8080"
 ```
 
 Default address:

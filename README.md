@@ -66,8 +66,12 @@ Backend:
 - Embedded PostgreSQL migrations for first core tables and definition seeds
 - First PostgreSQL player state snapshot store for the dev player
 - Redis is planned but not connected yet
+- Windows helper scripts:
+  - `scripts/start-backend.cmd`
+  - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.2: Added Windows helper scripts to start and smoke-test the local backend without Docker.
 - Backend 0.2.1: Added PostgreSQL connection, migrations, definition seed tables, Docker Compose Postgres, and player state snapshot persistence.
 - Backend 0.2.0: Added in-memory action endpoints up to the PostgreSQL boundary.
 - Backend 0.1.1: Added shared API response types and a dev `GET /player/state` endpoint.
