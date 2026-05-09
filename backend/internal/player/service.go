@@ -18,8 +18,15 @@ const (
 )
 
 type StateStore interface {
-	LoadState(ctx context.Context, playerID string) (api.PlayerState, bool, error)
-	SaveState(ctx context.Context, playerID string, state api.PlayerState) error
+	LoadState(ctx context.Context, playerID string) (PersistentState, bool, error)
+	SaveState(ctx context.Context, playerID string, state PersistentState) error
+}
+
+type PersistentState struct {
+	PlayerState    api.PlayerState
+	HeroLevels     map[string]int
+	HeroShards     map[string]int
+	HeroAscensions map[string]int
 }
 
 type Service struct {
@@ -77,16 +84,16 @@ func (service *Service) UseStateStore(ctx context.Context, store StateStore) err
 	defer service.mu.Unlock()
 
 	service.stateStore = store
-	state, found, err := store.LoadState(ctx, service.playerID)
+	persistedState, found, err := store.LoadState(ctx, service.playerID)
 	if err != nil {
 		return err
 	}
 	if found {
-		service.state = state
+		service.applyPersistentState(persistedState)
 		return nil
 	}
 
-	return store.SaveState(ctx, service.playerID, service.state)
+	return store.SaveState(ctx, service.playerID, service.persistentState())
 }
 
 func (service *Service) GuestAuth() api.GuestAuthResponse {
@@ -376,7 +383,40 @@ func (service *Service) saveState() error {
 		return nil
 	}
 
-	return service.stateStore.SaveState(context.Background(), service.playerID, service.state)
+	return service.stateStore.SaveState(context.Background(), service.playerID, service.persistentState())
+}
+
+func (service *Service) persistentState() PersistentState {
+	return PersistentState{
+		PlayerState:    service.state,
+		HeroLevels:     cloneIntMap(service.heroLevels),
+		HeroShards:     cloneIntMap(service.heroShards),
+		HeroAscensions: cloneIntMap(service.heroAscensions),
+	}
+}
+
+func (service *Service) applyPersistentState(state PersistentState) {
+	service.state = state.PlayerState
+	service.heroLevels = mergeIntMaps(service.heroLevels, state.HeroLevels)
+	service.heroShards = mergeIntMaps(service.heroShards, state.HeroShards)
+	service.heroAscensions = mergeIntMaps(service.heroAscensions, state.HeroAscensions)
+	service.recalculatePower()
+}
+
+func cloneIntMap(values map[string]int) map[string]int {
+	cloned := make(map[string]int, len(values))
+	for key, value := range values {
+		cloned[key] = value
+	}
+	return cloned
+}
+
+func mergeIntMaps(defaults map[string]int, persisted map[string]int) map[string]int {
+	merged := cloneIntMap(defaults)
+	for key, value := range persisted {
+		merged[key] = value
+	}
+	return merged
 }
 
 func (service *Service) recalculatePower() {

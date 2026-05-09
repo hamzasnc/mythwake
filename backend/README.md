@@ -11,7 +11,8 @@ Current scope:
 - In-memory action endpoints for campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
 - Optional PostgreSQL connection via `MYTHWAKE_DATABASE_URL`
 - Embedded SQL migrations
-- First PostgreSQL player state snapshot store
+- PostgreSQL player progress tables for currencies, campaign, dungeons, heroes, ascensions, and hero shards
+- JSON player state snapshot mirror for fallback/debugging
 - Seeded definition tables for currencies, dungeons, accessory slots, accessory rarities, and accessories
 - Graceful shutdown
 
@@ -64,7 +65,8 @@ Optional environment variables:
 
 Database behavior:
 - If `MYTHWAKE_DATABASE_URL` is empty, the API uses the current in-memory dev state.
-- If `MYTHWAKE_DATABASE_URL` is set, startup connects to PostgreSQL, runs embedded migrations, and stores the dev player state snapshot.
+- If `MYTHWAKE_DATABASE_URL` is set, startup connects to PostgreSQL, runs embedded migrations, and stores the dev player state in normalized progression tables.
+- The JSON player state snapshot is still written as a fallback/debug mirror.
 - `GET /health` reports `database: disabled` or `database: connected`.
 
 Endpoints:

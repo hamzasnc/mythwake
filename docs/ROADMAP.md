@@ -296,6 +296,8 @@ Current backend state:
 - Added first core PostgreSQL tables for players, player state snapshots, economy transactions, currencies, dungeons, accessory slots, accessory rarities, and accessory definitions.
 - Seeded the current currency, dungeon, accessory slot, rarity, and accessory definition IDs.
 - Added first PostgreSQL player state snapshot store for the dev player.
+- Added normalized player progression tables for currencies, campaign progress, dungeon progress, hero levels, hero ascensions, and hero shards.
+- Backend load/save now uses normalized progression tables first and keeps the JSON snapshot as fallback/debug mirror.
 - Redis is not connected yet.
 
 Recommended Go shape:
@@ -461,25 +463,27 @@ Progress:
 - Added `docker-compose.yml` with local PostgreSQL.
 - Added `backend/internal/database` with PostgreSQL open/ping and embedded migration runner.
 - Added migration `0001_core.sql`.
+- Added migration `0002_player_progress.sql`.
 - Added definition seed tables for current currencies, dungeons, accessory slots, accessory rarities, and accessory definitions.
-- Added `player_state_snapshots` as a pragmatic first persistence layer for the current prototype state.
+- Added normalized player progression tables for currencies, campaign, dungeons, heroes, ascensions, and hero shards.
+- Kept `player_state_snapshots` as a fallback/debug mirror.
 - Added `backend/internal/store/postgres` with a player state store.
 - Server startup now connects, migrates, and wires persistence when `MYTHWAKE_DATABASE_URL` is set.
 - Existing backend tests still run without a database.
+- Local PostgreSQL smoke test confirmed state survives an API restart.
 
 Next useful step:
-- Replace the snapshot store piece by piece with normalized player tables:
-  - currencies
-  - dungeon progress
-  - heroes
-  - hero shards
-  - accessories
-  - reward claims
+- Move economy actions server-side one by one against the normalized tables:
+  - campaign fight
+  - gold dungeon
+  - essence dungeon
+  - hero level-up
+- Add normalized tables later for accessories, reward claims, summon history, and mission state.
 - Add Redis after the first PostgreSQL path is stable.
 
 Done when:
-- A local Postgres-backed API can restart without losing player state.
-- Definition rows exist in SQL with stable IDs.
+- A local Postgres-backed API can restart without losing core player state.
+- Definition and player progression rows exist in SQL with stable IDs.
 - The next Redis/session batch can start without touching core persistence setup.
 
 ## Useful Next Batches

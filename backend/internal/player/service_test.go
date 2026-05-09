@@ -3,8 +3,6 @@ package player
 import (
 	"context"
 	"testing"
-
-	"github.com/hamzasnc/mythwake/backend/internal/api"
 )
 
 func TestServicePersistsSuccessfulActionWhenStoreIsAttached(t *testing.T) {
@@ -20,20 +18,20 @@ func TestServicePersistsSuccessfulActionWhenStoreIsAttached(t *testing.T) {
 		t.Fatalf("expected campaign fight to succeed, got %#v", result)
 	}
 
-	if store.saved.CampaignStage != 2 {
-		t.Fatalf("expected saved campaign stage 2, got %d", store.saved.CampaignStage)
+	if store.saved.PlayerState.CampaignStage != 2 {
+		t.Fatalf("expected saved campaign stage 2, got %d", store.saved.PlayerState.CampaignStage)
 	}
 }
 
 type fakeStateStore struct {
-	saved api.PlayerState
+	saved PersistentState
 }
 
-func (store *fakeStateStore) LoadState(context.Context, string) (api.PlayerState, bool, error) {
-	return api.PlayerState{}, false, nil
+func (store *fakeStateStore) LoadState(context.Context, string) (PersistentState, bool, error) {
+	return PersistentState{}, false, nil
 }
 
-func (store *fakeStateStore) SaveState(_ context.Context, _ string, state api.PlayerState) error {
+func (store *fakeStateStore) SaveState(_ context.Context, _ string, state PersistentState) error {
 	store.saved = state
 	return nil
 }
