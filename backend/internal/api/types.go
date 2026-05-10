@@ -130,6 +130,12 @@ type ServerClockResponse struct {
 	SecondsUntilWeeklyReset int64  `json:"secondsUntilWeeklyReset"`
 }
 
+type ClientBootstrapResponse struct {
+	ServerClock    ServerClockResponse `json:"serverClock"`
+	Definitions    DefinitionSnapshot  `json:"definitions"`
+	PlayerSnapshot PlayerSnapshot      `json:"playerSnapshot"`
+}
+
 type AccessoryRequest struct {
 	AccessoryID string `json:"accessoryId"`
 }

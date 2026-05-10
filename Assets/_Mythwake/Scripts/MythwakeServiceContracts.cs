@@ -150,6 +150,14 @@ public struct MythwakeDevResetResponseDto
 }
 
 [Serializable]
+public struct MythwakeClientBootstrapDto
+{
+    public MythwakeServerClockDto serverClock;
+    public MythwakeDefinitionSnapshotDto definitions;
+    public MythwakePlayerSnapshotDto playerSnapshot;
+}
+
+[Serializable]
 public struct MythwakeHealthDto
 {
     public string service;

@@ -108,6 +108,20 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         return SendAuthenticatedJson(() => Get("/player/state"), completed);
     }
 
+    public IEnumerator GetClientBootstrap(Action<bool, string, MythwakeClientBootstrapDto> completed)
+    {
+        return SendAuthenticatedJson<MythwakeClientBootstrapDto>(() => Get("/client/bootstrap"), (success, error, response) =>
+        {
+            if (success)
+            {
+                StoreServerClock(response.serverClock);
+                StoreDefinitions(response.definitions);
+            }
+
+            completed?.Invoke(success, error, response);
+        });
+    }
+
     public IEnumerator GetPlayerCoreState(Action<bool, string, MythwakePlayerStateDto> completed)
     {
         return SendAuthenticatedJson(() => Get("/player/core-state"), completed);
@@ -385,21 +399,19 @@ public sealed class MythwakeBackendClient : MonoBehaviour
                 yield break;
             }
 
-            if (!CompleteDefinitionsJson(body, completed, fromCache: false))
+            var parsedDefinitions = default(MythwakeDefinitionSnapshotDto);
+            if (!CompleteDefinitionsJson(body, (success, error, response, fromCache) =>
+            {
+                parsedDefinitions = response;
+                completed?.Invoke(success, error, response, fromCache);
+            }, fromCache: false))
             {
                 yield break;
             }
 
             if (!string.IsNullOrWhiteSpace(body))
             {
-                var etag = request.GetResponseHeader("ETag");
-                if (!string.IsNullOrWhiteSpace(etag))
-                {
-                    PlayerPrefs.SetString(DefinitionsETagCacheKey, etag);
-                }
-
-                PlayerPrefs.SetString(DefinitionsJsonCacheKey, body);
-                PlayerPrefs.Save();
+                StoreDefinitions(parsedDefinitions, body, request.GetResponseHeader("ETag"));
             }
         }
     }
@@ -415,7 +427,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
                 return false;
             }
 
-            PlayerPrefs.SetString(DefinitionsContentHashCacheKey, data.contentHash);
+            StoreDefinitionHash(data);
             completed?.Invoke(true, string.Empty, data, fromCache);
             return true;
         }
@@ -423,6 +435,38 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         {
             completed?.Invoke(false, $"Invalid definitions JSON: {exception.Message}", default(MythwakeDefinitionSnapshotDto), fromCache);
             return false;
+        }
+    }
+
+    private static void StoreDefinitions(MythwakeDefinitionSnapshotDto definitions)
+    {
+        if (string.IsNullOrWhiteSpace(definitions.contentHash))
+        {
+            return;
+        }
+
+        StoreDefinitions(definitions, JsonUtility.ToJson(definitions), $"\"definitions-{definitions.contentHash}\"");
+    }
+
+    private static void StoreDefinitions(MythwakeDefinitionSnapshotDto definitions, string body, string etag)
+    {
+        StoreDefinitionHash(definitions);
+        if (!string.IsNullOrWhiteSpace(body))
+        {
+            PlayerPrefs.SetString(DefinitionsJsonCacheKey, body);
+        }
+        if (!string.IsNullOrWhiteSpace(etag))
+        {
+            PlayerPrefs.SetString(DefinitionsETagCacheKey, etag);
+        }
+        PlayerPrefs.Save();
+    }
+
+    private static void StoreDefinitionHash(MythwakeDefinitionSnapshotDto definitions)
+    {
+        if (!string.IsNullOrWhiteSpace(definitions.contentHash))
+        {
+            PlayerPrefs.SetString(DefinitionsContentHashCacheKey, definitions.contentHash);
         }
     }
 

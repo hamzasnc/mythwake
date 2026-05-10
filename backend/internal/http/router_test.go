@@ -410,6 +410,53 @@ func TestDefinitionsEndpointAcceptsWeakAndListedETags(t *testing.T) {
 	}
 }
 
+func TestClientBootstrapEndpoint(t *testing.T) {
+	handler := newTestHandler()
+	login := loginGuest(t, handler)
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/client/bootstrap", nil)
+	addAuth(request, login.SessionToken)
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+	if response.Header().Get("Cache-Control") != "no-store" {
+		t.Fatalf("expected no-store bootstrap response, got %q", response.Header().Get("Cache-Control"))
+	}
+	if response.Header().Get("X-Definitions-ETag") == "" {
+		t.Fatal("expected definition etag header")
+	}
+
+	var body api.ClientBootstrapResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+
+	if body.PlayerSnapshot.PlayerID != login.PlayerID || len(body.PlayerSnapshot.Heroes) == 0 {
+		t.Fatalf("expected player snapshot for logged-in player, got %#v", body.PlayerSnapshot)
+	}
+	if body.ServerClock.ServerUnixMs <= 0 || body.ServerClock.DailyResetUTC == "" {
+		t.Fatalf("expected server clock in bootstrap, got %#v", body.ServerClock)
+	}
+	if body.Definitions.ContentHash == "" || len(body.Definitions.GameplayActions) == 0 {
+		t.Fatalf("expected definitions in bootstrap, got %#v", body.Definitions)
+	}
+}
+
+func TestClientBootstrapEndpointRequiresSession(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/client/bootstrap", nil)
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401, got %d", response.Code)
+	}
+}
+
 func TestGuestAuthEndpoint(t *testing.T) {
 	handler := newTestHandler()
 	response := httptest.NewRecorder()

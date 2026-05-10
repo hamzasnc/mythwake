@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.45-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.46-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
@@ -206,6 +206,16 @@ try {
     if (@($stateBefore.heroShards).Count -lt @($definitions.heroes).Count) {
         throw "Expected player state to include initial shard rows for known heroes."
     }
+
+    $bootstrap = Invoke-Json -Path "/client/bootstrap" -Headers $authHeaders
+    Assert-Equal $bootstrap.playerSnapshot.playerId $login.playerId "Bootstrap snapshot player should match guest login."
+    if ([string]::IsNullOrWhiteSpace($bootstrap.serverClock.serverTimeUtc) -or [int64]$bootstrap.serverClock.serverUnixMs -le 0) {
+        throw "Expected bootstrap to include server clock. Response: $($bootstrap | ConvertTo-Json -Depth 8)"
+    }
+    if ([string]::IsNullOrWhiteSpace($bootstrap.definitions.contentHash) -or @($bootstrap.definitions.gameplayActions).Count -eq 0) {
+        throw "Expected bootstrap to include definition snapshot. Response: $($bootstrap | ConvertTo-Json -Depth 8)"
+    }
+    Assert-Equal $bootstrap.definitions.contentHash $definitions.contentHash "Bootstrap definitions should match /definitions content hash."
 
     $afkHeaders = @{
         "Authorization" = $authHeaders["Authorization"]

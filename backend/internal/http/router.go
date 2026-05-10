@@ -89,6 +89,7 @@ func (router *Router) routes() {
 	router.mux.HandleFunc("GET /health", router.handleHealth)
 	router.mux.HandleFunc("GET /time", router.handleTime)
 	router.mux.HandleFunc("GET /definitions", router.handleDefinitions)
+	router.mux.HandleFunc("GET /client/bootstrap", router.handleClientBootstrap)
 	router.mux.HandleFunc("GET /player/state", router.handlePlayerState)
 	router.mux.HandleFunc("POST /player/state/flush", router.handlePlayerStateFlush)
 	router.mux.HandleFunc("GET /player/core-state", router.handlePlayerCoreState)
@@ -176,6 +177,28 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 
 func (router *Router) handleTime(response http.ResponseWriter, request *http.Request) {
 	writeJSON(response, http.StatusOK, serverClock(time.Now().UTC()))
+}
+
+func (router *Router) handleClientBootstrap(response http.ResponseWriter, request *http.Request) {
+	playerService, ok := router.authenticatedPlayerService(response, request)
+	if !ok {
+		return
+	}
+
+	snapshot, err := router.definitionProvider.Snapshot(request.Context(), router.config.Version)
+	if err != nil {
+		writeError(response, request, http.StatusInternalServerError, "definitions_unavailable", "Definition catalog is temporarily unavailable.")
+		return
+	}
+
+	response.Header().Set("Cache-Control", "no-store")
+	response.Header().Set("X-Definitions-ETag", definitions.ETag(snapshot))
+
+	writeJSON(response, http.StatusOK, api.ClientBootstrapResponse{
+		ServerClock:    serverClock(time.Now().UTC()),
+		Definitions:    snapshot,
+		PlayerSnapshot: playerService.GetSnapshot(),
+	})
 }
 
 func serverClock(now time.Time) api.ServerClockResponse {

@@ -341,6 +341,7 @@ Current backend state:
 - PostgreSQL now has account identity and session tables shaped for guest, email, Google, and Apple login providers; raw session tokens are returned once and only token hashes are stored.
 - Unity Server Mode can now load and cache the `/definitions` snapshot with ETag revalidation and use it for server-owned dungeon preview values.
 - Unity Server Mode can request `/time`, keep an approximate in-memory server UTC value, and show daily/weekly reset timing in the Backend panel.
+- Added authenticated `/client/bootstrap` so mobile startup can fetch server clock, definition snapshot, and player snapshot through one stable contract.
 - Unity Backend Ping surfaces state-cache dirty/failure status so local persistence tests do not require opening Navicat first.
 - Player state, flush, and gameplay mutation routes now validate Bearer sessions and resolve the player context from the session token.
 - Unity Server Mode now persists the session token, sends `Authorization: Bearer <sessionToken>`, and retries protected requests once after `401` by refreshing guest auth.
@@ -499,6 +500,7 @@ Keep the first backend intentionally small.
 Initial endpoints:
 - `POST /auth/guest`
 - `POST /auth/logout`
+- `GET /client/bootstrap`
 - `GET /player/state`
 - `POST /player/state/flush`
 - `POST /dev/player/reset` local/dev only

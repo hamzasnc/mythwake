@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.27
+Prototype version: 0.2.28
 Local save version: 2
 
 Current prototype:
@@ -71,6 +71,7 @@ Backend:
 - `GET /health`
 - `GET /time` server clock with UTC daily and weekly reset boundaries
 - `GET /definitions` read-only server definition snapshot for client/admin tooling
+- `GET /client/bootstrap` authenticated mobile startup payload with server time, definitions, and player snapshot
 - `GET /player/state` dev response using the same player-state shape as the Unity service contract
 - In-memory pre-PostgreSQL action endpoints for auth, campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
 - Optional PostgreSQL connection using `MYTHWAKE_DATABASE_URL`
@@ -122,6 +123,7 @@ Backend:
 - Server-owned auth provider, currency, hero, starter equipment, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
 - Server-owned AFK reward definitions are exposed through `/definitions` so offline reward balance can move through PostgreSQL/admin tooling
 - Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
+- Unity Server Mode activation now uses `/client/bootstrap` to sync clock, definitions, and player state through one authenticated startup contract
 - Unity can sync `/time`, keep an approximate in-memory server clock, and show daily/weekly reset timing from the backend
 - Unity Backend Ping shows server write-mode plus state-cache dirty/failure status for faster local persistence checks
 - Unity can manually claim server AFK rewards from the Backend panel and checks them on app resume while Server Mode is active
@@ -144,6 +146,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.46 / Prototype 0.2.28: Added authenticated `/client/bootstrap` for mobile startup sync and wired Server Mode activation to use it.
 - Prototype 0.2.27: Backend Ping now surfaces server state-cache dirty/failure status for persistence smoke testing.
 - Backend 0.2.45: Added state-cache health counters and PostgreSQL E2E checks for dirty queue and flush visibility.
 - Prototype 0.2.26: Added a Backend-panel Reset action for local/dev server player reset smoke testing.

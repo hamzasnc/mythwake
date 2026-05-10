@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.27";
+    public const string PrototypeVersion = "0.2.28";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1968,32 +1968,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private IEnumerator PrepareBackendGameplayModeRoutine()
     {
-        if (!hasBackendDefinitions)
+        var bootstrapSuccess = false;
+        var bootstrapError = string.Empty;
+        var bootstrap = default(MythwakeClientBootstrapDto);
+        yield return backendClient.GetClientBootstrap((success, error, response) =>
         {
-            var definitionsSuccess = false;
-            var definitionsError = string.Empty;
-            var definitions = default(MythwakeDefinitionSnapshotDto);
-            var definitionsFromCache = false;
-            yield return backendClient.GetDefinitions((success, error, response, fromCache) =>
-            {
-                definitionsSuccess = success;
-                definitionsError = error;
-                definitions = response;
-                definitionsFromCache = fromCache;
-            });
+            bootstrapSuccess = success;
+            bootstrapError = error;
+            bootstrap = response;
+        });
 
-            if (!definitionsSuccess)
-            {
-                FinishBackendRequest($"Definitions sync failed: {definitionsError}");
-                yield break;
-            }
-
-            backendDefinitions = definitions;
-            hasBackendDefinitions = true;
-            var source = definitionsFromCache ? "cache" : "server";
-            SetBackendStatus($"Definitions: {source}  v{definitions.apiVersion}  {ShortHash(definitions.contentHash)}");
-            RefreshUi();
+        if (!bootstrapSuccess)
+        {
+            FinishBackendRequest($"Bootstrap failed: {bootstrapError}");
+            yield break;
         }
+
+        backendDefinitions = bootstrap.definitions;
+        hasBackendDefinitions = !string.IsNullOrWhiteSpace(bootstrap.definitions.contentHash);
+        ApplyBackendSnapshot(bootstrap.playerSnapshot);
+        SetBackendStatus($"Bootstrap: v{bootstrap.definitions.apiVersion}  {ShortHash(bootstrap.definitions.contentHash)}");
+        RefreshUi();
 
         var claimSuccess = false;
         var claimError = string.Empty;
