@@ -398,6 +398,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         Home,
         Battle,
+        Dungeons,
         Heroes,
         Gear,
         Summon,
@@ -771,12 +772,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [Header("Navigation")]
     [SerializeField] private GameObject homePanel;
     [SerializeField] private GameObject battlePanel;
+    [SerializeField] private GameObject dungeonsPanel;
     [SerializeField] private GameObject heroesPanel;
     [SerializeField] private GameObject gearPanel;
     [SerializeField] private GameObject summonPanel;
     [SerializeField] private GameObject shopPanel;
     [SerializeField] private Button homeTabButton;
     [SerializeField] private Button battleTabButton;
+    [SerializeField] private Button dungeonsTabButton;
     [SerializeField] private Button heroesTabButton;
     [SerializeField] private Button gearTabButton;
     [SerializeField] private Button summonTabButton;
@@ -797,6 +800,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private MythwakeDefinitionSnapshotDto backendDefinitions;
     private bool hasBackendDefinitions;
     private MythwakeRuntimeArtPresenter runtimeArt;
+    private TMP_Text dungeonsHeaderText;
+    private TMP_Text runtimeDungeonResultText;
 
     private void Awake()
     {
@@ -806,6 +811,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         LoadBackendGameplayPreference();
         EnsureRuntimeDebugUi();
         EnsureRuntimeBackendUi();
+        EnsureRuntimeScreenLayout();
         EnsureRuntimeArtUi();
         RegisterNavigation();
         RegisterHeroButtons();
@@ -1173,6 +1179,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     public void ShowBattle()
     {
         ShowScreen(AppScreen.Battle);
+    }
+
+    public void ShowDungeons()
+    {
+        ShowScreen(AppScreen.Dungeons);
     }
 
     public void ShowHeroes()
@@ -3749,6 +3760,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             dungeonResultText.textWrappingMode = TextWrappingModes.Normal;
             dungeonResultText.text = result;
         }
+
+        if (runtimeDungeonResultText != null)
+        {
+            runtimeDungeonResultText.text = result;
+        }
     }
 
     private void RefreshUi()
@@ -4119,6 +4135,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             battleTabButton.onClick.AddListener(ShowBattle);
         }
 
+        if (dungeonsTabButton != null)
+        {
+            dungeonsTabButton.onClick.AddListener(ShowDungeons);
+        }
+
         if (heroesTabButton != null)
         {
             heroesTabButton.onClick.AddListener(ShowHeroes);
@@ -4152,6 +4173,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             battleTabButton.onClick.RemoveListener(ShowBattle);
         }
 
+        if (dungeonsTabButton != null)
+        {
+            dungeonsTabButton.onClick.RemoveListener(ShowDungeons);
+        }
+
         if (heroesTabButton != null)
         {
             heroesTabButton.onClick.RemoveListener(ShowHeroes);
@@ -4179,6 +4205,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SetPanel(homePanel, screen == AppScreen.Home);
         SetPanel(battlePanel, screen == AppScreen.Battle);
+        SetPanel(dungeonsPanel, screen == AppScreen.Dungeons);
         SetPanel(heroesPanel, screen == AppScreen.Heroes);
         SetPanel(gearPanel, screen == AppScreen.Gear);
         SetPanel(summonPanel, screen == AppScreen.Summon);
@@ -4186,6 +4213,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SetTabState(homeTabButton, screen == AppScreen.Home);
         SetTabState(battleTabButton, screen == AppScreen.Battle);
+        SetTabState(dungeonsTabButton, screen == AppScreen.Dungeons);
         SetTabState(heroesTabButton, screen == AppScreen.Heroes);
         SetTabState(gearTabButton, screen == AppScreen.Gear);
         SetTabState(summonTabButton, screen == AppScreen.Summon);
@@ -6482,6 +6510,210 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendModeText = backendModeButton.GetComponentInChildren<TMP_Text>();
     }
 
+    private void EnsureRuntimeScreenLayout()
+    {
+        EnsureRuntimeDungeonsPanel();
+        EnsureRuntimeDungeonsTab();
+        LayoutBottomNavigation();
+        LayoutBattleScreen();
+        LayoutDungeonsScreen();
+        LayoutHeroesScreen();
+        LayoutGearScreen();
+        LayoutPrototypeTools();
+    }
+
+    private void EnsureRuntimeDungeonsPanel()
+    {
+        if (dungeonsPanel != null)
+        {
+            return;
+        }
+
+        var parent = battlePanel != null && battlePanel.transform.parent != null ? battlePanel.transform.parent : transform;
+        dungeonsPanel = new GameObject("Dungeons Panel", typeof(RectTransform));
+        dungeonsPanel.transform.SetParent(parent, false);
+
+        var dungeonsRect = dungeonsPanel.GetComponent<RectTransform>();
+        var sourceRect = battlePanel != null ? battlePanel.GetComponent<RectTransform>() : null;
+        if (sourceRect != null)
+        {
+            dungeonsRect.anchorMin = sourceRect.anchorMin;
+            dungeonsRect.anchorMax = sourceRect.anchorMax;
+            dungeonsRect.pivot = sourceRect.pivot;
+            dungeonsRect.anchoredPosition = sourceRect.anchoredPosition;
+            dungeonsRect.sizeDelta = sourceRect.sizeDelta;
+            dungeonsRect.offsetMin = sourceRect.offsetMin;
+            dungeonsRect.offsetMax = sourceRect.offsetMax;
+        }
+        else
+        {
+            StretchRuntime(dungeonsRect, Vector2.zero);
+        }
+
+        dungeonsHeaderText = CreateRuntimeText(dungeonsPanel.transform, "Dungeons Header", "Dungeons", 36, new Vector2(0, -132), new Vector2(860, 54));
+        dungeonsHeaderText.fontStyle = FontStyles.Bold;
+
+        runtimeDungeonResultText = CreateRuntimeText(dungeonsPanel.transform, "Dungeon Result Text", "Dungeons are the active resource source.", 22, new Vector2(0, -475), new Vector2(760, 74));
+        runtimeDungeonResultText.color = new Color(0.72f, 0.86f, 1f);
+        runtimeDungeonResultText.enableAutoSizing = true;
+        runtimeDungeonResultText.fontSizeMin = 16;
+        runtimeDungeonResultText.fontSizeMax = 22;
+    }
+
+    private void EnsureRuntimeDungeonsTab()
+    {
+        if (dungeonsTabButton != null)
+        {
+            return;
+        }
+
+        var tabParent = homeTabButton != null && homeTabButton.transform.parent != null ? homeTabButton.transform.parent : null;
+        if (tabParent == null)
+        {
+            return;
+        }
+
+        GameObject tabObject;
+        if (shopTabButton != null)
+        {
+            tabObject = Instantiate(shopTabButton.gameObject, tabParent, false);
+        }
+        else
+        {
+            tabObject = new GameObject("Dungeons Tab", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            tabObject.transform.SetParent(tabParent, false);
+        }
+
+        tabObject.name = "Dungeons Tab";
+        dungeonsTabButton = tabObject.GetComponent<Button>();
+        dungeonsTabButton.onClick.RemoveAllListeners();
+        SetButtonLabel(dungeonsTabButton, "Dungeons");
+    }
+
+    private void LayoutBottomNavigation()
+    {
+        var tabParent = homeTabButton != null && homeTabButton.transform.parent != null ? homeTabButton.transform.parent : null;
+        if (tabParent != null)
+        {
+            var navRect = tabParent.GetComponent<RectTransform>();
+            if (navRect != null)
+            {
+                navRect.sizeDelta = new Vector2(790, 112);
+            }
+        }
+
+        var tabs = new[] { homeTabButton, battleTabButton, dungeonsTabButton, heroesTabButton, gearTabButton, summonTabButton, shopTabButton };
+        var labels = new[] { "Home", "Battle", "Dungeons", "Heroes", "Gear", "Summon", "Shop" };
+        const float spacing = 108f;
+        const float startX = -324f;
+
+        for (var i = 0; i < tabs.Length; i++)
+        {
+            if (tabs[i] == null)
+            {
+                continue;
+            }
+
+            SetRuntimeRect(tabs[i].GetComponent<RectTransform>(), new Vector2(startX + spacing * i, 0), new Vector2(98, 90), new Vector2(0.5f, 0.5f));
+            SetButtonLabel(tabs[i], labels[i]);
+        }
+    }
+
+    private void LayoutBattleScreen()
+    {
+        SetComponentActive(upgradeButton, false);
+
+        MoveUiElement(fightButton, battlePanel, new Vector2(0, -390), new Vector2(420, 66));
+        MoveUiElement(dungeonResultText, battlePanel, new Vector2(0, -805), new Vector2(760, 80));
+    }
+
+    private void LayoutDungeonsScreen()
+    {
+        if (dungeonsPanel == null)
+        {
+            return;
+        }
+
+        MoveUiElement(goldDungeonButton, dungeonsPanel, new Vector2(0, -575), new Vector2(660, 72));
+        MoveUiElement(essenceDungeonButton, dungeonsPanel, new Vector2(0, -660), new Vector2(660, 72));
+        MoveUiElement(gearDungeonButton, dungeonsPanel, new Vector2(0, -745), new Vector2(660, 72));
+    }
+
+    private void LayoutHeroesScreen()
+    {
+        MoveUiElement(heroUpgradeButton, heroesPanel, new Vector2(-205, -870), new Vector2(330, 70));
+        MoveUiElement(heroAscendButton, heroesPanel, new Vector2(205, -870), new Vector2(330, 70));
+    }
+
+    private void LayoutGearScreen()
+    {
+        MoveUiElement(equipmentSummaryText, gearPanel, new Vector2(0, -128), new Vector2(760, 110));
+        MoveUiElement(weaponUpgradeButton, gearPanel, new Vector2(-210, -260), new Vector2(320, 70));
+        MoveUiElement(armorUpgradeButton, gearPanel, new Vector2(210, -260), new Vector2(320, 70));
+        MoveUiElement(accessorySummaryText, gearPanel, new Vector2(0, -365), new Vector2(760, 78));
+        MoveUiElement(accessorySelectedText, gearPanel, new Vector2(0, -465), new Vector2(760, 92));
+        MoveUiElement(accessoryInventoryText, gearPanel, new Vector2(0, -585), new Vector2(760, 110));
+        MoveUiElement(accessoryPreviousSlotButton, gearPanel, new Vector2(-310, -705), new Vector2(140, 58));
+        MoveUiElement(accessoryNextSlotButton, gearPanel, new Vector2(310, -705), new Vector2(140, 58));
+        MoveUiElement(accessoryPreviousRarityButton, gearPanel, new Vector2(-310, -775), new Vector2(140, 58));
+        MoveUiElement(accessoryNextRarityButton, gearPanel, new Vector2(310, -775), new Vector2(140, 58));
+        MoveUiElement(accessoryEquipButton, gearPanel, new Vector2(-220, -860), new Vector2(210, 64));
+        MoveUiElement(accessoryLevelButton, gearPanel, new Vector2(0, -860), new Vector2(210, 64));
+        MoveUiElement(accessoryFuseButton, gearPanel, new Vector2(220, -860), new Vector2(210, 64));
+    }
+
+    private void LayoutPrototypeTools()
+    {
+        MoveUiElement(resetButton, shopPanel, new Vector2(0, -920), new Vector2(320, 64));
+        MoveUiElement(debugGoldButton, shopPanel, new Vector2(-315, -1008), new Vector2(150, 54));
+        MoveUiElement(debugEssenceButton, shopPanel, new Vector2(-105, -1008), new Vector2(150, 54));
+        MoveUiElement(debugGemsButton, shopPanel, new Vector2(105, -1008), new Vector2(150, 54));
+        MoveUiElement(debugAccessoryButton, shopPanel, new Vector2(315, -1008), new Vector2(150, 54));
+    }
+
+    private static void MoveUiElement(Component component, GameObject parent, Vector2 anchoredPosition, Vector2 size)
+    {
+        if (component == null || parent == null)
+        {
+            return;
+        }
+
+        component.transform.SetParent(parent.transform, false);
+        var rectTransform = component.GetComponent<RectTransform>();
+        if (rectTransform != null)
+        {
+            SetRuntimeRect(rectTransform, anchoredPosition, size, new Vector2(0.5f, 1f));
+        }
+    }
+
+    private static void SetComponentActive(Component component, bool active)
+    {
+        if (component != null)
+        {
+            component.gameObject.SetActive(active);
+        }
+    }
+
+    private static void SetButtonLabel(Button button, string label)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        var text = button.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (text == null)
+        {
+            return;
+        }
+
+        text.text = label;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 10;
+        text.fontSizeMax = 20;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+    }
+
     private void EnsureRuntimeArtUi()
     {
         if (runtimeArt == null)
@@ -6489,7 +6721,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             runtimeArt = new MythwakeRuntimeArtPresenter();
         }
 
-        runtimeArt.Ensure(homePanel, battlePanel, summonPanel, shopPanel);
+        runtimeArt.Ensure(homePanel, battlePanel, dungeonsPanel, summonPanel, shopPanel);
         runtimeArt.ApplyButtonStyle(
             fightButton,
             goldDungeonButton,
@@ -6507,6 +6739,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             resetButton,
             homeTabButton,
             battleTabButton,
+            dungeonsTabButton,
             heroesTabButton,
             gearTabButton,
             summonTabButton,
