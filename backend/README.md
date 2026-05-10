@@ -9,6 +9,7 @@ Current scope:
 - Read-only definitions endpoint
 - Dev player state endpoint
 - Guest auth with random session tokens
+- Logout endpoint that revokes the active session token
 - PostgreSQL account identities and hashed session token persistence for guest, email, Google, and Apple login providers
 - Bearer session validation for player state, flush, and gameplay mutation endpoints
 - Per-player service contexts resolved from the authenticated session token
@@ -50,6 +51,7 @@ Current scope:
 - Optional write-behind mode for local/dev-only batching experiments
 - `GET /player/state` returns a full client-ready snapshot.
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
+- `POST /auth/logout` revokes the active session token.
 - `GET /player/core-state` returns the compact numeric state only.
 - Player state, flush, and gameplay mutation routes reject missing or invalid sessions with `401`.
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
@@ -69,7 +71,7 @@ Current scope:
   - `debug.v_common_meta_definition_overview`
 - Successful idempotent action results are stored in PostgreSQL before the materialized player-state flush.
 - Retrying the same action with the same key returns the stored result with `replay: true` instead of applying rewards/spends again.
-- Graceful shutdown
+- Graceful shutdown flushes loaded player contexts before closing the state cache.
 
 Not included yet:
 - Redis connection
@@ -117,6 +119,7 @@ Optional script modes:
 .\scripts\check-backend.cmd -FlushState
 .\scripts\check-backend.cmd -CheckIdempotency
 .\scripts\check-backend.cmd -CheckUnauthorized
+.\scripts\check-backend.cmd -CheckLogout
 .\scripts\check-postgres-e2e.cmd
 ```
 
@@ -142,7 +145,8 @@ Database behavior:
 - `MYTHWAKE_STATE_WRITE_MODE=write_through` forces the full normalized player state to be saved on every successful action.
 - `MYTHWAKE_STATE_WRITE_MODE=write_behind` is for local/dev-only experiments.
 - Queued materialized state flushes every `MYTHWAKE_STATE_FLUSH_INTERVAL` and once more during graceful shutdown.
-- `POST /player/state/flush` exists as the future app-pause/disconnect hook.
+- Loaded in-memory player contexts are flushed during API shutdown before the cache is closed.
+- `POST /player/state/flush` is the app-pause/disconnect hook used by the Unity prototype.
 - New player seed state still writes immediately so first login/startup is durable.
 - The JSON player state snapshot is still written as a fallback/debug mirror.
 - Currency changes are written to `logs.economy_transactions` during DB save.
@@ -152,10 +156,11 @@ Database behavior:
 - Missing or malformed keys on gameplay mutations return HTTP 400 before the action is applied.
 - `GET /health` reports `database`, `state_cache`, `state_write_mode`, `state_flush_interval`, and `require_idempotency`.
 - `scripts/check-backend.cmd` performs guest login, sends Bearer auth for protected endpoints, and can verify missing-session `401`s.
-- `scripts/check-postgres-e2e.cmd` starts the API twice against PostgreSQL and verifies login, protected state, campaign persistence, manual flush, restart reload, and idempotency replay.
+- `scripts/check-postgres-e2e.cmd` starts the API twice against PostgreSQL and verifies login, protected state, campaign persistence, manual flush, restart reload, idempotency replay, and logout revocation.
 
 Endpoints:
 - `POST /auth/guest`
+- `POST /auth/logout`
 - `GET /health`
 - `GET /definitions`
 - `GET /player/state`

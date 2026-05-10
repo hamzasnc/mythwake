@@ -495,6 +495,7 @@ Keep the first backend intentionally small.
 
 Initial endpoints:
 - `POST /auth/guest`
+- `POST /auth/logout`
 - `GET /player/state`
 - `POST /player/state/flush`
 - `POST /campaign/fight`
@@ -576,9 +577,13 @@ Progress:
 - Added explicit player domain action services for campaign, dungeons, hero progression, equipment, accessories, summons, and missions while preserving the public service API.
 - Added per-player backend service contexts resolved from validated sessions instead of routing protected requests through one hardcoded dev player.
 - Added PostgreSQL E2E restart smoke tooling and session-aware backend smoke checks.
+- Added session logout/revoke so cached Unity session tokens can be invalidated server-side.
+- Added manager-level loaded player flushing for graceful shutdown.
+- Added Unity app pause/quit backend flush calls for active backend sessions.
+- Extended smoke tooling to verify logout revokes the active session.
 
 Next useful step:
-- Add Redis for short-lived session/rate-limit/lock coordination after the current PostgreSQL session path is stable.
+- Add Redis for short-lived session/rate-limit/lock coordination after the PostgreSQL session lifecycle path is stable.
 - Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
 
 Done when:

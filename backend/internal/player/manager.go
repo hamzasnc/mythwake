@@ -2,6 +2,7 @@ package player
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -49,4 +50,32 @@ func (manager *Manager) ServiceForPlayer(ctx context.Context, playerID string) (
 
 	manager.services[playerID] = service
 	return service, nil
+}
+
+func (manager *Manager) FlushAll(ctx context.Context) error {
+	manager.mu.Lock()
+	services := make([]*Service, 0, len(manager.services))
+	for _, service := range manager.services {
+		services = append(services, service)
+	}
+	manager.mu.Unlock()
+
+	var flushError error
+	for _, service := range services {
+		if err := ctx.Err(); err != nil {
+			return errors.Join(flushError, err)
+		}
+		if err := service.FlushState(ctx); err != nil {
+			flushError = errors.Join(flushError, fmt.Errorf("flush player %s: %w", service.PlayerID(), err))
+		}
+	}
+
+	return flushError
+}
+
+func (manager *Manager) LoadedPlayerCount() int {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	return len(manager.services)
 }

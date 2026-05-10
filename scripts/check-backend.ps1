@@ -2,7 +2,8 @@ param(
     [string]$BaseUrl = "http://localhost:8080",
     [switch]$FlushState,
     [switch]$CheckIdempotency,
-    [switch]$CheckUnauthorized
+    [switch]$CheckUnauthorized,
+    [switch]$CheckLogout
 )
 
 $ErrorActionPreference = "Stop"
@@ -87,4 +88,30 @@ if ($FlushState) {
     $flush = Invoke-RestMethod -Method Post -Headers $sessionHeaders "$BaseUrl/player/state/flush"
     Write-Host "State Flush:"
     $flush | Format-List
+}
+
+if ($CheckLogout) {
+    $logout = Invoke-RestMethod -Method Post -Headers $sessionHeaders "$BaseUrl/auth/logout"
+
+    $revokedStatus = $null
+    try {
+        Invoke-RestMethod -Headers $sessionHeaders "$BaseUrl/player/state" | Out-Null
+    }
+    catch {
+        if ($_.Exception.Response) {
+            $revokedStatus = [int]$_.Exception.Response.StatusCode
+        }
+        else {
+            throw
+        }
+    }
+
+    Write-Host "Logout Revoke Check:"
+    [pscustomobject]@{
+        LogoutStatus = $logout.status
+        PlayerId = $logout.playerId
+        ExpectedAfterLogout = 401
+        ActualAfterLogout = $revokedStatus
+        Passed = $revokedStatus -eq 401
+    } | Format-List
 }

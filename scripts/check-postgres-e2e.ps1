@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.25-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.26-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
@@ -175,12 +175,30 @@ try {
     }
     Assert-Equal ([int]$replay.playerState.campaignStage) $stageAfterFight "Replay should not apply campaign fight twice."
 
+    $logout = Invoke-Json -Method "POST" -Path "/auth/logout" -Headers $authHeaders
+    Assert-Equal $logout.status "ok" "Logout should return ok."
+
+    $revokedStatus = $null
+    try {
+        Invoke-Json -Path "/player/state" -Headers $authHeaders | Out-Null
+    }
+    catch {
+        if ($_.Exception.Response) {
+            $revokedStatus = [int]$_.Exception.Response.StatusCode
+        }
+        else {
+            throw
+        }
+    }
+    Assert-Equal $revokedStatus 401 "Revoked session should reject protected state."
+
     Write-Host "PostgreSQL E2E smoke passed."
     [pscustomobject]@{
         PlayerId = $login.playerId
         SessionPrefix = $login.sessionToken.Substring(0, [Math]::Min(8, $login.sessionToken.Length))
         CampaignStage = $stageAfterFight
         Replay = $replay.replay
+        LogoutRevoked = $revokedStatus -eq 401
         StateWriteMode = $StateWriteMode
     } | Format-List
 }

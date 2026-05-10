@@ -95,6 +95,41 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         return SendAuthenticatedJson(() => Get("/player/core-state"), completed);
     }
 
+    public IEnumerator FlushPlayerState(Action<bool, string> completed)
+    {
+        if (!HasSession)
+        {
+            completed?.Invoke(false, "No backend session.");
+            yield break;
+        }
+
+        yield return SendAuthenticatedJson<BackendStatusResponseDto>(() => Post("/player/state/flush"), (success, error, _) =>
+        {
+            completed?.Invoke(success, error);
+        });
+    }
+
+    public IEnumerator Logout(Action<bool, string> completed)
+    {
+        if (!HasSession)
+        {
+            ClearSession();
+            completed?.Invoke(true, string.Empty);
+            yield break;
+        }
+
+        var request = Post("/auth/logout");
+        yield return SendJsonWithStatus<BackendStatusResponseDto>(request, (success, error, statusCode, _) =>
+        {
+            if (success || statusCode == httpStatusUnauthorized)
+            {
+                ClearSession();
+            }
+
+            completed?.Invoke(success || statusCode == httpStatusUnauthorized, success || statusCode == httpStatusUnauthorized ? string.Empty : error);
+        });
+    }
+
     public IEnumerator GetDefinitions(Action<bool, string, MythwakeDefinitionSnapshotDto, bool> completed)
     {
         var request = Get("/definitions");
@@ -446,5 +481,12 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     private struct AccessoryRequestDto
     {
         public string accessoryId;
+    }
+
+    [Serializable]
+    private struct BackendStatusResponseDto
+    {
+        public string status;
+        public string playerId;
     }
 }

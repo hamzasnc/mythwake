@@ -80,6 +80,12 @@ func main() {
 	if err := server.Shutdown(shutdownContext); err != nil {
 		logger.Fatalf("shutdown failed: %v", err)
 	}
+	if playerManager.LoadedPlayerCount() > 0 {
+		logger.Printf("flushing %d loaded player contexts", playerManager.LoadedPlayerCount())
+		if err := playerManager.FlushAll(shutdownContext); err != nil {
+			logger.Printf("loaded player flush failed during shutdown: %v", err)
+		}
+	}
 	if cachedStateStore != nil {
 		logger.Println("flushing player state cache")
 		if err := cachedStateStore.Close(shutdownContext); err != nil {

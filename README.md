@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.11
+Prototype version: 0.2.16
 Local save version: 2
 
 Current prototype:
@@ -92,13 +92,16 @@ Backend:
 - Backend player actions now route through explicit domain action services for campaign, dungeons, hero progression, equipment, accessories, summons, and missions
 - Guest auth now issues real random session tokens, stores only token hashes when PostgreSQL is enabled, and has account identity tables shaped for guest, email, Google, and Apple login
 - Player state, flush, and gameplay mutations now require a valid Bearer session token and resolve the active player from that token
-- PostgreSQL E2E smoke script verifies guest auth, protected state, campaign action persistence, manual flush, API restart reload, and idempotency replay
+- Logout now revokes the active session token server-side and clears the Unity cached session
+- PostgreSQL E2E smoke script verifies guest auth, protected state, campaign action persistence, manual flush, API restart reload, idempotency replay, and logout revocation
 - Navicat-friendly account/persistence debug views expose auth providers, active sessions, latest action result, and snapshot freshness
 - Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
 - Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
 - Unity stores the backend session token, sends it automatically, and retries once with a fresh guest login after a `401`
 - Unity reuses pending idempotency keys after transport failures
-- `POST /player/state/flush` is ready as the future app-pause/disconnect save hook
+- Unity requests a backend state flush on app pause/quit when a backend session is active
+- API shutdown flushes loaded player contexts before closing the state cache
+- `POST /player/state/flush` is the manual app-pause/disconnect save hook
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Guest auth and action responses include the full player snapshot for direct client UI updates
 - Android emulator builds use `http://10.0.2.2:8080` as the default backend URL, while Editor/Desktop use `http://localhost:8080`
@@ -109,6 +112,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.26 / Prototype 0.2.16: Added session logout/revoke, loaded-player shutdown flushing, Unity app pause/quit backend flush, and logout-aware smoke checks.
 - Backend 0.2.25: Added PostgreSQL E2E restart smoke tooling, session-aware backend checks, and account/persistence debug views for Navicat.
 - Backend 0.2.24 / Prototype 0.2.15: Added Bearer session validation, per-player backend context, protected gameplay/state endpoints, and Unity session persistence with one-shot `401` re-login retry.
 - Backend 0.2.23: Added explicit player domain action services so future server-authoritative slices can evolve without bloating the core player service.

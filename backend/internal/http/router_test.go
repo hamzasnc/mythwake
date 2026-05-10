@@ -131,6 +131,29 @@ func TestGuestAuthEndpoint(t *testing.T) {
 	}
 }
 
+func TestLogoutEndpointRevokesSession(t *testing.T) {
+	handler := newTestHandler()
+	login := loginGuest(t, handler)
+
+	logoutResponse := httptest.NewRecorder()
+	logoutRequest := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	addAuth(logoutRequest, login.SessionToken)
+	handler.ServeHTTP(logoutResponse, logoutRequest)
+
+	if logoutResponse.Code != http.StatusOK {
+		t.Fatalf("expected logout status 200, got %d", logoutResponse.Code)
+	}
+
+	stateResponse := httptest.NewRecorder()
+	stateRequest := httptest.NewRequest(http.MethodGet, "/player/state", nil)
+	addAuth(stateRequest, login.SessionToken)
+	handler.ServeHTTP(stateResponse, stateRequest)
+
+	if stateResponse.Code != http.StatusUnauthorized {
+		t.Fatalf("expected revoked session to return 401, got %d", stateResponse.Code)
+	}
+}
+
 func TestCampaignFightEndpoint(t *testing.T) {
 	handler := newTestHandler()
 	login := loginGuest(t, handler)

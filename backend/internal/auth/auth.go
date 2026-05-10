@@ -62,6 +62,7 @@ type AccountStore interface {
 	SaveSession(ctx context.Context, session Session) error
 	FindSessionByTokenHash(ctx context.Context, tokenHash string, now time.Time) (Session, bool, error)
 	TouchSession(ctx context.Context, sessionID string, seenAt time.Time) error
+	RevokeSession(ctx context.Context, sessionID string, revokedAt time.Time) error
 }
 
 type Service struct {
@@ -193,6 +194,45 @@ func (service *Service) ValidateSession(ctx context.Context, token string) (Sess
 	return session, nil
 }
 
+func (service *Service) RevokeSession(ctx context.Context, token string) (Session, error) {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return Session{}, ErrMissingSession
+	}
+
+	now := service.now().UTC()
+	tokenHash := TokenHash(token)
+
+	if service.store != nil {
+		session, found, err := service.store.FindSessionByTokenHash(ctx, tokenHash, now)
+		if err != nil {
+			return Session{}, err
+		}
+		if !found {
+			return Session{}, ErrInvalidSession
+		}
+		if err := service.store.RevokeSession(ctx, session.SessionID, now); err != nil {
+			return Session{}, err
+		}
+
+		service.forgetSession(tokenHash)
+		session.Token = token
+		return session, nil
+	}
+
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	session, ok := service.sessionsByHash[tokenHash]
+	if !ok {
+		return Session{}, ErrInvalidSession
+	}
+
+	delete(service.sessionsByHash, tokenHash)
+	session.Token = token
+	return session, nil
+}
+
 func TokenHash(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
@@ -212,4 +252,11 @@ func (service *Service) rememberSession(session Session) {
 	defer service.mu.Unlock()
 
 	service.sessionsByHash[session.TokenHash] = session
+}
+
+func (service *Service) forgetSession(tokenHash string) {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	delete(service.sessionsByHash, tokenHash)
 }

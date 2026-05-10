@@ -47,6 +47,7 @@ func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service,
 
 func (router *Router) routes() {
 	router.mux.HandleFunc("POST /auth/guest", router.handleGuestAuth)
+	router.mux.HandleFunc("POST /auth/logout", router.handleLogout)
 	router.mux.HandleFunc("GET /health", router.handleHealth)
 	router.mux.HandleFunc("GET /definitions", router.handleDefinitions)
 	router.mux.HandleFunc("GET /player/state", router.handlePlayerState)
@@ -171,6 +172,31 @@ func (router *Router) handleGuestAuth(response http.ResponseWriter, request *htt
 	}
 
 	writeJSON(response, http.StatusOK, playerService.GuestAuth(session.Token))
+}
+
+func (router *Router) handleLogout(response http.ResponseWriter, request *http.Request) {
+	token := sessionTokenFromRequest(request)
+	if token == "" {
+		writeJSON(response, http.StatusUnauthorized, map[string]string{
+			"errorCode": "missing_session",
+			"message":   "Bearer session token is required.",
+		})
+		return
+	}
+
+	session, err := router.authService.RevokeSession(request.Context(), token)
+	if err != nil {
+		writeJSON(response, http.StatusUnauthorized, map[string]string{
+			"errorCode": "invalid_session",
+			"message":   "Session token is invalid or expired.",
+		})
+		return
+	}
+
+	writeJSON(response, http.StatusOK, map[string]string{
+		"status":   "ok",
+		"playerId": session.PlayerID,
+	})
 }
 
 func (router *Router) handleCampaignFight(response http.ResponseWriter, request *http.Request) {

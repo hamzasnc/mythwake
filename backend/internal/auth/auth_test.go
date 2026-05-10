@@ -37,6 +37,14 @@ func (store *fakeAccountStore) TouchSession(_ context.Context, sessionID string,
 	return nil
 }
 
+func (store *fakeAccountStore) RevokeSession(_ context.Context, sessionID string, revokedAt time.Time) error {
+	if store.session.SessionID == sessionID {
+		store.session.ExpiresAt = revokedAt
+		store.session.TokenHash = ""
+	}
+	return nil
+}
+
 func TestProviderDefinitionsIncludePlannedLoginVariants(t *testing.T) {
 	definitions := ProviderDefinitions()
 
@@ -118,6 +126,23 @@ func TestValidateSessionRejectsUnknownToken(t *testing.T) {
 
 	if _, err := service.ValidateSession(context.Background(), "mw_sess_unknown"); err == nil {
 		t.Fatal("expected unknown token to fail")
+	}
+}
+
+func TestRevokeSessionInvalidatesInMemorySession(t *testing.T) {
+	service := NewService(nil)
+
+	issued, err := service.IssueGuestSessionForPlayer(context.Background(), "player-1", "")
+	if err != nil {
+		t.Fatalf("issue guest session: %v", err)
+	}
+
+	if _, err := service.RevokeSession(context.Background(), issued.Token); err != nil {
+		t.Fatalf("revoke session: %v", err)
+	}
+
+	if _, err := service.ValidateSession(context.Background(), issued.Token); err == nil {
+		t.Fatal("expected revoked session to be invalid")
 	}
 }
 

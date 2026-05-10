@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.15";
+    public const string PrototypeVersion = "0.2.16";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -778,6 +778,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private int lastOfflineSeconds;
     private AppScreen activeScreen = AppScreen.Home;
     private bool backendRequestInProgress;
+    private bool backendLifecycleFlushInProgress;
     private string backendStatus = "Backend: local prototype mode";
     private MythwakeDefinitionSnapshotDto backendDefinitions;
     private bool hasBackendDefinitions;
@@ -2037,6 +2038,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetBackendButtonsInteractable(true);
     }
 
+    private void FlushBackendLifecycle(string reason)
+    {
+        EnsureRuntimeBackendClient();
+        if (backendClient == null || !backendClient.HasSession || backendLifecycleFlushInProgress)
+        {
+            return;
+        }
+
+        backendLifecycleFlushInProgress = true;
+        StartCoroutine(backendClient.FlushPlayerState((success, error) =>
+        {
+            backendLifecycleFlushInProgress = false;
+            if (success)
+            {
+                SetBackendStatus($"Backend flush: {reason}");
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                SetBackendStatus($"Backend flush failed: {error}");
+            }
+        }));
+    }
+
     private void ApplyBackendSnapshot(MythwakePlayerSnapshotDto snapshot)
     {
         if (snapshot.state.campaignStage <= 0)
@@ -2234,12 +2260,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (isPaused)
         {
             SaveProgress();
+            FlushBackendLifecycle("pause");
         }
     }
 
     private void OnApplicationQuit()
     {
         SaveProgress();
+        FlushBackendLifecycle("quit");
     }
 
     private void Fight(bool saveProgress)

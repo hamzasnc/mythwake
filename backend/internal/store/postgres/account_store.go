@@ -124,3 +124,13 @@ func (store *AccountStore) TouchSession(ctx context.Context, sessionID string, s
 	`, sessionID, seenAt)
 	return err
 }
+
+func (store *AccountStore) RevokeSession(ctx context.Context, sessionID string, revokedAt time.Time) error {
+	_, err := store.db.ExecContext(ctx, `
+		UPDATE account.player_sessions
+		SET revoked_at = $2
+		WHERE id = $1
+			AND revoked_at IS NULL
+	`, sessionID, revokedAt)
+	return err
+}
