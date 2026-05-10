@@ -334,6 +334,7 @@ Current backend state:
 - Campaign curves, dungeon curves, costs, summons, and simple reward definitions now live in a central backend balance package.
 - Daily Mission, Mission Track, and Summon actions now reject unknown client IDs and resolve rewards through server-owned balance definitions.
 - PostgreSQL now has DB-ready definition tables for heroes, campaign stages, rewards, progression costs, summon pools, daily missions, and Mission Track rewards.
+- The large backend player service has been split into focused domain files for campaign/dungeons, progression, gear, meta actions, snapshots, and persistence.
 - Successful idempotent action results save in `player.player_action_results`.
 - Per-action economy deltas save in `logs.player_action_ledger`.
 - Startup restores from the latest durable action result snapshot if materialized tables are behind.
@@ -558,10 +559,10 @@ Progress:
 - Added `internal/balance` for table-shaped campaign, dungeon, cost, summon, and simple reward definitions.
 - Added `common.hero_definitions`, `common.reward_definitions`, `common.campaign_curve_definitions`, `common.campaign_stage_definitions`, `common.progression_cost_definitions`, `common.summon_banner_definitions`, `common.summon_pool_definitions`, `common.mission_definitions`, and `common.battle_pass_track_definitions`.
 - Added debug views for common rewards, progression costs, and meta reward definitions.
+- Split `backend/internal/player/service.go` into smaller domain files while preserving route behavior and tests.
 
 Next useful step:
-- Split backend gameplay services out of the current single `player.Service` while keeping the API behavior stable:
-  - economy/reward validation
+- Continue turning the split player service into explicit domain services where it adds real ownership boundaries:
   - dungeons
   - hero progression
   - equipment/accessories

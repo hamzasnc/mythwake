@@ -87,6 +87,7 @@ Backend:
 - Backend campaign curves, dungeon curves, costs, and simple reward definitions now live in a central balance package
 - Backend Daily Mission, Mission Track, and Summon actions now validate against known server balance definitions instead of accepting arbitrary claim IDs
 - PostgreSQL now seeds DB-ready hero, campaign, reward, progression cost, summon, mission, and Mission Track definition tables
+- Backend player service actions are split by domain files for campaign/dungeons, progression, gear, meta, snapshots, and persistence
 - Unity reuses pending idempotency keys after transport failures
 - `POST /player/state/flush` is ready as the future app-pause/disconnect save hook
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
@@ -98,6 +99,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.18: Split the large player service into focused domain files without changing API behavior.
 - Backend 0.2.17: Added server-validated meta/summon balance definitions and PostgreSQL seed tables for hero, campaign, reward, cost, summon, mission, and Mission Track definitions.
 - Backend 0.2.16: Added a backend balance definition package for campaign, dungeon, cost, summon, and simple reward curves.
 - Backend 0.2.15: Added a central backend economy package for currency IDs, spends, grants, and delta calculation.
