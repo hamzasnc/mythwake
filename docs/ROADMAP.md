@@ -585,6 +585,7 @@ Progress:
 - Logout now flushes a loaded player context before responding when hot player state exists.
 - Added request IDs, structured error bodies, status-aware request logging, and panic recovery around the HTTP router.
 - Added process-local auth/gameplay rate limiting as a temporary limiter foundation before Redis.
+- Added a server-authoritative `GET /time` endpoint with UTC daily and weekly reset boundaries for later offline reward, mission reset, and clock drift validation.
 
 Next useful step:
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.

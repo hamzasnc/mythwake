@@ -30,6 +30,65 @@ func TestHealthEndpoint(t *testing.T) {
 	}
 }
 
+func TestServerClockEndpoint(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/time", nil)
+	request.Header.Set("X-Request-ID", "clock-request-001")
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+	if response.Header().Get("X-Request-ID") != "clock-request-001" {
+		t.Fatalf("expected request id header, got %q", response.Header().Get("X-Request-ID"))
+	}
+
+	var body api.ServerClockResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+
+	serverTime, err := time.Parse(time.RFC3339, body.ServerTimeUTC)
+	if err != nil {
+		t.Fatalf("expected RFC3339 server time, got %q", body.ServerTimeUTC)
+	}
+	dailyReset, err := time.Parse(time.RFC3339, body.DailyResetUTC)
+	if err != nil {
+		t.Fatalf("expected RFC3339 daily reset time, got %q", body.DailyResetUTC)
+	}
+	weeklyReset, err := time.Parse(time.RFC3339, body.WeeklyResetUTC)
+	if err != nil {
+		t.Fatalf("expected RFC3339 weekly reset time, got %q", body.WeeklyResetUTC)
+	}
+
+	if body.ServerUnixMs <= 0 || !dailyReset.After(serverTime) || !weeklyReset.After(serverTime) {
+		t.Fatalf("expected future reset times, got %#v", body)
+	}
+	if body.SecondsUntilDailyReset <= 0 || body.SecondsUntilWeeklyReset <= 0 {
+		t.Fatalf("expected positive reset countdowns, got %#v", body)
+	}
+}
+
+func TestServerClockUsesUTCResetBoundaries(t *testing.T) {
+	now := time.Date(2026, 5, 10, 22, 30, 15, 0, time.UTC)
+	clock := serverClock(now)
+
+	if clock.ServerTimeUTC != "2026-05-10T22:30:15Z" {
+		t.Fatalf("expected exact server time, got %#v", clock)
+	}
+	if clock.DailyResetUTC != "2026-05-11T00:00:00Z" {
+		t.Fatalf("expected next daily reset, got %#v", clock)
+	}
+	if clock.WeeklyResetUTC != "2026-05-11T00:00:00Z" {
+		t.Fatalf("expected next weekly reset, got %#v", clock)
+	}
+	if clock.SecondsUntilDailyReset != 5385 || clock.SecondsUntilWeeklyReset != 5385 {
+		t.Fatalf("expected reset countdowns from fixed time, got %#v", clock)
+	}
+}
+
 func TestRequestIDHeaderIsPreserved(t *testing.T) {
 	handler := newTestHandler()
 	response := httptest.NewRecorder()

@@ -50,6 +50,7 @@ func (router *Router) routes() {
 	router.mux.HandleFunc("POST /auth/guest", router.handleGuestAuth)
 	router.mux.HandleFunc("POST /auth/logout", router.handleLogout)
 	router.mux.HandleFunc("GET /health", router.handleHealth)
+	router.mux.HandleFunc("GET /time", router.handleTime)
 	router.mux.HandleFunc("GET /definitions", router.handleDefinitions)
 	router.mux.HandleFunc("GET /player/state", router.handlePlayerState)
 	router.mux.HandleFunc("POST /player/state/flush", router.handlePlayerStateFlush)
@@ -111,6 +112,41 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 		"version":              router.config.Version,
 		"time_utc":             time.Now().UTC().Format(time.RFC3339),
 	})
+}
+
+func (router *Router) handleTime(response http.ResponseWriter, request *http.Request) {
+	writeJSON(response, http.StatusOK, serverClock(time.Now().UTC()))
+}
+
+func serverClock(now time.Time) api.ServerClockResponse {
+	now = now.UTC()
+	dailyReset := nextDailyResetUTC(now)
+	weeklyReset := nextWeeklyResetUTC(now)
+
+	return api.ServerClockResponse{
+		ServerTimeUTC:           now.Format(time.RFC3339),
+		ServerUnixMs:            now.UnixMilli(),
+		DailyResetUTC:           dailyReset.Format(time.RFC3339),
+		WeeklyResetUTC:          weeklyReset.Format(time.RFC3339),
+		SecondsUntilDailyReset:  int64(dailyReset.Sub(now).Seconds()),
+		SecondsUntilWeeklyReset: int64(weeklyReset.Sub(now).Seconds()),
+	}
+}
+
+func nextDailyResetUTC(now time.Time) time.Time {
+	now = now.UTC()
+	return time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.UTC)
+}
+
+func nextWeeklyResetUTC(now time.Time) time.Time {
+	now = now.UTC()
+	daysUntilMonday := (int(time.Monday) - int(now.Weekday()) + 7) % 7
+	if daysUntilMonday == 0 {
+		daysUntilMonday = 7
+	}
+
+	resetDate := now.AddDate(0, 0, daysUntilMonday)
+	return time.Date(resetDate.Year(), resetDate.Month(), resetDate.Day(), 0, 0, 0, 0, time.UTC)
 }
 
 func (router *Router) handlePlayerState(response http.ResponseWriter, request *http.Request) {

@@ -28,6 +28,15 @@ Write-Host "Health:"
 $health | Format-List
 Write-Host "Request ID: $requestId"
 
+$timeResponse = Invoke-WebRequest -UseBasicParsing "$BaseUrl/time"
+$timeRequestId = $timeResponse.Headers["X-Request-ID"]
+if ([string]::IsNullOrWhiteSpace($timeRequestId)) {
+    throw "Expected X-Request-ID header on time response."
+}
+$serverTime = $timeResponse.Content | ConvertFrom-Json
+Write-Host "Server Clock:"
+$serverTime | Format-List
+
 if ($CheckUnauthorized) {
     $unauthorizedStatus = $null
     try {

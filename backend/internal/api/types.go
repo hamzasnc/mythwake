@@ -93,6 +93,15 @@ type ErrorResponse struct {
 	RequestID string `json:"requestId,omitempty"`
 }
 
+type ServerClockResponse struct {
+	ServerTimeUTC           string `json:"serverTimeUtc"`
+	ServerUnixMs            int64  `json:"serverUnixMs"`
+	DailyResetUTC           string `json:"dailyResetUtc"`
+	WeeklyResetUTC          string `json:"weeklyResetUtc"`
+	SecondsUntilDailyReset  int64  `json:"secondsUntilDailyReset"`
+	SecondsUntilWeeklyReset int64  `json:"secondsUntilWeeklyReset"`
+}
+
 type AccessoryRequest struct {
 	AccessoryID string `json:"accessoryId"`
 }

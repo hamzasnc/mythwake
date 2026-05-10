@@ -6,6 +6,7 @@ Current scope:
 - Standard-library HTTP server
 - Environment-based config
 - Health endpoint
+- Server clock endpoint with UTC daily and weekly reset boundaries
 - Read-only definitions endpoint
 - Dev player state endpoint
 - Guest auth with random session tokens
@@ -60,6 +61,7 @@ Current scope:
 - All responses include `X-Request-ID`; clients may send their own valid `X-Request-ID`.
 - Error responses use `{ "errorCode", "message", "requestId" }`.
 - Rate-limited requests return HTTP 429, `errorCode=rate_limited`, and `Retry-After`.
+- `GET /time` returns the authoritative server time, Unix milliseconds, and upcoming UTC daily/weekly reset times.
 - `GET /player/core-state` returns the compact numeric state only.
 - Player state, flush, and gameplay mutation routes reject missing or invalid sessions with `401`.
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
@@ -174,6 +176,7 @@ Database behavior:
 - Reusing a key for a different endpoint/body returns an `idempotency_conflict` action result.
 - Missing or malformed keys on gameplay mutations return HTTP 400 before the action is applied.
 - `GET /health` reports `database`, `state_cache`, `state_write_mode`, `state_flush_interval`, session cache settings, and `require_idempotency`.
+- `GET /time` is the future source of truth for offline reward windows, daily missions, weekly systems, and client clock drift checks.
 - Request logs include request id, method, path, status, bytes, and duration.
 - Rate limiting is currently process-local for development and single-node testing; Redis should replace the counter storage before multi-instance production.
 - `scripts/check-backend.cmd` performs guest login, sends Bearer auth for protected endpoints, and can verify missing-session `401`s.
@@ -183,6 +186,7 @@ Endpoints:
 - `POST /auth/guest`
 - `POST /auth/logout`
 - `GET /health`
+- `GET /time`
 - `GET /definitions`
 - `GET /player/state`
 - `POST /player/state/flush`

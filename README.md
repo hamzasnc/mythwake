@@ -64,6 +64,7 @@ Backend:
 - Standard-library HTTP server
 - Config via environment variables
 - `GET /health`
+- `GET /time` server clock with UTC daily and weekly reset boundaries
 - `GET /definitions` read-only server definition snapshot for client/admin tooling
 - `GET /player/state` dev response using the same player-state shape as the Unity service contract
 - In-memory pre-PostgreSQL action endpoints for auth, campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
@@ -98,6 +99,7 @@ Backend:
 - Every API response now carries an `X-Request-ID`, and error JSON includes `requestId` for log/client correlation
 - HTTP panic recovery returns a JSON `internal_error` instead of dropping the request
 - In-memory auth/gameplay rate limit middleware protects local API paths and is shaped for a later Redis-backed limiter
+- Server clock endpoint exposes authoritative UTC time plus daily/weekly reset countdowns for future offline rewards and daily reset validation
 - PostgreSQL E2E smoke script verifies guest auth, protected state, campaign action persistence, manual flush, API restart reload, idempotency replay, and logout revocation
 - Navicat-friendly account/persistence debug views expose auth providers, active sessions, latest action result, and snapshot freshness
 - Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
@@ -117,6 +119,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.30: Added `GET /time` as a server-authoritative clock with UTC daily and weekly reset boundaries, plus smoke-script coverage.
 - Backend 0.2.29: Added configurable auth/gameplay rate limiting with `429` JSON errors, `Retry-After`, health visibility, and local script knobs.
 - Backend 0.2.28: Added request ID propagation, structured error responses with request IDs, panic recovery, and status-aware request logging.
 - Backend 0.2.27: Added a configurable session validation cache, PostgreSQL touch window, logout state flush, and health/script visibility for session cache settings.
