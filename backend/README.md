@@ -10,6 +10,8 @@ Current scope:
 - Dev player state endpoint
 - Guest auth with random session tokens
 - PostgreSQL account identities and hashed session token persistence for guest, email, Google, and Apple login providers
+- Bearer session validation for player state, flush, and gameplay mutation endpoints
+- Per-player service contexts resolved from the authenticated session token
 - In-memory action endpoints for campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
 - Optional PostgreSQL connection via `MYTHWAKE_DATABASE_URL`
 - Embedded SQL migrations
@@ -44,9 +46,11 @@ Current scope:
 - `GET /player/state` returns a full client-ready snapshot.
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
 - `GET /player/core-state` returns the compact numeric state only.
+- Player state, flush, and gameplay mutation routes reject missing or invalid sessions with `401`.
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
 - Guest auth returns the raw session token once; PostgreSQL stores only `token_hash`.
-- The Unity prototype can ping, guest-login, sync this snapshot, cache `/definitions` with ETag revalidation, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
+- The Unity prototype can ping, guest-login, store the session token, sync this snapshot, cache `/definitions` with ETag revalidation, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
+- Unity automatically sends `Authorization: Bearer <sessionToken>` and retries protected calls once after a `401` by refreshing guest auth.
 - Server gameplay POSTs require valid `Idempotency-Key` headers by default.
 - Gameplay action IDs are centralized in `internal/gameplay` so routing, persistence, ledgers, and tests share the same names.
 - Currency IDs, spends, grants, display names, and deltas are centralized in `internal/economy`.

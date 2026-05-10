@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
@@ -119,8 +120,17 @@ type Service struct {
 }
 
 func NewService() *Service {
+	return NewServiceForPlayer(defaultPlayerID)
+}
+
+func NewServiceForPlayer(playerID string) *Service {
+	playerID = strings.TrimSpace(playerID)
+	if playerID == "" {
+		playerID = defaultPlayerID
+	}
+
 	service := &Service{
-		playerID: defaultPlayerID,
+		playerID: playerID,
 		state: api.PlayerState{
 			SaveVersion:         1,
 			Gold:                0,

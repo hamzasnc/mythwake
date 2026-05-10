@@ -91,8 +91,10 @@ Backend:
 - Backend player service actions are split by domain files for campaign/dungeons, progression, gear, meta, snapshots, and persistence
 - Backend player actions now route through explicit domain action services for campaign, dungeons, hero progression, equipment, accessories, summons, and missions
 - Guest auth now issues real random session tokens, stores only token hashes when PostgreSQL is enabled, and has account identity tables shaped for guest, email, Google, and Apple login
+- Player state, flush, and gameplay mutations now require a valid Bearer session token and resolve the active player from that token
 - Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
 - Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
+- Unity stores the backend session token, sends it automatically, and retries once with a fresh guest login after a `401`
 - Unity reuses pending idempotency keys after transport failures
 - `POST /player/state/flush` is ready as the future app-pause/disconnect save hook
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
@@ -104,6 +106,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.24 / Prototype 0.2.15: Added Bearer session validation, per-player backend context, protected gameplay/state endpoints, and Unity session persistence with one-shot `401` re-login retry.
 - Backend 0.2.23: Added explicit player domain action services so future server-authoritative slices can evolve without bloating the core player service.
 - Backend 0.2.22 / Prototype 0.2.14: Added the account/auth foundation for guest, email, Google, and Apple login providers, hashed session persistence, and auth provider definitions.
 - Backend 0.2.21 / Prototype 0.2.13: Expanded `/definitions` into a broader server-owned balance catalog for currencies, heroes, rewards, campaign stages, and accessories.

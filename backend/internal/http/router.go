@@ -22,12 +22,15 @@ type Router struct {
 	logger        *log.Logger
 	mux           *http.ServeMux
 	authService   *auth.Service
-	playerService *player.Service
+	playerManager *player.Manager
 }
 
-func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service, playerService *player.Service) http.Handler {
+func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service, playerManager *player.Manager) http.Handler {
 	if authService == nil {
 		authService = auth.NewService(nil)
+	}
+	if playerManager == nil {
+		playerManager = player.NewManager(nil)
 	}
 
 	router := &Router{
@@ -35,7 +38,7 @@ func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service,
 		logger:        logger,
 		mux:           http.NewServeMux(),
 		authService:   authService,
-		playerService: playerService,
+		playerManager: playerManager,
 	}
 
 	router.routes()
@@ -103,15 +106,30 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 }
 
 func (router *Router) handlePlayerState(response http.ResponseWriter, request *http.Request) {
-	writeJSON(response, http.StatusOK, router.playerService.GetSnapshot())
+	playerService, ok := router.authenticatedPlayerService(response, request)
+	if !ok {
+		return
+	}
+
+	writeJSON(response, http.StatusOK, playerService.GetSnapshot())
 }
 
 func (router *Router) handlePlayerCoreState(response http.ResponseWriter, request *http.Request) {
-	writeJSON(response, http.StatusOK, router.playerService.GetState())
+	playerService, ok := router.authenticatedPlayerService(response, request)
+	if !ok {
+		return
+	}
+
+	writeJSON(response, http.StatusOK, playerService.GetState())
 }
 
 func (router *Router) handlePlayerStateFlush(response http.ResponseWriter, request *http.Request) {
-	if err := router.playerService.FlushState(request.Context()); err != nil {
+	playerService, ok := router.authenticatedPlayerService(response, request)
+	if !ok {
+		return
+	}
+
+	if err := playerService.FlushState(request.Context()); err != nil {
 		writeJSON(response, http.StatusInternalServerError, map[string]string{
 			"errorCode": "state_flush_failed",
 			"message":   err.Error(),
@@ -125,7 +143,20 @@ func (router *Router) handlePlayerStateFlush(response http.ResponseWriter, reque
 }
 
 func (router *Router) handleGuestAuth(response http.ResponseWriter, request *http.Request) {
-	session, err := router.authService.IssueGuestSession(request.Context(), router.playerService.PlayerID(), request.UserAgent())
+	if token := sessionTokenFromRequest(request); token != "" {
+		session, err := router.authService.ValidateSession(request.Context(), token)
+		if err == nil {
+			playerService, ok := router.playerServiceForSession(response, request, session)
+			if !ok {
+				return
+			}
+
+			writeJSON(response, http.StatusOK, playerService.GuestAuth(token))
+			return
+		}
+	}
+
+	session, err := router.authService.IssueGuestSession(request.Context(), request.UserAgent())
 	if err != nil {
 		writeJSON(response, http.StatusInternalServerError, map[string]string{
 			"errorCode": "guest_auth_failed",
@@ -134,36 +165,41 @@ func (router *Router) handleGuestAuth(response http.ResponseWriter, request *htt
 		return
 	}
 
-	writeJSON(response, http.StatusOK, router.playerService.GuestAuth(session.Token))
+	playerService, ok := router.playerServiceForSession(response, request, session)
+	if !ok {
+		return
+	}
+
+	writeJSON(response, http.StatusOK, playerService.GuestAuth(session.Token))
 }
 
 func (router *Router) handleCampaignFight(response http.ResponseWriter, request *http.Request) {
-	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
-		return router.playerService.FightCampaignWithRequest(request.Context(), action)
+	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.FightCampaignWithRequest(request.Context(), action)
 	})
 }
 
 func (router *Router) handleDungeonRun(response http.ResponseWriter, request *http.Request) {
-	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
-		return router.playerService.RunDungeonWithRequest(request.Context(), action, request.PathValue("dungeon_id"))
+	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.RunDungeonWithRequest(request.Context(), action, request.PathValue("dungeon_id"))
 	})
 }
 
 func (router *Router) handleHeroLevel(response http.ResponseWriter, request *http.Request) {
-	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
-		return router.playerService.LevelHeroWithRequest(request.Context(), action, request.PathValue("hero_id"))
+	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.LevelHeroWithRequest(request.Context(), action, request.PathValue("hero_id"))
 	})
 }
 
 func (router *Router) handleHeroAscend(response http.ResponseWriter, request *http.Request) {
-	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
-		return router.playerService.AscendHeroWithRequest(request.Context(), action, request.PathValue("hero_id"))
+	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.AscendHeroWithRequest(request.Context(), action, request.PathValue("hero_id"))
 	})
 }
 
 func (router *Router) handleEquipmentLevel(response http.ResponseWriter, request *http.Request) {
-	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
-		return router.playerService.LevelEquipmentWithRequest(request.Context(), action, request.PathValue("equipment_id"))
+	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.LevelEquipmentWithRequest(request.Context(), action, request.PathValue("equipment_id"))
 	})
 }
 
@@ -173,8 +209,8 @@ func (router *Router) handleAccessoryEquip(response http.ResponseWriter, request
 		return
 	}
 
-	router.writeGameplayAction(response, request, rawBody, func(action player.ActionRequest) api.ActionResult {
-		return router.playerService.EquipAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID)
+	router.writeGameplayAction(response, request, rawBody, func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.EquipAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID)
 	})
 }
 
@@ -184,8 +220,8 @@ func (router *Router) handleAccessoryLevel(response http.ResponseWriter, request
 		return
 	}
 
-	router.writeGameplayAction(response, request, rawBody, func(action player.ActionRequest) api.ActionResult {
-		return router.playerService.LevelAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID)
+	router.writeGameplayAction(response, request, rawBody, func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.LevelAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID)
 	})
 }
 
@@ -195,26 +231,26 @@ func (router *Router) handleAccessoryFuse(response http.ResponseWriter, request 
 		return
 	}
 
-	router.writeGameplayAction(response, request, rawBody, func(action player.ActionRequest) api.ActionResult {
-		return router.playerService.FuseAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID)
+	router.writeGameplayAction(response, request, rawBody, func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.FuseAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID)
 	})
 }
 
 func (router *Router) handleSummonPull(response http.ResponseWriter, request *http.Request) {
-	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
-		return router.playerService.PullSummonWithRequest(request.Context(), action, request.PathValue("banner_id"))
+	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.PullSummonWithRequest(request.Context(), action, request.PathValue("banner_id"))
 	})
 }
 
 func (router *Router) handleDailyMissionClaim(response http.ResponseWriter, request *http.Request) {
-	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
-		return router.playerService.ClaimDailyMissionWithRequest(request.Context(), action, request.PathValue("mission_id"))
+	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.ClaimDailyMissionWithRequest(request.Context(), action, request.PathValue("mission_id"))
 	})
 }
 
 func (router *Router) handleBattlePassClaim(response http.ResponseWriter, request *http.Request) {
-	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
-		return router.playerService.ClaimBattlePassRewardWithRequest(request.Context(), action, request.PathValue("reward_id"))
+	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.ClaimBattlePassRewardWithRequest(request.Context(), action, request.PathValue("reward_id"))
 	})
 }
 
@@ -239,13 +275,65 @@ func writeActionResult(response http.ResponseWriter, result any) {
 	writeJSON(response, http.StatusOK, result)
 }
 
-func (router *Router) writeGameplayAction(response http.ResponseWriter, request *http.Request, rawBody string, run func(player.ActionRequest) api.ActionResult) {
+func (router *Router) writeGameplayAction(response http.ResponseWriter, request *http.Request, rawBody string, run func(*player.Service, player.ActionRequest) api.ActionResult) {
+	playerService, ok := router.authenticatedPlayerService(response, request)
+	if !ok {
+		return
+	}
+
 	action, ok := router.actionRequest(response, request, rawBody)
 	if !ok {
 		return
 	}
 
-	writeActionResult(response, run(action))
+	writeActionResult(response, run(playerService, action))
+}
+
+func (router *Router) authenticatedPlayerService(response http.ResponseWriter, request *http.Request) (*player.Service, bool) {
+	token := sessionTokenFromRequest(request)
+	if token == "" {
+		writeJSON(response, http.StatusUnauthorized, map[string]string{
+			"errorCode": "missing_session",
+			"message":   "Bearer session token is required.",
+		})
+		return nil, false
+	}
+
+	session, err := router.authService.ValidateSession(request.Context(), token)
+	if err != nil {
+		writeJSON(response, http.StatusUnauthorized, map[string]string{
+			"errorCode": "invalid_session",
+			"message":   "Session token is invalid or expired.",
+		})
+		return nil, false
+	}
+
+	return router.playerServiceForSession(response, request, session)
+}
+
+func (router *Router) playerServiceForSession(response http.ResponseWriter, request *http.Request, session auth.Session) (*player.Service, bool) {
+	playerService, err := router.playerManager.ServiceForPlayer(request.Context(), session.PlayerID)
+	if err != nil {
+		writeJSON(response, http.StatusInternalServerError, map[string]string{
+			"errorCode": "player_context_failed",
+			"message":   err.Error(),
+		})
+		return nil, false
+	}
+
+	return playerService, true
+}
+
+func sessionTokenFromRequest(request *http.Request) string {
+	authorization := strings.TrimSpace(request.Header.Get("Authorization"))
+	if authorization != "" {
+		parts := strings.Fields(authorization)
+		if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+			return strings.TrimSpace(parts[1])
+		}
+	}
+
+	return strings.TrimSpace(request.Header.Get("X-Session-Token"))
 }
 
 func (router *Router) actionRequest(response http.ResponseWriter, request *http.Request, rawBody string) (player.ActionRequest, bool) {

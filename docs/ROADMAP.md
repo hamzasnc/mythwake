@@ -339,6 +339,8 @@ Current backend state:
 - Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes, ETags, and `304 Not Modified` revalidation.
 - PostgreSQL now has account identity and session tables shaped for guest, email, Google, and Apple login providers; raw session tokens are returned once and only token hashes are stored.
 - Unity Server Mode can now load and cache the `/definitions` snapshot with ETag revalidation and use it for server-owned dungeon preview values.
+- Player state, flush, and gameplay mutation routes now validate Bearer sessions and resolve the player context from the session token.
+- Unity Server Mode now persists the session token, sends `Authorization: Bearer <sessionToken>`, and retries protected requests once after `401` by refreshing guest auth.
 - Successful idempotent action results save in `player.player_action_results`.
 - Per-action economy deltas save in `logs.player_action_ledger`.
 - Startup restores from the latest durable action result snapshot if materialized tables are behind.
@@ -570,10 +572,11 @@ Progress:
 - Expanded definition snapshots to cover currencies, heroes, rewards, campaign stages, accessory slots, accessory rarities, and accessory item definitions.
 - Added `internal/auth` with planned provider definitions for guest, email, Google, and Apple plus hashed PostgreSQL session persistence.
 - Added explicit player domain action services for campaign, dungeons, hero progression, equipment, accessories, summons, and missions while preserving the public service API.
+- Added per-player backend service contexts resolved from validated sessions instead of routing protected requests through one hardcoded dev player.
 
 Next useful step:
+- Add Redis for short-lived session/rate-limit/lock coordination after the current PostgreSQL session path is stable.
 - Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
-- Add Redis after the first PostgreSQL path is stable.
 
 Done when:
 - A local Postgres-backed API can restart without losing core player state.

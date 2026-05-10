@@ -133,8 +133,10 @@ func TestGuestAuthEndpoint(t *testing.T) {
 
 func TestCampaignFightEndpoint(t *testing.T) {
 	handler := newTestHandler()
+	login := loginGuest(t, handler)
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addAuth(request, login.SessionToken)
 	addIdempotencyKey(request, "campaign-fight-001")
 
 	handler.ServeHTTP(response, request)
@@ -158,8 +160,10 @@ func TestCampaignFightEndpoint(t *testing.T) {
 
 func TestMutatingActionRequiresIdempotencyHeader(t *testing.T) {
 	handler := newTestHandler()
+	login := loginGuest(t, handler)
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addAuth(request, login.SessionToken)
 
 	handler.ServeHTTP(response, request)
 
@@ -176,10 +180,53 @@ func TestMutatingActionRequiresIdempotencyHeader(t *testing.T) {
 	}
 }
 
-func TestMutatingActionRejectsInvalidIdempotencyHeader(t *testing.T) {
+func TestProtectedEndpointRequiresSession(t *testing.T) {
 	handler := newTestHandler()
 	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/player/state", nil)
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401, got %d", response.Code)
+	}
+
+	var body map[string]string
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body["errorCode"] != "missing_session" {
+		t.Fatalf("expected missing session error, got %#v", body)
+	}
+}
+
+func TestProtectedEndpointRejectsInvalidSession(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/player/state", nil)
+	addAuth(request, "mw_sess_invalid")
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401, got %d", response.Code)
+	}
+
+	var body map[string]string
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body["errorCode"] != "invalid_session" {
+		t.Fatalf("expected invalid session error, got %#v", body)
+	}
+}
+
+func TestMutatingActionRejectsInvalidIdempotencyHeader(t *testing.T) {
+	handler := newTestHandler()
+	login := loginGuest(t, handler)
+	response := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addAuth(request, login.SessionToken)
 	addIdempotencyKey(request, "bad key with spaces")
 
 	handler.ServeHTTP(response, request)
@@ -199,8 +246,10 @@ func TestMutatingActionRejectsInvalidIdempotencyHeader(t *testing.T) {
 
 func TestMutatingActionAcceptsLegacyIdempotencyHeader(t *testing.T) {
 	handler := newTestHandler()
+	login := loginGuest(t, handler)
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addAuth(request, login.SessionToken)
 	request.Header.Set("X-Idempotency-Key", "legacy-campaign-001")
 
 	handler.ServeHTTP(response, request)
@@ -220,8 +269,10 @@ func TestMutatingActionAcceptsLegacyIdempotencyHeader(t *testing.T) {
 
 func TestPlayerStateEndpointReturnsSnapshot(t *testing.T) {
 	handler := newTestHandler()
+	login := loginGuest(t, handler)
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/player/state", nil)
+	addAuth(request, login.SessionToken)
 
 	handler.ServeHTTP(response, request)
 
@@ -241,8 +292,10 @@ func TestPlayerStateEndpointReturnsSnapshot(t *testing.T) {
 
 func TestPlayerStateFlushEndpoint(t *testing.T) {
 	handler := newTestHandler()
+	login := loginGuest(t, handler)
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodPost, "/player/state/flush", nil)
+	addAuth(request, login.SessionToken)
 
 	handler.ServeHTTP(response, request)
 
@@ -253,8 +306,10 @@ func TestPlayerStateFlushEndpoint(t *testing.T) {
 
 func TestAccessoryBodyValidation(t *testing.T) {
 	handler := newTestHandler()
+	login := loginGuest(t, handler)
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodPost, "/gear/accessories/equip", strings.NewReader(`{}`))
+	addAuth(request, login.SessionToken)
 	addIdempotencyKey(request, "accessory-equip-001")
 
 	handler.ServeHTTP(response, request)
@@ -275,8 +330,34 @@ func newTestHandler() http.Handler {
 		},
 		log.New(testWriter{}, "", 0),
 		nil,
-		player.NewService(),
+		player.NewManager(nil),
 	)
+}
+
+func loginGuest(t testing.TB, handler http.Handler) api.GuestAuthResponse {
+	t.Helper()
+
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/auth/guest", nil)
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected guest login status 200, got %d", response.Code)
+	}
+
+	var body api.GuestAuthResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode guest login response: %v", err)
+	}
+	if body.SessionToken == "" {
+		t.Fatalf("expected session token in guest login response, got %#v", body)
+	}
+
+	return body
+}
+
+func addAuth(request *http.Request, token string) {
+	request.Header.Set("Authorization", "Bearer "+token)
 }
 
 func addIdempotencyKey(request *http.Request, key string) {

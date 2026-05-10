@@ -22,9 +22,9 @@ import (
 func main() {
 	cfg := config.Load()
 	logger := log.New(os.Stdout, "mythwake-api ", log.LstdFlags|log.LUTC)
-	playerService := player.NewService()
 	authService := auth.NewService(nil)
 	var cachedStateStore *cache.WriteBehindStateStore
+	var stateStore player.StateStore
 
 	if cfg.DatabaseURL != "" {
 		setupContext, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -49,18 +49,16 @@ func main() {
 			},
 			logger,
 		)
-		if err := playerService.UseStateStore(setupContext, cachedStateStore); err != nil {
-			cancel()
-			logger.Fatalf("player state store failed: %v", err)
-		}
+		stateStore = cachedStateStore
 		cancel()
 		cfg.DatabaseStatus = "connected"
 		cfg.StateCacheStatus = cfg.StateWriteMode
 	}
+	playerManager := player.NewManager(stateStore)
 
 	server := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           apihttp.NewRouter(cfg, logger, authService, playerService),
+		Handler:           apihttp.NewRouter(cfg, logger, authService, playerManager),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

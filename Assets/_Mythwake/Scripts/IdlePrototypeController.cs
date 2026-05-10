@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.14";
+    public const string PrototypeVersion = "0.2.15";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1947,7 +1947,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (success)
         {
             ApplyBackendSnapshot(response.playerSnapshot);
-            FinishBackendRequest($"Backend login: {response.playerId}");
+            var playerId = string.IsNullOrWhiteSpace(response.playerId) ? backendClient.PlayerId : response.playerId;
+            FinishBackendRequest($"Backend login: {playerId}  Session active");
             return;
         }
 
@@ -4904,7 +4905,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (backendStatusText != null)
         {
-            backendStatusText.text = backendStatus;
+            var sessionLabel = backendClient != null && backendClient.HasSession ? $"Logged: {backendClient.PlayerId}" : "Logged: no";
+            backendStatusText.text = $"{backendStatus}\n{sessionLabel}";
         }
 
         if (backendModeText != null)
@@ -4920,7 +4922,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendStatus = string.IsNullOrWhiteSpace(status) ? "Backend: no status" : status;
         if (backendStatusText != null)
         {
-            backendStatusText.text = backendStatus;
+            var sessionLabel = backendClient != null && backendClient.HasSession ? $"Logged: {backendClient.PlayerId}" : "Logged: no";
+            backendStatusText.text = $"{backendStatus}\n{sessionLabel}";
         }
     }
 

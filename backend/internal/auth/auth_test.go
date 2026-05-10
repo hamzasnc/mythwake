@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 )
 
 type fakeAccountStore struct {
@@ -21,6 +22,21 @@ func (store *fakeAccountStore) SaveSession(_ context.Context, session Session) e
 	return nil
 }
 
+func (store *fakeAccountStore) FindSessionByTokenHash(_ context.Context, tokenHash string, _ time.Time) (Session, bool, error) {
+	if store.session.TokenHash != tokenHash {
+		return Session{}, false, nil
+	}
+
+	return store.session, true, nil
+}
+
+func (store *fakeAccountStore) TouchSession(_ context.Context, sessionID string, seenAt time.Time) error {
+	if store.session.SessionID == sessionID {
+		store.session.LastSeenAt = seenAt
+	}
+	return nil
+}
+
 func TestProviderDefinitionsIncludePlannedLoginVariants(t *testing.T) {
 	definitions := ProviderDefinitions()
 
@@ -35,7 +51,7 @@ func TestIssueGuestSessionReturnsTokenAndPersistsHash(t *testing.T) {
 	store := &fakeAccountStore{}
 	service := NewService(store)
 
-	session, err := service.IssueGuestSession(context.Background(), "player-1", "test-agent")
+	session, err := service.IssueGuestSessionForPlayer(context.Background(), "player-1", "test-agent")
 	if err != nil {
 		t.Fatalf("issue guest session: %v", err)
 	}
@@ -60,8 +76,48 @@ func TestIssueGuestSessionReturnsTokenAndPersistsHash(t *testing.T) {
 func TestIssueGuestSessionRejectsEmptyPlayerID(t *testing.T) {
 	service := NewService(nil)
 
-	if _, err := service.IssueGuestSession(context.Background(), " ", ""); err == nil {
+	if _, err := service.IssueGuestSessionForPlayer(context.Background(), " ", ""); err == nil {
 		t.Fatal("expected empty player id to fail")
+	}
+}
+
+func TestIssueGuestSessionGeneratesPlayerID(t *testing.T) {
+	service := NewService(nil)
+
+	session, err := service.IssueGuestSession(context.Background(), "")
+	if err != nil {
+		t.Fatalf("issue guest session: %v", err)
+	}
+
+	if !strings.HasPrefix(session.PlayerID, "player_") {
+		t.Fatalf("expected generated player id, got %#v", session)
+	}
+}
+
+func TestValidateSessionUsesStoredTokenHash(t *testing.T) {
+	store := &fakeAccountStore{}
+	service := NewService(store)
+
+	issued, err := service.IssueGuestSessionForPlayer(context.Background(), "player-1", "")
+	if err != nil {
+		t.Fatalf("issue guest session: %v", err)
+	}
+
+	validated, err := service.ValidateSession(context.Background(), issued.Token)
+	if err != nil {
+		t.Fatalf("validate session: %v", err)
+	}
+
+	if validated.PlayerID != issued.PlayerID || validated.TokenHash != issued.TokenHash {
+		t.Fatalf("expected validated stored session, got %#v", validated)
+	}
+}
+
+func TestValidateSessionRejectsUnknownToken(t *testing.T) {
+	service := NewService(nil)
+
+	if _, err := service.ValidateSession(context.Background(), "mw_sess_unknown"); err == nil {
+		t.Fatal("expected unknown token to fail")
 	}
 }
 
