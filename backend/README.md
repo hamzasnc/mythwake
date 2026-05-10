@@ -44,7 +44,7 @@ Current scope:
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
 - `GET /player/core-state` returns the compact numeric state only.
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
-- The Unity prototype can ping, guest-login, sync this snapshot, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
+- The Unity prototype can ping, guest-login, sync this snapshot, cache `/definitions` with ETag revalidation, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
 - Server gameplay POSTs require valid `Idempotency-Key` headers by default.
 - Gameplay action IDs are centralized in `internal/gameplay` so routing, persistence, ledgers, and tests share the same names.
 - Currency IDs, spends, grants, display names, and deltas are centralized in `internal/economy`.

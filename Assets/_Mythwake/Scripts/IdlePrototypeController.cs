@@ -3,9 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
+public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.11";
+    public const string PrototypeVersion = "0.2.12";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -686,6 +686,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private Button backendHealthButton;
     [SerializeField] private Button backendLoginButton;
     [SerializeField] private Button backendSyncButton;
+    [SerializeField] private Button backendDefinitionsButton;
     [SerializeField] private Button backendModeButton;
     [SerializeField] private TMP_Text backendModeText;
 
@@ -778,6 +779,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private AppScreen activeScreen = AppScreen.Home;
     private bool backendRequestInProgress;
     private string backendStatus = "Backend: local prototype mode";
+    private MythwakeDefinitionSnapshotDto backendDefinitions;
+    private bool hasBackendDefinitions;
 
     private void Awake()
     {
@@ -914,6 +917,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendSyncButton != null)
         {
             backendSyncButton.onClick.AddListener(SyncBackendState);
+        }
+
+        if (backendDefinitionsButton != null)
+        {
+            backendDefinitionsButton.onClick.AddListener(SyncBackendDefinitions);
         }
 
         if (backendModeButton != null)
@@ -1075,6 +1083,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendSyncButton != null)
         {
             backendSyncButton.onClick.RemoveListener(SyncBackendState);
+        }
+
+        if (backendDefinitionsButton != null)
+        {
+            backendDefinitionsButton.onClick.RemoveListener(SyncBackendDefinitions);
         }
 
         if (backendModeButton != null)
@@ -1789,10 +1802,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         StartCoroutine(backendClient.GetPlayerSnapshot(OnBackendSnapshot));
     }
 
+    public void SyncBackendDefinitions()
+    {
+        if (!TryStartBackendRequest("Backend: syncing definitions..."))
+        {
+            return;
+        }
+
+        StartCoroutine(backendClient.GetDefinitions(OnBackendDefinitions));
+    }
+
     public void ToggleBackendGameplayMode()
     {
         backendGameplayEnabled = !backendGameplayEnabled;
         SetBackendStatus(backendGameplayEnabled ? "Gameplay mode: Server" : "Gameplay mode: Local");
+
+        if (backendGameplayEnabled && !hasBackendDefinitions && TryStartBackendRequest("Server: loading definitions..."))
+        {
+            StartCoroutine(backendClient.GetDefinitions(OnBackendDefinitions));
+        }
+
         RefreshUi();
     }
 
@@ -1935,6 +1964,22 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         FinishBackendRequest($"Backend sync failed: {error}");
+    }
+
+    private void OnBackendDefinitions(bool success, string error, MythwakeDefinitionSnapshotDto definitions, bool fromCache)
+    {
+        if (success)
+        {
+            backendDefinitions = definitions;
+            hasBackendDefinitions = true;
+            RefreshUi();
+
+            var source = fromCache ? "cache" : "server";
+            FinishBackendRequest($"Definitions: {source}  v{definitions.apiVersion}  {ShortHash(definitions.contentHash)}");
+            return;
+        }
+
+        FinishBackendRequest($"Definitions sync failed: {error}");
     }
 
     private void OnBackendGameplayAction(bool success, string error, MythwakeActionResultDto result)
@@ -3984,6 +4029,60 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         };
     }
 
+    public bool TryGetDefinitions(out MythwakeDefinitionSnapshotDto definitions)
+    {
+        definitions = backendDefinitions;
+        return hasBackendDefinitions && !string.IsNullOrWhiteSpace(backendDefinitions.contentHash);
+    }
+
+    private bool UseBackendDefinitionView()
+    {
+        MythwakeDefinitionSnapshotDto definitions;
+        return backendGameplayEnabled && TryGetDefinitions(out definitions);
+    }
+
+    private bool TryGetBackendDungeonDefinition(string dungeonId, out MythwakeDungeonDefinitionDto definition)
+    {
+        definition = default(MythwakeDungeonDefinitionDto);
+        if (!TryGetDefinitions(out var definitions) || definitions.dungeons == null)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < definitions.dungeons.Length; i++)
+        {
+            if (definitions.dungeons[i].dungeonId == dungeonId)
+            {
+                definition = definitions.dungeons[i];
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static int GetBackendDungeonRequiredPower(MythwakeDungeonDefinitionDto definition, int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        return Mathf.Max(1, definition.baseRequiredPower + (floor * definition.requiredPowerPerFloor));
+    }
+
+    private static int GetBackendDungeonRewardAmount(MythwakeDungeonDefinitionDto definition, int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        return Mathf.Max(0, definition.baseRewardAmount + (floor * definition.rewardPerFloor));
+    }
+
+    private static string ShortHash(string contentHash)
+    {
+        if (string.IsNullOrWhiteSpace(contentHash))
+        {
+            return "no-hash";
+        }
+
+        return contentHash.Length <= 8 ? contentHash : contentHash.Substring(0, 8);
+    }
+
     private MythwakeHeroStateDto[] CreateHeroSnapshot()
     {
         EnsureHeroLevels();
@@ -4448,23 +4547,51 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (goldDungeonText != null)
         {
-            goldDungeonText.text = $"{GoldDungeonDefinition.displayName} F{goldDungeonFloor}  Rec {GetDungeonRecommendedPower(goldDungeonFloor)}\n+{GetGoldDungeonReward(goldDungeonFloor)} {GetCurrencyDefinition(GoldDungeonDefinition.rewardCurrencyId).displayName}";
+            goldDungeonText.text = FormatDungeonPreview(GoldDungeonDefinition, goldDungeonFloor);
         }
 
         if (essenceDungeonText != null)
         {
-            essenceDungeonText.text = $"{EssenceDungeonDefinition.displayName} F{essenceDungeonFloor}  Rec {GetDungeonRecommendedPower(essenceDungeonFloor)}\n+{GetEssenceDungeonReward(essenceDungeonFloor)} {GetCurrencyDefinition(EssenceDungeonDefinition.rewardCurrencyId).displayName}";
+            essenceDungeonText.text = FormatDungeonPreview(EssenceDungeonDefinition, essenceDungeonFloor);
         }
 
         if (gearDungeonText != null)
         {
-            gearDungeonText.text = $"{GearDungeonDefinition.displayName} F{gearDungeonFloor}  Rec {GetGearDungeonRecommendedPower(gearDungeonFloor)}\nRandom accessory drop";
+            gearDungeonText.text = FormatDungeonPreview(GearDungeonDefinition, gearDungeonFloor);
         }
 
         if (dungeonResultText != null && string.IsNullOrWhiteSpace(dungeonResultText.text))
         {
             dungeonResultText.text = "Dungeons are the active resource source.";
         }
+    }
+
+    private string FormatDungeonPreview(DungeonDefinition localDefinition, int floor)
+    {
+        if (UseBackendDefinitionView() && TryGetBackendDungeonDefinition(localDefinition.dungeonId, out var backendDefinition))
+        {
+            var requiredPower = GetBackendDungeonRequiredPower(backendDefinition, floor);
+            if (string.IsNullOrWhiteSpace(backendDefinition.rewardCurrencyId))
+            {
+                return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\nServer: random accessory drop";
+            }
+
+            var rewardAmount = GetBackendDungeonRewardAmount(backendDefinition, floor);
+            var currencyName = GetCurrencyDefinition(backendDefinition.rewardCurrencyId).displayName;
+            return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\nServer: +{rewardAmount} {currencyName}";
+        }
+
+        if (localDefinition.dungeonId == GoldDungeonDefinition.dungeonId)
+        {
+            return $"{localDefinition.displayName} F{floor}  Rec {GetDungeonRecommendedPower(floor)}\n+{GetGoldDungeonReward(floor)} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
+        }
+
+        if (localDefinition.dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return $"{localDefinition.displayName} F{floor}  Rec {GetDungeonRecommendedPower(floor)}\n+{GetEssenceDungeonReward(floor)} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
+        }
+
+        return $"{localDefinition.displayName} F{floor}  Rec {GetGearDungeonRecommendedPower(floor)}\nRandom accessory drop";
     }
 
     private void RefreshOfflineRewardUi()
@@ -4705,7 +4832,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var panelObject = new GameObject("Backend Sync Panel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         panelObject.transform.SetParent(shopPanel.transform, false);
-        SetRuntimeRect(panelObject.GetComponent<RectTransform>(), new Vector2(0, -1215), new Vector2(860, 190), new Vector2(0.5f, 1f));
+        SetRuntimeRect(panelObject.GetComponent<RectTransform>(), new Vector2(0, -1215), new Vector2(860, 210), new Vector2(0.5f, 1f));
 
         var panelImage = panelObject.GetComponent<Image>();
         panelImage.color = new Color(0.1f, 0.13f, 0.2f, 0.96f);
@@ -4713,16 +4840,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var header = CreateRuntimeText(panelObject.transform, "Backend Header", "Backend", 30, new Vector2(0, -32), new Vector2(790, 42));
         header.fontStyle = FontStyles.Bold;
 
-        backendStatusText = CreateRuntimeText(panelObject.transform, "Backend Status Text", backendStatus, 22, new Vector2(0, -78), new Vector2(790, 54));
+        backendStatusText = CreateRuntimeText(panelObject.transform, "Backend Status Text", backendStatus, 22, new Vector2(0, -78), new Vector2(790, 62));
         backendStatusText.color = new Color(0.72f, 0.86f, 1f);
         backendStatusText.enableAutoSizing = true;
         backendStatusText.fontSizeMin = 16;
         backendStatusText.fontSizeMax = 22;
 
-        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -315, -140, 170, 54);
-        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", -105, -140, 170, 54);
-        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "Sync", 105, -140, 170, 54);
-        backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 315, -140, 170, 54);
+        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -336, -154, 148, 54);
+        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", -168, -154, 148, 54);
+        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "State", 0, -154, 148, 54);
+        backendDefinitionsButton = CreateRuntimeButton(panelObject.transform, "Backend Definitions Button", "Defs", 168, -154, 148, 54);
+        backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 336, -154, 148, 54);
         backendModeText = backendModeButton.GetComponentInChildren<TMP_Text>();
     }
 
@@ -4811,6 +4939,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendSyncButton != null)
         {
             backendSyncButton.interactable = interactable;
+        }
+
+        if (backendDefinitionsButton != null)
+        {
+            backendDefinitionsButton.interactable = interactable;
         }
 
         if (backendModeButton != null)

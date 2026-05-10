@@ -123,6 +123,90 @@ public struct MythwakeHealthDto
     public string time_utc;
 }
 
+[Serializable]
+public struct MythwakeDefinitionSnapshotDto
+{
+    public int schemaVersion;
+    public string apiVersion;
+    public string contentHash;
+    public MythwakeDungeonDefinitionDto[] dungeons;
+    public MythwakeProgressionCostDefinitionDto[] progressionCosts;
+    public MythwakeSummonBannerDefinitionDto[] summonBanners;
+    public MythwakeDailyMissionDefinitionDto[] dailyMissions;
+    public MythwakeBattlePassRewardDefinitionDto[] battlePassRewards;
+    public MythwakeGameplayActionDefinitionDto[] gameplayActions;
+}
+
+[Serializable]
+public struct MythwakeDungeonDefinitionDto
+{
+    public string dungeonId;
+    public string displayName;
+    public string rewardCurrencyId;
+    public int baseRequiredPower;
+    public int requiredPowerPerFloor;
+    public int baseRewardAmount;
+    public int rewardPerFloor;
+}
+
+[Serializable]
+public struct MythwakeProgressionCostDefinitionDto
+{
+    public string costId;
+    public string domain;
+    public string targetId;
+    public string costCurrencyId;
+    public int baseAmount;
+    public int amountPerLevel;
+    public string formula;
+}
+
+[Serializable]
+public struct MythwakeSummonBannerDefinitionDto
+{
+    public string bannerId;
+    public string displayName;
+    public string costCurrencyId;
+    public int costAmount;
+    public string resolutionMode;
+    public MythwakeSummonShardDropDefinitionDto[] shardDrops;
+}
+
+[Serializable]
+public struct MythwakeSummonShardDropDefinitionDto
+{
+    public string heroId;
+    public int shards;
+    public string rewardId;
+}
+
+[Serializable]
+public struct MythwakeDailyMissionDefinitionDto
+{
+    public string missionId;
+    public string displayName;
+    public string progressType;
+    public int target;
+    public MythwakeRewardDto reward;
+}
+
+[Serializable]
+public struct MythwakeBattlePassRewardDefinitionDto
+{
+    public string rewardId;
+    public int requiredPassXp;
+    public MythwakeRewardDto reward;
+}
+
+[Serializable]
+public struct MythwakeGameplayActionDefinitionDto
+{
+    public string actionId;
+    public string domain;
+    public bool requiresIdempotency;
+    public bool materializedByFlush;
+}
+
 public interface IMythwakePlayerStateService
 {
     MythwakePlayerStateDto GetPlayerState();
@@ -131,6 +215,11 @@ public interface IMythwakePlayerStateService
 public interface IMythwakePlayerSnapshotService
 {
     MythwakePlayerSnapshotDto GetPlayerSnapshot();
+}
+
+public interface IMythwakeDefinitionService
+{
+    bool TryGetDefinitions(out MythwakeDefinitionSnapshotDto definitions);
 }
 
 public interface IMythwakeEconomyService

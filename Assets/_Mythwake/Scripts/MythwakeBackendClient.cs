@@ -16,6 +16,9 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     [SerializeField] private string baseUrl = DefaultBackendBaseUrl;
     [SerializeField] private int requestTimeoutSeconds = 10;
     private readonly Dictionary<string, string> pendingActionKeys = new Dictionary<string, string>();
+    private const string DefinitionsJsonCacheKey = "Mythwake.Backend.Definitions.Json";
+    private const string DefinitionsETagCacheKey = "Mythwake.Backend.Definitions.ETag";
+    private const string DefinitionsContentHashCacheKey = "Mythwake.Backend.Definitions.ContentHash";
 
     public string BaseUrl
     {
@@ -41,6 +44,18 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     public IEnumerator GetPlayerCoreState(Action<bool, string, MythwakePlayerStateDto> completed)
     {
         return SendJson(Get("/player/core-state"), completed);
+    }
+
+    public IEnumerator GetDefinitions(Action<bool, string, MythwakeDefinitionSnapshotDto, bool> completed)
+    {
+        var request = Get("/definitions");
+        var cachedETag = PlayerPrefs.GetString(DefinitionsETagCacheKey, string.Empty);
+        if (!string.IsNullOrWhiteSpace(cachedETag))
+        {
+            request.SetRequestHeader("If-None-Match", cachedETag);
+        }
+
+        return SendDefinitionsJson(request, completed);
     }
 
     public IEnumerator FightCampaign(Action<bool, string, MythwakeActionResultDto> completed)
@@ -157,6 +172,75 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         }
     }
 
+    private IEnumerator SendDefinitionsJson(UnityWebRequest request, Action<bool, string, MythwakeDefinitionSnapshotDto, bool> completed)
+    {
+        request.timeout = Mathf.Max(1, requestTimeoutSeconds);
+
+        using (request)
+        {
+            yield return request.SendWebRequest();
+
+            var body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
+            if (request.responseCode == httpStatusNotModified)
+            {
+                var cachedBody = PlayerPrefs.GetString(DefinitionsJsonCacheKey, string.Empty);
+                if (string.IsNullOrWhiteSpace(cachedBody))
+                {
+                    completed?.Invoke(false, "Definitions unchanged but no local cache exists.", default(MythwakeDefinitionSnapshotDto), true);
+                    yield break;
+                }
+
+                CompleteDefinitionsJson(cachedBody, completed, fromCache: true);
+                yield break;
+            }
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                completed?.Invoke(false, BuildErrorMessage(request, body), default(MythwakeDefinitionSnapshotDto), false);
+                yield break;
+            }
+
+            if (!CompleteDefinitionsJson(body, completed, fromCache: false))
+            {
+                yield break;
+            }
+
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                var etag = request.GetResponseHeader("ETag");
+                if (!string.IsNullOrWhiteSpace(etag))
+                {
+                    PlayerPrefs.SetString(DefinitionsETagCacheKey, etag);
+                }
+
+                PlayerPrefs.SetString(DefinitionsJsonCacheKey, body);
+                PlayerPrefs.Save();
+            }
+        }
+    }
+
+    private static bool CompleteDefinitionsJson(string body, Action<bool, string, MythwakeDefinitionSnapshotDto, bool> completed, bool fromCache)
+    {
+        try
+        {
+            var data = JsonUtility.FromJson<MythwakeDefinitionSnapshotDto>(body);
+            if (string.IsNullOrWhiteSpace(data.contentHash))
+            {
+                completed?.Invoke(false, "Definitions response did not include a content hash.", default(MythwakeDefinitionSnapshotDto), fromCache);
+                return false;
+            }
+
+            PlayerPrefs.SetString(DefinitionsContentHashCacheKey, data.contentHash);
+            completed?.Invoke(true, string.Empty, data, fromCache);
+            return true;
+        }
+        catch (ArgumentException exception)
+        {
+            completed?.Invoke(false, $"Invalid definitions JSON: {exception.Message}", default(MythwakeDefinitionSnapshotDto), fromCache);
+            return false;
+        }
+    }
+
     private IEnumerator SendActionJson(string actionKey, UnityWebRequest request, Action<bool, string, MythwakeActionResultDto> completed)
     {
         request.SetRequestHeader("Idempotency-Key", GetOrCreatePendingActionKey(actionKey));
@@ -213,6 +297,8 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
         return $"{request.responseCode}: {error} - {body}";
     }
+
+    private const long httpStatusNotModified = 304;
 
     [Serializable]
     private struct AccessoryRequestDto

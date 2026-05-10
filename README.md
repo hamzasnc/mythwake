@@ -90,6 +90,7 @@ Backend:
 - PostgreSQL now seeds DB-ready hero, campaign, reward, progression cost, summon, mission, and Mission Track definition tables
 - Backend player service actions are split by domain files for campaign/dungeons, progression, gear, meta, snapshots, and persistence
 - Server-owned dungeon, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
+- Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
 - Unity reuses pending idempotency keys after transport failures
 - `POST /player/state/flush` is ready as the future app-pause/disconnect save hook
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
@@ -101,6 +102,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- 0.2.12: Added Unity definition snapshot DTOs, ETag-backed local definition caching, and Server Mode dungeon previews based on `/definitions`.
 - Backend 0.2.20: Added content hashes, ETags, and `304 Not Modified` revalidation to the read-only definitions endpoint.
 - Backend 0.2.19: Added a read-only `/definitions` endpoint for server-owned gameplay and balance definitions.
 - Backend 0.2.18: Split the large player service into focused domain files without changing API behavior.
