@@ -45,8 +45,62 @@ func TestDefinitionsEndpoint(t *testing.T) {
 	if body.APIVersion != "test" || body.SchemaVersion == 0 {
 		t.Fatalf("expected versioned definition snapshot, got %#v", body)
 	}
+	if body.ContentHash == "" {
+		t.Fatalf("expected content hash, got %#v", body)
+	}
 	if len(body.Dungeons) == 0 || len(body.SummonBanners) == 0 || len(body.GameplayActions) == 0 {
 		t.Fatalf("expected populated definitions, got %#v", body)
+	}
+	if response.Header().Get("ETag") == "" {
+		t.Fatalf("expected ETag header")
+	}
+	if response.Header().Get("Cache-Control") == "" {
+		t.Fatalf("expected Cache-Control header")
+	}
+}
+
+func TestDefinitionsEndpointSupportsETagRevalidation(t *testing.T) {
+	handler := newTestHandler()
+
+	firstResponse := httptest.NewRecorder()
+	firstRequest := httptest.NewRequest(http.MethodGet, "/definitions", nil)
+	handler.ServeHTTP(firstResponse, firstRequest)
+	etag := firstResponse.Header().Get("ETag")
+	if etag == "" {
+		t.Fatal("expected initial ETag")
+	}
+
+	secondResponse := httptest.NewRecorder()
+	secondRequest := httptest.NewRequest(http.MethodGet, "/definitions", nil)
+	secondRequest.Header.Set("If-None-Match", etag)
+	handler.ServeHTTP(secondResponse, secondRequest)
+
+	if secondResponse.Code != http.StatusNotModified {
+		t.Fatalf("expected status 304, got %d", secondResponse.Code)
+	}
+	if secondResponse.Body.Len() != 0 {
+		t.Fatalf("expected empty 304 body, got %q", secondResponse.Body.String())
+	}
+}
+
+func TestDefinitionsEndpointAcceptsWeakAndListedETags(t *testing.T) {
+	handler := newTestHandler()
+
+	firstResponse := httptest.NewRecorder()
+	firstRequest := httptest.NewRequest(http.MethodGet, "/definitions", nil)
+	handler.ServeHTTP(firstResponse, firstRequest)
+	etag := firstResponse.Header().Get("ETag")
+	if etag == "" {
+		t.Fatal("expected initial ETag")
+	}
+
+	secondResponse := httptest.NewRecorder()
+	secondRequest := httptest.NewRequest(http.MethodGet, "/definitions", nil)
+	secondRequest.Header.Set("If-None-Match", `"older-definition", W/`+etag)
+	handler.ServeHTTP(secondResponse, secondRequest)
+
+	if secondResponse.Code != http.StatusNotModified {
+		t.Fatalf("expected status 304, got %d", secondResponse.Code)
 	}
 }
 

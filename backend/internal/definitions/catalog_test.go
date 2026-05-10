@@ -16,6 +16,9 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if snapshot.APIVersion != "test-version" {
 		t.Fatalf("expected API version test-version, got %s", snapshot.APIVersion)
 	}
+	if snapshot.ContentHash == "" {
+		t.Fatal("expected content hash")
+	}
 	if len(snapshot.Dungeons) != 3 {
 		t.Fatalf("expected 3 dungeons, got %#v", snapshot.Dungeons)
 	}
@@ -33,6 +36,27 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	}
 	if !hasAction(snapshot, gameplay.ActionCampaignFight) {
 		t.Fatalf("expected action catalog to include %s", gameplay.ActionCampaignFight)
+	}
+}
+
+func TestSnapshotContentHashIsStableForSameVersion(t *testing.T) {
+	first := Snapshot("test-version")
+	second := Snapshot("test-version")
+
+	if first.ContentHash != second.ContentHash {
+		t.Fatalf("expected stable content hash, got %s and %s", first.ContentHash, second.ContentHash)
+	}
+	if ETag(first) != ETag(second) {
+		t.Fatalf("expected stable etag, got %s and %s", ETag(first), ETag(second))
+	}
+}
+
+func TestSnapshotContentHashChangesWithAPIVersion(t *testing.T) {
+	first := Snapshot("test-version-a")
+	second := Snapshot("test-version-b")
+
+	if first.ContentHash == second.ContentHash {
+		t.Fatalf("expected API version to affect content hash, both were %s", first.ContentHash)
 	}
 }
 

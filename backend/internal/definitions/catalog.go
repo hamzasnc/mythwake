@@ -1,6 +1,11 @@
 package definitions
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
@@ -9,7 +14,7 @@ import (
 const SchemaVersion = 1
 
 func Snapshot(apiVersion string) api.DefinitionSnapshot {
-	return api.DefinitionSnapshot{
+	snapshot := api.DefinitionSnapshot{
 		SchemaVersion:     SchemaVersion,
 		APIVersion:        apiVersion,
 		Dungeons:          dungeonDefinitions(),
@@ -19,6 +24,23 @@ func Snapshot(apiVersion string) api.DefinitionSnapshot {
 		BattlePassRewards: battlePassRewardDefinitions(),
 		GameplayActions:   gameplayActionDefinitions(),
 	}
+	snapshot.ContentHash = ContentHash(snapshot)
+	return snapshot
+}
+
+func ContentHash(snapshot api.DefinitionSnapshot) string {
+	snapshot.ContentHash = ""
+	rawSnapshot, err := json.Marshal(snapshot)
+	if err != nil {
+		return ""
+	}
+
+	sum := sha256.Sum256(rawSnapshot)
+	return hex.EncodeToString(sum[:])
+}
+
+func ETag(snapshot api.DefinitionSnapshot) string {
+	return fmt.Sprintf(`"definitions-%s"`, snapshot.ContentHash)
 }
 
 func dungeonDefinitions() []api.DungeonDefinition {

@@ -89,7 +89,7 @@ Backend:
 - Backend Daily Mission, Mission Track, and Summon actions now validate against known server balance definitions instead of accepting arbitrary claim IDs
 - PostgreSQL now seeds DB-ready hero, campaign, reward, progression cost, summon, mission, and Mission Track definition tables
 - Backend player service actions are split by domain files for campaign/dungeons, progression, gear, meta, snapshots, and persistence
-- Server-owned dungeon, cost, summon, mission, Mission Track, and action definitions are exposed through `GET /definitions`
+- Server-owned dungeon, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
 - Unity reuses pending idempotency keys after transport failures
 - `POST /player/state/flush` is ready as the future app-pause/disconnect save hook
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
@@ -101,6 +101,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.20: Added content hashes, ETags, and `304 Not Modified` revalidation to the read-only definitions endpoint.
 - Backend 0.2.19: Added a read-only `/definitions` endpoint for server-owned gameplay and balance definitions.
 - Backend 0.2.18: Split the large player service into focused domain files without changing API behavior.
 - Backend 0.2.17: Added server-validated meta/summon balance definitions and PostgreSQL seed tables for hero, campaign, reward, cost, summon, mission, and Mission Track definitions.

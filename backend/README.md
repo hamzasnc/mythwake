@@ -51,7 +51,7 @@ Current scope:
 - Early balance definitions for campaign, dungeons, costs, summons, and simple rewards are centralized in `internal/balance`.
 - Player service gameplay actions are organized by domain files while keeping the existing API surface stable.
 - Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.
-- `GET /definitions` exposes the current server-owned balance/action catalog for client and admin tooling.
+- `GET /definitions` exposes the current server-owned balance/action catalog for client and admin tooling, with content hashes and ETag revalidation.
 - Navicat-friendly common definition views:
   - `debug.v_common_reward_overview`
   - `debug.v_common_progression_cost_overview`

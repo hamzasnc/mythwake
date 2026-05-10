@@ -94,6 +94,7 @@ type AccessoryRequest struct {
 type DefinitionSnapshot struct {
 	SchemaVersion     int                          `json:"schemaVersion"`
 	APIVersion        string                       `json:"apiVersion"`
+	ContentHash       string                       `json:"contentHash"`
 	Dungeons          []DungeonDefinition          `json:"dungeons"`
 	ProgressionCosts  []ProgressionCostDefinition  `json:"progressionCosts"`
 	SummonBanners     []SummonBannerDefinition     `json:"summonBanners"`

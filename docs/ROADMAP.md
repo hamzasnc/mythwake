@@ -336,7 +336,7 @@ Current backend state:
 - Daily Mission, Mission Track, and Summon actions now reject unknown client IDs and resolve rewards through server-owned balance definitions.
 - PostgreSQL now has DB-ready definition tables for heroes, campaign stages, rewards, progression costs, summon pools, daily missions, and Mission Track rewards.
 - The large backend player service has been split into focused domain files for campaign/dungeons, progression, gear, meta actions, snapshots, and persistence.
-- Server-owned dungeon, cost, summon, mission, Mission Track, and action definitions are exposed through `GET /definitions`.
+- Server-owned dungeon, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes, ETags, and `304 Not Modified` revalidation.
 - Successful idempotent action results save in `player.player_action_results`.
 - Per-action economy deltas save in `logs.player_action_ledger`.
 - Startup restores from the latest durable action result snapshot if materialized tables are behind.
@@ -563,6 +563,7 @@ Progress:
 - Added debug views for common rewards, progression costs, and meta reward definitions.
 - Split `backend/internal/player/service.go` into smaller domain files while preserving route behavior and tests.
 - Added `internal/definitions` as a read-only API projection layer for balance and gameplay catalogs.
+- Added content hashes and ETag revalidation to the read-only definition snapshot endpoint.
 
 Next useful step:
 - Continue turning the split player service into explicit domain services where it adds real ownership boundaries:

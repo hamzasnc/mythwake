@@ -56,7 +56,28 @@ func (router *Router) routes() {
 }
 
 func (router *Router) handleDefinitions(response http.ResponseWriter, request *http.Request) {
-	writeJSON(response, http.StatusOK, definitions.Snapshot(router.config.Version))
+	snapshot := definitions.Snapshot(router.config.Version)
+	etag := definitions.ETag(snapshot)
+
+	response.Header().Set("Cache-Control", "private, max-age=60, must-revalidate")
+	response.Header().Set("ETag", etag)
+	if matchesIfNoneMatch(request.Header.Get("If-None-Match"), etag) {
+		response.WriteHeader(http.StatusNotModified)
+		return
+	}
+
+	writeJSON(response, http.StatusOK, snapshot)
+}
+
+func matchesIfNoneMatch(header string, etag string) bool {
+	for _, match := range strings.Split(header, ",") {
+		match = strings.TrimSpace(match)
+		if match == "*" || match == etag || strings.TrimPrefix(match, "W/") == etag {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (router *Router) handleHealth(response http.ResponseWriter, request *http.Request) {
