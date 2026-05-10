@@ -120,9 +120,10 @@ func (service *Service) GuestAuth() api.GuestAuthResponse {
 	defer service.mu.Unlock()
 
 	return api.GuestAuthResponse{
-		PlayerID:     service.playerID,
-		SessionToken: "dev-session-token",
-		PlayerState:  service.state,
+		PlayerID:       service.playerID,
+		SessionToken:   "dev-session-token",
+		PlayerState:    service.state,
+		PlayerSnapshot: service.snapshot(),
 	}
 }
 
@@ -137,6 +138,10 @@ func (service *Service) GetSnapshot() api.PlayerSnapshot {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	return service.snapshot()
+}
+
+func (service *Service) snapshot() api.PlayerSnapshot {
 	return api.PlayerSnapshot{
 		PlayerID:          service.playerID,
 		State:             service.state,
@@ -409,23 +414,25 @@ func (service *Service) result(success bool, actionID string, errorCode string, 
 	if success {
 		if err := service.saveState(actionID, reward); err != nil {
 			return api.ActionResult{
-				Success:     false,
-				ActionID:    actionID,
-				ErrorCode:   "persistence_failed",
-				Message:     fmt.Sprintf("Action succeeded locally but could not be saved: %v", err),
-				PlayerState: service.state,
-				Reward:      api.Reward{},
+				Success:        false,
+				ActionID:       actionID,
+				ErrorCode:      "persistence_failed",
+				Message:        fmt.Sprintf("Action succeeded locally but could not be saved: %v", err),
+				PlayerState:    service.state,
+				PlayerSnapshot: service.snapshot(),
+				Reward:         api.Reward{},
 			}
 		}
 	}
 
 	return api.ActionResult{
-		Success:     success,
-		ActionID:    actionID,
-		ErrorCode:   errorCode,
-		Message:     message,
-		PlayerState: service.state,
-		Reward:      reward,
+		Success:        success,
+		ActionID:       actionID,
+		ErrorCode:      errorCode,
+		Message:        message,
+		PlayerState:    service.state,
+		PlayerSnapshot: service.snapshot(),
+		Reward:         reward,
 	}
 }
 

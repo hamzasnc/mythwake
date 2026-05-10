@@ -37,6 +37,7 @@ Current scope:
   - `debug.v_player_summon_overview`
 - `GET /player/state` returns a full client-ready snapshot.
 - `GET /player/core-state` returns the compact numeric state only.
+- Guest auth and action responses include `playerSnapshot` for direct client refresh.
 - Graceful shutdown
 
 Not included yet:

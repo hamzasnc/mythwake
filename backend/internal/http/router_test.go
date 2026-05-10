@@ -44,6 +44,9 @@ func TestGuestAuthEndpoint(t *testing.T) {
 	if body.PlayerID == "" || body.SessionToken == "" {
 		t.Fatalf("expected guest player and session token, got %#v", body)
 	}
+	if len(body.PlayerSnapshot.Heroes) == 0 {
+		t.Fatalf("expected guest auth to include player snapshot, got %#v", body)
+	}
 }
 
 func TestCampaignFightEndpoint(t *testing.T) {
@@ -64,6 +67,9 @@ func TestCampaignFightEndpoint(t *testing.T) {
 
 	if !body.Success || body.ActionID != "campaign_fight" {
 		t.Fatalf("expected successful campaign fight, got %#v", body)
+	}
+	if len(body.PlayerSnapshot.Heroes) == 0 || body.PlayerSnapshot.State.CampaignStage != body.PlayerState.CampaignStage {
+		t.Fatalf("expected action result snapshot to match player state, got %#v", body)
 	}
 }
 

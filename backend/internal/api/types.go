@@ -69,18 +69,20 @@ type Reward struct {
 }
 
 type ActionResult struct {
-	Success     bool        `json:"success"`
-	ActionID    string      `json:"actionId"`
-	ErrorCode   string      `json:"errorCode,omitempty"`
-	Message     string      `json:"message"`
-	PlayerState PlayerState `json:"playerState"`
-	Reward      Reward      `json:"reward"`
+	Success        bool           `json:"success"`
+	ActionID       string         `json:"actionId"`
+	ErrorCode      string         `json:"errorCode,omitempty"`
+	Message        string         `json:"message"`
+	PlayerState    PlayerState    `json:"playerState"`
+	PlayerSnapshot PlayerSnapshot `json:"playerSnapshot"`
+	Reward         Reward         `json:"reward"`
 }
 
 type GuestAuthResponse struct {
-	PlayerID     string      `json:"playerId"`
-	SessionToken string      `json:"sessionToken"`
-	PlayerState  PlayerState `json:"playerState"`
+	PlayerID       string         `json:"playerId"`
+	SessionToken   string         `json:"sessionToken"`
+	PlayerState    PlayerState    `json:"playerState"`
+	PlayerSnapshot PlayerSnapshot `json:"playerSnapshot"`
 }
 
 type AccessoryRequest struct {

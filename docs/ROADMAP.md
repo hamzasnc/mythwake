@@ -306,6 +306,7 @@ Current backend state:
 - Added persistent starter equipment training and a debug equipment overview view.
 - Added persistent summon count, daily mission claims, Battle Pass claims, summon history, and debug claim/summon views.
 - Expanded `GET /player/state` into a client-ready player snapshot containing core state, heroes, equipment, accessories, claims, and summon count.
+- Added the same full player snapshot to guest auth and action responses so the client can refresh UI from a single response.
 - Redis is not connected yet.
 
 Recommended Go shape:

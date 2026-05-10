@@ -73,12 +73,14 @@ Backend:
 - Summon count, daily mission claims, and Battle Pass claims persist in PostgreSQL
 - Claim and summon debug views are available for Navicat
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
+- Guest auth and action responses include the full player snapshot for direct client UI updates
 - Redis is planned but not connected yet
 - Windows helper scripts:
   - `scripts/start-backend.cmd`
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.9: Added full player snapshots to guest auth and action responses.
 - Backend 0.2.8: Expanded `/player/state` into a client-ready player snapshot response.
 - Backend 0.2.7: Added PostgreSQL starter equipment training persistence and equipment debug views.
 - Backend 0.2.6: Added PostgreSQL persistence for summon count, daily claims, Battle Pass claims, and claim/summon debug views.
