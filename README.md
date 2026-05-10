@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.19
+Prototype version: 0.2.20
 Local save version: 2
 
 Current prototype:
@@ -17,6 +17,7 @@ Current prototype:
 - Unity has a backend client component for health, guest auth, player snapshot sync, and server action endpoints
 - Shop tab creates a small runtime Backend panel for Ping, Login, Sync, and Local/Server gameplay mode smoke tests
 - Server Mode routes manual gameplay buttons through the Go backend and applies the returned player snapshot
+- Server Mode campaign and dungeon actions now display server combat results with HP, damage, rounds, and rewards
 - Auto Attack stays local-only for now and is paused while Server Mode is active
 - Campaign fights, dungeon runs, and summons now return local action-result DTOs
 - Accessory equip, level, and fuse actions now return local action-result DTOs
@@ -124,6 +125,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.33 / Prototype 0.2.20: Added server-authored combat result DTOs for campaign and dungeon actions, persistent combat-loss fight progress, and Unity combat result display.
 - Backend 0.2.32 / Prototype 0.2.19: Added server-authoritative daily mission progress, UTC daily reset state, PostgreSQL `player_daily_progress`, and Unity snapshot mapping.
 - Backend 0.2.31: Added server-authoritative AFK reward claims with PostgreSQL `player_afk_progress`, crash-safe snapshot replay, and smoke coverage.
 - Prototype 0.2.18: Wired Server Mode AFK claims into Unity with a Backend AFK button, Server Mode activation claim, and resume claim checks.

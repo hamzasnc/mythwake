@@ -78,6 +78,23 @@ type Reward struct {
 	PassXP      int    `json:"passXp"`
 }
 
+type CombatResult struct {
+	Mode             string `json:"mode"`
+	TargetID         string `json:"targetId"`
+	TargetLevel      int    `json:"targetLevel"`
+	Won              bool   `json:"won"`
+	Rounds           int    `json:"rounds"`
+	MaxRounds        int    `json:"maxRounds"`
+	TeamAttack       int    `json:"teamAttack"`
+	TeamMaxHP        int    `json:"teamMaxHp"`
+	TeamHPRemaining  int    `json:"teamHpRemaining"`
+	EnemyMaxHP       int    `json:"enemyMaxHp"`
+	EnemyHPRemaining int    `json:"enemyHpRemaining"`
+	EnemyDamage      int    `json:"enemyDamage"`
+	DamageDealt      int    `json:"damageDealt"`
+	DamageTaken      int    `json:"damageTaken"`
+}
+
 type ActionResult struct {
 	Success        bool           `json:"success"`
 	ActionID       string         `json:"actionId"`
@@ -88,6 +105,7 @@ type ActionResult struct {
 	PlayerState    PlayerState    `json:"playerState"`
 	PlayerSnapshot PlayerSnapshot `json:"playerSnapshot"`
 	Reward         Reward         `json:"reward"`
+	Combat         *CombatResult  `json:"combat,omitempty"`
 }
 
 type GuestAuthResponse struct {

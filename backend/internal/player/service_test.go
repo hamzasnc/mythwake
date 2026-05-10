@@ -117,6 +117,9 @@ func TestCampaignFightAdvancesDailyProgress(t *testing.T) {
 	if !result.Success {
 		t.Fatalf("expected campaign fight to succeed, got %#v", result)
 	}
+	if result.Combat == nil || !result.Combat.Won || result.Combat.Rounds <= 0 {
+		t.Fatalf("expected successful combat result, got %#v", result.Combat)
+	}
 
 	if result.PlayerSnapshot.DailyDate == "" {
 		t.Fatal("expected snapshot to include daily date")
@@ -127,6 +130,33 @@ func TestCampaignFightAdvancesDailyProgress(t *testing.T) {
 	}
 	if service.dailyFightCount != 1 || service.dailyStageClears != 1 {
 		t.Fatalf("expected daily counters to advance, fights=%d clears=%d", service.dailyFightCount, service.dailyStageClears)
+	}
+}
+
+func TestCombatLossReturnsResultAndPersistsFightProgress(t *testing.T) {
+	store := &fakeStateStore{}
+	service := NewService()
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	service.state.TeamAttack = 1
+	service.state.TeamHealth = 1
+	service.state.TeamPower = 1
+
+	result := service.FightCampaign()
+	if result.Success || result.ErrorCode != "combat_lost" {
+		t.Fatalf("expected combat loss, got %#v", result)
+	}
+	if result.Combat == nil || result.Combat.Won || result.Combat.DamageTaken <= 0 {
+		t.Fatalf("expected failed combat result, got %#v", result.Combat)
+	}
+	if store.saved.DailyFightCount != 1 {
+		t.Fatalf("expected failed combat attempt to persist daily fight progress, got %d", store.saved.DailyFightCount)
+	}
+	if store.saved.PlayerState.CampaignStage != 1 {
+		t.Fatalf("expected failed combat to keep campaign stage 1, got %d", store.saved.PlayerState.CampaignStage)
 	}
 }
 
@@ -341,6 +371,9 @@ func TestIdempotencyReplayDoesNotApplyActionTwice(t *testing.T) {
 	replay := service.FightCampaignWithRequest(context.Background(), request)
 	if !replay.Success || !replay.Replay {
 		t.Fatalf("expected idempotent replay, got %#v", replay)
+	}
+	if replay.Combat == nil || first.Combat == nil || replay.Combat.Rounds != first.Combat.Rounds {
+		t.Fatalf("expected replay to include the original combat result, first=%#v replay=%#v", first.Combat, replay.Combat)
 	}
 
 	if stage := service.GetState().CampaignStage; stage != 2 {

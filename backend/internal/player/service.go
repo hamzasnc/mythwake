@@ -270,9 +270,11 @@ func (service *Service) FlushState(ctx context.Context) error {
 
 type actionOutcome struct {
 	success   bool
+	persist   bool
 	errorCode string
 	message   string
 	reward    api.Reward
+	combat    *api.CombatResult
 }
 
 func actionSuccess(message string, reward api.Reward) actionOutcome {
@@ -283,10 +285,25 @@ func actionSuccess(message string, reward api.Reward) actionOutcome {
 	}
 }
 
+func actionSuccessWithCombat(message string, reward api.Reward, combat api.CombatResult) actionOutcome {
+	outcome := actionSuccess(message, reward)
+	outcome.combat = &combat
+	return outcome
+}
+
 func actionFailure(errorCode string, message string) actionOutcome {
 	return actionOutcome{
 		errorCode: errorCode,
 		message:   message,
+	}
+}
+
+func actionFailureWithCombat(errorCode string, message string, combat api.CombatResult, persist bool) actionOutcome {
+	return actionOutcome{
+		persist:   persist,
+		errorCode: errorCode,
+		message:   message,
+		combat:    &combat,
 	}
 }
 
@@ -298,15 +315,15 @@ func (service *Service) executeAction(ctx context.Context, request ActionRequest
 	service.ensureDailyWindow()
 	beforeState := service.persistentState()
 	outcome := run()
-	result := service.newActionResult(outcome.success, actionID, request.IdempotencyKey, false, outcome.errorCode, outcome.message, outcome.reward)
-	if !outcome.success {
+	result := service.newActionResult(outcome.success, actionID, request.IdempotencyKey, false, outcome.errorCode, outcome.message, outcome.reward, outcome.combat)
+	if !outcome.success && !outcome.persist {
 		return result
 	}
 
 	delta := economy.Delta(beforeState.PlayerState, service.state)
 	if err := service.saveState(ctx, request, actionID, outcome.reward, delta, result); err != nil {
 		service.applyPersistentState(beforeState)
-		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "persistence_failed", fmt.Sprintf("Action could not be saved and was rolled back: %v", err), api.Reward{})
+		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "persistence_failed", fmt.Sprintf("Action could not be saved and was rolled back: %v", err), api.Reward{}, nil)
 	}
 
 	return result
@@ -319,13 +336,13 @@ func (service *Service) replayedActionResult(ctx context.Context, request Action
 
 	record, found, err := service.actionResultStore.LoadActionResult(ctx, service.playerID, request.IdempotencyKey)
 	if err != nil {
-		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "idempotency_lookup_failed", fmt.Sprintf("Could not verify idempotency key: %v", err), api.Reward{}), true
+		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "idempotency_lookup_failed", fmt.Sprintf("Could not verify idempotency key: %v", err), api.Reward{}, nil), true
 	}
 	if !found {
 		return api.ActionResult{}, false
 	}
 	if record.ActionID != actionID || record.RequestHash != request.RequestHash {
-		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "idempotency_conflict", "Idempotency key was already used for a different action request.", api.Reward{}), true
+		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "idempotency_conflict", "Idempotency key was already used for a different action request.", api.Reward{}, nil), true
 	}
 
 	result := record.ActionResult
@@ -334,7 +351,7 @@ func (service *Service) replayedActionResult(ctx context.Context, request Action
 	return result, true
 }
 
-func (service *Service) newActionResult(success bool, actionID string, idempotencyKey string, replay bool, errorCode string, message string, reward api.Reward) api.ActionResult {
+func (service *Service) newActionResult(success bool, actionID string, idempotencyKey string, replay bool, errorCode string, message string, reward api.Reward, combat *api.CombatResult) api.ActionResult {
 	return api.ActionResult{
 		Success:        success,
 		ActionID:       actionID,
@@ -345,6 +362,7 @@ func (service *Service) newActionResult(success bool, actionID string, idempoten
 		PlayerState:    service.state,
 		PlayerSnapshot: service.snapshot(),
 		Reward:         reward,
+		Combat:         combat,
 	}
 }
 

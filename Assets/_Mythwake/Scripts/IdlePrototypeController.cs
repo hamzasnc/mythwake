@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.19";
+    public const string PrototypeVersion = "0.2.20";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -2187,6 +2187,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         ApplyBackendSnapshot(result.playerSnapshot);
         var message = string.IsNullOrWhiteSpace(result.message) ? "Server action completed." : result.message;
+        if (!showInSummonPanel && HasServerCombatResult(result))
+        {
+            message = FormatServerCombatMessage(result);
+        }
+
         if (showInSummonPanel)
         {
             SetSummonResult(message);
@@ -2202,6 +2207,67 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             outcome = $"{outcome} replay";
         }
         FinishBackendRequest($"Server action: {outcome}  {result.actionId}");
+    }
+
+    private static bool HasServerCombatResult(MythwakeActionResultDto result)
+    {
+        return result.combat.maxRounds > 0 && result.combat.enemyMaxHp > 0;
+    }
+
+    private string FormatServerCombatMessage(MythwakeActionResultDto result)
+    {
+        var combat = result.combat;
+        var status = combat.won ? "cleared" : "failed";
+        var reward = FormatServerReward(result.reward);
+        var rewardLine = string.IsNullOrWhiteSpace(reward) ? string.Empty : $"\nReward: {reward}";
+        return $"{GetServerCombatLabel(combat)} {status} in {combat.rounds}/{combat.maxRounds} rounds" +
+               $"\nHP {combat.teamHpRemaining}/{combat.teamMaxHp}  Enemy HP {combat.enemyHpRemaining}/{combat.enemyMaxHp}" +
+               $"\nATK {combat.teamAttack}  Enemy DMG {combat.enemyDamage}  Dealt {combat.damageDealt}  Took {combat.damageTaken}" +
+               rewardLine;
+    }
+
+    private string GetServerCombatLabel(MythwakeCombatResultDto combat)
+    {
+        if (combat.mode == "campaign")
+        {
+            return $"Campaign Stage {combat.targetLevel}";
+        }
+
+        if (combat.mode == "dungeon")
+        {
+            if (UseBackendDefinitionView() && TryGetBackendDungeonDefinition(combat.targetId, out var definition))
+            {
+                return $"{definition.displayName} F{combat.targetLevel}";
+            }
+
+            if (combat.targetId == GoldDungeonDefinition.dungeonId)
+            {
+                return $"{GoldDungeonDefinition.displayName} F{combat.targetLevel}";
+            }
+
+            if (combat.targetId == EssenceDungeonDefinition.dungeonId)
+            {
+                return $"{EssenceDungeonDefinition.displayName} F{combat.targetLevel}";
+            }
+
+            if (combat.targetId == GearDungeonDefinition.dungeonId)
+            {
+                return $"{GearDungeonDefinition.displayName} F{combat.targetLevel}";
+            }
+        }
+
+        return string.IsNullOrWhiteSpace(combat.targetId) ? "Server Combat" : $"{combat.targetId} Lv {combat.targetLevel}";
+    }
+
+    private string FormatServerReward(MythwakeRewardDto reward)
+    {
+        var text = FormatReward(reward.gold, reward.gems, reward.mythEssence);
+        if (reward.passXp <= 0)
+        {
+            return text == "None" ? string.Empty : text;
+        }
+
+        return text == "None" ? $"{reward.passXp} Pass XP" : $"{text}, {reward.passXp} Pass XP";
     }
 
     private void FinishBackendRequest(string status)

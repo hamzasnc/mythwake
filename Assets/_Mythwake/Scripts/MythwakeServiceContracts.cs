@@ -99,6 +99,25 @@ public struct MythwakeRewardDto
 }
 
 [Serializable]
+public struct MythwakeCombatResultDto
+{
+    public string mode;
+    public string targetId;
+    public int targetLevel;
+    public bool won;
+    public int rounds;
+    public int maxRounds;
+    public int teamAttack;
+    public int teamMaxHp;
+    public int teamHpRemaining;
+    public int enemyMaxHp;
+    public int enemyHpRemaining;
+    public int enemyDamage;
+    public int damageDealt;
+    public int damageTaken;
+}
+
+[Serializable]
 public struct MythwakeActionResultDto
 {
     public bool success;
@@ -110,6 +129,7 @@ public struct MythwakeActionResultDto
     public MythwakePlayerStateDto playerState;
     public MythwakePlayerSnapshotDto playerSnapshot;
     public MythwakeRewardDto reward;
+    public MythwakeCombatResultDto combat;
 }
 
 [Serializable]

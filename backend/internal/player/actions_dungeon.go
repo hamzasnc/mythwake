@@ -57,9 +57,11 @@ func (actions dungeonActions) runResourceDungeon(dungeonID string, floor int, is
 		return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", dungeonID))
 	}
 
-	requiredPower := balance.DungeonRequiredPower(definition, floor)
-	if service.state.TeamPower < requiredPower {
-		return actionFailure("combat_lost", fmt.Sprintf("Floor %d failed. Required Power %d.", floor, requiredPower))
+	combat := service.simulateCombat(dungeonEnemy(definition, floor))
+	service.dailyFightCount++
+	label := fmt.Sprintf("%s Floor %d", definition.DisplayName, floor)
+	if !combat.Won {
+		return actionFailureWithCombat("combat_lost", formatCombatMessage(label, combat), combat, true)
 	}
 
 	reward := balance.DungeonReward(definition, floor)
@@ -68,10 +70,16 @@ func (actions dungeonActions) runResourceDungeon(dungeonID string, floor int, is
 	} else {
 		service.state.EssenceDungeonFloor++
 	}
-	service.dailyFightCount++
 
 	economy.Grant(&service.state, reward)
-	return actionSuccess(fmt.Sprintf("%s floor %d cleared.", dungeonID, floor), reward)
+	message := formatCombatMessage(label, combat)
+	if reward.Gold > 0 {
+		message = fmt.Sprintf("%s Reward +%d Gold.", message, reward.Gold)
+	}
+	if reward.MythEssence > 0 {
+		message = fmt.Sprintf("%s Reward +%d Myth Essence.", message, reward.MythEssence)
+	}
+	return actionSuccessWithCombat(message, reward, combat)
 }
 
 func (actions dungeonActions) runGearDungeon() actionOutcome {
@@ -82,14 +90,16 @@ func (actions dungeonActions) runGearDungeon() actionOutcome {
 		return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", gearDungeonID))
 	}
 
-	requiredPower := balance.DungeonRequiredPower(definition, floor)
-	if service.state.TeamPower < requiredPower {
-		return actionFailure("combat_lost", fmt.Sprintf("Floor %d failed. Required Power %d.", floor, requiredPower))
+	combat := service.simulateCombat(dungeonEnemy(definition, floor))
+	service.dailyFightCount++
+	label := fmt.Sprintf("%s Floor %d", definition.DisplayName, floor)
+	if !combat.Won {
+		return actionFailureWithCombat("combat_lost", formatCombatMessage(label, combat), combat, true)
 	}
 
 	accessoryID := balance.GearDungeonDropAccessoryID(floor)
 	service.accessoryInventory[accessoryID]++
 	service.state.GearDungeonFloor++
-	service.dailyFightCount++
-	return actionSuccess(fmt.Sprintf("Dropped %s.", accessoryID), balance.GearDungeonReward())
+	message := fmt.Sprintf("%s Dropped %s.", formatCombatMessage(label, combat), accessoryID)
+	return actionSuccessWithCombat(message, balance.GearDungeonReward(), combat)
 }

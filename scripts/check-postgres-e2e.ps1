@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.32-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.33-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
@@ -174,6 +174,9 @@ try {
     $fight = Invoke-Json -Method "POST" -Path "/campaign/fight" -Headers $actionHeaders
     if (-not $fight.success) {
         throw "Expected campaign fight to succeed. Response: $($fight | ConvertTo-Json -Depth 8)"
+    }
+    if (-not $fight.combat -or -not $fight.combat.won -or [int]$fight.combat.rounds -le 0) {
+        throw "Expected campaign fight to include a successful server combat result. Response: $($fight | ConvertTo-Json -Depth 8)"
     }
     Assert-Equal $fight.playerSnapshot.playerId $login.playerId "Action snapshot player should match guest login."
     $fightDailyProgress = $fight.playerSnapshot.dailyProgress | Where-Object { $_.missionId -eq "daily_stage_clears_3" } | Select-Object -First 1

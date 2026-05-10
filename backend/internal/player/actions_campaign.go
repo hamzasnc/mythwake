@@ -25,16 +25,17 @@ func (actions campaignActions) FightCampaign(ctx context.Context, request Action
 
 	return service.executeAction(ctx, request, gameplay.ActionCampaignFight, func() actionOutcome {
 		stage := service.state.CampaignStage
-		requiredPower := balance.CampaignRequiredPower(stage)
-		if service.state.TeamPower < requiredPower {
-			return actionFailure("combat_lost", fmt.Sprintf("Campaign Stage %d failed. Required Power %d.", stage, requiredPower))
+		combat := service.simulateCombat(campaignEnemy(stage))
+		service.dailyFightCount++
+		label := fmt.Sprintf("Campaign Stage %d", stage)
+		if !combat.Won {
+			return actionFailureWithCombat("combat_lost", formatCombatMessage(label, combat), combat, true)
 		}
 
 		reward := balance.CampaignReward(stage)
 		economy.Grant(&service.state, reward)
 		service.state.CampaignStage++
-		service.dailyFightCount++
 		service.dailyStageClears++
-		return actionSuccess(fmt.Sprintf("Campaign Stage %d cleared.", stage), reward)
+		return actionSuccessWithCombat(formatCombatMessage(label, combat), reward, combat)
 	})
 }
