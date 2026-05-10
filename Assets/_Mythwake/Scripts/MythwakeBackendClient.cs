@@ -18,12 +18,14 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     private readonly Dictionary<string, string> pendingActionKeys = new Dictionary<string, string>();
     private string cachedSessionToken;
     private string cachedPlayerId;
+    private long cachedStateRevision = -1;
     private MythwakeServerClockDto lastServerClock;
     private DateTime lastServerClockUtc;
     private float lastServerClockRealtime;
     private bool hasServerClock;
     private const string SessionTokenCacheKey = "Mythwake.Backend.SessionToken";
     private const string PlayerIdCacheKey = "Mythwake.Backend.PlayerId";
+    private const string StateRevisionCacheKey = "Mythwake.Backend.StateRevision";
     private const string DefinitionsJsonCacheKey = "Mythwake.Backend.Definitions.Json";
     private const string DefinitionsETagCacheKey = "Mythwake.Backend.Definitions.ETag";
     private const string DefinitionsContentHashCacheKey = "Mythwake.Backend.Definitions.ContentHash";
@@ -62,13 +64,28 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
     public bool HasSession => !string.IsNullOrWhiteSpace(SessionToken);
     public bool HasServerClock => hasServerClock;
+    public long StateRevision
+    {
+        get
+        {
+            if (cachedStateRevision < 0)
+            {
+                var rawRevision = PlayerPrefs.GetString(StateRevisionCacheKey, "0");
+                cachedStateRevision = long.TryParse(rawRevision, out var revision) ? Math.Max(0, revision) : 0;
+            }
+
+            return cachedStateRevision;
+        }
+    }
 
     public void ClearSession()
     {
         cachedSessionToken = string.Empty;
         cachedPlayerId = string.Empty;
+        cachedStateRevision = 0;
         PlayerPrefs.DeleteKey(SessionTokenCacheKey);
         PlayerPrefs.DeleteKey(PlayerIdCacheKey);
+        PlayerPrefs.DeleteKey(StateRevisionCacheKey);
         PlayerPrefs.Save();
     }
 
@@ -97,6 +114,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
             if (success)
             {
                 StoreSession(response);
+                StoreStateRevision(response.playerSnapshot);
             }
 
             completed?.Invoke(success, error, response);
@@ -105,7 +123,15 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
     public IEnumerator GetPlayerSnapshot(Action<bool, string, MythwakePlayerSnapshotDto> completed)
     {
-        return SendAuthenticatedJson(() => Get("/player/state"), completed);
+        return SendAuthenticatedJson<MythwakePlayerSnapshotDto>(() => Get("/player/state"), (success, error, snapshot) =>
+        {
+            if (success)
+            {
+                StoreStateRevision(snapshot);
+            }
+
+            completed?.Invoke(success, error, snapshot);
+        });
     }
 
     public IEnumerator GetClientBootstrap(Action<bool, string, MythwakeClientBootstrapDto> completed)
@@ -116,6 +142,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
             {
                 StoreServerClock(response.serverClock);
                 StoreDefinitions(response.definitions);
+                StoreStateRevision(response.playerSnapshot);
             }
 
             completed?.Invoke(success, error, response);
@@ -148,6 +175,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
             if (success)
             {
                 pendingActionKeys.Clear();
+                StoreStateRevision(response.playerSnapshot);
             }
 
             completed?.Invoke(success, error, response);
@@ -476,12 +504,18 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         {
             var request = createRequest();
             request.SetRequestHeader("Idempotency-Key", GetOrCreatePendingActionKey(actionKey));
+            if (StateRevision > 0)
+            {
+                request.SetRequestHeader("X-Player-State-Revision", StateRevision.ToString());
+            }
+
             return request;
         }, (success, error, result) =>
         {
             if (success)
             {
                 pendingActionKeys.Remove(actionKey);
+                StoreStateRevision(result.playerSnapshot);
             }
 
             completed?.Invoke(success, error, result);
@@ -507,6 +541,18 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         idempotencyKey = Guid.NewGuid().ToString("N");
         pendingActionKeys[actionKey] = idempotencyKey;
         return idempotencyKey;
+    }
+
+    private void StoreStateRevision(MythwakePlayerSnapshotDto snapshot)
+    {
+        if (snapshot.revision <= 0)
+        {
+            return;
+        }
+
+        cachedStateRevision = snapshot.revision;
+        PlayerPrefs.SetString(StateRevisionCacheKey, snapshot.revision.ToString());
+        PlayerPrefs.Save();
     }
 
     private string BuildUrl(string path)

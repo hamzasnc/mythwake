@@ -530,6 +530,23 @@ func TestIdempotencyConflictDoesNotMutateState(t *testing.T) {
 	}
 }
 
+func TestExpectedRevisionRejectsStaleAction(t *testing.T) {
+	service := NewService()
+
+	first := service.FightCampaignWithRequest(context.Background(), ActionRequest{ExpectedRevision: 1})
+	if !first.Success || first.PlayerSnapshot.Revision != 2 {
+		t.Fatalf("expected first campaign fight to advance revision, got %#v", first)
+	}
+
+	stale := service.FightCampaignWithRequest(context.Background(), ActionRequest{ExpectedRevision: 1})
+	if stale.Success || stale.ErrorCode != "stale_player_state" {
+		t.Fatalf("expected stale revision rejection, got %#v", stale)
+	}
+	if stale.PlayerSnapshot.Revision != first.PlayerSnapshot.Revision || stale.PlayerState.CampaignStage != first.PlayerState.CampaignStage {
+		t.Fatalf("expected stale rejection to return current state without mutation, first=%#v stale=%#v", first, stale)
+	}
+}
+
 func TestPersistenceFailureRollsBackHotState(t *testing.T) {
 	store := &failingAfterSeedStore{}
 	service := NewService()

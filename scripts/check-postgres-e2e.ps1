@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.47-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.48-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
@@ -224,6 +224,7 @@ try {
 
     $afkHeaders = @{
         "Authorization" = $authHeaders["Authorization"]
+        "X-Player-State-Revision" = [string]$stateBefore.revision
         "Idempotency-Key" = "e2e-afk-$([guid]::NewGuid().ToString("N"))"
     }
     $afk = Invoke-Json -Method "POST" -Path "/player/offline/claim" -Headers $afkHeaders
@@ -235,6 +236,7 @@ try {
     $idempotencyKey = "e2e-campaign-$([guid]::NewGuid().ToString("N"))"
     $actionHeaders = @{
         "Authorization" = $authHeaders["Authorization"]
+        "X-Player-State-Revision" = [string]$stateBefore.revision
         "Idempotency-Key" = $idempotencyKey
     }
     $fight = Invoke-Json -Method "POST" -Path "/campaign/fight" -Headers $actionHeaders
@@ -249,6 +251,18 @@ try {
     Assert-GreaterOrEqual ([int64]$fight.playerSnapshot.revision) (([int64]$stateBefore.revision) + 1) "Campaign fight should advance the server state revision."
     $fightDailyProgress = $fight.playerSnapshot.dailyProgress | Where-Object { $_.missionId -eq "daily_stage_clears_3" } | Select-Object -First 1
     Assert-Equal ([int]$fightDailyProgress.progress) 1 "Campaign fight should advance daily stage-clear progress."
+
+    $staleHeaders = @{
+        "Authorization" = $authHeaders["Authorization"]
+        "X-Player-State-Revision" = [string]$stateBefore.revision
+        "Idempotency-Key" = "e2e-stale-$([guid]::NewGuid().ToString("N"))"
+    }
+    $staleFight = Invoke-Json -Method "POST" -Path "/campaign/fight" -Headers $staleHeaders
+    if ($staleFight.success -or $staleFight.errorCode -ne "stale_player_state") {
+        throw "Expected stale revision rejection after campaign fight. Response: $($staleFight | ConvertTo-Json -Depth 8)"
+    }
+    Assert-Equal ([int64]$staleFight.playerSnapshot.revision) ([int64]$fight.playerSnapshot.revision) "Stale fight should return latest snapshot revision."
+    Assert-Equal ([int]$staleFight.playerState.campaignStage) ([int]$fight.playerState.campaignStage) "Stale fight should not mutate campaign progress."
 
     $cacheBeforeFlush = Invoke-Json -Path "/health"
     if ($StateWriteMode -ne "write_through") {

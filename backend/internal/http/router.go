@@ -523,22 +523,43 @@ func (router *Router) actionRequest(response http.ResponseWriter, request *http.
 }
 
 func buildActionRequest(request *http.Request, rawBody string) (player.ActionRequest, string, string) {
+	expectedRevision, errorCode, message := expectedStateRevision(request)
+	if errorCode != "" {
+		return player.ActionRequest{}, errorCode, message
+	}
+
 	idempotencyKey := strings.TrimSpace(request.Header.Get("Idempotency-Key"))
 	if idempotencyKey == "" {
 		idempotencyKey = strings.TrimSpace(request.Header.Get("X-Idempotency-Key"))
 	}
 	if idempotencyKey == "" {
-		return player.ActionRequest{}, "", ""
+		return player.ActionRequest{ExpectedRevision: expectedRevision}, "", ""
 	}
 	if !validIdempotencyKey(idempotencyKey) {
 		return player.ActionRequest{}, "invalid_idempotency_key", "Idempotency-Key must be 8-128 chars and only contain letters, numbers, dot, underscore, colon, or dash."
 	}
 
-	hash := sha256.Sum256([]byte(request.Method + "\n" + request.URL.EscapedPath() + "\n" + request.URL.RawQuery + "\n" + rawBody))
+	hashInput := request.Method + "\n" + request.URL.EscapedPath() + "\n" + request.URL.RawQuery + "\n" + rawBody + "\n" + strconv.FormatInt(expectedRevision, 10)
+	hash := sha256.Sum256([]byte(hashInput))
 	return player.ActionRequest{
-		IdempotencyKey: idempotencyKey,
-		RequestHash:    hex.EncodeToString(hash[:]),
+		IdempotencyKey:   idempotencyKey,
+		RequestHash:      hex.EncodeToString(hash[:]),
+		ExpectedRevision: expectedRevision,
 	}, "", ""
+}
+
+func expectedStateRevision(request *http.Request) (int64, string, string) {
+	value := strings.TrimSpace(request.Header.Get("X-Player-State-Revision"))
+	if value == "" {
+		return 0, "", ""
+	}
+
+	revision, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || revision <= 0 {
+		return 0, "invalid_state_revision", "X-Player-State-Revision must be a positive integer."
+	}
+
+	return revision, "", ""
 }
 
 func validIdempotencyKey(key string) bool {

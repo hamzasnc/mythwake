@@ -343,6 +343,7 @@ Current backend state:
 - Unity Server Mode can request `/time`, keep an approximate in-memory server UTC value, and show daily/weekly reset timing in the Backend panel.
 - Added authenticated `/client/bootstrap` so mobile startup can fetch server clock, definition snapshot, and player snapshot through one stable contract.
 - Player snapshots and action results now carry server state revisions/action receipts so clients can reason about accepted state versions.
+- Unity gameplay mutations now send the last known server state revision, and the backend rejects stale mutation attempts with the latest snapshot.
 - Unity Backend Ping surfaces state-cache dirty/failure status so local persistence tests do not require opening Navicat first.
 - Player state, flush, and gameplay mutation routes now validate Bearer sessions and resolve the player context from the session token.
 - Unity Server Mode now persists the session token, sends `Authorization: Bearer <sessionToken>`, and retries protected requests once after `401` by refreshing guest auth.

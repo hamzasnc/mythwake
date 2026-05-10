@@ -76,8 +76,9 @@ type StateSaveSource struct {
 }
 
 type ActionRequest struct {
-	IdempotencyKey string
-	RequestHash    string
+	IdempotencyKey   string
+	RequestHash      string
+	ExpectedRevision int64
 }
 
 type StoredActionResult struct {
@@ -364,6 +365,19 @@ func (service *Service) executeAction(ctx context.Context, request ActionRequest
 	}
 
 	service.ensureDailyWindow()
+	if request.ExpectedRevision > 0 && request.ExpectedRevision != service.revision {
+		return service.newActionResult(
+			false,
+			actionID,
+			request.IdempotencyKey,
+			false,
+			"stale_player_state",
+			fmt.Sprintf("Client state revision %d is stale; latest is %d.", request.ExpectedRevision, service.revision),
+			api.Reward{},
+			nil,
+		)
+	}
+
 	beforeState := service.persistentState()
 	outcome := run()
 	if !outcome.success && !outcome.persist {

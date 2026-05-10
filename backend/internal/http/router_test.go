@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -662,6 +663,74 @@ func TestMutatingActionRejectsInvalidIdempotencyHeader(t *testing.T) {
 	}
 }
 
+func TestMutatingActionRejectsInvalidStateRevisionHeader(t *testing.T) {
+	handler := newTestHandler()
+	login := loginGuest(t, handler)
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addAuth(request, login.SessionToken)
+	addIdempotencyKey(request, "bad-revision-001")
+	request.Header.Set("X-Player-State-Revision", "not-a-number")
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", response.Code)
+	}
+
+	var body map[string]string
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body["errorCode"] != "invalid_state_revision" {
+		t.Fatalf("expected invalid state revision error, got %#v", body)
+	}
+}
+
+func TestMutatingActionRejectsStaleStateRevision(t *testing.T) {
+	handler := newTestHandler()
+	login := loginGuest(t, handler)
+
+	firstResponse := httptest.NewRecorder()
+	firstRequest := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addAuth(firstRequest, login.SessionToken)
+	addIdempotencyKey(firstRequest, "revision-first-001")
+	addStateRevision(firstRequest, login.PlayerSnapshot.Revision)
+	handler.ServeHTTP(firstResponse, firstRequest)
+	if firstResponse.Code != http.StatusOK {
+		t.Fatalf("expected first status 200, got %d", firstResponse.Code)
+	}
+
+	var firstBody api.ActionResult
+	if err := json.NewDecoder(firstResponse.Body).Decode(&firstBody); err != nil {
+		t.Fatalf("decode first response: %v", err)
+	}
+	if !firstBody.Success || firstBody.PlayerSnapshot.Revision <= login.PlayerSnapshot.Revision {
+		t.Fatalf("expected first fight to advance revision, got %#v", firstBody)
+	}
+
+	staleResponse := httptest.NewRecorder()
+	staleRequest := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addAuth(staleRequest, login.SessionToken)
+	addIdempotencyKey(staleRequest, "revision-stale-001")
+	addStateRevision(staleRequest, login.PlayerSnapshot.Revision)
+	handler.ServeHTTP(staleResponse, staleRequest)
+	if staleResponse.Code != http.StatusOK {
+		t.Fatalf("expected stale status 200, got %d", staleResponse.Code)
+	}
+
+	var staleBody api.ActionResult
+	if err := json.NewDecoder(staleResponse.Body).Decode(&staleBody); err != nil {
+		t.Fatalf("decode stale response: %v", err)
+	}
+	if staleBody.Success || staleBody.ErrorCode != "stale_player_state" {
+		t.Fatalf("expected stale player state action result, got %#v", staleBody)
+	}
+	if staleBody.PlayerSnapshot.Revision != firstBody.PlayerSnapshot.Revision || staleBody.PlayerState.CampaignStage != firstBody.PlayerState.CampaignStage {
+		t.Fatalf("expected stale result to return current state without mutation, first=%#v stale=%#v", firstBody, staleBody)
+	}
+}
+
 func TestMutatingActionAcceptsLegacyIdempotencyHeader(t *testing.T) {
 	handler := newTestHandler()
 	login := loginGuest(t, handler)
@@ -862,6 +931,10 @@ func addAuth(request *http.Request, token string) {
 
 func addIdempotencyKey(request *http.Request, key string) {
 	request.Header.Set("Idempotency-Key", key)
+}
+
+func addStateRevision(request *http.Request, revision int64) {
+	request.Header.Set("X-Player-State-Revision", strconv.FormatInt(revision, 10))
 }
 
 type testWriter struct{}
