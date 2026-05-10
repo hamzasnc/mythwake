@@ -152,6 +152,52 @@ func (store *PlayerStateStore) SaveActionResult(ctx context.Context, playerID st
 	return tx.Commit()
 }
 
+func (store *PlayerStateStore) ResetState(ctx context.Context, playerID string) error {
+	tx, err := store.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	statements := []string{
+		`DELETE FROM player.player_action_results WHERE player_id = $1`,
+		`DELETE FROM player.player_state_snapshots WHERE player_id = $1`,
+		`DELETE FROM player.player_afk_progress WHERE player_id = $1`,
+		`DELETE FROM player.player_daily_mission_claims WHERE player_id = $1`,
+		`DELETE FROM player.player_daily_progress WHERE player_id = $1`,
+		`DELETE FROM player.player_battle_pass_claims WHERE player_id = $1`,
+		`DELETE FROM player.player_summon_state WHERE player_id = $1`,
+		`DELETE FROM player.player_equipped_accessories WHERE player_id = $1`,
+		`DELETE FROM player.player_accessory_inventory WHERE player_id = $1`,
+		`DELETE FROM player.player_equipment_training WHERE player_id = $1`,
+		`DELETE FROM player.player_hero_shards WHERE player_id = $1`,
+		`DELETE FROM player.player_heroes WHERE player_id = $1`,
+		`DELETE FROM player.player_dungeon_progress WHERE player_id = $1`,
+		`DELETE FROM player.player_campaign_progress WHERE player_id = $1`,
+		`DELETE FROM player.player_currencies WHERE player_id = $1`,
+		`DELETE FROM player.player_combat_stats WHERE player_id = $1`,
+		`DELETE FROM logs.player_action_ledger WHERE player_id = $1`,
+		`DELETE FROM logs.summon_history WHERE player_id = $1`,
+		`DELETE FROM logs.economy_transactions WHERE player_id = $1`,
+	}
+
+	for _, statement := range statements {
+		if _, err := tx.ExecContext(ctx, statement, playerID); err != nil {
+			return err
+		}
+	}
+
+	if _, err := tx.ExecContext(ctx, `
+		UPDATE account.players
+		SET updated_at = now()
+		WHERE id = $1
+	`, playerID); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func (store *PlayerStateStore) saveActionResult(ctx context.Context, tx *sql.Tx, playerID string, source player.StateSaveSource) error {
 	if source.IdempotencyKey == "" || source.RequestHash == "" || source.ActionResult == nil {
 		return nil

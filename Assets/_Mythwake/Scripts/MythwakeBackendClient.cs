@@ -127,6 +127,19 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         });
     }
 
+    public IEnumerator ResetDevPlayer(Action<bool, string, MythwakeDevResetResponseDto> completed)
+    {
+        return SendAuthenticatedJson<MythwakeDevResetResponseDto>(() => Post("/dev/player/reset"), (success, error, response) =>
+        {
+            if (success)
+            {
+                pendingActionKeys.Clear();
+            }
+
+            completed?.Invoke(success, error, response);
+        });
+    }
+
     public IEnumerator Logout(Action<bool, string> completed)
     {
         if (!HasSession)

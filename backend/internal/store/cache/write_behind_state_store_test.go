@@ -146,6 +146,32 @@ func TestWriteBehindStateStoreSavesIdempotentActionResultAndQueuesState(t *testi
 	}
 }
 
+func TestWriteBehindStateStoreResetClearsDirtyPlayer(t *testing.T) {
+	base := &fakeStateStore{}
+	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
+	defer closeStore(t, store)
+
+	if err := store.SaveState(context.Background(), "player-1", testState(7), idempotentSource(gameplay.ActionCampaignFight, "key-1")); err != nil {
+		t.Fatalf("queue state: %v", err)
+	}
+	if err := store.ResetState(context.Background(), "player-1"); err != nil {
+		t.Fatalf("reset state: %v", err)
+	}
+
+	if stats := store.Stats(); stats.DirtyPlayers != 0 {
+		t.Fatalf("expected reset to clear dirty state, got %#v", stats)
+	}
+	if base.resetPlayerID != "player-1" {
+		t.Fatalf("expected base reset, got %q", base.resetPlayerID)
+	}
+	if err := store.Flush(context.Background()); err != nil {
+		t.Fatalf("flush after reset: %v", err)
+	}
+	if base.saveCount != 0 {
+		t.Fatalf("expected reset to discard queued materialized save, got %d", base.saveCount)
+	}
+}
+
 func idempotentSource(actionID string, key string) player.StateSaveSource {
 	return player.StateSaveSource{
 		ActionID:       actionID,
@@ -190,6 +216,7 @@ type fakeStateStore struct {
 	actionSaveCount int
 	saved           player.PersistentState
 	source          player.StateSaveSource
+	resetPlayerID   string
 }
 
 func (store *fakeStateStore) LoadState(context.Context, string) (player.PersistentState, bool, error) {
@@ -214,5 +241,10 @@ func (store *fakeStateStore) SaveActionResult(_ context.Context, _ string, sourc
 
 	store.actionSaveCount++
 	store.source = source
+	return nil
+}
+
+func (store *fakeStateStore) ResetState(_ context.Context, playerID string) error {
+	store.resetPlayerID = playerID
 	return nil
 }

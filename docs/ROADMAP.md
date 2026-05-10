@@ -267,6 +267,7 @@ Progress:
   - accessory equip/level/fuse
   - summons
   - daily mission and Mission Track claims
+- Backend panel can reset the active local/dev server player and apply the fresh server snapshot.
 - Auto Attack is intentionally paused in Server Mode until AFK claims are server-designed.
 
 Tasks:
@@ -499,6 +500,7 @@ Initial endpoints:
 - `POST /auth/logout`
 - `GET /player/state`
 - `POST /player/state/flush`
+- `POST /dev/player/reset` local/dev only
 - `POST /campaign/fight`
 - `POST /dungeons/{dungeon_id}/run`
 - `POST /heroes/{hero_id}/level-up`
@@ -605,6 +607,8 @@ Progress:
 - Hero definitions now carry server-owned stat growth and level/ascension caps; backend team ATK, HP, and Power are derived from those definitions instead of generic hardcoded hero increments.
 - Starter equipment definitions now carry server-owned stat growth and max-level caps; backend equipment training validates against those definitions instead of hardcoded Weapon/Armor stat bonuses.
 - AFK reward definitions now carry claim timing, cap, tick size, and Gold/Myth Essence formula fields; PostgreSQL-backed gameplay uses those rows for offline claims.
+- Added a local/dev-only active player reset endpoint that clears hot cache state, PostgreSQL player progression rows, action replay rows, and dev logs while keeping account/session data.
+- Unity Server Mode exposes the local/dev reset through the Backend panel and clears pending client idempotency keys after a successful reset.
 
 Next useful step:
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.

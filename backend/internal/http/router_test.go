@@ -629,6 +629,73 @@ func TestPlayerStateFlushEndpoint(t *testing.T) {
 	}
 }
 
+func TestDevPlayerResetEndpointIsLocalOnly(t *testing.T) {
+	handler := newTestHandlerWithConfig(config.Config{DevToolsEnabled: false})
+	login := loginGuest(t, handler)
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/dev/player/reset", nil)
+	addAuth(request, login.SessionToken)
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Fatalf("expected status 404 when dev tools are disabled, got %d", response.Code)
+	}
+}
+
+func TestDevPlayerResetEndpointResetsHotPlayer(t *testing.T) {
+	handler := newTestHandlerWithConfig(config.Config{DevToolsEnabled: true})
+	login := loginGuest(t, handler)
+
+	fightResponse := httptest.NewRecorder()
+	fightRequest := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addAuth(fightRequest, login.SessionToken)
+	addIdempotencyKey(fightRequest, "dev-reset-fight-001")
+	handler.ServeHTTP(fightResponse, fightRequest)
+	if fightResponse.Code != http.StatusOK {
+		t.Fatalf("expected fight status 200, got %d", fightResponse.Code)
+	}
+
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/dev/player/reset", nil)
+	addAuth(request, login.SessionToken)
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+
+	var body struct {
+		Status         string             `json:"status"`
+		PlayerID       string             `json:"playerId"`
+		PlayerSnapshot api.PlayerSnapshot `json:"playerSnapshot"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Status != "ok" || body.PlayerID != login.PlayerID {
+		t.Fatalf("expected reset status for login player, got %#v", body)
+	}
+	if body.PlayerSnapshot.State.CampaignStage != 1 || body.PlayerSnapshot.State.Gems != 35 {
+		t.Fatalf("expected fresh player snapshot after reset, got %#v", body.PlayerSnapshot.State)
+	}
+
+	stateResponse := httptest.NewRecorder()
+	stateRequest := httptest.NewRequest(http.MethodGet, "/player/state", nil)
+	addAuth(stateRequest, login.SessionToken)
+	handler.ServeHTTP(stateResponse, stateRequest)
+	if stateResponse.Code != http.StatusOK {
+		t.Fatalf("expected post-reset state status 200, got %d", stateResponse.Code)
+	}
+	var state api.PlayerSnapshot
+	if err := json.NewDecoder(stateResponse.Body).Decode(&state); err != nil {
+		t.Fatalf("decode state response: %v", err)
+	}
+	if state.State.CampaignStage != 1 || len(state.Heroes) == 0 {
+		t.Fatalf("expected reset state to stay fresh through active session, got %#v", state)
+	}
+}
+
 func TestAccessoryBodyValidation(t *testing.T) {
 	handler := newTestHandler()
 	login := loginGuest(t, handler)

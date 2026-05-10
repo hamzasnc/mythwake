@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.25
+Prototype version: 0.2.26
 Local save version: 2
 
 Current prototype:
@@ -15,7 +15,7 @@ Current prototype:
 - Currency spend/grant actions now go through local economy boundary methods for backend migration
 - Shared service contracts now define player state, reward, action result, economy, battle, summon, and inventory boundaries
 - Unity has a backend client component for health, guest auth, player snapshot sync, and server action endpoints
-- Shop tab creates a small runtime Backend panel for Ping, Login, Sync, and Local/Server gameplay mode smoke tests
+- Shop tab creates a small runtime Backend panel for Ping, Login, Sync, Reset, and Local/Server gameplay mode smoke tests
 - Server Mode routes manual gameplay buttons through the Go backend and applies the returned player snapshot
 - Server Mode campaign and dungeon actions now display server combat results with HP, damage, seconds, and rewards
 - Server definitions include campaign and dungeon combat stats so Unity previews match backend combat
@@ -128,8 +128,10 @@ Backend:
 - Unity stores the backend session token, sends it automatically, and retries once with a fresh guest login after a `401`
 - Unity reuses pending idempotency keys after transport failures
 - Unity requests a backend state flush on app pause/quit when a backend session is active
+- Unity Backend panel can reset the active local/dev server player and refresh the UI from the fresh server snapshot
 - API shutdown flushes loaded player contexts before closing the state cache
 - `POST /player/state/flush` is the manual app-pause/disconnect save hook
+- `POST /dev/player/reset` is available only when local/dev tools are enabled; it resets the active player progression while keeping the account/session
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Guest auth and action responses include the full player snapshot for direct client UI updates
 - Android emulator builds use `http://10.0.2.2:8080` as the default backend URL, while Editor/Desktop use `http://localhost:8080`
@@ -140,6 +142,8 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Prototype 0.2.26: Added a Backend-panel Reset action for local/dev server player reset smoke testing.
+- Backend 0.2.44: Added local/dev-only active player reset, cache invalidation, PostgreSQL state cleanup, and E2E coverage that verifies idempotency rows are cleared.
 - Prototype 0.2.25: Server Mode upgrade labels/buttons now honor backend max-level, max-ascension, equipment cap, accessory fuse-cost, and AFK timing definitions.
 - Prototype 0.2.24: Server Mode stat previews now use backend hero/equipment/accessory definitions and authoritative team ATK/HP/Power from player snapshots.
 - Backend 0.2.43: Moved AFK reward timing and Gold/Myth Essence formula into server-owned definitions, PostgreSQL seeds, and snapshot-driven gameplay balance.

@@ -83,6 +83,9 @@ func (router *Router) routes() {
 	router.mux.HandleFunc("POST /summons/{banner_id}/pull", router.handleSummonPull)
 	router.mux.HandleFunc("POST /missions/{mission_id}/claim", router.handleDailyMissionClaim)
 	router.mux.HandleFunc("POST /battle-pass/{reward_id}/claim", router.handleBattlePassClaim)
+	if router.config.DevToolsEnabled {
+		router.mux.HandleFunc("POST /dev/player/reset", router.handleDevPlayerReset)
+	}
 }
 
 func (router *Router) handleDefinitions(response http.ResponseWriter, request *http.Request) {
@@ -131,6 +134,7 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 		"rate_limit_auth":      strconv.Itoa(router.config.RateLimitAuth),
 		"rate_limit_gameplay":  strconv.Itoa(router.config.RateLimitGameplay),
 		"require_idempotency":  boolLabel(router.config.RequireIdempotency),
+		"dev_tools":            boolLabel(router.config.DevToolsEnabled),
 		"environment":          router.config.Environment,
 		"version":              router.config.Version,
 		"time_utc":             time.Now().UTC().Format(time.RFC3339),
@@ -203,6 +207,25 @@ func (router *Router) handlePlayerStateFlush(response http.ResponseWriter, reque
 
 	writeJSON(response, http.StatusOK, map[string]string{
 		"status": "ok",
+	})
+}
+
+func (router *Router) handleDevPlayerReset(response http.ResponseWriter, request *http.Request) {
+	session, ok := router.authenticatedSession(response, request)
+	if !ok {
+		return
+	}
+
+	playerService, err := router.playerManager.ResetPlayer(request.Context(), session.PlayerID)
+	if err != nil {
+		writeError(response, request, http.StatusInternalServerError, "player_reset_failed", err.Error())
+		return
+	}
+
+	writeJSON(response, http.StatusOK, map[string]any{
+		"status":         "ok",
+		"playerId":       session.PlayerID,
+		"playerSnapshot": playerService.GetSnapshot(),
 	})
 }
 
@@ -383,19 +406,28 @@ func (router *Router) writeGameplayAction(response http.ResponseWriter, request 
 }
 
 func (router *Router) authenticatedPlayerService(response http.ResponseWriter, request *http.Request) (*player.Service, bool) {
+	session, ok := router.authenticatedSession(response, request)
+	if !ok {
+		return nil, false
+	}
+
+	return router.playerServiceForSession(response, request, session)
+}
+
+func (router *Router) authenticatedSession(response http.ResponseWriter, request *http.Request) (auth.Session, bool) {
 	token := sessionTokenFromRequest(request)
 	if token == "" {
 		writeError(response, request, http.StatusUnauthorized, "missing_session", "Bearer session token is required.")
-		return nil, false
+		return auth.Session{}, false
 	}
 
 	session, err := router.authService.ValidateSession(request.Context(), token)
 	if err != nil {
 		writeError(response, request, http.StatusUnauthorized, "invalid_session", "Session token is invalid or expired.")
-		return nil, false
+		return auth.Session{}, false
 	}
 
-	return router.playerServiceForSession(response, request, session)
+	return session, true
 }
 
 func (router *Router) playerServiceForSession(response http.ResponseWriter, request *http.Request, session auth.Session) (*player.Service, bool) {

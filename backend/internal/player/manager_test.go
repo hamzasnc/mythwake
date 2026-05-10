@@ -110,6 +110,32 @@ func TestManagerFlushPlayerIfLoadedSkipsColdPlayer(t *testing.T) {
 	}
 }
 
+func TestManagerResetPlayerReplacesLoadedService(t *testing.T) {
+	store := &managerFlushStore{saved: map[string]PersistentState{}}
+	manager := NewManager(store)
+
+	service, err := manager.ServiceForPlayer(context.Background(), "player-reset")
+	if err != nil {
+		t.Fatalf("service for player: %v", err)
+	}
+	service.state.Gold = 999
+
+	reset, err := manager.ResetPlayer(context.Background(), "player-reset")
+	if err != nil {
+		t.Fatalf("reset player: %v", err)
+	}
+
+	if reset == service {
+		t.Fatal("expected reset to replace the hot service")
+	}
+	if reset.GetState().Gold != 0 || reset.GetState().Gems != 35 {
+		t.Fatalf("expected fresh player state after reset, got %#v", reset.GetState())
+	}
+	if store.resetPlayerID != "player-reset" {
+		t.Fatalf("expected reset store call, got %q", store.resetPlayerID)
+	}
+}
+
 func TestManagerInjectsBalanceCatalogIntoServices(t *testing.T) {
 	manager := NewManager(nil, WithBalanceCatalog(expensiveSummonCatalog{}))
 	service, err := manager.ServiceForPlayer(context.Background(), "catalog-player")
@@ -131,8 +157,9 @@ func TestManagerInjectsBalanceCatalogIntoServices(t *testing.T) {
 }
 
 type managerFlushStore struct {
-	saved      map[string]PersistentState
-	flushCount int
+	saved         map[string]PersistentState
+	flushCount    int
+	resetPlayerID string
 }
 
 func (store *managerFlushStore) LoadState(context.Context, string) (PersistentState, bool, error) {
@@ -146,6 +173,12 @@ func (store *managerFlushStore) SaveState(_ context.Context, playerID string, st
 
 func (store *managerFlushStore) Flush(context.Context) error {
 	store.flushCount++
+	return nil
+}
+
+func (store *managerFlushStore) ResetState(_ context.Context, playerID string) error {
+	store.resetPlayerID = playerID
+	delete(store.saved, playerID)
 	return nil
 }
 

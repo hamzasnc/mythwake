@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.43-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.44-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
@@ -79,6 +79,7 @@ function Start-Api {
     $env:MYTHWAKE_RATE_LIMIT_AUTH = "30"
     $env:MYTHWAKE_RATE_LIMIT_GAMEPLAY = "240"
     $env:MYTHWAKE_REQUIRE_IDEMPOTENCY = "true"
+    $env:MYTHWAKE_DEV_TOOLS_ENABLED = "true"
 
     Remove-Item -LiteralPath $stdoutLog, $stderrLog -Force -ErrorAction SilentlyContinue
     $process = Start-Process -FilePath $apiExe -WorkingDirectory $backendPath -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog -PassThru -WindowStyle Hidden
@@ -90,6 +91,10 @@ function Start-Api {
     if ($health.balance_catalog -ne "postgres_snapshot") {
         Stop-Api $process
         throw "Expected PostgreSQL-backed gameplay balance, got balance_catalog=$($health.balance_catalog)."
+    }
+    if ($health.dev_tools -ne "true") {
+        Stop-Api $process
+        throw "Expected local E2E API to expose dev tools, got dev_tools=$($health.dev_tools)."
     }
 
     return $process
@@ -236,6 +241,20 @@ try {
     }
     Assert-Equal ([int]$replay.playerState.campaignStage) $stageAfterFight "Replay should not apply campaign fight twice."
 
+    $reset = Invoke-Json -Method "POST" -Path "/dev/player/reset" -Headers $authHeaders
+    Assert-Equal $reset.status "ok" "Dev player reset should return ok."
+    Assert-Equal $reset.playerId $login.playerId "Dev player reset should target the logged-in player."
+    Assert-Equal ([int]$reset.playerSnapshot.state.campaignStage) 1 "Dev player reset should return fresh campaign progress."
+
+    $stateAfterReset = Invoke-Json -Path "/player/state" -Headers $authHeaders
+    Assert-Equal ([int]$stateAfterReset.state.campaignStage) 1 "State after dev reset should stay fresh through the active session."
+
+    $fightAfterReset = Invoke-Json -Method "POST" -Path "/campaign/fight" -Headers $actionHeaders
+    if ($fightAfterReset.replay) {
+        throw "Expected old idempotency key to be cleared by dev reset."
+    }
+    Assert-Equal ([int]$fightAfterReset.playerState.campaignStage) 2 "Campaign fight after dev reset should apply from fresh stage one."
+
     $logout = Invoke-Json -Method "POST" -Path "/auth/logout" -Headers $authHeaders
     Assert-Equal $logout.status "ok" "Logout should return ok."
     Assert-Equal $logout.stateFlushed $true "Logout should flush the loaded player state."
@@ -258,8 +277,9 @@ try {
     [pscustomobject]@{
         PlayerId = $login.playerId
         SessionPrefix = $login.sessionToken.Substring(0, [Math]::Min(8, $login.sessionToken.Length))
-        CampaignStage = $stageAfterFight
+        CampaignStage = [int]$fightAfterReset.playerState.campaignStage
         Replay = $replay.replay
+        DevReset = $stateAfterReset.state.campaignStage -eq 1
         LogoutRevoked = $revokedStatus -eq 401
         LogoutStateFlushed = $logout.stateFlushed
         StateWriteMode = $StateWriteMode

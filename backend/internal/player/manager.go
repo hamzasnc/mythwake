@@ -109,6 +109,40 @@ func (manager *Manager) FlushPlayerIfLoaded(ctx context.Context, playerID string
 	return true, nil
 }
 
+func (manager *Manager) ResetPlayer(ctx context.Context, playerID string) (*Service, error) {
+	playerID = strings.TrimSpace(playerID)
+	if playerID == "" {
+		return nil, fmt.Errorf("player id is required")
+	}
+
+	if manager.stateStore != nil {
+		resetter, ok := manager.stateStore.(StateResetter)
+		if !ok {
+			return nil, fmt.Errorf("state store does not support reset")
+		}
+		if err := resetter.ResetState(ctx, playerID); err != nil {
+			return nil, err
+		}
+	}
+
+	manager.mu.Lock()
+	delete(manager.services, playerID)
+	manager.mu.Unlock()
+
+	service := NewServiceForPlayer(playerID, withServiceBalanceCatalog(manager.balanceCatalog))
+	if manager.stateStore != nil {
+		if err := service.UseStateStore(ctx, manager.stateStore); err != nil {
+			return nil, err
+		}
+	}
+
+	manager.mu.Lock()
+	manager.services[playerID] = service
+	manager.mu.Unlock()
+
+	return service, nil
+}
+
 func (manager *Manager) LoadedPlayerCount() int {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()

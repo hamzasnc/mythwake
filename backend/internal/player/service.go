@@ -41,6 +41,10 @@ type StateFlusher interface {
 	Flush(ctx context.Context) error
 }
 
+type StateResetter interface {
+	ResetState(ctx context.Context, playerID string) error
+}
+
 type PersistentState struct {
 	PlayerState        api.PlayerState
 	HeroLevels         map[string]int

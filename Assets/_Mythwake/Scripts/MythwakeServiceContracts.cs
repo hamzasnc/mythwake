@@ -142,6 +142,14 @@ public struct MythwakeGuestAuthResponseDto
 }
 
 [Serializable]
+public struct MythwakeDevResetResponseDto
+{
+    public string status;
+    public string playerId;
+    public MythwakePlayerSnapshotDto playerSnapshot;
+}
+
+[Serializable]
 public struct MythwakeHealthDto
 {
     public string service;
@@ -150,6 +158,7 @@ public struct MythwakeHealthDto
     public string state_cache;
     public string state_write_mode;
     public string state_flush_interval;
+    public string dev_tools;
     public string environment;
     public string version;
     public string time_utc;

@@ -180,6 +180,26 @@ func (store *WriteBehindStateStore) Flush(ctx context.Context) error {
 	return flushError
 }
 
+func (store *WriteBehindStateStore) ResetState(ctx context.Context, playerID string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if playerID == "" {
+		return errors.New("player id is required")
+	}
+
+	store.mu.Lock()
+	delete(store.dirty, playerID)
+	store.mu.Unlock()
+
+	resetter, ok := store.base.(player.StateResetter)
+	if !ok {
+		return errors.New("base state store does not support reset")
+	}
+
+	return resetter.ResetState(ctx, playerID)
+}
+
 func (store *WriteBehindStateStore) Close(ctx context.Context) error {
 	var stopError error
 	store.stopOnce.Do(func() {

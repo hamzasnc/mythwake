@@ -32,6 +32,7 @@ type Config struct {
 	RateLimitAuth      int
 	RateLimitGameplay  int
 	RequireIdempotency bool
+	DevToolsEnabled    bool
 }
 
 func Load() Config {
@@ -39,7 +40,7 @@ func Load() Config {
 		ServiceName:        "mythwake-api",
 		Addr:               getEnv("MYTHWAKE_API_ADDR", ":8080"),
 		Environment:        getEnv("MYTHWAKE_ENV", "local"),
-		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.43"),
+		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.44"),
 		DatabaseURL:        os.Getenv("MYTHWAKE_DATABASE_URL"),
 		DatabaseStatus:     "disabled",
 		StateCacheStatus:   "disabled",
@@ -54,6 +55,7 @@ func Load() Config {
 		RateLimitAuth:      getIntEnv("MYTHWAKE_RATE_LIMIT_AUTH", 30),
 		RateLimitGameplay:  getIntEnv("MYTHWAKE_RATE_LIMIT_GAMEPLAY", 240),
 		RequireIdempotency: getBoolEnv("MYTHWAKE_REQUIRE_IDEMPOTENCY", true),
+		DevToolsEnabled:    getBoolEnv("MYTHWAKE_DEV_TOOLS_ENABLED", defaultDevToolsEnabled(getEnv("MYTHWAKE_ENV", "local"))),
 	}
 }
 
@@ -118,4 +120,13 @@ func getStateWriteMode() string {
 	}
 
 	return StateWriteModeLedgerWriteBehind
+}
+
+func defaultDevToolsEnabled(environment string) bool {
+	switch strings.ToLower(strings.TrimSpace(environment)) {
+	case "local", "local-e2e", "dev", "development", "test":
+		return true
+	default:
+		return false
+	}
 }

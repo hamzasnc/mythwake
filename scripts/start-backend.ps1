@@ -11,6 +11,7 @@ param(
     [string]$StateWriteMode = "ledger_write_behind",
     [switch]$NoDatabase,
     [switch]$AllowMissingIdempotency,
+    [switch]$DisableDevTools,
     [switch]$DisableRateLimit
 )
 
@@ -78,7 +79,7 @@ function Start-PostgresServiceIfNeeded {
 $goExe = Find-Go
 $env:MYTHWAKE_API_ADDR = $ApiAddr
 $env:MYTHWAKE_ENV = "local"
-$env:MYTHWAKE_API_VERSION = "0.2.43"
+$env:MYTHWAKE_API_VERSION = "0.2.44"
 $env:MYTHWAKE_STATE_FLUSH_INTERVAL = $StateFlushInterval
 $env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
 $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
@@ -89,6 +90,7 @@ $env:MYTHWAKE_RATE_LIMIT_WINDOW = $RateLimitWindow
 $env:MYTHWAKE_RATE_LIMIT_AUTH = [string]$RateLimitAuth
 $env:MYTHWAKE_RATE_LIMIT_GAMEPLAY = [string]$RateLimitGameplay
 $env:MYTHWAKE_REQUIRE_IDEMPOTENCY = if ($AllowMissingIdempotency) { "false" } else { "true" }
+$env:MYTHWAKE_DEV_TOOLS_ENABLED = if ($DisableDevTools) { "false" } else { "true" }
 
 if ($NoDatabase) {
     Remove-Item Env:\MYTHWAKE_DATABASE_URL -ErrorAction SilentlyContinue
@@ -124,6 +126,7 @@ Write-Host "Rate limit enabled: $($env:MYTHWAKE_RATE_LIMIT_ENABLED)"
 Write-Host "Rate limit window: $RateLimitWindow"
 Write-Host "Rate limit auth/gameplay: $RateLimitAuth / $RateLimitGameplay"
 Write-Host "Require idempotency: $($env:MYTHWAKE_REQUIRE_IDEMPOTENCY)"
+Write-Host "Dev tools enabled: $($env:MYTHWAKE_DEV_TOOLS_ENABLED)"
 Write-Host "Stop server with Ctrl+C."
 Write-Host ""
 

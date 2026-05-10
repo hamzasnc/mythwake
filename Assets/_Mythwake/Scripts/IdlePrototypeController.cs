@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.25";
+    public const string PrototypeVersion = "0.2.26";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -695,6 +695,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private Button backendAfkButton;
     [SerializeField] private Button backendClockButton;
     [SerializeField] private Button backendDefinitionsButton;
+    [SerializeField] private Button backendResetButton;
     [SerializeField] private Button backendModeButton;
     [SerializeField] private TMP_Text backendModeText;
 
@@ -945,6 +946,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             backendDefinitionsButton.onClick.AddListener(SyncBackendDefinitions);
         }
 
+        if (backendResetButton != null)
+        {
+            backendResetButton.onClick.AddListener(ResetBackendPlayer);
+        }
+
         if (backendModeButton != null)
         {
             backendModeButton.onClick.AddListener(ToggleBackendGameplayMode);
@@ -1119,6 +1125,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendDefinitionsButton != null)
         {
             backendDefinitionsButton.onClick.RemoveListener(SyncBackendDefinitions);
+        }
+
+        if (backendResetButton != null)
+        {
+            backendResetButton.onClick.RemoveListener(ResetBackendPlayer);
         }
 
         if (backendModeButton != null)
@@ -1890,6 +1901,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         StartCoroutine(backendClient.GetPlayerSnapshot(OnBackendSnapshot));
     }
 
+    public void ResetBackendPlayer()
+    {
+        if (!TryStartBackendRequest("Backend: resetting dev player..."))
+        {
+            return;
+        }
+
+        StartCoroutine(backendClient.ResetDevPlayer(OnBackendReset));
+    }
+
     public void SyncBackendDefinitions()
     {
         if (!TryStartBackendRequest("Backend: syncing definitions..."))
@@ -2140,6 +2161,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         FinishBackendRequest($"Backend sync failed: {error}");
+    }
+
+    private void OnBackendReset(bool success, string error, MythwakeDevResetResponseDto response)
+    {
+        if (success)
+        {
+            ApplyBackendSnapshot(response.playerSnapshot);
+            SetDungeonResult("Server dev player reset to fresh progression.");
+            FinishBackendRequest($"Backend reset: {response.playerId}");
+            return;
+        }
+
+        FinishBackendRequest($"Backend reset failed: {error}");
     }
 
     private void OnBackendDefinitions(bool success, string error, MythwakeDefinitionSnapshotDto definitions, bool fromCache)
@@ -5782,13 +5816,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendStatusText.fontSizeMin = 16;
         backendStatusText.fontSizeMax = 22;
 
-        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -375, -154, 108, 54);
-        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", -250, -154, 108, 54);
-        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "Sync", -125, -154, 108, 54);
-        backendAfkButton = CreateRuntimeButton(panelObject.transform, "Backend AFK Button", "AFK", 0, -154, 108, 54);
-        backendClockButton = CreateRuntimeButton(panelObject.transform, "Backend Clock Button", "Clock", 125, -154, 108, 54);
-        backendDefinitionsButton = CreateRuntimeButton(panelObject.transform, "Backend Definitions Button", "Defs", 250, -154, 108, 54);
-        backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 375, -154, 108, 54);
+        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -385, -154, 94, 54);
+        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", -275, -154, 94, 54);
+        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "Sync", -165, -154, 94, 54);
+        backendAfkButton = CreateRuntimeButton(panelObject.transform, "Backend AFK Button", "AFK", -55, -154, 94, 54);
+        backendClockButton = CreateRuntimeButton(panelObject.transform, "Backend Clock Button", "Clock", 55, -154, 94, 54);
+        backendDefinitionsButton = CreateRuntimeButton(panelObject.transform, "Backend Definitions Button", "Defs", 165, -154, 94, 54);
+        backendResetButton = CreateRuntimeButton(panelObject.transform, "Backend Reset Button", "Reset", 275, -154, 94, 54);
+        backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 385, -154, 94, 54);
         backendModeText = backendModeButton.GetComponentInChildren<TMP_Text>();
     }
 
@@ -5894,6 +5929,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendDefinitionsButton != null)
         {
             backendDefinitionsButton.interactable = interactable;
+        }
+
+        if (backendResetButton != null)
+        {
+            backendResetButton.interactable = interactable;
         }
 
         if (backendModeButton != null)
