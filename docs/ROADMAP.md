@@ -597,10 +597,11 @@ Progress:
 - Added a PostgreSQL-backed definition provider so `/definitions` reads current common definition tables when the database is enabled.
 - Routed player gameplay balance reads through an injectable balance catalog while keeping the static Go catalog as the current runtime default.
 - Combat now uses a 30 second fight timer in API results, balance definitions, PostgreSQL definition rows, and Unity prototype text instead of round limits.
+- PostgreSQL-backed APIs now inject the loaded common definition snapshot into live player gameplay balance for combat, rewards, costs, summons, daily missions, and Mission Track rewards.
 
 Next useful step:
-- Implement a PostgreSQL-backed gameplay balance catalog and inject it into the player manager when the database is enabled.
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.
+- Keep moving individual Unity Server Mode flows away from local-only fallbacks once their backend path is stable.
 - Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
 
 Done when:

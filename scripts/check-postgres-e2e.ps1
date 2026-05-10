@@ -87,6 +87,10 @@ function Start-Api {
         Stop-Api $process
         throw "Expected PostgreSQL-backed API, got database=$($health.database)."
     }
+    if ($health.balance_catalog -ne "postgres_snapshot") {
+        Stop-Api $process
+        throw "Expected PostgreSQL-backed gameplay balance, got balance_catalog=$($health.balance_catalog)."
+    }
 
     return $process
 }
@@ -239,6 +243,7 @@ try {
         LogoutRevoked = $revokedStatus -eq 401
         LogoutStateFlushed = $logout.stateFlushed
         StateWriteMode = $StateWriteMode
+        BalanceCatalog = "postgres_snapshot"
     } | Format-List
 }
 finally {

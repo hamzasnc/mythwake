@@ -121,6 +121,7 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 		"status":               "ok",
 		"database":             router.config.DatabaseStatus,
 		"state_cache":          router.config.StateCacheStatus,
+		"balance_catalog":      router.config.BalanceCatalog,
 		"state_write_mode":     router.config.StateWriteMode,
 		"state_flush_interval": router.config.StateFlushInterval.String(),
 		"session_cache_ttl":    router.config.SessionCacheTTL.String(),

@@ -76,8 +76,9 @@ Current scope:
 - Gameplay action IDs are centralized in `internal/gameplay` so routing, persistence, ledgers, and tests share the same names.
 - Currency IDs, spends, grants, display names, and deltas are centralized in `internal/economy`.
 - Early balance definitions for campaign, dungeons, costs, summons, and simple rewards are centralized in `internal/balance`.
-- Player gameplay services read balance through an injectable catalog boundary, so a database-backed gameplay catalog can replace the static catalog without changing route handlers.
+- Player gameplay services read balance through an injectable catalog boundary.
 - When PostgreSQL is enabled, `/definitions` is loaded from `common.*` definition tables; no-database mode keeps using the static Go catalog.
+- When PostgreSQL is enabled, the same loaded definition snapshot is injected into live gameplay balance for combat stats, dungeon rewards, progression costs, summon rotation, daily missions, and Mission Track rewards.
 - Player service gameplay actions route through explicit domain action services while keeping the existing API surface stable.
 - Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.
 - Campaign, dungeon, and summon actions advance server-owned daily mission counters for the active UTC day.
@@ -166,7 +167,7 @@ Optional environment variables:
 
 Database behavior:
 - If `MYTHWAKE_DATABASE_URL` is empty, the API uses the current in-memory dev state.
-- If `MYTHWAKE_DATABASE_URL` is set, startup connects to PostgreSQL, runs embedded migrations, and stores the dev player state in normalized progression tables.
+- If `MYTHWAKE_DATABASE_URL` is set, startup connects to PostgreSQL, runs embedded migrations, loads the common definition snapshot for gameplay balance, and stores player state in normalized progression tables.
 - PostgreSQL-backed sessions are cached briefly in-process to avoid a database round trip on every protected request.
 - The touch window updates `account.player_sessions.last_seen_at` at a controlled rate instead of on every request.
 - By default, idempotent gameplay actions update hot server state, synchronously write a durable action ledger/result to PostgreSQL, then queue the materialized player state for flush.
@@ -186,7 +187,7 @@ Database behavior:
 - Per-action currency deltas are written to `logs.player_action_ledger`.
 - Reusing a key for a different endpoint/body returns an `idempotency_conflict` action result.
 - Missing or malformed keys on gameplay mutations return HTTP 400 before the action is applied.
-- `GET /health` reports `database`, `state_cache`, `state_write_mode`, `state_flush_interval`, session cache settings, and `require_idempotency`.
+- `GET /health` reports `database`, `state_cache`, `balance_catalog`, `state_write_mode`, `state_flush_interval`, session cache settings, and `require_idempotency`.
 - `GET /time` is the source of truth for offline reward windows, daily missions, weekly systems, and client clock drift checks.
 - Request logs include request id, method, path, status, bytes, and duration.
 - Rate limiting is currently process-local for development and single-node testing; Redis should replace the counter storage before multi-instance production.

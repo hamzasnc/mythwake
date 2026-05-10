@@ -90,10 +90,11 @@ Backend:
 - Backend gameplay action IDs now live in a central action catalog instead of being scattered string literals
 - Backend currency spends, grants, display names, and deltas now live in a central economy package
 - Backend campaign curves, dungeon curves, costs, and simple reward definitions now live in a central balance package
-- Player gameplay actions read balance through an injectable catalog boundary, preparing gameplay logic for DB-backed balance without changing route behavior
+- Player gameplay actions read balance through an injectable catalog boundary, and PostgreSQL-backed APIs now inject the loaded common definition snapshot into live gameplay logic at startup
 - Backend Daily Mission, Mission Track, and Summon actions now validate against known server balance definitions instead of accepting arbitrary claim IDs
 - PostgreSQL now seeds DB-ready hero, campaign, reward, progression cost, summon, mission, and Mission Track definition tables
 - `/definitions` now loads the common definition catalog from PostgreSQL when the database is enabled, with the static Go catalog used only for no-DB local mode
+- When PostgreSQL is enabled, combat stats, dungeon rewards, progression costs, summon rotation, daily missions, and Mission Track rewards are resolved from the database-backed gameplay catalog
 - Backend player service actions are split by domain files for campaign/dungeons, progression, gear, meta, snapshots, and persistence
 - Backend player actions now route through explicit domain action services for campaign, dungeons, hero progression, equipment, accessories, summons, and missions
 - Guest auth now issues real random session tokens, stores only token hashes when PostgreSQL is enabled, and has account identity tables shaped for guest, email, Google, and Apple login
@@ -104,6 +105,7 @@ Backend:
 - Every API response now carries an `X-Request-ID`, and error JSON includes `requestId` for log/client correlation
 - HTTP panic recovery returns a JSON `internal_error` instead of dropping the request
 - In-memory auth/gameplay rate limit middleware protects local API paths and is shaped for a later Redis-backed limiter
+- `/health` reports whether gameplay balance is using the static fallback or the PostgreSQL-loaded snapshot
 - Server clock endpoint exposes authoritative UTC time plus daily/weekly reset countdowns for future offline rewards and daily reset validation
 - Server-authoritative AFK claim endpoint grants capped Gold and Myth Essence using server time and persists the last claim timestamp
 - Server-authoritative daily mission progress tracks fight, stage-clear, and summon counts by UTC day and blocks incomplete daily claims
@@ -129,6 +131,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.38: Injected the PostgreSQL-loaded definition snapshot into live player gameplay balance so server actions use DB-backed combat, reward, cost, summon, mission, and Mission Track values.
 - Backend 0.2.37 / Prototype 0.2.23: Switched combat contracts, balance definitions, PostgreSQL definitions, and Unity combat text from round limits to 30 second fight timers.
 - Backend 0.2.36: Added an injectable player balance catalog and routed gameplay balance reads through it while preserving the static default catalog.
 - Backend 0.2.35: Added an injectable definition provider and PostgreSQL-backed `/definitions` loader for common balance/catalog tables.

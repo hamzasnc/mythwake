@@ -28,6 +28,7 @@ func main() {
 	}
 	authService := auth.NewService(nil, authOptions...)
 	routerOptions := []apihttp.RouterOption{}
+	managerOptions := []player.ManagerOption{}
 	var cachedStateStore *cache.WriteBehindStateStore
 	var stateStore player.StateStore
 
@@ -45,10 +46,12 @@ func main() {
 			logger.Fatalf("database migration failed: %v", err)
 		}
 		definitionStore := postgres.NewDefinitionStore(db)
-		if _, err := definitionStore.Snapshot(setupContext, cfg.Version); err != nil {
+		definitionSnapshot, err := definitionStore.Snapshot(setupContext, cfg.Version)
+		if err != nil {
 			cancel()
 			logger.Fatalf("database definition catalog failed: %v", err)
 		}
+		managerOptions = append(managerOptions, player.WithBalanceCatalog(player.NewSnapshotBalanceCatalog(definitionSnapshot)))
 		authService = auth.NewService(postgres.NewAccountStore(db), authOptions...)
 		cachedStateStore = cache.NewWriteBehindStateStore(
 			postgres.NewPlayerStateStore(db),
@@ -64,8 +67,9 @@ func main() {
 		cancel()
 		cfg.DatabaseStatus = "connected"
 		cfg.StateCacheStatus = cfg.StateWriteMode
+		cfg.BalanceCatalog = "postgres_snapshot"
 	}
-	playerManager := player.NewManager(stateStore)
+	playerManager := player.NewManager(stateStore, managerOptions...)
 
 	server := &http.Server{
 		Addr:              cfg.Addr,

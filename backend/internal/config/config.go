@@ -21,6 +21,7 @@ type Config struct {
 	DatabaseURL        string
 	DatabaseStatus     string
 	StateCacheStatus   string
+	BalanceCatalog     string
 	StateWriteMode     string
 	StateFlushInterval time.Duration
 	StateFlushTimeout  time.Duration
@@ -38,10 +39,11 @@ func Load() Config {
 		ServiceName:        "mythwake-api",
 		Addr:               getEnv("MYTHWAKE_API_ADDR", ":8080"),
 		Environment:        getEnv("MYTHWAKE_ENV", "local"),
-		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.37"),
+		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.38"),
 		DatabaseURL:        os.Getenv("MYTHWAKE_DATABASE_URL"),
 		DatabaseStatus:     "disabled",
 		StateCacheStatus:   "disabled",
+		BalanceCatalog:     "static",
 		StateWriteMode:     getStateWriteMode(),
 		StateFlushInterval: getDurationEnv("MYTHWAKE_STATE_FLUSH_INTERVAL", 30*time.Second),
 		StateFlushTimeout:  getDurationEnv("MYTHWAKE_STATE_FLUSH_TIMEOUT", 5*time.Second),
