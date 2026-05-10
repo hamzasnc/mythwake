@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/cache/ratelimit"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
 	"github.com/hamzasnc/mythwake/backend/internal/definitions"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
@@ -68,6 +69,9 @@ func TestHealthEndpointIncludesStateCacheStats(t *testing.T) {
 	}
 	if body["state_cache_last_utc"] != "2026-05-10T12:00:00Z" || body["state_cache_error"] != "database unavailable" {
 		t.Fatalf("expected cache flush details in health response, got %#v", body)
+	}
+	if body["session_cache_store"] != config.CacheStoreMemory || body["rate_limit_store"] != config.CacheStoreMemory {
+		t.Fatalf("expected memory cache stores in health response, got %#v", body)
 	}
 }
 
@@ -275,6 +279,42 @@ func TestGameplayRateLimitUsesSessionToken(t *testing.T) {
 	}
 	if body.ErrorCode != "rate_limited" || body.RequestID != "gameplay-limit-001" {
 		t.Fatalf("expected gameplay rate limit error with request id, got %#v", body)
+	}
+}
+
+func TestRateLimiterFailureFailsClosed(t *testing.T) {
+	handler := NewRouter(
+		config.Config{
+			ServiceName:        "test-api",
+			Addr:               ":0",
+			Environment:        "test",
+			Version:            "test",
+			RateLimitEnabled:   true,
+			RateLimitWindow:    time.Minute,
+			RateLimitAuth:      1,
+			RequireIdempotency: true,
+		},
+		log.New(testWriter{}, "", 0),
+		nil,
+		player.NewManager(nil),
+		WithRateLimiter(failingRateLimiter{}),
+	)
+
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/auth/guest", nil)
+	request.Header.Set("X-Request-ID", "rate-limit-failed-001")
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status 503, got %d", response.Code)
+	}
+
+	var body api.ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.ErrorCode != "rate_limit_unavailable" || body.RequestID != "rate-limit-failed-001" {
+		t.Fatalf("expected rate limit unavailable error, got %#v", body)
 	}
 }
 
@@ -967,4 +1007,10 @@ type failingDefinitionProvider struct{}
 
 func (failingDefinitionProvider) Snapshot(context.Context, string) (api.DefinitionSnapshot, error) {
 	return api.DefinitionSnapshot{}, errors.New("definition provider failed")
+}
+
+type failingRateLimiter struct{}
+
+func (failingRateLimiter) Allow(context.Context, string, int, time.Duration) (ratelimit.Decision, error) {
+	return ratelimit.Decision{}, errors.New("rate limiter failed")
 }

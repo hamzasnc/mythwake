@@ -150,6 +150,32 @@ func TestValidateSessionCachesStoredSession(t *testing.T) {
 	}
 }
 
+func TestValidateSessionUsesInjectedSessionCache(t *testing.T) {
+	store := &fakeAccountStore{}
+	issuer := NewService(store)
+
+	issued, err := issuer.IssueGuestSessionForPlayer(context.Background(), "player-1", "")
+	if err != nil {
+		t.Fatalf("issue guest session: %v", err)
+	}
+
+	cache := newCountingSessionCache()
+	service := NewService(store, WithSessionCache(cache), WithSessionCacheTTL(time.Minute), WithSessionTouchInterval(time.Minute))
+	if _, err := service.ValidateSession(context.Background(), issued.Token); err != nil {
+		t.Fatalf("first validate session: %v", err)
+	}
+	if _, err := service.ValidateSession(context.Background(), issued.Token); err != nil {
+		t.Fatalf("second validate session: %v", err)
+	}
+
+	if cache.loads < 2 || cache.stores == 0 {
+		t.Fatalf("expected injected cache to be used, loads=%d stores=%d", cache.loads, cache.stores)
+	}
+	if store.findHits != 1 {
+		t.Fatalf("expected second validation to use injected cache, got %d store lookups", store.findHits)
+	}
+}
+
 func TestValidateSessionRefreshesExpiredCache(t *testing.T) {
 	store := &fakeAccountStore{}
 	now := time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC)
@@ -248,4 +274,30 @@ func hasProvider(definitions []ProviderDefinition, providerID string) bool {
 		}
 	}
 	return false
+}
+
+type countingSessionCache struct {
+	base    *MemorySessionCache
+	loads   int
+	stores  int
+	deletes int
+}
+
+func newCountingSessionCache() *countingSessionCache {
+	return &countingSessionCache{base: NewMemorySessionCache()}
+}
+
+func (cache *countingSessionCache) Load(ctx context.Context, tokenHash string) (SessionCacheEntry, bool, error) {
+	cache.loads++
+	return cache.base.Load(ctx, tokenHash)
+}
+
+func (cache *countingSessionCache) Store(ctx context.Context, tokenHash string, entry SessionCacheEntry) error {
+	cache.stores++
+	return cache.base.Store(ctx, tokenHash, entry)
+}
+
+func (cache *countingSessionCache) Delete(ctx context.Context, tokenHash string) error {
+	cache.deletes++
+	return cache.base.Delete(ctx, tokenHash)
 }

@@ -79,7 +79,7 @@ function Start-PostgresServiceIfNeeded {
 $goExe = Find-Go
 $env:MYTHWAKE_API_ADDR = $ApiAddr
 $env:MYTHWAKE_ENV = "local"
-$env:MYTHWAKE_API_VERSION = "0.2.50"
+$env:MYTHWAKE_API_VERSION = "0.2.51"
 $env:MYTHWAKE_STATE_FLUSH_INTERVAL = $StateFlushInterval
 $env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
 $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
@@ -120,8 +120,10 @@ Write-Host "Backend: $backendPath"
 Write-Host "Address: $ApiAddr"
 Write-Host "State write mode: $StateWriteMode"
 Write-Host "State flush interval: $StateFlushInterval"
+Write-Host "Session cache store: memory"
 Write-Host "Session cache TTL: $SessionCacheTTL"
 Write-Host "Session touch window: $SessionTouchWindow"
+Write-Host "Rate limit store: memory"
 Write-Host "Rate limit enabled: $($env:MYTHWAKE_RATE_LIMIT_ENABLED)"
 Write-Host "Rate limit window: $RateLimitWindow"
 Write-Host "Rate limit auth/gameplay: $RateLimitAuth / $RateLimitGameplay"

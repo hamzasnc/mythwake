@@ -13,6 +13,7 @@ import (
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/auth"
+	"github.com/hamzasnc/mythwake/backend/internal/cache/ratelimit"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
 	"github.com/hamzasnc/mythwake/backend/internal/definitions"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
@@ -26,6 +27,7 @@ type Router struct {
 	playerManager      *player.Manager
 	definitionProvider definitions.SnapshotProvider
 	stateCacheStats    StateCacheStatsProvider
+	rateLimiter        ratelimit.Limiter
 }
 
 type RouterOption func(*Router)
@@ -57,6 +59,14 @@ func WithStateCacheStatsProvider(provider StateCacheStatsProvider) RouterOption 
 	}
 }
 
+func WithRateLimiter(limiter ratelimit.Limiter) RouterOption {
+	return func(router *Router) {
+		if limiter != nil {
+			router.rateLimiter = limiter
+		}
+	}
+}
+
 func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service, playerManager *player.Manager, options ...RouterOption) http.Handler {
 	if authService == nil {
 		authService = auth.NewService(nil)
@@ -73,6 +83,7 @@ func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service,
 		playerManager:      playerManager,
 		definitionProvider: definitions.NewStaticSnapshotProvider(),
 		stateCacheStats:    func() StateCacheStats { return StateCacheStats{} },
+		rateLimiter:        ratelimit.NewMemoryLimiter(),
 	}
 
 	for _, option := range options {
@@ -80,7 +91,7 @@ func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service,
 	}
 
 	router.routes()
-	return withRequestID(logRequests(router.logger, recoverPanic(router.logger, withRateLimit(router.config, router.mux))))
+	return withRequestID(logRequests(router.logger, recoverPanic(router.logger, withRateLimit(router.config, router.rateLimiter, router.mux))))
 }
 
 func (router *Router) routes() {
@@ -146,6 +157,14 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 	if !cacheStats.LastFlushAt.IsZero() {
 		lastFlushUTC = cacheStats.LastFlushAt.UTC().Format(time.RFC3339)
 	}
+	sessionCacheStore := router.config.SessionCacheStore
+	if sessionCacheStore == "" {
+		sessionCacheStore = config.CacheStoreMemory
+	}
+	rateLimitStore := router.config.RateLimitStore
+	if rateLimitStore == "" {
+		rateLimitStore = config.CacheStoreMemory
+	}
 
 	writeJSON(response, http.StatusOK, map[string]string{
 		"service":              router.config.ServiceName,
@@ -161,8 +180,10 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 		"state_cache_failed":   strconv.FormatInt(cacheStats.FailedFlushes, 10),
 		"state_cache_last_utc": lastFlushUTC,
 		"state_cache_error":    cacheStats.LastError,
+		"session_cache_store":  sessionCacheStore,
 		"session_cache_ttl":    router.config.SessionCacheTTL.String(),
 		"session_touch_window": router.config.SessionTouchWindow.String(),
+		"rate_limit_store":     rateLimitStore,
 		"rate_limit_enabled":   boolLabel(router.config.RateLimitEnabled),
 		"rate_limit_window":    router.config.RateLimitWindow.String(),
 		"rate_limit_auth":      strconv.Itoa(router.config.RateLimitAuth),

@@ -36,11 +36,15 @@ func TestLoadFallsBackForInvalidIdempotencyFlag(t *testing.T) {
 }
 
 func TestLoadSessionCacheDurations(t *testing.T) {
+	t.Setenv("MYTHWAKE_SESSION_CACHE_STORE", "memory")
 	t.Setenv("MYTHWAKE_SESSION_CACHE_TTL", "45s")
 	t.Setenv("MYTHWAKE_SESSION_TOUCH_WINDOW", "2m")
 
 	cfg := Load()
 
+	if cfg.SessionCacheStore != CacheStoreMemory {
+		t.Fatalf("expected memory session cache, got %s", cfg.SessionCacheStore)
+	}
 	if cfg.SessionCacheTTL != 45*time.Second {
 		t.Fatalf("expected session cache ttl 45s, got %s", cfg.SessionCacheTTL)
 	}
@@ -50,6 +54,7 @@ func TestLoadSessionCacheDurations(t *testing.T) {
 }
 
 func TestLoadRateLimitSettings(t *testing.T) {
+	t.Setenv("MYTHWAKE_RATE_LIMIT_STORE", "memory")
 	t.Setenv("MYTHWAKE_RATE_LIMIT_ENABLED", "false")
 	t.Setenv("MYTHWAKE_RATE_LIMIT_WINDOW", "15s")
 	t.Setenv("MYTHWAKE_RATE_LIMIT_AUTH", "7")
@@ -57,6 +62,9 @@ func TestLoadRateLimitSettings(t *testing.T) {
 
 	cfg := Load()
 
+	if cfg.RateLimitStore != CacheStoreMemory {
+		t.Fatalf("expected memory rate limit store, got %s", cfg.RateLimitStore)
+	}
 	if cfg.RateLimitEnabled {
 		t.Fatal("expected rate limiting to be disabled")
 	}
@@ -68,5 +76,16 @@ func TestLoadRateLimitSettings(t *testing.T) {
 	}
 	if cfg.RateLimitGameplay != 9 {
 		t.Fatalf("expected gameplay limit 9, got %d", cfg.RateLimitGameplay)
+	}
+}
+
+func TestLoadFallsBackToMemoryCacheStores(t *testing.T) {
+	t.Setenv("MYTHWAKE_SESSION_CACHE_STORE", "redis")
+	t.Setenv("MYTHWAKE_RATE_LIMIT_STORE", "bad-store")
+
+	cfg := Load()
+
+	if cfg.SessionCacheStore != CacheStoreMemory || cfg.RateLimitStore != CacheStoreMemory {
+		t.Fatalf("expected unsupported cache stores to fall back to memory, got session=%s rate=%s", cfg.SessionCacheStore, cfg.RateLimitStore)
 	}
 }

@@ -346,6 +346,7 @@ Current backend state:
 - Unity gameplay mutations now send the last known server state revision, and the backend rejects stale mutation attempts with the latest snapshot.
 - Action ledger rows now store accepted state revisions, and PostgreSQL guards against older materialized state writes overwriting newer accepted revisions.
 - PostgreSQL action-result writes now lock and enforce expected player state revisions transactionally before accepting gameplay mutations.
+- Auth session caching and API rate limiting now sit behind Redis-ready interfaces while still using in-memory implementations locally.
 - Unity Backend Ping surfaces state-cache dirty/failure status so local persistence tests do not require opening Navicat first.
 - Player state, flush, and gameplay mutation routes now validate Bearer sessions and resolve the player context from the session token.
 - Unity Server Mode now persists the session token, sends `Authorization: Bearer <sessionToken>`, and retries protected requests once after `401` by refreshing guest auth.
@@ -355,7 +356,7 @@ Current backend state:
 - Per-action economy deltas save in `logs.player_action_ledger`.
 - Startup restores from the latest durable action result snapshot if materialized tables are behind.
 - Unity Server Mode now sends and reuses pending idempotency keys for gameplay actions after transport failures.
-- Redis is not connected yet.
+- Redis is not connected yet, but the auth session-cache and rate-limit boundaries are ready for Redis adapters.
 
 Recommended Go shape:
 - `cmd/api`
@@ -592,9 +593,11 @@ Progress:
 - Added Unity app pause/quit backend flush calls for active backend sessions.
 - Extended smoke tooling to verify logout revokes the active session.
 - Added a configurable read-through session cache and PostgreSQL touch window to reduce DB load on protected requests.
+- Extracted auth session caching behind an interface so Redis can replace the in-process cache without changing auth validation.
 - Logout now flushes a loaded player context before responding when hot player state exists.
 - Added request IDs, structured error bodies, status-aware request logging, and panic recovery around the HTTP router.
 - Added process-local auth/gameplay rate limiting as a temporary limiter foundation before Redis.
+- Extracted rate limiting behind an interface so Redis can replace the in-process counters without changing HTTP middleware.
 - Added a server-authoritative `GET /time` endpoint with UTC daily and weekly reset boundaries for later offline reward, mission reset, and clock drift validation.
 - Wired Unity Server Mode to consume the server clock and display reset timing for local smoke testing.
 - Added server-authoritative AFK reward claims for Gold and Myth Essence using server time, a 60 second minimum window, and a 6 hour cap.
@@ -621,7 +624,7 @@ Progress:
 - Added action-ledger revision columns and monotonic PostgreSQL revision saves to protect batched materialized state writes.
 
 Next useful step:
-- Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.
+- Add Redis-backed implementations for the session cache, rate-limit counters, and short-lived locks once local Redis is available.
 - Keep moving individual Unity Server Mode flows away from local-only fallbacks once their backend path is stable.
 - Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
 

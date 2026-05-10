@@ -108,11 +108,11 @@ Backend:
 - Guest auth now issues real random session tokens, stores only token hashes when PostgreSQL is enabled, and has account identity tables shaped for guest, email, Google, and Apple login
 - Player state, flush, and gameplay mutations now require a valid Bearer session token and resolve the active player from that token
 - Logout now revokes the active session token server-side and clears the Unity cached session
-- Session validation uses a short server-side read-through cache with a controlled PostgreSQL touch window
+- Session validation uses a Redis-ready read-through cache interface with a memory implementation and a controlled PostgreSQL touch window
 - Logout flushes a loaded player context before returning when server state is hot in memory
 - Every API response now carries an `X-Request-ID`, and error JSON includes `requestId` for log/client correlation
 - HTTP panic recovery returns a JSON `internal_error` instead of dropping the request
-- In-memory auth/gameplay rate limit middleware protects local API paths and is shaped for a later Redis-backed limiter
+- Auth/gameplay rate limit middleware now uses a Redis-ready limiter interface with a memory implementation for local API paths
 - `/health` reports whether gameplay balance is using the static fallback or the PostgreSQL-loaded snapshot
 - Server clock endpoint exposes authoritative UTC time plus daily/weekly reset countdowns for future offline rewards and daily reset validation
 - Server-authoritative AFK claim endpoint grants capped Gold and Myth Essence using server time and persists the last claim timestamp
@@ -139,13 +139,14 @@ Backend:
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Guest auth and action responses include the full player snapshot for direct client UI updates
 - Android emulator builds use `http://10.0.2.2:8080` as the default backend URL, while Editor/Desktop use `http://localhost:8080`
-- Redis is planned but not connected yet
+- Redis is planned but not connected yet; session cache and rate-limit seams are now ready for a Redis-backed implementation
 - Windows helper scripts:
   - `scripts/start-backend.cmd`
   - `scripts/check-backend.cmd`
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.51: Extracted auth session caching and API rate limiting behind Redis-ready interfaces with in-memory implementations.
 - Backend 0.2.50: PostgreSQL action-result writes now enforce expected player state revisions transactionally before accepting gameplay mutations.
 - Backend 0.2.49: Action ledger rows now store accepted state revisions and PostgreSQL rejects older materialized state writes over newer accepted revisions.
 - Backend 0.2.48 / Prototype 0.2.30: Unity now sends known player state revisions on gameplay actions and the backend rejects stale mutation attempts with the current snapshot.

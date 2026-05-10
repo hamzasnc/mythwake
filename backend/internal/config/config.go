@@ -11,6 +11,7 @@ const (
 	StateWriteModeLedgerWriteBehind = "ledger_write_behind"
 	StateWriteModeWriteThrough      = "write_through"
 	StateWriteModeWriteBehind       = "write_behind"
+	CacheStoreMemory                = "memory"
 )
 
 type Config struct {
@@ -25,8 +26,10 @@ type Config struct {
 	StateWriteMode     string
 	StateFlushInterval time.Duration
 	StateFlushTimeout  time.Duration
+	SessionCacheStore  string
 	SessionCacheTTL    time.Duration
 	SessionTouchWindow time.Duration
+	RateLimitStore     string
 	RateLimitEnabled   bool
 	RateLimitWindow    time.Duration
 	RateLimitAuth      int
@@ -40,7 +43,7 @@ func Load() Config {
 		ServiceName:        "mythwake-api",
 		Addr:               getEnv("MYTHWAKE_API_ADDR", ":8080"),
 		Environment:        getEnv("MYTHWAKE_ENV", "local"),
-		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.50"),
+		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.51"),
 		DatabaseURL:        os.Getenv("MYTHWAKE_DATABASE_URL"),
 		DatabaseStatus:     "disabled",
 		StateCacheStatus:   "disabled",
@@ -48,8 +51,10 @@ func Load() Config {
 		StateWriteMode:     getStateWriteMode(),
 		StateFlushInterval: getDurationEnv("MYTHWAKE_STATE_FLUSH_INTERVAL", 30*time.Second),
 		StateFlushTimeout:  getDurationEnv("MYTHWAKE_STATE_FLUSH_TIMEOUT", 5*time.Second),
+		SessionCacheStore:  getCacheStore("MYTHWAKE_SESSION_CACHE_STORE"),
 		SessionCacheTTL:    getDurationEnv("MYTHWAKE_SESSION_CACHE_TTL", 30*time.Second),
 		SessionTouchWindow: getDurationEnv("MYTHWAKE_SESSION_TOUCH_WINDOW", 30*time.Second),
+		RateLimitStore:     getCacheStore("MYTHWAKE_RATE_LIMIT_STORE"),
 		RateLimitEnabled:   getBoolEnv("MYTHWAKE_RATE_LIMIT_ENABLED", true),
 		RateLimitWindow:    getDurationEnv("MYTHWAKE_RATE_LIMIT_WINDOW", time.Minute),
 		RateLimitAuth:      getIntEnv("MYTHWAKE_RATE_LIMIT_AUTH", 30),
@@ -110,6 +115,16 @@ func getIntEnv(key string, fallback int) int {
 	}
 
 	return parsed
+}
+
+func getCacheStore(key string) string {
+	value := strings.ToLower(strings.TrimSpace(getEnv(key, CacheStoreMemory)))
+	switch value {
+	case CacheStoreMemory:
+		return value
+	default:
+		return CacheStoreMemory
+	}
 }
 
 func getStateWriteMode() string {

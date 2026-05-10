@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -71,36 +70,37 @@ type AccountStore interface {
 
 type ServiceOption func(*Service)
 
-type cachedSession struct {
-	session          Session
-	cachedAt         time.Time
-	lastStoreTouchAt time.Time
-}
-
 type Service struct {
-	store          AccountStore
-	now            func() time.Time
-	ttl            time.Duration
-	cacheTTL       time.Duration
-	touchInterval  time.Duration
-	mu             sync.Mutex
-	sessionsByHash map[string]cachedSession
+	store         AccountStore
+	now           func() time.Time
+	ttl           time.Duration
+	cacheTTL      time.Duration
+	touchInterval time.Duration
+	sessionCache  SessionCache
 }
 
 func NewService(store AccountStore, options ...ServiceOption) *Service {
 	service := &Service{
-		store:          store,
-		now:            time.Now,
-		ttl:            defaultSessionTTL,
-		cacheTTL:       defaultSessionCacheTTL,
-		touchInterval:  defaultSessionTouchInterval,
-		sessionsByHash: map[string]cachedSession{},
+		store:         store,
+		now:           time.Now,
+		ttl:           defaultSessionTTL,
+		cacheTTL:      defaultSessionCacheTTL,
+		touchInterval: defaultSessionTouchInterval,
+		sessionCache:  NewMemorySessionCache(),
 	}
 	for _, option := range options {
 		option(service)
 	}
 
 	return service
+}
+
+func WithSessionCache(cache SessionCache) ServiceOption {
+	return func(service *Service) {
+		if cache != nil {
+			service.sessionCache = cache
+		}
+	}
 }
 
 func WithSessionCacheTTL(ttl time.Duration) ServiceOption {
@@ -167,7 +167,9 @@ func (service *Service) IssueGuestSessionForPlayer(ctx context.Context, playerID
 	}
 
 	if service.store == nil {
-		service.rememberSession(session, now, now)
+		if err := service.rememberSession(ctx, session, now, now); err != nil {
+			return Session{}, err
+		}
 		return session, nil
 	}
 
@@ -183,7 +185,9 @@ func (service *Service) IssueGuestSessionForPlayer(ctx context.Context, playerID
 	if err := service.store.SaveSession(ctx, session); err != nil {
 		return Session{}, err
 	}
-	service.rememberSession(session, now, now)
+	if err := service.rememberSession(ctx, session, now, now); err != nil {
+		return Session{}, err
+	}
 
 	return session, nil
 }
@@ -217,27 +221,31 @@ func (service *Service) ValidateSession(ctx context.Context, token string) (Sess
 
 		session.Token = token
 		session.LastSeenAt = now
-		service.rememberSession(session, now, now)
+		if err := service.rememberSession(ctx, session, now, now); err != nil {
+			return Session{}, err
+		}
 		return session, nil
 	}
 
-	service.mu.Lock()
-	defer service.mu.Unlock()
-
-	entry, ok := service.sessionsByHash[tokenHash]
+	entry, ok, err := service.sessionCache.Load(ctx, tokenHash)
+	if err != nil {
+		return Session{}, err
+	}
 	if !ok {
 		return Session{}, ErrInvalidSession
 	}
-	session := entry.session
+	session := entry.Session
 	if !session.ExpiresAt.After(now) {
-		delete(service.sessionsByHash, tokenHash)
+		_ = service.sessionCache.Delete(ctx, tokenHash)
 		return Session{}, ErrExpiredSession
 	}
 
 	session.Token = token
 	session.LastSeenAt = now
-	entry.session = session
-	service.sessionsByHash[tokenHash] = entry
+	entry.Session = session
+	if err := service.sessionCache.Store(ctx, tokenHash, entry); err != nil {
+		return Session{}, err
+	}
 	return session, nil
 }
 
@@ -268,21 +276,23 @@ func (service *Service) RevokeSession(ctx context.Context, token string) (Sessio
 			return Session{}, err
 		}
 
-		service.forgetSession(tokenHash)
+		_ = service.forgetSession(ctx, tokenHash)
 		session.Token = token
 		return session, nil
 	}
 
-	service.mu.Lock()
-	defer service.mu.Unlock()
-
-	entry, ok := service.sessionsByHash[tokenHash]
+	entry, ok, err := service.sessionCache.Load(ctx, tokenHash)
+	if err != nil {
+		return Session{}, err
+	}
 	if !ok {
 		return Session{}, ErrInvalidSession
 	}
 
-	delete(service.sessionsByHash, tokenHash)
-	session := entry.session
+	if err := service.sessionCache.Delete(ctx, tokenHash); err != nil {
+		return Session{}, err
+	}
+	session := entry.Session
 	session.Token = token
 	return session, nil
 }
@@ -302,26 +312,28 @@ func randomToken(prefix string, byteCount int) (string, error) {
 }
 
 func (service *Service) cachedSession(ctx context.Context, tokenHash string, token string, now time.Time) (Session, bool, error) {
-	service.mu.Lock()
-	entry, ok := service.sessionsByHash[tokenHash]
+	entry, ok, err := service.sessionCache.Load(ctx, tokenHash)
+	if err != nil {
+		if service.store != nil {
+			return Session{}, false, nil
+		}
+
+		return Session{}, false, err
+	}
 	if !ok {
-		service.mu.Unlock()
 		return Session{}, false, nil
 	}
-	if !entry.session.ExpiresAt.After(now) {
-		delete(service.sessionsByHash, tokenHash)
-		service.mu.Unlock()
+	if !entry.Session.ExpiresAt.After(now) {
+		_ = service.sessionCache.Delete(ctx, tokenHash)
 		return Session{}, false, nil
 	}
-	if service.cacheTTL == 0 || now.Sub(entry.cachedAt) >= service.cacheTTL {
-		delete(service.sessionsByHash, tokenHash)
-		service.mu.Unlock()
+	if service.cacheTTL == 0 || now.Sub(entry.CachedAt) >= service.cacheTTL {
+		_ = service.sessionCache.Delete(ctx, tokenHash)
 		return Session{}, false, nil
 	}
 
-	shouldTouch := service.touchInterval == 0 || now.Sub(entry.lastStoreTouchAt) >= service.touchInterval
-	session := entry.session
-	service.mu.Unlock()
+	shouldTouch := service.touchInterval == 0 || now.Sub(entry.LastStoreTouchAt) >= service.touchInterval
+	session := entry.Session
 
 	if shouldTouch {
 		if err := service.store.TouchSession(ctx, session.SessionID, now); err != nil {
@@ -329,34 +341,40 @@ func (service *Service) cachedSession(ctx context.Context, tokenHash string, tok
 		}
 
 		session.LastSeenAt = now
-		service.mu.Lock()
-		current, ok := service.sessionsByHash[tokenHash]
-		if ok && current.session.SessionID == session.SessionID {
-			current.session = session
-			current.lastStoreTouchAt = now
-			service.sessionsByHash[tokenHash] = current
+		current, ok, err := service.sessionCache.Load(ctx, tokenHash)
+		if err != nil {
+			if service.store != nil {
+				return Session{}, false, nil
+			}
+
+			return Session{}, false, err
 		}
-		service.mu.Unlock()
+		if ok && current.Session.SessionID == session.SessionID {
+			current.Session = session
+			current.LastStoreTouchAt = now
+			if err := service.sessionCache.Store(ctx, tokenHash, current); err != nil && service.store == nil {
+				return Session{}, false, err
+			}
+		}
 	}
 
 	session.Token = token
 	return session, true, nil
 }
 
-func (service *Service) rememberSession(session Session, cachedAt time.Time, lastStoreTouchAt time.Time) {
-	service.mu.Lock()
-	defer service.mu.Unlock()
-
-	service.sessionsByHash[session.TokenHash] = cachedSession{
-		session:          session,
-		cachedAt:         cachedAt,
-		lastStoreTouchAt: lastStoreTouchAt,
+func (service *Service) rememberSession(ctx context.Context, session Session, cachedAt time.Time, lastStoreTouchAt time.Time) error {
+	err := service.sessionCache.Store(ctx, session.TokenHash, SessionCacheEntry{
+		Session:          session,
+		CachedAt:         cachedAt,
+		LastStoreTouchAt: lastStoreTouchAt,
+	})
+	if err != nil && service.store == nil {
+		return err
 	}
+
+	return nil
 }
 
-func (service *Service) forgetSession(tokenHash string) {
-	service.mu.Lock()
-	defer service.mu.Unlock()
-
-	delete(service.sessionsByHash, tokenHash)
+func (service *Service) forgetSession(ctx context.Context, tokenHash string) error {
+	return service.sessionCache.Delete(ctx, tokenHash)
 }

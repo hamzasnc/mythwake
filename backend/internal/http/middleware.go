@@ -12,9 +12,9 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/hamzasnc/mythwake/backend/internal/cache/ratelimit"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
 )
 
@@ -102,20 +102,11 @@ func logRequests(logger *log.Logger, next http.Handler) http.Handler {
 	})
 }
 
-type rateLimiter struct {
-	mu      sync.Mutex
-	now     func() time.Time
-	window  time.Duration
-	entries map[string]rateLimitEntry
-}
+func withRateLimit(cfg config.Config, limiter ratelimit.Limiter, next http.Handler) http.Handler {
+	if limiter == nil {
+		limiter = ratelimit.NewMemoryLimiter()
+	}
 
-type rateLimitEntry struct {
-	count   int
-	resetAt time.Time
-}
-
-func withRateLimit(cfg config.Config, next http.Handler) http.Handler {
-	limiter := newRateLimiter(cfg.RateLimitWindow)
 	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		category, limit := rateLimitCategory(cfg, request)
 		if !cfg.RateLimitEnabled || category == "" || limit <= 0 {
@@ -124,50 +115,19 @@ func withRateLimit(cfg config.Config, next http.Handler) http.Handler {
 		}
 
 		key := rateLimitKey(category, request)
-		allowed, retryAfter := limiter.Allow(key, limit)
-		if !allowed {
-			response.Header().Set("Retry-After", strconv.Itoa(int(retryAfter.Seconds()+0.999)))
+		decision, err := limiter.Allow(request.Context(), key, limit, cfg.RateLimitWindow)
+		if err != nil {
+			writeError(response, request, http.StatusServiceUnavailable, "rate_limit_unavailable", "Rate limit service is temporarily unavailable.")
+			return
+		}
+		if !decision.Allowed {
+			response.Header().Set("Retry-After", strconv.Itoa(int(decision.RetryAfter.Seconds()+0.999)))
 			writeError(response, request, http.StatusTooManyRequests, "rate_limited", "Too many requests. Try again shortly.")
 			return
 		}
 
 		next.ServeHTTP(response, request)
 	})
-}
-
-func newRateLimiter(window time.Duration) *rateLimiter {
-	if window <= 0 {
-		window = time.Minute
-	}
-
-	return &rateLimiter{
-		now:     time.Now,
-		window:  window,
-		entries: map[string]rateLimitEntry{},
-	}
-}
-
-func (limiter *rateLimiter) Allow(key string, limit int) (bool, time.Duration) {
-	if limit <= 0 {
-		return true, 0
-	}
-
-	now := limiter.now()
-	limiter.mu.Lock()
-	defer limiter.mu.Unlock()
-
-	entry := limiter.entries[key]
-	if entry.resetAt.IsZero() || !entry.resetAt.After(now) {
-		entry = rateLimitEntry{resetAt: now.Add(limiter.window)}
-	}
-
-	if entry.count >= limit {
-		return false, entry.resetAt.Sub(now)
-	}
-
-	entry.count++
-	limiter.entries[key] = entry
-	return true, 0
 }
 
 func rateLimitCategory(cfg config.Config, request *http.Request) (string, int) {
