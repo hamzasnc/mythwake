@@ -398,6 +398,16 @@ func HeroDefinitions() []HeroDefinition {
 	return definitions
 }
 
+func HeroDefinitionByID(heroID string) (HeroDefinition, bool) {
+	for _, definition := range heroDefinitions {
+		if definition.ID == heroID {
+			return definition, true
+		}
+	}
+
+	return HeroDefinition{}, false
+}
+
 func CampaignDefinitions() []CampaignDefinition {
 	definitions := make([]CampaignDefinition, len(campaignDefinitions))
 	copy(definitions, campaignDefinitions)

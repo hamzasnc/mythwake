@@ -50,6 +50,16 @@ func TestCampaignMilestoneReward(t *testing.T) {
 	}
 }
 
+func TestHeroDefinitions(t *testing.T) {
+	hero, ok := HeroDefinitionByID("hero_astra")
+	if !ok || !hero.StarterOwned || hero.SortOrder != 10 {
+		t.Fatalf("unexpected hero_astra definition: %#v ok=%v", hero, ok)
+	}
+	if _, ok := HeroDefinitionByID("hero_fake"); ok {
+		t.Fatal("unknown hero should not exist")
+	}
+}
+
 func TestProgressionCosts(t *testing.T) {
 	if HeroLevelCost(1) != 20 {
 		t.Fatalf("expected level 1 hero cost 20, got %d", HeroLevelCost(1))

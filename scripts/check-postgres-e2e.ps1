@@ -136,6 +136,7 @@ try {
     $firstProcess = Start-Api
 
     $definitions = Invoke-Json -Path "/definitions"
+    $starterHeroDefinitions = @($definitions.heroes | Where-Object { $_.starterOwned -eq $true })
     $stageOneDefinition = $definitions.campaignStages | Where-Object { [int]$_.stageNumber -eq 1 } | Select-Object -First 1
     if (-not $stageOneDefinition -or [int]$stageOneDefinition.enemyMaxHp -le 0 -or [int]$stageOneDefinition.enemyDamage -le 0) {
         throw "Expected definitions to include campaign combat stats. Response: $($definitions | ConvertTo-Json -Depth 8)"
@@ -168,6 +169,12 @@ try {
     }
     if (@($stateBefore.dailyProgress).Count -lt 3) {
         throw "Expected player state to include daily mission progress."
+    }
+    if (@($stateBefore.heroes).Count -ne $starterHeroDefinitions.Count) {
+        throw "Expected player state starter heroes to match definitions. Heroes=$(@($stateBefore.heroes).Count) Starters=$($starterHeroDefinitions.Count)"
+    }
+    if (@($stateBefore.heroShards).Count -lt @($definitions.heroes).Count) {
+        throw "Expected player state to include initial shard rows for known heroes."
     }
 
     $afkHeaders = @{

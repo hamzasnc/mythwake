@@ -10,6 +10,10 @@ import (
 
 func TestSnapshotBalanceCatalogUsesSnapshotCombatDefinitions(t *testing.T) {
 	catalog := NewSnapshotBalanceCatalog(api.DefinitionSnapshot{
+		Heroes: []api.HeroDefinition{
+			{HeroID: "hero_custom", DisplayName: "Custom", SortOrder: 20, StarterOwned: true},
+			{HeroID: "hero_locked", DisplayName: "Locked", SortOrder: 10, StarterOwned: false},
+		},
 		Rewards: []api.RewardDefinition{
 			{
 				RewardID: "reward_campaign_stage_003",
@@ -61,6 +65,15 @@ func TestSnapshotBalanceCatalogUsesSnapshotCombatDefinitions(t *testing.T) {
 	dungeonReward := catalog.DungeonReward(dungeon, 2)
 	if dungeonReward.Gold != 34 {
 		t.Fatalf("expected snapshot dungeon reward gold 34, got %#v", dungeonReward)
+	}
+
+	heroes := catalog.HeroDefinitions()
+	if len(heroes) != 2 || heroes[0].ID != "hero_locked" || heroes[1].ID != "hero_custom" {
+		t.Fatalf("expected sorted snapshot hero definitions, got %#v", heroes)
+	}
+	hero, ok := catalog.HeroDefinitionByID("hero_custom")
+	if !ok || !hero.StarterOwned {
+		t.Fatalf("expected snapshot hero_custom definition, got %#v ok=%t", hero, ok)
 	}
 }
 

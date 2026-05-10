@@ -16,6 +16,8 @@ type BalanceCatalog interface {
 	AFKReward(stage int, elapsedSeconds int) (api.Reward, int)
 	AFKMinClaimSeconds() int
 	RewardAFKClaim() string
+	HeroDefinitions() []balance.HeroDefinition
+	HeroDefinitionByID(heroID string) (balance.HeroDefinition, bool)
 	HeroLevelCost(level int) int
 	HeroAscensionShardCost(ascension int) int
 	EquipmentLevelCost(equipmentID string, level int) (int, bool)
@@ -71,6 +73,14 @@ func (StaticBalanceCatalog) AFKMinClaimSeconds() int {
 
 func (StaticBalanceCatalog) RewardAFKClaim() string {
 	return balance.RewardAFKClaim
+}
+
+func (StaticBalanceCatalog) HeroDefinitions() []balance.HeroDefinition {
+	return balance.HeroDefinitions()
+}
+
+func (StaticBalanceCatalog) HeroDefinitionByID(heroID string) (balance.HeroDefinition, bool) {
+	return balance.HeroDefinitionByID(heroID)
 }
 
 func (StaticBalanceCatalog) HeroLevelCost(level int) int {

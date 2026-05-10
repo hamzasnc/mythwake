@@ -13,6 +13,8 @@ type SnapshotBalanceCatalog struct {
 	fallback              StaticBalanceCatalog
 	campaigns             []api.CampaignDefinition
 	campaignStagesByLevel map[int]api.CampaignStageDefinition
+	heroes                []balance.HeroDefinition
+	heroesByID            map[string]balance.HeroDefinition
 	rewards               map[string]api.Reward
 	dungeons              map[string]balance.DungeonDefinition
 	progressionCosts      []api.ProgressionCostDefinition
@@ -29,6 +31,7 @@ type SnapshotBalanceCatalog struct {
 func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalanceCatalog {
 	catalog := &SnapshotBalanceCatalog{
 		campaignStagesByLevel: map[int]api.CampaignStageDefinition{},
+		heroesByID:            map[string]balance.HeroDefinition{},
 		rewards:               map[string]api.Reward{},
 		dungeons:              map[string]balance.DungeonDefinition{},
 		summonBanners:         map[string]api.SummonBannerDefinition{},
@@ -46,6 +49,23 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 	for _, definition := range snapshot.CampaignStages {
 		catalog.campaignStagesByLevel[definition.StageNumber] = definition
 	}
+
+	for _, definition := range snapshot.Heroes {
+		hero := balance.HeroDefinition{
+			ID:           definition.HeroID,
+			DisplayName:  definition.DisplayName,
+			SortOrder:    definition.SortOrder,
+			StarterOwned: definition.StarterOwned,
+		}
+		catalog.heroes = append(catalog.heroes, hero)
+		catalog.heroesByID[hero.ID] = hero
+	}
+	sort.Slice(catalog.heroes, func(left int, right int) bool {
+		if catalog.heroes[left].SortOrder == catalog.heroes[right].SortOrder {
+			return catalog.heroes[left].ID < catalog.heroes[right].ID
+		}
+		return catalog.heroes[left].SortOrder < catalog.heroes[right].SortOrder
+	})
 
 	for _, definition := range snapshot.Rewards {
 		reward := definition.Reward
@@ -260,6 +280,24 @@ func (catalog *SnapshotBalanceCatalog) AFKMinClaimSeconds() int {
 
 func (catalog *SnapshotBalanceCatalog) RewardAFKClaim() string {
 	return catalog.fallback.RewardAFKClaim()
+}
+
+func (catalog *SnapshotBalanceCatalog) HeroDefinitions() []balance.HeroDefinition {
+	if len(catalog.heroes) == 0 {
+		return catalog.fallback.HeroDefinitions()
+	}
+
+	definitions := make([]balance.HeroDefinition, len(catalog.heroes))
+	copy(definitions, catalog.heroes)
+	return definitions
+}
+
+func (catalog *SnapshotBalanceCatalog) HeroDefinitionByID(heroID string) (balance.HeroDefinition, bool) {
+	if definition, ok := catalog.heroesByID[heroID]; ok {
+		return definition, true
+	}
+
+	return catalog.fallback.HeroDefinitionByID(heroID)
 }
 
 func (catalog *SnapshotBalanceCatalog) HeroLevelCost(level int) int {

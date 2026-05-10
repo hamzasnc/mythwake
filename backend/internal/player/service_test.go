@@ -46,6 +46,29 @@ func TestDungeonActionIDUsesSpecificActionForKnownDungeons(t *testing.T) {
 	}
 }
 
+func TestServiceSeedsStarterHeroesFromBalanceCatalog(t *testing.T) {
+	catalog := NewSnapshotBalanceCatalog(api.DefinitionSnapshot{
+		Heroes: []api.HeroDefinition{
+			{HeroID: "hero_custom_starter", StarterOwned: true},
+			{HeroID: "hero_custom_locked", StarterOwned: false},
+		},
+	})
+	service := NewServiceForPlayer("hero-seed-player", withServiceBalanceCatalog(catalog))
+
+	if service.heroLevels["hero_custom_starter"] != 1 {
+		t.Fatalf("expected custom starter hero at level 1, got %#v", service.heroLevels)
+	}
+	if _, ok := service.heroLevels["hero_custom_locked"]; ok {
+		t.Fatalf("expected locked hero to stay unowned, got %#v", service.heroLevels)
+	}
+	if _, ok := service.heroLevels["hero_astra"]; ok {
+		t.Fatalf("expected static starter heroes to be replaced by snapshot catalog, got %#v", service.heroLevels)
+	}
+	if _, ok := service.heroShards["hero_custom_locked"]; !ok {
+		t.Fatalf("expected custom hero shard row to be initialized, got %#v", service.heroShards)
+	}
+}
+
 func TestAccessoryEquipUsesDefinitionSlot(t *testing.T) {
 	service := NewService()
 	service.accessoryInventory["accessory_necklace_r0"] = 1

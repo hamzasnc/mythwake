@@ -176,16 +176,8 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 			TeamAttack:          96,
 			TeamHealth:          780,
 		},
-		heroLevels: map[string]int{
-			"hero_astra":  1,
-			"hero_borin":  1,
-			"hero_cyra":   1,
-			"hero_dante":  1,
-			"hero_elowen": 1,
-		},
-		heroShards: map[string]int{
-			"hero_astra": 0,
-		},
+		heroLevels:         map[string]int{},
+		heroShards:         map[string]int{},
 		heroAscensions:     map[string]int{},
 		equipmentLevels:    map[string]int{weaponID: 0, armorID: 0},
 		accessoryInventory: map[string]int{},
@@ -197,10 +189,25 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 	for _, option := range options {
 		option(service)
 	}
+	service.seedInitialHeroes()
 	service.lastAFKClaimedAt = service.now().UTC()
 	service.dailyDate = dailyDateKey(service.now())
 	service.configureDomainServices()
 	return service
+}
+
+func (service *Service) seedInitialHeroes() {
+	for _, definition := range service.balanceCatalog.HeroDefinitions() {
+		if definition.ID == "" {
+			continue
+		}
+		if definition.StarterOwned {
+			service.heroLevels[definition.ID] = max(1, service.heroLevels[definition.ID])
+		}
+		if _, ok := service.heroShards[definition.ID]; !ok {
+			service.heroShards[definition.ID] = 0
+		}
+	}
 }
 
 func (service *Service) UseStateStore(ctx context.Context, store StateStore) error {

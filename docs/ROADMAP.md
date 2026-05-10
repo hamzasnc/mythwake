@@ -598,6 +598,7 @@ Progress:
 - Routed player gameplay balance reads through an injectable balance catalog while keeping the static Go catalog as the current runtime default.
 - Combat now uses a 30 second fight timer in API results, balance definitions, PostgreSQL definition rows, and Unity prototype text instead of round limits.
 - PostgreSQL-backed APIs now inject the loaded common definition snapshot into live player gameplay balance for combat, rewards, costs, summons, daily missions, and Mission Track rewards.
+- New player starter heroes and initial hero shard rows now come from the active hero definition catalog instead of hardcoded service maps.
 - Accessory equip, level, and fuse actions now use accessory and rarity definitions for slot routing, fuse targets, fuse copy costs, max-level validation, and equipped ATK/HP stat bonuses instead of parsing behavior from item IDs.
 
 Next useful step:

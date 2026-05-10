@@ -79,6 +79,7 @@ Current scope:
 - Player gameplay services read balance through an injectable catalog boundary.
 - When PostgreSQL is enabled, `/definitions` is loaded from `common.*` definition tables; no-database mode keeps using the static Go catalog.
 - When PostgreSQL is enabled, the same loaded definition snapshot is injected into live gameplay balance for combat stats, dungeon rewards, progression costs, summon rotation, daily missions, and Mission Track rewards.
+- New player starter heroes and initial shard rows are seeded from the active hero definition catalog.
 - Accessory equip, level, and fuse actions use server-owned accessory and rarity definitions for slot selection, fuse targets, fuse copy costs, max level validation, and equipped ATK/HP stat bonuses.
 - Player service gameplay actions route through explicit domain action services while keeping the existing API surface stable.
 - Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.
