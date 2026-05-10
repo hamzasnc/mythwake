@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.21";
+    public const string PrototypeVersion = "0.2.22";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -641,6 +641,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private int gearDungeonFloor = 1;
     [SerializeField] private int weaponLevel = StarterEquipmentLevel;
     [SerializeField] private int armorLevel = StarterEquipmentLevel;
+    [NonSerialized] private int backendWeaponLevel;
+    [NonSerialized] private int backendArmorLevel;
     [SerializeField] private int selectedAccessorySlot;
     [SerializeField] private int selectedAccessoryRarity;
     [SerializeField] private int[] equippedAccessoryRarities = new int[AccessorySlotCount];
@@ -1961,18 +1963,30 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void ClaimDailyMissionOnBackend(int missionIndex)
     {
         missionIndex = Mathf.Clamp(missionIndex, 0, DailyMissionCount - 1);
+        var missionId = GetDailyMissionDefinition(missionIndex).missionId;
+        if (TryGetBackendDailyMissionDefinition(missionIndex, out var backendMission))
+        {
+            missionId = backendMission.missionId;
+        }
+
         if (TryStartBackendRequest("Server: claiming daily mission..."))
         {
-            StartCoroutine(backendClient.ClaimDailyMission(GetDailyMissionDefinition(missionIndex).missionId, OnBackendGameplayAction));
+            StartCoroutine(backendClient.ClaimDailyMission(missionId, OnBackendGameplayAction));
         }
     }
 
     private void ClaimBattlePassRewardOnBackend(int rewardIndex)
     {
         rewardIndex = Mathf.Clamp(rewardIndex, 0, BattlePassRewardCount - 1);
+        var rewardId = GetBattlePassRewardDefinition(rewardIndex).rewardId;
+        if (TryGetBackendBattlePassRewardDefinition(rewardIndex, out var backendReward))
+        {
+            rewardId = backendReward.rewardId;
+        }
+
         if (TryStartBackendRequest("Server: claiming mission track reward..."))
         {
-            StartCoroutine(backendClient.ClaimBattlePassReward(GetBattlePassRewardDefinition(rewardIndex).rewardId, OnBackendGameplayAction));
+            StartCoroutine(backendClient.ClaimBattlePassReward(rewardId, OnBackendGameplayAction));
         }
     }
 
@@ -2379,6 +2393,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         weaponLevel = StarterEquipmentLevel;
         armorLevel = StarterEquipmentLevel;
+        backendWeaponLevel = 0;
+        backendArmorLevel = 0;
 
         if (equipment == null)
         {
@@ -2389,11 +2405,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             if (equipment[i].equipmentId == WeaponTrack.equipmentId)
             {
-                weaponLevel = Mathf.Max(StarterEquipmentLevel, equipment[i].level);
+                backendWeaponLevel = Mathf.Max(0, equipment[i].level);
+                weaponLevel = Mathf.Max(StarterEquipmentLevel, backendWeaponLevel);
             }
             else if (equipment[i].equipmentId == ArmorTrack.equipmentId)
             {
-                armorLevel = Mathf.Max(StarterEquipmentLevel, equipment[i].level);
+                backendArmorLevel = Mathf.Max(0, equipment[i].level);
+                armorLevel = Mathf.Max(StarterEquipmentLevel, backendArmorLevel);
             }
         }
     }
@@ -4170,13 +4188,42 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return rarityId;
     }
 
-    private static int GetSummonCost()
+    private int GetSummonCost()
     {
+        if (TryGetBackendSummonBannerDefinition(HeroShardBanner.bannerId, out var backendBanner))
+        {
+            return Mathf.Max(0, backendBanner.costAmount);
+        }
+
         return HeroShardBanner.costAmount;
     }
 
-    private static string GetSummonRatesText()
+    private string GetSummonRatesText()
     {
+        if (TryGetBackendSummonBannerDefinition(HeroShardBanner.bannerId, out var backendBanner))
+        {
+            var serverText = $"{backendBanner.displayName}\nCost {backendBanner.costAmount} {GetCurrencyDefinition(backendBanner.costCurrencyId).displayName}";
+            if (backendBanner.shardDrops == null || backendBanner.shardDrops.Length == 0)
+            {
+                return serverText;
+            }
+
+            serverText += "\nRotation";
+            for (var i = 0; i < backendBanner.shardDrops.Length; i++)
+            {
+                serverText += i == 0 ? " " : "  ";
+                var heroName = backendBanner.shardDrops[i].heroId;
+                if (TryGetHeroIndexById(backendBanner.shardDrops[i].heroId, out var heroIndex))
+                {
+                    heroName = GetHeroDefinition(heroIndex).name;
+                }
+
+                serverText += $"{heroName} x{backendBanner.shardDrops[i].shards}";
+            }
+
+            return serverText;
+        }
+
         var text = "Rates";
 
         if (HeroShardBanner.rates == null || HeroShardBanner.rates.Length == 0)
@@ -4412,6 +4459,92 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return false;
+    }
+
+    private bool TryGetBackendProgressionCostAmount(string costId, string targetId, int progressValue, out int amount, out string currencyId)
+    {
+        amount = 0;
+        currencyId = string.Empty;
+        if (!UseBackendDefinitionView() || !TryGetDefinitions(out var definitions) || definitions.progressionCosts == null)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < definitions.progressionCosts.Length; i++)
+        {
+            var definition = definitions.progressionCosts[i];
+            if (definition.costId != costId)
+            {
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(definition.targetId) && definition.targetId != "*" && definition.targetId != targetId)
+            {
+                continue;
+            }
+
+            amount = Mathf.Max(0, definition.baseAmount + (Mathf.Max(0, progressValue) * definition.amountPerLevel));
+            currencyId = definition.costCurrencyId;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryGetBackendSummonBannerDefinition(string bannerId, out MythwakeSummonBannerDefinitionDto definition)
+    {
+        definition = default(MythwakeSummonBannerDefinitionDto);
+        if (!UseBackendDefinitionView() || !TryGetDefinitions(out var definitions) || definitions.summonBanners == null)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < definitions.summonBanners.Length; i++)
+        {
+            if (definitions.summonBanners[i].bannerId == bannerId)
+            {
+                definition = definitions.summonBanners[i];
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetBackendDailyMissionDefinition(int missionIndex, out MythwakeDailyMissionDefinitionDto definition)
+    {
+        definition = default(MythwakeDailyMissionDefinitionDto);
+        if (!UseBackendDefinitionView() || !TryGetDefinitions(out var definitions) || definitions.dailyMissions == null || definitions.dailyMissions.Length == 0)
+        {
+            return false;
+        }
+
+        missionIndex = Mathf.Clamp(missionIndex, 0, definitions.dailyMissions.Length - 1);
+        if (missionIndex < 0 || missionIndex >= definitions.dailyMissions.Length)
+        {
+            return false;
+        }
+
+        definition = definitions.dailyMissions[missionIndex];
+        return !string.IsNullOrWhiteSpace(definition.missionId);
+    }
+
+    private bool TryGetBackendBattlePassRewardDefinition(int rewardIndex, out MythwakeBattlePassRewardDefinitionDto definition)
+    {
+        definition = default(MythwakeBattlePassRewardDefinitionDto);
+        if (!UseBackendDefinitionView() || !TryGetDefinitions(out var definitions) || definitions.battlePassRewards == null || definitions.battlePassRewards.Length == 0)
+        {
+            return false;
+        }
+
+        rewardIndex = Mathf.Clamp(rewardIndex, 0, definitions.battlePassRewards.Length - 1);
+        if (rewardIndex < 0 || rewardIndex >= definitions.battlePassRewards.Length)
+        {
+            return false;
+        }
+
+        definition = definitions.battlePassRewards[rewardIndex];
+        return !string.IsNullOrWhiteSpace(definition.rewardId);
     }
 
     private static int GetBackendDungeonRequiredPower(MythwakeDungeonDefinitionDto definition, int floor)
@@ -4791,6 +4924,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var level = Mathf.Max(1, equippedAccessoryLevels[slot]);
+        if (TryGetBackendProgressionCostAmount("accessory_level_any", "*", level, out var backendCost, out _))
+        {
+            return backendCost;
+        }
+
         var rarityDefinition = GetAccessoryRarityDefinition(rarity);
         return Mathf.CeilToInt(rarityDefinition.levelCostBase * Mathf.Pow(rarityDefinition.levelCostGrowth, level - 1));
     }
@@ -4853,6 +4991,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         index = Mathf.Clamp(index, 0, HeroCount - 1);
         EnsureHeroLevels();
+        if (TryGetBackendProgressionCostAmount("hero_level_any", "*", heroLevels[index], out var backendCost, out _))
+        {
+            return backendCost;
+        }
+
         return Mathf.CeilToInt(14 * Mathf.Pow(1.34f, heroLevels[index] - 1));
     }
 
@@ -4860,6 +5003,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         index = Mathf.Clamp(index, 0, HeroCount - 1);
         EnsureHeroAscensions();
+        if (TryGetBackendProgressionCostAmount("hero_ascension_any", "*", heroAscensions[index], out var backendCost, out _))
+        {
+            return backendCost;
+        }
+
         var hero = GetHeroDefinition(index);
         return hero.ascensionBaseCost + (heroAscensions[index] * hero.ascensionCostGrowth);
     }
@@ -4877,6 +5025,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private int GetEquipmentUpgradeCost(EquipmentTrackDefinition track, int level)
     {
         level = Mathf.Max(StarterEquipmentLevel, level);
+        var costId = track.equipmentId == WeaponTrack.equipmentId ? "equipment_weapon_level" : "equipment_armor_level";
+        var serverLevel = track.equipmentId == WeaponTrack.equipmentId ? backendWeaponLevel : backendArmorLevel;
+        if (TryGetBackendProgressionCostAmount(costId, track.equipmentId, serverLevel, out var backendCost, out _))
+        {
+            return backendCost;
+        }
+
         return Mathf.CeilToInt(track.baseCost * Mathf.Pow(track.costGrowth, level - 1));
     }
 
@@ -5068,11 +5223,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         for (var i = 0; i < DailyMissionCount; i++)
         {
             var mission = GetDailyMissionDefinition(i);
-            var progress = Mathf.Min(GetDailyMissionProgress(i), mission.target);
-            var isComplete = progress >= mission.target;
+            var title = mission.title;
+            var target = mission.target;
+            var rewardText = FormatReward(mission.reward);
+            if (TryGetBackendDailyMissionDefinition(i, out var backendMission))
+            {
+                title = backendMission.displayName;
+                target = Mathf.Max(1, backendMission.target);
+                rewardText = FormatServerReward(backendMission.reward);
+            }
+
+            var progress = Mathf.Min(GetDailyMissionProgress(i), target);
+            var isComplete = progress >= target;
             var isClaimed = dailyMissionClaimed[i];
-            var state = isClaimed ? "Claimed" : isComplete ? "Claim" : $"{progress}/{mission.target}";
-            var text = $"{mission.title}\n{state}  Reward {FormatReward(mission.reward)}";
+            var state = isClaimed ? "Claimed" : isComplete ? "Claim" : $"{progress}/{target}";
+            var text = $"{title}\n{state}  Reward {rewardText}";
 
             if (dailyMissionTexts != null && i < dailyMissionTexts.Length && dailyMissionTexts[i] != null)
             {
@@ -5092,16 +5257,30 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (battlePassProgressText != null)
         {
-            battlePassProgressText.text = $"Mission Track XP: {battlePassXp}\nDaily claims give +{BattlePassXpPerDailyClaim} XP";
+            var dailyPassXp = BattlePassXpPerDailyClaim;
+            if (TryGetBackendDailyMissionDefinition(0, out var backendDailyMission) && backendDailyMission.reward.passXp > 0)
+            {
+                dailyPassXp = backendDailyMission.reward.passXp;
+            }
+
+            battlePassProgressText.text = $"Mission Track XP: {battlePassXp}\nDaily claims give +{dailyPassXp} XP";
         }
 
         for (var i = 0; i < BattlePassRewardCount; i++)
         {
             var rewardDefinition = GetBattlePassRewardDefinition(i);
-            var isReady = battlePassXp >= rewardDefinition.requiredXp;
+            var requiredXp = rewardDefinition.requiredXp;
+            var rewardText = FormatReward(rewardDefinition.reward);
+            if (TryGetBackendBattlePassRewardDefinition(i, out var backendReward))
+            {
+                requiredXp = Mathf.Max(0, backendReward.requiredPassXp);
+                rewardText = FormatServerReward(backendReward.reward);
+            }
+
+            var isReady = battlePassXp >= requiredXp;
             var isClaimed = battlePassRewardsClaimed[i];
-            var state = isClaimed ? "Claimed" : isReady ? "Claim" : $"{battlePassXp}/{rewardDefinition.requiredXp} XP";
-            var text = $"Level {i + 1}  {state}\nReward {FormatReward(rewardDefinition.reward)}";
+            var state = isClaimed ? "Claimed" : isReady ? "Claim" : $"{battlePassXp}/{requiredXp} XP";
+            var text = $"Level {i + 1}  {state}\nReward {rewardText}";
 
             if (battlePassRewardTexts != null && i < battlePassRewardTexts.Length && battlePassRewardTexts[i] != null)
             {

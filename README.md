@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.21
+Prototype version: 0.2.22
 Local save version: 2
 
 Current prototype:
@@ -19,6 +19,7 @@ Current prototype:
 - Server Mode routes manual gameplay buttons through the Go backend and applies the returned player snapshot
 - Server Mode campaign and dungeon actions now display server combat results with HP, damage, rounds, and rewards
 - Server definitions include campaign and dungeon combat stats so Unity previews match backend combat
+- Server Mode uses backend definitions for summon, progression cost, daily mission, and Mission Track preview values
 - Auto Attack stays local-only for now and is paused while Server Mode is active
 - Campaign fights, dungeon runs, and summons now return local action-result DTOs
 - Accessory equip, level, and fuse actions now return local action-result DTOs
@@ -126,6 +127,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Prototype 0.2.22: Extended Unity Server Mode previews to use backend definitions for summon cost/rotation, progression costs, daily missions, and Mission Track rewards.
 - Backend 0.2.34 / Prototype 0.2.21: Added combat balance fields to server definitions, PostgreSQL combat-balance migration/debug view, and Unity server preview rendering.
 - Backend 0.2.33 / Prototype 0.2.20: Added server-authored combat result DTOs for campaign and dungeon actions, persistent combat-loss fight progress, and Unity combat result display.
 - Backend 0.2.32 / Prototype 0.2.19: Added server-authoritative daily mission progress, UTC daily reset state, PostgreSQL `player_daily_progress`, and Unity snapshot mapping.
