@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.26";
+    public const string PrototypeVersion = "0.2.27";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1872,13 +1872,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         });
 
         var writeMode = string.IsNullOrWhiteSpace(health.state_write_mode) ? "unknown" : health.state_write_mode;
+        var cacheSummary = FormatBackendCacheSummary(health);
         if (clockSuccess)
         {
-            FinishBackendRequest($"Backend: {health.status}  DB {health.database}  {writeMode}  v{health.version}  Daily {FormatResetCountdown(clock.secondsUntilDailyReset)}");
+            FinishBackendRequest($"Backend: {health.status}  DB {health.database}  {writeMode}  {cacheSummary}  v{health.version}  Daily {FormatResetCountdown(clock.secondsUntilDailyReset)}");
             yield break;
         }
 
-        FinishBackendRequest($"Backend: {health.status}  DB {health.database}  {writeMode}  v{health.version}");
+        FinishBackendRequest($"Backend: {health.status}  DB {health.database}  {writeMode}  {cacheSummary}  v{health.version}");
     }
 
     public void LoginBackend()
@@ -2131,7 +2132,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (success)
         {
             var writeMode = string.IsNullOrWhiteSpace(health.state_write_mode) ? "unknown" : health.state_write_mode;
-            FinishBackendRequest($"Backend: {health.status}  DB {health.database}  {writeMode}  v{health.version}");
+            FinishBackendRequest($"Backend: {health.status}  DB {health.database}  {writeMode}  {FormatBackendCacheSummary(health)}  v{health.version}");
             return;
         }
 
@@ -2201,6 +2202,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         FinishBackendRequest($"Clock sync failed: {error}");
+    }
+
+    private static string FormatBackendCacheSummary(MythwakeHealthDto health)
+    {
+        var dirty = string.IsNullOrWhiteSpace(health.state_cache_dirty) ? "0" : health.state_cache_dirty;
+        var failed = string.IsNullOrWhiteSpace(health.state_cache_failed) ? "0" : health.state_cache_failed;
+        if (!string.IsNullOrWhiteSpace(health.state_cache_error))
+        {
+            return $"Dirty {dirty}  Failed {failed}";
+        }
+
+        return $"Dirty {dirty}";
     }
 
     private void OnBackendGameplayAction(bool success, string error, MythwakeActionResultDto result)

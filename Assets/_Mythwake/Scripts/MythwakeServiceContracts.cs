@@ -158,6 +158,12 @@ public struct MythwakeHealthDto
     public string state_cache;
     public string state_write_mode;
     public string state_flush_interval;
+    public string state_cache_dirty;
+    public string state_cache_queued;
+    public string state_cache_flushed;
+    public string state_cache_failed;
+    public string state_cache_last_utc;
+    public string state_cache_error;
     public string dev_tools;
     public string environment;
     public string version;

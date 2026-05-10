@@ -25,14 +25,34 @@ type Router struct {
 	authService        *auth.Service
 	playerManager      *player.Manager
 	definitionProvider definitions.SnapshotProvider
+	stateCacheStats    StateCacheStatsProvider
 }
 
 type RouterOption func(*Router)
+
+type StateCacheStats struct {
+	DirtyPlayers  int
+	QueuedSaves   int64
+	FlushedSaves  int64
+	FailedFlushes int64
+	LastFlushAt   time.Time
+	LastError     string
+}
+
+type StateCacheStatsProvider func() StateCacheStats
 
 func WithDefinitionProvider(provider definitions.SnapshotProvider) RouterOption {
 	return func(router *Router) {
 		if provider != nil {
 			router.definitionProvider = provider
+		}
+	}
+}
+
+func WithStateCacheStatsProvider(provider StateCacheStatsProvider) RouterOption {
+	return func(router *Router) {
+		if provider != nil {
+			router.stateCacheStats = provider
 		}
 	}
 }
@@ -52,6 +72,7 @@ func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service,
 		authService:        authService,
 		playerManager:      playerManager,
 		definitionProvider: definitions.NewStaticSnapshotProvider(),
+		stateCacheStats:    func() StateCacheStats { return StateCacheStats{} },
 	}
 
 	for _, option := range options {
@@ -119,6 +140,12 @@ func matchesIfNoneMatch(header string, etag string) bool {
 }
 
 func (router *Router) handleHealth(response http.ResponseWriter, request *http.Request) {
+	cacheStats := router.stateCacheStats()
+	lastFlushUTC := ""
+	if !cacheStats.LastFlushAt.IsZero() {
+		lastFlushUTC = cacheStats.LastFlushAt.UTC().Format(time.RFC3339)
+	}
+
 	writeJSON(response, http.StatusOK, map[string]string{
 		"service":              router.config.ServiceName,
 		"status":               "ok",
@@ -127,6 +154,12 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 		"balance_catalog":      router.config.BalanceCatalog,
 		"state_write_mode":     router.config.StateWriteMode,
 		"state_flush_interval": router.config.StateFlushInterval.String(),
+		"state_cache_dirty":    strconv.Itoa(cacheStats.DirtyPlayers),
+		"state_cache_queued":   strconv.FormatInt(cacheStats.QueuedSaves, 10),
+		"state_cache_flushed":  strconv.FormatInt(cacheStats.FlushedSaves, 10),
+		"state_cache_failed":   strconv.FormatInt(cacheStats.FailedFlushes, 10),
+		"state_cache_last_utc": lastFlushUTC,
+		"state_cache_error":    cacheStats.LastError,
 		"session_cache_ttl":    router.config.SessionCacheTTL.String(),
 		"session_touch_window": router.config.SessionTouchWindow.String(),
 		"rate_limit_enabled":   boolLabel(router.config.RateLimitEnabled),

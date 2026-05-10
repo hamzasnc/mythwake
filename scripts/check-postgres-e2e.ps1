@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.44-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.45-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
@@ -120,6 +120,18 @@ function Assert-Equal {
 
     if ($Actual -ne $Expected) {
         throw "$Message Expected=[$Expected] Actual=[$Actual]"
+    }
+}
+
+function Assert-GreaterOrEqual {
+    param(
+        [int64]$Actual,
+        [int64]$Expected,
+        [string]$Message
+    )
+
+    if ($Actual -lt $Expected) {
+        throw "$Message Expected at least=[$Expected] Actual=[$Actual]"
     }
 }
 
@@ -221,8 +233,20 @@ try {
     $fightDailyProgress = $fight.playerSnapshot.dailyProgress | Where-Object { $_.missionId -eq "daily_stage_clears_3" } | Select-Object -First 1
     Assert-Equal ([int]$fightDailyProgress.progress) 1 "Campaign fight should advance daily stage-clear progress."
 
+    $cacheBeforeFlush = Invoke-Json -Path "/health"
+    if ($StateWriteMode -ne "write_through") {
+        Assert-GreaterOrEqual ([int64]$cacheBeforeFlush.state_cache_dirty) 1 "Write-behind cache should show dirty player state before manual flush."
+        Assert-GreaterOrEqual ([int64]$cacheBeforeFlush.state_cache_queued) 1 "Write-behind cache should report queued saves before manual flush."
+    }
+
     $flush = Invoke-Json -Method "POST" -Path "/player/state/flush" -Headers $authHeaders
     Assert-Equal $flush.status "ok" "Manual state flush should succeed."
+
+    $cacheAfterFlush = Invoke-Json -Path "/health"
+    Assert-Equal ([int]$cacheAfterFlush.state_cache_dirty) 0 "Manual state flush should clear dirty cache state."
+    if ($StateWriteMode -ne "write_through") {
+        Assert-GreaterOrEqual ([int64]$cacheAfterFlush.state_cache_flushed) 1 "Manual state flush should increase flushed cache saves."
+    }
 
     $stageAfterFight = [int]$fight.playerState.campaignStage
     Stop-Api $firstProcess

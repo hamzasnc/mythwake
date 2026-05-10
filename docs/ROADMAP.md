@@ -341,6 +341,7 @@ Current backend state:
 - PostgreSQL now has account identity and session tables shaped for guest, email, Google, and Apple login providers; raw session tokens are returned once and only token hashes are stored.
 - Unity Server Mode can now load and cache the `/definitions` snapshot with ETag revalidation and use it for server-owned dungeon preview values.
 - Unity Server Mode can request `/time`, keep an approximate in-memory server UTC value, and show daily/weekly reset timing in the Backend panel.
+- Unity Backend Ping surfaces state-cache dirty/failure status so local persistence tests do not require opening Navicat first.
 - Player state, flush, and gameplay mutation routes now validate Bearer sessions and resolve the player context from the session token.
 - Unity Server Mode now persists the session token, sends `Authorization: Bearer <sessionToken>`, and retries protected requests once after `401` by refreshing guest auth.
 - Added `scripts/check-postgres-e2e.cmd` to verify PostgreSQL guest auth, protected state, campaign persistence, manual flush, API restart reload, and idempotency replay.
@@ -609,6 +610,7 @@ Progress:
 - AFK reward definitions now carry claim timing, cap, tick size, and Gold/Myth Essence formula fields; PostgreSQL-backed gameplay uses those rows for offline claims.
 - Added a local/dev-only active player reset endpoint that clears hot cache state, PostgreSQL player progression rows, action replay rows, and dev logs while keeping account/session data.
 - Unity Server Mode exposes the local/dev reset through the Backend panel and clears pending client idempotency keys after a successful reset.
+- `/health` now reports state-cache dirty, queued, flushed, failed, last flush, and last error counters; PostgreSQL E2E verifies dirty queue visibility before manual flush and clean state after flush.
 
 Next useful step:
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.

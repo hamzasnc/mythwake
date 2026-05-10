@@ -33,6 +33,43 @@ func TestHealthEndpoint(t *testing.T) {
 	}
 }
 
+func TestHealthEndpointIncludesStateCacheStats(t *testing.T) {
+	handler := NewRouter(
+		config.Config{ServiceName: "test-api", Addr: ":0", Environment: "test", Version: "test"},
+		log.New(testWriter{}, "", 0),
+		nil,
+		player.NewManager(nil),
+		WithStateCacheStatsProvider(func() StateCacheStats {
+			return StateCacheStats{
+				DirtyPlayers:  2,
+				QueuedSaves:   7,
+				FlushedSaves:  5,
+				FailedFlushes: 1,
+				LastFlushAt:   time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC),
+				LastError:     "database unavailable",
+			}
+		}),
+	)
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/health", nil)
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+	var body map[string]string
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body["state_cache_dirty"] != "2" || body["state_cache_queued"] != "7" || body["state_cache_flushed"] != "5" || body["state_cache_failed"] != "1" {
+		t.Fatalf("expected cache stats in health response, got %#v", body)
+	}
+	if body["state_cache_last_utc"] != "2026-05-10T12:00:00Z" || body["state_cache_error"] != "database unavailable" {
+		t.Fatalf("expected cache flush details in health response, got %#v", body)
+	}
+}
+
 func TestServerClockEndpoint(t *testing.T) {
 	handler := newTestHandler()
 	response := httptest.NewRecorder()

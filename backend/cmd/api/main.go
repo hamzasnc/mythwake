@@ -64,6 +64,17 @@ func main() {
 		)
 		stateStore = cachedStateStore
 		routerOptions = append(routerOptions, apihttp.WithDefinitionProvider(definitionStore))
+		routerOptions = append(routerOptions, apihttp.WithStateCacheStatsProvider(func() apihttp.StateCacheStats {
+			stats := cachedStateStore.Stats()
+			return apihttp.StateCacheStats{
+				DirtyPlayers:  stats.DirtyPlayers,
+				QueuedSaves:   stats.QueuedSaves,
+				FlushedSaves:  stats.FlushedSaves,
+				FailedFlushes: stats.FailedFlushes,
+				LastFlushAt:   stats.LastFlushAt,
+				LastError:     stats.LastError,
+			}
+		}))
 		cancel()
 		cfg.DatabaseStatus = "connected"
 		cfg.StateCacheStatus = cfg.StateWriteMode
