@@ -1,6 +1,7 @@
 param(
     [string]$DatabaseUrl = "postgres://mythwake:mythwake@localhost:5432/mythwake?sslmode=disable",
     [string]$ApiAddr = ":8080",
+    [string]$StateFlushInterval = "30s",
     [switch]$NoDatabase
 )
 
@@ -68,7 +69,9 @@ function Start-PostgresServiceIfNeeded {
 $goExe = Find-Go
 $env:MYTHWAKE_API_ADDR = $ApiAddr
 $env:MYTHWAKE_ENV = "local"
-$env:MYTHWAKE_API_VERSION = "0.2.9"
+$env:MYTHWAKE_API_VERSION = "0.2.10"
+$env:MYTHWAKE_STATE_FLUSH_INTERVAL = $StateFlushInterval
+$env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
 
 if ($NoDatabase) {
     Remove-Item Env:\MYTHWAKE_DATABASE_URL -ErrorAction SilentlyContinue
@@ -96,6 +99,7 @@ else {
 
 Write-Host "Backend: $backendPath"
 Write-Host "Address: $ApiAddr"
+Write-Host "State flush interval: $StateFlushInterval"
 Write-Host "Stop server with Ctrl+C."
 Write-Host ""
 

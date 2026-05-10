@@ -99,6 +99,33 @@ func TestEquipmentLevelPersistsAndRaisesPower(t *testing.T) {
 	}
 }
 
+func TestFlushStateQueuesCurrentStateAndFlushesStore(t *testing.T) {
+	store := &flushableStateStore{}
+	service := NewService()
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+	result := service.FightCampaign()
+	if !result.Success {
+		t.Fatalf("expected campaign fight to succeed, got %#v", result)
+	}
+
+	if err := service.FlushState(context.Background()); err != nil {
+		t.Fatalf("flush state: %v", err)
+	}
+
+	if store.flushCount != 1 {
+		t.Fatalf("expected one flush, got %d", store.flushCount)
+	}
+	if store.saved.PlayerState.CampaignStage != 2 {
+		t.Fatalf("expected saved campaign stage 2, got %d", store.saved.PlayerState.CampaignStage)
+	}
+	if store.source.ActionID != "player_state_flush" {
+		t.Fatalf("expected flush source, got %#v", store.source)
+	}
+}
+
 type fakeStateStore struct {
 	saved PersistentState
 }
@@ -109,5 +136,26 @@ func (store *fakeStateStore) LoadState(context.Context, string) (PersistentState
 
 func (store *fakeStateStore) SaveState(_ context.Context, _ string, state PersistentState, _ StateSaveSource) error {
 	store.saved = state
+	return nil
+}
+
+type flushableStateStore struct {
+	saved      PersistentState
+	source     StateSaveSource
+	flushCount int
+}
+
+func (store *flushableStateStore) LoadState(context.Context, string) (PersistentState, bool, error) {
+	return PersistentState{}, false, nil
+}
+
+func (store *flushableStateStore) SaveState(_ context.Context, _ string, state PersistentState, source StateSaveSource) error {
+	store.saved = state
+	store.source = source
+	return nil
+}
+
+func (store *flushableStateStore) Flush(context.Context) error {
+	store.flushCount++
 	return nil
 }

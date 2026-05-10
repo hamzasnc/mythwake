@@ -94,6 +94,18 @@ func TestPlayerStateEndpointReturnsSnapshot(t *testing.T) {
 	}
 }
 
+func TestPlayerStateFlushEndpoint(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/player/state/flush", nil)
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+}
+
 func TestAccessoryBodyValidation(t *testing.T) {
 	handler := newTestHandler()
 	response := httptest.NewRecorder()

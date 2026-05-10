@@ -34,6 +34,7 @@ func (router *Router) routes() {
 	router.mux.HandleFunc("POST /auth/guest", router.handleGuestAuth)
 	router.mux.HandleFunc("GET /health", router.handleHealth)
 	router.mux.HandleFunc("GET /player/state", router.handlePlayerState)
+	router.mux.HandleFunc("POST /player/state/flush", router.handlePlayerStateFlush)
 	router.mux.HandleFunc("GET /player/core-state", router.handlePlayerCoreState)
 	router.mux.HandleFunc("POST /campaign/fight", router.handleCampaignFight)
 	router.mux.HandleFunc("POST /dungeons/{dungeon_id}/run", router.handleDungeonRun)
@@ -50,12 +51,14 @@ func (router *Router) routes() {
 
 func (router *Router) handleHealth(response http.ResponseWriter, request *http.Request) {
 	writeJSON(response, http.StatusOK, map[string]string{
-		"service":     router.config.ServiceName,
-		"status":      "ok",
-		"database":    router.config.DatabaseStatus,
-		"environment": router.config.Environment,
-		"version":     router.config.Version,
-		"time_utc":    time.Now().UTC().Format(time.RFC3339),
+		"service":              router.config.ServiceName,
+		"status":               "ok",
+		"database":             router.config.DatabaseStatus,
+		"state_cache":          router.config.StateCacheStatus,
+		"state_flush_interval": router.config.StateFlushInterval.String(),
+		"environment":          router.config.Environment,
+		"version":              router.config.Version,
+		"time_utc":             time.Now().UTC().Format(time.RFC3339),
 	})
 }
 
@@ -65,6 +68,20 @@ func (router *Router) handlePlayerState(response http.ResponseWriter, request *h
 
 func (router *Router) handlePlayerCoreState(response http.ResponseWriter, request *http.Request) {
 	writeJSON(response, http.StatusOK, router.playerService.GetState())
+}
+
+func (router *Router) handlePlayerStateFlush(response http.ResponseWriter, request *http.Request) {
+	if err := router.playerService.FlushState(request.Context()); err != nil {
+		writeJSON(response, http.StatusInternalServerError, map[string]string{
+			"errorCode": "state_flush_failed",
+			"message":   err.Error(),
+		})
+		return
+	}
+
+	writeJSON(response, http.StatusOK, map[string]string{
+		"status": "ok",
+	})
 }
 
 func (router *Router) handleGuestAuth(response http.ResponseWriter, request *http.Request) {

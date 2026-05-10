@@ -76,6 +76,9 @@ Backend:
 - Starter Weapon and Armor training levels persist in PostgreSQL and affect team power
 - Summon count, daily mission claims, and Battle Pass claims persist in PostgreSQL
 - Claim and summon debug views are available for Navicat
+- PostgreSQL writes now sit behind an in-memory write-behind state cache
+- Player state flushes are batched by interval and flushed again on graceful shutdown
+- `POST /player/state/flush` is ready as the future app-pause/disconnect save hook
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Guest auth and action responses include the full player snapshot for direct client UI updates
 - Android emulator builds use `http://10.0.2.2:8080` as the default backend URL, while Editor/Desktop use `http://localhost:8080`
@@ -85,6 +88,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.10: Added write-behind player state cache, batched PostgreSQL flushes, cache health fields, manual flush endpoint, and shutdown flushing.
 - 0.2.11: Added Server Mode routing for manual gameplay buttons through the Unity backend client.
 - 0.2.10: Added Unity backend HTTP client, full local player snapshots, and an ingame Backend panel for Ping/Login/Sync smoke tests.
 - Backend 0.2.9: Added full player snapshots to guest auth and action responses.

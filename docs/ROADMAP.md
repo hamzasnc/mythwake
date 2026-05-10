@@ -323,6 +323,10 @@ Current backend state:
 - Added the same full player snapshot to guest auth and action responses so the client can refresh UI from a single response.
 - Unity can now ping the backend, guest-login, and apply `/player/state` snapshots through the ingame Backend panel.
 - Unity Server Mode can now execute manual gameplay actions through the backend and refresh from the returned `playerSnapshot`.
+- Added an in-memory write-behind state cache in front of PostgreSQL.
+- Server gameplay actions now update hot server state first and queue the latest dirty player state for batched DB flush.
+- The cache flushes on interval and during graceful API shutdown.
+- Added `POST /player/state/flush` as a future app-pause/disconnect hook.
 - Redis is not connected yet.
 
 Recommended Go shape:
@@ -339,6 +343,7 @@ Recommended Go shape:
 - `internal/summons`
 - `internal/missions`
 - `internal/store/postgres`
+- `internal/store/cache`
 - `internal/cache/redis`
 
 Backend should become authoritative for:
@@ -421,6 +426,12 @@ Avoid Redis for:
 - Purchase records
 - Anything that must survive cache loss
 
+Current cache stance:
+- The current Go write-behind cache is an in-process MVP for one API instance.
+- It is good for local development and early server-authoritative flow testing.
+- Redis later should handle cross-process sessions, locks, rate limits, and short-lived coordination.
+- PostgreSQL remains the durable source of truth for player economy and inventory.
+
 ## Server MVP Timing
 
 Do not build the backend before the client data boundaries exist.
@@ -448,6 +459,7 @@ Keep the first backend intentionally small.
 Initial endpoints:
 - `POST /auth/guest`
 - `GET /player/state`
+- `POST /player/state/flush`
 - `POST /campaign/fight`
 - `POST /dungeons/{dungeon_id}/run`
 - `POST /heroes/{hero_id}/level-up`
@@ -507,14 +519,16 @@ Progress:
 - Added `player.player_accessory_inventory`, `player.player_equipped_accessories`, and `debug.v_player_accessory_overview`.
 - Added `player.player_equipment_training` and `debug.v_player_equipment_overview`.
 - Added `player.player_summon_state`, `player.player_daily_mission_claims`, `player.player_battle_pass_claims`, `logs.summon_history`, `debug.v_player_claim_overview`, and `debug.v_player_summon_overview`.
+- Added write-behind state cache with interval flush and graceful shutdown flush.
+- Added a manual player state flush endpoint for client disconnect/app-pause flows.
 
 Next useful step:
-- Move economy actions server-side one by one against the normalized tables:
-  - campaign fight
-  - gold dungeon
-  - essence dungeon
-  - hero level-up
-- Add normalized tables later for accessories, reward claims, summon history, and mission state.
+- Split backend gameplay services out of the current single `player.Service` while keeping the API behavior stable:
+  - economy/reward validation
+  - dungeons
+  - hero progression
+  - equipment/accessories
+  - missions/summons
 - Add Redis after the first PostgreSQL path is stable.
 
 Done when:

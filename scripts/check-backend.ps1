@@ -1,5 +1,6 @@
 param(
-    [string]$BaseUrl = "http://localhost:8080"
+    [string]$BaseUrl = "http://localhost:8080",
+    [switch]$FlushState
 )
 
 $ErrorActionPreference = "Stop"
@@ -17,3 +18,9 @@ $state | Format-List
 $fight = Invoke-RestMethod -Method Post "$BaseUrl/campaign/fight"
 Write-Host "Campaign Fight:"
 $fight | Format-List
+
+if ($FlushState) {
+    $flush = Invoke-RestMethod -Method Post "$BaseUrl/player/state/flush"
+    Write-Host "State Flush:"
+    $flush | Format-List
+}

@@ -14,6 +14,7 @@ import (
 	"github.com/hamzasnc/mythwake/backend/internal/database"
 	apihttp "github.com/hamzasnc/mythwake/backend/internal/http"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
+	"github.com/hamzasnc/mythwake/backend/internal/store/cache"
 	"github.com/hamzasnc/mythwake/backend/internal/store/postgres"
 )
 
@@ -21,6 +22,7 @@ func main() {
 	cfg := config.Load()
 	logger := log.New(os.Stdout, "mythwake-api ", log.LstdFlags|log.LUTC)
 	playerService := player.NewService()
+	var cachedStateStore *cache.WriteBehindStateStore
 
 	if cfg.DatabaseURL != "" {
 		setupContext, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -35,12 +37,21 @@ func main() {
 			cancel()
 			logger.Fatalf("database migration failed: %v", err)
 		}
-		if err := playerService.UseStateStore(setupContext, postgres.NewPlayerStateStore(db)); err != nil {
+		cachedStateStore = cache.NewWriteBehindStateStore(
+			postgres.NewPlayerStateStore(db),
+			cache.Config{
+				FlushInterval: cfg.StateFlushInterval,
+				FlushTimeout:  cfg.StateFlushTimeout,
+			},
+			logger,
+		)
+		if err := playerService.UseStateStore(setupContext, cachedStateStore); err != nil {
 			cancel()
 			logger.Fatalf("player state store failed: %v", err)
 		}
 		cancel()
 		cfg.DatabaseStatus = "connected"
+		cfg.StateCacheStatus = "write_behind"
 	}
 
 	server := &http.Server{
@@ -66,5 +77,11 @@ func main() {
 	logger.Println("shutting down")
 	if err := server.Shutdown(shutdownContext); err != nil {
 		logger.Fatalf("shutdown failed: %v", err)
+	}
+	if cachedStateStore != nil {
+		logger.Println("flushing player state cache")
+		if err := cachedStateStore.Close(shutdownContext); err != nil {
+			logger.Printf("state cache flush failed during shutdown: %v", err)
+		}
 	}
 }

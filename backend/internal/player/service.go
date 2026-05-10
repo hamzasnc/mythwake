@@ -25,6 +25,10 @@ type StateStore interface {
 	SaveState(ctx context.Context, playerID string, state PersistentState, source StateSaveSource) error
 }
 
+type StateFlusher interface {
+	Flush(ctx context.Context) error
+}
+
 type PersistentState struct {
 	PlayerState        api.PlayerState
 	HeroLevels         map[string]int
@@ -42,6 +46,22 @@ type PersistentState struct {
 type StateSaveSource struct {
 	ActionID string
 	RewardID string
+}
+
+func ClonePersistentState(state PersistentState) PersistentState {
+	return PersistentState{
+		PlayerState:        state.PlayerState,
+		HeroLevels:         cloneIntMap(state.HeroLevels),
+		HeroShards:         cloneIntMap(state.HeroShards),
+		HeroAscensions:     cloneIntMap(state.HeroAscensions),
+		EquipmentLevels:    cloneIntMap(state.EquipmentLevels),
+		AccessoryInventory: cloneIntMap(state.AccessoryInventory),
+		AccessoryLevels:    cloneIntMap(state.AccessoryLevels),
+		EquippedAccessory:  cloneStringMap(state.EquippedAccessory),
+		ClaimedDaily:       cloneBoolMap(state.ClaimedDaily),
+		ClaimedBattlePass:  cloneBoolMap(state.ClaimedBattlePass),
+		SummonCount:        state.SummonCount,
+	}
 }
 
 type Service struct {
@@ -139,6 +159,30 @@ func (service *Service) GetSnapshot() api.PlayerSnapshot {
 	defer service.mu.Unlock()
 
 	return service.snapshot()
+}
+
+func (service *Service) FlushState(ctx context.Context) error {
+	service.mu.Lock()
+	store := service.stateStore
+	if store == nil {
+		service.mu.Unlock()
+		return nil
+	}
+
+	playerID := service.playerID
+	state := service.persistentState()
+	service.mu.Unlock()
+
+	if err := store.SaveState(ctx, playerID, state, StateSaveSource{ActionID: "player_state_flush"}); err != nil {
+		return err
+	}
+
+	flusher, ok := store.(StateFlusher)
+	if !ok {
+		return nil
+	}
+
+	return flusher.Flush(ctx)
 }
 
 func (service *Service) snapshot() api.PlayerSnapshot {
@@ -448,19 +492,19 @@ func (service *Service) saveState(actionID string, reward api.Reward) error {
 }
 
 func (service *Service) persistentState() PersistentState {
-	return PersistentState{
+	return ClonePersistentState(PersistentState{
 		PlayerState:        service.state,
-		HeroLevels:         cloneIntMap(service.heroLevels),
-		HeroShards:         cloneIntMap(service.heroShards),
-		HeroAscensions:     cloneIntMap(service.heroAscensions),
-		EquipmentLevels:    cloneIntMap(service.equipmentLevels),
-		AccessoryInventory: cloneIntMap(service.accessoryInventory),
-		AccessoryLevels:    cloneIntMap(service.accessoryLevels),
-		EquippedAccessory:  cloneStringMap(service.equippedAccessory),
-		ClaimedDaily:       cloneBoolMap(service.claimedDaily),
-		ClaimedBattlePass:  cloneBoolMap(service.claimedBattlePass),
+		HeroLevels:         service.heroLevels,
+		HeroShards:         service.heroShards,
+		HeroAscensions:     service.heroAscensions,
+		EquipmentLevels:    service.equipmentLevels,
+		AccessoryInventory: service.accessoryInventory,
+		AccessoryLevels:    service.accessoryLevels,
+		EquippedAccessory:  service.equippedAccessory,
+		ClaimedDaily:       service.claimedDaily,
+		ClaimedBattlePass:  service.claimedBattlePass,
 		SummonCount:        service.summonCount,
-	}
+	})
 }
 
 func (service *Service) applyPersistentState(state PersistentState) {
