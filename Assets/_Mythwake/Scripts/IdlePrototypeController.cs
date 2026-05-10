@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.24";
+    public const string PrototypeVersion = "0.2.25";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -782,8 +782,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private Color inactiveTabColor = new Color(0.11f, 0.14f, 0.2f);
 
     private float autoAttackTimer;
+    private int lastOfflineGoldReward;
     private int lastOfflineReward;
     private int lastOfflineSeconds;
+    private bool lastOfflineRewardIsServer;
     private AppScreen activeScreen = AppScreen.Home;
     private bool backendRequestInProgress;
     private bool backendLifecycleFlushInProgress;
@@ -1349,6 +1351,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         selectedHeroIndex = heroIndex;
+        if (IsHeroLevelMax(heroIndex))
+        {
+            var maxResult = CreateActionResult(false, "hero_level", "max_level", $"{GetHeroDefinition(heroIndex).name} is already max level.");
+            RefreshUi();
+            return maxResult;
+        }
+
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
         if (!TrySpendCurrency(MythEssenceCurrencyId, upgradeCost))
         {
@@ -1378,6 +1387,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         selectedHeroIndex = heroIndex;
         EnsureHeroShards();
         EnsureHeroAscensions();
+        if (IsHeroAscensionMax(heroIndex))
+        {
+            var maxResult = CreateActionResult(false, "hero_ascend", "max_ascension", $"{GetHeroDefinition(heroIndex).name} is already max ascension.");
+            RefreshUi();
+            return maxResult;
+        }
 
         var ascendCost = GetHeroAscensionCost(selectedHeroIndex);
         if (heroShards[selectedHeroIndex] < ascendCost)
@@ -1417,6 +1432,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         var currentLevel = isWeapon ? weaponLevel : armorLevel;
         currentLevel = Mathf.Max(StarterEquipmentLevel, currentLevel);
+        if (IsEquipmentLevelMax(track, currentLevel))
+        {
+            var maxResult = CreateActionResult(false, "equipment_level", "max_level", $"{track.name} is already max level.");
+            RefreshUi();
+            return maxResult;
+        }
+
         var cost = GetEquipmentUpgradeCost(track, currentLevel);
 
         if (!TrySpendCurrency(GoldCurrencyId, cost))
@@ -2059,8 +2081,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         damage = GetTeamDamage();
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
         autoAttackTimer = 0f;
+        lastOfflineGoldReward = 0;
         lastOfflineReward = 0;
         lastOfflineSeconds = 0;
+        lastOfflineRewardIsServer = false;
 
         SaveProgress();
         RefreshUi();
@@ -2879,8 +2903,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void ClaimOfflineRewards()
     {
+        lastOfflineGoldReward = 0;
         lastOfflineReward = 0;
         lastOfflineSeconds = 0;
+        lastOfflineRewardIsServer = false;
 
         if (!long.TryParse(lastSeenUtcTicks, out var ticks))
         {
@@ -2900,6 +2926,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         lastOfflineReward = CalculateOfflineReward(lastOfflineSeconds);
         var offlineGoldReward = CalculateOfflineGoldReward(lastOfflineReward);
+        lastOfflineGoldReward = offlineGoldReward;
         GrantCurrency(GoldCurrencyId, offlineGoldReward);
         GrantCurrency(MythEssenceCurrencyId, lastOfflineReward);
         SaveProgress();
@@ -3281,44 +3308,53 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshBattlePassUi();
         RefreshBackendUi();
 
+        var heroLevelMax = IsHeroLevelMax(selectedHeroIndex);
+        var heroAscensionMax = IsHeroAscensionMax(selectedHeroIndex);
+
         if (upgradeCostText != null)
         {
-            upgradeCostText.text = $"Upgrade {GetHeroDefinition(selectedHeroIndex).name} ({upgradeCost} Essence)";
+            upgradeCostText.text = heroLevelMax
+                ? $"{GetHeroDefinition(selectedHeroIndex).name} Max Lv. {GetHeroLevelCap(selectedHeroIndex)}"
+                : $"Upgrade {GetHeroDefinition(selectedHeroIndex).name} ({upgradeCost} Essence)";
         }
 
         if (heroUpgradeCostText != null)
         {
-            heroUpgradeCostText.text = $"Upgrade {GetHeroDefinition(selectedHeroIndex).name} ({upgradeCost} Essence)";
+            heroUpgradeCostText.text = heroLevelMax
+                ? $"{GetHeroDefinition(selectedHeroIndex).name} Max Lv. {GetHeroLevelCap(selectedHeroIndex)}"
+                : $"Upgrade {GetHeroDefinition(selectedHeroIndex).name} ({upgradeCost} Essence)";
         }
 
         if (heroAscendCostText != null)
         {
-            heroAscendCostText.text = $"Ascend {GetHeroDefinition(selectedHeroIndex).name} ({GetHeroAscensionCost(selectedHeroIndex)} Shards)";
+            heroAscendCostText.text = heroAscensionMax
+                ? $"{GetHeroDefinition(selectedHeroIndex).name} Max Asc. {GetHeroAscensionCap(selectedHeroIndex)}"
+                : $"Ascend {GetHeroDefinition(selectedHeroIndex).name} ({GetHeroAscensionCost(selectedHeroIndex)} Shards)";
         }
 
         if (upgradeButton != null)
         {
-            upgradeButton.interactable = mythEssence >= upgradeCost;
+            upgradeButton.interactable = !heroLevelMax && mythEssence >= upgradeCost;
         }
 
         if (heroUpgradeButton != null)
         {
-            heroUpgradeButton.interactable = mythEssence >= upgradeCost;
+            heroUpgradeButton.interactable = !heroLevelMax && mythEssence >= upgradeCost;
         }
 
         if (heroAscendButton != null)
         {
-            heroAscendButton.interactable = heroShards[selectedHeroIndex] >= GetHeroAscensionCost(selectedHeroIndex);
+            heroAscendButton.interactable = !heroAscensionMax && heroShards[selectedHeroIndex] >= GetHeroAscensionCost(selectedHeroIndex);
         }
 
         if (weaponUpgradeButton != null)
         {
-            weaponUpgradeButton.interactable = gold >= GetWeaponUpgradeCost();
+            weaponUpgradeButton.interactable = !IsEquipmentLevelMax(WeaponTrack, weaponLevel) && gold >= GetWeaponUpgradeCost();
         }
 
         if (armorUpgradeButton != null)
         {
-            armorUpgradeButton.interactable = gold >= GetArmorUpgradeCost();
+            armorUpgradeButton.interactable = !IsEquipmentLevelMax(ArmorTrack, armorLevel) && gold >= GetArmorUpgradeCost();
         }
 
         RefreshAccessoryButtonStates();
@@ -3545,7 +3581,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (selectedHeroText != null)
         {
             var hero = GetHeroDefinition(selectedHeroIndex);
-            selectedHeroText.text = $"{hero.name}  Lv. {heroLevels[selectedHeroIndex]}  Asc. {heroAscensions[selectedHeroIndex]}\n{hero.rarityName} {hero.roleName}  Power {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroAttack(selectedHeroIndex)}  HP {GetHeroHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
+            selectedHeroText.text = $"{hero.name}  Lv. {FormatCappedValue(heroLevels[selectedHeroIndex], GetHeroLevelCap(selectedHeroIndex))}  Asc. {FormatCappedValue(heroAscensions[selectedHeroIndex], GetHeroAscensionCap(selectedHeroIndex))}\n{hero.rarityName} {hero.roleName}  Power {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroAttack(selectedHeroIndex)}  HP {GetHeroHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
         }
 
         if (heroCardTexts != null)
@@ -3556,7 +3592,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 {
                     var hero = GetHeroDefinition(i);
                     var marker = i == selectedHeroIndex ? "> " : string.Empty;
-                    heroCardTexts[i].text = $"{marker}{hero.name}  Lv. {heroLevels[i]}  A{heroAscensions[i]}  Shards {heroShards[i]}\n{hero.rarityName} {hero.roleName}  ATK {GetHeroAttack(i)}  HP {GetHeroHealth(i)}";
+                    heroCardTexts[i].text = $"{marker}{hero.name}  Lv. {FormatCappedValue(heroLevels[i], GetHeroLevelCap(i))}  A{FormatCappedValue(heroAscensions[i], GetHeroAscensionCap(i))}  Shards {heroShards[i]}\n{hero.rarityName} {hero.roleName}  ATK {GetHeroAttack(i)}  HP {GetHeroHealth(i)}";
                 }
             }
         }
@@ -3628,17 +3664,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (equipmentSummaryText != null)
         {
-            equipmentSummaryText.text = $"Equipment\n{WeaponTrack.name} Lv. {displayedWeaponLevel}  +{GetEquipmentAttackBonus()} {WeaponTrack.statLabel}\n{ArmorTrack.name} Lv. {displayedArmorLevel}  +{GetEquipmentHealthBonus()} {ArmorTrack.statLabel}";
+            equipmentSummaryText.text = $"Equipment\n{WeaponTrack.name} Lv. {FormatCappedValue(displayedWeaponLevel, GetEquipmentLevelCap(WeaponTrack))}  +{GetEquipmentAttackBonus()} {WeaponTrack.statLabel}\n{ArmorTrack.name} Lv. {FormatCappedValue(displayedArmorLevel, GetEquipmentLevelCap(ArmorTrack))}  +{GetEquipmentHealthBonus()} {ArmorTrack.statLabel}";
         }
 
         if (weaponUpgradeCostText != null)
         {
-            weaponUpgradeCostText.text = $"{WeaponTrack.name} +1\n{GetWeaponUpgradeCost()} Gold";
+            weaponUpgradeCostText.text = IsEquipmentLevelMax(WeaponTrack, weaponLevel)
+                ? $"{WeaponTrack.name}\nMax Lv. {GetEquipmentLevelCap(WeaponTrack)}"
+                : $"{WeaponTrack.name} +1\n{GetWeaponUpgradeCost()} Gold";
         }
 
         if (armorUpgradeCostText != null)
         {
-            armorUpgradeCostText.text = $"{ArmorTrack.name} +1\n{GetArmorUpgradeCost()} Gold";
+            armorUpgradeCostText.text = IsEquipmentLevelMax(ArmorTrack, armorLevel)
+                ? $"{ArmorTrack.name}\nMax Lv. {GetEquipmentLevelCap(ArmorTrack)}"
+                : $"{ArmorTrack.name} +1\n{GetArmorUpgradeCost()} Gold";
         }
     }
 
@@ -4563,6 +4603,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return TryGetBackendAccessoryRarityDefinition(backendAccessory.rarityId, out definition);
     }
 
+    private bool TryGetBackendAfkRewardDefinition(out MythwakeAfkRewardDefinitionDto definition)
+    {
+        definition = default(MythwakeAfkRewardDefinitionDto);
+        if (!UseBackendDefinitionView() || !TryGetDefinitions(out var definitions) || definitions.afkRewards == null || definitions.afkRewards.Length == 0)
+        {
+            return false;
+        }
+
+        definition = definitions.afkRewards[0];
+        return !string.IsNullOrWhiteSpace(definition.rewardId);
+    }
+
     private bool TryGetBackendProgressionCostAmount(string costId, string targetId, int progressValue, out int amount, out string currencyId)
     {
         amount = 0;
@@ -4689,6 +4741,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return contentHash.Length <= 8 ? contentHash : contentHash.Substring(0, 8);
+    }
+
+    private static bool HasFiniteCap(int cap)
+    {
+        return cap >= 0 && cap < int.MaxValue / 2;
+    }
+
+    private static string FormatCappedValue(int value, int cap)
+    {
+        return HasFiniteCap(cap) ? $"{value}/{cap}" : value.ToString();
     }
 
     private static string FormatClockTime(string serverTimeUtc)
@@ -5010,6 +5072,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return Mathf.Max(0, fallbackLevel);
     }
 
+    private int GetEquipmentLevelCap(EquipmentTrackDefinition track)
+    {
+        if (TryGetBackendEquipmentDefinition(track.equipmentId, out var definition))
+        {
+            return Mathf.Max(1, definition.maxLevel);
+        }
+
+        return int.MaxValue;
+    }
+
+    private bool IsEquipmentLevelMax(EquipmentTrackDefinition track, int fallbackLevel)
+    {
+        var cap = GetEquipmentLevelCap(track);
+        if (!HasFiniteCap(cap))
+        {
+            return false;
+        }
+
+        return GetEquipmentDisplayLevel(track, fallbackLevel) >= cap;
+    }
+
     private int GetAccessoryAttackBonus()
     {
         EnsureAccessories();
@@ -5187,6 +5270,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return Mathf.CeilToInt(14 * Mathf.Pow(1.34f, heroLevels[index] - 1));
     }
 
+    private int GetHeroLevelCap(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        var hero = GetHeroDefinition(index);
+        if (TryGetBackendHeroDefinition(hero.heroId, out var backendHero))
+        {
+            return Mathf.Max(1, backendHero.maxLevel);
+        }
+
+        return int.MaxValue;
+    }
+
+    private bool IsHeroLevelMax(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        var cap = GetHeroLevelCap(index);
+        return HasFiniteCap(cap) && heroLevels[index] >= cap;
+    }
+
     private int GetHeroAscensionCost(int index)
     {
         index = Mathf.Clamp(index, 0, HeroCount - 1);
@@ -5198,6 +5300,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var hero = GetHeroDefinition(index);
         return hero.ascensionBaseCost + (heroAscensions[index] * hero.ascensionCostGrowth);
+    }
+
+    private int GetHeroAscensionCap(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        var hero = GetHeroDefinition(index);
+        if (TryGetBackendHeroDefinition(hero.heroId, out var backendHero))
+        {
+            return Mathf.Max(0, backendHero.maxAscension);
+        }
+
+        return int.MaxValue;
+    }
+
+    private bool IsHeroAscensionMax(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        var cap = GetHeroAscensionCap(index);
+        return HasFiniteCap(cap) && heroAscensions[index] >= cap;
     }
 
     private int GetWeaponUpgradeCost()
@@ -5352,28 +5473,48 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        if (lastOfflineReward <= 0)
+        if (backendGameplayEnabled || lastOfflineRewardIsServer)
+        {
+            if (lastOfflineGoldReward > 0 || lastOfflineReward > 0)
+            {
+                offlineRewardText.text = $"Server AFK: +{lastOfflineGoldReward} Gold, +{lastOfflineReward} Essence";
+                return;
+            }
+
+            if (TryGetBackendAfkRewardDefinition(out var afkDefinition))
+            {
+                offlineRewardText.text = $"Server AFK: min {FormatDuration(afkDefinition.minClaimSeconds)}, cap {FormatDuration(afkDefinition.maxClaimSeconds)}";
+                return;
+            }
+
+            offlineRewardText.text = "Server AFK: sync definitions first";
+            return;
+        }
+
+        if (lastOfflineGoldReward <= 0 && lastOfflineReward <= 0)
         {
             offlineRewardText.text = "Offline: no reward yet";
             return;
         }
 
-        offlineRewardText.text = $"Offline: +{CalculateOfflineGoldReward(lastOfflineReward)} Gold, +{lastOfflineReward} Essence ({FormatDuration(lastOfflineSeconds)})";
+        offlineRewardText.text = $"Offline: +{lastOfflineGoldReward} Gold, +{lastOfflineReward} Essence ({FormatDuration(lastOfflineSeconds)})";
     }
 
     private void UpdateServerOfflineRewardUi(MythwakeActionResultDto result)
     {
+        lastOfflineGoldReward = Mathf.Max(0, result.reward.gold);
         lastOfflineReward = Mathf.Max(0, result.reward.mythEssence);
         lastOfflineSeconds = 0;
+        lastOfflineRewardIsServer = true;
 
         if (offlineRewardText == null)
         {
             return;
         }
 
-        if (result.reward.gold > 0 || result.reward.mythEssence > 0)
+        if (lastOfflineGoldReward > 0 || lastOfflineReward > 0)
         {
-            offlineRewardText.text = $"Server AFK: +{result.reward.gold} Gold, +{result.reward.mythEssence} Essence";
+            offlineRewardText.text = $"Server AFK: +{lastOfflineGoldReward} Gold, +{lastOfflineReward} Essence";
             return;
         }
 

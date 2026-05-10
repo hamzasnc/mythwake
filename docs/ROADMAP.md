@@ -595,6 +595,7 @@ Progress:
 - Daily Mission claims now require the matching server-side fight, stage-clear, or summon progress before rewards are granted.
 - Unity Server Mode now uses backend definitions for summon cost/rotation, progression costs, daily missions, and Mission Track reward previews.
 - Unity Server Mode now uses backend hero, equipment, accessory, and snapshot team stats for authoritative stat previews.
+- Unity Server Mode upgrade labels/buttons now respect backend max-level, max-ascension, equipment cap, accessory fuse-cost, and AFK timing definitions.
 - Added a PostgreSQL-backed definition provider so `/definitions` reads current common definition tables when the database is enabled.
 - Routed player gameplay balance reads through an injectable balance catalog while keeping the static Go catalog as the current runtime default.
 - Combat now uses a 30 second fight timer in API results, balance definitions, PostgreSQL definition rows, and Unity prototype text instead of round limits.
