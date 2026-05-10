@@ -437,6 +437,9 @@ func TestClientBootstrapEndpoint(t *testing.T) {
 	if body.PlayerSnapshot.PlayerID != login.PlayerID || len(body.PlayerSnapshot.Heroes) == 0 {
 		t.Fatalf("expected player snapshot for logged-in player, got %#v", body.PlayerSnapshot)
 	}
+	if body.PlayerSnapshot.Revision < 1 || body.PlayerSnapshot.UpdatedAtUTC == "" {
+		t.Fatalf("expected revision metadata in bootstrap snapshot, got %#v", body.PlayerSnapshot)
+	}
 	if body.ServerClock.ServerUnixMs <= 0 || body.ServerClock.DailyResetUTC == "" {
 		t.Fatalf("expected server clock in bootstrap, got %#v", body.ServerClock)
 	}
@@ -539,6 +542,9 @@ func TestCampaignFightEndpoint(t *testing.T) {
 	if len(body.PlayerSnapshot.Heroes) == 0 || body.PlayerSnapshot.State.CampaignStage != body.PlayerState.CampaignStage {
 		t.Fatalf("expected action result snapshot to match player state, got %#v", body)
 	}
+	if body.PlayerSnapshot.Revision < 2 || body.Receipt.StateRevision != body.PlayerSnapshot.Revision || body.PlayerSnapshot.UpdatedAtUTC == "" {
+		t.Fatalf("expected action receipt and snapshot revision, got %#v", body)
+	}
 }
 
 func TestOfflineClaimEndpoint(t *testing.T) {
@@ -561,6 +567,9 @@ func TestOfflineClaimEndpoint(t *testing.T) {
 	}
 	if body.ActionID != gameplay.ActionAFKRewardClaim {
 		t.Fatalf("expected afk claim action, got %#v", body)
+	}
+	if body.Receipt.StateRevision != body.PlayerSnapshot.Revision {
+		t.Fatalf("expected afk receipt revision to match snapshot, got %#v", body)
 	}
 	if body.PlayerSnapshot.LastAFKClaimUTC == "" {
 		t.Fatalf("expected afk claim timestamp in snapshot, got %#v", body.PlayerSnapshot)
@@ -696,6 +705,9 @@ func TestPlayerStateEndpointReturnsSnapshot(t *testing.T) {
 
 	if body.PlayerID == "" || len(body.Heroes) == 0 || len(body.Equipment) == 0 {
 		t.Fatalf("expected rich player snapshot, got %#v", body)
+	}
+	if body.Revision < 1 || body.UpdatedAtUTC == "" {
+		t.Fatalf("expected player snapshot revision metadata, got %#v", body)
 	}
 }
 

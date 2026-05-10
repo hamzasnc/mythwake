@@ -17,6 +17,8 @@ type PlayerState struct {
 
 type PlayerSnapshot struct {
 	PlayerID          string              `json:"playerId"`
+	Revision          int64               `json:"revision"`
+	UpdatedAtUTC      string              `json:"updatedAtUtc,omitempty"`
 	State             PlayerState         `json:"state"`
 	LastAFKClaimUTC   string              `json:"lastAfkClaimUtc,omitempty"`
 	DailyDate         string              `json:"dailyDate,omitempty"`
@@ -100,12 +102,18 @@ type ActionResult struct {
 	ActionID       string         `json:"actionId"`
 	IdempotencyKey string         `json:"idempotencyKey,omitempty"`
 	Replay         bool           `json:"replay,omitempty"`
+	Receipt        ActionReceipt  `json:"receipt"`
 	ErrorCode      string         `json:"errorCode,omitempty"`
 	Message        string         `json:"message"`
 	PlayerState    PlayerState    `json:"playerState"`
 	PlayerSnapshot PlayerSnapshot `json:"playerSnapshot"`
 	Reward         Reward         `json:"reward"`
 	Combat         *CombatResult  `json:"combat,omitempty"`
+}
+
+type ActionReceipt struct {
+	StateRevision int64  `json:"stateRevision"`
+	ServerTimeUTC string `json:"serverTimeUtc,omitempty"`
 }
 
 type GuestAuthResponse struct {

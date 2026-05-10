@@ -64,6 +64,9 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	if err := store.saveCoreState(ctx, tx, playerID, state.PlayerState); err != nil {
 		return err
 	}
+	if err := store.saveRevisionState(ctx, tx, playerID, state); err != nil {
+		return err
+	}
 	if err := store.saveHeroState(ctx, tx, playerID, state); err != nil {
 		return err
 	}
@@ -161,6 +164,7 @@ func (store *PlayerStateStore) ResetState(ctx context.Context, playerID string) 
 
 	statements := []string{
 		`DELETE FROM player.player_action_results WHERE player_id = $1`,
+		`DELETE FROM player.player_state_revisions WHERE player_id = $1`,
 		`DELETE FROM player.player_state_snapshots WHERE player_id = $1`,
 		`DELETE FROM player.player_afk_progress WHERE player_id = $1`,
 		`DELETE FROM player.player_daily_mission_claims WHERE player_id = $1`,
@@ -317,6 +321,8 @@ func (store *PlayerStateStore) loadLatestActionState(ctx context.Context, player
 
 func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentState {
 	state := player.PersistentState{
+		Revision:           snapshot.Revision,
+		UpdatedAt:          parseSnapshotTime(snapshot.UpdatedAtUTC),
 		PlayerState:        snapshot.State,
 		HeroLevels:         map[string]int{},
 		HeroShards:         map[string]int{},
@@ -406,7 +412,12 @@ func (store *PlayerStateStore) loadSnapshotState(ctx context.Context, playerID s
 		return player.PersistentState{}, false, err
 	}
 
-	return player.PersistentState{PlayerState: state}, true, nil
+	revision, updatedAt, err := store.loadStateRevision(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
+
+	return player.PersistentState{Revision: revision, UpdatedAt: updatedAt, PlayerState: state}, true, nil
 }
 
 func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID string) (player.PersistentState, bool, error) {
@@ -488,8 +499,14 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
+	revision, updatedAt, err := store.loadStateRevision(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
 
 	return player.PersistentState{
+		Revision:           revision,
+		UpdatedAt:          updatedAt,
 		PlayerState:        state,
 		HeroLevels:         heroLevels,
 		HeroShards:         heroShards,
@@ -507,6 +524,27 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 		DailyStageClears:   dailyStageClears,
 		DailySummonCount:   dailySummonCount,
 	}, true, nil
+}
+
+func (store *PlayerStateStore) loadStateRevision(ctx context.Context, playerID string) (int64, time.Time, error) {
+	var revision int64
+	var updatedAt time.Time
+	err := store.db.QueryRowContext(ctx, `
+		SELECT revision, updated_at
+		FROM player.player_state_revisions
+		WHERE player_id = $1
+	`, playerID).Scan(&revision, &updatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 1, time.Time{}, nil
+	}
+	if err != nil {
+		return 0, time.Time{}, err
+	}
+	if revision < 1 {
+		revision = 1
+	}
+
+	return revision, updatedAt.UTC(), nil
 }
 
 func (store *PlayerStateStore) saveCoreState(ctx context.Context, tx *sql.Tx, playerID string, state api.PlayerState) error {
@@ -569,6 +607,26 @@ func (store *PlayerStateStore) saveCoreState(ctx context.Context, tx *sql.Tx, pl
 	}
 
 	return nil
+}
+
+func (store *PlayerStateStore) saveRevisionState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
+	revision := state.Revision
+	if revision < 1 {
+		revision = 1
+	}
+	updatedAt := state.UpdatedAt
+	if updatedAt.IsZero() {
+		updatedAt = time.Now().UTC()
+	}
+
+	_, err := tx.ExecContext(ctx, `
+		INSERT INTO player.player_state_revisions (player_id, revision, updated_at)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (player_id) DO UPDATE SET
+			revision = EXCLUDED.revision,
+			updated_at = EXCLUDED.updated_at
+	`, playerID, revision, updatedAt.UTC())
+	return err
 }
 
 func (store *PlayerStateStore) saveHeroState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {

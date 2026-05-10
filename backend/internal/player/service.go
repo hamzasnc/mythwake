@@ -46,6 +46,8 @@ type StateResetter interface {
 }
 
 type PersistentState struct {
+	Revision           int64
+	UpdatedAt          time.Time
 	PlayerState        api.PlayerState
 	HeroLevels         map[string]int
 	HeroShards         map[string]int
@@ -90,6 +92,8 @@ func (request ActionRequest) HasIdempotency() bool {
 
 func ClonePersistentState(state PersistentState) PersistentState {
 	return PersistentState{
+		Revision:           state.Revision,
+		UpdatedAt:          state.UpdatedAt,
 		PlayerState:        state.PlayerState,
 		HeroLevels:         cloneIntMap(state.HeroLevels),
 		HeroShards:         cloneIntMap(state.HeroShards),
@@ -134,6 +138,8 @@ type Service struct {
 	claimedDaily       map[string]bool
 	claimedBattlePass  map[string]bool
 	summonCount        int
+	revision           int64
+	updatedAt          time.Time
 	lastAFKClaimedAt   time.Time
 	dailyDate          string
 	dailyFightCount    int
@@ -161,6 +167,7 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 	if playerID == "" {
 		playerID = defaultPlayerID
 	}
+	now := time.Now().UTC()
 
 	service := &Service{
 		playerID:       playerID,
@@ -189,6 +196,8 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 		equippedAccessory:  map[string]string{},
 		claimedDaily:       map[string]bool{},
 		claimedBattlePass:  map[string]bool{},
+		revision:           1,
+		updatedAt:          now,
 	}
 	for _, option := range options {
 		option(service)
@@ -196,7 +205,7 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 	service.seedInitialHeroes()
 	service.seedInitialEquipment()
 	service.recalculatePower()
-	service.lastAFKClaimedAt = service.now().UTC()
+	service.lastAFKClaimedAt = now
 	service.dailyDate = dailyDateKey(service.now())
 	service.configureDomainServices()
 	return service
@@ -357,11 +366,12 @@ func (service *Service) executeAction(ctx context.Context, request ActionRequest
 	service.ensureDailyWindow()
 	beforeState := service.persistentState()
 	outcome := run()
-	result := service.newActionResult(outcome.success, actionID, request.IdempotencyKey, false, outcome.errorCode, outcome.message, outcome.reward, outcome.combat)
 	if !outcome.success && !outcome.persist {
-		return result
+		return service.newActionResult(outcome.success, actionID, request.IdempotencyKey, false, outcome.errorCode, outcome.message, outcome.reward, outcome.combat)
 	}
 
+	service.bumpRevision()
+	result := service.newActionResult(outcome.success, actionID, request.IdempotencyKey, false, outcome.errorCode, outcome.message, outcome.reward, outcome.combat)
 	delta := economy.Delta(beforeState.PlayerState, service.state)
 	if err := service.saveState(ctx, request, actionID, outcome.reward, delta, result); err != nil {
 		service.applyPersistentState(beforeState)
@@ -394,18 +404,31 @@ func (service *Service) replayedActionResult(ctx context.Context, request Action
 }
 
 func (service *Service) newActionResult(success bool, actionID string, idempotencyKey string, replay bool, errorCode string, message string, reward api.Reward, combat *api.CombatResult) api.ActionResult {
+	snapshot := service.snapshot()
 	return api.ActionResult{
 		Success:        success,
 		ActionID:       actionID,
 		IdempotencyKey: idempotencyKey,
 		Replay:         replay,
+		Receipt: api.ActionReceipt{
+			StateRevision: snapshot.Revision,
+			ServerTimeUTC: snapshot.UpdatedAtUTC,
+		},
 		ErrorCode:      errorCode,
 		Message:        message,
 		PlayerState:    service.state,
-		PlayerSnapshot: service.snapshot(),
+		PlayerSnapshot: snapshot,
 		Reward:         reward,
 		Combat:         combat,
 	}
+}
+
+func (service *Service) bumpRevision() {
+	if service.revision < 1 {
+		service.revision = 1
+	}
+	service.revision++
+	service.updatedAt = service.now().UTC()
 }
 
 func (service *Service) spendCurrency(currencyID string, amount int) (actionOutcome, bool) {

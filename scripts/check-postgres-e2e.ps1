@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.46-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.47-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
@@ -206,6 +206,10 @@ try {
     if (@($stateBefore.heroShards).Count -lt @($definitions.heroes).Count) {
         throw "Expected player state to include initial shard rows for known heroes."
     }
+    Assert-GreaterOrEqual ([int64]$stateBefore.revision) 1 "Player state should include a server revision."
+    if ([string]::IsNullOrWhiteSpace($stateBefore.updatedAtUtc)) {
+        throw "Expected player state to include updatedAtUtc."
+    }
 
     $bootstrap = Invoke-Json -Path "/client/bootstrap" -Headers $authHeaders
     Assert-Equal $bootstrap.playerSnapshot.playerId $login.playerId "Bootstrap snapshot player should match guest login."
@@ -216,6 +220,7 @@ try {
         throw "Expected bootstrap to include definition snapshot. Response: $($bootstrap | ConvertTo-Json -Depth 8)"
     }
     Assert-Equal $bootstrap.definitions.contentHash $definitions.contentHash "Bootstrap definitions should match /definitions content hash."
+    Assert-Equal ([int64]$bootstrap.playerSnapshot.revision) ([int64]$stateBefore.revision) "Bootstrap snapshot should include the current state revision."
 
     $afkHeaders = @{
         "Authorization" = $authHeaders["Authorization"]
@@ -240,6 +245,8 @@ try {
         throw "Expected campaign fight to include a successful server combat result. Response: $($fight | ConvertTo-Json -Depth 8)"
     }
     Assert-Equal $fight.playerSnapshot.playerId $login.playerId "Action snapshot player should match guest login."
+    Assert-Equal ([int64]$fight.receipt.stateRevision) ([int64]$fight.playerSnapshot.revision) "Action receipt should match snapshot revision."
+    Assert-GreaterOrEqual ([int64]$fight.playerSnapshot.revision) (([int64]$stateBefore.revision) + 1) "Campaign fight should advance the server state revision."
     $fightDailyProgress = $fight.playerSnapshot.dailyProgress | Where-Object { $_.missionId -eq "daily_stage_clears_3" } | Select-Object -First 1
     Assert-Equal ([int]$fightDailyProgress.progress) 1 "Campaign fight should advance daily stage-clear progress."
 
@@ -268,17 +275,20 @@ try {
     $stateAfterRestart = Invoke-Json -Path "/player/state" -Headers $authHeaders
     Assert-Equal $stateAfterRestart.playerId $login.playerId "Restarted API should resolve the same session player."
     Assert-Equal ([int]$stateAfterRestart.state.campaignStage) $stageAfterFight "Restarted API should load flushed campaign progress."
+    Assert-Equal ([int64]$stateAfterRestart.revision) ([int64]$fight.playerSnapshot.revision) "Restarted API should load the flushed state revision."
 
     $replay = Invoke-Json -Method "POST" -Path "/campaign/fight" -Headers $actionHeaders
     if (-not $replay.replay) {
         throw "Expected campaign replay after restart for idempotency key $idempotencyKey."
     }
     Assert-Equal ([int]$replay.playerState.campaignStage) $stageAfterFight "Replay should not apply campaign fight twice."
+    Assert-Equal ([int64]$replay.receipt.stateRevision) ([int64]$fight.receipt.stateRevision) "Replay should return the original action receipt revision."
 
     $reset = Invoke-Json -Method "POST" -Path "/dev/player/reset" -Headers $authHeaders
     Assert-Equal $reset.status "ok" "Dev player reset should return ok."
     Assert-Equal $reset.playerId $login.playerId "Dev player reset should target the logged-in player."
     Assert-Equal ([int]$reset.playerSnapshot.state.campaignStage) 1 "Dev player reset should return fresh campaign progress."
+    Assert-Equal ([int64]$reset.playerSnapshot.revision) 1 "Dev player reset should return a fresh state revision."
 
     $stateAfterReset = Invoke-Json -Path "/player/state" -Headers $authHeaders
     Assert-Equal ([int]$stateAfterReset.state.campaignStage) 1 "State after dev reset should stay fresh through the active session."

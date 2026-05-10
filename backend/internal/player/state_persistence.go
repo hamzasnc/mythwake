@@ -27,6 +27,8 @@ func (service *Service) saveState(ctx context.Context, request ActionRequest, ac
 
 func (service *Service) persistentState() PersistentState {
 	return ClonePersistentState(PersistentState{
+		Revision:           service.revision,
+		UpdatedAt:          service.updatedAt,
 		PlayerState:        service.state,
 		HeroLevels:         service.heroLevels,
 		HeroShards:         service.heroShards,
@@ -47,6 +49,14 @@ func (service *Service) persistentState() PersistentState {
 }
 
 func (service *Service) applyPersistentState(state PersistentState) {
+	service.revision = state.Revision
+	if service.revision < 1 {
+		service.revision = 1
+	}
+	service.updatedAt = state.UpdatedAt
+	if service.updatedAt.IsZero() {
+		service.updatedAt = service.now().UTC()
+	}
 	service.state = state.PlayerState
 	service.heroLevels = mergeIntMaps(service.heroLevels, state.HeroLevels)
 	service.heroShards = mergeIntMaps(service.heroShards, state.HeroShards)

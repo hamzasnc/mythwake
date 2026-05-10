@@ -487,10 +487,16 @@ func TestIdempotencyReplayDoesNotApplyActionTwice(t *testing.T) {
 	if !first.Success {
 		t.Fatalf("expected first campaign fight to succeed, got %#v", first)
 	}
+	if first.PlayerSnapshot.Revision != 2 || first.Receipt.StateRevision != first.PlayerSnapshot.Revision {
+		t.Fatalf("expected first action to advance revision and receipt, got %#v", first)
+	}
 
 	replay := service.FightCampaignWithRequest(context.Background(), request)
 	if !replay.Success || !replay.Replay {
 		t.Fatalf("expected idempotent replay, got %#v", replay)
+	}
+	if replay.PlayerSnapshot.Revision != first.PlayerSnapshot.Revision || replay.Receipt.StateRevision != first.Receipt.StateRevision {
+		t.Fatalf("expected replay to return original revision, first=%#v replay=%#v", first.Receipt, replay.Receipt)
 	}
 	if replay.Combat == nil || first.Combat == nil || replay.Combat.ElapsedSeconds != first.Combat.ElapsedSeconds {
 		t.Fatalf("expected replay to include the original combat result, first=%#v replay=%#v", first.Combat, replay.Combat)

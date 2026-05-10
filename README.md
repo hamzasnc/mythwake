@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.28
+Prototype version: 0.2.29
 Local save version: 2
 
 Current prototype:
@@ -146,6 +146,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.47 / Prototype 0.2.29: Added server state revisions and action receipts to snapshots/results, with PostgreSQL persistence and Unity Backend-panel revision visibility.
 - Backend 0.2.46 / Prototype 0.2.28: Added authenticated `/client/bootstrap` for mobile startup sync and wired Server Mode activation to use it.
 - Prototype 0.2.27: Backend Ping now surfaces server state-cache dirty/failure status for persistence smoke testing.
 - Backend 0.2.45: Added state-cache health counters and PostgreSQL E2E checks for dirty queue and flush visibility.

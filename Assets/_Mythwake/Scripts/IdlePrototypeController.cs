@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.28";
+    public const string PrototypeVersion = "0.2.29";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -791,6 +791,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private bool backendRequestInProgress;
     private bool backendLifecycleFlushInProgress;
     private string backendStatus = "Backend: local prototype mode";
+    private long backendStateRevision;
     private MythwakeDefinitionSnapshotDto backendDefinitions;
     private bool hasBackendDefinitions;
 
@@ -2248,7 +2249,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             outcome = $"{outcome} replay";
         }
 
-        FinishBackendRequest($"{source}: {outcome}");
+        FinishBackendRequest($"{source}: {outcome}{FormatBackendRevisionSuffix(result)}");
     }
 
     private void CompleteBackendAction(bool success, string error, MythwakeActionResultDto result, bool showInSummonPanel)
@@ -2290,7 +2291,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             outcome = $"{outcome} replay";
         }
-        FinishBackendRequest($"Server action: {outcome}  {result.actionId}");
+        FinishBackendRequest($"Server action: {outcome}  {result.actionId}{FormatBackendRevisionSuffix(result)}");
+    }
+
+    private static string FormatBackendRevisionSuffix(MythwakeActionResultDto result)
+    {
+        var revision = Math.Max(result.receipt.stateRevision, result.playerSnapshot.revision);
+        return revision > 0 ? $"  Rev {revision}" : string.Empty;
     }
 
     private static bool HasServerCombatResult(MythwakeActionResultDto result)
@@ -2392,6 +2399,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             return;
         }
+
+        backendStateRevision = Math.Max(0, snapshot.revision);
 
         var state = snapshot.state;
         saveVersion = CurrentSaveVersion;
@@ -5885,8 +5894,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (backendStatusText != null)
         {
-            var sessionLabel = backendClient != null && backendClient.HasSession ? $"Logged: {backendClient.PlayerId}" : "Logged: no";
-            backendStatusText.text = $"{backendStatus}\n{sessionLabel}";
+            backendStatusText.text = $"{backendStatus}\n{BackendSessionLabel()}";
         }
 
         if (backendModeText != null)
@@ -5902,9 +5910,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendStatus = string.IsNullOrWhiteSpace(status) ? "Backend: no status" : status;
         if (backendStatusText != null)
         {
-            var sessionLabel = backendClient != null && backendClient.HasSession ? $"Logged: {backendClient.PlayerId}" : "Logged: no";
-            backendStatusText.text = $"{backendStatus}\n{sessionLabel}";
+            backendStatusText.text = $"{backendStatus}\n{BackendSessionLabel()}";
         }
+    }
+
+    private string BackendSessionLabel()
+    {
+        var sessionLabel = backendClient != null && backendClient.HasSession ? $"Logged: {backendClient.PlayerId}" : "Logged: no";
+        if (backendStateRevision > 0)
+        {
+            sessionLabel = $"{sessionLabel}  Rev {backendStateRevision}";
+        }
+
+        return sessionLabel;
     }
 
     private void SetBackendButtonsInteractable(bool interactable)

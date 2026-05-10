@@ -21,6 +21,8 @@ public struct MythwakePlayerStateDto
 public struct MythwakePlayerSnapshotDto
 {
     public string playerId;
+    public long revision;
+    public string updatedAtUtc;
     public MythwakePlayerStateDto state;
     public string lastAfkClaimUtc;
     public string dailyDate;
@@ -124,12 +126,20 @@ public struct MythwakeActionResultDto
     public string actionId;
     public string idempotencyKey;
     public bool replay;
+    public MythwakeActionReceiptDto receipt;
     public string errorCode;
     public string message;
     public MythwakePlayerStateDto playerState;
     public MythwakePlayerSnapshotDto playerSnapshot;
     public MythwakeRewardDto reward;
     public MythwakeCombatResultDto combat;
+}
+
+[Serializable]
+public struct MythwakeActionReceiptDto
+{
+    public long stateRevision;
+    public string serverTimeUtc;
 }
 
 [Serializable]

@@ -10,6 +10,8 @@ import (
 func (service *Service) snapshot() api.PlayerSnapshot {
 	return api.PlayerSnapshot{
 		PlayerID:          service.playerID,
+		Revision:          service.revision,
+		UpdatedAtUTC:      formatSnapshotTime(service.updatedAt),
 		State:             service.state,
 		LastAFKClaimUTC:   formatSnapshotTime(service.lastAFKClaimedAt),
 		DailyDate:         service.dailyDate,
