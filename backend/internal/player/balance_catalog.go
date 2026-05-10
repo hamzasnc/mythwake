@@ -18,6 +18,8 @@ type BalanceCatalog interface {
 	RewardAFKClaim() string
 	HeroDefinitions() []balance.HeroDefinition
 	HeroDefinitionByID(heroID string) (balance.HeroDefinition, bool)
+	EquipmentDefinitions() []balance.EquipmentDefinition
+	EquipmentDefinitionByID(equipmentID string) (balance.EquipmentDefinition, bool)
 	HeroLevelCost(level int) int
 	HeroAscensionShardCost(ascension int) int
 	EquipmentLevelCost(equipmentID string, level int) (int, bool)
@@ -81,6 +83,14 @@ func (StaticBalanceCatalog) HeroDefinitions() []balance.HeroDefinition {
 
 func (StaticBalanceCatalog) HeroDefinitionByID(heroID string) (balance.HeroDefinition, bool) {
 	return balance.HeroDefinitionByID(heroID)
+}
+
+func (StaticBalanceCatalog) EquipmentDefinitions() []balance.EquipmentDefinition {
+	return balance.EquipmentDefinitions()
+}
+
+func (StaticBalanceCatalog) EquipmentDefinitionByID(equipmentID string) (balance.EquipmentDefinition, bool) {
+	return balance.EquipmentDefinitionByID(equipmentID)
 }
 
 func (StaticBalanceCatalog) HeroLevelCost(level int) int {

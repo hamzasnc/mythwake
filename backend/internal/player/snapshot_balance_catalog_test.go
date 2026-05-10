@@ -14,6 +14,9 @@ func TestSnapshotBalanceCatalogUsesSnapshotCombatDefinitions(t *testing.T) {
 			{HeroID: "hero_custom", DisplayName: "Custom", SortOrder: 20, StarterOwned: true, MaxLevel: 70, MaxAscension: 7, BaseAttack: 31, AttackPerLevel: 4, AttackPerAscension: 9, BaseHealth: 222, HealthPerLevel: 11, HealthPerAscension: 33},
 			{HeroID: "hero_locked", DisplayName: "Locked", SortOrder: 10, StarterOwned: false, MaxLevel: 60, MaxAscension: 6, BaseAttack: 12, AttackPerLevel: 2, AttackPerAscension: 6, BaseHealth: 150, HealthPerLevel: 9, HealthPerAscension: 22},
 		},
+		Equipment: []api.EquipmentDefinition{
+			{EquipmentID: "equipment_custom", DisplayName: "Custom Gear", SortOrder: 30, StarterOwned: true, MaxLevel: 5, AttackPerLevel: 4, HealthPerLevel: 25},
+		},
 		Rewards: []api.RewardDefinition{
 			{
 				RewardID: "reward_campaign_stage_003",
@@ -75,6 +78,10 @@ func TestSnapshotBalanceCatalogUsesSnapshotCombatDefinitions(t *testing.T) {
 	if !ok || !hero.StarterOwned || hero.MaxLevel != 70 || hero.BaseAttack != 31 || hero.HealthPerAscension != 33 {
 		t.Fatalf("expected snapshot hero_custom definition, got %#v ok=%t", hero, ok)
 	}
+	equipment, ok := catalog.EquipmentDefinitionByID("equipment_custom")
+	if !ok || equipment.MaxLevel != 5 || equipment.AttackPerLevel != 4 || equipment.HealthPerLevel != 25 {
+		t.Fatalf("expected snapshot equipment_custom definition, got %#v ok=%t", equipment, ok)
+	}
 }
 
 func TestSnapshotBalanceCatalogUsesSnapshotCostsAndMetaRewards(t *testing.T) {
@@ -84,6 +91,9 @@ func TestSnapshotBalanceCatalogUsesSnapshotCostsAndMetaRewards(t *testing.T) {
 			{Domain: "hero", TargetID: "*", CostCurrencyID: "hero_shards", BaseAmount: 40, AmountPerLevel: 11},
 			{Domain: "equipment", TargetID: balance.EquipmentWeapon, CostCurrencyID: economy.CurrencyGold, BaseAmount: 9, AmountPerLevel: 2},
 			{Domain: "accessory", TargetID: "*", CostCurrencyID: economy.CurrencyGold, BaseAmount: 6, AmountPerLevel: 1},
+		},
+		Equipment: []api.EquipmentDefinition{
+			{EquipmentID: balance.EquipmentWeapon, StarterOwned: true, MaxLevel: 10, AttackPerLevel: 11},
 		},
 		SummonBanners: []api.SummonBannerDefinition{
 			{

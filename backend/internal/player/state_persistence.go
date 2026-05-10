@@ -120,17 +120,36 @@ func mergeBoolMaps(defaults map[string]bool, persisted map[string]bool) map[stri
 
 func (service *Service) recalculatePower() {
 	heroAttack, heroHealth := service.heroStatTotals()
-	weaponAttack := service.equipmentLevels[weaponID] * 7
-	armorHealth := service.equipmentLevels[armorID] * 65
+	equipmentAttack, equipmentHealth, equipmentPower := service.equipmentStatBonuses()
 	accessoryAttack, accessoryHealth := service.accessoryStatBonuses()
 
-	teamAttack := heroAttack + weaponAttack + accessoryAttack
-	teamHealth := heroHealth + armorHealth + accessoryHealth
-	power := teamAttack + (teamHealth / 10) + (service.equipmentLevels[weaponID] * 12) + (service.equipmentLevels[armorID] * 12)
+	teamAttack := heroAttack + equipmentAttack + accessoryAttack
+	teamHealth := heroHealth + equipmentHealth + accessoryHealth
+	power := teamAttack + (teamHealth / 10) + equipmentPower
 
 	service.state.TeamPower = power
 	service.state.TeamAttack = max(1, teamAttack)
 	service.state.TeamHealth = max(1, teamHealth)
+}
+
+func (service *Service) equipmentStatBonuses() (int, int, int) {
+	totalAttack := 0
+	totalHealth := 0
+	totalPower := 0
+	for equipmentID, level := range service.equipmentLevels {
+		definition, ok := service.balanceCatalog.EquipmentDefinitionByID(equipmentID)
+		if !ok {
+			continue
+		}
+		level = clampEquipmentLevel(level, definition.MaxLevel)
+		attack := definition.AttackPerLevel * level
+		health := definition.HealthPerLevel * level
+		totalAttack += attack
+		totalHealth += health
+		totalPower += attack + (health / 10)
+	}
+
+	return totalAttack, totalHealth, totalPower
 }
 
 func (service *Service) heroStatTotals() (int, int) {
@@ -160,6 +179,15 @@ func clampHeroLevel(value int, maximum int) int {
 }
 
 func clampHeroAscension(value int, maximum int) int {
+	value = max(0, value)
+	if maximum <= 0 {
+		return value
+	}
+
+	return min(value, maximum)
+}
+
+func clampEquipmentLevel(value int, maximum int) int {
 	value = max(0, value)
 	if maximum <= 0 {
 		return value

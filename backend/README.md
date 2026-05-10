@@ -23,7 +23,7 @@ Current scope:
 - Embedded SQL migrations
 - PostgreSQL player progress tables for currencies, campaign, dungeons, heroes, ascensions, and hero shards
 - JSON player state snapshot mirror for fallback/debugging
-- Seeded definition tables for currencies, dungeons, accessory slots, accessory rarities, accessories, heroes, campaign stages, rewards, progression costs, summons, missions, and Mission Track rewards
+- Seeded definition tables for currencies, heroes, starter equipment, dungeons, accessory slots, accessory rarities, accessories, campaign stages, rewards, progression costs, summons, missions, and Mission Track rewards
 - PostgreSQL schemas:
   - `account`
   - `common`
@@ -81,14 +81,16 @@ Current scope:
 - When PostgreSQL is enabled, the same loaded definition snapshot is injected into live gameplay balance for combat stats, dungeon rewards, progression costs, summon rotation, daily missions, and Mission Track rewards.
 - New player starter heroes and initial shard rows are seeded from the active hero definition catalog.
 - Hero definitions carry server-owned stat scaling plus level/ascension caps, and backend team ATK/HP/Power are derived from those rows.
+- Starter equipment definitions carry server-owned stat scaling plus max-level caps, and equipment training validates against those rows.
 - Accessory equip, level, and fuse actions use server-owned accessory and rarity definitions for slot selection, fuse targets, fuse copy costs, max level validation, and equipped ATK/HP stat bonuses.
 - Player service gameplay actions route through explicit domain action services while keeping the existing API surface stable.
 - Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.
 - Campaign, dungeon, and summon actions advance server-owned daily mission counters for the active UTC day.
-- `GET /definitions` exposes the current server-owned balance/action catalog for client and admin tooling, including auth providers, currencies, heroes, rewards, campaign stages, dungeons, accessories, costs, summons, missions, and action metadata, with content hashes and ETag revalidation.
+- `GET /definitions` exposes the current server-owned balance/action catalog for client and admin tooling, including auth providers, currencies, heroes, starter equipment, rewards, campaign stages, dungeons, accessories, costs, summons, missions, and action metadata, with content hashes and ETag revalidation.
 - Campaign and dungeon definitions include combat curves/stats so client previews can match server combat.
 - Navicat-friendly common definition views:
   - `debug.v_common_hero_definition_overview`
+  - `debug.v_common_equipment_definition_overview`
   - `debug.v_common_reward_overview`
   - `debug.v_common_progression_cost_overview`
   - `debug.v_common_meta_definition_overview`

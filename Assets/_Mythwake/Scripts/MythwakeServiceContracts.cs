@@ -175,6 +175,7 @@ public struct MythwakeDefinitionSnapshotDto
     public MythwakeAuthProviderDefinitionDto[] authProviders;
     public MythwakeCurrencyDefinitionDto[] currencies;
     public MythwakeHeroDefinitionDto[] heroes;
+    public MythwakeEquipmentDefinitionDto[] equipment;
     public MythwakeRewardDefinitionDto[] rewards;
     public MythwakeCampaignDefinitionDto[] campaigns;
     public MythwakeCampaignStageDefinitionDto[] campaignStages;
@@ -222,6 +223,18 @@ public struct MythwakeHeroDefinitionDto
     public int baseHealth;
     public int healthPerLevel;
     public int healthPerAscension;
+}
+
+[Serializable]
+public struct MythwakeEquipmentDefinitionDto
+{
+    public string equipmentId;
+    public string displayName;
+    public int sortOrder;
+    public bool starterOwned;
+    public int maxLevel;
+    public int attackPerLevel;
+    public int healthPerLevel;
 }
 
 [Serializable]

@@ -35,7 +35,7 @@ Current prototype:
 - Gold, Gems, Myth Essence, Pass XP, and Hero Shards are separated
 - Gold can be spent on starter Weapon and Armor equipment upgrades
 - Equipment upgrades are saved locally and add team-wide ATK and HP
-- Starter equipment balance is defined through small data structs to prepare for later server/database config
+- Starter equipment balance is defined through stable server/database-ready definitions
 - Core prototype balance is being reshaped into code-side definition rows with stable IDs for later database migration
 - Accessory gear system with Ohrringe, Kette, Armband, Handschuhe, and Schuhe slots
 - Accessory slot/rarity pairs now have item-like definitions with stable IDs, level caps, stat scaling, drop weights, and fuse targets
@@ -94,6 +94,7 @@ Backend:
 - Backend Daily Mission, Mission Track, and Summon actions now validate against known server balance definitions instead of accepting arbitrary claim IDs
 - Backend new-player starter heroes are seeded from server-owned hero definitions
 - Backend hero definitions now include server-owned stat scaling and level/ascension caps, and team ATK/HP/Power are derived from those definitions
+- Backend starter equipment definitions now include server-owned stat scaling and max-level caps, and equipment training validates against those definitions
 - Backend Accessory equip, level, and fuse actions now validate against server-owned accessory and rarity definitions instead of deriving slot/fuse behavior from ID strings
 - Equipped Accessories now contribute definition-based ATK/HP to backend team stats
 - PostgreSQL now seeds DB-ready hero, campaign, reward, progression cost, summon, mission, and Mission Track definition tables
@@ -115,7 +116,7 @@ Backend:
 - Server-authoritative daily mission progress tracks fight, stage-clear, and summon counts by UTC day and blocks incomplete daily claims
 - PostgreSQL E2E smoke script verifies guest auth, protected state, campaign action persistence, manual flush, API restart reload, idempotency replay, and logout revocation
 - Navicat-friendly account/persistence debug views expose auth providers, active sessions, latest action result, and snapshot freshness
-- Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
+- Server-owned auth provider, currency, hero, starter equipment, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
 - Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
 - Unity can sync `/time`, keep an approximate in-memory server clock, and show daily/weekly reset timing from the backend
 - Unity can manually claim server AFK rewards from the Backend panel and checks them on app resume while Server Mode is active
@@ -135,6 +136,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.42: Added server-owned equipment definitions for starter Weapon/Armor stat scaling, max-level validation, PostgreSQL seeds, and definition snapshots.
 - Backend 0.2.41: Added server-owned hero stat scaling and level/ascension caps to definitions, PostgreSQL seeds, and backend team-stat calculation.
 - Backend 0.2.40: New player starter heroes and initial shard rows are now seeded from the active hero definition catalog instead of hardcoded service maps.
 - Backend 0.2.39: Made Accessory equip, level, and fuse actions definition-driven, including accessory slots, fuse targets, fuse copy costs, rarity max levels, and equipped ATK/HP stat bonuses.

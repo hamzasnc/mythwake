@@ -567,7 +567,7 @@ Progress:
 - Added `internal/gameplay` as the first action catalog slice before splitting the large player service into domain services.
 - Added `internal/economy` for shared backend currency IDs, spend validation, reward grants, and delta calculation.
 - Added `internal/balance` for table-shaped campaign, dungeon, cost, summon, and simple reward definitions.
-- Added `common.hero_definitions`, `common.reward_definitions`, `common.campaign_curve_definitions`, `common.campaign_stage_definitions`, `common.progression_cost_definitions`, `common.summon_banner_definitions`, `common.summon_pool_definitions`, `common.mission_definitions`, and `common.battle_pass_track_definitions`.
+- Added `common.hero_definitions`, `common.equipment_definitions`, `common.reward_definitions`, `common.campaign_curve_definitions`, `common.campaign_stage_definitions`, `common.progression_cost_definitions`, `common.summon_banner_definitions`, `common.summon_pool_definitions`, `common.mission_definitions`, and `common.battle_pass_track_definitions`.
 - Added debug views for common rewards, progression costs, and meta reward definitions.
 - Split `backend/internal/player/service.go` into smaller domain files while preserving route behavior and tests.
 - Added `internal/definitions` as a read-only API projection layer for balance and gameplay catalogs.
@@ -601,6 +601,7 @@ Progress:
 - New player starter heroes and initial hero shard rows now come from the active hero definition catalog instead of hardcoded service maps.
 - Accessory equip, level, and fuse actions now use accessory and rarity definitions for slot routing, fuse targets, fuse copy costs, max-level validation, and equipped ATK/HP stat bonuses instead of parsing behavior from item IDs.
 - Hero definitions now carry server-owned stat growth and level/ascension caps; backend team ATK, HP, and Power are derived from those definitions instead of generic hardcoded hero increments.
+- Starter equipment definitions now carry server-owned stat growth and max-level caps; backend equipment training validates against those definitions instead of hardcoded Weapon/Armor stat bonuses.
 
 Next useful step:
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.

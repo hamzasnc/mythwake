@@ -141,6 +141,7 @@ type DefinitionSnapshot struct {
 	AuthProviders     []AuthProviderDefinition     `json:"authProviders"`
 	Currencies        []CurrencyDefinition         `json:"currencies"`
 	Heroes            []HeroDefinition             `json:"heroes"`
+	Equipment         []EquipmentDefinition        `json:"equipment"`
 	Rewards           []RewardDefinition           `json:"rewards"`
 	Campaigns         []CampaignDefinition         `json:"campaigns"`
 	CampaignStages    []CampaignStageDefinition    `json:"campaignStages"`
@@ -182,6 +183,16 @@ type HeroDefinition struct {
 	BaseHealth         int    `json:"baseHealth"`
 	HealthPerLevel     int    `json:"healthPerLevel"`
 	HealthPerAscension int    `json:"healthPerAscension"`
+}
+
+type EquipmentDefinition struct {
+	EquipmentID    string `json:"equipmentId"`
+	DisplayName    string `json:"displayName"`
+	SortOrder      int    `json:"sortOrder"`
+	StarterOwned   bool   `json:"starterOwned"`
+	MaxLevel       int    `json:"maxLevel"`
+	AttackPerLevel int    `json:"attackPerLevel"`
+	HealthPerLevel int    `json:"healthPerLevel"`
 }
 
 type RewardDefinition struct {

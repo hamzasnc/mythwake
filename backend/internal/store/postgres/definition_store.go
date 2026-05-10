@@ -26,6 +26,9 @@ func (store *DefinitionStore) Snapshot(ctx context.Context, apiVersion string) (
 	if snapshot.Heroes, err = store.heroDefinitions(ctx); err != nil {
 		return api.DefinitionSnapshot{}, err
 	}
+	if snapshot.Equipment, err = store.equipmentDefinitions(ctx); err != nil {
+		return api.DefinitionSnapshot{}, err
+	}
 	if snapshot.Rewards, err = store.rewardDefinitions(ctx); err != nil {
 		return api.DefinitionSnapshot{}, err
 	}
@@ -126,6 +129,44 @@ func (store *DefinitionStore) heroDefinitions(ctx context.Context) ([]api.HeroDe
 			&definition.BaseHealth,
 			&definition.HealthPerLevel,
 			&definition.HealthPerAscension,
+		); err != nil {
+			return nil, err
+		}
+		response = append(response, definition)
+	}
+
+	return response, rows.Err()
+}
+
+func (store *DefinitionStore) equipmentDefinitions(ctx context.Context) ([]api.EquipmentDefinition, error) {
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT
+			id,
+			display_name,
+			sort_order,
+			starter_owned,
+			max_level,
+			attack_per_level,
+			health_per_level
+		FROM common.equipment_definitions
+		ORDER BY sort_order, id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	response := []api.EquipmentDefinition{}
+	for rows.Next() {
+		var definition api.EquipmentDefinition
+		if err := rows.Scan(
+			&definition.EquipmentID,
+			&definition.DisplayName,
+			&definition.SortOrder,
+			&definition.StarterOwned,
+			&definition.MaxLevel,
+			&definition.AttackPerLevel,
+			&definition.HealthPerLevel,
 		); err != nil {
 			return nil, err
 		}

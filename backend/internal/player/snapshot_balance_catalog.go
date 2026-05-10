@@ -15,6 +15,8 @@ type SnapshotBalanceCatalog struct {
 	campaignStagesByLevel map[int]api.CampaignStageDefinition
 	heroes                []balance.HeroDefinition
 	heroesByID            map[string]balance.HeroDefinition
+	equipment             []balance.EquipmentDefinition
+	equipmentByID         map[string]balance.EquipmentDefinition
 	rewards               map[string]api.Reward
 	dungeons              map[string]balance.DungeonDefinition
 	progressionCosts      []api.ProgressionCostDefinition
@@ -32,6 +34,7 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 	catalog := &SnapshotBalanceCatalog{
 		campaignStagesByLevel: map[int]api.CampaignStageDefinition{},
 		heroesByID:            map[string]balance.HeroDefinition{},
+		equipmentByID:         map[string]balance.EquipmentDefinition{},
 		rewards:               map[string]api.Reward{},
 		dungeons:              map[string]balance.DungeonDefinition{},
 		summonBanners:         map[string]api.SummonBannerDefinition{},
@@ -74,6 +77,27 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 			return catalog.heroes[left].ID < catalog.heroes[right].ID
 		}
 		return catalog.heroes[left].SortOrder < catalog.heroes[right].SortOrder
+	})
+
+	for _, definition := range snapshot.Equipment {
+		equipment := balance.EquipmentDefinition{
+			ID:             definition.EquipmentID,
+			DisplayName:    definition.DisplayName,
+			SortOrder:      definition.SortOrder,
+			StarterOwned:   definition.StarterOwned,
+			MaxLevel:       definition.MaxLevel,
+			AttackPerLevel: definition.AttackPerLevel,
+			HealthPerLevel: definition.HealthPerLevel,
+		}
+		equipment = normalizeEquipmentDefinition(equipment, catalog.fallback)
+		catalog.equipment = append(catalog.equipment, equipment)
+		catalog.equipmentByID[equipment.ID] = equipment
+	}
+	sort.Slice(catalog.equipment, func(left int, right int) bool {
+		if catalog.equipment[left].SortOrder == catalog.equipment[right].SortOrder {
+			return catalog.equipment[left].ID < catalog.equipment[right].ID
+		}
+		return catalog.equipment[left].SortOrder < catalog.equipment[right].SortOrder
 	})
 
 	for _, definition := range snapshot.Rewards {
@@ -309,6 +333,24 @@ func (catalog *SnapshotBalanceCatalog) HeroDefinitionByID(heroID string) (balanc
 	return catalog.fallback.HeroDefinitionByID(heroID)
 }
 
+func (catalog *SnapshotBalanceCatalog) EquipmentDefinitions() []balance.EquipmentDefinition {
+	if len(catalog.equipment) == 0 {
+		return catalog.fallback.EquipmentDefinitions()
+	}
+
+	definitions := make([]balance.EquipmentDefinition, len(catalog.equipment))
+	copy(definitions, catalog.equipment)
+	return definitions
+}
+
+func (catalog *SnapshotBalanceCatalog) EquipmentDefinitionByID(equipmentID string) (balance.EquipmentDefinition, bool) {
+	if definition, ok := catalog.equipmentByID[equipmentID]; ok {
+		return definition, true
+	}
+
+	return catalog.fallback.EquipmentDefinitionByID(equipmentID)
+}
+
 func (catalog *SnapshotBalanceCatalog) HeroLevelCost(level int) int {
 	if cost, ok := catalog.progressionCost("hero", "*", economy.CurrencyMythEssence, level); ok {
 		return cost
@@ -518,6 +560,29 @@ func normalizeHeroDefinition(definition balance.HeroDefinition, fallback StaticB
 	}
 	if definition.HealthPerAscension <= 0 {
 		definition.HealthPerAscension = 50
+	}
+
+	return definition
+}
+
+func normalizeEquipmentDefinition(definition balance.EquipmentDefinition, fallback StaticBalanceCatalog) balance.EquipmentDefinition {
+	if staticDefinition, ok := fallback.EquipmentDefinitionByID(definition.ID); ok {
+		if definition.DisplayName == "" {
+			definition.DisplayName = staticDefinition.DisplayName
+		}
+		if definition.MaxLevel <= 0 {
+			definition.MaxLevel = staticDefinition.MaxLevel
+		}
+		if definition.AttackPerLevel <= 0 {
+			definition.AttackPerLevel = staticDefinition.AttackPerLevel
+		}
+		if definition.HealthPerLevel <= 0 {
+			definition.HealthPerLevel = staticDefinition.HealthPerLevel
+		}
+	}
+
+	if definition.MaxLevel <= 0 {
+		definition.MaxLevel = 100
 	}
 
 	return definition

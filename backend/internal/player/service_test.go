@@ -416,6 +416,37 @@ func TestEquipmentLevelPersistsAndRaisesPower(t *testing.T) {
 	}
 }
 
+func TestEquipmentProgressionUsesDefinitions(t *testing.T) {
+	catalog := NewSnapshotBalanceCatalog(api.DefinitionSnapshot{
+		Heroes: []api.HeroDefinition{
+			{HeroID: "hero_custom_starter", StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 20, AttackPerLevel: 4, AttackPerAscension: 9, BaseHealth: 200, HealthPerLevel: 15, HealthPerAscension: 60},
+		},
+		Equipment: []api.EquipmentDefinition{
+			{EquipmentID: "equipment_custom", StarterOwned: true, MaxLevel: 1, AttackPerLevel: 13, HealthPerLevel: 70},
+		},
+		ProgressionCosts: []api.ProgressionCostDefinition{
+			{Domain: "equipment", TargetID: "equipment_custom", CostCurrencyID: "gold", BaseAmount: 10, AmountPerLevel: 0},
+		},
+	})
+	service := NewServiceForPlayer("equipment-definition-player", withServiceBalanceCatalog(catalog))
+	service.state.Gold = 100
+	beforeAttack := service.state.TeamAttack
+	beforeHealth := service.state.TeamHealth
+
+	result := service.LevelEquipment("equipment_custom")
+	if !result.Success {
+		t.Fatalf("expected equipment level to succeed, got %#v", result)
+	}
+	if service.state.TeamAttack != beforeAttack+13 || service.state.TeamHealth != beforeHealth+70 {
+		t.Fatalf("expected equipment stats from definition, before attack=%d health=%d after=%#v", beforeAttack, beforeHealth, service.state)
+	}
+
+	second := service.LevelEquipment("equipment_custom")
+	if second.Success || second.ErrorCode != "max_level" {
+		t.Fatalf("expected max_level, got %#v", second)
+	}
+}
+
 func TestFlushStateQueuesCurrentStateAndFlushesStore(t *testing.T) {
 	store := &flushableStateStore{}
 	service := NewService()

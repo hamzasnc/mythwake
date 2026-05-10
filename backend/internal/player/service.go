@@ -179,7 +179,7 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 		heroLevels:         map[string]int{},
 		heroShards:         map[string]int{},
 		heroAscensions:     map[string]int{},
-		equipmentLevels:    map[string]int{weaponID: 0, armorID: 0},
+		equipmentLevels:    map[string]int{},
 		accessoryInventory: map[string]int{},
 		accessoryLevels:    map[string]int{},
 		equippedAccessory:  map[string]string{},
@@ -190,6 +190,7 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 		option(service)
 	}
 	service.seedInitialHeroes()
+	service.seedInitialEquipment()
 	service.recalculatePower()
 	service.lastAFKClaimedAt = service.now().UTC()
 	service.dailyDate = dailyDateKey(service.now())
@@ -210,6 +211,17 @@ func (service *Service) seedInitialHeroes() {
 		}
 		if _, ok := service.heroAscensions[definition.ID]; !ok {
 			service.heroAscensions[definition.ID] = 0
+		}
+	}
+}
+
+func (service *Service) seedInitialEquipment() {
+	for _, definition := range service.balanceCatalog.EquipmentDefinitions() {
+		if definition.ID == "" || !definition.StarterOwned {
+			continue
+		}
+		if _, ok := service.equipmentLevels[definition.ID]; !ok {
+			service.equipmentLevels[definition.ID] = 0
 		}
 	}
 }

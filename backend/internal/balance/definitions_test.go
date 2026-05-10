@@ -66,6 +66,20 @@ func TestHeroDefinitions(t *testing.T) {
 	}
 }
 
+func TestEquipmentDefinitions(t *testing.T) {
+	weapon, ok := EquipmentDefinitionByID(EquipmentWeapon)
+	if !ok || !weapon.StarterOwned || weapon.MaxLevel != 100 || weapon.AttackPerLevel != 7 || weapon.HealthPerLevel != 0 {
+		t.Fatalf("unexpected weapon definition: %#v ok=%v", weapon, ok)
+	}
+	armor, ok := EquipmentDefinitionByID(EquipmentArmor)
+	if !ok || !armor.StarterOwned || armor.MaxLevel != 100 || armor.AttackPerLevel != 0 || armor.HealthPerLevel != 65 {
+		t.Fatalf("unexpected armor definition: %#v ok=%v", armor, ok)
+	}
+	if _, ok := EquipmentDefinitionByID("equipment_fake"); ok {
+		t.Fatal("unknown equipment should not exist")
+	}
+}
+
 func TestProgressionCosts(t *testing.T) {
 	if HeroLevelCost(1) != 20 {
 		t.Fatalf("expected level 1 hero cost 20, got %d", HeroLevelCost(1))

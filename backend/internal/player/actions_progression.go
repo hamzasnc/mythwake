@@ -102,8 +102,18 @@ func (actions equipmentActions) LevelEquipment(ctx context.Context, request Acti
 		if !ok {
 			return actionFailure("invalid_equipment", fmt.Sprintf("Unknown equipment: %s", equipmentID))
 		}
+		definition, ok := service.balanceCatalog.EquipmentDefinitionByID(equipmentID)
+		if !ok {
+			return actionFailure("invalid_equipment", fmt.Sprintf("Unknown equipment definition: %s", equipmentID))
+		}
+		if definition.MaxLevel > 0 && level >= definition.MaxLevel {
+			return actionFailure("max_level", fmt.Sprintf("%s is already Lv. %d.", equipmentID, level))
+		}
 
-		cost, _ := service.balanceCatalog.EquipmentLevelCost(equipmentID, level)
+		cost, ok := service.balanceCatalog.EquipmentLevelCost(equipmentID, level)
+		if !ok {
+			return actionFailure("invalid_cost", fmt.Sprintf("Missing equipment level cost for %s.", equipmentID))
+		}
 		if failure, ok := service.spendCurrency(economy.CurrencyGold, cost); !ok {
 			return failure
 		}
