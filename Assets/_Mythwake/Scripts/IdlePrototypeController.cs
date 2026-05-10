@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.32";
+    public const string PrototypeVersion = "0.2.33";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -802,6 +802,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private MythwakeRuntimeArtPresenter runtimeArt;
     private TMP_Text dungeonsHeaderText;
     private TMP_Text runtimeDungeonResultText;
+    private RectTransform topBarRoot;
+    private RectTransform bottomNavRoot;
+    private TMP_Text topProfileText;
+    private TMP_Text topPowerText;
+    private TMP_Text topCurrencyText;
+    private RawImage topAvatarImage;
+    private Button homeBeginButton;
+    private TMP_Text menuHeaderText;
+    private RawImage[] heroCardPortraits;
 
     private void Awake()
     {
@@ -3861,6 +3870,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshBattlePassUi();
         RefreshBackendUi();
         RefreshRuntimeArtUi();
+        RefreshTopBarUi();
 
         var heroLevelMax = IsHeroLevelMax(selectedHeroIndex);
         var heroAscensionMax = IsHeroAscensionMax(selectedHeroIndex);
@@ -4130,6 +4140,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             homeTabButton.onClick.AddListener(ShowHome);
         }
 
+        if (homeBeginButton != null)
+        {
+            homeBeginButton.onClick.AddListener(ShowBattle);
+        }
+
         if (battleTabButton != null)
         {
             battleTabButton.onClick.AddListener(ShowBattle);
@@ -4166,6 +4181,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (homeTabButton != null)
         {
             homeTabButton.onClick.RemoveListener(ShowHome);
+        }
+
+        if (homeBeginButton != null)
+        {
+            homeBeginButton.onClick.RemoveListener(ShowBattle);
         }
 
         if (battleTabButton != null)
@@ -4269,10 +4289,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 {
                     var hero = GetHeroDefinition(i);
                     var marker = i == selectedHeroIndex ? "> " : string.Empty;
-                    heroCardTexts[i].text = $"{marker}{hero.name}  Lv. {FormatCappedValue(heroLevels[i], GetHeroLevelCap(i))}  A{FormatCappedValue(heroAscensions[i], GetHeroAscensionCap(i))}  Shards {heroShards[i]}\n{hero.rarityName} {hero.roleName}  ATK {GetHeroAttack(i)}  HP {GetHeroHealth(i)}";
+                    heroCardTexts[i].text = $"{marker}{hero.name}\nLv {FormatCappedValue(heroLevels[i], GetHeroLevelCap(i))}  A{FormatCappedValue(heroAscensions[i], GetHeroAscensionCap(i))}\nPower {GetHeroPower(i)}";
                 }
             }
         }
+
+        RefreshHeroCardVisuals();
     }
 
     private void RefreshNextGoalUi()
@@ -6512,14 +6534,145 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void EnsureRuntimeScreenLayout()
     {
+        EnsureRuntimeTopBar();
         EnsureRuntimeDungeonsPanel();
         EnsureRuntimeDungeonsTab();
+        EnsureRuntimeScreenBackdrops();
+        EnsureRuntimeHomeActions();
+        EnsureRuntimeMenuHeader();
+        EnsureRuntimeHeroCardArt();
         LayoutBottomNavigation();
+        LayoutHomeScreen();
         LayoutBattleScreen();
         LayoutDungeonsScreen();
         LayoutHeroesScreen();
         LayoutGearScreen();
+        LayoutSummonScreen();
+        LayoutShopScreen();
         LayoutPrototypeTools();
+        ApplyAfkInspiredTextSkin();
+    }
+
+    private void EnsureRuntimeTopBar()
+    {
+        if (topBarRoot != null)
+        {
+            return;
+        }
+
+        var parent = homePanel != null && homePanel.transform.parent != null ? homePanel.transform.parent : transform;
+        var topBarObject = new GameObject("Mythwake Top Resource Bar", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        topBarObject.transform.SetParent(parent, false);
+        topBarRoot = topBarObject.GetComponent<RectTransform>();
+        SetRuntimeRect(topBarRoot, new Vector2(0, 0), new Vector2(900, 116), new Vector2(0.5f, 1f));
+        topBarRoot.SetAsLastSibling();
+
+        var topBarImage = topBarObject.GetComponent<Image>();
+        topBarImage.color = new Color(0.24f, 0.12f, 0.055f, 0.98f);
+        topBarImage.raycastTarget = false;
+
+        CreateRuntimePanel(topBarObject.transform, "Top Avatar Ring", new Vector2(-390, -58), new Vector2(92, 92), new Color(0.86f, 0.61f, 0.22f, 0.32f));
+        topAvatarImage = CreateRuntimeRawImage(topBarObject.transform, "Top Avatar", "hero_elowen", new Vector2(-390, -58), new Vector2(82, 82));
+
+        topProfileText = CreateRuntimeText(topBarObject.transform, "Top Profile Text", "Mythwake", 24, new Vector2(-260, -20), new Vector2(260, 34));
+        topProfileText.alignment = TextAlignmentOptions.Left;
+        topProfileText.fontStyle = FontStyles.Bold;
+
+        topPowerText = CreateRuntimeText(topBarObject.transform, "Top Power Text", "Power 0", 23, new Vector2(-260, -62), new Vector2(260, 40));
+        topPowerText.alignment = TextAlignmentOptions.Left;
+        topPowerText.color = new Color(1f, 0.86f, 0.36f);
+        topPowerText.fontStyle = FontStyles.Bold;
+
+        topCurrencyText = CreateRuntimeText(topBarObject.transform, "Top Currency Text", "Gold 0   Gems 0   Essence 0", 24, new Vector2(170, -38), new Vector2(520, 46));
+        topCurrencyText.alignment = TextAlignmentOptions.Right;
+        topCurrencyText.fontStyle = FontStyles.Bold;
+
+        SetComponentActive(titleText, false);
+        SetComponentActive(versionText, false);
+        SetComponentActive(goldText, false);
+        SetComponentActive(homeGoldText, false);
+        SetComponentActive(gemsText, false);
+        SetComponentActive(mythEssenceText, false);
+    }
+
+    private void EnsureRuntimeScreenBackdrops()
+    {
+        EnsureParchmentBackdrop(heroesPanel, "Heroes Parchment Backdrop");
+        EnsureParchmentBackdrop(gearPanel, "Gear Parchment Backdrop");
+        EnsureParchmentBackdrop(summonPanel, "Summon Parchment Backdrop");
+        EnsureParchmentBackdrop(shopPanel, "Shop Parchment Backdrop");
+    }
+
+    private void EnsureParchmentBackdrop(GameObject panel, string name)
+    {
+        if (panel == null || panel.transform.Find(name) != null)
+        {
+            return;
+        }
+
+        var backdrop = CreateRuntimePanel(panel.transform, name, new Vector2(0, -548), new Vector2(840, 820), new Color(0.87f, 0.68f, 0.38f, 0.95f));
+        backdrop.SetAsFirstSibling();
+
+        var inner = CreateRuntimePanel(backdrop, "Inner Scroll Tint", new Vector2(0, -404), new Vector2(800, 780), new Color(1f, 0.85f, 0.55f, 0.68f));
+        inner.SetAsFirstSibling();
+    }
+
+    private void EnsureRuntimeHomeActions()
+    {
+        if (homePanel == null || homeBeginButton != null)
+        {
+            return;
+        }
+
+        homeBeginButton = CreateRuntimeButton(homePanel.transform, "Home Begin Button", "Begin", 0, -805, 360, 76);
+    }
+
+    private void EnsureRuntimeMenuHeader()
+    {
+        if (shopPanel == null || menuHeaderText != null)
+        {
+            return;
+        }
+
+        menuHeaderText = CreateRuntimeText(shopPanel.transform, "Menu Header", "Quests & Systems", 34, new Vector2(0, -145), new Vector2(790, 48));
+        menuHeaderText.fontStyle = FontStyles.Bold;
+        menuHeaderText.color = new Color(0.28f, 0.14f, 0.055f);
+    }
+
+    private void EnsureRuntimeHeroCardArt()
+    {
+        if (heroSelectButtons == null || heroCardPortraits != null)
+        {
+            return;
+        }
+
+        heroCardPortraits = new RawImage[heroSelectButtons.Length];
+        for (var i = 0; i < heroSelectButtons.Length; i++)
+        {
+            var button = heroSelectButtons[i];
+            if (button == null)
+            {
+                continue;
+            }
+
+            var existing = button.transform.Find("Runtime Hero Portrait");
+            if (existing != null)
+            {
+                heroCardPortraits[i] = existing.GetComponent<RawImage>();
+                continue;
+            }
+
+            var portraitObject = new GameObject("Runtime Hero Portrait", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+            portraitObject.transform.SetParent(button.transform, false);
+            var portraitRect = portraitObject.GetComponent<RectTransform>();
+            SetRuntimeRect(portraitRect, new Vector2(0, -14), new Vector2(78, 78), new Vector2(0.5f, 1f));
+            portraitObject.transform.SetAsFirstSibling();
+
+            var portrait = portraitObject.GetComponent<RawImage>();
+            portrait.raycastTarget = false;
+            portrait.color = Color.white;
+            heroCardPortraits[i] = portrait;
+        }
     }
 
     private void EnsureRuntimeDungeonsPanel()
@@ -6553,7 +6706,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         dungeonsHeaderText = CreateRuntimeText(dungeonsPanel.transform, "Dungeons Header", "Dungeons", 36, new Vector2(0, -132), new Vector2(860, 54));
         dungeonsHeaderText.fontStyle = FontStyles.Bold;
 
-        runtimeDungeonResultText = CreateRuntimeText(dungeonsPanel.transform, "Dungeon Result Text", "Dungeons are the active resource source.", 22, new Vector2(0, -475), new Vector2(760, 74));
+        runtimeDungeonResultText = CreateRuntimeText(dungeonsPanel.transform, "Dungeon Result Text", "Dungeons are the active resource source.", 22, new Vector2(0, -475), new Vector2(760, 52));
         runtimeDungeonResultText.color = new Color(0.72f, 0.86f, 1f);
         runtimeDungeonResultText.enableAutoSizing = true;
         runtimeDungeonResultText.fontSizeMin = 16;
@@ -6595,17 +6748,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var tabParent = homeTabButton != null && homeTabButton.transform.parent != null ? homeTabButton.transform.parent : null;
         if (tabParent != null)
         {
-            var navRect = tabParent.GetComponent<RectTransform>();
-            if (navRect != null)
+            bottomNavRoot = tabParent.GetComponent<RectTransform>();
+            if (bottomNavRoot != null)
             {
-                navRect.sizeDelta = new Vector2(790, 112);
+                bottomNavRoot.sizeDelta = new Vector2(860, 118);
+            }
+
+            var navImage = tabParent.GetComponent<Image>();
+            if (navImage != null)
+            {
+                navImage.color = new Color(0.18f, 0.08f, 0.035f, 0.98f);
             }
         }
 
         var tabs = new[] { homeTabButton, battleTabButton, dungeonsTabButton, heroesTabButton, gearTabButton, summonTabButton, shopTabButton };
-        var labels = new[] { "Home", "Battle", "Dungeons", "Heroes", "Gear", "Summon", "Shop" };
-        const float spacing = 108f;
-        const float startX = -324f;
+        var labels = new[] { "Map", "Battle", "Dungeon", "Heroes", "Gear", "Summon", "Menu" };
+        const float spacing = 116f;
+        const float startX = -348f;
 
         for (var i = 0; i < tabs.Length; i++)
         {
@@ -6614,17 +6773,30 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 continue;
             }
 
-            SetRuntimeRect(tabs[i].GetComponent<RectTransform>(), new Vector2(startX + spacing * i, 0), new Vector2(98, 90), new Vector2(0.5f, 0.5f));
+            SetRuntimeRect(tabs[i].GetComponent<RectTransform>(), new Vector2(startX + spacing * i, 0), new Vector2(106, 92), new Vector2(0.5f, 0.5f));
             SetButtonLabel(tabs[i], labels[i]);
         }
+    }
+
+    private void LayoutHomeScreen()
+    {
+        MoveUiElement(homeStageText, homePanel, new Vector2(-270, -180), new Vector2(300, 76));
+        MoveUiElement(homePowerText, homePanel, new Vector2(-270, -258), new Vector2(300, 44));
+        MoveUiElement(nextGoalText, homePanel, new Vector2(0, -675), new Vector2(720, 86));
+        MoveUiElement(offlineRewardText, homePanel, new Vector2(255, -760), new Vector2(300, 64));
+        MoveUiElement(homeBeginButton, homePanel, new Vector2(0, -825), new Vector2(360, 76));
     }
 
     private void LayoutBattleScreen()
     {
         SetComponentActive(upgradeButton, false);
 
-        MoveUiElement(fightButton, battlePanel, new Vector2(0, -390), new Vector2(420, 66));
-        MoveUiElement(dungeonResultText, battlePanel, new Vector2(0, -805), new Vector2(760, 80));
+        MoveUiElement(damageText, battlePanel, new Vector2(0, -130), new Vector2(760, 34));
+        MoveUiElement(autoAttackText, battlePanel, new Vector2(0, -166), new Vector2(760, 28));
+        MoveUiElement(enemyText, battlePanel, new Vector2(0, -210), new Vector2(760, 64));
+        MoveUiElement(enemyHpText, battlePanel, new Vector2(0, -270), new Vector2(760, 32));
+        MoveUiElement(fightButton, battlePanel, new Vector2(0, -690), new Vector2(420, 76));
+        MoveUiElement(dungeonResultText, battlePanel, new Vector2(0, -782), new Vector2(760, 72));
     }
 
     private void LayoutDungeonsScreen()
@@ -6634,41 +6806,138 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        MoveUiElement(goldDungeonButton, dungeonsPanel, new Vector2(0, -575), new Vector2(660, 72));
-        MoveUiElement(essenceDungeonButton, dungeonsPanel, new Vector2(0, -660), new Vector2(660, 72));
-        MoveUiElement(gearDungeonButton, dungeonsPanel, new Vector2(0, -745), new Vector2(660, 72));
+        MoveUiElement(goldDungeonButton, dungeonsPanel, new Vector2(0, -560), new Vector2(660, 76));
+        MoveUiElement(essenceDungeonButton, dungeonsPanel, new Vector2(0, -653), new Vector2(660, 76));
+        MoveUiElement(gearDungeonButton, dungeonsPanel, new Vector2(0, -746), new Vector2(660, 76));
     }
 
     private void LayoutHeroesScreen()
     {
-        MoveUiElement(heroUpgradeButton, heroesPanel, new Vector2(-205, -870), new Vector2(330, 70));
-        MoveUiElement(heroAscendButton, heroesPanel, new Vector2(205, -870), new Vector2(330, 70));
+        MoveUiElement(selectedHeroText, heroesPanel, new Vector2(0, -155), new Vector2(760, 90));
+        LayoutHeroCards();
+        SetTextArrayActive(teamSlotTexts, false);
+        MoveUiElement(heroUpgradeButton, heroesPanel, new Vector2(-205, -845), new Vector2(330, 72));
+        MoveUiElement(heroAscendButton, heroesPanel, new Vector2(205, -845), new Vector2(330, 72));
+    }
+
+    private void LayoutHeroCards()
+    {
+        if (heroSelectButtons == null)
+        {
+            return;
+        }
+
+        const float cardWidth = 132f;
+        const float cardHeight = 128f;
+        var xPositions = new[] { -304f, -152f, 0f, 152f, 304f };
+        var yPositions = new[] { -292f, -435f, -578f };
+
+        for (var i = 0; i < heroSelectButtons.Length; i++)
+        {
+            var x = xPositions[i % xPositions.Length];
+            var y = yPositions[Mathf.Min(yPositions.Length - 1, i / xPositions.Length)];
+            MoveUiElement(heroSelectButtons[i], heroesPanel, new Vector2(x, y), new Vector2(cardWidth, cardHeight));
+
+            if (heroCardTexts != null && i < heroCardTexts.Length)
+            {
+                MoveUiElement(heroCardTexts[i], heroSelectButtons[i] != null ? heroSelectButtons[i].gameObject : null, new Vector2(0, -86), new Vector2(122, 36));
+            }
+        }
     }
 
     private void LayoutGearScreen()
     {
-        MoveUiElement(equipmentSummaryText, gearPanel, new Vector2(0, -128), new Vector2(760, 110));
-        MoveUiElement(weaponUpgradeButton, gearPanel, new Vector2(-210, -260), new Vector2(320, 70));
-        MoveUiElement(armorUpgradeButton, gearPanel, new Vector2(210, -260), new Vector2(320, 70));
-        MoveUiElement(accessorySummaryText, gearPanel, new Vector2(0, -365), new Vector2(760, 78));
-        MoveUiElement(accessorySelectedText, gearPanel, new Vector2(0, -465), new Vector2(760, 92));
-        MoveUiElement(accessoryInventoryText, gearPanel, new Vector2(0, -585), new Vector2(760, 110));
-        MoveUiElement(accessoryPreviousSlotButton, gearPanel, new Vector2(-310, -705), new Vector2(140, 58));
-        MoveUiElement(accessoryNextSlotButton, gearPanel, new Vector2(310, -705), new Vector2(140, 58));
-        MoveUiElement(accessoryPreviousRarityButton, gearPanel, new Vector2(-310, -775), new Vector2(140, 58));
-        MoveUiElement(accessoryNextRarityButton, gearPanel, new Vector2(310, -775), new Vector2(140, 58));
-        MoveUiElement(accessoryEquipButton, gearPanel, new Vector2(-220, -860), new Vector2(210, 64));
-        MoveUiElement(accessoryLevelButton, gearPanel, new Vector2(0, -860), new Vector2(210, 64));
-        MoveUiElement(accessoryFuseButton, gearPanel, new Vector2(220, -860), new Vector2(210, 64));
+        MoveUiElement(equipmentSummaryText, gearPanel, new Vector2(0, -485), new Vector2(760, 88));
+        MoveUiElement(weaponUpgradeButton, gearPanel, new Vector2(-210, -575), new Vector2(320, 68));
+        MoveUiElement(armorUpgradeButton, gearPanel, new Vector2(210, -575), new Vector2(320, 68));
+        MoveUiElement(accessorySummaryText, gearPanel, new Vector2(0, -665), new Vector2(760, 62));
+        MoveUiElement(accessorySelectedText, gearPanel, new Vector2(0, -735), new Vector2(760, 70));
+        MoveUiElement(accessoryInventoryText, gearPanel, new Vector2(0, -805), new Vector2(760, 64));
+        MoveUiElement(accessoryPreviousSlotButton, gearPanel, new Vector2(-320, -878), new Vector2(130, 54));
+        MoveUiElement(accessoryNextSlotButton, gearPanel, new Vector2(320, -878), new Vector2(130, 54));
+        MoveUiElement(accessoryPreviousRarityButton, gearPanel, new Vector2(-320, -940), new Vector2(130, 54));
+        MoveUiElement(accessoryNextRarityButton, gearPanel, new Vector2(320, -940), new Vector2(130, 54));
+        MoveUiElement(accessoryEquipButton, gearPanel, new Vector2(-215, -1010), new Vector2(205, 58));
+        MoveUiElement(accessoryLevelButton, gearPanel, new Vector2(0, -1010), new Vector2(205, 58));
+        MoveUiElement(accessoryFuseButton, gearPanel, new Vector2(215, -1010), new Vector2(205, 58));
+    }
+
+    private void LayoutSummonScreen()
+    {
+        MoveUiElement(summonCostText, summonPanel, new Vector2(0, -690), new Vector2(760, 42));
+        MoveUiElement(summonRatesText, summonPanel, new Vector2(0, -748), new Vector2(760, 70));
+        MoveUiElement(summonResultText, summonPanel, new Vector2(0, -828), new Vector2(760, 72));
+        MoveUiElement(summonCountText, summonPanel, new Vector2(0, -905), new Vector2(760, 36));
+        MoveUiElement(summonButton, summonPanel, new Vector2(0, -960), new Vector2(360, 66));
+    }
+
+    private void LayoutShopScreen()
+    {
+        MoveUiElement(menuHeaderText, shopPanel, new Vector2(0, -145), new Vector2(790, 48));
+
+        if (dailyMissionButtons != null)
+        {
+            for (var i = 0; i < dailyMissionButtons.Length; i++)
+            {
+                MoveUiElement(dailyMissionButtons[i], shopPanel, new Vector2(0, -230 - i * 82), new Vector2(720, 70));
+                if (dailyMissionTexts != null && i < dailyMissionTexts.Length)
+                {
+                    MoveUiElement(dailyMissionTexts[i], dailyMissionButtons[i] != null ? dailyMissionButtons[i].gameObject : null, new Vector2(0, -8), new Vector2(690, 52));
+                }
+            }
+        }
+
+        MoveUiElement(battlePassProgressText, shopPanel, new Vector2(0, -505), new Vector2(720, 64));
+        if (battlePassRewardButtons != null)
+        {
+            const float spacing = 142f;
+            const float startX = -284f;
+            for (var i = 0; i < battlePassRewardButtons.Length; i++)
+            {
+                MoveUiElement(battlePassRewardButtons[i], shopPanel, new Vector2(startX + i * spacing, -600), new Vector2(126, 86));
+                if (battlePassRewardTexts != null && i < battlePassRewardTexts.Length)
+                {
+                    MoveUiElement(battlePassRewardTexts[i], battlePassRewardButtons[i] != null ? battlePassRewardButtons[i].gameObject : null, new Vector2(0, -8), new Vector2(112, 68));
+                }
+            }
+        }
+
+        var backendPanel = backendStatusText != null && backendStatusText.transform.parent != null
+            ? backendStatusText.transform.parent.GetComponent<RectTransform>()
+            : null;
+        MoveUiElement(backendPanel, shopPanel, new Vector2(0, -735), new Vector2(820, 200));
     }
 
     private void LayoutPrototypeTools()
     {
-        MoveUiElement(resetButton, shopPanel, new Vector2(0, -920), new Vector2(320, 64));
-        MoveUiElement(debugGoldButton, shopPanel, new Vector2(-315, -1008), new Vector2(150, 54));
-        MoveUiElement(debugEssenceButton, shopPanel, new Vector2(-105, -1008), new Vector2(150, 54));
-        MoveUiElement(debugGemsButton, shopPanel, new Vector2(105, -1008), new Vector2(150, 54));
-        MoveUiElement(debugAccessoryButton, shopPanel, new Vector2(315, -1008), new Vector2(150, 54));
+        MoveUiElement(resetButton, shopPanel, new Vector2(0, -965), new Vector2(300, 58));
+        MoveUiElement(debugGoldButton, shopPanel, new Vector2(-315, -1036), new Vector2(150, 50));
+        MoveUiElement(debugEssenceButton, shopPanel, new Vector2(-105, -1036), new Vector2(150, 50));
+        MoveUiElement(debugGemsButton, shopPanel, new Vector2(105, -1036), new Vector2(150, 50));
+        MoveUiElement(debugAccessoryButton, shopPanel, new Vector2(315, -1036), new Vector2(150, 50));
+    }
+
+    private void ApplyAfkInspiredTextSkin()
+    {
+        activeTabColor = new Color(0.75f, 0.42f, 0.16f, 1f);
+        inactiveTabColor = new Color(0.16f, 0.08f, 0.035f, 1f);
+
+        SetTextColor(homeGoldText, new Color(0.23f, 0.12f, 0.045f));
+        SetTextColor(gemsText, new Color(0.23f, 0.12f, 0.045f));
+        SetTextColor(mythEssenceText, new Color(0.23f, 0.12f, 0.045f));
+        SetTextColor(homeStageText, new Color(0.23f, 0.12f, 0.045f));
+        SetTextColor(homePowerText, new Color(0.23f, 0.12f, 0.045f));
+        SetTextColor(nextGoalText, new Color(0.23f, 0.12f, 0.045f));
+        SetTextColor(offlineRewardText, new Color(0.23f, 0.12f, 0.045f));
+        SetTextColor(selectedHeroText, new Color(0.24f, 0.13f, 0.055f));
+        SetTextColor(equipmentSummaryText, new Color(0.24f, 0.13f, 0.055f));
+        SetTextColor(accessorySummaryText, new Color(0.24f, 0.13f, 0.055f));
+        SetTextColor(accessorySelectedText, new Color(0.24f, 0.13f, 0.055f));
+        SetTextColor(accessoryInventoryText, new Color(0.24f, 0.13f, 0.055f));
+        SetTextColor(battlePassProgressText, new Color(0.24f, 0.13f, 0.055f));
+        SetTextArrayColor(heroCardTexts, Color.white);
+        SetTextArrayColor(dailyMissionTexts, new Color(0.24f, 0.13f, 0.055f));
+        SetTextArrayColor(battlePassRewardTexts, new Color(0.24f, 0.13f, 0.055f));
     }
 
     private static void MoveUiElement(Component component, GameObject parent, Vector2 anchoredPosition, Vector2 size)
@@ -6714,6 +6983,125 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         text.textWrappingMode = TextWrappingModes.NoWrap;
     }
 
+    private void RefreshHeroCardVisuals()
+    {
+        if (heroSelectButtons == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < heroSelectButtons.Length; i++)
+        {
+            var button = heroSelectButtons[i];
+            if (button == null)
+            {
+                continue;
+            }
+
+            var frame = button.GetComponent<Image>();
+            if (frame != null)
+            {
+                frame.color = i == selectedHeroIndex
+                    ? new Color(1f, 0.78f, 0.25f, 1f)
+                    : new Color(0.72f, 0.42f, 0.18f, 1f);
+            }
+
+            if (heroCardPortraits == null || i >= heroCardPortraits.Length || heroCardPortraits[i] == null)
+            {
+                continue;
+            }
+
+            var hero = GetHeroDefinition(Mathf.Clamp(i, 0, HeroCount - 1));
+            heroCardPortraits[i].texture = LoadRuntimeTexture($"hero_{hero.name.ToLowerInvariant()}");
+            heroCardPortraits[i].color = Color.white;
+        }
+    }
+
+    private void RefreshTopBarUi()
+    {
+        if (topBarRoot == null)
+        {
+            return;
+        }
+
+        topBarRoot.SetAsLastSibling();
+
+        var hero = GetHeroDefinition(selectedHeroIndex);
+        if (topProfileText != null)
+        {
+            topProfileText.text = $"Mythwake  Lv {heroLevels[selectedHeroIndex]}";
+        }
+
+        if (topPowerText != null)
+        {
+            topPowerText.text = $"Power {GetTeamPower()}";
+        }
+
+        if (topCurrencyText != null)
+        {
+            topCurrencyText.text = $"Gold {FormatCompactNumber(gold)}    Gems {FormatCompactNumber(gems)}    Essence {FormatCompactNumber(mythEssence)}";
+        }
+
+        if (topAvatarImage != null)
+        {
+            topAvatarImage.texture = LoadRuntimeTexture($"hero_{hero.name.ToLowerInvariant()}");
+        }
+    }
+
+    private static string FormatCompactNumber(int value)
+    {
+        if (value >= 1000000000)
+        {
+            return $"{value / 1000000000f:0.#}B";
+        }
+
+        if (value >= 1000000)
+        {
+            return $"{value / 1000000f:0.#}M";
+        }
+
+        if (value >= 1000)
+        {
+            return $"{value / 1000f:0.#}K";
+        }
+
+        return value.ToString();
+    }
+
+    private static void SetTextArrayActive(TMP_Text[] texts, bool active)
+    {
+        if (texts == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < texts.Length; i++)
+        {
+            SetComponentActive(texts[i], active);
+        }
+    }
+
+    private static void SetTextColor(TMP_Text text, Color color)
+    {
+        if (text != null)
+        {
+            text.color = color;
+        }
+    }
+
+    private static void SetTextArrayColor(TMP_Text[] texts, Color color)
+    {
+        if (texts == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < texts.Length; i++)
+        {
+            SetTextColor(texts[i], color);
+        }
+    }
+
     private void EnsureRuntimeArtUi()
     {
         if (runtimeArt == null)
@@ -6721,7 +7109,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             runtimeArt = new MythwakeRuntimeArtPresenter();
         }
 
-        runtimeArt.Ensure(homePanel, battlePanel, dungeonsPanel, summonPanel, shopPanel);
+        runtimeArt.Ensure(homePanel, battlePanel, dungeonsPanel, heroesPanel, gearPanel, summonPanel, shopPanel);
         runtimeArt.ApplyButtonStyle(
             fightButton,
             goldDungeonButton,
@@ -6756,10 +7144,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             debugGoldButton,
             debugEssenceButton,
             debugGemsButton,
-            debugAccessoryButton);
+            debugAccessoryButton,
+            homeBeginButton);
         runtimeArt.ApplyButtonStyle(heroSelectButtons);
         runtimeArt.ApplyButtonStyle(dailyMissionButtons);
         runtimeArt.ApplyButtonStyle(battlePassRewardButtons);
+        runtimeArt.ApplyButtonStyle("ui_button_blue", fightButton, summonButton, homeBeginButton);
     }
 
     private void EnsureRuntimeDebugUi()
@@ -6806,6 +7196,57 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         StretchRuntime(text.rectTransform, new Vector2(18, 10));
 
         return button;
+    }
+
+    private static RectTransform CreateRuntimePanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 rectSize, Color color)
+    {
+        var panelObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        panelObject.transform.SetParent(parent, false);
+        var rectTransform = panelObject.GetComponent<RectTransform>();
+        SetRuntimeRect(rectTransform, anchoredPosition, rectSize, new Vector2(0.5f, 1f));
+
+        var image = panelObject.GetComponent<Image>();
+        image.color = color;
+        image.raycastTarget = false;
+        return rectTransform;
+    }
+
+    private static RawImage CreateRuntimeRawImage(Transform parent, string name, string textureName, Vector2 anchoredPosition, Vector2 rectSize)
+    {
+        var imageObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+        imageObject.transform.SetParent(parent, false);
+        var rectTransform = imageObject.GetComponent<RectTransform>();
+        SetRuntimeRect(rectTransform, anchoredPosition, rectSize, new Vector2(0.5f, 1f));
+
+        var rawImage = imageObject.GetComponent<RawImage>();
+        rawImage.texture = LoadRuntimeTexture(textureName);
+        rawImage.raycastTarget = false;
+        rawImage.color = Color.white;
+        return rawImage;
+    }
+
+    private static Texture2D LoadRuntimeTexture(string textureName)
+    {
+        if (string.IsNullOrWhiteSpace(textureName))
+        {
+            return null;
+        }
+
+        var texture = Resources.Load<Texture2D>($"Mythwake/Art/Runtime/{textureName}");
+        if (texture != null)
+        {
+            texture.filterMode = FilterMode.Point;
+            return texture;
+        }
+
+        var sprite = Resources.Load<Sprite>($"Mythwake/Art/Runtime/{textureName}");
+        if (sprite == null)
+        {
+            return null;
+        }
+
+        sprite.texture.filterMode = FilterMode.Point;
+        return sprite.texture;
     }
 
     private void RefreshBackendUi()

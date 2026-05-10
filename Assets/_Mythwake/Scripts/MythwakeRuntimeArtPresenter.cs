@@ -42,10 +42,13 @@ public sealed class MythwakeRuntimeArtPresenter
     private RectTransform homeRoot;
     private RectTransform battleRoot;
     private RectTransform dungeonsRoot;
+    private RectTransform gearRoot;
     private RectTransform summonRoot;
     private RawImage battleHeroImage;
     private RawImage battleEnemyImage;
     private RawImage battleVfxImage;
+    private RawImage homeHeroImage;
+    private RawImage gearHeroImage;
     private RawImage summonHeroImage;
     private RawImage summonVfxImage;
     private TMP_Text battleTitleText;
@@ -70,34 +73,38 @@ public sealed class MythwakeRuntimeArtPresenter
     private string currentBattleMeta = "Ready";
     private int currentSummonHeroIndex;
 
-    public void Ensure(GameObject homePanel, GameObject battlePanel, GameObject dungeonsPanel, GameObject summonPanel, GameObject shopPanel)
+    public void Ensure(GameObject homePanel, GameObject battlePanel, GameObject dungeonsPanel, GameObject heroesPanel, GameObject gearPanel, GameObject summonPanel, GameObject shopPanel)
     {
         if (homePanel != null && homeRoot == null)
         {
-            homeRoot = CreatePanel(homePanel.transform, "Runtime Art Home Backdrop", new Vector2(0f, -280f), new Vector2(900f, 360f), new Color(0.05f, 0.08f, 0.13f, 0.9f));
+            homeRoot = CreatePanel(homePanel.transform, "Runtime Art Home Backdrop", new Vector2(0f, -116f), new Vector2(900f, 790f), new Color(0.05f, 0.08f, 0.13f, 0.92f));
             homeRoot.SetAsFirstSibling();
             CreateBackgroundLayers(homeRoot);
-            resourceText = CreateText(homeRoot, "Resource Icon Row", "Gold 0   Gems 0   Essence 0", 24, new Vector2(0f, -286f), new Vector2(820f, 42f), FontStyles.Bold);
+            CreateTextureImage(homeRoot, "Map Castle Route", "bg_castle", new Vector2(-255f, -170f), new Vector2(104f, 104f));
+            CreateTextureImage(homeRoot, "Map Tower Route", "dungeon_portal", new Vector2(255f, -320f), new Vector2(92f, 92f));
+            CreateTextureImage(homeRoot, "Map Treasure Route", "icon_gold", new Vector2(-205f, -470f), new Vector2(72f, 72f));
+            homeHeroImage = CreateTextureImage(homeRoot, "Map Party Leader", "hero_cyra", new Vector2(0f, -560f), new Vector2(150f, 150f));
+            resourceText = CreateText(homeRoot, "Campaign Route Label", "Campaign Route", 24, new Vector2(0f, -654f), new Vector2(820f, 42f), FontStyles.Bold);
         }
 
         if (battlePanel != null && battleRoot == null)
         {
-            battleRoot = CreatePanel(battlePanel.transform, "Runtime Art Battle Stage", new Vector2(0f, -500f), new Vector2(820f, 270f), new Color(0.05f, 0.07f, 0.12f, 0.94f));
+            battleRoot = CreatePanel(battlePanel.transform, "Runtime Art Battle Stage", new Vector2(0f, -330f), new Vector2(820f, 315f), new Color(0.05f, 0.07f, 0.12f, 0.94f));
             battleRoot.SetAsFirstSibling();
             CreateBackgroundLayers(battleRoot);
 
             battleTitleText = CreateText(battleRoot, "Battle Visual Title", "Campaign", 28, new Vector2(0f, -24f), new Vector2(820f, 42f), FontStyles.Bold);
-            battleMetaText = CreateText(battleRoot, "Battle Visual Meta", "Ready", 19, new Vector2(0f, -222f), new Vector2(760f, 36f), FontStyles.Bold);
-            battleHeroImage = CreateTextureImage(battleRoot, "Battle Hero", "hero_astra", new Vector2(-230f, -128f), new Vector2(120f, 120f));
-            battleEnemyImage = CreateTextureImage(battleRoot, "Battle Enemy", "enemy_campaign", new Vector2(230f, -128f), new Vector2(120f, 120f));
-            battleVfxImage = CreateTextureImage(battleRoot, "Battle VFX", "vfx_slash", new Vector2(105f, -124f), new Vector2(165f, 165f));
+            battleMetaText = CreateText(battleRoot, "Battle Visual Meta", "Ready", 18, new Vector2(0f, -266f), new Vector2(760f, 36f), FontStyles.Bold);
+            battleHeroImage = CreateTextureImage(battleRoot, "Battle Hero", "hero_astra", new Vector2(-230f, -154f), new Vector2(132f, 132f));
+            battleEnemyImage = CreateTextureImage(battleRoot, "Battle Enemy", "enemy_campaign", new Vector2(230f, -154f), new Vector2(132f, 132f));
+            battleVfxImage = CreateTextureImage(battleRoot, "Battle VFX", "vfx_slash", new Vector2(105f, -150f), new Vector2(170f, 170f));
             battleHeroRect = battleHeroImage.GetComponent<RectTransform>();
             battleEnemyRect = battleEnemyImage.GetComponent<RectTransform>();
             battleVfxRect = battleVfxImage.GetComponent<RectTransform>();
             battleVfxImage.color = new Color(1f, 1f, 1f, 0f);
 
-            heroHpFill = CreateHealthBar(battleRoot, "Hero HP Bar", new Vector2(-230f, -202f), new Color(0.16f, 0.77f, 0.38f));
-            enemyHpFill = CreateHealthBar(battleRoot, "Enemy HP Bar", new Vector2(230f, -202f), new Color(0.86f, 0.2f, 0.24f));
+            heroHpFill = CreateHealthBar(battleRoot, "Hero HP Bar", new Vector2(-230f, -232f), new Color(0.16f, 0.77f, 0.38f));
+            enemyHpFill = CreateHealthBar(battleRoot, "Enemy HP Bar", new Vector2(230f, -232f), new Color(0.86f, 0.2f, 0.24f));
         }
 
         if (dungeonsPanel != null && dungeonsRoot == null)
@@ -110,6 +117,20 @@ public sealed class MythwakeRuntimeArtPresenter
             CreateTextureImage(dungeonsRoot, "Essence Dungeon Token", "dungeon_essence", new Vector2(0f, -130f), new Vector2(72f, 72f));
             CreateTextureImage(dungeonsRoot, "Gear Dungeon Token", "icon_weapon", new Vector2(240f, -130f), new Vector2(72f, 72f));
             dungeonText = CreateText(dungeonsRoot, "Dungeon Visual Summary", "Gold F1     Essence F1     Gear F1", 18, new Vector2(0f, -204f), new Vector2(760f, 34f), FontStyles.Bold);
+        }
+
+        if (gearPanel != null && gearRoot == null)
+        {
+            gearRoot = CreatePanel(gearPanel.transform, "Runtime Art Gear Showcase", new Vector2(0f, -145f), new Vector2(780f, 315f), new Color(0.08f, 0.13f, 0.08f, 0.92f));
+            gearRoot.SetAsFirstSibling();
+            CreateBackgroundLayers(gearRoot);
+            CreateText(gearRoot, "Gear Visual Title", "Hero Loadout", 28, new Vector2(0f, -22f), new Vector2(720f, 42f), FontStyles.Bold);
+            gearHeroImage = CreateTextureImage(gearRoot, "Gear Hero", "hero_astra", new Vector2(0f, -158f), new Vector2(150f, 150f));
+            CreateTextureImage(gearRoot, "Gear Weapon Slot", "icon_weapon", new Vector2(-255f, -100f), new Vector2(76f, 76f));
+            CreateTextureImage(gearRoot, "Gear Armor Slot", "icon_armor", new Vector2(255f, -100f), new Vector2(76f, 76f));
+            CreateTextureImage(gearRoot, "Gear Gold Slot", "icon_gold", new Vector2(-255f, -215f), new Vector2(76f, 76f));
+            CreateTextureImage(gearRoot, "Gear Essence Slot", "icon_essence", new Vector2(255f, -215f), new Vector2(76f, 76f));
+            CreateText(gearRoot, "Gear Visual Power", "Weapon  Armor  Accessories", 18, new Vector2(0f, -270f), new Vector2(720f, 34f), FontStyles.Bold);
         }
 
         if (summonPanel != null && summonRoot == null)
@@ -128,6 +149,11 @@ public sealed class MythwakeRuntimeArtPresenter
 
     public void ApplyButtonStyle(params Button[] buttons)
     {
+        ApplyButtonStyle("ui_button_brown", buttons);
+    }
+
+    public void ApplyButtonStyle(string textureName, params Button[] buttons)
+    {
         if (buttons == null)
         {
             return;
@@ -144,7 +170,7 @@ public sealed class MythwakeRuntimeArtPresenter
             var image = button.GetComponent<Image>();
             if (image != null)
             {
-                image.sprite = GetSprite("ui_button_blue", new Vector4(10f, 10f, 10f, 10f));
+                image.sprite = GetSprite(textureName, new Vector4(10f, 10f, 10f, 10f));
                 image.type = Image.Type.Sliced;
                 image.color = Color.white;
             }
@@ -161,7 +187,9 @@ public sealed class MythwakeRuntimeArtPresenter
     public void Refresh(MythwakeRuntimeArtState state)
     {
         var heroTexture = GetHeroTextureName(state.selectedHeroIndex);
+        SetTexture(homeHeroImage, heroTexture);
         SetTexture(battleHeroImage, heroTexture);
+        SetTexture(gearHeroImage, heroTexture);
         SetTexture(summonHeroImage, GetHeroTextureName(currentSummonHeroIndex));
         SetTexture(battleEnemyImage, currentEnemyTexture);
         SetTexture(battleVfxImage, currentVfxTexture);
@@ -179,7 +207,7 @@ public sealed class MythwakeRuntimeArtPresenter
 
         if (resourceText != null)
         {
-            resourceText.text = $"Gold {state.gold}   Gems {state.gems}   Essence {state.mythEssence}";
+            resourceText.text = $"Stage {state.campaignStage}   {state.campaignEnemyName}   Power {state.teamPower}";
         }
 
         if (dungeonText != null)
