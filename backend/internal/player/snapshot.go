@@ -2,6 +2,7 @@ package player
 
 import (
 	"sort"
+	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 )
@@ -10,6 +11,7 @@ func (service *Service) snapshot() api.PlayerSnapshot {
 	return api.PlayerSnapshot{
 		PlayerID:          service.playerID,
 		State:             service.state,
+		LastAFKClaimUTC:   formatSnapshotTime(service.lastAFKClaimedAt),
 		Heroes:            heroStates(service.heroLevels, service.heroAscensions),
 		HeroShards:        heroShardStates(service.heroShards),
 		Equipment:         equipmentStates(service.equipmentLevels),
@@ -19,6 +21,14 @@ func (service *Service) snapshot() api.PlayerSnapshot {
 		BattlePassClaims:  claimStates(service.claimedBattlePass),
 		SummonCount:       service.summonCount,
 	}
+}
+
+func formatSnapshotTime(value time.Time) string {
+	if value.IsZero() {
+		return ""
+	}
+
+	return value.UTC().Format(time.RFC3339)
 }
 
 func heroStates(levels map[string]int, ascensions map[string]int) []api.HeroState {

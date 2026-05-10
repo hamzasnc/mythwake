@@ -38,6 +38,7 @@ func (service *Service) persistentState() PersistentState {
 		ClaimedDaily:       service.claimedDaily,
 		ClaimedBattlePass:  service.claimedBattlePass,
 		SummonCount:        service.summonCount,
+		LastAFKClaimedAt:   service.lastAFKClaimedAt,
 	})
 }
 
@@ -53,6 +54,10 @@ func (service *Service) applyPersistentState(state PersistentState) {
 	service.claimedDaily = mergeBoolMaps(service.claimedDaily, state.ClaimedDaily)
 	service.claimedBattlePass = mergeBoolMaps(service.claimedBattlePass, state.ClaimedBattlePass)
 	service.summonCount = state.SummonCount
+	service.lastAFKClaimedAt = state.LastAFKClaimedAt
+	if service.lastAFKClaimedAt.IsZero() {
+		service.lastAFKClaimedAt = service.now().UTC()
+	}
 	service.recalculatePower()
 }
 

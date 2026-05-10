@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/balance"
@@ -52,6 +53,7 @@ type PersistentState struct {
 	ClaimedDaily       map[string]bool
 	ClaimedBattlePass  map[string]bool
 	SummonCount        int
+	LastAFKClaimedAt   time.Time
 }
 
 type StateSaveSource struct {
@@ -91,6 +93,7 @@ func ClonePersistentState(state PersistentState) PersistentState {
 		ClaimedDaily:       cloneBoolMap(state.ClaimedDaily),
 		ClaimedBattlePass:  cloneBoolMap(state.ClaimedBattlePass),
 		SummonCount:        state.SummonCount,
+		LastAFKClaimedAt:   state.LastAFKClaimedAt,
 	}
 }
 
@@ -106,6 +109,7 @@ type Service struct {
 	accessoryActions   accessoryActions
 	summonActions      summonActions
 	missionActions     missionActions
+	afkActions         afkActions
 	state              api.PlayerState
 	heroLevels         map[string]int
 	heroShards         map[string]int
@@ -117,6 +121,8 @@ type Service struct {
 	claimedDaily       map[string]bool
 	claimedBattlePass  map[string]bool
 	summonCount        int
+	lastAFKClaimedAt   time.Time
+	now                func() time.Time
 }
 
 func NewService() *Service {
@@ -131,6 +137,7 @@ func NewServiceForPlayer(playerID string) *Service {
 
 	service := &Service{
 		playerID: playerID,
+		now:      time.Now,
 		state: api.PlayerState{
 			SaveVersion:         1,
 			Gold:                0,
@@ -163,6 +170,7 @@ func NewServiceForPlayer(playerID string) *Service {
 		claimedDaily:       map[string]bool{},
 		claimedBattlePass:  map[string]bool{},
 	}
+	service.lastAFKClaimedAt = service.now().UTC()
 	service.configureDomainServices()
 	return service
 }

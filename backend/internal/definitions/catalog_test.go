@@ -28,8 +28,8 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if len(snapshot.Heroes) != 5 {
 		t.Fatalf("expected 5 hero definitions, got %#v", snapshot.Heroes)
 	}
-	if len(snapshot.Rewards) != 70 {
-		t.Fatalf("expected 70 reward definitions, got %d", len(snapshot.Rewards))
+	if len(snapshot.Rewards) != 71 {
+		t.Fatalf("expected 71 reward definitions, got %d", len(snapshot.Rewards))
 	}
 	if len(snapshot.Campaigns) != 1 {
 		t.Fatalf("expected 1 campaign definition, got %#v", snapshot.Campaigns)
@@ -63,6 +63,9 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	}
 	if !hasAction(snapshot, gameplay.ActionCampaignFight) {
 		t.Fatalf("expected action catalog to include %s", gameplay.ActionCampaignFight)
+	}
+	if !hasAction(snapshot, gameplay.ActionAFKRewardClaim) {
+		t.Fatalf("expected action catalog to include %s", gameplay.ActionAFKRewardClaim)
 	}
 }
 

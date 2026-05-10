@@ -20,7 +20,12 @@ const (
 
 	RewardSummonShards         = "reward_summon_shards"
 	RewardGearDrop             = "reward_gear_drop"
+	RewardAFKClaim             = "reward_afk_claim"
 	StarterGearDropAccessoryID = "accessory_earrings_r0"
+
+	AFKMinClaimSeconds   = 60
+	AFKMaxClaimSeconds   = 6 * 60 * 60
+	AFKRewardTickSeconds = 60
 )
 
 type DungeonDefinition struct {
@@ -366,6 +371,7 @@ func RewardDefinitions() []RewardDefinition {
 	definitions := []RewardDefinition{
 		{ID: RewardSummonShards, DisplayName: "Hero Shards", RewardType: "summon", Reward: api.Reward{RewardID: RewardSummonShards}},
 		{ID: RewardGearDrop, DisplayName: "Gear Dungeon Accessory Drop", RewardType: "gear_drop", Reward: api.Reward{RewardID: RewardGearDrop}},
+		{ID: RewardAFKClaim, DisplayName: "AFK Gold and Myth Essence", RewardType: "afk", Reward: api.Reward{RewardID: RewardAFKClaim}},
 	}
 
 	for _, definition := range dailyMissionDefinitions {
@@ -469,6 +475,23 @@ func CampaignReward(stage int) api.Reward {
 	}
 
 	return reward
+}
+
+func AFKReward(stage int, elapsedSeconds int) (api.Reward, int) {
+	if elapsedSeconds < AFKMinClaimSeconds {
+		return api.Reward{RewardID: RewardAFKClaim}, 0
+	}
+
+	claimSeconds := min(elapsedSeconds, AFKMaxClaimSeconds)
+	ticks := claimSeconds / AFKRewardTickSeconds
+	essencePerTick := 3 + max(1, stage)
+	goldPerTick := max(1, essencePerTick/2)
+
+	return api.Reward{
+		RewardID:    RewardAFKClaim,
+		Gold:        ticks * goldPerTick,
+		MythEssence: ticks * essencePerTick,
+	}, claimSeconds
 }
 
 func HeroLevelCost(level int) int {

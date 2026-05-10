@@ -56,6 +56,7 @@ Current scope:
 - Optional write-behind mode for local/dev-only batching experiments
 - `GET /player/state` returns a full client-ready snapshot.
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
+- `POST /player/offline/claim` claims server-authoritative AFK Gold and Myth Essence using server time.
 - `POST /auth/logout` revokes the active session token.
 - Logout flushes the loaded player state before returning when that player is hot in memory.
 - All responses include `X-Request-ID`; clients may send their own valid `X-Request-ID`.
@@ -168,6 +169,7 @@ Database behavior:
 - Queued materialized state flushes every `MYTHWAKE_STATE_FLUSH_INTERVAL` and once more during graceful shutdown.
 - Loaded in-memory player contexts are flushed during API shutdown before the cache is closed.
 - `POST /player/state/flush` is the app-pause/disconnect hook used by the Unity prototype.
+- AFK reward claims are capped at 6 hours, require at least 60 seconds, and persist `last_claimed_at` in PostgreSQL plus the action-result snapshot for crash-safe replay.
 - New player seed state still writes immediately so first login/startup is durable.
 - The JSON player state snapshot is still written as a fallback/debug mirror.
 - Currency changes are written to `logs.economy_transactions` during DB save.
@@ -191,6 +193,7 @@ Endpoints:
 - `GET /player/state`
 - `POST /player/state/flush`
 - `GET /player/core-state`
+- `POST /player/offline/claim`
 - `POST /campaign/fight`
 - `POST /dungeons/{dungeon_id}/run`
 - `POST /heroes/{hero_id}/level-up`

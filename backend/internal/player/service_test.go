@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
+	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
@@ -93,6 +95,67 @@ func TestMissionClaimsPersist(t *testing.T) {
 
 	if !store.saved.ClaimedDaily["daily_battles_15"] {
 		t.Fatalf("expected daily_battles_15 claim to be saved")
+	}
+}
+
+func TestAFKClaimGrantsGoldAndEssence(t *testing.T) {
+	store := &fakeStateStore{}
+	service := NewService()
+	now := time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC)
+	service.now = func() time.Time { return now }
+	service.lastAFKClaimedAt = now.Add(-2 * time.Hour)
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	result := service.ClaimAFKRewards()
+	if !result.Success {
+		t.Fatalf("expected afk claim to succeed, got %#v", result)
+	}
+	if result.ActionID != gameplay.ActionAFKRewardClaim {
+		t.Fatalf("expected afk action id, got %s", result.ActionID)
+	}
+	if result.Reward.Gold <= 0 || result.Reward.MythEssence <= 0 {
+		t.Fatalf("expected gold and essence reward, got %#v", result.Reward)
+	}
+	if !store.saved.LastAFKClaimedAt.Equal(now) {
+		t.Fatalf("expected saved afk claim time %s, got %s", now, store.saved.LastAFKClaimedAt)
+	}
+}
+
+func TestAFKClaimRequiresMinimumWindow(t *testing.T) {
+	service := NewService()
+	now := time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC)
+	service.now = func() time.Time { return now }
+	service.lastAFKClaimedAt = now.Add(-(balance.AFKMinClaimSeconds - 1) * time.Second)
+	before := service.GetState()
+
+	result := service.ClaimAFKRewards()
+	if result.Success || result.ErrorCode != "afk_not_ready" {
+		t.Fatalf("expected afk_not_ready, got %#v", result)
+	}
+
+	after := service.GetState()
+	if after.Gold != before.Gold || after.MythEssence != before.MythEssence {
+		t.Fatalf("early afk claim mutated state: before=%#v after=%#v", before, after)
+	}
+}
+
+func TestAFKClaimIsCapped(t *testing.T) {
+	service := NewService()
+	now := time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC)
+	service.now = func() time.Time { return now }
+	service.lastAFKClaimedAt = now.Add(-24 * time.Hour)
+
+	result := service.ClaimAFKRewards()
+	if !result.Success {
+		t.Fatalf("expected capped afk claim to succeed, got %#v", result)
+	}
+
+	expected, _ := balance.AFKReward(1, balance.AFKMaxClaimSeconds)
+	if result.Reward.Gold != expected.Gold || result.Reward.MythEssence != expected.MythEssence {
+		t.Fatalf("expected capped reward %#v, got %#v", expected, result.Reward)
 	}
 }
 

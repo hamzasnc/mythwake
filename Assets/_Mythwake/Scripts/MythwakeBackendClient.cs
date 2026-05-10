@@ -165,6 +165,11 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         return SendAuthenticatedActionJson("campaign_fight", () => Post("/campaign/fight"), completed);
     }
 
+    public IEnumerator ClaimOfflineRewards(Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        return SendAuthenticatedActionJson("afk_reward_claim", () => Post("/player/offline/claim"), completed);
+    }
+
     public IEnumerator RunDungeon(string dungeonId, Action<bool, string, MythwakeActionResultDto> completed)
     {
         return SendAuthenticatedActionJson($"dungeon_run:{dungeonId}", () => Post($"/dungeons/{EscapePath(dungeonId)}/run"), completed);

@@ -588,8 +588,11 @@ Progress:
 - Added process-local auth/gameplay rate limiting as a temporary limiter foundation before Redis.
 - Added a server-authoritative `GET /time` endpoint with UTC daily and weekly reset boundaries for later offline reward, mission reset, and clock drift validation.
 - Wired Unity Server Mode to consume the server clock and display reset timing for local smoke testing.
+- Added server-authoritative AFK reward claims for Gold and Myth Essence using server time, a 60 second minimum window, and a 6 hour cap.
+- Persisted AFK claim timestamps in `player.player_afk_progress` and included them in player snapshots/action results for crash-safe replay.
 
 Next useful step:
+- Wire Unity Server Mode to claim server AFK rewards on app resume/manual claim while keeping the local prototype path available.
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.
 - Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
 

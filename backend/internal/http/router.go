@@ -55,6 +55,7 @@ func (router *Router) routes() {
 	router.mux.HandleFunc("GET /player/state", router.handlePlayerState)
 	router.mux.HandleFunc("POST /player/state/flush", router.handlePlayerStateFlush)
 	router.mux.HandleFunc("GET /player/core-state", router.handlePlayerCoreState)
+	router.mux.HandleFunc("POST /player/offline/claim", router.handleOfflineClaim)
 	router.mux.HandleFunc("POST /campaign/fight", router.handleCampaignFight)
 	router.mux.HandleFunc("POST /dungeons/{dungeon_id}/run", router.handleDungeonRun)
 	router.mux.HandleFunc("POST /heroes/{hero_id}/level-up", router.handleHeroLevel)
@@ -240,6 +241,12 @@ func (router *Router) handleLogout(response http.ResponseWriter, request *http.R
 func (router *Router) handleCampaignFight(response http.ResponseWriter, request *http.Request) {
 	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
 		return playerService.FightCampaignWithRequest(request.Context(), action)
+	})
+}
+
+func (router *Router) handleOfflineClaim(response http.ResponseWriter, request *http.Request) {
+	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.ClaimAFKRewardsWithRequest(request.Context(), action)
 	})
 }
 

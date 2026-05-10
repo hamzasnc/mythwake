@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.30-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.31-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
@@ -149,6 +149,19 @@ try {
     $authHeaders = @{ "Authorization" = "Bearer $($login.sessionToken)" }
     $stateBefore = Invoke-Json -Path "/player/state" -Headers $authHeaders
     Assert-Equal $stateBefore.playerId $login.playerId "State player should match guest login."
+    if ([string]::IsNullOrWhiteSpace($stateBefore.lastAfkClaimUtc)) {
+        throw "Expected player state to include lastAfkClaimUtc."
+    }
+
+    $afkHeaders = @{
+        "Authorization" = $authHeaders["Authorization"]
+        "Idempotency-Key" = "e2e-afk-$([guid]::NewGuid().ToString("N"))"
+    }
+    $afk = Invoke-Json -Method "POST" -Path "/player/offline/claim" -Headers $afkHeaders
+    Assert-Equal $afk.actionId "afk_reward_claim" "AFK claim should return the afk action id."
+    if ([string]::IsNullOrWhiteSpace($afk.playerSnapshot.lastAfkClaimUtc)) {
+        throw "Expected AFK action snapshot to include lastAfkClaimUtc."
+    }
 
     $idempotencyKey = "e2e-campaign-$([guid]::NewGuid().ToString("N"))"
     $actionHeaders = @{

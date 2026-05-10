@@ -28,6 +28,10 @@ type missionActions struct {
 	service *Service
 }
 
+type afkActions struct {
+	service *Service
+}
+
 func (service *Service) configureDomainServices() {
 	service.campaignActions = campaignActions{service: service}
 	service.dungeonActions = dungeonActions{service: service}
@@ -36,4 +40,5 @@ func (service *Service) configureDomainServices() {
 	service.accessoryActions = accessoryActions{service: service}
 	service.summonActions = summonActions{service: service}
 	service.missionActions = missionActions{service: service}
+	service.afkActions = afkActions{service: service}
 }

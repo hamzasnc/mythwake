@@ -100,11 +100,13 @@ Backend:
 - HTTP panic recovery returns a JSON `internal_error` instead of dropping the request
 - In-memory auth/gameplay rate limit middleware protects local API paths and is shaped for a later Redis-backed limiter
 - Server clock endpoint exposes authoritative UTC time plus daily/weekly reset countdowns for future offline rewards and daily reset validation
+- Server-authoritative AFK claim endpoint grants capped Gold and Myth Essence using server time and persists the last claim timestamp
 - PostgreSQL E2E smoke script verifies guest auth, protected state, campaign action persistence, manual flush, API restart reload, idempotency replay, and logout revocation
 - Navicat-friendly account/persistence debug views expose auth providers, active sessions, latest action result, and snapshot freshness
 - Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
 - Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
 - Unity can sync `/time`, keep an approximate in-memory server clock, and show daily/weekly reset timing from the backend
+- Unity has client DTO support for server AFK claim snapshots
 - Unity stores the backend session token, sends it automatically, and retries once with a fresh guest login after a `401`
 - Unity reuses pending idempotency keys after transport failures
 - Unity requests a backend state flush on app pause/quit when a backend session is active
@@ -120,6 +122,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.31: Added server-authoritative AFK reward claims with PostgreSQL `player_afk_progress`, crash-safe snapshot replay, and smoke coverage.
 - Prototype 0.2.17: Added Unity server-clock DTO/client support and a Backend Clock smoke action using `GET /time`.
 - Backend 0.2.30: Added `GET /time` as a server-authoritative clock with UTC daily and weekly reset boundaries, plus smoke-script coverage.
 - Backend 0.2.29: Added configurable auth/gameplay rate limiting with `429` JSON errors, `Retry-After`, health visibility, and local script knobs.

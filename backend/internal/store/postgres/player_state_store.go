@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
@@ -72,6 +73,9 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 		return err
 	}
 	if err := store.saveMetaState(ctx, tx, playerID, state, source); err != nil {
+		return err
+	}
+	if err := store.saveAFKState(ctx, tx, playerID, state); err != nil {
 		return err
 	}
 	if err := store.saveEconomyTransaction(ctx, tx, playerID, previousCurrencies, state.PlayerState, source); err != nil {
@@ -277,6 +281,7 @@ func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentS
 		ClaimedDaily:       map[string]bool{},
 		ClaimedBattlePass:  map[string]bool{},
 		SummonCount:        snapshot.SummonCount,
+		LastAFKClaimedAt:   parseSnapshotTime(snapshot.LastAFKClaimUTC),
 	}
 
 	for _, hero := range snapshot.Heroes {
@@ -304,6 +309,19 @@ func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentS
 	}
 
 	return state
+}
+
+func parseSnapshotTime(value string) time.Time {
+	if value == "" {
+		return time.Time{}
+	}
+
+	parsed, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return time.Time{}
+	}
+
+	return parsed.UTC()
 }
 
 func (store *PlayerStateStore) loadSnapshotState(ctx context.Context, playerID string) (player.PersistentState, bool, error) {
@@ -399,6 +417,10 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
+	lastAFKClaimedAt, err := store.loadAFKClaimedAt(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
 
 	return player.PersistentState{
 		PlayerState:        state,
@@ -412,6 +434,7 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 		ClaimedDaily:       claimedDaily,
 		ClaimedBattlePass:  claimedBattlePass,
 		SummonCount:        summonCount,
+		LastAFKClaimedAt:   lastAFKClaimedAt,
 	}, true, nil
 }
 
@@ -672,6 +695,21 @@ func (store *PlayerStateStore) saveMetaState(ctx context.Context, tx *sql.Tx, pl
 	return nil
 }
 
+func (store *PlayerStateStore) saveAFKState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
+	if state.LastAFKClaimedAt.IsZero() {
+		return nil
+	}
+
+	_, err := tx.ExecContext(ctx, `
+		INSERT INTO player.player_afk_progress (player_id, last_claimed_at, updated_at)
+		VALUES ($1, $2, now())
+		ON CONFLICT (player_id) DO UPDATE SET
+			last_claimed_at = EXCLUDED.last_claimed_at,
+			updated_at = now()
+	`, playerID, state.LastAFKClaimedAt.UTC())
+	return err
+}
+
 func (store *PlayerStateStore) loadCurrencies(ctx context.Context, playerID string) (map[string]int, error) {
 	rows, err := store.db.QueryContext(ctx, `
 		SELECT currency_id, amount
@@ -895,6 +933,23 @@ func (store *PlayerStateStore) loadSummonCount(ctx context.Context, playerID str
 	}
 
 	return summonCount, nil
+}
+
+func (store *PlayerStateStore) loadAFKClaimedAt(ctx context.Context, playerID string) (time.Time, error) {
+	var lastClaimedAt time.Time
+	err := store.db.QueryRowContext(ctx, `
+		SELECT last_claimed_at
+		FROM player.player_afk_progress
+		WHERE player_id = $1
+	`, playerID).Scan(&lastClaimedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return time.Time{}, nil
+	}
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return lastClaimedAt.UTC(), nil
 }
 
 func (store *PlayerStateStore) loadDailyClaims(ctx context.Context, playerID string) (map[string]bool, error) {

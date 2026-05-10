@@ -5,6 +5,7 @@ const (
 	ActionPlayerStateFlush = "player_state_flush"
 	ActionStateCacheFlush  = "state_cache_flush"
 
+	ActionAFKRewardClaim    = "afk_reward_claim"
 	ActionCampaignFight     = "campaign_fight"
 	ActionDungeonRun        = "dungeon_run"
 	ActionGoldDungeonRun    = "gold_dungeon_run"
@@ -30,6 +31,7 @@ type ActionDefinition struct {
 
 func ActionCatalog() []ActionDefinition {
 	return []ActionDefinition{
+		{ID: ActionAFKRewardClaim, Domain: "afk", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionCampaignFight, Domain: "campaign", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionDungeonRun, Domain: "dungeon", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionGoldDungeonRun, Domain: "dungeon", RequiresIdempotency: true, MaterializedByFlush: true},

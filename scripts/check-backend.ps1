@@ -72,6 +72,14 @@ $state = Invoke-RestMethod -Headers $sessionHeaders "$BaseUrl/player/state"
 Write-Host "Player State:"
 $state | Format-List
 
+$offlineHeaders = New-IdempotencyHeaders "afk-claim"
+foreach ($key in $sessionHeaders.Keys) {
+    $offlineHeaders[$key] = $sessionHeaders[$key]
+}
+$offline = Invoke-RestMethod -Method Post -Headers $offlineHeaders "$BaseUrl/player/offline/claim"
+Write-Host "AFK Claim:"
+$offline | Format-List
+
 $fightHeaders = New-IdempotencyHeaders "campaign-fight"
 foreach ($key in $sessionHeaders.Keys) {
     $fightHeaders[$key] = $sessionHeaders[$key]

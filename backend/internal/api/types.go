@@ -18,6 +18,7 @@ type PlayerState struct {
 type PlayerSnapshot struct {
 	PlayerID          string              `json:"playerId"`
 	State             PlayerState         `json:"state"`
+	LastAFKClaimUTC   string              `json:"lastAfkClaimUtc,omitempty"`
 	Heroes            []HeroState         `json:"heroes"`
 	HeroShards        []HeroShardState    `json:"heroShards"`
 	Equipment         []EquipmentState    `json:"equipment"`

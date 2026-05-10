@@ -399,6 +399,32 @@ func TestCampaignFightEndpoint(t *testing.T) {
 	}
 }
 
+func TestOfflineClaimEndpoint(t *testing.T) {
+	handler := newTestHandler()
+	login := loginGuest(t, handler)
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/player/offline/claim", nil)
+	addAuth(request, login.SessionToken)
+	addIdempotencyKey(request, "offline-claim-001")
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+
+	var body api.ActionResult
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.ActionID != gameplay.ActionAFKRewardClaim {
+		t.Fatalf("expected afk claim action, got %#v", body)
+	}
+	if body.PlayerSnapshot.LastAFKClaimUTC == "" {
+		t.Fatalf("expected afk claim timestamp in snapshot, got %#v", body.PlayerSnapshot)
+	}
+}
+
 func TestMutatingActionRequiresIdempotencyHeader(t *testing.T) {
 	handler := newTestHandler()
 	login := loginGuest(t, handler)

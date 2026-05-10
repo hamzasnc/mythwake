@@ -22,6 +22,7 @@ public struct MythwakePlayerSnapshotDto
 {
     public string playerId;
     public MythwakePlayerStateDto state;
+    public string lastAfkClaimUtc;
     public MythwakeHeroStateDto[] heroes;
     public MythwakeHeroShardStateDto[] heroShards;
     public MythwakeEquipmentStateDto[] equipment;
