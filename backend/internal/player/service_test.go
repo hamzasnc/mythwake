@@ -2,8 +2,11 @@ package player
 
 import (
 	"context"
+	"errors"
 	"testing"
 )
+
+var errTestPersistenceFailed = errors.New("test persistence failed")
 
 func TestServicePersistsSuccessfulActionWhenStoreIsAttached(t *testing.T) {
 	store := &fakeStateStore{}
@@ -126,6 +129,71 @@ func TestFlushStateQueuesCurrentStateAndFlushesStore(t *testing.T) {
 	}
 }
 
+func TestIdempotencyReplayDoesNotApplyActionTwice(t *testing.T) {
+	store := newIdempotentStateStore()
+	service := NewService()
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	request := ActionRequest{IdempotencyKey: "campaign-key-1", RequestHash: "campaign-hash-1"}
+	first := service.FightCampaignWithRequest(context.Background(), request)
+	if !first.Success {
+		t.Fatalf("expected first campaign fight to succeed, got %#v", first)
+	}
+
+	replay := service.FightCampaignWithRequest(context.Background(), request)
+	if !replay.Success || !replay.Replay {
+		t.Fatalf("expected idempotent replay, got %#v", replay)
+	}
+
+	if stage := service.GetState().CampaignStage; stage != 2 {
+		t.Fatalf("expected campaign stage to stay at 2 after replay, got %d", stage)
+	}
+}
+
+func TestIdempotencyConflictDoesNotMutateState(t *testing.T) {
+	store := newIdempotentStateStore()
+	service := NewService()
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	request := ActionRequest{IdempotencyKey: "campaign-key-1", RequestHash: "campaign-hash-1"}
+	if result := service.FightCampaignWithRequest(context.Background(), request); !result.Success {
+		t.Fatalf("expected first campaign fight to succeed, got %#v", result)
+	}
+
+	conflict := service.FightCampaignWithRequest(context.Background(), ActionRequest{IdempotencyKey: "campaign-key-1", RequestHash: "different-hash"})
+	if conflict.Success || conflict.ErrorCode != "idempotency_conflict" {
+		t.Fatalf("expected idempotency conflict, got %#v", conflict)
+	}
+
+	if stage := service.GetState().CampaignStage; stage != 2 {
+		t.Fatalf("expected campaign stage to stay at 2 after conflict, got %d", stage)
+	}
+}
+
+func TestPersistenceFailureRollsBackHotState(t *testing.T) {
+	store := &failingAfterSeedStore{}
+	service := NewService()
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	result := service.FightCampaign()
+	if result.Success || result.ErrorCode != "persistence_failed" {
+		t.Fatalf("expected persistence failure, got %#v", result)
+	}
+
+	if stage := service.GetState().CampaignStage; stage != 1 {
+		t.Fatalf("expected campaign stage rollback to 1, got %d", stage)
+	}
+}
+
 type fakeStateStore struct {
 	saved PersistentState
 }
@@ -158,4 +226,52 @@ func (store *flushableStateStore) SaveState(_ context.Context, _ string, state P
 func (store *flushableStateStore) Flush(context.Context) error {
 	store.flushCount++
 	return nil
+}
+
+type idempotentStateStore struct {
+	saved   PersistentState
+	records map[string]StoredActionResult
+}
+
+func newIdempotentStateStore() *idempotentStateStore {
+	return &idempotentStateStore{records: map[string]StoredActionResult{}}
+}
+
+func (store *idempotentStateStore) LoadState(context.Context, string) (PersistentState, bool, error) {
+	return PersistentState{}, false, nil
+}
+
+func (store *idempotentStateStore) SaveState(_ context.Context, _ string, state PersistentState, source StateSaveSource) error {
+	store.saved = state
+	if source.IdempotencyKey != "" && source.ActionResult != nil {
+		store.records[source.IdempotencyKey] = StoredActionResult{
+			ActionID:     source.ActionID,
+			RequestHash:  source.RequestHash,
+			ActionResult: *source.ActionResult,
+		}
+	}
+
+	return nil
+}
+
+func (store *idempotentStateStore) LoadActionResult(_ context.Context, _ string, idempotencyKey string) (StoredActionResult, bool, error) {
+	record, ok := store.records[idempotencyKey]
+	return record, ok, nil
+}
+
+type failingAfterSeedStore struct {
+	saveCount int
+}
+
+func (store *failingAfterSeedStore) LoadState(context.Context, string) (PersistentState, bool, error) {
+	return PersistentState{}, false, nil
+}
+
+func (store *failingAfterSeedStore) SaveState(_ context.Context, _ string, _ PersistentState, _ StateSaveSource) error {
+	store.saveCount++
+	if store.saveCount == 1 {
+		return nil
+	}
+
+	return errTestPersistenceFailed
 }

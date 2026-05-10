@@ -79,8 +79,75 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	`, playerID, rawState); err != nil {
 		return err
 	}
+	if err := store.saveActionResult(ctx, tx, playerID, source); err != nil {
+		return err
+	}
 
 	return tx.Commit()
+}
+
+func (store *PlayerStateStore) LoadActionResult(ctx context.Context, playerID string, idempotencyKey string) (player.StoredActionResult, bool, error) {
+	var record player.StoredActionResult
+	var rawResponse []byte
+	err := store.db.QueryRowContext(ctx, `
+		SELECT action_id, request_hash, response
+		FROM player.player_action_results
+		WHERE player_id = $1
+			AND idempotency_key = $2
+	`, playerID, idempotencyKey).Scan(&record.ActionID, &record.RequestHash, &rawResponse)
+	if errors.Is(err, sql.ErrNoRows) {
+		return player.StoredActionResult{}, false, nil
+	}
+	if err != nil {
+		return player.StoredActionResult{}, false, err
+	}
+	if err := json.Unmarshal(rawResponse, &record.ActionResult); err != nil {
+		return player.StoredActionResult{}, false, err
+	}
+
+	return record, true, nil
+}
+
+func (store *PlayerStateStore) saveActionResult(ctx context.Context, tx *sql.Tx, playerID string, source player.StateSaveSource) error {
+	if source.IdempotencyKey == "" || source.RequestHash == "" || source.ActionResult == nil {
+		return nil
+	}
+
+	rawResponse, err := json.Marshal(source.ActionResult)
+	if err != nil {
+		return err
+	}
+
+	result, err := tx.ExecContext(ctx, `
+		INSERT INTO player.player_action_results (
+			player_id,
+			idempotency_key,
+			action_id,
+			request_hash,
+			response,
+			created_at,
+			updated_at
+		)
+		VALUES ($1, $2, $3, $4, $5, now(), now())
+		ON CONFLICT (player_id, idempotency_key) DO UPDATE SET
+			response = EXCLUDED.response,
+			updated_at = now()
+		WHERE player.player_action_results.action_id = EXCLUDED.action_id
+			AND player.player_action_results.request_hash = EXCLUDED.request_hash
+	`, playerID, source.IdempotencyKey, source.ActionID, source.RequestHash, rawResponse)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return errors.New("idempotency key already belongs to a different action request")
+	}
+
+	return nil
 }
 
 func (store *PlayerStateStore) loadSnapshotState(ctx context.Context, playerID string) (player.PersistentState, bool, error) {

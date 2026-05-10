@@ -25,6 +25,10 @@ type StateStore interface {
 	SaveState(ctx context.Context, playerID string, state PersistentState, source StateSaveSource) error
 }
 
+type ActionResultStore interface {
+	LoadActionResult(ctx context.Context, playerID string, idempotencyKey string) (StoredActionResult, bool, error)
+}
+
 type StateFlusher interface {
 	Flush(ctx context.Context) error
 }
@@ -44,8 +48,26 @@ type PersistentState struct {
 }
 
 type StateSaveSource struct {
-	ActionID string
-	RewardID string
+	ActionID       string
+	RewardID       string
+	IdempotencyKey string
+	RequestHash    string
+	ActionResult   *api.ActionResult
+}
+
+type ActionRequest struct {
+	IdempotencyKey string
+	RequestHash    string
+}
+
+type StoredActionResult struct {
+	ActionID     string
+	RequestHash  string
+	ActionResult api.ActionResult
+}
+
+func (request ActionRequest) HasIdempotency() bool {
+	return request.IdempotencyKey != "" && request.RequestHash != ""
 }
 
 func ClonePersistentState(state PersistentState) PersistentState {
@@ -68,6 +90,7 @@ type Service struct {
 	mu                 sync.Mutex
 	playerID           string
 	stateStore         StateStore
+	actionResultStore  ActionResultStore
 	state              api.PlayerState
 	heroLevels         map[string]int
 	heroShards         map[string]int
@@ -123,6 +146,9 @@ func (service *Service) UseStateStore(ctx context.Context, store StateStore) err
 	defer service.mu.Unlock()
 
 	service.stateStore = store
+	if actionResultStore, ok := store.(ActionResultStore); ok {
+		service.actionResultStore = actionResultStore
+	}
 	persistedState, found, err := store.LoadState(ctx, service.playerID)
 	if err != nil {
 		return err
@@ -185,6 +211,84 @@ func (service *Service) FlushState(ctx context.Context) error {
 	return flusher.Flush(ctx)
 }
 
+type actionOutcome struct {
+	success   bool
+	errorCode string
+	message   string
+	reward    api.Reward
+}
+
+func actionSuccess(message string, reward api.Reward) actionOutcome {
+	return actionOutcome{
+		success: true,
+		message: message,
+		reward:  reward,
+	}
+}
+
+func actionFailure(errorCode string, message string) actionOutcome {
+	return actionOutcome{
+		errorCode: errorCode,
+		message:   message,
+	}
+}
+
+func (service *Service) executeAction(ctx context.Context, request ActionRequest, actionID string, run func() actionOutcome) api.ActionResult {
+	if result, handled := service.replayedActionResult(ctx, request, actionID); handled {
+		return result
+	}
+
+	beforeState := service.persistentState()
+	outcome := run()
+	result := service.newActionResult(outcome.success, actionID, request.IdempotencyKey, false, outcome.errorCode, outcome.message, outcome.reward)
+	if !outcome.success {
+		return result
+	}
+
+	if err := service.saveState(ctx, request, actionID, outcome.reward, result); err != nil {
+		service.applyPersistentState(beforeState)
+		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "persistence_failed", fmt.Sprintf("Action could not be saved and was rolled back: %v", err), api.Reward{})
+	}
+
+	return result
+}
+
+func (service *Service) replayedActionResult(ctx context.Context, request ActionRequest, actionID string) (api.ActionResult, bool) {
+	if !request.HasIdempotency() || service.actionResultStore == nil {
+		return api.ActionResult{}, false
+	}
+
+	record, found, err := service.actionResultStore.LoadActionResult(ctx, service.playerID, request.IdempotencyKey)
+	if err != nil {
+		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "idempotency_lookup_failed", fmt.Sprintf("Could not verify idempotency key: %v", err), api.Reward{}), true
+	}
+	if !found {
+		return api.ActionResult{}, false
+	}
+	if record.ActionID != actionID || record.RequestHash != request.RequestHash {
+		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "idempotency_conflict", "Idempotency key was already used for a different action request.", api.Reward{}), true
+	}
+
+	result := record.ActionResult
+	result.IdempotencyKey = request.IdempotencyKey
+	result.Replay = true
+	return result, true
+}
+
+func (service *Service) newActionResult(success bool, actionID string, idempotencyKey string, replay bool, errorCode string, message string, reward api.Reward) api.ActionResult {
+	return api.ActionResult{
+		Success:        success,
+		ActionID:       actionID,
+		IdempotencyKey: idempotencyKey,
+		Replay:         replay,
+		ErrorCode:      errorCode,
+		Message:        message,
+		PlayerState:    service.state,
+		PlayerSnapshot: service.snapshot(),
+		Reward:         reward,
+	}
+}
+
 func (service *Service) snapshot() api.PlayerSnapshot {
 	return api.PlayerSnapshot{
 		PlayerID:          service.playerID,
@@ -201,224 +305,295 @@ func (service *Service) snapshot() api.PlayerSnapshot {
 }
 
 func (service *Service) FightCampaign() api.ActionResult {
+	return service.FightCampaignWithRequest(context.Background(), ActionRequest{})
+}
+
+func (service *Service) FightCampaignWithRequest(ctx context.Context, request ActionRequest) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	stage := service.state.CampaignStage
-	requiredPower := 90 + (stage * 46)
-	if service.state.TeamPower < requiredPower {
-		return service.result(false, "campaign_fight", "combat_lost", fmt.Sprintf("Campaign Stage %d failed. Required Power %d.", stage, requiredPower), api.Reward{})
-	}
+	return service.executeAction(ctx, request, "campaign_fight", func() actionOutcome {
+		stage := service.state.CampaignStage
+		requiredPower := 90 + (stage * 46)
+		if service.state.TeamPower < requiredPower {
+			return actionFailure("combat_lost", fmt.Sprintf("Campaign Stage %d failed. Required Power %d.", stage, requiredPower))
+		}
 
-	reward := api.Reward{
-		RewardID:    fmt.Sprintf("reward_campaign_stage_%03d", stage),
-		MythEssence: 7 + (stage * 4),
-	}
-	if stage%5 == 0 {
-		reward.Gems = 12 + stage
-		reward.PassXP = 25
-	}
+		reward := api.Reward{
+			RewardID:    fmt.Sprintf("reward_campaign_stage_%03d", stage),
+			MythEssence: 7 + (stage * 4),
+		}
+		if stage%5 == 0 {
+			reward.Gems = 12 + stage
+			reward.PassXP = 25
+		}
 
-	service.grantReward(reward)
-	service.state.CampaignStage++
-	return service.result(true, "campaign_fight", "", fmt.Sprintf("Campaign Stage %d cleared.", stage), reward)
+		service.grantReward(reward)
+		service.state.CampaignStage++
+		return actionSuccess(fmt.Sprintf("Campaign Stage %d cleared.", stage), reward)
+	})
 }
 
 func (service *Service) RunDungeon(dungeonID string) api.ActionResult {
+	return service.RunDungeonWithRequest(context.Background(), ActionRequest{}, dungeonID)
+}
+
+func (service *Service) RunDungeonWithRequest(ctx context.Context, request ActionRequest, dungeonID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	switch dungeonID {
-	case goldDungeonID:
-		return service.runResourceDungeon(dungeonID, service.state.GoldDungeonFloor, true)
-	case essenceDungeonID:
-		return service.runResourceDungeon(dungeonID, service.state.EssenceDungeonFloor, false)
-	case gearDungeonID:
-		return service.runGearDungeon()
-	default:
-		return service.result(false, "dungeon_run", "invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", dungeonID), api.Reward{})
+	actionID := dungeonID + "_run"
+	if dungeonID != goldDungeonID && dungeonID != essenceDungeonID && dungeonID != gearDungeonID {
+		actionID = "dungeon_run"
 	}
+
+	return service.executeAction(ctx, request, actionID, func() actionOutcome {
+		switch dungeonID {
+		case goldDungeonID:
+			return service.runResourceDungeon(dungeonID, service.state.GoldDungeonFloor, true)
+		case essenceDungeonID:
+			return service.runResourceDungeon(dungeonID, service.state.EssenceDungeonFloor, false)
+		case gearDungeonID:
+			return service.runGearDungeon()
+		default:
+			return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", dungeonID))
+		}
+	})
 }
 
 func (service *Service) LevelHero(heroID string) api.ActionResult {
+	return service.LevelHeroWithRequest(context.Background(), ActionRequest{}, heroID)
+}
+
+func (service *Service) LevelHeroWithRequest(ctx context.Context, request ActionRequest, heroID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	level, ok := service.heroLevels[heroID]
-	if !ok {
-		return service.result(false, "hero_level", "invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID), api.Reward{})
-	}
+	return service.executeAction(ctx, request, "hero_level", func() actionOutcome {
+		level, ok := service.heroLevels[heroID]
+		if !ok {
+			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID))
+		}
 
-	cost := 14 + (level * 6)
-	if service.state.MythEssence < cost {
-		return service.result(false, "hero_level", "insufficient_currency", fmt.Sprintf("Need %d Myth Essence.", cost), api.Reward{})
-	}
+		cost := 14 + (level * 6)
+		if service.state.MythEssence < cost {
+			return actionFailure("insufficient_currency", fmt.Sprintf("Need %d Myth Essence.", cost))
+		}
 
-	service.state.MythEssence -= cost
-	service.heroLevels[heroID] = level + 1
-	service.recalculatePower()
-	return service.result(true, "hero_level", "", fmt.Sprintf("%s reached Lv. %d.", heroID, level+1), api.Reward{})
+		service.state.MythEssence -= cost
+		service.heroLevels[heroID] = level + 1
+		service.recalculatePower()
+		return actionSuccess(fmt.Sprintf("%s reached Lv. %d.", heroID, level+1), api.Reward{})
+	})
 }
 
 func (service *Service) AscendHero(heroID string) api.ActionResult {
+	return service.AscendHeroWithRequest(context.Background(), ActionRequest{}, heroID)
+}
+
+func (service *Service) AscendHeroWithRequest(ctx context.Context, request ActionRequest, heroID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	if _, ok := service.heroLevels[heroID]; !ok {
-		return service.result(false, "hero_ascend", "invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID), api.Reward{})
-	}
+	return service.executeAction(ctx, request, "hero_ascend", func() actionOutcome {
+		if _, ok := service.heroLevels[heroID]; !ok {
+			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID))
+		}
 
-	cost := 20 + (service.heroAscensions[heroID] * 15)
-	if service.heroShards[heroID] < cost {
-		return service.result(false, "hero_ascend", "insufficient_shards", fmt.Sprintf("Need %d shards.", cost), api.Reward{})
-	}
+		cost := 20 + (service.heroAscensions[heroID] * 15)
+		if service.heroShards[heroID] < cost {
+			return actionFailure("insufficient_shards", fmt.Sprintf("Need %d shards.", cost))
+		}
 
-	service.heroShards[heroID] -= cost
-	service.heroAscensions[heroID]++
-	service.recalculatePower()
-	return service.result(true, "hero_ascend", "", fmt.Sprintf("%s ascended.", heroID), api.Reward{})
+		service.heroShards[heroID] -= cost
+		service.heroAscensions[heroID]++
+		service.recalculatePower()
+		return actionSuccess(fmt.Sprintf("%s ascended.", heroID), api.Reward{})
+	})
 }
 
 func (service *Service) LevelEquipment(equipmentID string) api.ActionResult {
+	return service.LevelEquipmentWithRequest(context.Background(), ActionRequest{}, equipmentID)
+}
+
+func (service *Service) LevelEquipmentWithRequest(ctx context.Context, request ActionRequest, equipmentID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	level, ok := service.equipmentLevels[equipmentID]
-	if !ok {
-		return service.result(false, "equipment_level", "invalid_equipment", fmt.Sprintf("Unknown equipment: %s", equipmentID), api.Reward{})
-	}
+	return service.executeAction(ctx, request, "equipment_level", func() actionOutcome {
+		level, ok := service.equipmentLevels[equipmentID]
+		if !ok {
+			return actionFailure("invalid_equipment", fmt.Sprintf("Unknown equipment: %s", equipmentID))
+		}
 
-	var baseCost int
-	switch equipmentID {
-	case weaponID:
-		baseCost = 80
-	case armorID:
-		baseCost = 75
-	}
+		var baseCost int
+		switch equipmentID {
+		case weaponID:
+			baseCost = 80
+		case armorID:
+			baseCost = 75
+		}
 
-	cost := baseCost + (level * 35)
-	if service.state.Gold < cost {
-		return service.result(false, "equipment_level", "insufficient_currency", fmt.Sprintf("Need %d Gold.", cost), api.Reward{})
-	}
+		cost := baseCost + (level * 35)
+		if service.state.Gold < cost {
+			return actionFailure("insufficient_currency", fmt.Sprintf("Need %d Gold.", cost))
+		}
 
-	service.state.Gold -= cost
-	service.equipmentLevels[equipmentID] = level + 1
-	service.recalculatePower()
-	return service.result(true, "equipment_level", "", fmt.Sprintf("%s reached Lv. %d.", equipmentID, level+1), api.Reward{})
+		service.state.Gold -= cost
+		service.equipmentLevels[equipmentID] = level + 1
+		service.recalculatePower()
+		return actionSuccess(fmt.Sprintf("%s reached Lv. %d.", equipmentID, level+1), api.Reward{})
+	})
 }
 
 func (service *Service) EquipAccessory(accessoryID string) api.ActionResult {
+	return service.EquipAccessoryWithRequest(context.Background(), ActionRequest{}, accessoryID)
+}
+
+func (service *Service) EquipAccessoryWithRequest(ctx context.Context, request ActionRequest, accessoryID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	if service.accessoryInventory[accessoryID] <= 0 {
-		return service.result(false, "accessory_equip", "missing_item", fmt.Sprintf("Missing accessory: %s", accessoryID), api.Reward{})
-	}
+	return service.executeAction(ctx, request, "accessory_equip", func() actionOutcome {
+		if service.accessoryInventory[accessoryID] <= 0 {
+			return actionFailure("missing_item", fmt.Sprintf("Missing accessory: %s", accessoryID))
+		}
 
-	slotID := accessorySlot(accessoryID)
-	if current := service.equippedAccessory[slotID]; current != "" {
-		service.accessoryInventory[current]++
-	}
+		slotID := accessorySlot(accessoryID)
+		if current := service.equippedAccessory[slotID]; current != "" {
+			service.accessoryInventory[current]++
+		}
 
-	service.accessoryInventory[accessoryID]--
-	service.equippedAccessory[slotID] = accessoryID
-	service.recalculatePower()
-	return service.result(true, "accessory_equip", "", fmt.Sprintf("Equipped %s.", accessoryID), api.Reward{})
+		service.accessoryInventory[accessoryID]--
+		service.equippedAccessory[slotID] = accessoryID
+		service.recalculatePower()
+		return actionSuccess(fmt.Sprintf("Equipped %s.", accessoryID), api.Reward{})
+	})
 }
 
 func (service *Service) LevelAccessory(accessoryID string) api.ActionResult {
+	return service.LevelAccessoryWithRequest(context.Background(), ActionRequest{}, accessoryID)
+}
+
+func (service *Service) LevelAccessoryWithRequest(ctx context.Context, request ActionRequest, accessoryID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	if service.accessoryInventory[accessoryID] <= 0 && !service.accessoryIsEquipped(accessoryID) {
-		return service.result(false, "accessory_level", "missing_item", fmt.Sprintf("Missing accessory: %s.", accessoryID), api.Reward{})
-	}
+	return service.executeAction(ctx, request, "accessory_level", func() actionOutcome {
+		if service.accessoryInventory[accessoryID] <= 0 && !service.accessoryIsEquipped(accessoryID) {
+			return actionFailure("missing_item", fmt.Sprintf("Missing accessory: %s.", accessoryID))
+		}
 
-	if service.state.Gold < 35 {
-		return service.result(false, "accessory_level", "insufficient_currency", "Need 35 Gold.", api.Reward{})
-	}
+		if service.state.Gold < 35 {
+			return actionFailure("insufficient_currency", "Need 35 Gold.")
+		}
 
-	service.state.Gold -= 35
-	service.accessoryLevels[accessoryID]++
-	service.recalculatePower()
-	return service.result(true, "accessory_level", "", fmt.Sprintf("%s reached Lv. %d.", accessoryID, service.accessoryLevels[accessoryID]), api.Reward{})
+		service.state.Gold -= 35
+		service.accessoryLevels[accessoryID]++
+		service.recalculatePower()
+		return actionSuccess(fmt.Sprintf("%s reached Lv. %d.", accessoryID, service.accessoryLevels[accessoryID]), api.Reward{})
+	})
 }
 
 func (service *Service) FuseAccessory(accessoryID string) api.ActionResult {
+	return service.FuseAccessoryWithRequest(context.Background(), ActionRequest{}, accessoryID)
+}
+
+func (service *Service) FuseAccessoryWithRequest(ctx context.Context, request ActionRequest, accessoryID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	if service.accessoryInventory[accessoryID] < 3 {
-		return service.result(false, "accessory_fuse", "missing_items", fmt.Sprintf("Need 3 copies of %s.", accessoryID), api.Reward{})
-	}
+	return service.executeAction(ctx, request, "accessory_fuse", func() actionOutcome {
+		if service.accessoryInventory[accessoryID] < 3 {
+			return actionFailure("missing_items", fmt.Sprintf("Need 3 copies of %s.", accessoryID))
+		}
 
-	service.accessoryInventory[accessoryID] -= 3
-	fusedID, ok := accessoryFuseTarget(accessoryID)
-	if !ok {
-		return service.result(false, "accessory_fuse", "max_rarity", fmt.Sprintf("%s cannot be fused further.", accessoryID), api.Reward{})
-	}
+		service.accessoryInventory[accessoryID] -= 3
+		fusedID, ok := accessoryFuseTarget(accessoryID)
+		if !ok {
+			return actionFailure("max_rarity", fmt.Sprintf("%s cannot be fused further.", accessoryID))
+		}
 
-	service.accessoryInventory[fusedID]++
-	return service.result(true, "accessory_fuse", "", fmt.Sprintf("Fused into %s.", fusedID), api.Reward{})
+		service.accessoryInventory[fusedID]++
+		return actionSuccess(fmt.Sprintf("Fused into %s.", fusedID), api.Reward{})
+	})
 }
 
 func (service *Service) PullSummon(bannerID string) api.ActionResult {
+	return service.PullSummonWithRequest(context.Background(), ActionRequest{}, bannerID)
+}
+
+func (service *Service) PullSummonWithRequest(ctx context.Context, request ActionRequest, bannerID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	if bannerID != heroBannerID {
-		return service.result(false, "summon_pull", "invalid_banner", fmt.Sprintf("Unknown banner: %s", bannerID), api.Reward{})
-	}
+	return service.executeAction(ctx, request, "summon_pull", func() actionOutcome {
+		if bannerID != heroBannerID {
+			return actionFailure("invalid_banner", fmt.Sprintf("Unknown banner: %s", bannerID))
+		}
 
-	if service.state.Gems < 35 {
-		return service.result(false, "summon_pull", "insufficient_currency", "Need 35 Gems.", api.Reward{})
-	}
+		if service.state.Gems < 35 {
+			return actionFailure("insufficient_currency", "Need 35 Gems.")
+		}
 
-	heroes := []string{"hero_astra", "hero_borin", "hero_cyra", "hero_dante", "hero_elowen"}
-	heroID := heroes[service.summonCount%len(heroes)]
-	service.summonCount++
-	service.state.Gems -= 35
-	service.heroShards[heroID] += 7
-	service.recalculatePower()
-	return service.result(true, "summon_pull", "", fmt.Sprintf("Pulled %s shards.", heroID), api.Reward{RewardID: "reward_summon_shards"})
+		heroes := []string{"hero_astra", "hero_borin", "hero_cyra", "hero_dante", "hero_elowen"}
+		heroID := heroes[service.summonCount%len(heroes)]
+		service.summonCount++
+		service.state.Gems -= 35
+		service.heroShards[heroID] += 7
+		service.recalculatePower()
+		return actionSuccess(fmt.Sprintf("Pulled %s shards.", heroID), api.Reward{RewardID: "reward_summon_shards"})
+	})
 }
 
 func (service *Service) ClaimDailyMission(missionID string) api.ActionResult {
+	return service.ClaimDailyMissionWithRequest(context.Background(), ActionRequest{}, missionID)
+}
+
+func (service *Service) ClaimDailyMissionWithRequest(ctx context.Context, request ActionRequest, missionID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	if service.claimedDaily[missionID] {
-		return service.result(false, "daily_mission_claim", "already_claimed", fmt.Sprintf("%s already claimed.", missionID), api.Reward{})
-	}
+	return service.executeAction(ctx, request, "daily_mission_claim", func() actionOutcome {
+		if service.claimedDaily[missionID] {
+			return actionFailure("already_claimed", fmt.Sprintf("%s already claimed.", missionID))
+		}
 
-	reward := api.Reward{RewardID: "reward_" + missionID, Gold: 40, Gems: 5, MythEssence: 70, PassXP: 40}
-	service.claimedDaily[missionID] = true
-	service.grantReward(reward)
-	return service.result(true, "daily_mission_claim", "", fmt.Sprintf("Claimed %s.", missionID), reward)
+		reward := api.Reward{RewardID: "reward_" + missionID, Gold: 40, Gems: 5, MythEssence: 70, PassXP: 40}
+		service.claimedDaily[missionID] = true
+		service.grantReward(reward)
+		return actionSuccess(fmt.Sprintf("Claimed %s.", missionID), reward)
+	})
 }
 
 func (service *Service) ClaimBattlePassReward(rewardID string) api.ActionResult {
+	return service.ClaimBattlePassRewardWithRequest(context.Background(), ActionRequest{}, rewardID)
+}
+
+func (service *Service) ClaimBattlePassRewardWithRequest(ctx context.Context, request ActionRequest, rewardID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	if service.claimedBattlePass[rewardID] {
-		return service.result(false, "battle_pass_claim", "already_claimed", fmt.Sprintf("%s already claimed.", rewardID), api.Reward{})
-	}
+	return service.executeAction(ctx, request, "battle_pass_claim", func() actionOutcome {
+		if service.claimedBattlePass[rewardID] {
+			return actionFailure("already_claimed", fmt.Sprintf("%s already claimed.", rewardID))
+		}
 
-	if service.state.PassXP < 40 {
-		return service.result(false, "battle_pass_claim", "not_unlocked", "Need 40 Pass XP.", api.Reward{})
-	}
+		if service.state.PassXP < 40 {
+			return actionFailure("not_unlocked", "Need 40 Pass XP.")
+		}
 
-	reward := api.Reward{RewardID: rewardID, Gold: 100, Gems: 10}
-	service.claimedBattlePass[rewardID] = true
-	service.grantReward(reward)
-	return service.result(true, "battle_pass_claim", "", fmt.Sprintf("Claimed %s.", rewardID), reward)
+		reward := api.Reward{RewardID: rewardID, Gold: 100, Gems: 10}
+		service.claimedBattlePass[rewardID] = true
+		service.grantReward(reward)
+		return actionSuccess(fmt.Sprintf("Claimed %s.", rewardID), reward)
+	})
 }
 
-func (service *Service) runResourceDungeon(dungeonID string, floor int, isGold bool) api.ActionResult {
+func (service *Service) runResourceDungeon(dungeonID string, floor int, isGold bool) actionOutcome {
 	requiredPower := 100 + (floor * 50)
 	if service.state.TeamPower < requiredPower {
-		return service.result(false, dungeonID+"_run", "combat_lost", fmt.Sprintf("Floor %d failed. Required Power %d.", floor, requiredPower), api.Reward{})
+		return actionFailure("combat_lost", fmt.Sprintf("Floor %d failed. Required Power %d.", floor, requiredPower))
 	}
 
 	reward := api.Reward{RewardID: fmt.Sprintf("reward_%s_floor_%d", dungeonID, floor)}
@@ -431,20 +606,20 @@ func (service *Service) runResourceDungeon(dungeonID string, floor int, isGold b
 	}
 
 	service.grantReward(reward)
-	return service.result(true, dungeonID+"_run", "", fmt.Sprintf("%s floor %d cleared.", dungeonID, floor), reward)
+	return actionSuccess(fmt.Sprintf("%s floor %d cleared.", dungeonID, floor), reward)
 }
 
-func (service *Service) runGearDungeon() api.ActionResult {
+func (service *Service) runGearDungeon() actionOutcome {
 	floor := service.state.GearDungeonFloor
 	requiredPower := 120 + (floor * 56)
 	if service.state.TeamPower < requiredPower {
-		return service.result(false, "gear_dungeon_run", "combat_lost", fmt.Sprintf("Floor %d failed. Required Power %d.", floor, requiredPower), api.Reward{})
+		return actionFailure("combat_lost", fmt.Sprintf("Floor %d failed. Required Power %d.", floor, requiredPower))
 	}
 
 	accessoryID := "accessory_earrings_r0"
 	service.accessoryInventory[accessoryID]++
 	service.state.GearDungeonFloor++
-	return service.result(true, "gear_dungeon_run", "", fmt.Sprintf("Dropped %s.", accessoryID), api.Reward{RewardID: "reward_gear_drop"})
+	return actionSuccess(fmt.Sprintf("Dropped %s.", accessoryID), api.Reward{RewardID: "reward_gear_drop"})
 }
 
 func (service *Service) grantReward(reward api.Reward) {
@@ -454,41 +629,22 @@ func (service *Service) grantReward(reward api.Reward) {
 	service.state.PassXP += reward.PassXP
 }
 
-func (service *Service) result(success bool, actionID string, errorCode string, message string, reward api.Reward) api.ActionResult {
-	if success {
-		if err := service.saveState(actionID, reward); err != nil {
-			return api.ActionResult{
-				Success:        false,
-				ActionID:       actionID,
-				ErrorCode:      "persistence_failed",
-				Message:        fmt.Sprintf("Action succeeded locally but could not be saved: %v", err),
-				PlayerState:    service.state,
-				PlayerSnapshot: service.snapshot(),
-				Reward:         api.Reward{},
-			}
-		}
-	}
-
-	return api.ActionResult{
-		Success:        success,
-		ActionID:       actionID,
-		ErrorCode:      errorCode,
-		Message:        message,
-		PlayerState:    service.state,
-		PlayerSnapshot: service.snapshot(),
-		Reward:         reward,
-	}
-}
-
-func (service *Service) saveState(actionID string, reward api.Reward) error {
+func (service *Service) saveState(ctx context.Context, request ActionRequest, actionID string, reward api.Reward, result api.ActionResult) error {
 	if service.stateStore == nil {
 		return nil
 	}
 
-	return service.stateStore.SaveState(context.Background(), service.playerID, service.persistentState(), StateSaveSource{
-		ActionID: actionID,
-		RewardID: reward.RewardID,
-	})
+	source := StateSaveSource{
+		ActionID:       actionID,
+		RewardID:       reward.RewardID,
+		IdempotencyKey: request.IdempotencyKey,
+		RequestHash:    request.RequestHash,
+	}
+	if request.HasIdempotency() {
+		source.ActionResult = &result
+	}
+
+	return service.stateStore.SaveState(ctx, service.playerID, service.persistentState(), source)
 }
 
 func (service *Service) persistentState() PersistentState {

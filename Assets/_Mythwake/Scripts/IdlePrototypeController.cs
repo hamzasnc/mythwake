@@ -1905,7 +1905,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (success)
         {
-            FinishBackendRequest($"Backend: {health.status}  DB {health.database}  v{health.version}");
+            var writeMode = string.IsNullOrWhiteSpace(health.state_write_mode) ? "unknown" : health.state_write_mode;
+            FinishBackendRequest($"Backend: {health.status}  DB {health.database}  {writeMode}  v{health.version}");
             return;
         }
 
@@ -1976,6 +1977,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var outcome = result.success ? "ok" : string.IsNullOrWhiteSpace(result.errorCode) ? "failed" : result.errorCode;
+        if (result.replay)
+        {
+            outcome = $"{outcome} replay";
+        }
         FinishBackendRequest($"Server action: {outcome}  {result.actionId}");
     }
 

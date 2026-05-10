@@ -327,6 +327,9 @@ Current backend state:
 - Server gameplay actions now update hot server state first and write PostgreSQL synchronously by default before returning success.
 - Optional write-behind mode exists for local/dev-only batching experiments and flushes on interval plus graceful shutdown.
 - Added `POST /player/state/flush` as a future app-pause/disconnect hook.
+- Added durable idempotent action results through `Idempotency-Key`.
+- Successful idempotent action results save in `player.player_action_results` in the same transaction as player state.
+- Unity Server Mode now sends and reuses pending idempotency keys for gameplay actions after transport failures.
 - Redis is not connected yet.
 
 Recommended Go shape:
@@ -397,12 +400,14 @@ Player state tables:
 - `player_battle_pass`
 - `player_reward_claims`
 - `player_summon_history`
+- `player_action_results`
 - `player_transactions`
 
 Important rules:
 - Use integer currency amounts.
 - Never trust client-submitted reward amounts.
 - Store reward claim IDs to avoid duplicate claims.
+- Require idempotency keys for retryable economy actions before production.
 - Keep definition IDs stable.
 - Prefer append-only transaction history for economy-affecting actions.
 
@@ -522,6 +527,7 @@ Progress:
 - Added `player.player_summon_state`, `player.player_daily_mission_claims`, `player.player_battle_pass_claims`, `logs.summon_history`, `debug.v_player_claim_overview`, and `debug.v_player_summon_overview`.
 - Added state cache wrapper with write-through default, optional write-behind interval flush, and graceful shutdown flush.
 - Added a manual player state flush endpoint for client disconnect/app-pause flows.
+- Added `player.player_action_results` and `debug.v_player_action_result_overview` for idempotent action replay.
 
 Next useful step:
 - Split backend gameplay services out of the current single `player.Service` while keeping the API behavior stable:

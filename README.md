@@ -79,6 +79,9 @@ Backend:
 - PostgreSQL writes now sit behind a durable state cache wrapper
 - Critical player saves use write-through by default, so success responses only happen after PostgreSQL commits
 - Optional write-behind mode exists for local/dev batching experiments only
+- Server actions support `Idempotency-Key` to make timeout/retry flows replay-safe
+- Successful idempotent action results are stored in `player.player_action_results`
+- Unity reuses pending idempotency keys after transport failures
 - `POST /player/state/flush` is ready as the future app-pause/disconnect save hook
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Guest auth and action responses include the full player snapshot for direct client UI updates
@@ -89,6 +92,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.11: Added durable idempotent action results, replay-safe server action routing, and Unity pending action keys.
 - Backend 0.2.10: Added durable player state cache wrapper, write-through default saves, optional write-behind mode, cache health fields, manual flush endpoint, and shutdown flushing.
 - 0.2.11: Added Server Mode routing for manual gameplay buttons through the Unity backend client.
 - 0.2.10: Added Unity backend HTTP client, full local player snapshots, and an ingame Backend panel for Ping/Login/Sync smoke tests.

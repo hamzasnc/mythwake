@@ -71,6 +71,8 @@ type Reward struct {
 type ActionResult struct {
 	Success        bool           `json:"success"`
 	ActionID       string         `json:"actionId"`
+	IdempotencyKey string         `json:"idempotencyKey,omitempty"`
+	Replay         bool           `json:"replay,omitempty"`
 	ErrorCode      string         `json:"errorCode,omitempty"`
 	Message        string         `json:"message"`
 	PlayerState    PlayerState    `json:"playerState"`

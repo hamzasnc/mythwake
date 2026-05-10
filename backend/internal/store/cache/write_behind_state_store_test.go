@@ -111,6 +111,30 @@ func TestWriteBehindStateStoreDefaultsToWriteThroughDurability(t *testing.T) {
 	}
 }
 
+func TestWriteBehindStateStoreForcesIdempotentActionsToWriteThrough(t *testing.T) {
+	base := &fakeStateStore{}
+	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
+	defer closeStore(t, store)
+
+	result := &api.ActionResult{Success: true, ActionID: "summon_pull"}
+	err := store.SaveState(context.Background(), "player-1", testState(6), player.StateSaveSource{
+		ActionID:       "summon_pull",
+		IdempotencyKey: "summon-key-1",
+		RequestHash:    "summon-hash-1",
+		ActionResult:   result,
+	})
+	if err != nil {
+		t.Fatalf("save idempotent state: %v", err)
+	}
+
+	if base.saveCount != 1 {
+		t.Fatalf("expected idempotent action to write through immediately, got %d", base.saveCount)
+	}
+	if stats := store.Stats(); stats.DirtyPlayers != 0 {
+		t.Fatalf("expected no dirty write-behind state, got %#v", stats)
+	}
+}
+
 func testState(stage int) player.PersistentState {
 	return player.PersistentState{
 		PlayerState: api.PlayerState{

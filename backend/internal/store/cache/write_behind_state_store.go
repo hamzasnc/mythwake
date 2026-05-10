@@ -80,6 +80,15 @@ func (store *WriteBehindStateStore) LoadState(ctx context.Context, playerID stri
 	return store.base.LoadState(ctx, playerID)
 }
 
+func (store *WriteBehindStateStore) LoadActionResult(ctx context.Context, playerID string, idempotencyKey string) (player.StoredActionResult, bool, error) {
+	actionResultStore, ok := store.base.(player.ActionResultStore)
+	if !ok {
+		return player.StoredActionResult{}, false, nil
+	}
+
+	return actionResultStore.LoadActionResult(ctx, playerID, idempotencyKey)
+}
+
 func (store *WriteBehindStateStore) SaveState(ctx context.Context, playerID string, state player.PersistentState, source player.StateSaveSource) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -90,6 +99,9 @@ func (store *WriteBehindStateStore) SaveState(ctx context.Context, playerID stri
 
 	state = player.ClonePersistentState(state)
 	if source.ActionID == seedActionID {
+		return store.base.SaveState(ctx, playerID, state, source)
+	}
+	if source.IdempotencyKey != "" {
 		return store.base.SaveState(ctx, playerID, state, source)
 	}
 	if !store.config.WriteBehind {

@@ -91,6 +91,8 @@ public struct MythwakeActionResultDto
 {
     public bool success;
     public string actionId;
+    public string idempotencyKey;
+    public bool replay;
     public string errorCode;
     public string message;
     public MythwakePlayerStateDto playerState;
@@ -113,6 +115,9 @@ public struct MythwakeHealthDto
     public string service;
     public string status;
     public string database;
+    public string state_cache;
+    public string state_write_mode;
+    public string state_flush_interval;
     public string environment;
     public string version;
     public string time_utc;

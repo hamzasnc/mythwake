@@ -43,6 +43,9 @@ Current scope:
 - `GET /player/core-state` returns the compact numeric state only.
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
 - The Unity prototype can ping, guest-login, sync this snapshot, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
+- Server gameplay POSTs support `Idempotency-Key` headers.
+- Successful idempotent action results are stored in PostgreSQL together with the player state transaction.
+- Retrying the same action with the same key returns the stored result with `replay: true` instead of applying rewards/spends again.
 - Graceful shutdown
 
 Not included yet:
@@ -87,6 +90,7 @@ Optional script modes:
 .\scripts\start-backend.cmd -DatabaseUrl "postgres://mythwake:mythwake@localhost:5432/mythwake?sslmode=disable"
 .\scripts\check-backend.cmd -BaseUrl "http://localhost:8080"
 .\scripts\check-backend.cmd -FlushState
+.\scripts\check-backend.cmd -CheckIdempotency
 ```
 
 Default address:
@@ -112,6 +116,8 @@ Database behavior:
 - New player seed state still writes immediately so first login/startup is durable.
 - The JSON player state snapshot is still written as a fallback/debug mirror.
 - Currency changes are written to `logs.economy_transactions` during DB save.
+- Successful action responses with an `Idempotency-Key` are written to `player.player_action_results`.
+- Reusing a key for a different endpoint/body returns an `idempotency_conflict` action result.
 - `GET /health` reports `database`, `state_cache`, `state_write_mode`, and `state_flush_interval`.
 
 Endpoints:
@@ -131,3 +137,12 @@ Endpoints:
 - `POST /summons/{banner_id}/pull`
 - `POST /missions/{mission_id}/claim`
 - `POST /battle-pass/{reward_id}/claim`
+
+Idempotent action retry:
+
+```powershell
+$key = [guid]::NewGuid().ToString("N")
+$headers = @{ "Idempotency-Key" = $key }
+Invoke-RestMethod -Method Post -Headers $headers "http://localhost:8080/heroes/hero_astra/level-up"
+Invoke-RestMethod -Method Post -Headers $headers "http://localhost:8080/heroes/hero_astra/level-up"
+```

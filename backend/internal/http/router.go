@@ -1,9 +1,13 @@
 package apihttp
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
@@ -90,62 +94,62 @@ func (router *Router) handleGuestAuth(response http.ResponseWriter, request *htt
 }
 
 func (router *Router) handleCampaignFight(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.FightCampaign())
+	writeActionResult(response, router.playerService.FightCampaignWithRequest(request.Context(), actionRequest(request, "")))
 }
 
 func (router *Router) handleDungeonRun(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.RunDungeon(request.PathValue("dungeon_id")))
+	writeActionResult(response, router.playerService.RunDungeonWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("dungeon_id")))
 }
 
 func (router *Router) handleHeroLevel(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.LevelHero(request.PathValue("hero_id")))
+	writeActionResult(response, router.playerService.LevelHeroWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("hero_id")))
 }
 
 func (router *Router) handleHeroAscend(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.AscendHero(request.PathValue("hero_id")))
+	writeActionResult(response, router.playerService.AscendHeroWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("hero_id")))
 }
 
 func (router *Router) handleEquipmentLevel(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.LevelEquipment(request.PathValue("equipment_id")))
+	writeActionResult(response, router.playerService.LevelEquipmentWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("equipment_id")))
 }
 
 func (router *Router) handleAccessoryEquip(response http.ResponseWriter, request *http.Request) {
-	accessoryRequest, ok := decodeAccessoryRequest(response, request)
+	accessoryRequest, rawBody, ok := decodeAccessoryRequest(response, request)
 	if !ok {
 		return
 	}
 
-	writeActionResult(response, router.playerService.EquipAccessory(accessoryRequest.AccessoryID))
+	writeActionResult(response, router.playerService.EquipAccessoryWithRequest(request.Context(), actionRequest(request, rawBody), accessoryRequest.AccessoryID))
 }
 
 func (router *Router) handleAccessoryLevel(response http.ResponseWriter, request *http.Request) {
-	accessoryRequest, ok := decodeAccessoryRequest(response, request)
+	accessoryRequest, rawBody, ok := decodeAccessoryRequest(response, request)
 	if !ok {
 		return
 	}
 
-	writeActionResult(response, router.playerService.LevelAccessory(accessoryRequest.AccessoryID))
+	writeActionResult(response, router.playerService.LevelAccessoryWithRequest(request.Context(), actionRequest(request, rawBody), accessoryRequest.AccessoryID))
 }
 
 func (router *Router) handleAccessoryFuse(response http.ResponseWriter, request *http.Request) {
-	accessoryRequest, ok := decodeAccessoryRequest(response, request)
+	accessoryRequest, rawBody, ok := decodeAccessoryRequest(response, request)
 	if !ok {
 		return
 	}
 
-	writeActionResult(response, router.playerService.FuseAccessory(accessoryRequest.AccessoryID))
+	writeActionResult(response, router.playerService.FuseAccessoryWithRequest(request.Context(), actionRequest(request, rawBody), accessoryRequest.AccessoryID))
 }
 
 func (router *Router) handleSummonPull(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.PullSummon(request.PathValue("banner_id")))
+	writeActionResult(response, router.playerService.PullSummonWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("banner_id")))
 }
 
 func (router *Router) handleDailyMissionClaim(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.ClaimDailyMission(request.PathValue("mission_id")))
+	writeActionResult(response, router.playerService.ClaimDailyMissionWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("mission_id")))
 }
 
 func (router *Router) handleBattlePassClaim(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.ClaimBattlePassReward(request.PathValue("reward_id")))
+	writeActionResult(response, router.playerService.ClaimBattlePassRewardWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("reward_id")))
 }
 
 func (router *Router) logRequests(next http.Handler) http.Handler {
@@ -169,14 +173,39 @@ func writeActionResult(response http.ResponseWriter, result any) {
 	writeJSON(response, http.StatusOK, result)
 }
 
-func decodeAccessoryRequest(response http.ResponseWriter, request *http.Request) (api.AccessoryRequest, bool) {
+func actionRequest(request *http.Request, rawBody string) player.ActionRequest {
+	idempotencyKey := strings.TrimSpace(request.Header.Get("Idempotency-Key"))
+	if idempotencyKey == "" {
+		idempotencyKey = strings.TrimSpace(request.Header.Get("X-Idempotency-Key"))
+	}
+	if idempotencyKey == "" {
+		return player.ActionRequest{}
+	}
+
+	hash := sha256.Sum256([]byte(request.Method + "\n" + request.URL.EscapedPath() + "\n" + request.URL.RawQuery + "\n" + rawBody))
+	return player.ActionRequest{
+		IdempotencyKey: idempotencyKey,
+		RequestHash:    hex.EncodeToString(hash[:]),
+	}
+}
+
+func decodeAccessoryRequest(response http.ResponseWriter, request *http.Request) (api.AccessoryRequest, string, bool) {
+	rawBody, err := io.ReadAll(request.Body)
+	if err != nil {
+		writeJSON(response, http.StatusBadRequest, map[string]string{
+			"errorCode": "invalid_body",
+			"message":   "Could not read request body.",
+		})
+		return api.AccessoryRequest{}, "", false
+	}
+
 	var accessoryRequest api.AccessoryRequest
-	if err := json.NewDecoder(request.Body).Decode(&accessoryRequest); err != nil {
+	if err := json.Unmarshal(rawBody, &accessoryRequest); err != nil {
 		writeJSON(response, http.StatusBadRequest, map[string]string{
 			"errorCode": "invalid_json",
 			"message":   "Expected JSON body with accessoryId.",
 		})
-		return api.AccessoryRequest{}, false
+		return api.AccessoryRequest{}, string(rawBody), false
 	}
 
 	if accessoryRequest.AccessoryID == "" {
@@ -184,8 +213,8 @@ func decodeAccessoryRequest(response http.ResponseWriter, request *http.Request)
 			"errorCode": "missing_accessory_id",
 			"message":   "Expected accessoryId.",
 		})
-		return api.AccessoryRequest{}, false
+		return api.AccessoryRequest{}, string(rawBody), false
 	}
 
-	return accessoryRequest, true
+	return accessoryRequest, string(rawBody), true
 }

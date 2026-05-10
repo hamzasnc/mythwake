@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -14,6 +15,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
     [SerializeField] private string baseUrl = DefaultBackendBaseUrl;
     [SerializeField] private int requestTimeoutSeconds = 10;
+    private readonly Dictionary<string, string> pendingActionKeys = new Dictionary<string, string>();
 
     public string BaseUrl
     {
@@ -43,57 +45,57 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
     public IEnumerator FightCampaign(Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendJson(Post("/campaign/fight"), completed);
+        return SendActionJson("campaign_fight", Post("/campaign/fight"), completed);
     }
 
     public IEnumerator RunDungeon(string dungeonId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendJson(Post($"/dungeons/{EscapePath(dungeonId)}/run"), completed);
+        return SendActionJson($"dungeon_run:{dungeonId}", Post($"/dungeons/{EscapePath(dungeonId)}/run"), completed);
     }
 
     public IEnumerator LevelHero(string heroId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendJson(Post($"/heroes/{EscapePath(heroId)}/level-up"), completed);
+        return SendActionJson($"hero_level:{heroId}", Post($"/heroes/{EscapePath(heroId)}/level-up"), completed);
     }
 
     public IEnumerator AscendHero(string heroId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendJson(Post($"/heroes/{EscapePath(heroId)}/ascend"), completed);
+        return SendActionJson($"hero_ascend:{heroId}", Post($"/heroes/{EscapePath(heroId)}/ascend"), completed);
     }
 
     public IEnumerator LevelEquipment(string equipmentId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendJson(Post($"/equipment/{EscapePath(equipmentId)}/level-up"), completed);
+        return SendActionJson($"equipment_level:{equipmentId}", Post($"/equipment/{EscapePath(equipmentId)}/level-up"), completed);
     }
 
     public IEnumerator EquipAccessory(string accessoryId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendJson(PostAccessory("/gear/accessories/equip", accessoryId), completed);
+        return SendActionJson($"accessory_equip:{accessoryId}", PostAccessory("/gear/accessories/equip", accessoryId), completed);
     }
 
     public IEnumerator LevelAccessory(string accessoryId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendJson(PostAccessory("/gear/accessories/level-up", accessoryId), completed);
+        return SendActionJson($"accessory_level:{accessoryId}", PostAccessory("/gear/accessories/level-up", accessoryId), completed);
     }
 
     public IEnumerator FuseAccessory(string accessoryId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendJson(PostAccessory("/gear/accessories/fuse", accessoryId), completed);
+        return SendActionJson($"accessory_fuse:{accessoryId}", PostAccessory("/gear/accessories/fuse", accessoryId), completed);
     }
 
     public IEnumerator PullSummon(string bannerId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendJson(Post($"/summons/{EscapePath(bannerId)}/pull"), completed);
+        return SendActionJson($"summon_pull:{bannerId}", Post($"/summons/{EscapePath(bannerId)}/pull"), completed);
     }
 
     public IEnumerator ClaimDailyMission(string missionId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendJson(Post($"/missions/{EscapePath(missionId)}/claim"), completed);
+        return SendActionJson($"daily_mission_claim:{missionId}", Post($"/missions/{EscapePath(missionId)}/claim"), completed);
     }
 
     public IEnumerator ClaimBattlePassReward(string rewardId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendJson(Post($"/battle-pass/{EscapePath(rewardId)}/claim"), completed);
+        return SendActionJson($"battle_pass_claim:{rewardId}", Post($"/battle-pass/{EscapePath(rewardId)}/claim"), completed);
     }
 
     private UnityWebRequest Get(string path)
@@ -155,9 +157,35 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         }
     }
 
+    private IEnumerator SendActionJson(string actionKey, UnityWebRequest request, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        request.SetRequestHeader("Idempotency-Key", GetOrCreatePendingActionKey(actionKey));
+        return SendJson<MythwakeActionResultDto>(request, (success, error, result) =>
+        {
+            if (success)
+            {
+                pendingActionKeys.Remove(actionKey);
+            }
+
+            completed?.Invoke(success, error, result);
+        });
+    }
+
     private void ApplyCommonHeaders(UnityWebRequest request)
     {
         request.SetRequestHeader("Accept", "application/json");
+    }
+
+    private string GetOrCreatePendingActionKey(string actionKey)
+    {
+        if (pendingActionKeys.TryGetValue(actionKey, out var idempotencyKey) && !string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            return idempotencyKey;
+        }
+
+        idempotencyKey = Guid.NewGuid().ToString("N");
+        pendingActionKeys[actionKey] = idempotencyKey;
+        return idempotencyKey;
     }
 
     private string BuildUrl(string path)
