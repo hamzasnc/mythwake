@@ -19,8 +19,32 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if snapshot.ContentHash == "" {
 		t.Fatal("expected content hash")
 	}
+	if len(snapshot.Currencies) != 5 {
+		t.Fatalf("expected 5 currency definitions, got %#v", snapshot.Currencies)
+	}
+	if len(snapshot.Heroes) != 5 {
+		t.Fatalf("expected 5 hero definitions, got %#v", snapshot.Heroes)
+	}
+	if len(snapshot.Rewards) != 70 {
+		t.Fatalf("expected 70 reward definitions, got %d", len(snapshot.Rewards))
+	}
+	if len(snapshot.Campaigns) != 1 {
+		t.Fatalf("expected 1 campaign definition, got %#v", snapshot.Campaigns)
+	}
+	if len(snapshot.CampaignStages) != 60 {
+		t.Fatalf("expected 60 campaign stage definitions, got %d", len(snapshot.CampaignStages))
+	}
 	if len(snapshot.Dungeons) != 3 {
 		t.Fatalf("expected 3 dungeons, got %#v", snapshot.Dungeons)
+	}
+	if len(snapshot.AccessorySlots) != 5 {
+		t.Fatalf("expected 5 accessory slot definitions, got %#v", snapshot.AccessorySlots)
+	}
+	if len(snapshot.AccessoryRarities) != 5 {
+		t.Fatalf("expected 5 accessory rarity definitions, got %#v", snapshot.AccessoryRarities)
+	}
+	if len(snapshot.Accessories) != 25 {
+		t.Fatalf("expected 25 accessory definitions, got %d", len(snapshot.Accessories))
 	}
 	if len(snapshot.ProgressionCosts) == 0 {
 		t.Fatal("expected progression cost definitions")
@@ -75,6 +99,28 @@ func TestSnapshotCarriesAuthoritativeRewardValues(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("expected daily_stage_clears_3 in snapshot")
+	}
+}
+
+func TestSnapshotCarriesCampaignAndAccessoryDefinitionData(t *testing.T) {
+	snapshot := Snapshot("test-version")
+
+	if snapshot.CampaignStages[4].RewardID != "reward_campaign_stage_005" || snapshot.CampaignStages[4].RequiredPower != 320 {
+		t.Fatalf("unexpected campaign stage 5 definition: %#v", snapshot.CampaignStages[4])
+	}
+
+	var found bool
+	for _, definition := range snapshot.Accessories {
+		if definition.AccessoryID != "accessory_earrings_r0" {
+			continue
+		}
+		found = true
+		if definition.SlotID != "earrings" || definition.RarityID != "r0" || definition.FuseTargetID != "accessory_earrings_r1" {
+			t.Fatalf("unexpected accessory definition: %#v", definition)
+		}
+	}
+	if !found {
+		t.Fatal("expected accessory_earrings_r0 definition")
 	}
 }
 

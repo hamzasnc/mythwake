@@ -336,7 +336,7 @@ Current backend state:
 - Daily Mission, Mission Track, and Summon actions now reject unknown client IDs and resolve rewards through server-owned balance definitions.
 - PostgreSQL now has DB-ready definition tables for heroes, campaign stages, rewards, progression costs, summon pools, daily missions, and Mission Track rewards.
 - The large backend player service has been split into focused domain files for campaign/dungeons, progression, gear, meta actions, snapshots, and persistence.
-- Server-owned dungeon, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes, ETags, and `304 Not Modified` revalidation.
+- Server-owned currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes, ETags, and `304 Not Modified` revalidation.
 - Unity Server Mode can now load and cache the `/definitions` snapshot with ETag revalidation and use it for server-owned dungeon preview values.
 - Successful idempotent action results save in `player.player_action_results`.
 - Per-action economy deltas save in `logs.player_action_ledger`.
@@ -566,6 +566,7 @@ Progress:
 - Added `internal/definitions` as a read-only API projection layer for balance and gameplay catalogs.
 - Added content hashes and ETag revalidation to the read-only definition snapshot endpoint.
 - Added Unity definition snapshot DTOs, ETag-backed local caching, and a Shop-tab `Defs` smoke button.
+- Expanded definition snapshots to cover currencies, heroes, rewards, campaign stages, accessory slots, accessory rarities, and accessory item definitions.
 
 Next useful step:
 - Continue turning the split player service into explicit domain services where it adds real ownership boundaries:

@@ -11,12 +11,27 @@ const (
 	CurrencyGems        = "gems"
 	CurrencyMythEssence = "myth_essence"
 	CurrencyPassXP      = "pass_xp"
+	CurrencyHeroShards  = "hero_shards"
 )
+
+type CurrencyDefinition struct {
+	ID          string
+	DisplayName string
+	IsPremium   bool
+}
 
 type InsufficientCurrencyError struct {
 	CurrencyID string
 	Required   int
 	Available  int
+}
+
+var currencyDefinitions = []CurrencyDefinition{
+	{ID: CurrencyGold, DisplayName: "Gold"},
+	{ID: CurrencyGems, DisplayName: "Gems", IsPremium: true},
+	{ID: CurrencyMythEssence, DisplayName: "Myth Essence"},
+	{ID: CurrencyPassXP, DisplayName: "Pass XP"},
+	{ID: CurrencyHeroShards, DisplayName: "Hero Shards"},
 }
 
 func (err InsufficientCurrencyError) Error() string {
@@ -28,18 +43,19 @@ func (err InsufficientCurrencyError) Message() string {
 }
 
 func DisplayName(currencyID string) string {
-	switch currencyID {
-	case CurrencyGold:
-		return "Gold"
-	case CurrencyGems:
-		return "Gems"
-	case CurrencyMythEssence:
-		return "Myth Essence"
-	case CurrencyPassXP:
-		return "Pass XP"
-	default:
-		return currencyID
+	for _, definition := range currencyDefinitions {
+		if definition.ID == currencyID {
+			return definition.DisplayName
+		}
 	}
+
+	return currencyID
+}
+
+func CurrencyDefinitions() []CurrencyDefinition {
+	definitions := make([]CurrencyDefinition, len(currencyDefinitions))
+	copy(definitions, currencyDefinitions)
+	return definitions
 }
 
 func Amount(state api.PlayerState, currencyID string) (int, bool) {

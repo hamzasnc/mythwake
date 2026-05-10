@@ -95,12 +95,63 @@ type DefinitionSnapshot struct {
 	SchemaVersion     int                          `json:"schemaVersion"`
 	APIVersion        string                       `json:"apiVersion"`
 	ContentHash       string                       `json:"contentHash"`
+	Currencies        []CurrencyDefinition         `json:"currencies"`
+	Heroes            []HeroDefinition             `json:"heroes"`
+	Rewards           []RewardDefinition           `json:"rewards"`
+	Campaigns         []CampaignDefinition         `json:"campaigns"`
+	CampaignStages    []CampaignStageDefinition    `json:"campaignStages"`
 	Dungeons          []DungeonDefinition          `json:"dungeons"`
+	AccessorySlots    []AccessorySlotDefinition    `json:"accessorySlots"`
+	AccessoryRarities []AccessoryRarityDefinition  `json:"accessoryRarities"`
+	Accessories       []AccessoryDefinition        `json:"accessories"`
 	ProgressionCosts  []ProgressionCostDefinition  `json:"progressionCosts"`
 	SummonBanners     []SummonBannerDefinition     `json:"summonBanners"`
 	DailyMissions     []DailyMissionDefinition     `json:"dailyMissions"`
 	BattlePassRewards []BattlePassRewardDefinition `json:"battlePassRewards"`
 	GameplayActions   []GameplayActionDefinition   `json:"gameplayActions"`
+}
+
+type CurrencyDefinition struct {
+	CurrencyID  string `json:"currencyId"`
+	DisplayName string `json:"displayName"`
+	IsPremium   bool   `json:"isPremium"`
+}
+
+type HeroDefinition struct {
+	HeroID       string `json:"heroId"`
+	DisplayName  string `json:"displayName"`
+	SortOrder    int    `json:"sortOrder"`
+	StarterOwned bool   `json:"starterOwned"`
+}
+
+type RewardDefinition struct {
+	RewardID    string `json:"rewardId"`
+	DisplayName string `json:"displayName"`
+	RewardType  string `json:"rewardType"`
+	Reward      Reward `json:"reward"`
+}
+
+type CampaignDefinition struct {
+	CampaignID                string `json:"campaignId"`
+	DisplayName               string `json:"displayName"`
+	BaseRequiredPower         int    `json:"baseRequiredPower"`
+	RequiredPowerPerStage     int    `json:"requiredPowerPerStage"`
+	BaseMythEssenceReward     int    `json:"baseMythEssenceReward"`
+	MythEssenceRewardPerStage int    `json:"mythEssenceRewardPerStage"`
+	MilestoneEveryStages      int    `json:"milestoneEveryStages"`
+	MilestoneBaseGems         int    `json:"milestoneBaseGems"`
+	MilestoneGemsPerStage     int    `json:"milestoneGemsPerStage"`
+	MilestonePassXP           int    `json:"milestonePassXp"`
+}
+
+type CampaignStageDefinition struct {
+	StageID        string `json:"stageId"`
+	CampaignID     string `json:"campaignId"`
+	StageNumber    int    `json:"stageNumber"`
+	DisplayName    string `json:"displayName"`
+	RequiredPower  int    `json:"requiredPower"`
+	RewardID       string `json:"rewardId"`
+	EnemyProfileID string `json:"enemyProfileId"`
 }
 
 type DungeonDefinition struct {
@@ -111,6 +162,30 @@ type DungeonDefinition struct {
 	RequiredPowerPerFloor int    `json:"requiredPowerPerFloor"`
 	BaseRewardAmount      int    `json:"baseRewardAmount"`
 	RewardPerFloor        int    `json:"rewardPerFloor"`
+}
+
+type AccessorySlotDefinition struct {
+	SlotID      string `json:"slotId"`
+	DisplayName string `json:"displayName"`
+	SortOrder   int    `json:"sortOrder"`
+}
+
+type AccessoryRarityDefinition struct {
+	RarityID     string `json:"rarityId"`
+	RarityIndex  int    `json:"rarityIndex"`
+	DisplayName  string `json:"displayName"`
+	MaxLevel     int    `json:"maxLevel"`
+	FuseCopyCost int    `json:"fuseCopyCost"`
+}
+
+type AccessoryDefinition struct {
+	AccessoryID    string `json:"accessoryId"`
+	SlotID         string `json:"slotId"`
+	RarityID       string `json:"rarityId"`
+	AttackPerLevel int    `json:"attackPerLevel"`
+	HealthPerLevel int    `json:"healthPerLevel"`
+	DropWeight     int    `json:"dropWeight"`
+	FuseTargetID   string `json:"fuseTargetId,omitempty"`
 }
 
 type ProgressionCostDefinition struct {

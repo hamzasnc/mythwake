@@ -44,6 +44,20 @@ func TestGrantReward(t *testing.T) {
 	}
 }
 
+func TestCurrencyDefinitions(t *testing.T) {
+	definitions := CurrencyDefinitions()
+
+	if len(definitions) != 5 {
+		t.Fatalf("expected 5 currency definitions, got %#v", definitions)
+	}
+	if DisplayName(CurrencyHeroShards) != "Hero Shards" {
+		t.Fatalf("expected hero shard display name, got %s", DisplayName(CurrencyHeroShards))
+	}
+	if !definitions[1].IsPremium || definitions[1].ID != CurrencyGems {
+		t.Fatalf("expected gems to be premium second definition, got %#v", definitions[1])
+	}
+}
+
 func TestDelta(t *testing.T) {
 	before := api.PlayerState{Gold: 100, Gems: 20, MythEssence: 50, PassXP: 5}
 	after := api.PlayerState{Gold: 80, Gems: 25, MythEssence: 75, PassXP: 5}

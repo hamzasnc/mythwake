@@ -33,6 +33,67 @@ type DungeonDefinition struct {
 	RewardPerFloor        int
 }
 
+type HeroDefinition struct {
+	ID           string
+	DisplayName  string
+	SortOrder    int
+	StarterOwned bool
+}
+
+type RewardDefinition struct {
+	ID          string
+	DisplayName string
+	RewardType  string
+	Reward      api.Reward
+}
+
+type CampaignDefinition struct {
+	ID                        string
+	DisplayName               string
+	BaseRequiredPower         int
+	RequiredPowerPerStage     int
+	BaseMythEssenceReward     int
+	MythEssenceRewardPerStage int
+	MilestoneEveryStages      int
+	MilestoneBaseGems         int
+	MilestoneGemsPerStage     int
+	MilestonePassXP           int
+}
+
+type CampaignStageDefinition struct {
+	ID             string
+	CampaignID     string
+	StageNumber    int
+	DisplayName    string
+	RequiredPower  int
+	RewardID       string
+	EnemyProfileID string
+}
+
+type AccessorySlotDefinition struct {
+	ID          string
+	DisplayName string
+	SortOrder   int
+}
+
+type AccessoryRarityDefinition struct {
+	ID           string
+	RarityIndex  int
+	DisplayName  string
+	MaxLevel     int
+	FuseCopyCost int
+}
+
+type AccessoryDefinition struct {
+	ID             string
+	SlotID         string
+	RarityID       string
+	AttackPerLevel int
+	HealthPerLevel int
+	DropWeight     int
+	FuseTargetID   string
+}
+
 type DailyMissionDefinition struct {
 	ID           string
 	DisplayName  string
@@ -70,6 +131,73 @@ type SummonBannerDefinition struct {
 	CostAmount     int
 	ResolutionMode string
 	ShardDrops     []SummonShardDrop
+}
+
+var heroDefinitions = []HeroDefinition{
+	{ID: "hero_astra", DisplayName: "Astra", SortOrder: 10, StarterOwned: true},
+	{ID: "hero_borin", DisplayName: "Borin", SortOrder: 20, StarterOwned: true},
+	{ID: "hero_cyra", DisplayName: "Cyra", SortOrder: 30, StarterOwned: true},
+	{ID: "hero_dante", DisplayName: "Dante", SortOrder: 40, StarterOwned: true},
+	{ID: "hero_elowen", DisplayName: "Elowen", SortOrder: 50, StarterOwned: true},
+}
+
+var campaignDefinitions = []CampaignDefinition{
+	{
+		ID:                        "main_campaign",
+		DisplayName:               "Main Campaign",
+		BaseRequiredPower:         90,
+		RequiredPowerPerStage:     46,
+		BaseMythEssenceReward:     7,
+		MythEssenceRewardPerStage: 4,
+		MilestoneEveryStages:      5,
+		MilestoneBaseGems:         12,
+		MilestoneGemsPerStage:     1,
+		MilestonePassXP:           25,
+	},
+}
+
+var accessorySlotDefinitions = []AccessorySlotDefinition{
+	{ID: "earrings", DisplayName: "Ohrringe", SortOrder: 10},
+	{ID: "necklace", DisplayName: "Kette", SortOrder: 20},
+	{ID: "bracelet", DisplayName: "Armband", SortOrder: 30},
+	{ID: "gloves", DisplayName: "Handschuhe", SortOrder: 40},
+	{ID: "shoes", DisplayName: "Schuhe", SortOrder: 50},
+}
+
+var accessoryRarityDefinitions = []AccessoryRarityDefinition{
+	{ID: "r0", RarityIndex: 0, DisplayName: "R0", MaxLevel: 20, FuseCopyCost: 3},
+	{ID: "r1", RarityIndex: 1, DisplayName: "R1", MaxLevel: 30, FuseCopyCost: 3},
+	{ID: "r2", RarityIndex: 2, DisplayName: "R2", MaxLevel: 40, FuseCopyCost: 3},
+	{ID: "r3", RarityIndex: 3, DisplayName: "R3", MaxLevel: 50, FuseCopyCost: 3},
+	{ID: "r4", RarityIndex: 4, DisplayName: "R4", MaxLevel: 60, FuseCopyCost: 3},
+}
+
+var accessoryDefinitions = []AccessoryDefinition{
+	{ID: "accessory_earrings_r0", SlotID: "earrings", RarityID: "r0", AttackPerLevel: 2, HealthPerLevel: 8, DropWeight: 120, FuseTargetID: "accessory_earrings_r1"},
+	{ID: "accessory_earrings_r1", SlotID: "earrings", RarityID: "r1", AttackPerLevel: 4, HealthPerLevel: 16, DropWeight: 55, FuseTargetID: "accessory_earrings_r2"},
+	{ID: "accessory_earrings_r2", SlotID: "earrings", RarityID: "r2", AttackPerLevel: 7, HealthPerLevel: 28, DropWeight: 22, FuseTargetID: "accessory_earrings_r3"},
+	{ID: "accessory_earrings_r3", SlotID: "earrings", RarityID: "r3", AttackPerLevel: 11, HealthPerLevel: 44, DropWeight: 8, FuseTargetID: "accessory_earrings_r4"},
+	{ID: "accessory_earrings_r4", SlotID: "earrings", RarityID: "r4", AttackPerLevel: 16, HealthPerLevel: 64, DropWeight: 2},
+	{ID: "accessory_necklace_r0", SlotID: "necklace", RarityID: "r0", AttackPerLevel: 1, HealthPerLevel: 12, DropWeight: 120, FuseTargetID: "accessory_necklace_r1"},
+	{ID: "accessory_necklace_r1", SlotID: "necklace", RarityID: "r1", AttackPerLevel: 3, HealthPerLevel: 24, DropWeight: 55, FuseTargetID: "accessory_necklace_r2"},
+	{ID: "accessory_necklace_r2", SlotID: "necklace", RarityID: "r2", AttackPerLevel: 5, HealthPerLevel: 40, DropWeight: 22, FuseTargetID: "accessory_necklace_r3"},
+	{ID: "accessory_necklace_r3", SlotID: "necklace", RarityID: "r3", AttackPerLevel: 8, HealthPerLevel: 64, DropWeight: 8, FuseTargetID: "accessory_necklace_r4"},
+	{ID: "accessory_necklace_r4", SlotID: "necklace", RarityID: "r4", AttackPerLevel: 12, HealthPerLevel: 92, DropWeight: 2},
+	{ID: "accessory_bracelet_r0", SlotID: "bracelet", RarityID: "r0", AttackPerLevel: 2, HealthPerLevel: 10, DropWeight: 120, FuseTargetID: "accessory_bracelet_r1"},
+	{ID: "accessory_bracelet_r1", SlotID: "bracelet", RarityID: "r1", AttackPerLevel: 4, HealthPerLevel: 20, DropWeight: 55, FuseTargetID: "accessory_bracelet_r2"},
+	{ID: "accessory_bracelet_r2", SlotID: "bracelet", RarityID: "r2", AttackPerLevel: 6, HealthPerLevel: 34, DropWeight: 22, FuseTargetID: "accessory_bracelet_r3"},
+	{ID: "accessory_bracelet_r3", SlotID: "bracelet", RarityID: "r3", AttackPerLevel: 10, HealthPerLevel: 54, DropWeight: 8, FuseTargetID: "accessory_bracelet_r4"},
+	{ID: "accessory_bracelet_r4", SlotID: "bracelet", RarityID: "r4", AttackPerLevel: 14, HealthPerLevel: 78, DropWeight: 2},
+	{ID: "accessory_gloves_r0", SlotID: "gloves", RarityID: "r0", AttackPerLevel: 3, HealthPerLevel: 6, DropWeight: 120, FuseTargetID: "accessory_gloves_r1"},
+	{ID: "accessory_gloves_r1", SlotID: "gloves", RarityID: "r1", AttackPerLevel: 5, HealthPerLevel: 12, DropWeight: 55, FuseTargetID: "accessory_gloves_r2"},
+	{ID: "accessory_gloves_r2", SlotID: "gloves", RarityID: "r2", AttackPerLevel: 9, HealthPerLevel: 22, DropWeight: 22, FuseTargetID: "accessory_gloves_r3"},
+	{ID: "accessory_gloves_r3", SlotID: "gloves", RarityID: "r3", AttackPerLevel: 13, HealthPerLevel: 36, DropWeight: 8, FuseTargetID: "accessory_gloves_r4"},
+	{ID: "accessory_gloves_r4", SlotID: "gloves", RarityID: "r4", AttackPerLevel: 18, HealthPerLevel: 52, DropWeight: 2},
+	{ID: "accessory_shoes_r0", SlotID: "shoes", RarityID: "r0", AttackPerLevel: 1, HealthPerLevel: 14, DropWeight: 120, FuseTargetID: "accessory_shoes_r1"},
+	{ID: "accessory_shoes_r1", SlotID: "shoes", RarityID: "r1", AttackPerLevel: 3, HealthPerLevel: 26, DropWeight: 55, FuseTargetID: "accessory_shoes_r2"},
+	{ID: "accessory_shoes_r2", SlotID: "shoes", RarityID: "r2", AttackPerLevel: 5, HealthPerLevel: 44, DropWeight: 22, FuseTargetID: "accessory_shoes_r3"},
+	{ID: "accessory_shoes_r3", SlotID: "shoes", RarityID: "r3", AttackPerLevel: 8, HealthPerLevel: 70, DropWeight: 8, FuseTargetID: "accessory_shoes_r4"},
+	{ID: "accessory_shoes_r4", SlotID: "shoes", RarityID: "r4", AttackPerLevel: 12, HealthPerLevel: 100, DropWeight: 2},
 }
 
 var dungeonDefinitions = map[string]DungeonDefinition{
@@ -203,6 +331,102 @@ func DungeonDefinitions() []DungeonDefinition {
 	sort.Slice(definitions, func(left int, right int) bool {
 		return definitions[left].ID < definitions[right].ID
 	})
+	return definitions
+}
+
+func HeroDefinitions() []HeroDefinition {
+	definitions := make([]HeroDefinition, len(heroDefinitions))
+	copy(definitions, heroDefinitions)
+	return definitions
+}
+
+func CampaignDefinitions() []CampaignDefinition {
+	definitions := make([]CampaignDefinition, len(campaignDefinitions))
+	copy(definitions, campaignDefinitions)
+	return definitions
+}
+
+func CampaignStageDefinitions() []CampaignStageDefinition {
+	definitions := make([]CampaignStageDefinition, 0, 60)
+	for stage := 1; stage <= 60; stage++ {
+		definitions = append(definitions, CampaignStageDefinition{
+			ID:             fmt.Sprintf("campaign_stage_%03d", stage),
+			CampaignID:     "main_campaign",
+			StageNumber:    stage,
+			DisplayName:    fmt.Sprintf("Rift Echo %d", stage),
+			RequiredPower:  CampaignRequiredPower(stage),
+			RewardID:       fmt.Sprintf("reward_campaign_stage_%03d", stage),
+			EnemyProfileID: "rift_echo",
+		})
+	}
+	return definitions
+}
+
+func RewardDefinitions() []RewardDefinition {
+	definitions := []RewardDefinition{
+		{ID: RewardSummonShards, DisplayName: "Hero Shards", RewardType: "summon", Reward: api.Reward{RewardID: RewardSummonShards}},
+		{ID: RewardGearDrop, DisplayName: "Gear Dungeon Accessory Drop", RewardType: "gear_drop", Reward: api.Reward{RewardID: RewardGearDrop}},
+	}
+
+	for _, definition := range dailyMissionDefinitions {
+		definitions = append(definitions, RewardDefinition{
+			ID:          definition.Reward.RewardID,
+			DisplayName: rewardDisplayName(definition.Reward.RewardID, fmt.Sprintf("%s Reward", definition.DisplayName)),
+			RewardType:  "daily_mission",
+			Reward:      definition.Reward,
+		})
+	}
+
+	for index, definition := range battlePassRewardDefinitions {
+		definitions = append(definitions, RewardDefinition{
+			ID:          definition.Reward.RewardID,
+			DisplayName: rewardDisplayName(definition.Reward.RewardID, fmt.Sprintf("Mission Track Reward %02d", index+1)),
+			RewardType:  "battle_pass",
+			Reward:      definition.Reward,
+		})
+	}
+
+	for stage := 1; stage <= 60; stage++ {
+		reward := CampaignReward(stage)
+		definitions = append(definitions, RewardDefinition{
+			ID:          reward.RewardID,
+			DisplayName: fmt.Sprintf("Campaign Stage %d Reward", stage),
+			RewardType:  "campaign_stage",
+			Reward:      reward,
+		})
+	}
+
+	return definitions
+}
+
+func rewardDisplayName(rewardID string, fallback string) string {
+	switch rewardID {
+	case "reward_daily_battles_15":
+		return "Daily Battles Reward"
+	case "reward_daily_stage_clears_3":
+		return "Daily Stage Clears Reward"
+	case "reward_daily_summon_1":
+		return "Daily Summon Reward"
+	default:
+		return fallback
+	}
+}
+
+func AccessorySlotDefinitions() []AccessorySlotDefinition {
+	definitions := make([]AccessorySlotDefinition, len(accessorySlotDefinitions))
+	copy(definitions, accessorySlotDefinitions)
+	return definitions
+}
+
+func AccessoryRarityDefinitions() []AccessoryRarityDefinition {
+	definitions := make([]AccessoryRarityDefinition, len(accessoryRarityDefinitions))
+	copy(definitions, accessoryRarityDefinitions)
+	return definitions
+}
+
+func AccessoryDefinitions() []AccessoryDefinition {
+	definitions := make([]AccessoryDefinition, len(accessoryDefinitions))
+	copy(definitions, accessoryDefinitions)
 	return definitions
 }
 

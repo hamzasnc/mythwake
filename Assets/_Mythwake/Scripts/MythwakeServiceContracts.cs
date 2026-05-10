@@ -129,12 +129,73 @@ public struct MythwakeDefinitionSnapshotDto
     public int schemaVersion;
     public string apiVersion;
     public string contentHash;
+    public MythwakeCurrencyDefinitionDto[] currencies;
+    public MythwakeHeroDefinitionDto[] heroes;
+    public MythwakeRewardDefinitionDto[] rewards;
+    public MythwakeCampaignDefinitionDto[] campaigns;
+    public MythwakeCampaignStageDefinitionDto[] campaignStages;
     public MythwakeDungeonDefinitionDto[] dungeons;
+    public MythwakeAccessorySlotDefinitionDto[] accessorySlots;
+    public MythwakeAccessoryRarityDefinitionDto[] accessoryRarities;
+    public MythwakeAccessoryDefinitionDto[] accessories;
     public MythwakeProgressionCostDefinitionDto[] progressionCosts;
     public MythwakeSummonBannerDefinitionDto[] summonBanners;
     public MythwakeDailyMissionDefinitionDto[] dailyMissions;
     public MythwakeBattlePassRewardDefinitionDto[] battlePassRewards;
     public MythwakeGameplayActionDefinitionDto[] gameplayActions;
+}
+
+[Serializable]
+public struct MythwakeCurrencyDefinitionDto
+{
+    public string currencyId;
+    public string displayName;
+    public bool isPremium;
+}
+
+[Serializable]
+public struct MythwakeHeroDefinitionDto
+{
+    public string heroId;
+    public string displayName;
+    public int sortOrder;
+    public bool starterOwned;
+}
+
+[Serializable]
+public struct MythwakeRewardDefinitionDto
+{
+    public string rewardId;
+    public string displayName;
+    public string rewardType;
+    public MythwakeRewardDto reward;
+}
+
+[Serializable]
+public struct MythwakeCampaignDefinitionDto
+{
+    public string campaignId;
+    public string displayName;
+    public int baseRequiredPower;
+    public int requiredPowerPerStage;
+    public int baseMythEssenceReward;
+    public int mythEssenceRewardPerStage;
+    public int milestoneEveryStages;
+    public int milestoneBaseGems;
+    public int milestoneGemsPerStage;
+    public int milestonePassXp;
+}
+
+[Serializable]
+public struct MythwakeCampaignStageDefinitionDto
+{
+    public string stageId;
+    public string campaignId;
+    public int stageNumber;
+    public string displayName;
+    public int requiredPower;
+    public string rewardId;
+    public string enemyProfileId;
 }
 
 [Serializable]
@@ -147,6 +208,36 @@ public struct MythwakeDungeonDefinitionDto
     public int requiredPowerPerFloor;
     public int baseRewardAmount;
     public int rewardPerFloor;
+}
+
+[Serializable]
+public struct MythwakeAccessorySlotDefinitionDto
+{
+    public string slotId;
+    public string displayName;
+    public int sortOrder;
+}
+
+[Serializable]
+public struct MythwakeAccessoryRarityDefinitionDto
+{
+    public string rarityId;
+    public int rarityIndex;
+    public string displayName;
+    public int maxLevel;
+    public int fuseCopyCost;
+}
+
+[Serializable]
+public struct MythwakeAccessoryDefinitionDto
+{
+    public string accessoryId;
+    public string slotId;
+    public string rarityId;
+    public int attackPerLevel;
+    public int healthPerLevel;
+    public int dropWeight;
+    public string fuseTargetId;
 }
 
 [Serializable]

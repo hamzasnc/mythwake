@@ -8,6 +8,7 @@ import (
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/balance"
+	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
@@ -17,7 +18,15 @@ func Snapshot(apiVersion string) api.DefinitionSnapshot {
 	snapshot := api.DefinitionSnapshot{
 		SchemaVersion:     SchemaVersion,
 		APIVersion:        apiVersion,
+		Currencies:        currencyDefinitions(),
+		Heroes:            heroDefinitions(),
+		Rewards:           rewardDefinitions(),
+		Campaigns:         campaignDefinitions(),
+		CampaignStages:    campaignStageDefinitions(),
 		Dungeons:          dungeonDefinitions(),
+		AccessorySlots:    accessorySlotDefinitions(),
+		AccessoryRarities: accessoryRarityDefinitions(),
+		Accessories:       accessoryDefinitions(),
 		ProgressionCosts:  progressionCostDefinitions(),
 		SummonBanners:     summonBannerDefinitions(),
 		DailyMissions:     dailyMissionDefinitions(),
@@ -43,6 +52,84 @@ func ETag(snapshot api.DefinitionSnapshot) string {
 	return fmt.Sprintf(`"definitions-%s"`, snapshot.ContentHash)
 }
 
+func currencyDefinitions() []api.CurrencyDefinition {
+	definitions := economy.CurrencyDefinitions()
+	response := make([]api.CurrencyDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.CurrencyDefinition{
+			CurrencyID:  definition.ID,
+			DisplayName: definition.DisplayName,
+			IsPremium:   definition.IsPremium,
+		})
+	}
+	return response
+}
+
+func heroDefinitions() []api.HeroDefinition {
+	definitions := balance.HeroDefinitions()
+	response := make([]api.HeroDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.HeroDefinition{
+			HeroID:       definition.ID,
+			DisplayName:  definition.DisplayName,
+			SortOrder:    definition.SortOrder,
+			StarterOwned: definition.StarterOwned,
+		})
+	}
+	return response
+}
+
+func rewardDefinitions() []api.RewardDefinition {
+	definitions := balance.RewardDefinitions()
+	response := make([]api.RewardDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.RewardDefinition{
+			RewardID:    definition.ID,
+			DisplayName: definition.DisplayName,
+			RewardType:  definition.RewardType,
+			Reward:      definition.Reward,
+		})
+	}
+	return response
+}
+
+func campaignDefinitions() []api.CampaignDefinition {
+	definitions := balance.CampaignDefinitions()
+	response := make([]api.CampaignDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.CampaignDefinition{
+			CampaignID:                definition.ID,
+			DisplayName:               definition.DisplayName,
+			BaseRequiredPower:         definition.BaseRequiredPower,
+			RequiredPowerPerStage:     definition.RequiredPowerPerStage,
+			BaseMythEssenceReward:     definition.BaseMythEssenceReward,
+			MythEssenceRewardPerStage: definition.MythEssenceRewardPerStage,
+			MilestoneEveryStages:      definition.MilestoneEveryStages,
+			MilestoneBaseGems:         definition.MilestoneBaseGems,
+			MilestoneGemsPerStage:     definition.MilestoneGemsPerStage,
+			MilestonePassXP:           definition.MilestonePassXP,
+		})
+	}
+	return response
+}
+
+func campaignStageDefinitions() []api.CampaignStageDefinition {
+	definitions := balance.CampaignStageDefinitions()
+	response := make([]api.CampaignStageDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.CampaignStageDefinition{
+			StageID:        definition.ID,
+			CampaignID:     definition.CampaignID,
+			StageNumber:    definition.StageNumber,
+			DisplayName:    definition.DisplayName,
+			RequiredPower:  definition.RequiredPower,
+			RewardID:       definition.RewardID,
+			EnemyProfileID: definition.EnemyProfileID,
+		})
+	}
+	return response
+}
+
 func dungeonDefinitions() []api.DungeonDefinition {
 	definitions := balance.DungeonDefinitions()
 	response := make([]api.DungeonDefinition, 0, len(definitions))
@@ -55,6 +142,51 @@ func dungeonDefinitions() []api.DungeonDefinition {
 			RequiredPowerPerFloor: definition.RequiredPowerPerFloor,
 			BaseRewardAmount:      definition.BaseRewardAmount,
 			RewardPerFloor:        definition.RewardPerFloor,
+		})
+	}
+	return response
+}
+
+func accessorySlotDefinitions() []api.AccessorySlotDefinition {
+	definitions := balance.AccessorySlotDefinitions()
+	response := make([]api.AccessorySlotDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.AccessorySlotDefinition{
+			SlotID:      definition.ID,
+			DisplayName: definition.DisplayName,
+			SortOrder:   definition.SortOrder,
+		})
+	}
+	return response
+}
+
+func accessoryRarityDefinitions() []api.AccessoryRarityDefinition {
+	definitions := balance.AccessoryRarityDefinitions()
+	response := make([]api.AccessoryRarityDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.AccessoryRarityDefinition{
+			RarityID:     definition.ID,
+			RarityIndex:  definition.RarityIndex,
+			DisplayName:  definition.DisplayName,
+			MaxLevel:     definition.MaxLevel,
+			FuseCopyCost: definition.FuseCopyCost,
+		})
+	}
+	return response
+}
+
+func accessoryDefinitions() []api.AccessoryDefinition {
+	definitions := balance.AccessoryDefinitions()
+	response := make([]api.AccessoryDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.AccessoryDefinition{
+			AccessoryID:    definition.ID,
+			SlotID:         definition.SlotID,
+			RarityID:       definition.RarityID,
+			AttackPerLevel: definition.AttackPerLevel,
+			HealthPerLevel: definition.HealthPerLevel,
+			DropWeight:     definition.DropWeight,
+			FuseTargetID:   definition.FuseTargetID,
 		})
 	}
 	return response
