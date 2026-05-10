@@ -110,6 +110,26 @@ func TestManagerFlushPlayerIfLoadedSkipsColdPlayer(t *testing.T) {
 	}
 }
 
+func TestManagerInjectsBalanceCatalogIntoServices(t *testing.T) {
+	manager := NewManager(nil, WithBalanceCatalog(expensiveSummonCatalog{}))
+	service, err := manager.ServiceForPlayer(context.Background(), "catalog-player")
+	if err != nil {
+		t.Fatalf("service for player: %v", err)
+	}
+
+	service.state.Gems = 998
+	result := service.PullSummon(heroBannerID)
+	if result.Success || result.ErrorCode != "insufficient_currency" {
+		t.Fatalf("expected injected summon cost to block pull, got %#v", result)
+	}
+
+	service.state.Gems = 999
+	result = service.PullSummon(heroBannerID)
+	if !result.Success {
+		t.Fatalf("expected exact injected summon cost to pass, got %#v", result)
+	}
+}
+
 type managerFlushStore struct {
 	saved      map[string]PersistentState
 	flushCount int
@@ -127,4 +147,12 @@ func (store *managerFlushStore) SaveState(_ context.Context, playerID string, st
 func (store *managerFlushStore) Flush(context.Context) error {
 	store.flushCount++
 	return nil
+}
+
+type expensiveSummonCatalog struct {
+	StaticBalanceCatalog
+}
+
+func (expensiveSummonCatalog) SummonCost(string) (int, bool) {
+	return 999, true
 }

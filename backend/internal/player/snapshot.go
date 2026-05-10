@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
-	"github.com/hamzasnc/mythwake/backend/internal/balance"
 )
 
 func (service *Service) snapshot() api.PlayerSnapshot {
@@ -27,7 +26,7 @@ func (service *Service) snapshot() api.PlayerSnapshot {
 }
 
 func (service *Service) dailyProgressStates() []api.DailyProgress {
-	definitions := balance.DailyMissionDefinitions()
+	definitions := service.balanceCatalog.DailyMissionDefinitions()
 	states := make([]api.DailyProgress, 0, len(definitions))
 	for _, definition := range definitions {
 		states = append(states, api.DailyProgress{

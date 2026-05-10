@@ -110,6 +110,7 @@ type Service struct {
 	playerID           string
 	stateStore         StateStore
 	actionResultStore  ActionResultStore
+	balanceCatalog     BalanceCatalog
 	campaignActions    campaignActions
 	dungeonActions     dungeonActions
 	heroActions        heroProgressionActions
@@ -137,19 +138,30 @@ type Service struct {
 	now                func() time.Time
 }
 
+type ServiceOption func(*Service)
+
+func withServiceBalanceCatalog(catalog BalanceCatalog) ServiceOption {
+	return func(service *Service) {
+		if catalog != nil {
+			service.balanceCatalog = catalog
+		}
+	}
+}
+
 func NewService() *Service {
 	return NewServiceForPlayer(defaultPlayerID)
 }
 
-func NewServiceForPlayer(playerID string) *Service {
+func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 	playerID = strings.TrimSpace(playerID)
 	if playerID == "" {
 		playerID = defaultPlayerID
 	}
 
 	service := &Service{
-		playerID: playerID,
-		now:      time.Now,
+		playerID:       playerID,
+		balanceCatalog: StaticBalanceCatalog{},
+		now:            time.Now,
 		state: api.PlayerState{
 			SaveVersion:         1,
 			Gold:                0,
@@ -181,6 +193,9 @@ func NewServiceForPlayer(playerID string) *Service {
 		equippedAccessory:  map[string]string{},
 		claimedDaily:       map[string]bool{},
 		claimedBattlePass:  map[string]bool{},
+	}
+	for _, option := range options {
+		option(service)
 	}
 	service.lastAFKClaimedAt = service.now().UTC()
 	service.dailyDate = dailyDateKey(service.now())

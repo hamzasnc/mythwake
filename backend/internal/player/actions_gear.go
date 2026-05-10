@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
-	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
@@ -59,7 +58,7 @@ func (actions accessoryActions) LevelAccessory(ctx context.Context, request Acti
 			return actionFailure("missing_item", fmt.Sprintf("Missing accessory: %s.", accessoryID))
 		}
 
-		cost := balance.AccessoryLevelCost(accessoryID, service.accessoryLevels[accessoryID])
+		cost := service.balanceCatalog.AccessoryLevelCost(accessoryID, service.accessoryLevels[accessoryID])
 		if failure, ok := service.spendCurrency(economy.CurrencyGold, cost); !ok {
 			return failure
 		}

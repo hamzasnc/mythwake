@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
-	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
@@ -28,12 +27,12 @@ func (actions summonActions) PullSummon(ctx context.Context, request ActionReque
 			return actionFailure("invalid_banner", fmt.Sprintf("Unknown banner: %s", bannerID))
 		}
 
-		cost, _ := balance.SummonCost(bannerID)
+		cost, _ := service.balanceCatalog.SummonCost(bannerID)
 		if failure, ok := service.spendCurrency(economy.CurrencyGems, cost); !ok {
 			return failure
 		}
 
-		drop, ok := balance.SummonShardReward(bannerID, service.summonCount)
+		drop, ok := service.balanceCatalog.SummonShardReward(bannerID, service.summonCount)
 		if !ok {
 			return actionFailure("invalid_banner", fmt.Sprintf("Unknown banner: %s", bannerID))
 		}
@@ -60,11 +59,11 @@ func (actions missionActions) ClaimDailyMission(ctx context.Context, request Act
 	defer service.mu.Unlock()
 
 	return service.executeAction(ctx, request, gameplay.ActionDailyMissionClaim, func() actionOutcome {
-		reward, ok := balance.DailyMissionReward(missionID)
+		reward, ok := service.balanceCatalog.DailyMissionReward(missionID)
 		if !ok {
 			return actionFailure("invalid_mission", fmt.Sprintf("Unknown daily mission: %s", missionID))
 		}
-		definition, _ := balance.DailyMissionDefinitionByID(missionID)
+		definition, _ := service.balanceCatalog.DailyMissionDefinitionByID(missionID)
 
 		if service.claimedDaily[missionID] {
 			return actionFailure("already_claimed", fmt.Sprintf("%s already claimed.", missionID))
@@ -95,7 +94,7 @@ func (actions missionActions) ClaimBattlePassReward(ctx context.Context, request
 	defer service.mu.Unlock()
 
 	return service.executeAction(ctx, request, gameplay.ActionBattlePassClaim, func() actionOutcome {
-		requiredPassXP, ok := balance.BattlePassRequiredXP(rewardID)
+		requiredPassXP, ok := service.balanceCatalog.BattlePassRequiredXP(rewardID)
 		if !ok {
 			return actionFailure("invalid_reward", fmt.Sprintf("Unknown battle pass reward: %s", rewardID))
 		}
@@ -108,7 +107,7 @@ func (actions missionActions) ClaimBattlePassReward(ctx context.Context, request
 			return actionFailure("not_unlocked", fmt.Sprintf("Need %d Pass XP.", requiredPassXP))
 		}
 
-		reward, ok := balance.BattlePassReward(rewardID)
+		reward, ok := service.balanceCatalog.BattlePassReward(rewardID)
 		if !ok {
 			return actionFailure("invalid_reward", fmt.Sprintf("Unknown battle pass reward: %s", rewardID))
 		}

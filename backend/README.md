@@ -76,6 +76,7 @@ Current scope:
 - Gameplay action IDs are centralized in `internal/gameplay` so routing, persistence, ledgers, and tests share the same names.
 - Currency IDs, spends, grants, display names, and deltas are centralized in `internal/economy`.
 - Early balance definitions for campaign, dungeons, costs, summons, and simple rewards are centralized in `internal/balance`.
+- Player gameplay services read balance through an injectable catalog boundary, so a database-backed gameplay catalog can replace the static catalog without changing route handlers.
 - When PostgreSQL is enabled, `/definitions` is loaded from `common.*` definition tables; no-database mode keeps using the static Go catalog.
 - Player service gameplay actions route through explicit domain action services while keeping the existing API surface stable.
 - Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.

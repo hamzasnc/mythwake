@@ -595,9 +595,10 @@ Progress:
 - Daily Mission claims now require the matching server-side fight, stage-clear, or summon progress before rewards are granted.
 - Unity Server Mode now uses backend definitions for summon cost/rotation, progression costs, daily missions, and Mission Track reward previews.
 - Added a PostgreSQL-backed definition provider so `/definitions` reads current common definition tables when the database is enabled.
+- Routed player gameplay balance reads through an injectable balance catalog while keeping the static Go catalog as the current runtime default.
 
 Next useful step:
-- Start routing backend gameplay balance reads through a definition service/repository instead of direct `internal/balance` helpers.
+- Implement a PostgreSQL-backed gameplay balance catalog and inject it into the player manager when the database is enabled.
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.
 - Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
 

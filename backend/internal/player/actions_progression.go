@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
-	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
@@ -29,7 +28,7 @@ func (actions heroProgressionActions) LevelHero(ctx context.Context, request Act
 			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID))
 		}
 
-		cost := balance.HeroLevelCost(level)
+		cost := service.balanceCatalog.HeroLevelCost(level)
 		if failure, ok := service.spendCurrency(economy.CurrencyMythEssence, cost); !ok {
 			return failure
 		}
@@ -58,7 +57,7 @@ func (actions heroProgressionActions) AscendHero(ctx context.Context, request Ac
 			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID))
 		}
 
-		cost := balance.HeroAscensionShardCost(service.heroAscensions[heroID])
+		cost := service.balanceCatalog.HeroAscensionShardCost(service.heroAscensions[heroID])
 		if service.heroShards[heroID] < cost {
 			return actionFailure("insufficient_shards", fmt.Sprintf("Need %d shards.", cost))
 		}
@@ -89,7 +88,7 @@ func (actions equipmentActions) LevelEquipment(ctx context.Context, request Acti
 			return actionFailure("invalid_equipment", fmt.Sprintf("Unknown equipment: %s", equipmentID))
 		}
 
-		cost, _ := balance.EquipmentLevelCost(equipmentID, level)
+		cost, _ := service.balanceCatalog.EquipmentLevelCost(equipmentID, level)
 		if failure, ok := service.spendCurrency(economy.CurrencyGold, cost); !ok {
 			return failure
 		}

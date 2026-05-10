@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
-	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
@@ -28,13 +27,13 @@ func (actions afkActions) ClaimAFKRewards(ctx context.Context, request ActionReq
 		now := service.now().UTC()
 		if service.lastAFKClaimedAt.IsZero() || service.lastAFKClaimedAt.After(now) {
 			service.lastAFKClaimedAt = now
-			return actionSuccess("AFK timer initialized.", api.Reward{RewardID: balance.RewardAFKClaim})
+			return actionSuccess("AFK timer initialized.", api.Reward{RewardID: service.balanceCatalog.RewardAFKClaim()})
 		}
 
 		elapsedSeconds := int(now.Sub(service.lastAFKClaimedAt).Seconds())
-		reward, claimedSeconds := balance.AFKReward(service.state.CampaignStage, elapsedSeconds)
+		reward, claimedSeconds := service.balanceCatalog.AFKReward(service.state.CampaignStage, elapsedSeconds)
 		if claimedSeconds <= 0 {
-			return actionFailure("afk_not_ready", fmt.Sprintf("AFK rewards need at least %s.", formatAFKDuration(balance.AFKMinClaimSeconds)))
+			return actionFailure("afk_not_ready", fmt.Sprintf("AFK rewards need at least %s.", formatAFKDuration(service.balanceCatalog.AFKMinClaimSeconds())))
 		}
 
 		economy.Grant(&service.state, reward)

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
-	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
@@ -52,19 +51,19 @@ func dungeonActionID(dungeonID string) string {
 
 func (actions dungeonActions) runResourceDungeon(dungeonID string, floor int, isGold bool) actionOutcome {
 	service := actions.service
-	definition, ok := balance.DungeonDefinitionByID(dungeonID)
+	definition, ok := service.balanceCatalog.DungeonDefinitionByID(dungeonID)
 	if !ok {
 		return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", dungeonID))
 	}
 
-	combat := service.simulateCombat(dungeonEnemy(definition, floor))
+	combat := service.simulateCombat(service.dungeonEnemy(definition, floor))
 	service.dailyFightCount++
 	label := fmt.Sprintf("%s Floor %d", definition.DisplayName, floor)
 	if !combat.Won {
 		return actionFailureWithCombat("combat_lost", formatCombatMessage(label, combat), combat, true)
 	}
 
-	reward := balance.DungeonReward(definition, floor)
+	reward := service.balanceCatalog.DungeonReward(definition, floor)
 	if isGold {
 		service.state.GoldDungeonFloor++
 	} else {
@@ -85,21 +84,21 @@ func (actions dungeonActions) runResourceDungeon(dungeonID string, floor int, is
 func (actions dungeonActions) runGearDungeon() actionOutcome {
 	service := actions.service
 	floor := service.state.GearDungeonFloor
-	definition, ok := balance.DungeonDefinitionByID(gearDungeonID)
+	definition, ok := service.balanceCatalog.DungeonDefinitionByID(gearDungeonID)
 	if !ok {
 		return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", gearDungeonID))
 	}
 
-	combat := service.simulateCombat(dungeonEnemy(definition, floor))
+	combat := service.simulateCombat(service.dungeonEnemy(definition, floor))
 	service.dailyFightCount++
 	label := fmt.Sprintf("%s Floor %d", definition.DisplayName, floor)
 	if !combat.Won {
 		return actionFailureWithCombat("combat_lost", formatCombatMessage(label, combat), combat, true)
 	}
 
-	accessoryID := balance.GearDungeonDropAccessoryID(floor)
+	accessoryID := service.balanceCatalog.GearDungeonDropAccessoryID(floor)
 	service.accessoryInventory[accessoryID]++
 	service.state.GearDungeonFloor++
 	message := fmt.Sprintf("%s Dropped %s.", formatCombatMessage(label, combat), accessoryID)
-	return actionSuccessWithCombat(message, balance.GearDungeonReward(), combat)
+	return actionSuccessWithCombat(message, service.balanceCatalog.GearDungeonReward(), combat)
 }

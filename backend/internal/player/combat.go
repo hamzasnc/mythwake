@@ -16,9 +16,9 @@ type combatEnemy struct {
 	maxRounds   int
 }
 
-func campaignEnemy(stage int) combatEnemy {
+func (service *Service) campaignEnemy(stage int) combatEnemy {
 	stage = max(1, stage)
-	stats := balance.CampaignEnemyCombatStats(stage)
+	stats := service.balanceCatalog.CampaignEnemyCombatStats(stage)
 	return combatEnemy{
 		mode:        "campaign",
 		targetID:    fmt.Sprintf("campaign_stage_%03d", stage),
@@ -29,9 +29,9 @@ func campaignEnemy(stage int) combatEnemy {
 	}
 }
 
-func dungeonEnemy(definition balance.DungeonDefinition, floor int) combatEnemy {
+func (service *Service) dungeonEnemy(definition balance.DungeonDefinition, floor int) combatEnemy {
 	floor = max(1, floor)
-	stats := balance.DungeonEnemyCombatStats(definition, floor)
+	stats := service.balanceCatalog.DungeonEnemyCombatStats(definition, floor)
 
 	return combatEnemy{
 		mode:        "dungeon",

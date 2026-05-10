@@ -9,16 +9,32 @@ import (
 )
 
 type Manager struct {
-	mu         sync.Mutex
-	stateStore StateStore
-	services   map[string]*Service
+	mu             sync.Mutex
+	stateStore     StateStore
+	balanceCatalog BalanceCatalog
+	services       map[string]*Service
 }
 
-func NewManager(stateStore StateStore) *Manager {
-	return &Manager{
-		stateStore: stateStore,
-		services:   map[string]*Service{},
+type ManagerOption func(*Manager)
+
+func WithBalanceCatalog(catalog BalanceCatalog) ManagerOption {
+	return func(manager *Manager) {
+		if catalog != nil {
+			manager.balanceCatalog = catalog
+		}
 	}
+}
+
+func NewManager(stateStore StateStore, options ...ManagerOption) *Manager {
+	manager := &Manager{
+		stateStore:     stateStore,
+		balanceCatalog: StaticBalanceCatalog{},
+		services:       map[string]*Service{},
+	}
+	for _, option := range options {
+		option(manager)
+	}
+	return manager
 }
 
 func (manager *Manager) ServiceForPlayer(ctx context.Context, playerID string) (*Service, error) {
@@ -34,7 +50,7 @@ func (manager *Manager) ServiceForPlayer(ctx context.Context, playerID string) (
 	}
 	manager.mu.Unlock()
 
-	service := NewServiceForPlayer(playerID)
+	service := NewServiceForPlayer(playerID, withServiceBalanceCatalog(manager.balanceCatalog))
 	if manager.stateStore != nil {
 		if err := service.UseStateStore(ctx, manager.stateStore); err != nil {
 			return nil, err

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
-	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
@@ -25,14 +24,14 @@ func (actions campaignActions) FightCampaign(ctx context.Context, request Action
 
 	return service.executeAction(ctx, request, gameplay.ActionCampaignFight, func() actionOutcome {
 		stage := service.state.CampaignStage
-		combat := service.simulateCombat(campaignEnemy(stage))
+		combat := service.simulateCombat(service.campaignEnemy(stage))
 		service.dailyFightCount++
 		label := fmt.Sprintf("Campaign Stage %d", stage)
 		if !combat.Won {
 			return actionFailureWithCombat("combat_lost", formatCombatMessage(label, combat), combat, true)
 		}
 
-		reward := balance.CampaignReward(stage)
+		reward := service.balanceCatalog.CampaignReward(stage)
 		economy.Grant(&service.state, reward)
 		service.state.CampaignStage++
 		service.dailyStageClears++
