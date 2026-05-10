@@ -625,6 +625,7 @@ Progress:
 - `/health` now reports state-cache dirty, queued, flushed, failed, loaded player contexts, last flush, and last error counters; PostgreSQL E2E verifies dirty queue visibility before manual flush and clean state after flush.
 - Added persistent player state revisions, action receipt metadata, and `debug.v_player_revision_overview` for Navicat-level state tracking.
 - Added action-ledger revision columns and monotonic PostgreSQL revision saves to protect batched materialized state writes.
+- Expanded PostgreSQL E2E coverage across starter gameplay mutation endpoints: resource dungeons, gear dungeon, accessory equip, hero level, equipment level, summon, daily mission claim, Battle Pass claim, flush, restart reload, idempotency replay, and logout.
 
 Next useful step:
 - Add more Redis-backed short-lived locks only when a specific system needs cross-process coordination.

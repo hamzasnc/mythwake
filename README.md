@@ -119,7 +119,7 @@ Backend:
 - Server-authoritative AFK claim endpoint grants capped Gold and Myth Essence using server time and persists the last claim timestamp
 - Backend AFK reward timing and Gold/Myth Essence formula are exposed through server-owned definitions and PostgreSQL seeds
 - Server-authoritative daily mission progress tracks fight, stage-clear, and summon counts by UTC day and blocks incomplete daily claims
-- PostgreSQL E2E smoke script verifies guest auth, protected state, campaign action persistence, manual flush, API restart reload, idempotency replay, and logout revocation
+- PostgreSQL E2E smoke script verifies guest auth, protected state, campaign, dungeon, gear, hero, equipment, summon, mission, Battle Pass action persistence, manual flush, API restart reload, idempotency replay, and logout revocation
 - Navicat-friendly account/persistence debug views expose auth providers, active sessions, latest action result, and snapshot freshness
 - Server-owned auth provider, currency, hero, starter equipment, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
 - Server-owned AFK reward definitions are exposed through `/definitions` so offline reward balance can move through PostgreSQL/admin tooling
@@ -148,6 +148,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.55: Expanded PostgreSQL E2E coverage across core gameplay mutation endpoints and restart reload checks.
 - Backend 0.2.54: Added configurable idle loaded-player context flushing/unloading with health visibility for long-running API memory control.
 - Backend 0.2.53: Added per-player gameplay mutation locks with memory/Redis implementations and `player_busy` conflict handling.
 - Backend 0.2.52: Added optional Redis-backed session cache and rate-limit adapters with health/script visibility while keeping memory as the no-Redis default.

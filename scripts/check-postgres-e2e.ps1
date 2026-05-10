@@ -32,8 +32,13 @@ function Invoke-Json {
     param(
         [string]$Method = "GET",
         [string]$Path,
-        [hashtable]$Headers = @{}
+        [hashtable]$Headers = @{},
+        [object]$Body = $null
     )
+
+    if ($null -ne $Body) {
+        return Invoke-RestMethod -Method $Method -Uri "$baseUrl$Path" -Headers $Headers -Body ([string]$Body) -ContentType "application/json"
+    }
 
     return Invoke-RestMethod -Method $Method -Uri "$baseUrl$Path" -Headers $Headers
 }
@@ -67,7 +72,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.54-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.55-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_REDIS_ADDR = ""
     $env:MYTHWAKE_REDIS_PASSWORD = ""
@@ -144,6 +149,48 @@ function Assert-GreaterOrEqual {
     }
 }
 
+function New-GameplayHeaders {
+    param(
+        [hashtable]$AuthHeaders,
+        [int64]$Revision,
+        [string]$Prefix
+    )
+
+    return @{
+        "Authorization" = $AuthHeaders["Authorization"]
+        "X-Player-State-Revision" = [string]$Revision
+        "Idempotency-Key" = "e2e-$Prefix-$([guid]::NewGuid().ToString("N"))"
+    }
+}
+
+function Invoke-GameplayPost {
+    param(
+        [string]$Path,
+        [hashtable]$AuthHeaders,
+        [ref]$Revision,
+        [string]$Label,
+        [object]$Body = $null
+    )
+
+    $previousRevision = [int64]$Revision.Value
+    $headers = New-GameplayHeaders -AuthHeaders $AuthHeaders -Revision $previousRevision -Prefix ($Label.ToLowerInvariant() -replace '[^a-z0-9]+', '-')
+    if ($null -ne $Body) {
+        $result = Invoke-Json -Method "POST" -Path $Path -Headers $headers -Body $Body
+    }
+    else {
+        $result = Invoke-Json -Method "POST" -Path $Path -Headers $headers
+    }
+    if (-not $result.success) {
+        throw "$Label should succeed. Response: $($result | ConvertTo-Json -Depth 10)"
+    }
+
+    Assert-GreaterOrEqual ([int64]$result.playerSnapshot.revision) ($previousRevision + 1) "$Label should advance the server state revision."
+    Assert-Equal ([int64]$result.receipt.stateRevision) ([int64]$result.playerSnapshot.revision) "$Label receipt should match snapshot revision."
+    $Revision.Value = [int64]$result.playerSnapshot.revision
+
+    return $result
+}
+
 Write-Host "Building Mythwake API..."
 $goExe = Find-Go
 Push-Location $backendPath
@@ -171,6 +218,10 @@ try {
     $weaponDefinition = $definitions.equipment | Where-Object { $_.equipmentId -eq "equipment_weapon" } | Select-Object -First 1
     if (-not $weaponDefinition -or [int]$weaponDefinition.maxLevel -le 0 -or [int]$weaponDefinition.attackPerLevel -le 0) {
         throw "Expected equipment definitions to include stat scaling fields. Response: $($definitions | ConvertTo-Json -Depth 8)"
+    }
+    $starterAccessoryDefinition = $definitions.accessories | Where-Object { $_.accessoryId -eq "accessory_earrings_r0" } | Select-Object -First 1
+    if (-not $starterAccessoryDefinition -or $starterAccessoryDefinition.slotId -ne "earrings") {
+        throw "Expected definitions to include starter accessory drop accessory_earrings_r0. Response: $($definitions | ConvertTo-Json -Depth 8)"
     }
     $afkDefinition = $definitions.afkRewards | Where-Object { $_.rewardId -eq "reward_afk_claim" } | Select-Object -First 1
     if (-not $afkDefinition -or [int]$afkDefinition.minClaimSeconds -ne 60 -or [int]$afkDefinition.maxClaimSeconds -ne 21600 -or [int]$afkDefinition.tickSeconds -ne 60) {
@@ -273,6 +324,60 @@ try {
     Assert-Equal ([int64]$staleFight.playerSnapshot.revision) ([int64]$fight.playerSnapshot.revision) "Stale fight should return latest snapshot revision."
     Assert-Equal ([int]$staleFight.playerState.campaignStage) ([int]$fight.playerState.campaignStage) "Stale fight should not mutate campaign progress."
 
+    $currentRevision = [int64]$fight.playerSnapshot.revision
+    $goldDungeon = Invoke-GameplayPost -Path "/dungeons/gold_dungeon/run" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Gold dungeon"
+    Assert-Equal $goldDungeon.actionId "gold_dungeon_run" "Gold dungeon should return the gold dungeon action id."
+    Assert-Equal $goldDungeon.combat.won $true "Gold dungeon should win in the starter smoke path."
+    Assert-GreaterOrEqual ([int64]$goldDungeon.reward.gold) 1 "Gold dungeon should grant gold."
+
+    $essenceDungeon = Invoke-GameplayPost -Path "/dungeons/essence_dungeon/run" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Essence dungeon"
+    Assert-Equal $essenceDungeon.actionId "essence_dungeon_run" "Essence dungeon should return the essence dungeon action id."
+    Assert-Equal $essenceDungeon.combat.won $true "Essence dungeon should win in the starter smoke path."
+    Assert-GreaterOrEqual ([int64]$essenceDungeon.reward.mythEssence) 1 "Essence dungeon should grant Myth Essence."
+
+    $gearDungeon = Invoke-GameplayPost -Path "/dungeons/gear_dungeon/run" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Gear dungeon"
+    Assert-Equal $gearDungeon.actionId "gear_dungeon_run" "Gear dungeon should return the gear dungeon action id."
+    Assert-Equal $gearDungeon.combat.won $true "Gear dungeon should win in the starter smoke path."
+    $droppedAccessory = $gearDungeon.playerSnapshot.accessories | Where-Object { $_.accessoryId -eq "accessory_earrings_r0" } | Select-Object -First 1
+    if (-not $droppedAccessory -or [int]$droppedAccessory.copies -lt 1) {
+        throw "Expected gear dungeon to add accessory_earrings_r0. Response: $($gearDungeon | ConvertTo-Json -Depth 10)"
+    }
+
+    $accessoryEquip = Invoke-GameplayPost -Path "/gear/accessories/equip" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Accessory equip" -Body '{"accessoryId":"accessory_earrings_r0"}'
+    Assert-Equal $accessoryEquip.actionId "accessory_equip" "Accessory equip should return the accessory equip action id."
+    $equippedAccessory = $accessoryEquip.playerSnapshot.equippedAccessories | Where-Object { $_.slotId -eq "earrings" -and $_.accessoryId -eq "accessory_earrings_r0" } | Select-Object -First 1
+    if (-not $equippedAccessory) {
+        throw "Expected accessory_equip to equip accessory_earrings_r0. Response: $($accessoryEquip | ConvertTo-Json -Depth 10)"
+    }
+
+    $heroLevel = Invoke-GameplayPost -Path "/heroes/hero_astra/level-up" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Hero level"
+    Assert-Equal $heroLevel.actionId "hero_level" "Hero level should return the hero level action id."
+    $astraState = $heroLevel.playerSnapshot.heroes | Where-Object { $_.heroId -eq "hero_astra" } | Select-Object -First 1
+    Assert-Equal ([int]$astraState.level) 2 "Hero level endpoint should level Astra to 2."
+
+    $weaponLevel = Invoke-GameplayPost -Path "/equipment/equipment_weapon/level-up" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Weapon level"
+    Assert-Equal $weaponLevel.actionId "equipment_level" "Weapon level should return the equipment level action id."
+    $weaponState = $weaponLevel.playerSnapshot.equipment | Where-Object { $_.equipmentId -eq "equipment_weapon" } | Select-Object -First 1
+    Assert-Equal ([int]$weaponState.level) 1 "Weapon level endpoint should train weapon to server level 1."
+
+    $summon = Invoke-GameplayPost -Path "/summons/hero_shard_standard/pull" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Summon"
+    Assert-Equal $summon.actionId "summon_pull" "Summon should return the summon action id."
+    Assert-Equal ([int]$summon.playerSnapshot.summonCount) 1 "Summon should increment summon count."
+    $summonDailyProgress = $summon.playerSnapshot.dailyProgress | Where-Object { $_.missionId -eq "daily_summon_1" } | Select-Object -First 1
+    Assert-Equal ([int]$summonDailyProgress.progress) 1 "Summon should advance daily summon progress."
+
+    $dailyClaim = Invoke-GameplayPost -Path "/missions/daily_summon_1/claim" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Daily mission"
+    Assert-Equal $dailyClaim.actionId "daily_mission_claim" "Daily mission claim should return the mission action id."
+    Assert-GreaterOrEqual ([int64]$dailyClaim.playerSnapshot.state.passXp) 40 "Daily mission claim should grant Battle Pass XP."
+
+    $battlePass = Invoke-GameplayPost -Path "/battle-pass/mission_track_reward_01/claim" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Battle pass"
+    Assert-Equal $battlePass.actionId "battle_pass_claim" "Battle Pass claim should return the battle pass action id."
+    $battlePassClaim = $battlePass.playerSnapshot.battlePassClaims | Where-Object { $_.claimId -eq "mission_track_reward_01" } | Select-Object -First 1
+    if (-not $battlePassClaim -or -not $battlePassClaim.claimed) {
+        throw "Expected Battle Pass reward 01 to be claimed. Response: $($battlePass | ConvertTo-Json -Depth 10)"
+    }
+    $finalSnapshotBeforeFlush = $battlePass.playerSnapshot
+
     $cacheBeforeFlush = Invoke-Json -Path "/health"
     Assert-GreaterOrEqual ([int64]$cacheBeforeFlush.loaded_players) 1 "Health should report loaded player contexts after authenticated gameplay."
     Assert-Equal $cacheBeforeFlush.player_context_idle_ttl "30m0s" "Health should expose player context idle TTL."
@@ -301,7 +406,19 @@ try {
     $stateAfterRestart = Invoke-Json -Path "/player/state" -Headers $authHeaders
     Assert-Equal $stateAfterRestart.playerId $login.playerId "Restarted API should resolve the same session player."
     Assert-Equal ([int]$stateAfterRestart.state.campaignStage) $stageAfterFight "Restarted API should load flushed campaign progress."
-    Assert-Equal ([int64]$stateAfterRestart.revision) ([int64]$fight.playerSnapshot.revision) "Restarted API should load the flushed state revision."
+    Assert-Equal ([int64]$stateAfterRestart.revision) ([int64]$finalSnapshotBeforeFlush.revision) "Restarted API should load the flushed state revision."
+    Assert-Equal ([int]$stateAfterRestart.state.goldDungeonFloor) ([int]$finalSnapshotBeforeFlush.state.goldDungeonFloor) "Restarted API should load gold dungeon progress."
+    Assert-Equal ([int]$stateAfterRestart.state.essenceDungeonFloor) ([int]$finalSnapshotBeforeFlush.state.essenceDungeonFloor) "Restarted API should load essence dungeon progress."
+    Assert-Equal ([int]$stateAfterRestart.state.gearDungeonFloor) ([int]$finalSnapshotBeforeFlush.state.gearDungeonFloor) "Restarted API should load gear dungeon progress."
+    Assert-Equal ([int]$stateAfterRestart.summonCount) ([int]$finalSnapshotBeforeFlush.summonCount) "Restarted API should load summon progress."
+    $restartBattlePassClaim = $stateAfterRestart.battlePassClaims | Where-Object { $_.claimId -eq "mission_track_reward_01" } | Select-Object -First 1
+    if (-not $restartBattlePassClaim -or -not $restartBattlePassClaim.claimed) {
+        throw "Restarted API should load Battle Pass reward 01 claim. Response: $($stateAfterRestart | ConvertTo-Json -Depth 10)"
+    }
+    $restartEquippedAccessory = $stateAfterRestart.equippedAccessories | Where-Object { $_.slotId -eq "earrings" -and $_.accessoryId -eq "accessory_earrings_r0" } | Select-Object -First 1
+    if (-not $restartEquippedAccessory) {
+        throw "Restarted API should load equipped accessory_earrings_r0. Response: $($stateAfterRestart | ConvertTo-Json -Depth 10)"
+    }
 
     $replay = Invoke-Json -Method "POST" -Path "/campaign/fight" -Headers $actionHeaders
     if (-not $replay.replay) {
