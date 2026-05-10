@@ -165,11 +165,16 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 	if rateLimitStore == "" {
 		rateLimitStore = config.CacheStoreMemory
 	}
+	redisStatus := router.config.RedisStatus
+	if redisStatus == "" {
+		redisStatus = "disabled"
+	}
 
 	writeJSON(response, http.StatusOK, map[string]string{
 		"service":              router.config.ServiceName,
 		"status":               "ok",
 		"database":             router.config.DatabaseStatus,
+		"redis":                redisStatus,
 		"state_cache":          router.config.StateCacheStatus,
 		"balance_catalog":      router.config.BalanceCatalog,
 		"state_write_mode":     router.config.StateWriteMode,

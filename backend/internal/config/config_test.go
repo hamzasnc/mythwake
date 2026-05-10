@@ -53,6 +53,35 @@ func TestLoadSessionCacheDurations(t *testing.T) {
 	}
 }
 
+func TestLoadUsesRedisStoresWhenRedisAddressIsSet(t *testing.T) {
+	t.Setenv("MYTHWAKE_REDIS_ADDR", "localhost:6379")
+	t.Setenv("MYTHWAKE_REDIS_PASSWORD", "secret")
+	t.Setenv("MYTHWAKE_REDIS_DB", "2")
+	t.Setenv("MYTHWAKE_SESSION_CACHE_STORE", "")
+	t.Setenv("MYTHWAKE_RATE_LIMIT_STORE", "")
+
+	cfg := Load()
+
+	if cfg.RedisAddr != "localhost:6379" || cfg.RedisPassword != "secret" || cfg.RedisDB != 2 {
+		t.Fatalf("expected redis config to load, got %#v", cfg)
+	}
+	if cfg.SessionCacheStore != CacheStoreRedis || cfg.RateLimitStore != CacheStoreRedis {
+		t.Fatalf("expected redis stores when redis addr is set, got session=%s rate=%s", cfg.SessionCacheStore, cfg.RateLimitStore)
+	}
+}
+
+func TestLoadCanKeepMemoryStoresWithRedisAddress(t *testing.T) {
+	t.Setenv("MYTHWAKE_REDIS_ADDR", "localhost:6379")
+	t.Setenv("MYTHWAKE_SESSION_CACHE_STORE", "memory")
+	t.Setenv("MYTHWAKE_RATE_LIMIT_STORE", "memory")
+
+	cfg := Load()
+
+	if cfg.SessionCacheStore != CacheStoreMemory || cfg.RateLimitStore != CacheStoreMemory {
+		t.Fatalf("expected explicit memory stores, got session=%s rate=%s", cfg.SessionCacheStore, cfg.RateLimitStore)
+	}
+}
+
 func TestLoadRateLimitSettings(t *testing.T) {
 	t.Setenv("MYTHWAKE_RATE_LIMIT_STORE", "memory")
 	t.Setenv("MYTHWAKE_RATE_LIMIT_ENABLED", "false")
@@ -80,7 +109,8 @@ func TestLoadRateLimitSettings(t *testing.T) {
 }
 
 func TestLoadFallsBackToMemoryCacheStores(t *testing.T) {
-	t.Setenv("MYTHWAKE_SESSION_CACHE_STORE", "redis")
+	t.Setenv("MYTHWAKE_REDIS_ADDR", "")
+	t.Setenv("MYTHWAKE_SESSION_CACHE_STORE", "bad-store")
 	t.Setenv("MYTHWAKE_RATE_LIMIT_STORE", "bad-store")
 
 	cfg := Load()

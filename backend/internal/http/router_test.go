@@ -70,6 +70,9 @@ func TestHealthEndpointIncludesStateCacheStats(t *testing.T) {
 	if body["state_cache_last_utc"] != "2026-05-10T12:00:00Z" || body["state_cache_error"] != "database unavailable" {
 		t.Fatalf("expected cache flush details in health response, got %#v", body)
 	}
+	if body["redis"] != "disabled" {
+		t.Fatalf("expected disabled redis status, got %#v", body)
+	}
 	if body["session_cache_store"] != config.CacheStoreMemory || body["rate_limit_store"] != config.CacheStoreMemory {
 		t.Fatalf("expected memory cache stores in health response, got %#v", body)
 	}

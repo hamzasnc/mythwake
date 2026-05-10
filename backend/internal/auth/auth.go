@@ -363,6 +363,7 @@ func (service *Service) cachedSession(ctx context.Context, tokenHash string, tok
 }
 
 func (service *Service) rememberSession(ctx context.Context, session Session, cachedAt time.Time, lastStoreTouchAt time.Time) error {
+	session.Token = ""
 	err := service.sessionCache.Store(ctx, session.TokenHash, SessionCacheEntry{
 		Session:          session,
 		CachedAt:         cachedAt,

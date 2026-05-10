@@ -346,7 +346,7 @@ Current backend state:
 - Unity gameplay mutations now send the last known server state revision, and the backend rejects stale mutation attempts with the latest snapshot.
 - Action ledger rows now store accepted state revisions, and PostgreSQL guards against older materialized state writes overwriting newer accepted revisions.
 - PostgreSQL action-result writes now lock and enforce expected player state revisions transactionally before accepting gameplay mutations.
-- Auth session caching and API rate limiting now sit behind Redis-ready interfaces while still using in-memory implementations locally.
+- Auth session caching and API rate limiting now sit behind Redis-ready interfaces and can use optional Redis-backed implementations.
 - Unity Backend Ping surfaces state-cache dirty/failure status so local persistence tests do not require opening Navicat first.
 - Player state, flush, and gameplay mutation routes now validate Bearer sessions and resolve the player context from the session token.
 - Unity Server Mode now persists the session token, sends `Authorization: Bearer <sessionToken>`, and retries protected requests once after `401` by refreshing guest auth.
@@ -356,7 +356,7 @@ Current backend state:
 - Per-action economy deltas save in `logs.player_action_ledger`.
 - Startup restores from the latest durable action result snapshot if materialized tables are behind.
 - Unity Server Mode now sends and reuses pending idempotency keys for gameplay actions after transport failures.
-- Redis is not connected yet, but the auth session-cache and rate-limit boundaries are ready for Redis adapters.
+- Redis is optional for auth session caching and rate-limit counters; memory remains the local no-Redis default.
 
 Recommended Go shape:
 - `cmd/api`
@@ -463,7 +463,7 @@ Current cache stance:
 - Full `write_through` mode is available for debugging direct table writes.
 - Plain `write_behind` mode is not safe for production economy state unless every critical action also has a durable ledger/result.
 - Gameplay mutations require valid idempotency keys by default; disabling that is a local debugging escape hatch only.
-- Redis later should handle cross-process sessions, locks, rate limits, and short-lived coordination.
+- Redis can now handle cross-process session-cache and rate-limit counters; short-lived locks and other temporary coordination remain later work.
 - PostgreSQL remains the durable source of truth for player economy and inventory.
 
 ## Engineering Standard
@@ -624,14 +624,14 @@ Progress:
 - Added action-ledger revision columns and monotonic PostgreSQL revision saves to protect batched materialized state writes.
 
 Next useful step:
-- Add Redis-backed implementations for the session cache, rate-limit counters, and short-lived locks once local Redis is available.
+- Add Redis-backed short-lived player/action locks once local Redis is part of the regular setup.
 - Keep moving individual Unity Server Mode flows away from local-only fallbacks once their backend path is stable.
 - Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
 
 Done when:
 - A local Postgres-backed API can restart without losing core player state.
 - Definition and player progression rows exist in SQL with stable IDs.
-- The next Redis/session batch can start without touching core persistence setup.
+- Redis session/rate-limit mode can be enabled without touching core persistence setup.
 
 ## Useful Next Batches
 
@@ -644,7 +644,7 @@ Recommended order:
 5. Add local service layer.
 6. Start Go backend skeleton. (done)
 7. Add PostgreSQL definitions and player state tables. (first pass done)
-8. Add Redis for sessions/rate limits.
+8. Add Redis for sessions/rate limits. (optional adapter done)
 9. Move economy actions server-side one by one.
 10. Prepare for real assets and better UI.
 
@@ -673,5 +673,5 @@ That means:
 - Keep every economy mutation replay-safe.
 - Split the large backend player service into focused domain services.
 - Move definition/balance ownership toward PostgreSQL-backed tables.
-- Add Redis only for sessions, locks, rate limits, and other temporary coordination.
+- Add Redis only for sessions, rate limits, locks, and other temporary coordination.
 - Keep Unity Server Mode working after each backend batch.

@@ -11,10 +11,10 @@ Current scope:
 - Dev player state endpoint
 - Guest auth with random session tokens
 - Logout endpoint that revokes the active session token
-- Redis-ready session cache interface with an in-memory implementation for PostgreSQL-backed auth validation
+- Redis or in-memory session cache implementation for PostgreSQL-backed auth validation
 - Request ID middleware for client/server log correlation
 - JSON panic recovery for unexpected HTTP handler failures
-- Redis-ready rate limiter interface with an in-memory implementation for auth and gameplay mutation requests
+- Redis or in-memory rate limiter implementation for auth and gameplay mutation requests
 - PostgreSQL account identities and hashed session token persistence for guest, email, Google, and Apple login providers
 - Bearer session validation for player state, flush, and gameplay mutation endpoints
 - Per-player service contexts resolved from the authenticated session token
@@ -102,7 +102,6 @@ Current scope:
 - Graceful shutdown flushes loaded player contexts before closing the state cache.
 
 Not included yet:
-- Redis connection
 - Email, Google, and Apple token verification endpoints
 - Production-ready balance tooling/admin flow
 
@@ -162,13 +161,16 @@ Optional environment variables:
 - `MYTHWAKE_ENV`
 - `MYTHWAKE_API_VERSION`
 - `MYTHWAKE_DATABASE_URL`
+- `MYTHWAKE_REDIS_ADDR`, optional; when set, session cache and rate limiter default to Redis
+- `MYTHWAKE_REDIS_PASSWORD`, optional
+- `MYTHWAKE_REDIS_DB`, default `0`
 - `MYTHWAKE_STATE_WRITE_MODE`, default `ledger_write_behind`, optional `write_through` or `write_behind`
 - `MYTHWAKE_STATE_FLUSH_INTERVAL` such as `30s`, `2m`, or `5m`
 - `MYTHWAKE_STATE_FLUSH_TIMEOUT` such as `5s`
-- `MYTHWAKE_SESSION_CACHE_STORE`, currently `memory`
+- `MYTHWAKE_SESSION_CACHE_STORE`, `memory` or `redis`; defaults to `redis` only when `MYTHWAKE_REDIS_ADDR` is set
 - `MYTHWAKE_SESSION_CACHE_TTL`, default `30s`; set to `0s` to force DB lookup on every validation
 - `MYTHWAKE_SESSION_TOUCH_WINDOW`, default `30s`; controls how often cached active sessions update `last_seen_at`
-- `MYTHWAKE_RATE_LIMIT_STORE`, currently `memory`
+- `MYTHWAKE_RATE_LIMIT_STORE`, `memory` or `redis`; defaults to `redis` only when `MYTHWAKE_REDIS_ADDR` is set
 - `MYTHWAKE_RATE_LIMIT_ENABLED`, default `true`
 - `MYTHWAKE_RATE_LIMIT_WINDOW`, default `1m`
 - `MYTHWAKE_RATE_LIMIT_AUTH`, default `30` requests per window for auth endpoints
@@ -179,6 +181,7 @@ Database behavior:
 - If `MYTHWAKE_DATABASE_URL` is empty, the API uses the current in-memory dev state.
 - If `MYTHWAKE_DATABASE_URL` is set, startup connects to PostgreSQL, runs embedded migrations, loads the common definition snapshot for gameplay balance, and stores player state in normalized progression tables.
 - PostgreSQL-backed sessions are cached briefly through the auth session-cache interface to avoid a database round trip on every protected request.
+- Redis cache mode is optional and temporary-only; PostgreSQL remains the durable account/session source of truth.
 - The touch window updates `account.player_sessions.last_seen_at` at a controlled rate instead of on every request.
 - By default, idempotent gameplay actions update hot server state, synchronously write a durable action ledger/result to PostgreSQL, then queue the materialized player state for flush.
 - This default protects critical economy state from hard process crashes after a successful API response without forcing every materialized table to update immediately.
@@ -201,7 +204,7 @@ Database behavior:
 - `GET /health` reports `database`, `state_cache`, `balance_catalog`, `state_write_mode`, `state_flush_interval`, session/rate-limit cache stores, and `require_idempotency`.
 - `GET /time` is the source of truth for offline reward windows, daily missions, weekly systems, and client clock drift checks.
 - Request logs include request id, method, path, status, bytes, and duration.
-- Rate limiting currently uses the in-memory limiter implementation for development and single-node testing; Redis should replace the counter storage before multi-instance production.
+- Rate limiting uses memory by default and can use Redis by setting `MYTHWAKE_REDIS_ADDR` or `MYTHWAKE_RATE_LIMIT_STORE=redis`.
 - `scripts/check-backend.cmd` performs guest login, sends Bearer auth for protected endpoints, and can verify missing-session `401`s.
 - `scripts/check-postgres-e2e.cmd` starts the API twice against PostgreSQL and verifies login, protected state, campaign persistence, manual flush, restart reload, idempotency replay, and logout revocation.
 

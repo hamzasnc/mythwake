@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/auth"
+	rediscache "github.com/hamzasnc/mythwake/backend/internal/cache/redis"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
 	"github.com/hamzasnc/mythwake/backend/internal/database"
 	apihttp "github.com/hamzasnc/mythwake/backend/internal/http"
@@ -26,11 +27,44 @@ func main() {
 		auth.WithSessionCacheTTL(cfg.SessionCacheTTL),
 		auth.WithSessionTouchInterval(cfg.SessionTouchWindow),
 	}
-	authService := auth.NewService(nil, authOptions...)
+	var authService *auth.Service
 	routerOptions := []apihttp.RouterOption{}
 	managerOptions := []player.ManagerOption{}
 	var cachedStateStore *cache.WriteBehindStateStore
 	var stateStore player.StateStore
+	var redisClientCloser interface{ Close() error }
+
+	if (cfg.SessionCacheStore == config.CacheStoreRedis || cfg.RateLimitStore == config.CacheStoreRedis) && cfg.RedisAddr == "" {
+		logger.Fatalf("redis cache store requires MYTHWAKE_REDIS_ADDR")
+	}
+
+	if cfg.RedisAddr != "" {
+		setupContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		redisClient := rediscache.NewClient(rediscache.Config{
+			Addr:     cfg.RedisAddr,
+			Password: cfg.RedisPassword,
+			DB:       cfg.RedisDB,
+		})
+		if err := rediscache.Ping(setupContext, redisClient); err != nil {
+			cancel()
+			_ = redisClient.Close()
+			logger.Fatalf("redis connection failed: %v", err)
+		}
+		cancel()
+
+		redisClientCloser = redisClient
+		cfg.RedisStatus = "connected"
+		if cfg.SessionCacheStore == config.CacheStoreRedis {
+			authOptions = append(authOptions, auth.WithSessionCache(rediscache.NewSessionCache(redisClient, cfg.ServiceName)))
+		}
+		if cfg.RateLimitStore == config.CacheStoreRedis {
+			routerOptions = append(routerOptions, apihttp.WithRateLimiter(rediscache.NewRateLimiter(redisClient, cfg.ServiceName)))
+		}
+	}
+	if redisClientCloser != nil {
+		defer redisClientCloser.Close()
+	}
+	authService = auth.NewService(nil, authOptions...)
 
 	if cfg.DatabaseURL != "" {
 		setupContext, cancel := context.WithTimeout(context.Background(), 15*time.Second)

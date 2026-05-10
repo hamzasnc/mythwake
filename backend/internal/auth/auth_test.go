@@ -171,6 +171,9 @@ func TestValidateSessionUsesInjectedSessionCache(t *testing.T) {
 	if cache.loads < 2 || cache.stores == 0 {
 		t.Fatalf("expected injected cache to be used, loads=%d stores=%d", cache.loads, cache.stores)
 	}
+	if cache.lastStored.Session.Token != "" {
+		t.Fatalf("expected session cache to omit raw token, got %#v", cache.lastStored.Session)
+	}
 	if store.findHits != 1 {
 		t.Fatalf("expected second validation to use injected cache, got %d store lookups", store.findHits)
 	}
@@ -277,10 +280,11 @@ func hasProvider(definitions []ProviderDefinition, providerID string) bool {
 }
 
 type countingSessionCache struct {
-	base    *MemorySessionCache
-	loads   int
-	stores  int
-	deletes int
+	base       *MemorySessionCache
+	loads      int
+	stores     int
+	deletes    int
+	lastStored SessionCacheEntry
 }
 
 func newCountingSessionCache() *countingSessionCache {
@@ -294,6 +298,7 @@ func (cache *countingSessionCache) Load(ctx context.Context, tokenHash string) (
 
 func (cache *countingSessionCache) Store(ctx context.Context, tokenHash string, entry SessionCacheEntry) error {
 	cache.stores++
+	cache.lastStored = entry
 	return cache.base.Store(ctx, tokenHash, entry)
 }
 

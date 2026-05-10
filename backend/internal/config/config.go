@@ -12,6 +12,7 @@ const (
 	StateWriteModeWriteThrough      = "write_through"
 	StateWriteModeWriteBehind       = "write_behind"
 	CacheStoreMemory                = "memory"
+	CacheStoreRedis                 = "redis"
 )
 
 type Config struct {
@@ -21,6 +22,10 @@ type Config struct {
 	Version            string
 	DatabaseURL        string
 	DatabaseStatus     string
+	RedisAddr          string
+	RedisPassword      string
+	RedisDB            int
+	RedisStatus        string
 	StateCacheStatus   string
 	BalanceCatalog     string
 	StateWriteMode     string
@@ -39,22 +44,29 @@ type Config struct {
 }
 
 func Load() Config {
+	redisAddr := strings.TrimSpace(os.Getenv("MYTHWAKE_REDIS_ADDR"))
+	defaultCache := defaultCacheStore(redisAddr)
+
 	return Config{
 		ServiceName:        "mythwake-api",
 		Addr:               getEnv("MYTHWAKE_API_ADDR", ":8080"),
 		Environment:        getEnv("MYTHWAKE_ENV", "local"),
-		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.51"),
+		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.52"),
 		DatabaseURL:        os.Getenv("MYTHWAKE_DATABASE_URL"),
 		DatabaseStatus:     "disabled",
+		RedisAddr:          redisAddr,
+		RedisPassword:      os.Getenv("MYTHWAKE_REDIS_PASSWORD"),
+		RedisDB:            getIntEnv("MYTHWAKE_REDIS_DB", 0),
+		RedisStatus:        "disabled",
 		StateCacheStatus:   "disabled",
 		BalanceCatalog:     "static",
 		StateWriteMode:     getStateWriteMode(),
 		StateFlushInterval: getDurationEnv("MYTHWAKE_STATE_FLUSH_INTERVAL", 30*time.Second),
 		StateFlushTimeout:  getDurationEnv("MYTHWAKE_STATE_FLUSH_TIMEOUT", 5*time.Second),
-		SessionCacheStore:  getCacheStore("MYTHWAKE_SESSION_CACHE_STORE"),
+		SessionCacheStore:  getCacheStore("MYTHWAKE_SESSION_CACHE_STORE", defaultCache),
 		SessionCacheTTL:    getDurationEnv("MYTHWAKE_SESSION_CACHE_TTL", 30*time.Second),
 		SessionTouchWindow: getDurationEnv("MYTHWAKE_SESSION_TOUCH_WINDOW", 30*time.Second),
-		RateLimitStore:     getCacheStore("MYTHWAKE_RATE_LIMIT_STORE"),
+		RateLimitStore:     getCacheStore("MYTHWAKE_RATE_LIMIT_STORE", defaultCache),
 		RateLimitEnabled:   getBoolEnv("MYTHWAKE_RATE_LIMIT_ENABLED", true),
 		RateLimitWindow:    getDurationEnv("MYTHWAKE_RATE_LIMIT_WINDOW", time.Minute),
 		RateLimitAuth:      getIntEnv("MYTHWAKE_RATE_LIMIT_AUTH", 30),
@@ -117,13 +129,25 @@ func getIntEnv(key string, fallback int) int {
 	return parsed
 }
 
-func getCacheStore(key string) string {
-	value := strings.ToLower(strings.TrimSpace(getEnv(key, CacheStoreMemory)))
+func defaultCacheStore(redisAddr string) string {
+	if strings.TrimSpace(redisAddr) != "" {
+		return CacheStoreRedis
+	}
+
+	return CacheStoreMemory
+}
+
+func getCacheStore(key string, fallback string) string {
+	if fallback == "" {
+		fallback = CacheStoreMemory
+	}
+
+	value := strings.ToLower(strings.TrimSpace(getEnv(key, fallback)))
 	switch value {
-	case CacheStoreMemory:
+	case CacheStoreMemory, CacheStoreRedis:
 		return value
 	default:
-		return CacheStoreMemory
+		return fallback
 	}
 }
 
