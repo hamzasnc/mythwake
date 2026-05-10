@@ -11,6 +11,8 @@ param(
     [int]$RateLimitAuth = 30,
     [int]$RateLimitGameplay = 240,
     [string]$PlayerLockTTL = "5s",
+    [string]$PlayerContextIdleTTL = "30m",
+    [string]$PlayerContextSweepInterval = "5m",
     [ValidateSet("ledger_write_behind", "write_through", "write_behind")]
     [string]$StateWriteMode = "ledger_write_behind",
     [switch]$NoDatabase,
@@ -83,7 +85,7 @@ function Start-PostgresServiceIfNeeded {
 $goExe = Find-Go
 $env:MYTHWAKE_API_ADDR = $ApiAddr
 $env:MYTHWAKE_ENV = "local"
-$env:MYTHWAKE_API_VERSION = "0.2.53"
+$env:MYTHWAKE_API_VERSION = "0.2.54"
 $env:MYTHWAKE_STATE_FLUSH_INTERVAL = $StateFlushInterval
 $env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
 $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
@@ -100,6 +102,8 @@ $env:MYTHWAKE_RATE_LIMIT_AUTH = [string]$RateLimitAuth
 $env:MYTHWAKE_RATE_LIMIT_GAMEPLAY = [string]$RateLimitGameplay
 $env:MYTHWAKE_PLAYER_LOCK_STORE = if ($RedisAddr) { "redis" } else { "memory" }
 $env:MYTHWAKE_PLAYER_LOCK_TTL = $PlayerLockTTL
+$env:MYTHWAKE_PLAYER_CONTEXT_IDLE_TTL = $PlayerContextIdleTTL
+$env:MYTHWAKE_PLAYER_CONTEXT_SWEEP_INTERVAL = $PlayerContextSweepInterval
 $env:MYTHWAKE_REQUIRE_IDEMPOTENCY = if ($AllowMissingIdempotency) { "false" } else { "true" }
 $env:MYTHWAKE_DEV_TOOLS_ENABLED = if ($DisableDevTools) { "false" } else { "true" }
 

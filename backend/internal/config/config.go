@@ -16,33 +16,35 @@ const (
 )
 
 type Config struct {
-	ServiceName        string
-	Addr               string
-	Environment        string
-	Version            string
-	DatabaseURL        string
-	DatabaseStatus     string
-	RedisAddr          string
-	RedisPassword      string
-	RedisDB            int
-	RedisStatus        string
-	StateCacheStatus   string
-	BalanceCatalog     string
-	StateWriteMode     string
-	StateFlushInterval time.Duration
-	StateFlushTimeout  time.Duration
-	SessionCacheStore  string
-	SessionCacheTTL    time.Duration
-	SessionTouchWindow time.Duration
-	RateLimitStore     string
-	RateLimitEnabled   bool
-	RateLimitWindow    time.Duration
-	RateLimitAuth      int
-	RateLimitGameplay  int
-	PlayerLockStore    string
-	PlayerLockTTL      time.Duration
-	RequireIdempotency bool
-	DevToolsEnabled    bool
+	ServiceName                string
+	Addr                       string
+	Environment                string
+	Version                    string
+	DatabaseURL                string
+	DatabaseStatus             string
+	RedisAddr                  string
+	RedisPassword              string
+	RedisDB                    int
+	RedisStatus                string
+	StateCacheStatus           string
+	BalanceCatalog             string
+	StateWriteMode             string
+	StateFlushInterval         time.Duration
+	StateFlushTimeout          time.Duration
+	SessionCacheStore          string
+	SessionCacheTTL            time.Duration
+	SessionTouchWindow         time.Duration
+	RateLimitStore             string
+	RateLimitEnabled           bool
+	RateLimitWindow            time.Duration
+	RateLimitAuth              int
+	RateLimitGameplay          int
+	PlayerLockStore            string
+	PlayerLockTTL              time.Duration
+	PlayerContextIdleTTL       time.Duration
+	PlayerContextSweepInterval time.Duration
+	RequireIdempotency         bool
+	DevToolsEnabled            bool
 }
 
 func Load() Config {
@@ -50,33 +52,35 @@ func Load() Config {
 	defaultCache := defaultCacheStore(redisAddr)
 
 	return Config{
-		ServiceName:        "mythwake-api",
-		Addr:               getEnv("MYTHWAKE_API_ADDR", ":8080"),
-		Environment:        getEnv("MYTHWAKE_ENV", "local"),
-		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.53"),
-		DatabaseURL:        os.Getenv("MYTHWAKE_DATABASE_URL"),
-		DatabaseStatus:     "disabled",
-		RedisAddr:          redisAddr,
-		RedisPassword:      os.Getenv("MYTHWAKE_REDIS_PASSWORD"),
-		RedisDB:            getIntEnv("MYTHWAKE_REDIS_DB", 0),
-		RedisStatus:        "disabled",
-		StateCacheStatus:   "disabled",
-		BalanceCatalog:     "static",
-		StateWriteMode:     getStateWriteMode(),
-		StateFlushInterval: getDurationEnv("MYTHWAKE_STATE_FLUSH_INTERVAL", 30*time.Second),
-		StateFlushTimeout:  getDurationEnv("MYTHWAKE_STATE_FLUSH_TIMEOUT", 5*time.Second),
-		SessionCacheStore:  getCacheStore("MYTHWAKE_SESSION_CACHE_STORE", defaultCache),
-		SessionCacheTTL:    getDurationEnv("MYTHWAKE_SESSION_CACHE_TTL", 30*time.Second),
-		SessionTouchWindow: getDurationEnv("MYTHWAKE_SESSION_TOUCH_WINDOW", 30*time.Second),
-		RateLimitStore:     getCacheStore("MYTHWAKE_RATE_LIMIT_STORE", defaultCache),
-		RateLimitEnabled:   getBoolEnv("MYTHWAKE_RATE_LIMIT_ENABLED", true),
-		RateLimitWindow:    getDurationEnv("MYTHWAKE_RATE_LIMIT_WINDOW", time.Minute),
-		RateLimitAuth:      getIntEnv("MYTHWAKE_RATE_LIMIT_AUTH", 30),
-		RateLimitGameplay:  getIntEnv("MYTHWAKE_RATE_LIMIT_GAMEPLAY", 240),
-		PlayerLockStore:    getCacheStore("MYTHWAKE_PLAYER_LOCK_STORE", defaultCache),
-		PlayerLockTTL:      getDurationEnv("MYTHWAKE_PLAYER_LOCK_TTL", 5*time.Second),
-		RequireIdempotency: getBoolEnv("MYTHWAKE_REQUIRE_IDEMPOTENCY", true),
-		DevToolsEnabled:    getBoolEnv("MYTHWAKE_DEV_TOOLS_ENABLED", defaultDevToolsEnabled(getEnv("MYTHWAKE_ENV", "local"))),
+		ServiceName:                "mythwake-api",
+		Addr:                       getEnv("MYTHWAKE_API_ADDR", ":8080"),
+		Environment:                getEnv("MYTHWAKE_ENV", "local"),
+		Version:                    getEnv("MYTHWAKE_API_VERSION", "0.2.54"),
+		DatabaseURL:                os.Getenv("MYTHWAKE_DATABASE_URL"),
+		DatabaseStatus:             "disabled",
+		RedisAddr:                  redisAddr,
+		RedisPassword:              os.Getenv("MYTHWAKE_REDIS_PASSWORD"),
+		RedisDB:                    getIntEnv("MYTHWAKE_REDIS_DB", 0),
+		RedisStatus:                "disabled",
+		StateCacheStatus:           "disabled",
+		BalanceCatalog:             "static",
+		StateWriteMode:             getStateWriteMode(),
+		StateFlushInterval:         getDurationEnv("MYTHWAKE_STATE_FLUSH_INTERVAL", 30*time.Second),
+		StateFlushTimeout:          getDurationEnv("MYTHWAKE_STATE_FLUSH_TIMEOUT", 5*time.Second),
+		SessionCacheStore:          getCacheStore("MYTHWAKE_SESSION_CACHE_STORE", defaultCache),
+		SessionCacheTTL:            getDurationEnv("MYTHWAKE_SESSION_CACHE_TTL", 30*time.Second),
+		SessionTouchWindow:         getDurationEnv("MYTHWAKE_SESSION_TOUCH_WINDOW", 30*time.Second),
+		RateLimitStore:             getCacheStore("MYTHWAKE_RATE_LIMIT_STORE", defaultCache),
+		RateLimitEnabled:           getBoolEnv("MYTHWAKE_RATE_LIMIT_ENABLED", true),
+		RateLimitWindow:            getDurationEnv("MYTHWAKE_RATE_LIMIT_WINDOW", time.Minute),
+		RateLimitAuth:              getIntEnv("MYTHWAKE_RATE_LIMIT_AUTH", 30),
+		RateLimitGameplay:          getIntEnv("MYTHWAKE_RATE_LIMIT_GAMEPLAY", 240),
+		PlayerLockStore:            getCacheStore("MYTHWAKE_PLAYER_LOCK_STORE", defaultCache),
+		PlayerLockTTL:              getDurationEnv("MYTHWAKE_PLAYER_LOCK_TTL", 5*time.Second),
+		PlayerContextIdleTTL:       getDurationEnv("MYTHWAKE_PLAYER_CONTEXT_IDLE_TTL", 30*time.Minute),
+		PlayerContextSweepInterval: getDurationEnv("MYTHWAKE_PLAYER_CONTEXT_SWEEP_INTERVAL", 5*time.Minute),
+		RequireIdempotency:         getBoolEnv("MYTHWAKE_REQUIRE_IDEMPOTENCY", true),
+		DevToolsEnabled:            getBoolEnv("MYTHWAKE_DEV_TOOLS_ENABLED", defaultDevToolsEnabled(getEnv("MYTHWAKE_ENV", "local"))),
 	}
 }
 

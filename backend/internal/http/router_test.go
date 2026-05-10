@@ -37,11 +37,23 @@ func TestHealthEndpoint(t *testing.T) {
 }
 
 func TestHealthEndpointIncludesStateCacheStats(t *testing.T) {
+	manager := player.NewManager(nil)
+	if _, err := manager.ServiceForPlayer(context.Background(), "health-player"); err != nil {
+		t.Fatalf("seed loaded player: %v", err)
+	}
+
 	handler := NewRouter(
-		config.Config{ServiceName: "test-api", Addr: ":0", Environment: "test", Version: "test"},
+		config.Config{
+			ServiceName:                "test-api",
+			Addr:                       ":0",
+			Environment:                "test",
+			Version:                    "test",
+			PlayerContextIdleTTL:       30 * time.Minute,
+			PlayerContextSweepInterval: 5 * time.Minute,
+		},
 		log.New(testWriter{}, "", 0),
 		nil,
-		player.NewManager(nil),
+		manager,
 		WithStateCacheStatsProvider(func() StateCacheStats {
 			return StateCacheStats{
 				DirtyPlayers:  2,
@@ -79,6 +91,9 @@ func TestHealthEndpointIncludesStateCacheStats(t *testing.T) {
 	}
 	if body["player_lock_ttl"] != "5s" {
 		t.Fatalf("expected player lock ttl in health response, got %#v", body)
+	}
+	if body["loaded_players"] != "1" || body["player_context_idle_ttl"] != "30m0s" || body["player_context_sweep_interval"] != "5m0s" {
+		t.Fatalf("expected player context health fields, got %#v", body)
 	}
 }
 

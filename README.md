@@ -134,9 +134,10 @@ Backend:
 - Unity requests a backend state flush on app pause/quit when a backend session is active
 - Unity Backend panel can reset the active local/dev server player and refresh the UI from the fresh server snapshot
 - API shutdown flushes loaded player contexts before closing the state cache
+- API periodically flushes and unloads idle loaded player contexts so long-running servers do not keep every touched player hot forever
 - `POST /player/state/flush` is the manual app-pause/disconnect save hook
 - `POST /dev/player/reset` is available only when local/dev tools are enabled; it resets the active player progression while keeping the account/session
-- `/health` reports state-cache dirty, queued, flushed, failed, last flush, and last error counters for local diagnostics
+- `/health` reports state-cache dirty, queued, flushed, failed, loaded player contexts, last flush, and last error counters for local diagnostics
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Guest auth and action responses include the full player snapshot for direct client UI updates
 - Android emulator builds use `http://10.0.2.2:8080` as the default backend URL, while Editor/Desktop use `http://localhost:8080`
@@ -147,6 +148,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.54: Added configurable idle loaded-player context flushing/unloading with health visibility for long-running API memory control.
 - Backend 0.2.53: Added per-player gameplay mutation locks with memory/Redis implementations and `player_busy` conflict handling.
 - Backend 0.2.52: Added optional Redis-backed session cache and rate-limit adapters with health/script visibility while keeping memory as the no-Redis default.
 - Backend 0.2.51: Extracted auth session caching and API rate limiting behind Redis-ready interfaces with in-memory implementations.

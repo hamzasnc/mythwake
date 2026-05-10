@@ -126,6 +126,20 @@ func TestLoadPlayerLockSettings(t *testing.T) {
 	}
 }
 
+func TestLoadPlayerContextSettings(t *testing.T) {
+	t.Setenv("MYTHWAKE_PLAYER_CONTEXT_IDLE_TTL", "45m")
+	t.Setenv("MYTHWAKE_PLAYER_CONTEXT_SWEEP_INTERVAL", "2m")
+
+	cfg := Load()
+
+	if cfg.PlayerContextIdleTTL != 45*time.Minute {
+		t.Fatalf("expected player context idle ttl 45m, got %s", cfg.PlayerContextIdleTTL)
+	}
+	if cfg.PlayerContextSweepInterval != 2*time.Minute {
+		t.Fatalf("expected player context sweep interval 2m, got %s", cfg.PlayerContextSweepInterval)
+	}
+}
+
 func TestLoadFallsBackToMemoryCacheStores(t *testing.T) {
 	t.Setenv("MYTHWAKE_REDIS_ADDR", "")
 	t.Setenv("MYTHWAKE_SESSION_CACHE_STORE", "bad-store")

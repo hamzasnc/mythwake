@@ -592,6 +592,7 @@ Progress:
 - Added PostgreSQL E2E restart smoke tooling and session-aware backend smoke checks.
 - Added session logout/revoke so cached Unity session tokens can be invalidated server-side.
 - Added manager-level loaded player flushing for graceful shutdown.
+- Added configurable idle loaded-player context flushing/unloading so long-running API processes can release inactive hot player services after their state is saved.
 - Added Unity app pause/quit backend flush calls for active backend sessions.
 - Extended smoke tooling to verify logout revokes the active session.
 - Added a configurable read-through session cache and PostgreSQL touch window to reduce DB load on protected requests.
@@ -621,7 +622,7 @@ Progress:
 - AFK reward definitions now carry claim timing, cap, tick size, and Gold/Myth Essence formula fields; PostgreSQL-backed gameplay uses those rows for offline claims.
 - Added a local/dev-only active player reset endpoint that clears hot cache state, PostgreSQL player progression rows, action replay rows, and dev logs while keeping account/session data.
 - Unity Server Mode exposes the local/dev reset through the Backend panel and clears pending client idempotency keys after a successful reset.
-- `/health` now reports state-cache dirty, queued, flushed, failed, last flush, and last error counters; PostgreSQL E2E verifies dirty queue visibility before manual flush and clean state after flush.
+- `/health` now reports state-cache dirty, queued, flushed, failed, loaded player contexts, last flush, and last error counters; PostgreSQL E2E verifies dirty queue visibility before manual flush and clean state after flush.
 - Added persistent player state revisions, action receipt metadata, and `debug.v_player_revision_overview` for Navicat-level state tracking.
 - Added action-ledger revision columns and monotonic PostgreSQL revision saves to protect batched materialized state writes.
 

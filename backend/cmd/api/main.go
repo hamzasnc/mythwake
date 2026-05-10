@@ -118,6 +118,7 @@ func main() {
 		cfg.BalanceCatalog = "postgres_snapshot"
 	}
 	playerManager := player.NewManager(stateStore, managerOptions...)
+	stopPlayerContextReaper := startPlayerContextReaper(logger, playerManager, cfg.PlayerContextIdleTTL, cfg.PlayerContextSweepInterval)
 
 	server := &http.Server{
 		Addr:              cfg.Addr,
@@ -140,6 +141,7 @@ func main() {
 	defer cancel()
 
 	logger.Println("shutting down")
+	stopPlayerContextReaper()
 	if err := server.Shutdown(shutdownContext); err != nil {
 		logger.Fatalf("shutdown failed: %v", err)
 	}
@@ -154,5 +156,46 @@ func main() {
 		if err := cachedStateStore.Close(shutdownContext); err != nil {
 			logger.Printf("state cache flush failed during shutdown: %v", err)
 		}
+	}
+}
+
+func startPlayerContextReaper(logger *log.Logger, manager *player.Manager, idleTTL time.Duration, sweepInterval time.Duration) func() {
+	if logger == nil {
+		logger = log.New(os.Stdout, "mythwake-api ", log.LstdFlags|log.LUTC)
+	}
+	if manager == nil || idleTTL <= 0 || sweepInterval <= 0 {
+		return func() {}
+	}
+
+	stop := make(chan struct{})
+	done := make(chan struct{})
+
+	go func() {
+		ticker := time.NewTicker(sweepInterval)
+		defer ticker.Stop()
+		defer close(done)
+
+		for {
+			select {
+			case <-ticker.C:
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				unloaded, err := manager.FlushIdle(ctx, idleTTL)
+				cancel()
+				if err != nil {
+					logger.Printf("idle player context flush failed: %v", err)
+					continue
+				}
+				if unloaded > 0 {
+					logger.Printf("flushed and unloaded %d idle player contexts", unloaded)
+				}
+			case <-stop:
+				return
+			}
+		}
+	}()
+
+	return func() {
+		close(stop)
+		<-done
 	}
 }

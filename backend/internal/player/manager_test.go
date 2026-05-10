@@ -3,6 +3,7 @@ package player
 import (
 	"context"
 	"testing"
+	"time"
 )
 
 func TestManagerReturnsStableServicePerPlayer(t *testing.T) {
@@ -136,6 +137,92 @@ func TestManagerResetPlayerReplacesLoadedService(t *testing.T) {
 	}
 }
 
+func TestManagerFlushIdleFlushesAndUnloadsExpiredPlayers(t *testing.T) {
+	store := &managerFlushStore{saved: map[string]PersistentState{}}
+	now := time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC)
+	manager := NewManager(store, WithClock(func() time.Time { return now }))
+
+	expired, err := manager.ServiceForPlayer(context.Background(), "player-expired")
+	if err != nil {
+		t.Fatalf("expired service: %v", err)
+	}
+	active, err := manager.ServiceForPlayer(context.Background(), "player-active")
+	if err != nil {
+		t.Fatalf("active service: %v", err)
+	}
+
+	store.saved = map[string]PersistentState{}
+	store.flushCount = 0
+	expired.state.Gold = 42
+	active.state.Gold = 99
+
+	now = now.Add(20 * time.Minute)
+	if _, err := manager.ServiceForPlayer(context.Background(), "player-active"); err != nil {
+		t.Fatalf("touch active service: %v", err)
+	}
+
+	unloaded, err := manager.FlushIdle(context.Background(), 10*time.Minute)
+	if err != nil {
+		t.Fatalf("flush idle: %v", err)
+	}
+
+	if unloaded != 1 {
+		t.Fatalf("expected one unloaded player, got %d", unloaded)
+	}
+	if manager.LoadedPlayerCount() != 1 {
+		t.Fatalf("expected one loaded player after idle flush, got %d", manager.LoadedPlayerCount())
+	}
+	if store.saved["player-expired"].PlayerState.Gold != 42 {
+		t.Fatalf("expected expired player gold 42, got %d", store.saved["player-expired"].PlayerState.Gold)
+	}
+	if _, ok := store.saved["player-active"]; ok {
+		t.Fatal("expected active player to remain unflushed")
+	}
+
+	reloaded, err := manager.ServiceForPlayer(context.Background(), "player-expired")
+	if err != nil {
+		t.Fatalf("reload expired service: %v", err)
+	}
+	if reloaded == expired {
+		t.Fatal("expected expired player to be removed from hot manager cache")
+	}
+}
+
+func TestManagerFlushIdleKeepsPlayerTouchedDuringFlush(t *testing.T) {
+	store := &managerFlushStore{saved: map[string]PersistentState{}}
+	now := time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC)
+	manager := NewManager(store, WithClock(func() time.Time { return now }))
+
+	service, err := manager.ServiceForPlayer(context.Background(), "player-hot")
+	if err != nil {
+		t.Fatalf("service for player: %v", err)
+	}
+
+	store.saved = map[string]PersistentState{}
+	store.flushCount = 0
+	service.state.Gold = 42
+
+	now = now.Add(20 * time.Minute)
+	store.onSave = func() {
+		now = now.Add(time.Minute)
+		if _, err := manager.ServiceForPlayer(context.Background(), "player-hot"); err != nil {
+			t.Fatalf("touch during flush: %v", err)
+		}
+	}
+
+	unloaded, err := manager.FlushIdle(context.Background(), 10*time.Minute)
+	if err != nil {
+		t.Fatalf("flush idle: %v", err)
+	}
+
+	if unloaded != 0 {
+		t.Fatalf("expected touched player to stay loaded, got %d unloads", unloaded)
+	}
+	if manager.LoadedPlayerCount() != 1 {
+		t.Fatalf("expected touched player to remain loaded, got %d loaded players", manager.LoadedPlayerCount())
+	}
+}
+
 func TestManagerInjectsBalanceCatalogIntoServices(t *testing.T) {
 	manager := NewManager(nil, WithBalanceCatalog(expensiveSummonCatalog{}))
 	service, err := manager.ServiceForPlayer(context.Background(), "catalog-player")
@@ -160,6 +247,7 @@ type managerFlushStore struct {
 	saved         map[string]PersistentState
 	flushCount    int
 	resetPlayerID string
+	onSave        func()
 }
 
 func (store *managerFlushStore) LoadState(context.Context, string) (PersistentState, bool, error) {
@@ -168,6 +256,9 @@ func (store *managerFlushStore) LoadState(context.Context, string) (PersistentSt
 
 func (store *managerFlushStore) SaveState(_ context.Context, playerID string, state PersistentState, _ StateSaveSource) error {
 	store.saved[playerID] = state
+	if store.onSave != nil {
+		store.onSave()
+	}
 	return nil
 }
 
