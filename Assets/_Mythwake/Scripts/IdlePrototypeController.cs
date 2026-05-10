@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.10";
+    public const string PrototypeVersion = "0.2.11";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -681,10 +681,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     [Header("Backend")]
     [SerializeField] private MythwakeBackendClient backendClient;
+    [SerializeField] private bool backendGameplayEnabled;
     [SerializeField] private TMP_Text backendStatusText;
     [SerializeField] private Button backendHealthButton;
     [SerializeField] private Button backendLoginButton;
     [SerializeField] private Button backendSyncButton;
+    [SerializeField] private Button backendModeButton;
+    [SerializeField] private TMP_Text backendModeText;
 
     [Header("UI")]
     [SerializeField] private TMP_Text titleText;
@@ -913,6 +916,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             backendSyncButton.onClick.AddListener(SyncBackendState);
         }
 
+        if (backendModeButton != null)
+        {
+            backendModeButton.onClick.AddListener(ToggleBackendGameplayMode);
+        }
+
         RefreshUi();
         ShowScreen(activeScreen);
     }
@@ -921,6 +929,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (!autoAttackEnabled)
         {
+            return;
+        }
+
+        if (backendGameplayEnabled)
+        {
+            RefreshAutoAttackUi();
             return;
         }
 
@@ -1063,6 +1077,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             backendSyncButton.onClick.RemoveListener(SyncBackendState);
         }
 
+        if (backendModeButton != null)
+        {
+            backendModeButton.onClick.RemoveListener(ToggleBackendGameplayMode);
+        }
+
         UnregisterNavigation();
         UnregisterHeroButtons();
         UnregisterDailyMissionButtons();
@@ -1101,21 +1120,61 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void Fight()
     {
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: campaign fight..."))
+            {
+                StartCoroutine(backendClient.FightCampaign(OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
         FightCampaign();
     }
 
     public void RunGoldDungeon()
     {
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: gold dungeon..."))
+            {
+                StartCoroutine(backendClient.RunDungeon(GoldDungeonDefinition.dungeonId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
         RunDungeon(GoldDungeonDefinition.dungeonId);
     }
 
     public void RunEssenceDungeon()
     {
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: essence dungeon..."))
+            {
+                StartCoroutine(backendClient.RunDungeon(EssenceDungeonDefinition.dungeonId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
         RunDungeon(EssenceDungeonDefinition.dungeonId);
     }
 
     public void RunGearDungeon()
     {
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: gear dungeon..."))
+            {
+                StartCoroutine(backendClient.RunDungeon(GearDungeonDefinition.dungeonId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
         RunDungeon(GearDungeonDefinition.dungeonId);
     }
 
@@ -1179,22 +1238,62 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     public void UpgradeDamage()
     {
         selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest($"Server: leveling {GetHeroDefinition(selectedHeroIndex).name}..."))
+            {
+                StartCoroutine(backendClient.LevelHero(GetHeroDefinition(selectedHeroIndex).heroId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
         LevelHero(GetHeroDefinition(selectedHeroIndex).heroId);
     }
 
     public void AscendSelectedHero()
     {
         selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest($"Server: ascending {GetHeroDefinition(selectedHeroIndex).name}..."))
+            {
+                StartCoroutine(backendClient.AscendHero(GetHeroDefinition(selectedHeroIndex).heroId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
         AscendHero(GetHeroDefinition(selectedHeroIndex).heroId);
     }
 
     public void UpgradeWeapon()
     {
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: leveling weapon..."))
+            {
+                StartCoroutine(backendClient.LevelEquipment(WeaponTrack.equipmentId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
         LevelEquipment(WeaponTrack.equipmentId);
     }
 
     public void UpgradeArmor()
     {
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: leveling armor..."))
+            {
+                StartCoroutine(backendClient.LevelEquipment(ArmorTrack.equipmentId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
         LevelEquipment(ArmorTrack.equipmentId);
     }
 
@@ -1333,6 +1432,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: equipping accessory..."))
+            {
+                StartCoroutine(backendClient.EquipAccessory(GetAccessoryDefinition(slot, rarity).accessoryId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
         EquipAccessory(GetAccessoryDefinition(slot, rarity).accessoryId);
     }
 
@@ -1381,6 +1490,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         var rarity = equippedAccessoryRarities[slot];
         var accessoryId = rarity >= 0 ? GetAccessoryDefinition(slot, rarity).accessoryId : string.Empty;
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: leveling accessory..."))
+            {
+                StartCoroutine(backendClient.LevelAccessory(accessoryId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
         LevelAccessory(accessoryId);
     }
 
@@ -1430,6 +1549,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAccessories();
         var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: fusing accessory..."))
+            {
+                StartCoroutine(backendClient.FuseAccessory(GetAccessoryDefinition(slot, rarity).accessoryId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
         FuseAccessory(GetAccessoryDefinition(slot, rarity).accessoryId);
     }
 
@@ -1464,6 +1593,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void SummonOnce()
     {
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: summon pull..."))
+            {
+                StartCoroutine(backendClient.PullSummon(HeroShardBanner.bannerId, OnBackendSummonAction));
+            }
+
+            return;
+        }
+
         Pull(HeroShardBanner.bannerId);
     }
 
@@ -1507,41 +1646,89 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void ClaimDailyBattleMission()
     {
+        if (backendGameplayEnabled)
+        {
+            ClaimDailyMissionOnBackend(0);
+            return;
+        }
+
         ClaimDailyMission(0);
     }
 
     public void ClaimDailyStageMission()
     {
+        if (backendGameplayEnabled)
+        {
+            ClaimDailyMissionOnBackend(1);
+            return;
+        }
+
         ClaimDailyMission(1);
     }
 
     public void ClaimDailySummonMission()
     {
+        if (backendGameplayEnabled)
+        {
+            ClaimDailyMissionOnBackend(2);
+            return;
+        }
+
         ClaimDailyMission(2);
     }
 
     public void ClaimBattlePassReward1()
     {
+        if (backendGameplayEnabled)
+        {
+            ClaimBattlePassRewardOnBackend(0);
+            return;
+        }
+
         ClaimBattlePassReward(0);
     }
 
     public void ClaimBattlePassReward2()
     {
+        if (backendGameplayEnabled)
+        {
+            ClaimBattlePassRewardOnBackend(1);
+            return;
+        }
+
         ClaimBattlePassReward(1);
     }
 
     public void ClaimBattlePassReward3()
     {
+        if (backendGameplayEnabled)
+        {
+            ClaimBattlePassRewardOnBackend(2);
+            return;
+        }
+
         ClaimBattlePassReward(2);
     }
 
     public void ClaimBattlePassReward4()
     {
+        if (backendGameplayEnabled)
+        {
+            ClaimBattlePassRewardOnBackend(3);
+            return;
+        }
+
         ClaimBattlePassReward(3);
     }
 
     public void ClaimBattlePassReward5()
     {
+        if (backendGameplayEnabled)
+        {
+            ClaimBattlePassRewardOnBackend(4);
+            return;
+        }
+
         ClaimBattlePassReward(4);
     }
 
@@ -1600,6 +1787,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         StartCoroutine(backendClient.GetPlayerSnapshot(OnBackendSnapshot));
+    }
+
+    public void ToggleBackendGameplayMode()
+    {
+        backendGameplayEnabled = !backendGameplayEnabled;
+        SetBackendStatus(backendGameplayEnabled ? "Gameplay mode: Server" : "Gameplay mode: Local");
+        RefreshUi();
+    }
+
+    private void ClaimDailyMissionOnBackend(int missionIndex)
+    {
+        missionIndex = Mathf.Clamp(missionIndex, 0, DailyMissionCount - 1);
+        if (TryStartBackendRequest("Server: claiming daily mission..."))
+        {
+            StartCoroutine(backendClient.ClaimDailyMission(GetDailyMissionDefinition(missionIndex).missionId, OnBackendGameplayAction));
+        }
+    }
+
+    private void ClaimBattlePassRewardOnBackend(int rewardIndex)
+    {
+        rewardIndex = Mathf.Clamp(rewardIndex, 0, BattlePassRewardCount - 1);
+        if (TryStartBackendRequest("Server: claiming mission track reward..."))
+        {
+            StartCoroutine(backendClient.ClaimBattlePassReward(GetBattlePassRewardDefinition(rewardIndex).rewardId, OnBackendGameplayAction));
+        }
     }
 
     public void ResetProgress()
@@ -1722,6 +1934,49 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         FinishBackendRequest($"Backend sync failed: {error}");
+    }
+
+    private void OnBackendGameplayAction(bool success, string error, MythwakeActionResultDto result)
+    {
+        CompleteBackendAction(success, error, result, showInSummonPanel: false);
+    }
+
+    private void OnBackendSummonAction(bool success, string error, MythwakeActionResultDto result)
+    {
+        CompleteBackendAction(success, error, result, showInSummonPanel: true);
+    }
+
+    private void CompleteBackendAction(bool success, string error, MythwakeActionResultDto result, bool showInSummonPanel)
+    {
+        if (!success)
+        {
+            var failedMessage = $"Server request failed: {error}";
+            if (showInSummonPanel)
+            {
+                SetSummonResult(failedMessage);
+            }
+            else
+            {
+                SetDungeonResult(failedMessage);
+            }
+
+            FinishBackendRequest($"Server request failed: {error}");
+            return;
+        }
+
+        ApplyBackendSnapshot(result.playerSnapshot);
+        var message = string.IsNullOrWhiteSpace(result.message) ? "Server action completed." : result.message;
+        if (showInSummonPanel)
+        {
+            SetSummonResult(message);
+        }
+        else
+        {
+            SetDungeonResult(message);
+        }
+
+        var outcome = result.success ? "ok" : string.IsNullOrWhiteSpace(result.errorCode) ? "failed" : result.errorCode;
+        FinishBackendRequest($"Server action: {outcome}  {result.actionId}");
     }
 
     private void FinishBackendRequest(string status)
@@ -4174,6 +4429,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
+        if (backendGameplayEnabled)
+        {
+            autoAttackText.text = "Auto Attack: Off in Server Mode";
+            return;
+        }
+
         var remaining = Mathf.Max(0f, autoAttackInterval - autoAttackTimer);
         autoAttackText.text = $"Auto Attack: {remaining:0.0}s";
     }
@@ -4453,9 +4714,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendStatusText.fontSizeMin = 16;
         backendStatusText.fontSizeMax = 22;
 
-        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -270, -140, 240, 54);
-        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", 0, -140, 240, 54);
-        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "Sync", 270, -140, 240, 54);
+        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -315, -140, 170, 54);
+        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", -105, -140, 170, 54);
+        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "Sync", 105, -140, 170, 54);
+        backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 315, -140, 170, 54);
+        backendModeText = backendModeButton.GetComponentInChildren<TMP_Text>();
     }
 
     private void EnsureRuntimeDebugUi()
@@ -4511,6 +4774,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             backendStatusText.text = backendStatus;
         }
 
+        if (backendModeText != null)
+        {
+            backendModeText.text = backendGameplayEnabled ? "Server" : "Local";
+        }
+
         SetBackendButtonsInteractable(!backendRequestInProgress);
     }
 
@@ -4538,6 +4806,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendSyncButton != null)
         {
             backendSyncButton.interactable = interactable;
+        }
+
+        if (backendModeButton != null)
+        {
+            backendModeButton.interactable = interactable;
         }
     }
 

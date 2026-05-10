@@ -258,6 +258,16 @@ Progress:
 - Expanded the Unity service contracts to full player snapshots matching the Go backend.
 - Added a Unity `MythwakeBackendClient` for health, guest auth, player snapshots, and all current action endpoints.
 - Added a runtime Shop-tab backend panel for Ping/Login/Sync smoke tests without making the local prototype depend on the server.
+- Added Local/Server mode in the backend panel.
+- Manual gameplay buttons can now route through the backend in Server Mode:
+  - campaign fight
+  - resource and gear dungeons
+  - hero level/ascend
+  - starter equipment level
+  - accessory equip/level/fuse
+  - summons
+  - daily mission and Mission Track claims
+- Auto Attack is intentionally paused in Server Mode until AFK claims are server-designed.
 
 Tasks:
 - Add service-style classes/interfaces for:
@@ -269,7 +279,7 @@ Tasks:
   - daily reset
 - Local implementation uses current save.
 - Future implementation calls backend.
-- Real HTTP exists now as a smoke-test layer; next step is moving gameplay actions onto it one-by-one behind a clean fallback.
+- Real HTTP exists now as a smoke-test layer, with manual gameplay actions routed through it behind a Local/Server toggle.
 
 Done when:
 - The gameplay code no longer directly owns every economy decision.
@@ -312,6 +322,7 @@ Current backend state:
 - Expanded `GET /player/state` into a client-ready player snapshot containing core state, heroes, equipment, accessories, claims, and summon count.
 - Added the same full player snapshot to guest auth and action responses so the client can refresh UI from a single response.
 - Unity can now ping the backend, guest-login, and apply `/player/state` snapshots through the ingame Backend panel.
+- Unity Server Mode can now execute manual gameplay actions through the backend and refresh from the returned `playerSnapshot`.
 - Redis is not connected yet.
 
 Recommended Go shape:

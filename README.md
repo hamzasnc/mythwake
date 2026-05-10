@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.10
+Prototype version: 0.2.11
 Local save version: 2
 
 Current prototype:
@@ -15,7 +15,9 @@ Current prototype:
 - Currency spend/grant actions now go through local economy boundary methods for backend migration
 - Shared service contracts now define player state, reward, action result, economy, battle, summon, and inventory boundaries
 - Unity has a backend client component for health, guest auth, player snapshot sync, and server action endpoints
-- Shop tab creates a small runtime Backend panel for Ping, Login, and Sync smoke tests
+- Shop tab creates a small runtime Backend panel for Ping, Login, Sync, and Local/Server gameplay mode smoke tests
+- Server Mode routes manual gameplay buttons through the Go backend and applies the returned player snapshot
+- Auto Attack stays local-only for now and is paused while Server Mode is active
 - Campaign fights, dungeon runs, and summons now return local action-result DTOs
 - Accessory equip, level, and fuse actions now return local action-result DTOs
 - Hero leveling, hero ascension, equipment leveling, daily claims, and mission track claims now return local action-result DTOs
@@ -83,6 +85,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- 0.2.11: Added Server Mode routing for manual gameplay buttons through the Unity backend client.
 - 0.2.10: Added Unity backend HTTP client, full local player snapshots, and an ingame Backend panel for Ping/Login/Sync smoke tests.
 - Backend 0.2.9: Added full player snapshots to guest auth and action responses.
 - Backend 0.2.8: Expanded `/player/state` into a client-ready player snapshot response.
