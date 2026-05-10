@@ -15,6 +15,7 @@ Current scope:
 - Request ID middleware for client/server log correlation
 - JSON panic recovery for unexpected HTTP handler failures
 - Redis or in-memory rate limiter implementation for auth and gameplay mutation requests
+- Redis or in-memory short-lived player mutation locks for gameplay POSTs
 - PostgreSQL account identities and hashed session token persistence for guest, email, Google, and Apple login providers
 - Bearer session validation for player state, flush, and gameplay mutation endpoints
 - Per-player service contexts resolved from the authenticated session token
@@ -175,6 +176,8 @@ Optional environment variables:
 - `MYTHWAKE_RATE_LIMIT_WINDOW`, default `1m`
 - `MYTHWAKE_RATE_LIMIT_AUTH`, default `30` requests per window for auth endpoints
 - `MYTHWAKE_RATE_LIMIT_GAMEPLAY`, default `240` requests per window for gameplay mutation endpoints
+- `MYTHWAKE_PLAYER_LOCK_STORE`, `memory` or `redis`; defaults to `redis` only when `MYTHWAKE_REDIS_ADDR` is set
+- `MYTHWAKE_PLAYER_LOCK_TTL`, default `5s`
 - `MYTHWAKE_REQUIRE_IDEMPOTENCY`, default `true`; set to `false` only for local debugging
 
 Database behavior:
@@ -205,6 +208,7 @@ Database behavior:
 - `GET /time` is the source of truth for offline reward windows, daily missions, weekly systems, and client clock drift checks.
 - Request logs include request id, method, path, status, bytes, and duration.
 - Rate limiting uses memory by default and can use Redis by setting `MYTHWAKE_REDIS_ADDR` or `MYTHWAKE_RATE_LIMIT_STORE=redis`.
+- Gameplay mutation requests take a short per-player lock before applying actions; busy players return HTTP 409 with `errorCode=player_busy`.
 - `scripts/check-backend.cmd` performs guest login, sends Bearer auth for protected endpoints, and can verify missing-session `401`s.
 - `scripts/check-postgres-e2e.cmd` starts the API twice against PostgreSQL and verifies login, protected state, campaign persistence, manual flush, restart reload, idempotency replay, and logout revocation.
 

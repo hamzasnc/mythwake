@@ -113,6 +113,7 @@ Backend:
 - Every API response now carries an `X-Request-ID`, and error JSON includes `requestId` for log/client correlation
 - HTTP panic recovery returns a JSON `internal_error` instead of dropping the request
 - Auth/gameplay rate limit middleware can use Redis or memory through the shared limiter interface
+- Gameplay mutations take a short per-player lock so fast double-taps or multi-instance races fail cleanly with `player_busy`
 - `/health` reports whether gameplay balance is using the static fallback or the PostgreSQL-loaded snapshot
 - Server clock endpoint exposes authoritative UTC time plus daily/weekly reset countdowns for future offline rewards and daily reset validation
 - Server-authoritative AFK claim endpoint grants capped Gold and Myth Essence using server time and persists the last claim timestamp
@@ -146,6 +147,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.53: Added per-player gameplay mutation locks with memory/Redis implementations and `player_busy` conflict handling.
 - Backend 0.2.52: Added optional Redis-backed session cache and rate-limit adapters with health/script visibility while keeping memory as the no-Redis default.
 - Backend 0.2.51: Extracted auth session caching and API rate limiting behind Redis-ready interfaces with in-memory implementations.
 - Backend 0.2.50: PostgreSQL action-result writes now enforce expected player state revisions transactionally before accepting gameplay mutations.

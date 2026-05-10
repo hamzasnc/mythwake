@@ -2,6 +2,8 @@ package redis
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -10,6 +12,7 @@ import (
 	goredis "github.com/redis/go-redis/v9"
 
 	"github.com/hamzasnc/mythwake/backend/internal/auth"
+	"github.com/hamzasnc/mythwake/backend/internal/cache/actionlock"
 	"github.com/hamzasnc/mythwake/backend/internal/cache/ratelimit"
 )
 
@@ -161,6 +164,62 @@ func (limiter *RateLimiter) Allow(ctx context.Context, key string, limit int, wi
 
 func (limiter *RateLimiter) key(key string) string {
 	return limiter.prefix + ":ratelimit:" + key
+}
+
+type Locker struct {
+	client        *goredis.Client
+	prefix        string
+	releaseScript *goredis.Script
+}
+
+func NewLocker(client *goredis.Client, keyPrefix string) *Locker {
+	return &Locker{
+		client: client,
+		prefix: normalizePrefix(keyPrefix),
+		releaseScript: goredis.NewScript(`
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+	return redis.call("DEL", KEYS[1])
+end
+return 0
+`),
+	}
+}
+
+func (locker *Locker) Acquire(ctx context.Context, key string, ttl time.Duration) (actionlock.Lock, bool, error) {
+	if ttl <= 0 {
+		ttl = 5 * time.Second
+	}
+
+	token, err := lockToken()
+	if err != nil {
+		return nil, false, err
+	}
+
+	redisKey := locker.key(key)
+	ok, err := locker.client.SetNX(ctx, redisKey, token, ttl).Result()
+	if err != nil {
+		return nil, false, err
+	}
+	if !ok {
+		return nil, false, nil
+	}
+
+	return actionlock.ReleaseFunc(func(ctx context.Context) error {
+		return locker.releaseScript.Run(ctx, locker.client, []string{redisKey}, token).Err()
+	}), true, nil
+}
+
+func (locker *Locker) key(key string) string {
+	return locker.prefix + ":lock:" + key
+}
+
+func lockToken() (string, error) {
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("generate redis lock token: %w", err)
+	}
+
+	return base64.RawURLEncoding.EncodeToString(bytes), nil
 }
 
 func normalizePrefix(prefix string) string {

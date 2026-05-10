@@ -34,7 +34,7 @@ func main() {
 	var stateStore player.StateStore
 	var redisClientCloser interface{ Close() error }
 
-	if (cfg.SessionCacheStore == config.CacheStoreRedis || cfg.RateLimitStore == config.CacheStoreRedis) && cfg.RedisAddr == "" {
+	if (cfg.SessionCacheStore == config.CacheStoreRedis || cfg.RateLimitStore == config.CacheStoreRedis || cfg.PlayerLockStore == config.CacheStoreRedis) && cfg.RedisAddr == "" {
 		logger.Fatalf("redis cache store requires MYTHWAKE_REDIS_ADDR")
 	}
 
@@ -59,6 +59,9 @@ func main() {
 		}
 		if cfg.RateLimitStore == config.CacheStoreRedis {
 			routerOptions = append(routerOptions, apihttp.WithRateLimiter(rediscache.NewRateLimiter(redisClient, cfg.ServiceName)))
+		}
+		if cfg.PlayerLockStore == config.CacheStoreRedis {
+			routerOptions = append(routerOptions, apihttp.WithPlayerLocker(rediscache.NewLocker(redisClient, cfg.ServiceName)))
 		}
 	}
 	if redisClientCloser != nil {

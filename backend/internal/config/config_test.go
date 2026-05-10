@@ -68,17 +68,21 @@ func TestLoadUsesRedisStoresWhenRedisAddressIsSet(t *testing.T) {
 	if cfg.SessionCacheStore != CacheStoreRedis || cfg.RateLimitStore != CacheStoreRedis {
 		t.Fatalf("expected redis stores when redis addr is set, got session=%s rate=%s", cfg.SessionCacheStore, cfg.RateLimitStore)
 	}
+	if cfg.PlayerLockStore != CacheStoreRedis {
+		t.Fatalf("expected redis player lock store when redis addr is set, got %s", cfg.PlayerLockStore)
+	}
 }
 
 func TestLoadCanKeepMemoryStoresWithRedisAddress(t *testing.T) {
 	t.Setenv("MYTHWAKE_REDIS_ADDR", "localhost:6379")
 	t.Setenv("MYTHWAKE_SESSION_CACHE_STORE", "memory")
 	t.Setenv("MYTHWAKE_RATE_LIMIT_STORE", "memory")
+	t.Setenv("MYTHWAKE_PLAYER_LOCK_STORE", "memory")
 
 	cfg := Load()
 
-	if cfg.SessionCacheStore != CacheStoreMemory || cfg.RateLimitStore != CacheStoreMemory {
-		t.Fatalf("expected explicit memory stores, got session=%s rate=%s", cfg.SessionCacheStore, cfg.RateLimitStore)
+	if cfg.SessionCacheStore != CacheStoreMemory || cfg.RateLimitStore != CacheStoreMemory || cfg.PlayerLockStore != CacheStoreMemory {
+		t.Fatalf("expected explicit memory stores, got session=%s rate=%s lock=%s", cfg.SessionCacheStore, cfg.RateLimitStore, cfg.PlayerLockStore)
 	}
 }
 
@@ -108,14 +112,29 @@ func TestLoadRateLimitSettings(t *testing.T) {
 	}
 }
 
+func TestLoadPlayerLockSettings(t *testing.T) {
+	t.Setenv("MYTHWAKE_PLAYER_LOCK_STORE", "memory")
+	t.Setenv("MYTHWAKE_PLAYER_LOCK_TTL", "3s")
+
+	cfg := Load()
+
+	if cfg.PlayerLockStore != CacheStoreMemory {
+		t.Fatalf("expected memory player lock store, got %s", cfg.PlayerLockStore)
+	}
+	if cfg.PlayerLockTTL != 3*time.Second {
+		t.Fatalf("expected player lock ttl 3s, got %s", cfg.PlayerLockTTL)
+	}
+}
+
 func TestLoadFallsBackToMemoryCacheStores(t *testing.T) {
 	t.Setenv("MYTHWAKE_REDIS_ADDR", "")
 	t.Setenv("MYTHWAKE_SESSION_CACHE_STORE", "bad-store")
 	t.Setenv("MYTHWAKE_RATE_LIMIT_STORE", "bad-store")
+	t.Setenv("MYTHWAKE_PLAYER_LOCK_STORE", "bad-store")
 
 	cfg := Load()
 
-	if cfg.SessionCacheStore != CacheStoreMemory || cfg.RateLimitStore != CacheStoreMemory {
-		t.Fatalf("expected unsupported cache stores to fall back to memory, got session=%s rate=%s", cfg.SessionCacheStore, cfg.RateLimitStore)
+	if cfg.SessionCacheStore != CacheStoreMemory || cfg.RateLimitStore != CacheStoreMemory || cfg.PlayerLockStore != CacheStoreMemory {
+		t.Fatalf("expected unsupported cache stores to fall back to memory, got session=%s rate=%s lock=%s", cfg.SessionCacheStore, cfg.RateLimitStore, cfg.PlayerLockStore)
 	}
 }

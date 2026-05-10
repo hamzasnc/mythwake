@@ -67,13 +67,14 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.52-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.53-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_REDIS_ADDR = ""
     $env:MYTHWAKE_REDIS_PASSWORD = ""
     $env:MYTHWAKE_REDIS_DB = "0"
     $env:MYTHWAKE_SESSION_CACHE_STORE = "memory"
     $env:MYTHWAKE_RATE_LIMIT_STORE = "memory"
+    $env:MYTHWAKE_PLAYER_LOCK_STORE = "memory"
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
     $env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
@@ -83,6 +84,7 @@ function Start-Api {
     $env:MYTHWAKE_RATE_LIMIT_WINDOW = "1m"
     $env:MYTHWAKE_RATE_LIMIT_AUTH = "30"
     $env:MYTHWAKE_RATE_LIMIT_GAMEPLAY = "240"
+    $env:MYTHWAKE_PLAYER_LOCK_TTL = "5s"
     $env:MYTHWAKE_REQUIRE_IDEMPOTENCY = "true"
     $env:MYTHWAKE_DEV_TOOLS_ENABLED = "true"
 

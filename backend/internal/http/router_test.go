@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/cache/actionlock"
 	"github.com/hamzasnc/mythwake/backend/internal/cache/ratelimit"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
 	"github.com/hamzasnc/mythwake/backend/internal/definitions"
@@ -73,8 +74,11 @@ func TestHealthEndpointIncludesStateCacheStats(t *testing.T) {
 	if body["redis"] != "disabled" {
 		t.Fatalf("expected disabled redis status, got %#v", body)
 	}
-	if body["session_cache_store"] != config.CacheStoreMemory || body["rate_limit_store"] != config.CacheStoreMemory {
+	if body["session_cache_store"] != config.CacheStoreMemory || body["rate_limit_store"] != config.CacheStoreMemory || body["player_lock_store"] != config.CacheStoreMemory {
 		t.Fatalf("expected memory cache stores in health response, got %#v", body)
+	}
+	if body["player_lock_ttl"] != "5s" {
+		t.Fatalf("expected player lock ttl in health response, got %#v", body)
 	}
 }
 
@@ -318,6 +322,87 @@ func TestRateLimiterFailureFailsClosed(t *testing.T) {
 	}
 	if body.ErrorCode != "rate_limit_unavailable" || body.RequestID != "rate-limit-failed-001" {
 		t.Fatalf("expected rate limit unavailable error, got %#v", body)
+	}
+}
+
+func TestGameplayActionReturnsConflictWhenPlayerLockIsBusy(t *testing.T) {
+	handler := NewRouter(
+		config.Config{
+			ServiceName:        "test-api",
+			Addr:               ":0",
+			Environment:        "test",
+			Version:            "test",
+			RateLimitEnabled:   false,
+			PlayerLockStore:    config.CacheStoreMemory,
+			PlayerLockTTL:      2500 * time.Millisecond,
+			RequireIdempotency: true,
+		},
+		log.New(testWriter{}, "", 0),
+		nil,
+		player.NewManager(nil),
+		WithPlayerLocker(blockingPlayerLocker{}),
+	)
+	login := loginGuest(t, handler)
+
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	request.Header.Set("X-Request-ID", "player-lock-busy-001")
+	addAuth(request, login.SessionToken)
+	addIdempotencyKey(request, "player-lock-key-001")
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusConflict {
+		t.Fatalf("expected status 409, got %d", response.Code)
+	}
+	if response.Header().Get("Retry-After") != "3" {
+		t.Fatalf("expected rounded Retry-After, got %q", response.Header().Get("Retry-After"))
+	}
+
+	var body api.ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.ErrorCode != "player_busy" || body.RequestID != "player-lock-busy-001" {
+		t.Fatalf("expected player_busy error with request id, got %#v", body)
+	}
+}
+
+func TestGameplayActionReturnsUnavailableWhenPlayerLockFails(t *testing.T) {
+	handler := NewRouter(
+		config.Config{
+			ServiceName:        "test-api",
+			Addr:               ":0",
+			Environment:        "test",
+			Version:            "test",
+			RateLimitEnabled:   false,
+			PlayerLockStore:    config.CacheStoreMemory,
+			PlayerLockTTL:      time.Second,
+			RequireIdempotency: true,
+		},
+		log.New(testWriter{}, "", 0),
+		nil,
+		player.NewManager(nil),
+		WithPlayerLocker(failingPlayerLocker{}),
+	)
+	login := loginGuest(t, handler)
+
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	request.Header.Set("X-Request-ID", "player-lock-failed-001")
+	addAuth(request, login.SessionToken)
+	addIdempotencyKey(request, "player-lock-key-002")
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status 503, got %d", response.Code)
+	}
+
+	var body api.ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.ErrorCode != "player_lock_unavailable" || body.RequestID != "player-lock-failed-001" {
+		t.Fatalf("expected player lock unavailable error, got %#v", body)
 	}
 }
 
@@ -1016,4 +1101,16 @@ type failingRateLimiter struct{}
 
 func (failingRateLimiter) Allow(context.Context, string, int, time.Duration) (ratelimit.Decision, error) {
 	return ratelimit.Decision{}, errors.New("rate limiter failed")
+}
+
+type blockingPlayerLocker struct{}
+
+func (blockingPlayerLocker) Acquire(context.Context, string, time.Duration) (actionlock.Lock, bool, error) {
+	return nil, false, nil
+}
+
+type failingPlayerLocker struct{}
+
+func (failingPlayerLocker) Acquire(context.Context, string, time.Duration) (actionlock.Lock, bool, error) {
+	return nil, false, errors.New("player locker failed")
 }

@@ -10,6 +10,7 @@ param(
     [string]$RateLimitWindow = "1m",
     [int]$RateLimitAuth = 30,
     [int]$RateLimitGameplay = 240,
+    [string]$PlayerLockTTL = "5s",
     [ValidateSet("ledger_write_behind", "write_through", "write_behind")]
     [string]$StateWriteMode = "ledger_write_behind",
     [switch]$NoDatabase,
@@ -82,7 +83,7 @@ function Start-PostgresServiceIfNeeded {
 $goExe = Find-Go
 $env:MYTHWAKE_API_ADDR = $ApiAddr
 $env:MYTHWAKE_ENV = "local"
-$env:MYTHWAKE_API_VERSION = "0.2.52"
+$env:MYTHWAKE_API_VERSION = "0.2.53"
 $env:MYTHWAKE_STATE_FLUSH_INTERVAL = $StateFlushInterval
 $env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
 $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
@@ -97,6 +98,8 @@ $env:MYTHWAKE_RATE_LIMIT_ENABLED = if ($DisableRateLimit) { "false" } else { "tr
 $env:MYTHWAKE_RATE_LIMIT_WINDOW = $RateLimitWindow
 $env:MYTHWAKE_RATE_LIMIT_AUTH = [string]$RateLimitAuth
 $env:MYTHWAKE_RATE_LIMIT_GAMEPLAY = [string]$RateLimitGameplay
+$env:MYTHWAKE_PLAYER_LOCK_STORE = if ($RedisAddr) { "redis" } else { "memory" }
+$env:MYTHWAKE_PLAYER_LOCK_TTL = $PlayerLockTTL
 $env:MYTHWAKE_REQUIRE_IDEMPOTENCY = if ($AllowMissingIdempotency) { "false" } else { "true" }
 $env:MYTHWAKE_DEV_TOOLS_ENABLED = if ($DisableDevTools) { "false" } else { "true" }
 
@@ -136,6 +139,8 @@ Write-Host "Rate limit store: $(if ($RedisAddr) { 'redis' } else { 'memory' })"
 Write-Host "Rate limit enabled: $($env:MYTHWAKE_RATE_LIMIT_ENABLED)"
 Write-Host "Rate limit window: $RateLimitWindow"
 Write-Host "Rate limit auth/gameplay: $RateLimitAuth / $RateLimitGameplay"
+Write-Host "Player lock store: $(if ($RedisAddr) { 'redis' } else { 'memory' })"
+Write-Host "Player lock TTL: $PlayerLockTTL"
 Write-Host "Require idempotency: $($env:MYTHWAKE_REQUIRE_IDEMPOTENCY)"
 Write-Host "Dev tools enabled: $($env:MYTHWAKE_DEV_TOOLS_ENABLED)"
 Write-Host "Stop server with Ctrl+C."

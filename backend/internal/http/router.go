@@ -13,6 +13,7 @@ import (
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/auth"
+	"github.com/hamzasnc/mythwake/backend/internal/cache/actionlock"
 	"github.com/hamzasnc/mythwake/backend/internal/cache/ratelimit"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
 	"github.com/hamzasnc/mythwake/backend/internal/definitions"
@@ -28,6 +29,7 @@ type Router struct {
 	definitionProvider definitions.SnapshotProvider
 	stateCacheStats    StateCacheStatsProvider
 	rateLimiter        ratelimit.Limiter
+	playerLocker       actionlock.Locker
 }
 
 type RouterOption func(*Router)
@@ -67,12 +69,26 @@ func WithRateLimiter(limiter ratelimit.Limiter) RouterOption {
 	}
 }
 
+func WithPlayerLocker(locker actionlock.Locker) RouterOption {
+	return func(router *Router) {
+		if locker != nil {
+			router.playerLocker = locker
+		}
+	}
+}
+
 func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service, playerManager *player.Manager, options ...RouterOption) http.Handler {
 	if authService == nil {
 		authService = auth.NewService(nil)
 	}
 	if playerManager == nil {
 		playerManager = player.NewManager(nil)
+	}
+	if cfg.PlayerLockStore == "" {
+		cfg.PlayerLockStore = config.CacheStoreMemory
+	}
+	if cfg.PlayerLockTTL <= 0 {
+		cfg.PlayerLockTTL = 5 * time.Second
 	}
 
 	router := &Router{
@@ -84,6 +100,7 @@ func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service,
 		definitionProvider: definitions.NewStaticSnapshotProvider(),
 		stateCacheStats:    func() StateCacheStats { return StateCacheStats{} },
 		rateLimiter:        ratelimit.NewMemoryLimiter(),
+		playerLocker:       actionlock.NewMemoryLocker(),
 	}
 
 	for _, option := range options {
@@ -193,6 +210,8 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 		"rate_limit_window":    router.config.RateLimitWindow.String(),
 		"rate_limit_auth":      strconv.Itoa(router.config.RateLimitAuth),
 		"rate_limit_gameplay":  strconv.Itoa(router.config.RateLimitGameplay),
+		"player_lock_store":    playerLockStore(router.config),
+		"player_lock_ttl":      router.config.PlayerLockTTL.String(),
 		"require_idempotency":  boolLabel(router.config.RequireIdempotency),
 		"dev_tools":            boolLabel(router.config.DevToolsEnabled),
 		"environment":          router.config.Environment,
@@ -474,7 +493,7 @@ func writeActionResult(response http.ResponseWriter, result any) {
 }
 
 func (router *Router) writeGameplayAction(response http.ResponseWriter, request *http.Request, rawBody string, run func(*player.Service, player.ActionRequest) api.ActionResult) {
-	playerService, ok := router.authenticatedPlayerService(response, request)
+	session, ok := router.authenticatedSession(response, request)
 	if !ok {
 		return
 	}
@@ -484,7 +503,69 @@ func (router *Router) writeGameplayAction(response http.ResponseWriter, request 
 		return
 	}
 
+	release, ok := router.acquirePlayerMutationLock(response, request, session.PlayerID)
+	if !ok {
+		return
+	}
+	defer release()
+
+	playerService, ok := router.playerServiceForSession(response, request, session)
+	if !ok {
+		return
+	}
+
 	writeActionResult(response, run(playerService, action))
+}
+
+func (router *Router) acquirePlayerMutationLock(response http.ResponseWriter, request *http.Request, playerID string) (func(), bool) {
+	if router.playerLocker == nil {
+		return func() {}, true
+	}
+
+	lock, acquired, err := router.playerLocker.Acquire(request.Context(), playerMutationLockKey(playerID), router.config.PlayerLockTTL)
+	if err != nil {
+		writeError(response, request, http.StatusServiceUnavailable, "player_lock_unavailable", "Player mutation lock is temporarily unavailable.")
+		return nil, false
+	}
+	if !acquired {
+		response.Header().Set("Retry-After", strconv.Itoa(retryAfterSeconds(router.config.PlayerLockTTL)))
+		writeError(response, request, http.StatusConflict, "player_busy", "Another player action is already being processed.")
+		return nil, false
+	}
+
+	return func() {
+		if err := lock.Release(request.Context()); err != nil {
+			router.logger.Printf("request_id=%s player_id=%s lock_release_failed=%v", requestIDFromContext(request.Context()), playerID, err)
+		}
+	}, true
+}
+
+func playerMutationLockKey(playerID string) string {
+	return "player:" + playerID + ":mutation"
+}
+
+func playerLockStore(cfg config.Config) string {
+	if cfg.PlayerLockStore == "" {
+		return config.CacheStoreMemory
+	}
+
+	return cfg.PlayerLockStore
+}
+
+func retryAfterSeconds(duration time.Duration) int {
+	if duration <= 0 {
+		return 1
+	}
+
+	seconds := int(duration.Seconds())
+	if time.Duration(seconds)*time.Second < duration {
+		seconds++
+	}
+	if seconds < 1 {
+		return 1
+	}
+
+	return seconds
 }
 
 func (router *Router) authenticatedPlayerService(response http.ResponseWriter, request *http.Request) (*player.Service, bool) {

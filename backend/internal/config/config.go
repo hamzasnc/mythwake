@@ -39,6 +39,8 @@ type Config struct {
 	RateLimitWindow    time.Duration
 	RateLimitAuth      int
 	RateLimitGameplay  int
+	PlayerLockStore    string
+	PlayerLockTTL      time.Duration
 	RequireIdempotency bool
 	DevToolsEnabled    bool
 }
@@ -51,7 +53,7 @@ func Load() Config {
 		ServiceName:        "mythwake-api",
 		Addr:               getEnv("MYTHWAKE_API_ADDR", ":8080"),
 		Environment:        getEnv("MYTHWAKE_ENV", "local"),
-		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.52"),
+		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.53"),
 		DatabaseURL:        os.Getenv("MYTHWAKE_DATABASE_URL"),
 		DatabaseStatus:     "disabled",
 		RedisAddr:          redisAddr,
@@ -71,6 +73,8 @@ func Load() Config {
 		RateLimitWindow:    getDurationEnv("MYTHWAKE_RATE_LIMIT_WINDOW", time.Minute),
 		RateLimitAuth:      getIntEnv("MYTHWAKE_RATE_LIMIT_AUTH", 30),
 		RateLimitGameplay:  getIntEnv("MYTHWAKE_RATE_LIMIT_GAMEPLAY", 240),
+		PlayerLockStore:    getCacheStore("MYTHWAKE_PLAYER_LOCK_STORE", defaultCache),
+		PlayerLockTTL:      getDurationEnv("MYTHWAKE_PLAYER_LOCK_TTL", 5*time.Second),
 		RequireIdempotency: getBoolEnv("MYTHWAKE_REQUIRE_IDEMPOTENCY", true),
 		DevToolsEnabled:    getBoolEnv("MYTHWAKE_DEV_TOOLS_ENABLED", defaultDevToolsEnabled(getEnv("MYTHWAKE_ENV", "local"))),
 	}
