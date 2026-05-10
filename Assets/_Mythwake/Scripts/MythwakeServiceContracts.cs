@@ -129,6 +129,7 @@ public struct MythwakeDefinitionSnapshotDto
     public int schemaVersion;
     public string apiVersion;
     public string contentHash;
+    public MythwakeAuthProviderDefinitionDto[] authProviders;
     public MythwakeCurrencyDefinitionDto[] currencies;
     public MythwakeHeroDefinitionDto[] heroes;
     public MythwakeRewardDefinitionDto[] rewards;
@@ -143,6 +144,16 @@ public struct MythwakeDefinitionSnapshotDto
     public MythwakeDailyMissionDefinitionDto[] dailyMissions;
     public MythwakeBattlePassRewardDefinitionDto[] battlePassRewards;
     public MythwakeGameplayActionDefinitionDto[] gameplayActions;
+}
+
+[Serializable]
+public struct MythwakeAuthProviderDefinitionDto
+{
+    public string providerId;
+    public string displayName;
+    public bool externalProvider;
+    public bool supportsLinking;
+    public bool supportsMobileSso;
 }
 
 [Serializable]

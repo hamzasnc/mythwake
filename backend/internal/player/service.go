@@ -98,6 +98,13 @@ type Service struct {
 	playerID           string
 	stateStore         StateStore
 	actionResultStore  ActionResultStore
+	campaignActions    campaignActions
+	dungeonActions     dungeonActions
+	heroActions        heroProgressionActions
+	equipmentActions   equipmentActions
+	accessoryActions   accessoryActions
+	summonActions      summonActions
+	missionActions     missionActions
 	state              api.PlayerState
 	heroLevels         map[string]int
 	heroShards         map[string]int
@@ -112,7 +119,7 @@ type Service struct {
 }
 
 func NewService() *Service {
-	return &Service{
+	service := &Service{
 		playerID: defaultPlayerID,
 		state: api.PlayerState{
 			SaveVersion:         1,
@@ -146,6 +153,8 @@ func NewService() *Service {
 		claimedDaily:       map[string]bool{},
 		claimedBattlePass:  map[string]bool{},
 	}
+	service.configureDomainServices()
+	return service
 }
 
 func (service *Service) UseStateStore(ctx context.Context, store StateStore) error {
@@ -168,13 +177,20 @@ func (service *Service) UseStateStore(ctx context.Context, store StateStore) err
 	return store.SaveState(ctx, service.playerID, service.persistentState(), StateSaveSource{ActionID: gameplay.ActionPlayerStateSeed})
 }
 
-func (service *Service) GuestAuth() api.GuestAuthResponse {
+func (service *Service) PlayerID() string {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	return service.playerID
+}
+
+func (service *Service) GuestAuth(sessionToken string) api.GuestAuthResponse {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
 	return api.GuestAuthResponse{
 		PlayerID:       service.playerID,
-		SessionToken:   "dev-session-token",
+		SessionToken:   sessionToken,
 		PlayerState:    service.state,
 		PlayerSnapshot: service.snapshot(),
 	}

@@ -15,6 +15,11 @@ func (service *Service) FightCampaign() api.ActionResult {
 }
 
 func (service *Service) FightCampaignWithRequest(ctx context.Context, request ActionRequest) api.ActionResult {
+	return service.campaignActions.FightCampaign(ctx, request)
+}
+
+func (actions campaignActions) FightCampaign(ctx context.Context, request ActionRequest) api.ActionResult {
+	service := actions.service
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
@@ -30,79 +35,4 @@ func (service *Service) FightCampaignWithRequest(ctx context.Context, request Ac
 		service.state.CampaignStage++
 		return actionSuccess(fmt.Sprintf("Campaign Stage %d cleared.", stage), reward)
 	})
-}
-
-func (service *Service) RunDungeon(dungeonID string) api.ActionResult {
-	return service.RunDungeonWithRequest(context.Background(), ActionRequest{}, dungeonID)
-}
-
-func (service *Service) RunDungeonWithRequest(ctx context.Context, request ActionRequest, dungeonID string) api.ActionResult {
-	service.mu.Lock()
-	defer service.mu.Unlock()
-
-	return service.executeAction(ctx, request, dungeonActionID(dungeonID), func() actionOutcome {
-		switch dungeonID {
-		case goldDungeonID:
-			return service.runResourceDungeon(dungeonID, service.state.GoldDungeonFloor, true)
-		case essenceDungeonID:
-			return service.runResourceDungeon(dungeonID, service.state.EssenceDungeonFloor, false)
-		case gearDungeonID:
-			return service.runGearDungeon()
-		default:
-			return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", dungeonID))
-		}
-	})
-}
-
-func dungeonActionID(dungeonID string) string {
-	switch dungeonID {
-	case goldDungeonID:
-		return gameplay.ActionGoldDungeonRun
-	case essenceDungeonID:
-		return gameplay.ActionEssenceDungeonRun
-	case gearDungeonID:
-		return gameplay.ActionGearDungeonRun
-	default:
-		return gameplay.ActionDungeonRun
-	}
-}
-
-func (service *Service) runResourceDungeon(dungeonID string, floor int, isGold bool) actionOutcome {
-	definition, ok := balance.DungeonDefinitionByID(dungeonID)
-	if !ok {
-		return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", dungeonID))
-	}
-
-	requiredPower := balance.DungeonRequiredPower(definition, floor)
-	if service.state.TeamPower < requiredPower {
-		return actionFailure("combat_lost", fmt.Sprintf("Floor %d failed. Required Power %d.", floor, requiredPower))
-	}
-
-	reward := balance.DungeonReward(definition, floor)
-	if isGold {
-		service.state.GoldDungeonFloor++
-	} else {
-		service.state.EssenceDungeonFloor++
-	}
-
-	economy.Grant(&service.state, reward)
-	return actionSuccess(fmt.Sprintf("%s floor %d cleared.", dungeonID, floor), reward)
-}
-
-func (service *Service) runGearDungeon() actionOutcome {
-	floor := service.state.GearDungeonFloor
-	definition, ok := balance.DungeonDefinitionByID(gearDungeonID)
-	if !ok {
-		return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", gearDungeonID))
-	}
-
-	requiredPower := balance.DungeonRequiredPower(definition, floor)
-	if service.state.TeamPower < requiredPower {
-		return actionFailure("combat_lost", fmt.Sprintf("Floor %d failed. Required Power %d.", floor, requiredPower))
-	}
-
-	accessoryID := balance.GearDungeonDropAccessoryID(floor)
-	service.accessoryInventory[accessoryID]++
-	service.state.GearDungeonFloor++
-	return actionSuccess(fmt.Sprintf("Dropped %s.", accessoryID), balance.GearDungeonReward())
 }

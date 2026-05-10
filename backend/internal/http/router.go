@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/auth"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
 	"github.com/hamzasnc/mythwake/backend/internal/definitions"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
@@ -20,14 +21,20 @@ type Router struct {
 	config        config.Config
 	logger        *log.Logger
 	mux           *http.ServeMux
+	authService   *auth.Service
 	playerService *player.Service
 }
 
-func NewRouter(cfg config.Config, logger *log.Logger, playerService *player.Service) http.Handler {
+func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service, playerService *player.Service) http.Handler {
+	if authService == nil {
+		authService = auth.NewService(nil)
+	}
+
 	router := &Router{
 		config:        cfg,
 		logger:        logger,
 		mux:           http.NewServeMux(),
+		authService:   authService,
 		playerService: playerService,
 	}
 
@@ -118,7 +125,16 @@ func (router *Router) handlePlayerStateFlush(response http.ResponseWriter, reque
 }
 
 func (router *Router) handleGuestAuth(response http.ResponseWriter, request *http.Request) {
-	writeJSON(response, http.StatusOK, router.playerService.GuestAuth())
+	session, err := router.authService.IssueGuestSession(request.Context(), router.playerService.PlayerID(), request.UserAgent())
+	if err != nil {
+		writeJSON(response, http.StatusInternalServerError, map[string]string{
+			"errorCode": "guest_auth_failed",
+			"message":   err.Error(),
+		})
+		return
+	}
+
+	writeJSON(response, http.StatusOK, router.playerService.GuestAuth(session.Token))
 }
 
 func (router *Router) handleCampaignFight(response http.ResponseWriter, request *http.Request) {

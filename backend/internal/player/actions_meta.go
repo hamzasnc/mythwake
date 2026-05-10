@@ -15,6 +15,11 @@ func (service *Service) PullSummon(bannerID string) api.ActionResult {
 }
 
 func (service *Service) PullSummonWithRequest(ctx context.Context, request ActionRequest, bannerID string) api.ActionResult {
+	return service.summonActions.PullSummon(ctx, request, bannerID)
+}
+
+func (actions summonActions) PullSummon(ctx context.Context, request ActionRequest, bannerID string) api.ActionResult {
+	service := actions.service
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
@@ -45,6 +50,11 @@ func (service *Service) ClaimDailyMission(missionID string) api.ActionResult {
 }
 
 func (service *Service) ClaimDailyMissionWithRequest(ctx context.Context, request ActionRequest, missionID string) api.ActionResult {
+	return service.missionActions.ClaimDailyMission(ctx, request, missionID)
+}
+
+func (actions missionActions) ClaimDailyMission(ctx context.Context, request ActionRequest, missionID string) api.ActionResult {
+	service := actions.service
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
@@ -69,6 +79,11 @@ func (service *Service) ClaimBattlePassReward(rewardID string) api.ActionResult 
 }
 
 func (service *Service) ClaimBattlePassRewardWithRequest(ctx context.Context, request ActionRequest, rewardID string) api.ActionResult {
+	return service.missionActions.ClaimBattlePassReward(ctx, request, rewardID)
+}
+
+func (actions missionActions) ClaimBattlePassReward(ctx context.Context, request ActionRequest, rewardID string) api.ActionResult {
+	service := actions.service
 	service.mu.Lock()
 	defer service.mu.Unlock()
 

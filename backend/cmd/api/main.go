@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/hamzasnc/mythwake/backend/internal/auth"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
 	"github.com/hamzasnc/mythwake/backend/internal/database"
 	apihttp "github.com/hamzasnc/mythwake/backend/internal/http"
@@ -22,6 +23,7 @@ func main() {
 	cfg := config.Load()
 	logger := log.New(os.Stdout, "mythwake-api ", log.LstdFlags|log.LUTC)
 	playerService := player.NewService()
+	authService := auth.NewService(nil)
 	var cachedStateStore *cache.WriteBehindStateStore
 
 	if cfg.DatabaseURL != "" {
@@ -37,6 +39,7 @@ func main() {
 			cancel()
 			logger.Fatalf("database migration failed: %v", err)
 		}
+		authService = auth.NewService(postgres.NewAccountStore(db))
 		cachedStateStore = cache.NewWriteBehindStateStore(
 			postgres.NewPlayerStateStore(db),
 			cache.Config{
@@ -57,7 +60,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           apihttp.NewRouter(cfg, logger, playerService),
+		Handler:           apihttp.NewRouter(cfg, logger, authService, playerService),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

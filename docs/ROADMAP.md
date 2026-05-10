@@ -301,7 +301,7 @@ Current backend state:
 - Added `GET /definitions` for a read-only server-owned definition snapshot.
 - Added shared API response types for player state, rewards, and action results.
 - Added dev `GET /player/state` endpoint.
-- Added in-memory guest auth endpoint.
+- Added guest auth endpoint with random session tokens.
 - Added in-memory action endpoints for campaign, dungeons, heroes, equipment, accessories, summons, missions, and Mission Track.
 - Added HTTP route tests for health, guest auth, campaign fight, and accessory request validation.
 - Added graceful shutdown.
@@ -336,7 +336,8 @@ Current backend state:
 - Daily Mission, Mission Track, and Summon actions now reject unknown client IDs and resolve rewards through server-owned balance definitions.
 - PostgreSQL now has DB-ready definition tables for heroes, campaign stages, rewards, progression costs, summon pools, daily missions, and Mission Track rewards.
 - The large backend player service has been split into focused domain files for campaign/dungeons, progression, gear, meta actions, snapshots, and persistence.
-- Server-owned currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes, ETags, and `304 Not Modified` revalidation.
+- Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes, ETags, and `304 Not Modified` revalidation.
+- PostgreSQL now has account identity and session tables shaped for guest, email, Google, and Apple login providers; raw session tokens are returned once and only token hashes are stored.
 - Unity Server Mode can now load and cache the `/definitions` snapshot with ETag revalidation and use it for server-owned dungeon preview values.
 - Successful idempotent action results save in `player.player_action_results`.
 - Per-action economy deltas save in `logs.player_action_ledger`.
@@ -567,13 +568,11 @@ Progress:
 - Added content hashes and ETag revalidation to the read-only definition snapshot endpoint.
 - Added Unity definition snapshot DTOs, ETag-backed local caching, and a Shop-tab `Defs` smoke button.
 - Expanded definition snapshots to cover currencies, heroes, rewards, campaign stages, accessory slots, accessory rarities, and accessory item definitions.
+- Added `internal/auth` with planned provider definitions for guest, email, Google, and Apple plus hashed PostgreSQL session persistence.
+- Added explicit player domain action services for campaign, dungeons, hero progression, equipment, accessories, summons, and missions while preserving the public service API.
 
 Next useful step:
-- Continue turning the split player service into explicit domain services where it adds real ownership boundaries:
-  - dungeons
-  - hero progression
-  - equipment/accessories
-  - missions/summons
+- Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
 - Add Redis after the first PostgreSQL path is stable.
 
 Done when:

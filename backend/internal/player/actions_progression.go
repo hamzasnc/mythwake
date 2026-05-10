@@ -15,6 +15,11 @@ func (service *Service) LevelHero(heroID string) api.ActionResult {
 }
 
 func (service *Service) LevelHeroWithRequest(ctx context.Context, request ActionRequest, heroID string) api.ActionResult {
+	return service.heroActions.LevelHero(ctx, request, heroID)
+}
+
+func (actions heroProgressionActions) LevelHero(ctx context.Context, request ActionRequest, heroID string) api.ActionResult {
+	service := actions.service
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
@@ -40,6 +45,11 @@ func (service *Service) AscendHero(heroID string) api.ActionResult {
 }
 
 func (service *Service) AscendHeroWithRequest(ctx context.Context, request ActionRequest, heroID string) api.ActionResult {
+	return service.heroActions.AscendHero(ctx, request, heroID)
+}
+
+func (actions heroProgressionActions) AscendHero(ctx context.Context, request ActionRequest, heroID string) api.ActionResult {
+	service := actions.service
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
@@ -65,6 +75,11 @@ func (service *Service) LevelEquipment(equipmentID string) api.ActionResult {
 }
 
 func (service *Service) LevelEquipmentWithRequest(ctx context.Context, request ActionRequest, equipmentID string) api.ActionResult {
+	return service.equipmentActions.LevelEquipment(ctx, request, equipmentID)
+}
+
+func (actions equipmentActions) LevelEquipment(ctx context.Context, request ActionRequest, equipmentID string) api.ActionResult {
+	service := actions.service
 	service.mu.Lock()
 	defer service.mu.Unlock()
 

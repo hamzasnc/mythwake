@@ -95,6 +95,7 @@ type DefinitionSnapshot struct {
 	SchemaVersion     int                          `json:"schemaVersion"`
 	APIVersion        string                       `json:"apiVersion"`
 	ContentHash       string                       `json:"contentHash"`
+	AuthProviders     []AuthProviderDefinition     `json:"authProviders"`
 	Currencies        []CurrencyDefinition         `json:"currencies"`
 	Heroes            []HeroDefinition             `json:"heroes"`
 	Rewards           []RewardDefinition           `json:"rewards"`
@@ -109,6 +110,14 @@ type DefinitionSnapshot struct {
 	DailyMissions     []DailyMissionDefinition     `json:"dailyMissions"`
 	BattlePassRewards []BattlePassRewardDefinition `json:"battlePassRewards"`
 	GameplayActions   []GameplayActionDefinition   `json:"gameplayActions"`
+}
+
+type AuthProviderDefinition struct {
+	ProviderID        string `json:"providerId"`
+	DisplayName       string `json:"displayName"`
+	ExternalProvider  bool   `json:"externalProvider"`
+	SupportsLinking   bool   `json:"supportsLinking"`
+	SupportsMobileSSO bool   `json:"supportsMobileSso"`
 }
 
 type CurrencyDefinition struct {

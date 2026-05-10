@@ -19,6 +19,9 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if snapshot.ContentHash == "" {
 		t.Fatal("expected content hash")
 	}
+	if len(snapshot.AuthProviders) != 4 {
+		t.Fatalf("expected 4 auth provider definitions, got %#v", snapshot.AuthProviders)
+	}
 	if len(snapshot.Currencies) != 5 {
 		t.Fatalf("expected 5 currency definitions, got %#v", snapshot.Currencies)
 	}

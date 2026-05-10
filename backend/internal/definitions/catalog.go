@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/auth"
 	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
@@ -18,6 +19,7 @@ func Snapshot(apiVersion string) api.DefinitionSnapshot {
 	snapshot := api.DefinitionSnapshot{
 		SchemaVersion:     SchemaVersion,
 		APIVersion:        apiVersion,
+		AuthProviders:     authProviderDefinitions(),
 		Currencies:        currencyDefinitions(),
 		Heroes:            heroDefinitions(),
 		Rewards:           rewardDefinitions(),
@@ -50,6 +52,21 @@ func ContentHash(snapshot api.DefinitionSnapshot) string {
 
 func ETag(snapshot api.DefinitionSnapshot) string {
 	return fmt.Sprintf(`"definitions-%s"`, snapshot.ContentHash)
+}
+
+func authProviderDefinitions() []api.AuthProviderDefinition {
+	definitions := auth.ProviderDefinitions()
+	response := make([]api.AuthProviderDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.AuthProviderDefinition{
+			ProviderID:        definition.ID,
+			DisplayName:       definition.DisplayName,
+			ExternalProvider:  definition.ExternalProvider,
+			SupportsLinking:   definition.SupportsLinking,
+			SupportsMobileSSO: definition.SupportsMobileSSO,
+		})
+	}
+	return response
 }
 
 func currencyDefinitions() []api.CurrencyDefinition {

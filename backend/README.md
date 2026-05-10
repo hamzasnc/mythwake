@@ -8,7 +8,8 @@ Current scope:
 - Health endpoint
 - Read-only definitions endpoint
 - Dev player state endpoint
-- In-memory guest auth
+- Guest auth with random session tokens
+- PostgreSQL account identities and hashed session token persistence for guest, email, Google, and Apple login providers
 - In-memory action endpoints for campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
 - Optional PostgreSQL connection via `MYTHWAKE_DATABASE_URL`
 - Embedded SQL migrations
@@ -44,14 +45,15 @@ Current scope:
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
 - `GET /player/core-state` returns the compact numeric state only.
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
+- Guest auth returns the raw session token once; PostgreSQL stores only `token_hash`.
 - The Unity prototype can ping, guest-login, sync this snapshot, cache `/definitions` with ETag revalidation, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
 - Server gameplay POSTs require valid `Idempotency-Key` headers by default.
 - Gameplay action IDs are centralized in `internal/gameplay` so routing, persistence, ledgers, and tests share the same names.
 - Currency IDs, spends, grants, display names, and deltas are centralized in `internal/economy`.
 - Early balance definitions for campaign, dungeons, costs, summons, and simple rewards are centralized in `internal/balance`.
-- Player service gameplay actions are organized by domain files while keeping the existing API surface stable.
+- Player service gameplay actions route through explicit domain action services while keeping the existing API surface stable.
 - Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.
-- `GET /definitions` exposes the current server-owned balance/action catalog for client and admin tooling, including currencies, heroes, rewards, campaign stages, dungeons, accessories, costs, summons, missions, and action metadata, with content hashes and ETag revalidation.
+- `GET /definitions` exposes the current server-owned balance/action catalog for client and admin tooling, including auth providers, currencies, heroes, rewards, campaign stages, dungeons, accessories, costs, summons, missions, and action metadata, with content hashes and ETag revalidation.
 - Navicat-friendly common definition views:
   - `debug.v_common_reward_overview`
   - `debug.v_common_progression_cost_overview`
@@ -62,7 +64,7 @@ Current scope:
 
 Not included yet:
 - Redis connection
-- Real auth/session persistence
+- Email, Google, and Apple token verification endpoints
 - Production-ready balance tooling/admin flow
 
 Run local API without PostgreSQL:

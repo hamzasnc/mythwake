@@ -16,6 +16,11 @@ func (service *Service) EquipAccessory(accessoryID string) api.ActionResult {
 }
 
 func (service *Service) EquipAccessoryWithRequest(ctx context.Context, request ActionRequest, accessoryID string) api.ActionResult {
+	return service.accessoryActions.EquipAccessory(ctx, request, accessoryID)
+}
+
+func (actions accessoryActions) EquipAccessory(ctx context.Context, request ActionRequest, accessoryID string) api.ActionResult {
+	service := actions.service
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
@@ -41,6 +46,11 @@ func (service *Service) LevelAccessory(accessoryID string) api.ActionResult {
 }
 
 func (service *Service) LevelAccessoryWithRequest(ctx context.Context, request ActionRequest, accessoryID string) api.ActionResult {
+	return service.accessoryActions.LevelAccessory(ctx, request, accessoryID)
+}
+
+func (actions accessoryActions) LevelAccessory(ctx context.Context, request ActionRequest, accessoryID string) api.ActionResult {
+	service := actions.service
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
@@ -65,6 +75,11 @@ func (service *Service) FuseAccessory(accessoryID string) api.ActionResult {
 }
 
 func (service *Service) FuseAccessoryWithRequest(ctx context.Context, request ActionRequest, accessoryID string) api.ActionResult {
+	return service.accessoryActions.FuseAccessory(ctx, request, accessoryID)
+}
+
+func (actions accessoryActions) FuseAccessory(ctx context.Context, request ActionRequest, accessoryID string) api.ActionResult {
+	service := actions.service
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
