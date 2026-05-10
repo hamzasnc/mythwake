@@ -2671,6 +2671,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 return "combat lost";
             case "stale_player_state":
                 return "stale state - sync";
+            case "afk_not_ready":
+                return "AFK not ready";
+            case "idempotency_conflict":
+                return "idempotency conflict";
+            case "persistence_failed":
+                return "persistence failed";
             case "insufficient_currency":
                 return "not enough currency";
             case "insufficient_shards":

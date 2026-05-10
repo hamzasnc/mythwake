@@ -156,7 +156,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
-- Prototype 0.2.32: Unity backend requests now carry request IDs, structured backend error bodies are formatted into readable client diagnostics, action-result errors are humanized, Backend-panel Smoke now covers accessory equip/level/fuse candidates plus Daily Summon and Mission Track claims, and PostgreSQL E2E verifies structured error/request-id contracts.
+- Prototype 0.2.32: Unity backend requests now carry request IDs, structured backend error bodies are formatted into readable client diagnostics, action-result errors are humanized, Backend-panel Smoke now covers accessory equip/level/fuse candidates plus Daily Summon and Mission Track claims, PostgreSQL E2E verifies structured error/request-id contracts, and AFK edge tests cover future timestamp recovery.
 - Prototype 0.2.31: Unity Server Mode now persists across restarts, auto-bootstraps through the backend, blocks local debug/reset mutations while server-authoritative, gates gameplay during backend requests, shows expanded backend health/cache diagnostics, and adds a Backend-panel Smoke action for compact server-flow testing.
 - Backend 0.2.55: Expanded PostgreSQL E2E coverage across core gameplay mutation endpoints and restart reload checks.
 - Backend 0.2.54: Added configurable idle loaded-player context flushing/unloading with health visibility for long-running API memory control.

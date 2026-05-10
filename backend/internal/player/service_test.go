@@ -330,6 +330,32 @@ func TestAFKClaimIsCapped(t *testing.T) {
 	}
 }
 
+func TestAFKClaimWithFutureTimestampReinitializesTimer(t *testing.T) {
+	store := &fakeStateStore{}
+	service := NewService()
+	now := time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC)
+	service.now = func() time.Time { return now }
+	service.lastAFKClaimedAt = now.Add(1 * time.Hour)
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	result := service.ClaimAFKRewards()
+	if !result.Success {
+		t.Fatalf("expected future AFK timestamp to reinitialize, got %#v", result)
+	}
+	if result.Reward.Gold != 0 || result.Reward.MythEssence != 0 {
+		t.Fatalf("timer initialization should not grant resources, got %#v", result.Reward)
+	}
+	if !store.saved.LastAFKClaimedAt.Equal(now) {
+		t.Fatalf("expected future afk timestamp to save now=%s, got %s", now, store.saved.LastAFKClaimedAt)
+	}
+	if result.PlayerSnapshot.LastAFKClaimUTC == "" {
+		t.Fatalf("expected AFK initialization result to include lastAfkClaimUtc")
+	}
+}
+
 func TestUnknownMissionClaimIsRejected(t *testing.T) {
 	service := NewService()
 

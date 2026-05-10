@@ -628,6 +628,7 @@ Progress:
 - Expanded PostgreSQL E2E coverage across starter gameplay mutation endpoints: resource dungeons, gear dungeon, accessory equip, hero level, equipment level, summon, daily mission claim, Battle Pass claim, flush, restart reload, idempotency replay, and logout.
 - Unity Server Mode now persists across app/editor restarts, restores through `/client/bootstrap`, gates gameplay buttons during backend requests, blocks local debug/reset mutations while server-authoritative, surfaces Redis/catalog/lock/hot-player diagnostics in the Backend panel, includes a one-click Server Smoke action, sends client request IDs, and formats structured backend/action errors into readable client diagnostics.
 - PostgreSQL E2E now verifies structured error bodies and request-id propagation for missing sessions, missing idempotency keys, and revoked sessions.
+- Backend AFK unit coverage now verifies that future/skewed claim timestamps reinitialize safely without granting resources.
 
 Next useful step:
 - Turn the current server-backed prototype into a smoother internal test client before adding more backend breadth.
