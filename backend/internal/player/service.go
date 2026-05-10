@@ -9,18 +9,19 @@ import (
 	"sync"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
 const (
 	defaultPlayerID  = "dev-player-1"
-	goldDungeonID    = "gold_dungeon"
-	essenceDungeonID = "essence_dungeon"
-	gearDungeonID    = "gear_dungeon"
-	heroBannerID     = "hero_shard_standard"
-	weaponID         = "equipment_weapon"
-	armorID          = "equipment_armor"
+	goldDungeonID    = balance.DungeonGold
+	essenceDungeonID = balance.DungeonEssence
+	gearDungeonID    = balance.DungeonGear
+	heroBannerID     = balance.BannerHeroShardStandard
+	weaponID         = balance.EquipmentWeapon
+	armorID          = balance.EquipmentArmor
 )
 
 type StateStore interface {
@@ -323,20 +324,12 @@ func (service *Service) FightCampaignWithRequest(ctx context.Context, request Ac
 
 	return service.executeAction(ctx, request, gameplay.ActionCampaignFight, func() actionOutcome {
 		stage := service.state.CampaignStage
-		requiredPower := 90 + (stage * 46)
+		requiredPower := balance.CampaignRequiredPower(stage)
 		if service.state.TeamPower < requiredPower {
 			return actionFailure("combat_lost", fmt.Sprintf("Campaign Stage %d failed. Required Power %d.", stage, requiredPower))
 		}
 
-		reward := api.Reward{
-			RewardID:    fmt.Sprintf("reward_campaign_stage_%03d", stage),
-			MythEssence: 7 + (stage * 4),
-		}
-		if stage%5 == 0 {
-			reward.Gems = 12 + stage
-			reward.PassXP = 25
-		}
-
+		reward := balance.CampaignReward(stage)
 		economy.Grant(&service.state, reward)
 		service.state.CampaignStage++
 		return actionSuccess(fmt.Sprintf("Campaign Stage %d cleared.", stage), reward)
@@ -392,7 +385,7 @@ func (service *Service) LevelHeroWithRequest(ctx context.Context, request Action
 			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID))
 		}
 
-		cost := 14 + (level * 6)
+		cost := balance.HeroLevelCost(level)
 		if failure, ok := service.spendCurrency(economy.CurrencyMythEssence, cost); !ok {
 			return failure
 		}
@@ -416,7 +409,7 @@ func (service *Service) AscendHeroWithRequest(ctx context.Context, request Actio
 			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID))
 		}
 
-		cost := 20 + (service.heroAscensions[heroID] * 15)
+		cost := balance.HeroAscensionShardCost(service.heroAscensions[heroID])
 		if service.heroShards[heroID] < cost {
 			return actionFailure("insufficient_shards", fmt.Sprintf("Need %d shards.", cost))
 		}
@@ -442,15 +435,7 @@ func (service *Service) LevelEquipmentWithRequest(ctx context.Context, request A
 			return actionFailure("invalid_equipment", fmt.Sprintf("Unknown equipment: %s", equipmentID))
 		}
 
-		var baseCost int
-		switch equipmentID {
-		case weaponID:
-			baseCost = 80
-		case armorID:
-			baseCost = 75
-		}
-
-		cost := baseCost + (level * 35)
+		cost, _ := balance.EquipmentLevelCost(equipmentID, level)
 		if failure, ok := service.spendCurrency(economy.CurrencyGold, cost); !ok {
 			return failure
 		}
@@ -499,7 +484,8 @@ func (service *Service) LevelAccessoryWithRequest(ctx context.Context, request A
 			return actionFailure("missing_item", fmt.Sprintf("Missing accessory: %s.", accessoryID))
 		}
 
-		if failure, ok := service.spendCurrency(economy.CurrencyGold, 35); !ok {
+		cost := balance.AccessoryLevelCost(accessoryID, service.accessoryLevels[accessoryID])
+		if failure, ok := service.spendCurrency(economy.CurrencyGold, cost); !ok {
 			return failure
 		}
 
@@ -546,7 +532,8 @@ func (service *Service) PullSummonWithRequest(ctx context.Context, request Actio
 			return actionFailure("invalid_banner", fmt.Sprintf("Unknown banner: %s", bannerID))
 		}
 
-		if failure, ok := service.spendCurrency(economy.CurrencyGems, 35); !ok {
+		cost, _ := balance.SummonCost(bannerID)
+		if failure, ok := service.spendCurrency(economy.CurrencyGems, cost); !ok {
 			return failure
 		}
 
@@ -572,7 +559,7 @@ func (service *Service) ClaimDailyMissionWithRequest(ctx context.Context, reques
 			return actionFailure("already_claimed", fmt.Sprintf("%s already claimed.", missionID))
 		}
 
-		reward := api.Reward{RewardID: "reward_" + missionID, Gold: 40, Gems: 5, MythEssence: 70, PassXP: 40}
+		reward := balance.DailyMissionReward(missionID)
 		service.claimedDaily[missionID] = true
 		economy.Grant(&service.state, reward)
 		return actionSuccess(fmt.Sprintf("Claimed %s.", missionID), reward)
@@ -592,11 +579,12 @@ func (service *Service) ClaimBattlePassRewardWithRequest(ctx context.Context, re
 			return actionFailure("already_claimed", fmt.Sprintf("%s already claimed.", rewardID))
 		}
 
-		if service.state.PassXP < 40 {
-			return actionFailure("not_unlocked", "Need 40 Pass XP.")
+		requiredPassXP := balance.BattlePassRequiredXP(rewardID)
+		if service.state.PassXP < requiredPassXP {
+			return actionFailure("not_unlocked", fmt.Sprintf("Need %d Pass XP.", requiredPassXP))
 		}
 
-		reward := api.Reward{RewardID: rewardID, Gold: 100, Gems: 10}
+		reward := balance.BattlePassReward(rewardID)
 		service.claimedBattlePass[rewardID] = true
 		economy.Grant(&service.state, reward)
 		return actionSuccess(fmt.Sprintf("Claimed %s.", rewardID), reward)
@@ -604,17 +592,20 @@ func (service *Service) ClaimBattlePassRewardWithRequest(ctx context.Context, re
 }
 
 func (service *Service) runResourceDungeon(dungeonID string, floor int, isGold bool) actionOutcome {
-	requiredPower := 100 + (floor * 50)
+	definition, ok := balance.DungeonDefinitionByID(dungeonID)
+	if !ok {
+		return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", dungeonID))
+	}
+
+	requiredPower := balance.DungeonRequiredPower(definition, floor)
 	if service.state.TeamPower < requiredPower {
 		return actionFailure("combat_lost", fmt.Sprintf("Floor %d failed. Required Power %d.", floor, requiredPower))
 	}
 
-	reward := api.Reward{RewardID: fmt.Sprintf("reward_%s_floor_%d", dungeonID, floor)}
+	reward := balance.DungeonReward(definition, floor)
 	if isGold {
-		reward.Gold = 95 + (floor * 34)
 		service.state.GoldDungeonFloor++
 	} else {
-		reward.MythEssence = 110 + (floor * 40)
 		service.state.EssenceDungeonFloor++
 	}
 
@@ -624,15 +615,20 @@ func (service *Service) runResourceDungeon(dungeonID string, floor int, isGold b
 
 func (service *Service) runGearDungeon() actionOutcome {
 	floor := service.state.GearDungeonFloor
-	requiredPower := 120 + (floor * 56)
+	definition, ok := balance.DungeonDefinitionByID(gearDungeonID)
+	if !ok {
+		return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", gearDungeonID))
+	}
+
+	requiredPower := balance.DungeonRequiredPower(definition, floor)
 	if service.state.TeamPower < requiredPower {
 		return actionFailure("combat_lost", fmt.Sprintf("Floor %d failed. Required Power %d.", floor, requiredPower))
 	}
 
-	accessoryID := "accessory_earrings_r0"
+	accessoryID := balance.GearDungeonDropAccessoryID(floor)
 	service.accessoryInventory[accessoryID]++
 	service.state.GearDungeonFloor++
-	return actionSuccess(fmt.Sprintf("Dropped %s.", accessoryID), api.Reward{RewardID: "reward_gear_drop"})
+	return actionSuccess(fmt.Sprintf("Dropped %s.", accessoryID), balance.GearDungeonReward())
 }
 
 func (service *Service) spendCurrency(currencyID string, amount int) (actionOutcome, bool) {

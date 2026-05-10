@@ -84,6 +84,7 @@ Backend:
 - Per-action economy deltas are stored in `logs.player_action_ledger`
 - Backend gameplay action IDs now live in a central action catalog instead of being scattered string literals
 - Backend currency spends, grants, display names, and deltas now live in a central economy package
+- Backend campaign curves, dungeon curves, costs, and simple reward definitions now live in a central balance package
 - Unity reuses pending idempotency keys after transport failures
 - `POST /player/state/flush` is ready as the future app-pause/disconnect save hook
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
@@ -95,6 +96,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.16: Added a backend balance definition package for campaign, dungeon, cost, summon, and simple reward curves.
 - Backend 0.2.15: Added a central backend economy package for currency IDs, spends, grants, and delta calculation.
 - Backend 0.2.14: Added a central gameplay action catalog and refactored HTTP gameplay handlers through one mutation validation path.
 - Backend 0.2.13: Required idempotency headers for gameplay mutations, added key validation, health visibility, script support, and HTTP/config tests.
