@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
@@ -88,6 +89,7 @@ func TestMissionClaimsPersist(t *testing.T) {
 		t.Fatalf("attach store: %v", err)
 	}
 
+	service.dailyFightCount = 15
 	result := service.ClaimDailyMission("daily_battles_15")
 	if !result.Success {
 		t.Fatalf("expected daily claim to succeed, got %#v", result)
@@ -95,6 +97,56 @@ func TestMissionClaimsPersist(t *testing.T) {
 
 	if !store.saved.ClaimedDaily["daily_battles_15"] {
 		t.Fatalf("expected daily_battles_15 claim to be saved")
+	}
+}
+
+func TestDailyMissionClaimRequiresProgress(t *testing.T) {
+	service := NewService()
+
+	result := service.ClaimDailyMission("daily_battles_15")
+	if result.Success || result.ErrorCode != "not_complete" {
+		t.Fatalf("expected not_complete, got %#v", result)
+	}
+}
+
+func TestCampaignFightAdvancesDailyProgress(t *testing.T) {
+	service := NewService()
+	service.state.TeamPower = 9999
+
+	result := service.FightCampaign()
+	if !result.Success {
+		t.Fatalf("expected campaign fight to succeed, got %#v", result)
+	}
+
+	if result.PlayerSnapshot.DailyDate == "" {
+		t.Fatal("expected snapshot to include daily date")
+	}
+	progress := dailyProgressByMission(result.PlayerSnapshot.DailyProgress, "daily_stage_clears_3")
+	if progress.Progress != 1 || progress.Target != 3 {
+		t.Fatalf("expected daily stage progress 1/3, got %#v", progress)
+	}
+	if service.dailyFightCount != 1 || service.dailyStageClears != 1 {
+		t.Fatalf("expected daily counters to advance, fights=%d clears=%d", service.dailyFightCount, service.dailyStageClears)
+	}
+}
+
+func TestDailyWindowResetsClaimsAndProgress(t *testing.T) {
+	service := NewService()
+	now := time.Date(2026, 5, 10, 23, 59, 0, 0, time.UTC)
+	service.now = func() time.Time { return now }
+	service.dailyDate = dailyDateKey(now)
+	service.dailyFightCount = 15
+	service.claimedDaily["daily_battles_15"] = true
+
+	now = now.Add(2 * time.Minute)
+	snapshot := service.GetSnapshot()
+
+	if snapshot.DailyDate != "2026-05-11" {
+		t.Fatalf("expected daily date 2026-05-11, got %s", snapshot.DailyDate)
+	}
+	progress := dailyProgressByMission(snapshot.DailyProgress, "daily_battles_15")
+	if progress.Progress != 0 || progress.Claimed {
+		t.Fatalf("expected reset daily progress, got %#v", progress)
 	}
 }
 
@@ -210,6 +262,16 @@ func TestUnknownBattlePassRewardIsRejected(t *testing.T) {
 	if after.Gold != before.Gold || after.Gems != before.Gems || after.MythEssence != before.MythEssence || after.PassXP != before.PassXP {
 		t.Fatalf("invalid battle pass reward mutated state: before=%#v after=%#v", before, after)
 	}
+}
+
+func dailyProgressByMission(progress []api.DailyProgress, missionID string) api.DailyProgress {
+	for _, item := range progress {
+		if item.MissionID == missionID {
+			return item
+		}
+	}
+
+	return api.DailyProgress{}
 }
 
 func TestEquipmentLevelPersistsAndRaisesPower(t *testing.T) {

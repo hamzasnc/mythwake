@@ -19,6 +19,8 @@ type PlayerSnapshot struct {
 	PlayerID          string              `json:"playerId"`
 	State             PlayerState         `json:"state"`
 	LastAFKClaimUTC   string              `json:"lastAfkClaimUtc,omitempty"`
+	DailyDate         string              `json:"dailyDate,omitempty"`
+	DailyProgress     []DailyProgress     `json:"dailyProgress"`
 	Heroes            []HeroState         `json:"heroes"`
 	HeroShards        []HeroShardState    `json:"heroShards"`
 	Equipment         []EquipmentState    `json:"equipment"`
@@ -59,6 +61,13 @@ type EquippedAccessory struct {
 type ClaimState struct {
 	ClaimID string `json:"claimId"`
 	Claimed bool   `json:"claimed"`
+}
+
+type DailyProgress struct {
+	MissionID string `json:"missionId"`
+	Progress  int    `json:"progress"`
+	Target    int    `json:"target"`
+	Claimed   bool   `json:"claimed"`
 }
 
 type Reward struct {

@@ -39,6 +39,10 @@ func (service *Service) persistentState() PersistentState {
 		ClaimedBattlePass:  service.claimedBattlePass,
 		SummonCount:        service.summonCount,
 		LastAFKClaimedAt:   service.lastAFKClaimedAt,
+		DailyDate:          service.dailyDate,
+		DailyFightCount:    service.dailyFightCount,
+		DailyStageClears:   service.dailyStageClears,
+		DailySummonCount:   service.dailySummonCount,
 	})
 }
 
@@ -58,6 +62,11 @@ func (service *Service) applyPersistentState(state PersistentState) {
 	if service.lastAFKClaimedAt.IsZero() {
 		service.lastAFKClaimedAt = service.now().UTC()
 	}
+	service.dailyDate = state.DailyDate
+	service.dailyFightCount = state.DailyFightCount
+	service.dailyStageClears = state.DailyStageClears
+	service.dailySummonCount = state.DailySummonCount
+	service.ensureDailyWindow()
 	service.recalculatePower()
 }
 

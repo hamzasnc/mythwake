@@ -23,6 +23,8 @@ public struct MythwakePlayerSnapshotDto
     public string playerId;
     public MythwakePlayerStateDto state;
     public string lastAfkClaimUtc;
+    public string dailyDate;
+    public MythwakeDailyProgressDto[] dailyProgress;
     public MythwakeHeroStateDto[] heroes;
     public MythwakeHeroShardStateDto[] heroShards;
     public MythwakeEquipmentStateDto[] equipment;
@@ -74,6 +76,15 @@ public struct MythwakeEquippedAccessoryDto
 public struct MythwakeClaimStateDto
 {
     public string claimId;
+    public bool claimed;
+}
+
+[Serializable]
+public struct MythwakeDailyProgressDto
+{
+    public string missionId;
+    public int progress;
+    public int target;
     public bool claimed;
 }
 

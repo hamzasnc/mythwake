@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.31-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.32-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
@@ -152,6 +152,9 @@ try {
     if ([string]::IsNullOrWhiteSpace($stateBefore.lastAfkClaimUtc)) {
         throw "Expected player state to include lastAfkClaimUtc."
     }
+    if (@($stateBefore.dailyProgress).Count -lt 3) {
+        throw "Expected player state to include daily mission progress."
+    }
 
     $afkHeaders = @{
         "Authorization" = $authHeaders["Authorization"]
@@ -173,6 +176,8 @@ try {
         throw "Expected campaign fight to succeed. Response: $($fight | ConvertTo-Json -Depth 8)"
     }
     Assert-Equal $fight.playerSnapshot.playerId $login.playerId "Action snapshot player should match guest login."
+    $fightDailyProgress = $fight.playerSnapshot.dailyProgress | Where-Object { $_.missionId -eq "daily_stage_clears_3" } | Select-Object -First 1
+    Assert-Equal ([int]$fightDailyProgress.progress) 1 "Campaign fight should advance daily stage-clear progress."
 
     $flush = Invoke-Json -Method "POST" -Path "/player/state/flush" -Headers $authHeaders
     Assert-Equal $flush.status "ok" "Manual state flush should succeed."

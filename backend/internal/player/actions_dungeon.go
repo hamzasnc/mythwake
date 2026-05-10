@@ -68,6 +68,7 @@ func (actions dungeonActions) runResourceDungeon(dungeonID string, floor int, is
 	} else {
 		service.state.EssenceDungeonFloor++
 	}
+	service.dailyFightCount++
 
 	economy.Grant(&service.state, reward)
 	return actionSuccess(fmt.Sprintf("%s floor %d cleared.", dungeonID, floor), reward)
@@ -89,5 +90,6 @@ func (actions dungeonActions) runGearDungeon() actionOutcome {
 	accessoryID := balance.GearDungeonDropAccessoryID(floor)
 	service.accessoryInventory[accessoryID]++
 	service.state.GearDungeonFloor++
+	service.dailyFightCount++
 	return actionSuccess(fmt.Sprintf("Dropped %s.", accessoryID), balance.GearDungeonReward())
 }

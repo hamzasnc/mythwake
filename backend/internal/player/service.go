@@ -54,6 +54,10 @@ type PersistentState struct {
 	ClaimedBattlePass  map[string]bool
 	SummonCount        int
 	LastAFKClaimedAt   time.Time
+	DailyDate          string
+	DailyFightCount    int
+	DailyStageClears   int
+	DailySummonCount   int
 }
 
 type StateSaveSource struct {
@@ -94,6 +98,10 @@ func ClonePersistentState(state PersistentState) PersistentState {
 		ClaimedBattlePass:  cloneBoolMap(state.ClaimedBattlePass),
 		SummonCount:        state.SummonCount,
 		LastAFKClaimedAt:   state.LastAFKClaimedAt,
+		DailyDate:          state.DailyDate,
+		DailyFightCount:    state.DailyFightCount,
+		DailyStageClears:   state.DailyStageClears,
+		DailySummonCount:   state.DailySummonCount,
 	}
 }
 
@@ -122,6 +130,10 @@ type Service struct {
 	claimedBattlePass  map[string]bool
 	summonCount        int
 	lastAFKClaimedAt   time.Time
+	dailyDate          string
+	dailyFightCount    int
+	dailyStageClears   int
+	dailySummonCount   int
 	now                func() time.Time
 }
 
@@ -171,6 +183,7 @@ func NewServiceForPlayer(playerID string) *Service {
 		claimedBattlePass:  map[string]bool{},
 	}
 	service.lastAFKClaimedAt = service.now().UTC()
+	service.dailyDate = dailyDateKey(service.now())
 	service.configureDomainServices()
 	return service
 }
@@ -206,6 +219,7 @@ func (service *Service) GuestAuth(sessionToken string) api.GuestAuthResponse {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	service.ensureDailyWindow()
 	return api.GuestAuthResponse{
 		PlayerID:       service.playerID,
 		SessionToken:   sessionToken,
@@ -225,6 +239,7 @@ func (service *Service) GetSnapshot() api.PlayerSnapshot {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	service.ensureDailyWindow()
 	return service.snapshot()
 }
 
@@ -237,6 +252,7 @@ func (service *Service) FlushState(ctx context.Context) error {
 	}
 
 	playerID := service.playerID
+	service.ensureDailyWindow()
 	state := service.persistentState()
 	service.mu.Unlock()
 
@@ -279,6 +295,7 @@ func (service *Service) executeAction(ctx context.Context, request ActionRequest
 		return result
 	}
 
+	service.ensureDailyWindow()
 	beforeState := service.persistentState()
 	outcome := run()
 	result := service.newActionResult(outcome.success, actionID, request.IdempotencyKey, false, outcome.errorCode, outcome.message, outcome.reward)

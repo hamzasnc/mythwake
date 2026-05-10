@@ -33,6 +33,8 @@ func (actions campaignActions) FightCampaign(ctx context.Context, request Action
 		reward := balance.CampaignReward(stage)
 		economy.Grant(&service.state, reward)
 		service.state.CampaignStage++
+		service.dailyFightCount++
+		service.dailyStageClears++
 		return actionSuccess(fmt.Sprintf("Campaign Stage %d cleared.", stage), reward)
 	})
 }

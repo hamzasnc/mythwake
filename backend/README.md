@@ -41,9 +41,10 @@ Current scope:
 - Starter Weapon and Armor training persisted in PostgreSQL
 - Navicat-friendly equipment view:
   - `debug.v_player_equipment_overview`
-- Summon count, daily mission claims, and Battle Pass claims persisted in PostgreSQL
+- Summon count, UTC daily mission progress/claims, and Battle Pass claims persisted in PostgreSQL
 - Navicat-friendly meta views:
   - `debug.v_player_claim_overview`
+  - `debug.v_player_daily_progress_overview`
   - `debug.v_player_summon_overview`
 - Navicat-friendly account and persistence views:
   - `debug.v_account_player_overview`
@@ -57,6 +58,7 @@ Current scope:
 - `GET /player/state` returns a full client-ready snapshot.
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
 - `POST /player/offline/claim` claims server-authoritative AFK Gold and Myth Essence using server time.
+- Daily mission claims require server-tracked progress for the active UTC daily reset window.
 - `POST /auth/logout` revokes the active session token.
 - Logout flushes the loaded player state before returning when that player is hot in memory.
 - All responses include `X-Request-ID`; clients may send their own valid `X-Request-ID`.
@@ -75,6 +77,7 @@ Current scope:
 - Early balance definitions for campaign, dungeons, costs, summons, and simple rewards are centralized in `internal/balance`.
 - Player service gameplay actions route through explicit domain action services while keeping the existing API surface stable.
 - Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.
+- Campaign, dungeon, and summon actions advance server-owned daily mission counters for the active UTC day.
 - `GET /definitions` exposes the current server-owned balance/action catalog for client and admin tooling, including auth providers, currencies, heroes, rewards, campaign stages, dungeons, accessories, costs, summons, missions, and action metadata, with content hashes and ETag revalidation.
 - Navicat-friendly common definition views:
   - `debug.v_common_reward_overview`
@@ -170,6 +173,7 @@ Database behavior:
 - Loaded in-memory player contexts are flushed during API shutdown before the cache is closed.
 - `POST /player/state/flush` is the app-pause/disconnect hook used by the Unity prototype.
 - AFK reward claims are capped at 6 hours, require at least 60 seconds, and persist `last_claimed_at` in PostgreSQL plus the action-result snapshot for crash-safe replay.
+- Daily progress is keyed by UTC date in `player.player_daily_progress`; a new server day clears daily mission counters and daily claims before the next snapshot/action.
 - New player seed state still writes immediately so first login/startup is durable.
 - The JSON player state snapshot is still written as a fallback/debug mirror.
 - Currency changes are written to `logs.economy_transactions` during DB save.
@@ -178,7 +182,7 @@ Database behavior:
 - Reusing a key for a different endpoint/body returns an `idempotency_conflict` action result.
 - Missing or malformed keys on gameplay mutations return HTTP 400 before the action is applied.
 - `GET /health` reports `database`, `state_cache`, `state_write_mode`, `state_flush_interval`, session cache settings, and `require_idempotency`.
-- `GET /time` is the future source of truth for offline reward windows, daily missions, weekly systems, and client clock drift checks.
+- `GET /time` is the source of truth for offline reward windows, daily missions, weekly systems, and client clock drift checks.
 - Request logs include request id, method, path, status, bytes, and duration.
 - Rate limiting is currently process-local for development and single-node testing; Redis should replace the counter storage before multi-instance production.
 - `scripts/check-backend.cmd` performs guest login, sends Bearer auth for protected endpoints, and can verify missing-session `401`s.

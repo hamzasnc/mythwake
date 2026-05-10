@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
@@ -282,6 +283,7 @@ func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentS
 		ClaimedBattlePass:  map[string]bool{},
 		SummonCount:        snapshot.SummonCount,
 		LastAFKClaimedAt:   parseSnapshotTime(snapshot.LastAFKClaimUTC),
+		DailyDate:          snapshot.DailyDate,
 	}
 
 	for _, hero := range snapshot.Heroes {
@@ -303,6 +305,21 @@ func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentS
 	}
 	for _, claim := range snapshot.DailyClaims {
 		state.ClaimedDaily[claim.ClaimID] = claim.Claimed
+	}
+	for _, progress := range snapshot.DailyProgress {
+		if progress.Claimed {
+			state.ClaimedDaily[progress.MissionID] = true
+		}
+		if definition, ok := balance.DailyMissionDefinitionByID(progress.MissionID); ok {
+			switch definition.ProgressType {
+			case "fight":
+				state.DailyFightCount = max(state.DailyFightCount, progress.Progress)
+			case "stage_clear":
+				state.DailyStageClears = max(state.DailyStageClears, progress.Progress)
+			case "summon":
+				state.DailySummonCount = max(state.DailySummonCount, progress.Progress)
+			}
+		}
 	}
 	for _, claim := range snapshot.BattlePassClaims {
 		state.ClaimedBattlePass[claim.ClaimID] = claim.Claimed
@@ -405,7 +422,11 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
-	claimedDaily, err := store.loadDailyClaims(ctx, playerID)
+	dailyDate, dailyFightCount, dailyStageClears, dailySummonCount, err := store.loadDailyProgress(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
+	claimedDaily, err := store.loadDailyClaims(ctx, playerID, dailyDate)
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
@@ -435,6 +456,10 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 		ClaimedBattlePass:  claimedBattlePass,
 		SummonCount:        summonCount,
 		LastAFKClaimedAt:   lastAFKClaimedAt,
+		DailyDate:          dailyDate,
+		DailyFightCount:    dailyFightCount,
+		DailyStageClears:   dailyStageClears,
+		DailySummonCount:   dailySummonCount,
 	}, true, nil
 }
 
@@ -635,6 +660,11 @@ func (store *PlayerStateStore) saveEquipmentState(ctx context.Context, tx *sql.T
 }
 
 func (store *PlayerStateStore) saveMetaState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState, source player.StateSaveSource) error {
+	dailyDate := state.DailyDate
+	if dailyDate == "" {
+		dailyDate = time.Now().UTC().Format("2006-01-02")
+	}
+
 	if _, err := tx.ExecContext(ctx, `
 		INSERT INTO player.player_summon_state (player_id, summon_count, updated_at)
 		VALUES ($1, $2, now())
@@ -655,9 +685,29 @@ func (store *PlayerStateStore) saveMetaState(ctx context.Context, tx *sql.Tx, pl
 	}
 
 	if _, err := tx.ExecContext(ctx, `
+		INSERT INTO player.player_daily_progress (
+			player_id,
+			daily_date,
+			fight_count,
+			stage_clear_count,
+			summon_count,
+			updated_at
+		)
+		VALUES ($1, $2, $3, $4, $5, now())
+		ON CONFLICT (player_id, daily_date) DO UPDATE SET
+			fight_count = EXCLUDED.fight_count,
+			stage_clear_count = EXCLUDED.stage_clear_count,
+			summon_count = EXCLUDED.summon_count,
+			updated_at = now()
+	`, playerID, dailyDate, state.DailyFightCount, state.DailyStageClears, state.DailySummonCount); err != nil {
+		return err
+	}
+
+	if _, err := tx.ExecContext(ctx, `
 		DELETE FROM player.player_daily_mission_claims
 		WHERE player_id = $1
-	`, playerID); err != nil {
+			AND daily_date = $2
+	`, playerID, dailyDate); err != nil {
 		return err
 	}
 
@@ -666,9 +716,13 @@ func (store *PlayerStateStore) saveMetaState(ctx context.Context, tx *sql.Tx, pl
 			continue
 		}
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO player.player_daily_mission_claims (player_id, mission_id, claimed, claimed_at, updated_at)
-			VALUES ($1, $2, true, now(), now())
-		`, playerID, missionID); err != nil {
+			INSERT INTO player.player_daily_mission_claims (player_id, daily_date, mission_id, claimed, claimed_at, updated_at)
+			VALUES ($1, $2, $3, true, now(), now())
+			ON CONFLICT (player_id, daily_date, mission_id) DO UPDATE SET
+				claimed = true,
+				claimed_at = EXCLUDED.claimed_at,
+				updated_at = now()
+		`, playerID, dailyDate, missionID); err != nil {
 			return err
 		}
 	}
@@ -952,12 +1006,39 @@ func (store *PlayerStateStore) loadAFKClaimedAt(ctx context.Context, playerID st
 	return lastClaimedAt.UTC(), nil
 }
 
-func (store *PlayerStateStore) loadDailyClaims(ctx context.Context, playerID string) (map[string]bool, error) {
+func (store *PlayerStateStore) loadDailyProgress(ctx context.Context, playerID string) (string, int, int, int, error) {
+	var dailyDate time.Time
+	var fightCount int
+	var stageClearCount int
+	var summonCount int
+	err := store.db.QueryRowContext(ctx, `
+		SELECT daily_date, fight_count, stage_clear_count, summon_count
+		FROM player.player_daily_progress
+		WHERE player_id = $1
+		ORDER BY daily_date DESC
+		LIMIT 1
+	`, playerID).Scan(&dailyDate, &fightCount, &stageClearCount, &summonCount)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", 0, 0, 0, nil
+	}
+	if err != nil {
+		return "", 0, 0, 0, err
+	}
+
+	return dailyDate.UTC().Format("2006-01-02"), fightCount, stageClearCount, summonCount, nil
+}
+
+func (store *PlayerStateStore) loadDailyClaims(ctx context.Context, playerID string, dailyDate string) (map[string]bool, error) {
+	if dailyDate == "" {
+		return map[string]bool{}, nil
+	}
+
 	rows, err := store.db.QueryContext(ctx, `
 		SELECT mission_id, claimed
 		FROM player.player_daily_mission_claims
 		WHERE player_id = $1
-	`, playerID)
+			AND daily_date = $2
+	`, playerID, dailyDate)
 	if err != nil {
 		return nil, err
 	}

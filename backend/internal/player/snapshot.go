@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/balance"
 )
 
 func (service *Service) snapshot() api.PlayerSnapshot {
@@ -12,6 +13,8 @@ func (service *Service) snapshot() api.PlayerSnapshot {
 		PlayerID:          service.playerID,
 		State:             service.state,
 		LastAFKClaimUTC:   formatSnapshotTime(service.lastAFKClaimedAt),
+		DailyDate:         service.dailyDate,
+		DailyProgress:     service.dailyProgressStates(),
 		Heroes:            heroStates(service.heroLevels, service.heroAscensions),
 		HeroShards:        heroShardStates(service.heroShards),
 		Equipment:         equipmentStates(service.equipmentLevels),
@@ -21,6 +24,20 @@ func (service *Service) snapshot() api.PlayerSnapshot {
 		BattlePassClaims:  claimStates(service.claimedBattlePass),
 		SummonCount:       service.summonCount,
 	}
+}
+
+func (service *Service) dailyProgressStates() []api.DailyProgress {
+	definitions := balance.DailyMissionDefinitions()
+	states := make([]api.DailyProgress, 0, len(definitions))
+	for _, definition := range definitions {
+		states = append(states, api.DailyProgress{
+			MissionID: definition.ID,
+			Progress:  service.dailyProgressFor(definition.ProgressType),
+			Target:    definition.Target,
+			Claimed:   service.claimedDaily[definition.ID],
+		})
+	}
+	return states
 }
 
 func formatSnapshotTime(value time.Time) string {

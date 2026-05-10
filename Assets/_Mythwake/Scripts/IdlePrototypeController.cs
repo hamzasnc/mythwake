@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.18";
+    public const string PrototypeVersion = "0.2.19";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -2257,6 +2257,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         ApplyBackendHeroes(snapshot.heroes, snapshot.heroShards);
         ApplyBackendEquipment(snapshot.equipment);
         ApplyBackendAccessories(snapshot.accessories, snapshot.equippedAccessories);
+        ApplyBackendDailyProgress(snapshot.dailyProgress);
         ApplyBackendClaims(snapshot.dailyClaims, snapshot.battlePassClaims);
 
         summonCount = Mathf.Max(0, snapshot.summonCount);
@@ -2389,6 +2390,41 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         for (var i = 0; i < battlePassRewardsClaimed.Length; i++)
         {
             battlePassRewardsClaimed[i] = GetClaimed(battlePassClaims, GetBattlePassRewardDefinition(i).rewardId);
+        }
+    }
+
+    private void ApplyBackendDailyProgress(MythwakeDailyProgressDto[] dailyProgress)
+    {
+        if (dailyProgress == null)
+        {
+            return;
+        }
+
+        dailyFightCount = 0;
+        dailyStageClearCount = 0;
+        dailySummonCount = 0;
+        EnsureDailyMissionClaims();
+
+        for (var i = 0; i < dailyProgress.Length; i++)
+        {
+            if (!TryGetDailyMissionIndexById(dailyProgress[i].missionId, out var missionIndex))
+            {
+                continue;
+            }
+
+            dailyMissionClaimed[missionIndex] = dailyProgress[i].claimed;
+            switch (GetDailyMissionDefinition(missionIndex).progressType)
+            {
+                case DailyMissionProgressType.Fight:
+                    dailyFightCount = Mathf.Max(dailyFightCount, dailyProgress[i].progress);
+                    break;
+                case DailyMissionProgressType.StageClear:
+                    dailyStageClearCount = Mathf.Max(dailyStageClearCount, dailyProgress[i].progress);
+                    break;
+                case DailyMissionProgressType.Summon:
+                    dailySummonCount = Mathf.Max(dailySummonCount, dailyProgress[i].progress);
+                    break;
+            }
         }
     }
 

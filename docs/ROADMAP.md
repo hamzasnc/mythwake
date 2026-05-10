@@ -591,9 +591,11 @@ Progress:
 - Added server-authoritative AFK reward claims for Gold and Myth Essence using server time, a 60 second minimum window, and a 6 hour cap.
 - Persisted AFK claim timestamps in `player.player_afk_progress` and included them in player snapshots/action results for crash-safe replay.
 - Wired Unity Server Mode to claim server AFK rewards through a Backend AFK button, on Server Mode activation, and on app resume when a backend session is active.
+- Added server-authoritative daily mission progress keyed by UTC date, including PostgreSQL `player.player_daily_progress` and Unity snapshot mapping.
+- Daily Mission claims now require the matching server-side fight, stage-clear, or summon progress before rewards are granted.
 
 Next useful step:
-- Start replacing remaining client-only local reward previews with server-owned action responses where the backend already has matching definitions.
+- Start replacing remaining client-only reward previews with server-owned action responses where the backend already has matching definitions.
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.
 - Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
 

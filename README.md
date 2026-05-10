@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.18
+Prototype version: 0.2.19
 Local save version: 2
 
 Current prototype:
@@ -101,12 +101,14 @@ Backend:
 - In-memory auth/gameplay rate limit middleware protects local API paths and is shaped for a later Redis-backed limiter
 - Server clock endpoint exposes authoritative UTC time plus daily/weekly reset countdowns for future offline rewards and daily reset validation
 - Server-authoritative AFK claim endpoint grants capped Gold and Myth Essence using server time and persists the last claim timestamp
+- Server-authoritative daily mission progress tracks fight, stage-clear, and summon counts by UTC day and blocks incomplete daily claims
 - PostgreSQL E2E smoke script verifies guest auth, protected state, campaign action persistence, manual flush, API restart reload, idempotency replay, and logout revocation
 - Navicat-friendly account/persistence debug views expose auth providers, active sessions, latest action result, and snapshot freshness
 - Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
 - Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
 - Unity can sync `/time`, keep an approximate in-memory server clock, and show daily/weekly reset timing from the backend
 - Unity can manually claim server AFK rewards from the Backend panel and checks them on app resume while Server Mode is active
+- Unity reads server daily mission progress from player snapshots when Server Mode syncs/actions complete
 - Unity stores the backend session token, sends it automatically, and retries once with a fresh guest login after a `401`
 - Unity reuses pending idempotency keys after transport failures
 - Unity requests a backend state flush on app pause/quit when a backend session is active
@@ -122,6 +124,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.32 / Prototype 0.2.19: Added server-authoritative daily mission progress, UTC daily reset state, PostgreSQL `player_daily_progress`, and Unity snapshot mapping.
 - Backend 0.2.31: Added server-authoritative AFK reward claims with PostgreSQL `player_afk_progress`, crash-safe snapshot replay, and smoke coverage.
 - Prototype 0.2.18: Wired Server Mode AFK claims into Unity with a Backend AFK button, Server Mode activation claim, and resume claim checks.
 - Prototype 0.2.17: Added Unity server-clock DTO/client support and a Backend Clock smoke action using `GET /time`.

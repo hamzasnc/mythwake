@@ -39,6 +39,7 @@ func (actions summonActions) PullSummon(ctx context.Context, request ActionReque
 		}
 
 		service.summonCount++
+		service.dailySummonCount++
 		service.heroShards[drop.HeroID] += drop.Shards
 		service.recalculatePower()
 		return actionSuccess(fmt.Sprintf("Pulled %s shards.", drop.HeroID), drop.Reward)
@@ -63,9 +64,15 @@ func (actions missionActions) ClaimDailyMission(ctx context.Context, request Act
 		if !ok {
 			return actionFailure("invalid_mission", fmt.Sprintf("Unknown daily mission: %s", missionID))
 		}
+		definition, _ := balance.DailyMissionDefinitionByID(missionID)
 
 		if service.claimedDaily[missionID] {
 			return actionFailure("already_claimed", fmt.Sprintf("%s already claimed.", missionID))
+		}
+
+		progress := service.dailyProgressFor(definition.ProgressType)
+		if progress < definition.Target {
+			return actionFailure("not_complete", fmt.Sprintf("%s needs %d/%d progress.", missionID, progress, definition.Target))
 		}
 
 		service.claimedDaily[missionID] = true
