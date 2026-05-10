@@ -80,6 +80,22 @@ func TestEquipmentDefinitions(t *testing.T) {
 	}
 }
 
+func TestAFKRewardDefinitions(t *testing.T) {
+	definition, ok := AFKRewardDefinitionByID("afk_default")
+	if !ok || definition.RewardID != RewardAFKClaim || definition.MinClaimSeconds != 60 || definition.MaxClaimSeconds != 21600 || definition.TickSeconds != 60 {
+		t.Fatalf("unexpected afk_default definition: %#v ok=%v", definition, ok)
+	}
+
+	reward, claimedSeconds := AFKRewardFromDefinition(definition, 5, 2*60)
+	if claimedSeconds != 120 || reward.Gold != 8 || reward.MythEssence != 16 {
+		t.Fatalf("unexpected AFK reward: reward=%#v claimedSeconds=%d", reward, claimedSeconds)
+	}
+
+	if _, ok := AFKRewardDefinitionByID("afk_fake"); ok {
+		t.Fatal("unknown AFK reward definition should not exist")
+	}
+}
+
 func TestProgressionCosts(t *testing.T) {
 	if HeroLevelCost(1) != 20 {
 		t.Fatalf("expected level 1 hero cost 20, got %d", HeroLevelCost(1))

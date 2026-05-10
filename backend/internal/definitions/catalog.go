@@ -13,7 +13,7 @@ import (
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
-const SchemaVersion = 4
+const SchemaVersion = 5
 
 func Snapshot(apiVersion string) api.DefinitionSnapshot {
 	snapshot := api.DefinitionSnapshot{
@@ -24,6 +24,7 @@ func Snapshot(apiVersion string) api.DefinitionSnapshot {
 		Heroes:            heroDefinitions(),
 		Equipment:         equipmentDefinitions(),
 		Rewards:           rewardDefinitions(),
+		AFKRewards:        afkRewardDefinitions(),
 		Campaigns:         campaignDefinitions(),
 		CampaignStages:    campaignStageDefinitions(),
 		Dungeons:          dungeonDefinitions(),
@@ -131,6 +132,25 @@ func rewardDefinitions() []api.RewardDefinition {
 			DisplayName: definition.DisplayName,
 			RewardType:  definition.RewardType,
 			Reward:      definition.Reward,
+		})
+	}
+	return response
+}
+
+func afkRewardDefinitions() []api.AFKRewardDefinition {
+	definitions := balance.AFKRewardDefinitions()
+	response := make([]api.AFKRewardDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.AFKRewardDefinition{
+			AFKRewardID:               definition.ID,
+			RewardID:                  definition.RewardID,
+			DisplayName:               definition.DisplayName,
+			MinClaimSeconds:           definition.MinClaimSeconds,
+			MaxClaimSeconds:           definition.MaxClaimSeconds,
+			TickSeconds:               definition.TickSeconds,
+			BaseMythEssencePerTick:    definition.BaseMythEssencePerTick,
+			MythEssencePerStage:       definition.MythEssencePerStage,
+			GoldPerMythEssenceDivisor: definition.GoldPerMythEssenceDivisor,
 		})
 	}
 	return response

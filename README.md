@@ -113,10 +113,12 @@ Backend:
 - `/health` reports whether gameplay balance is using the static fallback or the PostgreSQL-loaded snapshot
 - Server clock endpoint exposes authoritative UTC time plus daily/weekly reset countdowns for future offline rewards and daily reset validation
 - Server-authoritative AFK claim endpoint grants capped Gold and Myth Essence using server time and persists the last claim timestamp
+- Backend AFK reward timing and Gold/Myth Essence formula are exposed through server-owned definitions and PostgreSQL seeds
 - Server-authoritative daily mission progress tracks fight, stage-clear, and summon counts by UTC day and blocks incomplete daily claims
 - PostgreSQL E2E smoke script verifies guest auth, protected state, campaign action persistence, manual flush, API restart reload, idempotency replay, and logout revocation
 - Navicat-friendly account/persistence debug views expose auth providers, active sessions, latest action result, and snapshot freshness
 - Server-owned auth provider, currency, hero, starter equipment, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
+- Server-owned AFK reward definitions are exposed through `/definitions` so offline reward balance can move through PostgreSQL/admin tooling
 - Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
 - Unity can sync `/time`, keep an approximate in-memory server clock, and show daily/weekly reset timing from the backend
 - Unity can manually claim server AFK rewards from the Backend panel and checks them on app resume while Server Mode is active
@@ -136,6 +138,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.43: Moved AFK reward timing and Gold/Myth Essence formula into server-owned definitions, PostgreSQL seeds, and snapshot-driven gameplay balance.
 - Backend 0.2.42: Added server-owned equipment definitions for starter Weapon/Armor stat scaling, max-level validation, PostgreSQL seeds, and definition snapshots.
 - Backend 0.2.41: Added server-owned hero stat scaling and level/ascension caps to definitions, PostgreSQL seeds, and backend team-stat calculation.
 - Backend 0.2.40: New player starter heroes and initial shard rows are now seeded from the active hero definition catalog instead of hardcoded service maps.

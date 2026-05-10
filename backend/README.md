@@ -82,6 +82,7 @@ Current scope:
 - New player starter heroes and initial shard rows are seeded from the active hero definition catalog.
 - Hero definitions carry server-owned stat scaling plus level/ascension caps, and backend team ATK/HP/Power are derived from those rows.
 - Starter equipment definitions carry server-owned stat scaling plus max-level caps, and equipment training validates against those rows.
+- AFK reward definitions carry server-owned claim timing and Gold/Myth Essence formula values, and AFK claims read them from the active gameplay catalog.
 - Accessory equip, level, and fuse actions use server-owned accessory and rarity definitions for slot selection, fuse targets, fuse copy costs, max level validation, and equipped ATK/HP stat bonuses.
 - Player service gameplay actions route through explicit domain action services while keeping the existing API surface stable.
 - Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.
@@ -91,6 +92,7 @@ Current scope:
 - Navicat-friendly common definition views:
   - `debug.v_common_hero_definition_overview`
   - `debug.v_common_equipment_definition_overview`
+  - `debug.v_common_afk_reward_definition_overview`
   - `debug.v_common_reward_overview`
   - `debug.v_common_progression_cost_overview`
   - `debug.v_common_meta_definition_overview`
@@ -185,6 +187,7 @@ Database behavior:
 - Loaded in-memory player contexts are flushed during API shutdown before the cache is closed.
 - `POST /player/state/flush` is the app-pause/disconnect hook used by the Unity prototype.
 - AFK reward claims are capped at 6 hours, require at least 60 seconds, and persist `last_claimed_at` in PostgreSQL plus the action-result snapshot for crash-safe replay.
+- AFK claim windows and reward-per-tick values are loaded from `common.afk_reward_definitions` when PostgreSQL-backed definitions are enabled.
 - Daily progress is keyed by UTC date in `player.player_daily_progress`; a new server day clears daily mission counters and daily claims before the next snapshot/action.
 - New player seed state still writes immediately so first login/startup is durable.
 - The JSON player state snapshot is still written as a fallback/debug mirror.

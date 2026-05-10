@@ -177,6 +177,7 @@ public struct MythwakeDefinitionSnapshotDto
     public MythwakeHeroDefinitionDto[] heroes;
     public MythwakeEquipmentDefinitionDto[] equipment;
     public MythwakeRewardDefinitionDto[] rewards;
+    public MythwakeAfkRewardDefinitionDto[] afkRewards;
     public MythwakeCampaignDefinitionDto[] campaigns;
     public MythwakeCampaignStageDefinitionDto[] campaignStages;
     public MythwakeDungeonDefinitionDto[] dungeons;
@@ -244,6 +245,20 @@ public struct MythwakeRewardDefinitionDto
     public string displayName;
     public string rewardType;
     public MythwakeRewardDto reward;
+}
+
+[Serializable]
+public struct MythwakeAfkRewardDefinitionDto
+{
+    public string afkRewardId;
+    public string rewardId;
+    public string displayName;
+    public int minClaimSeconds;
+    public int maxClaimSeconds;
+    public int tickSeconds;
+    public int baseMythEssencePerTick;
+    public int mythEssencePerStage;
+    public int goldPerMythEssenceDivisor;
 }
 
 [Serializable]

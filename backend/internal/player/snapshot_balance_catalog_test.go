@@ -23,6 +23,19 @@ func TestSnapshotBalanceCatalogUsesSnapshotCombatDefinitions(t *testing.T) {
 				Reward:   api.Reward{RewardID: "reward_campaign_stage_003", MythEssence: 777, Gems: 13},
 			},
 		},
+		AFKRewards: []api.AFKRewardDefinition{
+			{
+				AFKRewardID:               "afk_test",
+				RewardID:                  "reward_afk_test",
+				DisplayName:               "AFK Test",
+				MinClaimSeconds:           120,
+				MaxClaimSeconds:           300,
+				TickSeconds:               60,
+				BaseMythEssencePerTick:    5,
+				MythEssencePerStage:       2,
+				GoldPerMythEssenceDivisor: 3,
+			},
+		},
 		CampaignStages: []api.CampaignStageDefinition{
 			{StageNumber: 3, EnemyMaxHP: 999, EnemyDamage: 77, MaxCombatSeconds: 12},
 		},
@@ -54,6 +67,14 @@ func TestSnapshotBalanceCatalogUsesSnapshotCombatDefinitions(t *testing.T) {
 	campaignReward := catalog.CampaignReward(3)
 	if campaignReward.MythEssence != 777 || campaignReward.Gems != 13 {
 		t.Fatalf("expected snapshot campaign reward, got %#v", campaignReward)
+	}
+
+	if catalog.AFKMinClaimSeconds() != 120 || catalog.RewardAFKClaim() != "reward_afk_test" {
+		t.Fatalf("expected snapshot AFK meta, min=%d reward=%s", catalog.AFKMinClaimSeconds(), catalog.RewardAFKClaim())
+	}
+	afkReward, claimedSeconds := catalog.AFKReward(4, 10*60)
+	if claimedSeconds != 300 || afkReward.RewardID != "reward_afk_test" || afkReward.Gold != 20 || afkReward.MythEssence != 65 {
+		t.Fatalf("expected snapshot AFK reward cap and formula, reward=%#v claimedSeconds=%d", afkReward, claimedSeconds)
 	}
 
 	dungeon, ok := catalog.DungeonDefinitionByID(balance.DungeonGold)

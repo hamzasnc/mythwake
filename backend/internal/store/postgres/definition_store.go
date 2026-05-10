@@ -32,6 +32,9 @@ func (store *DefinitionStore) Snapshot(ctx context.Context, apiVersion string) (
 	if snapshot.Rewards, err = store.rewardDefinitions(ctx); err != nil {
 		return api.DefinitionSnapshot{}, err
 	}
+	if snapshot.AFKRewards, err = store.afkRewardDefinitions(ctx); err != nil {
+		return api.DefinitionSnapshot{}, err
+	}
 	if snapshot.Campaigns, err = store.campaignDefinitions(ctx); err != nil {
 		return api.DefinitionSnapshot{}, err
 	}
@@ -202,6 +205,49 @@ func (store *DefinitionStore) rewardDefinitions(ctx context.Context) ([]api.Rewa
 			return nil, err
 		}
 		definition.Reward.RewardID = definition.RewardID
+		response = append(response, definition)
+	}
+
+	return response, rows.Err()
+}
+
+func (store *DefinitionStore) afkRewardDefinitions(ctx context.Context) ([]api.AFKRewardDefinition, error) {
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT
+			id,
+			reward_id,
+			display_name,
+			min_claim_seconds,
+			max_claim_seconds,
+			tick_seconds,
+			base_myth_essence_per_tick,
+			myth_essence_per_stage,
+			gold_per_myth_essence_divisor
+		FROM common.afk_reward_definitions
+		WHERE active = true
+		ORDER BY id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	response := []api.AFKRewardDefinition{}
+	for rows.Next() {
+		var definition api.AFKRewardDefinition
+		if err := rows.Scan(
+			&definition.AFKRewardID,
+			&definition.RewardID,
+			&definition.DisplayName,
+			&definition.MinClaimSeconds,
+			&definition.MaxClaimSeconds,
+			&definition.TickSeconds,
+			&definition.BaseMythEssencePerTick,
+			&definition.MythEssencePerStage,
+			&definition.GoldPerMythEssenceDivisor,
+		); err != nil {
+			return nil, err
+		}
 		response = append(response, definition)
 	}
 

@@ -18,6 +18,7 @@ type SnapshotBalanceCatalog struct {
 	equipment             []balance.EquipmentDefinition
 	equipmentByID         map[string]balance.EquipmentDefinition
 	rewards               map[string]api.Reward
+	afkReward             *balance.AFKRewardDefinition
 	dungeons              map[string]balance.DungeonDefinition
 	progressionCosts      []api.ProgressionCostDefinition
 	summonBanners         map[string]api.SummonBannerDefinition
@@ -106,6 +107,22 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 			reward.RewardID = definition.RewardID
 		}
 		catalog.rewards[definition.RewardID] = reward
+	}
+
+	for _, definition := range snapshot.AFKRewards {
+		afkReward := balance.NormalizeAFKRewardDefinition(balance.AFKRewardDefinition{
+			ID:                        definition.AFKRewardID,
+			RewardID:                  definition.RewardID,
+			DisplayName:               definition.DisplayName,
+			MinClaimSeconds:           definition.MinClaimSeconds,
+			MaxClaimSeconds:           definition.MaxClaimSeconds,
+			TickSeconds:               definition.TickSeconds,
+			BaseMythEssencePerTick:    definition.BaseMythEssencePerTick,
+			MythEssencePerStage:       definition.MythEssencePerStage,
+			GoldPerMythEssenceDivisor: definition.GoldPerMythEssenceDivisor,
+		})
+		catalog.afkReward = &afkReward
+		break
 	}
 
 	for _, definition := range snapshot.Dungeons {
@@ -304,14 +321,26 @@ func (catalog *SnapshotBalanceCatalog) GearDungeonReward() api.Reward {
 }
 
 func (catalog *SnapshotBalanceCatalog) AFKReward(stage int, elapsedSeconds int) (api.Reward, int) {
+	if catalog.afkReward != nil {
+		return balance.AFKRewardFromDefinition(*catalog.afkReward, stage, elapsedSeconds)
+	}
+
 	return catalog.fallback.AFKReward(stage, elapsedSeconds)
 }
 
 func (catalog *SnapshotBalanceCatalog) AFKMinClaimSeconds() int {
+	if catalog.afkReward != nil {
+		return catalog.afkReward.MinClaimSeconds
+	}
+
 	return catalog.fallback.AFKMinClaimSeconds()
 }
 
 func (catalog *SnapshotBalanceCatalog) RewardAFKClaim() string {
+	if catalog.afkReward != nil {
+		return catalog.afkReward.RewardID
+	}
+
 	return catalog.fallback.RewardAFKClaim()
 }
 

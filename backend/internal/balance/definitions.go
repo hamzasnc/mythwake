@@ -79,6 +79,18 @@ type RewardDefinition struct {
 	Reward      api.Reward
 }
 
+type AFKRewardDefinition struct {
+	ID                        string
+	RewardID                  string
+	DisplayName               string
+	MinClaimSeconds           int
+	MaxClaimSeconds           int
+	TickSeconds               int
+	BaseMythEssencePerTick    int
+	MythEssencePerStage       int
+	GoldPerMythEssenceDivisor int
+}
+
 type CampaignDefinition struct {
 	ID                        string
 	DisplayName               string
@@ -192,6 +204,20 @@ var heroDefinitions = []HeroDefinition{
 var equipmentDefinitions = []EquipmentDefinition{
 	{ID: EquipmentWeapon, DisplayName: "Weapon", SortOrder: 10, StarterOwned: true, MaxLevel: 100, AttackPerLevel: 7, HealthPerLevel: 0},
 	{ID: EquipmentArmor, DisplayName: "Armor", SortOrder: 20, StarterOwned: true, MaxLevel: 100, AttackPerLevel: 0, HealthPerLevel: 65},
+}
+
+var afkRewardDefinitions = []AFKRewardDefinition{
+	{
+		ID:                        "afk_default",
+		RewardID:                  RewardAFKClaim,
+		DisplayName:               "AFK Gold and Myth Essence",
+		MinClaimSeconds:           AFKMinClaimSeconds,
+		MaxClaimSeconds:           AFKMaxClaimSeconds,
+		TickSeconds:               AFKRewardTickSeconds,
+		BaseMythEssencePerTick:    3,
+		MythEssencePerStage:       1,
+		GoldPerMythEssenceDivisor: 2,
+	},
 }
 
 var campaignDefinitions = []CampaignDefinition{
@@ -447,6 +473,22 @@ func EquipmentDefinitionByID(equipmentID string) (EquipmentDefinition, bool) {
 	return EquipmentDefinition{}, false
 }
 
+func AFKRewardDefinitions() []AFKRewardDefinition {
+	definitions := make([]AFKRewardDefinition, len(afkRewardDefinitions))
+	copy(definitions, afkRewardDefinitions)
+	return definitions
+}
+
+func AFKRewardDefinitionByID(afkRewardID string) (AFKRewardDefinition, bool) {
+	for _, definition := range afkRewardDefinitions {
+		if definition.ID == afkRewardID {
+			return definition, true
+		}
+	}
+
+	return AFKRewardDefinition{}, false
+}
+
 func CampaignDefinitions() []CampaignDefinition {
 	definitions := make([]CampaignDefinition, len(campaignDefinitions))
 	copy(definitions, campaignDefinitions)
@@ -631,20 +673,62 @@ func CampaignReward(stage int) api.Reward {
 }
 
 func AFKReward(stage int, elapsedSeconds int) (api.Reward, int) {
-	if elapsedSeconds < AFKMinClaimSeconds {
-		return api.Reward{RewardID: RewardAFKClaim}, 0
+	return AFKRewardFromDefinition(afkRewardDefinitions[0], stage, elapsedSeconds)
+}
+
+func AFKRewardFromDefinition(definition AFKRewardDefinition, stage int, elapsedSeconds int) (api.Reward, int) {
+	definition = NormalizeAFKRewardDefinition(definition)
+	if elapsedSeconds < definition.MinClaimSeconds {
+		return api.Reward{RewardID: definition.RewardID}, 0
 	}
 
-	claimSeconds := min(elapsedSeconds, AFKMaxClaimSeconds)
-	ticks := claimSeconds / AFKRewardTickSeconds
-	essencePerTick := 3 + max(1, stage)
-	goldPerTick := max(1, essencePerTick/2)
-
+	claimSeconds := min(elapsedSeconds, definition.MaxClaimSeconds)
+	ticks := claimSeconds / definition.TickSeconds
+	essencePerTick := definition.BaseMythEssencePerTick + (max(1, stage) * definition.MythEssencePerStage)
+	goldPerTick := max(1, essencePerTick/definition.GoldPerMythEssenceDivisor)
 	return api.Reward{
-		RewardID:    RewardAFKClaim,
+		RewardID:    definition.RewardID,
 		Gold:        ticks * goldPerTick,
 		MythEssence: ticks * essencePerTick,
 	}, claimSeconds
+}
+
+func NormalizeAFKRewardDefinition(definition AFKRewardDefinition) AFKRewardDefinition {
+	if definition.ID == "" {
+		definition.ID = "afk_default"
+	}
+	if definition.RewardID == "" {
+		definition.RewardID = RewardAFKClaim
+	}
+	if definition.DisplayName == "" {
+		definition.DisplayName = "AFK Gold and Myth Essence"
+	}
+	if definition.MinClaimSeconds <= 0 {
+		definition.MinClaimSeconds = AFKMinClaimSeconds
+	}
+	if definition.MaxClaimSeconds <= 0 {
+		definition.MaxClaimSeconds = AFKMaxClaimSeconds
+	}
+	if definition.MaxClaimSeconds < definition.MinClaimSeconds {
+		definition.MaxClaimSeconds = definition.MinClaimSeconds
+	}
+	if definition.TickSeconds <= 0 {
+		definition.TickSeconds = AFKRewardTickSeconds
+	}
+	if definition.TickSeconds > definition.MaxClaimSeconds {
+		definition.TickSeconds = definition.MaxClaimSeconds
+	}
+	if definition.BaseMythEssencePerTick <= 0 {
+		definition.BaseMythEssencePerTick = 3
+	}
+	if definition.MythEssencePerStage < 0 {
+		definition.MythEssencePerStage = 1
+	}
+	if definition.GoldPerMythEssenceDivisor <= 0 {
+		definition.GoldPerMythEssenceDivisor = 2
+	}
+
+	return definition
 }
 
 func HeroLevelCost(level int) int {

@@ -602,6 +602,7 @@ Progress:
 - Accessory equip, level, and fuse actions now use accessory and rarity definitions for slot routing, fuse targets, fuse copy costs, max-level validation, and equipped ATK/HP stat bonuses instead of parsing behavior from item IDs.
 - Hero definitions now carry server-owned stat growth and level/ascension caps; backend team ATK, HP, and Power are derived from those definitions instead of generic hardcoded hero increments.
 - Starter equipment definitions now carry server-owned stat growth and max-level caps; backend equipment training validates against those definitions instead of hardcoded Weapon/Armor stat bonuses.
+- AFK reward definitions now carry claim timing, cap, tick size, and Gold/Myth Essence formula fields; PostgreSQL-backed gameplay uses those rows for offline claims.
 
 Next useful step:
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.

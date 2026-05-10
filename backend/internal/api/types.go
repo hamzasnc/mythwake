@@ -143,6 +143,7 @@ type DefinitionSnapshot struct {
 	Heroes            []HeroDefinition             `json:"heroes"`
 	Equipment         []EquipmentDefinition        `json:"equipment"`
 	Rewards           []RewardDefinition           `json:"rewards"`
+	AFKRewards        []AFKRewardDefinition        `json:"afkRewards"`
 	Campaigns         []CampaignDefinition         `json:"campaigns"`
 	CampaignStages    []CampaignStageDefinition    `json:"campaignStages"`
 	Dungeons          []DungeonDefinition          `json:"dungeons"`
@@ -200,6 +201,18 @@ type RewardDefinition struct {
 	DisplayName string `json:"displayName"`
 	RewardType  string `json:"rewardType"`
 	Reward      Reward `json:"reward"`
+}
+
+type AFKRewardDefinition struct {
+	AFKRewardID               string `json:"afkRewardId"`
+	RewardID                  string `json:"rewardId"`
+	DisplayName               string `json:"displayName"`
+	MinClaimSeconds           int    `json:"minClaimSeconds"`
+	MaxClaimSeconds           int    `json:"maxClaimSeconds"`
+	TickSeconds               int    `json:"tickSeconds"`
+	BaseMythEssencePerTick    int    `json:"baseMythEssencePerTick"`
+	MythEssencePerStage       int    `json:"mythEssencePerStage"`
+	GoldPerMythEssenceDivisor int    `json:"goldPerMythEssenceDivisor"`
 }
 
 type CampaignDefinition struct {

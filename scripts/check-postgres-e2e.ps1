@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.42-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.43-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
@@ -136,7 +136,7 @@ try {
     $firstProcess = Start-Api
 
     $definitions = Invoke-Json -Path "/definitions"
-    Assert-Equal ([int]$definitions.schemaVersion) 4 "Definitions schema should include hero and equipment stat fields."
+    Assert-Equal ([int]$definitions.schemaVersion) 5 "Definitions schema should include DB-owned AFK reward fields."
     $starterHeroDefinitions = @($definitions.heroes | Where-Object { $_.starterOwned -eq $true })
     $astraDefinition = $definitions.heroes | Where-Object { $_.heroId -eq "hero_astra" } | Select-Object -First 1
     if (-not $astraDefinition -or [int]$astraDefinition.maxLevel -le 0 -or [int]$astraDefinition.baseAttack -le 0 -or [int]$astraDefinition.baseHealth -le 0) {
@@ -145,6 +145,10 @@ try {
     $weaponDefinition = $definitions.equipment | Where-Object { $_.equipmentId -eq "equipment_weapon" } | Select-Object -First 1
     if (-not $weaponDefinition -or [int]$weaponDefinition.maxLevel -le 0 -or [int]$weaponDefinition.attackPerLevel -le 0) {
         throw "Expected equipment definitions to include stat scaling fields. Response: $($definitions | ConvertTo-Json -Depth 8)"
+    }
+    $afkDefinition = $definitions.afkRewards | Where-Object { $_.rewardId -eq "reward_afk_claim" } | Select-Object -First 1
+    if (-not $afkDefinition -or [int]$afkDefinition.minClaimSeconds -ne 60 -or [int]$afkDefinition.maxClaimSeconds -ne 21600 -or [int]$afkDefinition.tickSeconds -ne 60) {
+        throw "Expected definitions to include DB-owned AFK reward settings. Response: $($definitions | ConvertTo-Json -Depth 8)"
     }
     $stageOneDefinition = $definitions.campaignStages | Where-Object { [int]$_.stageNumber -eq 1 } | Select-Object -First 1
     if (-not $stageOneDefinition -or [int]$stageOneDefinition.enemyMaxHp -le 0 -or [int]$stageOneDefinition.enemyDamage -le 0) {
