@@ -53,6 +53,7 @@ func TestCampaignFightEndpoint(t *testing.T) {
 	handler := newTestHandler()
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addIdempotencyKey(request, "campaign-fight-001")
 
 	handler.ServeHTTP(response, request)
 
@@ -70,6 +71,47 @@ func TestCampaignFightEndpoint(t *testing.T) {
 	}
 	if len(body.PlayerSnapshot.Heroes) == 0 || body.PlayerSnapshot.State.CampaignStage != body.PlayerState.CampaignStage {
 		t.Fatalf("expected action result snapshot to match player state, got %#v", body)
+	}
+}
+
+func TestMutatingActionRequiresIdempotencyHeader(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", response.Code)
+	}
+
+	var body map[string]string
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body["errorCode"] != "missing_idempotency_key" {
+		t.Fatalf("expected missing idempotency error, got %#v", body)
+	}
+}
+
+func TestMutatingActionRejectsInvalidIdempotencyHeader(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addIdempotencyKey(request, "bad key with spaces")
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", response.Code)
+	}
+
+	var body map[string]string
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body["errorCode"] != "invalid_idempotency_key" {
+		t.Fatalf("expected invalid idempotency error, got %#v", body)
 	}
 }
 
@@ -110,6 +152,7 @@ func TestAccessoryBodyValidation(t *testing.T) {
 	handler := newTestHandler()
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodPost, "/gear/accessories/equip", strings.NewReader(`{}`))
+	addIdempotencyKey(request, "accessory-equip-001")
 
 	handler.ServeHTTP(response, request)
 
@@ -120,10 +163,20 @@ func TestAccessoryBodyValidation(t *testing.T) {
 
 func newTestHandler() http.Handler {
 	return NewRouter(
-		config.Config{ServiceName: "test-api", Addr: ":0", Environment: "test", Version: "test"},
+		config.Config{
+			ServiceName:        "test-api",
+			Addr:               ":0",
+			Environment:        "test",
+			Version:            "test",
+			RequireIdempotency: true,
+		},
 		log.New(testWriter{}, "", 0),
 		player.NewService(),
 	)
+}
+
+func addIdempotencyKey(request *http.Request, key string) {
+	request.Header.Set("Idempotency-Key", key)
 }
 
 type testWriter struct{}

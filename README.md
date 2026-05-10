@@ -79,7 +79,7 @@ Backend:
 - PostgreSQL writes now sit behind a durable state cache wrapper
 - Critical server actions now use ledger write-behind by default, so the action/result is durable before success while materialized state can flush in batches
 - Full write-through remains available as a debug mode
-- Server actions support `Idempotency-Key` to make timeout/retry flows replay-safe
+- Gameplay server actions require a valid `Idempotency-Key` by default, making timeout/retry flows part of the API contract instead of an optional client habit
 - Successful idempotent action results are stored in `player.player_action_results`
 - Per-action economy deltas are stored in `logs.player_action_ledger`
 - Unity reuses pending idempotency keys after transport failures
@@ -93,6 +93,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.13: Required idempotency headers for gameplay mutations, added key validation, health visibility, script support, and HTTP/config tests.
 - Backend 0.2.12: Switched default persistence to durable action ledger plus materialized state write-behind flush.
 - Backend 0.2.11: Added durable idempotent action results, replay-safe server action routing, and Unity pending action keys.
 - Backend 0.2.10: Added durable player state cache wrapper, write-through default saves, optional write-behind mode, cache health fields, manual flush endpoint, and shutdown flushing.

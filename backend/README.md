@@ -44,8 +44,8 @@ Current scope:
 - `GET /player/core-state` returns the compact numeric state only.
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
 - The Unity prototype can ping, guest-login, sync this snapshot, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
-- Server gameplay POSTs support `Idempotency-Key` headers.
-- Successful idempotent action results are stored in PostgreSQL together with the player state transaction.
+- Server gameplay POSTs require valid `Idempotency-Key` headers by default.
+- Successful idempotent action results are stored in PostgreSQL before the materialized player-state flush.
 - Retrying the same action with the same key returns the stored result with `replay: true` instead of applying rewards/spends again.
 - Graceful shutdown
 
@@ -88,6 +88,7 @@ Optional script modes:
 
 ```powershell
 .\scripts\start-backend.cmd -NoDatabase
+.\scripts\start-backend.cmd -AllowMissingIdempotency
 .\scripts\start-backend.cmd -DatabaseUrl "postgres://mythwake:mythwake@localhost:5432/mythwake?sslmode=disable"
 .\scripts\check-backend.cmd -BaseUrl "http://localhost:8080"
 .\scripts\check-backend.cmd -FlushState
@@ -105,6 +106,7 @@ Optional environment variables:
 - `MYTHWAKE_STATE_WRITE_MODE`, default `ledger_write_behind`, optional `write_through` or `write_behind`
 - `MYTHWAKE_STATE_FLUSH_INTERVAL` such as `30s`, `2m`, or `5m`
 - `MYTHWAKE_STATE_FLUSH_TIMEOUT` such as `5s`
+- `MYTHWAKE_REQUIRE_IDEMPOTENCY`, default `true`; set to `false` only for local debugging
 
 Database behavior:
 - If `MYTHWAKE_DATABASE_URL` is empty, the API uses the current in-memory dev state.
@@ -122,7 +124,8 @@ Database behavior:
 - Successful action responses with an `Idempotency-Key` are written to `player.player_action_results`.
 - Per-action currency deltas are written to `logs.player_action_ledger`.
 - Reusing a key for a different endpoint/body returns an `idempotency_conflict` action result.
-- `GET /health` reports `database`, `state_cache`, `state_write_mode`, and `state_flush_interval`.
+- Missing or malformed keys on gameplay mutations return HTTP 400 before the action is applied.
+- `GET /health` reports `database`, `state_cache`, `state_write_mode`, `state_flush_interval`, and `require_idempotency`.
 
 Endpoints:
 - `POST /auth/guest`

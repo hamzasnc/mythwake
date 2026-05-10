@@ -4,7 +4,8 @@ param(
     [string]$StateFlushInterval = "30s",
     [ValidateSet("ledger_write_behind", "write_through", "write_behind")]
     [string]$StateWriteMode = "ledger_write_behind",
-    [switch]$NoDatabase
+    [switch]$NoDatabase,
+    [switch]$AllowMissingIdempotency
 )
 
 $ErrorActionPreference = "Stop"
@@ -71,10 +72,11 @@ function Start-PostgresServiceIfNeeded {
 $goExe = Find-Go
 $env:MYTHWAKE_API_ADDR = $ApiAddr
 $env:MYTHWAKE_ENV = "local"
-$env:MYTHWAKE_API_VERSION = "0.2.12"
+$env:MYTHWAKE_API_VERSION = "0.2.13"
 $env:MYTHWAKE_STATE_FLUSH_INTERVAL = $StateFlushInterval
 $env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
 $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
+$env:MYTHWAKE_REQUIRE_IDEMPOTENCY = if ($AllowMissingIdempotency) { "false" } else { "true" }
 
 if ($NoDatabase) {
     Remove-Item Env:\MYTHWAKE_DATABASE_URL -ErrorAction SilentlyContinue
@@ -104,6 +106,7 @@ Write-Host "Backend: $backendPath"
 Write-Host "Address: $ApiAddr"
 Write-Host "State write mode: $StateWriteMode"
 Write-Host "State flush interval: $StateFlushInterval"
+Write-Host "Require idempotency: $($env:MYTHWAKE_REQUIRE_IDEMPOTENCY)"
 Write-Host "Stop server with Ctrl+C."
 Write-Host ""
 

@@ -328,6 +328,7 @@ Current backend state:
 - Full write-through mode exists for debugging, and local/dev write-behind mode remains available for experiments.
 - Added `POST /player/state/flush` as a future app-pause/disconnect hook.
 - Added durable idempotent action results through `Idempotency-Key`.
+- Gameplay mutation endpoints now require valid `Idempotency-Key` headers by default.
 - Successful idempotent action results save in `player.player_action_results`.
 - Per-action economy deltas save in `logs.player_action_ledger`.
 - Startup restores from the latest durable action result snapshot if materialized tables are behind.
@@ -438,8 +439,21 @@ Current cache stance:
 - Default mode is `ledger_write_behind`: critical economy actions write a durable action ledger/result before success is returned, while materialized player tables flush in batches.
 - Full `write_through` mode is available for debugging direct table writes.
 - Plain `write_behind` mode is not safe for production economy state unless every critical action also has a durable ledger/result.
+- Gameplay mutations require valid idempotency keys by default; disabling that is a local debugging escape hatch only.
 - Redis later should handle cross-process sessions, locks, rate limits, and short-lived coordination.
 - PostgreSQL remains the durable source of truth for player economy and inventory.
+
+## Engineering Standard
+
+Build Mythwake as a long-lived game core, not as disposable quick-and-dirty code.
+
+Rules for future batches:
+- Mutating server actions must be replay-safe, idempotent, and validated before touching player state.
+- The backend owns rewards, spends, drops, claims, and inventory transitions.
+- PostgreSQL remains durable truth; cache layers may improve throughput but must not be required to recover permanent player state.
+- Definition IDs must remain stable and table-shaped so balance can move into SQL/admin tooling.
+- New gameplay systems should ship with focused tests for economy, persistence, and invalid-state cases.
+- Local/dev shortcuts are allowed only behind explicit config or debug UI.
 
 ## Server MVP Timing
 
@@ -533,6 +547,7 @@ Progress:
 - Added `player.player_action_results` and `debug.v_player_action_result_overview` for idempotent action replay.
 - Added `logs.player_action_ledger` and `debug.v_player_action_ledger_overview` for per-action durable economy deltas.
 - Default persistence mode is now durable action ledger plus batched materialized state flush.
+- Added required idempotency headers and validation for gameplay mutation endpoints.
 
 Next useful step:
 - Split backend gameplay services out of the current single `player.Service` while keeping the API behavior stable:
@@ -582,11 +597,11 @@ These matter later, but they would slow down the clean core right now.
 
 The best next step is:
 
-Stabilize and data-shape the current prototype before adding more features.
+Harden the server-authoritative core before adding more gameplay breadth.
 
 That means:
-- Make current systems reliable.
-- Make current data table-like.
-- Make saves cleaner.
-- Tune the loop.
-- Then start backend.
+- Keep every economy mutation replay-safe.
+- Split the large backend player service into focused domain services.
+- Move definition/balance ownership toward PostgreSQL-backed tables.
+- Add Redis only for sessions, locks, rate limits, and other temporary coordination.
+- Keep Unity Server Mode working after each backend batch.

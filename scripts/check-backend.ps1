@@ -6,6 +6,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function New-IdempotencyHeaders {
+    param(
+        [string]$Prefix
+    )
+
+    return @{ "Idempotency-Key" = "$Prefix-$([guid]::NewGuid().ToString("N"))" }
+}
+
 Write-Host "Checking Mythwake API at $BaseUrl"
 
 $health = Invoke-RestMethod "$BaseUrl/health"
@@ -16,7 +24,7 @@ $state = Invoke-RestMethod "$BaseUrl/player/state"
 Write-Host "Player State:"
 $state | Format-List
 
-$fight = Invoke-RestMethod -Method Post "$BaseUrl/campaign/fight"
+$fight = Invoke-RestMethod -Method Post -Headers (New-IdempotencyHeaders "campaign-fight") "$BaseUrl/campaign/fight"
 Write-Host "Campaign Fight:"
 $fight | Format-List
 

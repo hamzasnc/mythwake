@@ -61,6 +61,7 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 		"state_cache":          router.config.StateCacheStatus,
 		"state_write_mode":     router.config.StateWriteMode,
 		"state_flush_interval": router.config.StateFlushInterval.String(),
+		"require_idempotency":  boolLabel(router.config.RequireIdempotency),
 		"environment":          router.config.Environment,
 		"version":              router.config.Version,
 		"time_utc":             time.Now().UTC().Format(time.RFC3339),
@@ -94,23 +95,48 @@ func (router *Router) handleGuestAuth(response http.ResponseWriter, request *htt
 }
 
 func (router *Router) handleCampaignFight(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.FightCampaignWithRequest(request.Context(), actionRequest(request, "")))
+	action, ok := router.actionRequest(response, request, "")
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, router.playerService.FightCampaignWithRequest(request.Context(), action))
 }
 
 func (router *Router) handleDungeonRun(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.RunDungeonWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("dungeon_id")))
+	action, ok := router.actionRequest(response, request, "")
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, router.playerService.RunDungeonWithRequest(request.Context(), action, request.PathValue("dungeon_id")))
 }
 
 func (router *Router) handleHeroLevel(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.LevelHeroWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("hero_id")))
+	action, ok := router.actionRequest(response, request, "")
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, router.playerService.LevelHeroWithRequest(request.Context(), action, request.PathValue("hero_id")))
 }
 
 func (router *Router) handleHeroAscend(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.AscendHeroWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("hero_id")))
+	action, ok := router.actionRequest(response, request, "")
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, router.playerService.AscendHeroWithRequest(request.Context(), action, request.PathValue("hero_id")))
 }
 
 func (router *Router) handleEquipmentLevel(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.LevelEquipmentWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("equipment_id")))
+	action, ok := router.actionRequest(response, request, "")
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, router.playerService.LevelEquipmentWithRequest(request.Context(), action, request.PathValue("equipment_id")))
 }
 
 func (router *Router) handleAccessoryEquip(response http.ResponseWriter, request *http.Request) {
@@ -119,7 +145,12 @@ func (router *Router) handleAccessoryEquip(response http.ResponseWriter, request
 		return
 	}
 
-	writeActionResult(response, router.playerService.EquipAccessoryWithRequest(request.Context(), actionRequest(request, rawBody), accessoryRequest.AccessoryID))
+	action, ok := router.actionRequest(response, request, rawBody)
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, router.playerService.EquipAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID))
 }
 
 func (router *Router) handleAccessoryLevel(response http.ResponseWriter, request *http.Request) {
@@ -128,7 +159,12 @@ func (router *Router) handleAccessoryLevel(response http.ResponseWriter, request
 		return
 	}
 
-	writeActionResult(response, router.playerService.LevelAccessoryWithRequest(request.Context(), actionRequest(request, rawBody), accessoryRequest.AccessoryID))
+	action, ok := router.actionRequest(response, request, rawBody)
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, router.playerService.LevelAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID))
 }
 
 func (router *Router) handleAccessoryFuse(response http.ResponseWriter, request *http.Request) {
@@ -137,19 +173,39 @@ func (router *Router) handleAccessoryFuse(response http.ResponseWriter, request 
 		return
 	}
 
-	writeActionResult(response, router.playerService.FuseAccessoryWithRequest(request.Context(), actionRequest(request, rawBody), accessoryRequest.AccessoryID))
+	action, ok := router.actionRequest(response, request, rawBody)
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, router.playerService.FuseAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID))
 }
 
 func (router *Router) handleSummonPull(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.PullSummonWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("banner_id")))
+	action, ok := router.actionRequest(response, request, "")
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, router.playerService.PullSummonWithRequest(request.Context(), action, request.PathValue("banner_id")))
 }
 
 func (router *Router) handleDailyMissionClaim(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.ClaimDailyMissionWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("mission_id")))
+	action, ok := router.actionRequest(response, request, "")
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, router.playerService.ClaimDailyMissionWithRequest(request.Context(), action, request.PathValue("mission_id")))
 }
 
 func (router *Router) handleBattlePassClaim(response http.ResponseWriter, request *http.Request) {
-	writeActionResult(response, router.playerService.ClaimBattlePassRewardWithRequest(request.Context(), actionRequest(request, ""), request.PathValue("reward_id")))
+	action, ok := router.actionRequest(response, request, "")
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, router.playerService.ClaimBattlePassRewardWithRequest(request.Context(), action, request.PathValue("reward_id")))
 }
 
 func (router *Router) logRequests(next http.Handler) http.Handler {
@@ -173,20 +229,75 @@ func writeActionResult(response http.ResponseWriter, result any) {
 	writeJSON(response, http.StatusOK, result)
 }
 
-func actionRequest(request *http.Request, rawBody string) player.ActionRequest {
+func (router *Router) actionRequest(response http.ResponseWriter, request *http.Request, rawBody string) (player.ActionRequest, bool) {
+	action, errorCode, message := buildActionRequest(request, rawBody)
+	if errorCode != "" {
+		writeJSON(response, http.StatusBadRequest, map[string]string{
+			"errorCode": errorCode,
+			"message":   message,
+		})
+		return player.ActionRequest{}, false
+	}
+	if router.config.RequireIdempotency && !action.HasIdempotency() {
+		writeJSON(response, http.StatusBadRequest, map[string]string{
+			"errorCode": "missing_idempotency_key",
+			"message":   "Gameplay mutation requests require an Idempotency-Key header.",
+		})
+		return player.ActionRequest{}, false
+	}
+
+	return action, true
+}
+
+func buildActionRequest(request *http.Request, rawBody string) (player.ActionRequest, string, string) {
 	idempotencyKey := strings.TrimSpace(request.Header.Get("Idempotency-Key"))
 	if idempotencyKey == "" {
 		idempotencyKey = strings.TrimSpace(request.Header.Get("X-Idempotency-Key"))
 	}
 	if idempotencyKey == "" {
-		return player.ActionRequest{}
+		return player.ActionRequest{}, "", ""
+	}
+	if !validIdempotencyKey(idempotencyKey) {
+		return player.ActionRequest{}, "invalid_idempotency_key", "Idempotency-Key must be 8-128 chars and only contain letters, numbers, dot, underscore, colon, or dash."
 	}
 
 	hash := sha256.Sum256([]byte(request.Method + "\n" + request.URL.EscapedPath() + "\n" + request.URL.RawQuery + "\n" + rawBody))
 	return player.ActionRequest{
 		IdempotencyKey: idempotencyKey,
 		RequestHash:    hex.EncodeToString(hash[:]),
+	}, "", ""
+}
+
+func validIdempotencyKey(key string) bool {
+	if len(key) < 8 || len(key) > 128 {
+		return false
 	}
+
+	for _, char := range key {
+		if char >= 'a' && char <= 'z' {
+			continue
+		}
+		if char >= 'A' && char <= 'Z' {
+			continue
+		}
+		if char >= '0' && char <= '9' {
+			continue
+		}
+		if char == '.' || char == '_' || char == ':' || char == '-' {
+			continue
+		}
+		return false
+	}
+
+	return true
+}
+
+func boolLabel(value bool) string {
+	if value {
+		return "true"
+	}
+
+	return "false"
 }
 
 func decodeAccessoryRequest(response http.ResponseWriter, request *http.Request) (api.AccessoryRequest, string, bool) {
