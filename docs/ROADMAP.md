@@ -255,6 +255,9 @@ Progress:
 - Campaign fights, resource dungeons, Gear Dungeon, and summons now route through local action-result methods with success/error/message/player-state output.
 - Accessory equip, accessory leveling, and accessory fusion now route through inventory service action-result methods.
 - Hero leveling, hero ascension, starter equipment leveling, daily claims, and Mission Track claims now route through progression/mission service action-result methods.
+- Expanded the Unity service contracts to full player snapshots matching the Go backend.
+- Added a Unity `MythwakeBackendClient` for health, guest auth, player snapshots, and all current action endpoints.
+- Added a runtime Shop-tab backend panel for Ping/Login/Sync smoke tests without making the local prototype depend on the server.
 
 Tasks:
 - Add service-style classes/interfaces for:
@@ -266,10 +269,11 @@ Tasks:
   - daily reset
 - Local implementation uses current save.
 - Future implementation calls backend.
-- Do not build real HTTP yet unless the client boundary is stable.
+- Real HTTP exists now as a smoke-test layer; next step is moving gameplay actions onto it one-by-one behind a clean fallback.
 
 Done when:
 - The gameplay code no longer directly owns every economy decision.
+- Server snapshots can refresh the client UI without manual JSON inspection.
 
 ## Backend Plan
 
@@ -307,6 +311,7 @@ Current backend state:
 - Added persistent summon count, daily mission claims, Battle Pass claims, summon history, and debug claim/summon views.
 - Expanded `GET /player/state` into a client-ready player snapshot containing core state, heroes, equipment, accessories, claims, and summon count.
 - Added the same full player snapshot to guest auth and action responses so the client can refresh UI from a single response.
+- Unity can now ping the backend, guest-login, and apply `/player/state` snapshots through the ingame Backend panel.
 - Redis is not connected yet.
 
 Recommended Go shape:

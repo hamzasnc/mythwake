@@ -38,6 +38,7 @@ Current scope:
 - `GET /player/state` returns a full client-ready snapshot.
 - `GET /player/core-state` returns the compact numeric state only.
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
+- The Unity prototype can ping, guest-login, and sync this snapshot from the Shop tab Backend panel.
 - Graceful shutdown
 
 Not included yet:
@@ -69,6 +70,11 @@ Shortcut scripts from the repo root:
 ```
 
 `start-backend.cmd` sets the local environment variables, checks PostgreSQL, tries to start the local `postgresql*` Windows service if needed, then runs the API.
+
+Unity client notes:
+- Editor/Desktop default backend URL: `http://localhost:8080`
+- Android emulator default backend URL: `http://10.0.2.2:8080`
+- In the prototype, open `Shop` and use `Ping`, `Login`, or `Sync` in the Backend panel.
 
 Optional script modes:
 

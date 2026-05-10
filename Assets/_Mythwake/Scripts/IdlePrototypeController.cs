@@ -3,9 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
+public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.9";
+    public const string PrototypeVersion = "0.2.10";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -679,6 +679,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private float autoAttackInterval = 1f;
     [SerializeField] private int maxOfflineSeconds = 6 * 60 * 60;
 
+    [Header("Backend")]
+    [SerializeField] private MythwakeBackendClient backendClient;
+    [SerializeField] private TMP_Text backendStatusText;
+    [SerializeField] private Button backendHealthButton;
+    [SerializeField] private Button backendLoginButton;
+    [SerializeField] private Button backendSyncButton;
+
     [Header("UI")]
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text versionText;
@@ -766,12 +773,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private int lastOfflineReward;
     private int lastOfflineSeconds;
     private AppScreen activeScreen = AppScreen.Home;
+    private bool backendRequestInProgress;
+    private string backendStatus = "Backend: local prototype mode";
 
     private void Awake()
     {
         LoadProgress();
         ClaimOfflineRewards();
+        EnsureRuntimeBackendClient();
         EnsureRuntimeDebugUi();
+        EnsureRuntimeBackendUi();
         RegisterNavigation();
         RegisterHeroButtons();
         RegisterDailyMissionButtons();
@@ -885,6 +896,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (debugAccessoryButton != null)
         {
             debugAccessoryButton.onClick.AddListener(AddDebugAccessoryCopy);
+        }
+
+        if (backendHealthButton != null)
+        {
+            backendHealthButton.onClick.AddListener(PingBackend);
+        }
+
+        if (backendLoginButton != null)
+        {
+            backendLoginButton.onClick.AddListener(LoginBackend);
+        }
+
+        if (backendSyncButton != null)
+        {
+            backendSyncButton.onClick.AddListener(SyncBackendState);
         }
 
         RefreshUi();
@@ -1020,6 +1046,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (debugAccessoryButton != null)
         {
             debugAccessoryButton.onClick.RemoveListener(AddDebugAccessoryCopy);
+        }
+
+        if (backendHealthButton != null)
+        {
+            backendHealthButton.onClick.RemoveListener(PingBackend);
+        }
+
+        if (backendLoginButton != null)
+        {
+            backendLoginButton.onClick.RemoveListener(LoginBackend);
+        }
+
+        if (backendSyncButton != null)
+        {
+            backendSyncButton.onClick.RemoveListener(SyncBackendState);
         }
 
         UnregisterNavigation();
@@ -1531,6 +1572,36 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetDungeonResult($"Debug: +1 {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} copy.");
     }
 
+    public void PingBackend()
+    {
+        if (!TryStartBackendRequest("Backend: pinging..."))
+        {
+            return;
+        }
+
+        StartCoroutine(backendClient.GetHealth(OnBackendHealth));
+    }
+
+    public void LoginBackend()
+    {
+        if (!TryStartBackendRequest("Backend: guest login..."))
+        {
+            return;
+        }
+
+        StartCoroutine(backendClient.GuestAuth(OnBackendLogin));
+    }
+
+    public void SyncBackendState()
+    {
+        if (!TryStartBackendRequest("Backend: syncing player snapshot..."))
+        {
+            return;
+        }
+
+        StartCoroutine(backendClient.GetPlayerSnapshot(OnBackendSnapshot));
+    }
+
     public void ResetProgress()
     {
         ClearPrototypePlayerPrefs();
@@ -1602,6 +1673,254 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SaveProgress();
         RefreshUi();
         SetDungeonResult("Prototype reset to fresh save.\nCurrencies, heroes, gear, missions cleared.");
+    }
+
+    private bool TryStartBackendRequest(string status)
+    {
+        EnsureRuntimeBackendClient();
+        if (backendClient == null || backendRequestInProgress)
+        {
+            return false;
+        }
+
+        backendRequestInProgress = true;
+        SetBackendStatus(status);
+        SetBackendButtonsInteractable(false);
+        return true;
+    }
+
+    private void OnBackendHealth(bool success, string error, MythwakeHealthDto health)
+    {
+        if (success)
+        {
+            FinishBackendRequest($"Backend: {health.status}  DB {health.database}  v{health.version}");
+            return;
+        }
+
+        FinishBackendRequest($"Backend offline: {error}");
+    }
+
+    private void OnBackendLogin(bool success, string error, MythwakeGuestAuthResponseDto response)
+    {
+        if (success)
+        {
+            ApplyBackendSnapshot(response.playerSnapshot);
+            FinishBackendRequest($"Backend login: {response.playerId}");
+            return;
+        }
+
+        FinishBackendRequest($"Backend login failed: {error}");
+    }
+
+    private void OnBackendSnapshot(bool success, string error, MythwakePlayerSnapshotDto snapshot)
+    {
+        if (success)
+        {
+            ApplyBackendSnapshot(snapshot);
+            FinishBackendRequest($"Backend sync: {snapshot.playerId}  Stage {enemyLevel}");
+            return;
+        }
+
+        FinishBackendRequest($"Backend sync failed: {error}");
+    }
+
+    private void FinishBackendRequest(string status)
+    {
+        backendRequestInProgress = false;
+        SetBackendStatus(status);
+        SetBackendButtonsInteractable(true);
+    }
+
+    private void ApplyBackendSnapshot(MythwakePlayerSnapshotDto snapshot)
+    {
+        if (snapshot.state.campaignStage <= 0)
+        {
+            return;
+        }
+
+        var state = snapshot.state;
+        saveVersion = CurrentSaveVersion;
+        gold = Mathf.Max(0, state.gold);
+        gems = Mathf.Max(0, state.gems);
+        mythEssence = Mathf.Max(0, state.mythEssence);
+        battlePassXp = Mathf.Max(0, state.passXp);
+        enemyLevel = Mathf.Max(1, state.campaignStage);
+        goldDungeonFloor = Mathf.Max(1, state.goldDungeonFloor);
+        essenceDungeonFloor = Mathf.Max(1, state.essenceDungeonFloor);
+        gearDungeonFloor = Mathf.Max(1, state.gearDungeonFloor);
+
+        ApplyBackendHeroes(snapshot.heroes, snapshot.heroShards);
+        ApplyBackendEquipment(snapshot.equipment);
+        ApplyBackendAccessories(snapshot.accessories, snapshot.equippedAccessories);
+        ApplyBackendClaims(snapshot.dailyClaims, snapshot.battlePassClaims);
+
+        summonCount = Mathf.Max(0, snapshot.summonCount);
+        enemyMaxHp = GetStageMaxHp(enemyLevel);
+        enemyHp = enemyMaxHp;
+        damage = GetTeamDamage();
+        upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
+
+        SaveProgress();
+        RefreshUi();
+    }
+
+    private void ApplyBackendHeroes(MythwakeHeroStateDto[] heroes, MythwakeHeroShardStateDto[] shards)
+    {
+        EnsureHeroLevels();
+        EnsureHeroShards();
+        EnsureHeroAscensions();
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            heroLevels[i] = 1;
+            heroShards[i] = 0;
+            heroAscensions[i] = 0;
+        }
+
+        if (heroes != null)
+        {
+            for (var i = 0; i < heroes.Length; i++)
+            {
+                if (!TryGetHeroIndexById(heroes[i].heroId, out var heroIndex))
+                {
+                    continue;
+                }
+
+                heroLevels[heroIndex] = Mathf.Max(1, heroes[i].level);
+                heroAscensions[heroIndex] = Mathf.Max(0, heroes[i].ascension);
+            }
+        }
+
+        if (shards != null)
+        {
+            for (var i = 0; i < shards.Length; i++)
+            {
+                if (TryGetHeroIndexById(shards[i].heroId, out var heroIndex))
+                {
+                    heroShards[heroIndex] = Mathf.Max(0, shards[i].shards);
+                }
+            }
+        }
+    }
+
+    private void ApplyBackendEquipment(MythwakeEquipmentStateDto[] equipment)
+    {
+        weaponLevel = StarterEquipmentLevel;
+        armorLevel = StarterEquipmentLevel;
+
+        if (equipment == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < equipment.Length; i++)
+        {
+            if (equipment[i].equipmentId == WeaponTrack.equipmentId)
+            {
+                weaponLevel = Mathf.Max(StarterEquipmentLevel, equipment[i].level);
+            }
+            else if (equipment[i].equipmentId == ArmorTrack.equipmentId)
+            {
+                armorLevel = Mathf.Max(StarterEquipmentLevel, equipment[i].level);
+            }
+        }
+    }
+
+    private void ApplyBackendAccessories(MythwakeAccessoryStateDto[] accessories, MythwakeEquippedAccessoryDto[] equipped)
+    {
+        EnsureAccessories();
+
+        for (var i = 0; i < accessoryInventory.Length; i++)
+        {
+            accessoryInventory[i] = 0;
+        }
+
+        for (var slot = 0; slot < AccessorySlotCount; slot++)
+        {
+            equippedAccessoryRarities[slot] = -1;
+            equippedAccessoryLevels[slot] = 0;
+        }
+
+        if (accessories != null)
+        {
+            for (var i = 0; i < accessories.Length; i++)
+            {
+                if (!TryGetAccessoryDefinitionById(accessories[i].accessoryId, out var definition))
+                {
+                    continue;
+                }
+
+                accessoryInventory[GetAccessoryInventoryIndex(definition.slotIndex, definition.rarityIndex)] = Mathf.Max(0, accessories[i].copies);
+            }
+        }
+
+        if (equipped == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < equipped.Length; i++)
+        {
+            if (!TryGetAccessoryDefinitionById(equipped[i].accessoryId, out var definition))
+            {
+                continue;
+            }
+
+            equippedAccessoryRarities[definition.slotIndex] = definition.rarityIndex;
+            equippedAccessoryLevels[definition.slotIndex] = Mathf.Clamp(GetBackendAccessoryLevel(accessories, equipped[i].accessoryId), 1, GetAccessoryMaxLevel(definition.rarityIndex));
+        }
+    }
+
+    private void ApplyBackendClaims(MythwakeClaimStateDto[] dailyClaims, MythwakeClaimStateDto[] battlePassClaims)
+    {
+        EnsureDailyMissionClaims();
+        EnsureBattlePassRewardClaims();
+
+        for (var i = 0; i < dailyMissionClaimed.Length; i++)
+        {
+            dailyMissionClaimed[i] = GetClaimed(dailyClaims, GetDailyMissionDefinition(i).missionId);
+        }
+
+        for (var i = 0; i < battlePassRewardsClaimed.Length; i++)
+        {
+            battlePassRewardsClaimed[i] = GetClaimed(battlePassClaims, GetBattlePassRewardDefinition(i).rewardId);
+        }
+    }
+
+    private static int GetBackendAccessoryLevel(MythwakeAccessoryStateDto[] accessories, string accessoryId)
+    {
+        if (accessories == null)
+        {
+            return 1;
+        }
+
+        for (var i = 0; i < accessories.Length; i++)
+        {
+            if (accessories[i].accessoryId == accessoryId)
+            {
+                return Mathf.Max(1, accessories[i].level);
+            }
+        }
+
+        return 1;
+    }
+
+    private static bool GetClaimed(MythwakeClaimStateDto[] claims, string claimId)
+    {
+        if (claims == null)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < claims.Length; i++)
+        {
+            if (claims[i].claimId == claimId)
+            {
+                return claims[i].claimed;
+            }
+        }
+
+        return false;
     }
 
     private void OnApplicationPause(bool isPaused)
@@ -2298,6 +2617,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshSummonUi();
         RefreshDailyMissionUi();
         RefreshBattlePassUi();
+        RefreshBackendUi();
 
         if (upgradeCostText != null)
         {
@@ -3386,6 +3706,164 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         };
     }
 
+    public MythwakePlayerSnapshotDto GetPlayerSnapshot()
+    {
+        NormalizeLoadedState();
+        return new MythwakePlayerSnapshotDto
+        {
+            playerId = "local-player",
+            state = GetPlayerState(),
+            heroes = CreateHeroSnapshot(),
+            heroShards = CreateHeroShardSnapshot(),
+            equipment = CreateEquipmentSnapshot(),
+            accessories = CreateAccessorySnapshot(),
+            equippedAccessories = CreateEquippedAccessorySnapshot(),
+            dailyClaims = CreateDailyClaimSnapshot(),
+            battlePassClaims = CreateBattlePassClaimSnapshot(),
+            summonCount = summonCount
+        };
+    }
+
+    private MythwakeHeroStateDto[] CreateHeroSnapshot()
+    {
+        EnsureHeroLevels();
+        EnsureHeroAscensions();
+        var snapshot = new MythwakeHeroStateDto[HeroCount];
+        for (var i = 0; i < snapshot.Length; i++)
+        {
+            snapshot[i] = new MythwakeHeroStateDto
+            {
+                heroId = GetHeroDefinition(i).heroId,
+                level = heroLevels[i],
+                ascension = heroAscensions[i]
+            };
+        }
+
+        return snapshot;
+    }
+
+    private MythwakeHeroShardStateDto[] CreateHeroShardSnapshot()
+    {
+        EnsureHeroShards();
+        var snapshot = new MythwakeHeroShardStateDto[HeroCount];
+        for (var i = 0; i < snapshot.Length; i++)
+        {
+            snapshot[i] = new MythwakeHeroShardStateDto
+            {
+                heroId = GetHeroDefinition(i).heroId,
+                shards = heroShards[i]
+            };
+        }
+
+        return snapshot;
+    }
+
+    private MythwakeEquipmentStateDto[] CreateEquipmentSnapshot()
+    {
+        return new[]
+        {
+            new MythwakeEquipmentStateDto { equipmentId = WeaponTrack.equipmentId, level = weaponLevel },
+            new MythwakeEquipmentStateDto { equipmentId = ArmorTrack.equipmentId, level = armorLevel }
+        };
+    }
+
+    private MythwakeAccessoryStateDto[] CreateAccessorySnapshot()
+    {
+        EnsureAccessories();
+        var snapshot = new MythwakeAccessoryStateDto[AccessorySlotCount * AccessoryRarityCount];
+
+        for (var slot = 0; slot < AccessorySlotCount; slot++)
+        {
+            for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
+            {
+                var definition = GetAccessoryDefinition(slot, rarity);
+                snapshot[GetAccessoryDefinitionIndex(slot, rarity)] = new MythwakeAccessoryStateDto
+                {
+                    accessoryId = definition.accessoryId,
+                    copies = GetAccessoryInventoryCount(slot, rarity),
+                    level = GetAccessorySnapshotLevel(slot, rarity)
+                };
+            }
+        }
+
+        return snapshot;
+    }
+
+    private MythwakeEquippedAccessoryDto[] CreateEquippedAccessorySnapshot()
+    {
+        EnsureAccessories();
+        var equippedCount = 0;
+        for (var slot = 0; slot < AccessorySlotCount; slot++)
+        {
+            if (equippedAccessoryRarities[slot] >= 0)
+            {
+                equippedCount++;
+            }
+        }
+
+        var snapshot = new MythwakeEquippedAccessoryDto[equippedCount];
+        var index = 0;
+        for (var slot = 0; slot < AccessorySlotCount; slot++)
+        {
+            var rarity = equippedAccessoryRarities[slot];
+            if (rarity < 0)
+            {
+                continue;
+            }
+
+            snapshot[index] = new MythwakeEquippedAccessoryDto
+            {
+                slotId = AccessorySlots[slot].itemSlotId,
+                accessoryId = GetAccessoryDefinition(slot, rarity).accessoryId
+            };
+            index++;
+        }
+
+        return snapshot;
+    }
+
+    private MythwakeClaimStateDto[] CreateDailyClaimSnapshot()
+    {
+        EnsureDailyMissionClaims();
+        var snapshot = new MythwakeClaimStateDto[DailyMissionCount];
+        for (var i = 0; i < snapshot.Length; i++)
+        {
+            snapshot[i] = new MythwakeClaimStateDto
+            {
+                claimId = GetDailyMissionDefinition(i).missionId,
+                claimed = dailyMissionClaimed[i]
+            };
+        }
+
+        return snapshot;
+    }
+
+    private MythwakeClaimStateDto[] CreateBattlePassClaimSnapshot()
+    {
+        EnsureBattlePassRewardClaims();
+        var snapshot = new MythwakeClaimStateDto[BattlePassRewardCount];
+        for (var i = 0; i < snapshot.Length; i++)
+        {
+            snapshot[i] = new MythwakeClaimStateDto
+            {
+                claimId = GetBattlePassRewardDefinition(i).rewardId,
+                claimed = battlePassRewardsClaimed[i]
+            };
+        }
+
+        return snapshot;
+    }
+
+    private int GetAccessorySnapshotLevel(int slot, int rarity)
+    {
+        if (equippedAccessoryRarities[slot] != rarity)
+        {
+            return 0;
+        }
+
+        return Mathf.Max(1, equippedAccessoryLevels[slot]);
+    }
+
     private MythwakeActionResultDto CreateActionResult(bool success, string actionId, string errorCode, string message)
     {
         return CreateActionResult(success, actionId, errorCode, message, new MythwakeRewardDto());
@@ -3400,6 +3878,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             errorCode = errorCode,
             message = message,
             playerState = GetPlayerState(),
+            playerSnapshot = GetPlayerSnapshot(),
             reward = reward
         };
     }
@@ -3937,6 +4416,48 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return $"Prototype v{PrototypeVersion}  Save v{saveVersion}";
     }
 
+    private void EnsureRuntimeBackendClient()
+    {
+        if (backendClient != null)
+        {
+            return;
+        }
+
+        backendClient = GetComponent<MythwakeBackendClient>();
+        if (backendClient == null)
+        {
+            backendClient = gameObject.AddComponent<MythwakeBackendClient>();
+        }
+    }
+
+    private void EnsureRuntimeBackendUi()
+    {
+        if (shopPanel == null || backendStatusText != null)
+        {
+            return;
+        }
+
+        var panelObject = new GameObject("Backend Sync Panel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        panelObject.transform.SetParent(shopPanel.transform, false);
+        SetRuntimeRect(panelObject.GetComponent<RectTransform>(), new Vector2(0, -1215), new Vector2(860, 190), new Vector2(0.5f, 1f));
+
+        var panelImage = panelObject.GetComponent<Image>();
+        panelImage.color = new Color(0.1f, 0.13f, 0.2f, 0.96f);
+
+        var header = CreateRuntimeText(panelObject.transform, "Backend Header", "Backend", 30, new Vector2(0, -32), new Vector2(790, 42));
+        header.fontStyle = FontStyles.Bold;
+
+        backendStatusText = CreateRuntimeText(panelObject.transform, "Backend Status Text", backendStatus, 22, new Vector2(0, -78), new Vector2(790, 54));
+        backendStatusText.color = new Color(0.72f, 0.86f, 1f);
+        backendStatusText.enableAutoSizing = true;
+        backendStatusText.fontSizeMin = 16;
+        backendStatusText.fontSizeMax = 22;
+
+        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -270, -140, 240, 54);
+        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", 0, -140, 240, 54);
+        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "Sync", 270, -140, 240, 54);
+    }
+
     private void EnsureRuntimeDebugUi()
     {
         if (battlePanel == null || debugGoldButton != null)
@@ -3979,6 +4500,87 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         text.color = Color.white;
         text.textWrappingMode = TextWrappingModes.Normal;
         StretchRuntime(text.rectTransform, new Vector2(18, 10));
+
+        return button;
+    }
+
+    private void RefreshBackendUi()
+    {
+        if (backendStatusText != null)
+        {
+            backendStatusText.text = backendStatus;
+        }
+
+        SetBackendButtonsInteractable(!backendRequestInProgress);
+    }
+
+    private void SetBackendStatus(string status)
+    {
+        backendStatus = string.IsNullOrWhiteSpace(status) ? "Backend: no status" : status;
+        if (backendStatusText != null)
+        {
+            backendStatusText.text = backendStatus;
+        }
+    }
+
+    private void SetBackendButtonsInteractable(bool interactable)
+    {
+        if (backendHealthButton != null)
+        {
+            backendHealthButton.interactable = interactable;
+        }
+
+        if (backendLoginButton != null)
+        {
+            backendLoginButton.interactable = interactable;
+        }
+
+        if (backendSyncButton != null)
+        {
+            backendSyncButton.interactable = interactable;
+        }
+    }
+
+    private static TMP_Text CreateRuntimeText(Transform parent, string name, string value, int size, Vector2 anchoredPosition, Vector2 rectSize)
+    {
+        var textObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(parent, false);
+        SetRuntimeRect(textObject.GetComponent<RectTransform>(), anchoredPosition, rectSize, new Vector2(0.5f, 1f));
+
+        var text = textObject.GetComponent<TextMeshProUGUI>();
+        text.text = value;
+        text.fontSize = size;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+        text.textWrappingMode = TextWrappingModes.Normal;
+        return text;
+    }
+
+    private static Button CreateRuntimeButton(Transform parent, string name, string label, float xPosition, float yPosition, float width, float height)
+    {
+        var buttonObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        buttonObject.transform.SetParent(parent, false);
+        SetRuntimeRect(buttonObject.GetComponent<RectTransform>(), new Vector2(xPosition, yPosition), new Vector2(width, height), new Vector2(0.5f, 1f));
+
+        var image = buttonObject.GetComponent<Image>();
+        image.color = new Color(0.17f, 0.39f, 0.72f, 0.98f);
+
+        var button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = image;
+
+        var textObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(buttonObject.transform, false);
+        var text = textObject.GetComponent<TextMeshProUGUI>();
+        text.text = label;
+        text.fontSize = 22;
+        text.fontSizeMin = 14;
+        text.fontSizeMax = 22;
+        text.enableAutoSizing = true;
+        text.fontStyle = FontStyles.Bold;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+        text.textWrappingMode = TextWrappingModes.Normal;
+        StretchRuntime(text.rectTransform, new Vector2(16, 8));
 
         return button;
     }

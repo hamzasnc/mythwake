@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.9
+Prototype version: 0.2.10
 Local save version: 2
 
 Current prototype:
@@ -14,6 +14,8 @@ Current prototype:
 - Legacy PlayerPrefs scalar keys are migrated into the JSON save on load
 - Currency spend/grant actions now go through local economy boundary methods for backend migration
 - Shared service contracts now define player state, reward, action result, economy, battle, summon, and inventory boundaries
+- Unity has a backend client component for health, guest auth, player snapshot sync, and server action endpoints
+- Shop tab creates a small runtime Backend panel for Ping, Login, and Sync smoke tests
 - Campaign fights, dungeon runs, and summons now return local action-result DTOs
 - Accessory equip, level, and fuse actions now return local action-result DTOs
 - Hero leveling, hero ascension, equipment leveling, daily claims, and mission track claims now return local action-result DTOs
@@ -74,12 +76,14 @@ Backend:
 - Claim and summon debug views are available for Navicat
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Guest auth and action responses include the full player snapshot for direct client UI updates
+- Android emulator builds use `http://10.0.2.2:8080` as the default backend URL, while Editor/Desktop use `http://localhost:8080`
 - Redis is planned but not connected yet
 - Windows helper scripts:
   - `scripts/start-backend.cmd`
   - `scripts/check-backend.cmd`
 
 Changelog:
+- 0.2.10: Added Unity backend HTTP client, full local player snapshots, and an ingame Backend panel for Ping/Login/Sync smoke tests.
 - Backend 0.2.9: Added full player snapshots to guest auth and action responses.
 - Backend 0.2.8: Expanded `/player/state` into a client-ready player snapshot response.
 - Backend 0.2.7: Added PostgreSQL starter equipment training persistence and equipment debug views.
