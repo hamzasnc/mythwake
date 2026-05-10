@@ -323,9 +323,9 @@ Current backend state:
 - Added the same full player snapshot to guest auth and action responses so the client can refresh UI from a single response.
 - Unity can now ping the backend, guest-login, and apply `/player/state` snapshots through the ingame Backend panel.
 - Unity Server Mode can now execute manual gameplay actions through the backend and refresh from the returned `playerSnapshot`.
-- Added an in-memory write-behind state cache in front of PostgreSQL.
-- Server gameplay actions now update hot server state first and queue the latest dirty player state for batched DB flush.
-- The cache flushes on interval and during graceful API shutdown.
+- Added a durable state cache wrapper in front of PostgreSQL.
+- Server gameplay actions now update hot server state first and write PostgreSQL synchronously by default before returning success.
+- Optional write-behind mode exists for local/dev-only batching experiments and flushes on interval plus graceful shutdown.
 - Added `POST /player/state/flush` as a future app-pause/disconnect hook.
 - Redis is not connected yet.
 
@@ -427,8 +427,9 @@ Avoid Redis for:
 - Anything that must survive cache loss
 
 Current cache stance:
-- The current Go write-behind cache is an in-process MVP for one API instance.
-- It is good for local development and early server-authoritative flow testing.
+- The current Go cache wrapper is an in-process MVP for one API instance.
+- Default mode is `write_through`: critical economy actions are durable in PostgreSQL before success is returned.
+- Optional `write_behind` mode is not safe for production economy state because hard process crashes can lose unflushed state.
 - Redis later should handle cross-process sessions, locks, rate limits, and short-lived coordination.
 - PostgreSQL remains the durable source of truth for player economy and inventory.
 
@@ -519,7 +520,7 @@ Progress:
 - Added `player.player_accessory_inventory`, `player.player_equipped_accessories`, and `debug.v_player_accessory_overview`.
 - Added `player.player_equipment_training` and `debug.v_player_equipment_overview`.
 - Added `player.player_summon_state`, `player.player_daily_mission_claims`, `player.player_battle_pass_claims`, `logs.summon_history`, `debug.v_player_claim_overview`, and `debug.v_player_summon_overview`.
-- Added write-behind state cache with interval flush and graceful shutdown flush.
+- Added state cache wrapper with write-through default, optional write-behind interval flush, and graceful shutdown flush.
 - Added a manual player state flush endpoint for client disconnect/app-pause flows.
 
 Next useful step:

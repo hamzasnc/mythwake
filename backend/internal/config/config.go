@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+const (
+	StateWriteModeWriteThrough = "write_through"
+	StateWriteModeWriteBehind  = "write_behind"
+)
+
 type Config struct {
 	ServiceName        string
 	Addr               string
@@ -13,6 +18,7 @@ type Config struct {
 	DatabaseURL        string
 	DatabaseStatus     string
 	StateCacheStatus   string
+	StateWriteMode     string
 	StateFlushInterval time.Duration
 	StateFlushTimeout  time.Duration
 }
@@ -26,6 +32,7 @@ func Load() Config {
 		DatabaseURL:        os.Getenv("MYTHWAKE_DATABASE_URL"),
 		DatabaseStatus:     "disabled",
 		StateCacheStatus:   "disabled",
+		StateWriteMode:     getStateWriteMode(),
 		StateFlushInterval: getDurationEnv("MYTHWAKE_STATE_FLUSH_INTERVAL", 30*time.Second),
 		StateFlushTimeout:  getDurationEnv("MYTHWAKE_STATE_FLUSH_TIMEOUT", 5*time.Second),
 	}
@@ -52,4 +59,13 @@ func getDurationEnv(key string, fallback time.Duration) time.Duration {
 	}
 
 	return duration
+}
+
+func getStateWriteMode() string {
+	value := getEnv("MYTHWAKE_STATE_WRITE_MODE", StateWriteModeWriteThrough)
+	if value == StateWriteModeWriteBehind {
+		return value
+	}
+
+	return StateWriteModeWriteThrough
 }

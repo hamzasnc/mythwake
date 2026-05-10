@@ -17,6 +17,7 @@ const seedActionID = "player_state_seed"
 type Config struct {
 	FlushInterval time.Duration
 	FlushTimeout  time.Duration
+	WriteBehind   bool
 }
 
 type Stats struct {
@@ -89,6 +90,9 @@ func (store *WriteBehindStateStore) SaveState(ctx context.Context, playerID stri
 
 	state = player.ClonePersistentState(state)
 	if source.ActionID == seedActionID {
+		return store.base.SaveState(ctx, playerID, state, source)
+	}
+	if !store.config.WriteBehind {
 		return store.base.SaveState(ctx, playerID, state, source)
 	}
 

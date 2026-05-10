@@ -55,6 +55,7 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 		"status":               "ok",
 		"database":             router.config.DatabaseStatus,
 		"state_cache":          router.config.StateCacheStatus,
+		"state_write_mode":     router.config.StateWriteMode,
 		"state_flush_interval": router.config.StateFlushInterval.String(),
 		"environment":          router.config.Environment,
 		"version":              router.config.Version,

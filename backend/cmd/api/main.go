@@ -42,6 +42,7 @@ func main() {
 			cache.Config{
 				FlushInterval: cfg.StateFlushInterval,
 				FlushTimeout:  cfg.StateFlushTimeout,
+				WriteBehind:   cfg.StateWriteMode == config.StateWriteModeWriteBehind,
 			},
 			logger,
 		)
@@ -51,7 +52,7 @@ func main() {
 		}
 		cancel()
 		cfg.DatabaseStatus = "connected"
-		cfg.StateCacheStatus = "write_behind"
+		cfg.StateCacheStatus = cfg.StateWriteMode
 	}
 
 	server := &http.Server{

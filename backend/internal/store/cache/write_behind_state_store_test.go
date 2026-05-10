@@ -12,7 +12,7 @@ import (
 
 func TestWriteBehindStateStoreFlushesLatestStateOnly(t *testing.T) {
 	base := &fakeStateStore{}
-	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second}, nil)
+	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
 	defer closeStore(t, store)
 
 	if err := store.SaveState(context.Background(), "player-1", testState(2), player.StateSaveSource{ActionID: "campaign_fight"}); err != nil {
@@ -49,7 +49,7 @@ func TestWriteBehindStateStoreFlushesLatestStateOnly(t *testing.T) {
 
 func TestWriteBehindStateStoreWritesSeedImmediately(t *testing.T) {
 	base := &fakeStateStore{}
-	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second}, nil)
+	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
 	defer closeStore(t, store)
 
 	if err := store.SaveState(context.Background(), "player-1", testState(1), player.StateSaveSource{ActionID: seedActionID}); err != nil {
@@ -66,7 +66,7 @@ func TestWriteBehindStateStoreWritesSeedImmediately(t *testing.T) {
 
 func TestWriteBehindStateStoreKeepsDirtyStateAfterFlushFailure(t *testing.T) {
 	base := &fakeStateStore{saveError: errors.New("database unavailable")}
-	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second}, nil)
+	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
 	defer closeStore(t, store)
 
 	if err := store.SaveState(context.Background(), "player-1", testState(4), player.StateSaveSource{ActionID: "campaign_fight"}); err != nil {
@@ -88,6 +88,26 @@ func TestWriteBehindStateStoreKeepsDirtyStateAfterFlushFailure(t *testing.T) {
 
 	if stats := store.Stats(); stats.DirtyPlayers != 0 || stats.FlushedSaves != 1 {
 		t.Fatalf("expected retry to clear dirty state, got %#v", stats)
+	}
+}
+
+func TestWriteBehindStateStoreDefaultsToWriteThroughDurability(t *testing.T) {
+	base := &fakeStateStore{}
+	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second}, nil)
+	defer closeStore(t, store)
+
+	if err := store.SaveState(context.Background(), "player-1", testState(5), player.StateSaveSource{ActionID: "summon_pull"}); err != nil {
+		t.Fatalf("save state: %v", err)
+	}
+
+	if base.saveCount != 1 {
+		t.Fatalf("expected immediate write-through save, got %d", base.saveCount)
+	}
+	if base.saved.PlayerState.CampaignStage != 5 {
+		t.Fatalf("expected campaign stage 5, got %d", base.saved.PlayerState.CampaignStage)
+	}
+	if stats := store.Stats(); stats.DirtyPlayers != 0 || stats.QueuedSaves != 0 {
+		t.Fatalf("expected no dirty write-behind state, got %#v", stats)
 	}
 }
 

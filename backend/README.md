@@ -35,8 +35,9 @@ Current scope:
 - Navicat-friendly meta views:
   - `debug.v_player_claim_overview`
   - `debug.v_player_summon_overview`
-- In-memory write-behind state cache in front of PostgreSQL
-- Batched player state flushes with shutdown flush
+- Durable state cache wrapper in front of PostgreSQL
+- Write-through player saves by default so successful economy actions are durable before the API responds
+- Optional write-behind mode for local/dev-only batching experiments
 - `GET /player/state` returns a full client-ready snapshot.
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
 - `GET /player/core-state` returns the compact numeric state only.
@@ -96,19 +97,22 @@ Optional environment variables:
 - `MYTHWAKE_ENV`
 - `MYTHWAKE_API_VERSION`
 - `MYTHWAKE_DATABASE_URL`
+- `MYTHWAKE_STATE_WRITE_MODE`, default `write_through`, optional `write_behind`
 - `MYTHWAKE_STATE_FLUSH_INTERVAL` such as `30s`, `2m`, or `5m`
 - `MYTHWAKE_STATE_FLUSH_TIMEOUT` such as `5s`
 
 Database behavior:
 - If `MYTHWAKE_DATABASE_URL` is empty, the API uses the current in-memory dev state.
 - If `MYTHWAKE_DATABASE_URL` is set, startup connects to PostgreSQL, runs embedded migrations, and stores the dev player state in normalized progression tables.
-- Gameplay actions update the hot server state first, then queue the latest player state in a write-behind cache.
-- The cache flushes dirty player state to PostgreSQL every `MYTHWAKE_STATE_FLUSH_INTERVAL`, and once more during graceful shutdown.
+- By default, gameplay actions update hot server state and synchronously write PostgreSQL before returning success.
+- This default protects critical economy state from hard process crashes after a successful API response.
+- Optional `MYTHWAKE_STATE_WRITE_MODE=write_behind` queues dirty player state and flushes every `MYTHWAKE_STATE_FLUSH_INTERVAL`; use it only for local/dev or non-critical experiments.
+- Write-behind mode also flushes once more during graceful shutdown.
 - `POST /player/state/flush` exists as the future app-pause/disconnect hook.
 - New player seed state still writes immediately so first login/startup is durable.
 - The JSON player state snapshot is still written as a fallback/debug mirror.
-- Currency changes are written to `logs.economy_transactions` during DB flush; batched writes can aggregate several gameplay actions into one economy delta row.
-- `GET /health` reports `database`, `state_cache`, and `state_flush_interval`.
+- Currency changes are written to `logs.economy_transactions` during DB save.
+- `GET /health` reports `database`, `state_cache`, `state_write_mode`, and `state_flush_interval`.
 
 Endpoints:
 - `POST /auth/guest`
