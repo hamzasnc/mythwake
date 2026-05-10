@@ -68,7 +68,7 @@ function Start-PostgresServiceIfNeeded {
 $goExe = Find-Go
 $env:MYTHWAKE_API_ADDR = $ApiAddr
 $env:MYTHWAKE_ENV = "local"
-$env:MYTHWAKE_API_VERSION = "0.2.7"
+$env:MYTHWAKE_API_VERSION = "0.2.8"
 
 if ($NoDatabase) {
     Remove-Item Env:\MYTHWAKE_DATABASE_URL -ErrorAction SilentlyContinue

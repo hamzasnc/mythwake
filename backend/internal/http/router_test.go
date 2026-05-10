@@ -67,6 +67,27 @@ func TestCampaignFightEndpoint(t *testing.T) {
 	}
 }
 
+func TestPlayerStateEndpointReturnsSnapshot(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/player/state", nil)
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+
+	var body api.PlayerSnapshot
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+
+	if body.PlayerID == "" || len(body.Heroes) == 0 || len(body.Equipment) == 0 {
+		t.Fatalf("expected rich player snapshot, got %#v", body)
+	}
+}
+
 func TestAccessoryBodyValidation(t *testing.T) {
 	handler := newTestHandler()
 	response := httptest.NewRecorder()

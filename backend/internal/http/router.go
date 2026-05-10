@@ -34,6 +34,7 @@ func (router *Router) routes() {
 	router.mux.HandleFunc("POST /auth/guest", router.handleGuestAuth)
 	router.mux.HandleFunc("GET /health", router.handleHealth)
 	router.mux.HandleFunc("GET /player/state", router.handlePlayerState)
+	router.mux.HandleFunc("GET /player/core-state", router.handlePlayerCoreState)
 	router.mux.HandleFunc("POST /campaign/fight", router.handleCampaignFight)
 	router.mux.HandleFunc("POST /dungeons/{dungeon_id}/run", router.handleDungeonRun)
 	router.mux.HandleFunc("POST /heroes/{hero_id}/level-up", router.handleHeroLevel)
@@ -59,6 +60,10 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 }
 
 func (router *Router) handlePlayerState(response http.ResponseWriter, request *http.Request) {
+	writeJSON(response, http.StatusOK, router.playerService.GetSnapshot())
+}
+
+func (router *Router) handlePlayerCoreState(response http.ResponseWriter, request *http.Request) {
 	writeJSON(response, http.StatusOK, router.playerService.GetState())
 }
 

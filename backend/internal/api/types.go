@@ -15,6 +15,51 @@ type PlayerState struct {
 	TeamHealth          int `json:"teamHealth"`
 }
 
+type PlayerSnapshot struct {
+	PlayerID          string              `json:"playerId"`
+	State             PlayerState         `json:"state"`
+	Heroes            []HeroState         `json:"heroes"`
+	HeroShards        []HeroShardState    `json:"heroShards"`
+	Equipment         []EquipmentState    `json:"equipment"`
+	Accessories       []AccessoryState    `json:"accessories"`
+	EquippedAccessory []EquippedAccessory `json:"equippedAccessories"`
+	DailyClaims       []ClaimState        `json:"dailyClaims"`
+	BattlePassClaims  []ClaimState        `json:"battlePassClaims"`
+	SummonCount       int                 `json:"summonCount"`
+}
+
+type HeroState struct {
+	HeroID    string `json:"heroId"`
+	Level     int    `json:"level"`
+	Ascension int    `json:"ascension"`
+}
+
+type HeroShardState struct {
+	HeroID string `json:"heroId"`
+	Shards int    `json:"shards"`
+}
+
+type EquipmentState struct {
+	EquipmentID string `json:"equipmentId"`
+	Level       int    `json:"level"`
+}
+
+type AccessoryState struct {
+	AccessoryID string `json:"accessoryId"`
+	Copies      int    `json:"copies"`
+	Level       int    `json:"level"`
+}
+
+type EquippedAccessory struct {
+	SlotID      string `json:"slotId"`
+	AccessoryID string `json:"accessoryId"`
+}
+
+type ClaimState struct {
+	ClaimID string `json:"claimId"`
+	Claimed bool   `json:"claimed"`
+}
+
 type Reward struct {
 	RewardID    string `json:"rewardId"`
 	Gold        int    `json:"gold"`

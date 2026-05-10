@@ -305,6 +305,7 @@ Current backend state:
 - Fixed accessory fusion to produce the next real rarity ID instead of a placeholder `_fused` ID.
 - Added persistent starter equipment training and a debug equipment overview view.
 - Added persistent summon count, daily mission claims, Battle Pass claims, summon history, and debug claim/summon views.
+- Expanded `GET /player/state` into a client-ready player snapshot containing core state, heroes, equipment, accessories, claims, and summon count.
 - Redis is not connected yet.
 
 Recommended Go shape:

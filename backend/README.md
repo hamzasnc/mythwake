@@ -35,6 +35,8 @@ Current scope:
 - Navicat-friendly meta views:
   - `debug.v_player_claim_overview`
   - `debug.v_player_summon_overview`
+- `GET /player/state` returns a full client-ready snapshot.
+- `GET /player/core-state` returns the compact numeric state only.
 - Graceful shutdown
 
 Not included yet:
@@ -95,6 +97,7 @@ Endpoints:
 - `POST /auth/guest`
 - `GET /health`
 - `GET /player/state`
+- `GET /player/core-state`
 - `POST /campaign/fight`
 - `POST /dungeons/{dungeon_id}/run`
 - `POST /heroes/{hero_id}/level-up`

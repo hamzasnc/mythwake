@@ -72,12 +72,14 @@ Backend:
 - Starter Weapon and Armor training levels persist in PostgreSQL and affect team power
 - Summon count, daily mission claims, and Battle Pass claims persist in PostgreSQL
 - Claim and summon debug views are available for Navicat
+- `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Redis is planned but not connected yet
 - Windows helper scripts:
   - `scripts/start-backend.cmd`
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.8: Expanded `/player/state` into a client-ready player snapshot response.
 - Backend 0.2.7: Added PostgreSQL starter equipment training persistence and equipment debug views.
 - Backend 0.2.6: Added PostgreSQL persistence for summon count, daily claims, Battle Pass claims, and claim/summon debug views.
 - Backend 0.2.5: Added PostgreSQL accessory inventory/equipment persistence and fixed accessory fusion target IDs.
