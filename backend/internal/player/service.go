@@ -15,6 +15,8 @@ const (
 	essenceDungeonID = "essence_dungeon"
 	gearDungeonID    = "gear_dungeon"
 	heroBannerID     = "hero_shard_standard"
+	weaponID         = "equipment_weapon"
+	armorID          = "equipment_armor"
 )
 
 type StateStore interface {
@@ -27,6 +29,7 @@ type PersistentState struct {
 	HeroLevels         map[string]int
 	HeroShards         map[string]int
 	HeroAscensions     map[string]int
+	EquipmentLevels    map[string]int
 	AccessoryInventory map[string]int
 	AccessoryLevels    map[string]int
 	EquippedAccessory  map[string]string
@@ -48,6 +51,7 @@ type Service struct {
 	heroLevels         map[string]int
 	heroShards         map[string]int
 	heroAscensions     map[string]int
+	equipmentLevels    map[string]int
 	accessoryInventory map[string]int
 	accessoryLevels    map[string]int
 	equippedAccessory  map[string]string
@@ -84,6 +88,7 @@ func NewService() *Service {
 			"hero_astra": 0,
 		},
 		heroAscensions:     map[string]int{},
+		equipmentLevels:    map[string]int{weaponID: 0, armorID: 0},
 		accessoryInventory: map[string]int{},
 		accessoryLevels:    map[string]int{},
 		equippedAccessory:  map[string]string{},
@@ -210,23 +215,28 @@ func (service *Service) LevelEquipment(equipmentID string) api.ActionResult {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	var cost int
-	switch equipmentID {
-	case "equipment_weapon":
-		cost = 80
-	case "equipment_armor":
-		cost = 75
-	default:
+	level, ok := service.equipmentLevels[equipmentID]
+	if !ok {
 		return service.result(false, "equipment_level", "invalid_equipment", fmt.Sprintf("Unknown equipment: %s", equipmentID), api.Reward{})
 	}
 
+	var baseCost int
+	switch equipmentID {
+	case weaponID:
+		baseCost = 80
+	case armorID:
+		baseCost = 75
+	}
+
+	cost := baseCost + (level * 35)
 	if service.state.Gold < cost {
 		return service.result(false, "equipment_level", "insufficient_currency", fmt.Sprintf("Need %d Gold.", cost), api.Reward{})
 	}
 
 	service.state.Gold -= cost
+	service.equipmentLevels[equipmentID] = level + 1
 	service.recalculatePower()
-	return service.result(true, "equipment_level", "", fmt.Sprintf("%s leveled.", equipmentID), api.Reward{})
+	return service.result(true, "equipment_level", "", fmt.Sprintf("%s reached Lv. %d.", equipmentID, level+1), api.Reward{})
 }
 
 func (service *Service) EquipAccessory(accessoryID string) api.ActionResult {
@@ -417,6 +427,7 @@ func (service *Service) persistentState() PersistentState {
 		HeroLevels:         cloneIntMap(service.heroLevels),
 		HeroShards:         cloneIntMap(service.heroShards),
 		HeroAscensions:     cloneIntMap(service.heroAscensions),
+		EquipmentLevels:    cloneIntMap(service.equipmentLevels),
 		AccessoryInventory: cloneIntMap(service.accessoryInventory),
 		AccessoryLevels:    cloneIntMap(service.accessoryLevels),
 		EquippedAccessory:  cloneStringMap(service.equippedAccessory),
@@ -431,6 +442,7 @@ func (service *Service) applyPersistentState(state PersistentState) {
 	service.heroLevels = mergeIntMaps(service.heroLevels, state.HeroLevels)
 	service.heroShards = mergeIntMaps(service.heroShards, state.HeroShards)
 	service.heroAscensions = mergeIntMaps(service.heroAscensions, state.HeroAscensions)
+	service.equipmentLevels = mergeIntMaps(service.equipmentLevels, state.EquipmentLevels)
 	service.accessoryInventory = mergeIntMaps(service.accessoryInventory, state.AccessoryInventory)
 	service.accessoryLevels = mergeIntMaps(service.accessoryLevels, state.AccessoryLevels)
 	service.equippedAccessory = mergeStringMaps(service.equippedAccessory, state.EquippedAccessory)
@@ -496,9 +508,11 @@ func (service *Service) recalculatePower() {
 	for _, ascension := range service.heroAscensions {
 		power += ascension * 45
 	}
+	power += service.equipmentLevels[weaponID] * 18
+	power += service.equipmentLevels[armorID] * 16
 	service.state.TeamPower = power
-	service.state.TeamAttack = 96 + (power / 8)
-	service.state.TeamHealth = 780 + (power * 2)
+	service.state.TeamAttack = 96 + (power / 8) + (service.equipmentLevels[weaponID] * 7)
+	service.state.TeamHealth = 780 + (power * 2) + (service.equipmentLevels[armorID] * 65)
 }
 
 func (service *Service) accessoryIsEquipped(accessoryID string) bool {

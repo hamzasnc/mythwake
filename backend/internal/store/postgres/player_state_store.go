@@ -58,6 +58,9 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	if err := store.saveHeroState(ctx, tx, playerID, state); err != nil {
 		return err
 	}
+	if err := store.saveEquipmentState(ctx, tx, playerID, state); err != nil {
+		return err
+	}
 	if err := store.saveAccessoryState(ctx, tx, playerID, state); err != nil {
 		return err
 	}
@@ -149,6 +152,10 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
+	equipmentLevels, err := store.loadEquipmentLevels(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
 	accessoryInventory, accessoryLevels, err := store.loadAccessoryInventory(ctx, playerID)
 	if err != nil {
 		return player.PersistentState{}, false, err
@@ -175,6 +182,7 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 		HeroLevels:         heroLevels,
 		HeroShards:         heroShards,
 		HeroAscensions:     heroAscensions,
+		EquipmentLevels:    equipmentLevels,
 		AccessoryInventory: accessoryInventory,
 		AccessoryLevels:    accessoryLevels,
 		EquippedAccessory:  equippedAccessory,
@@ -357,6 +365,22 @@ func (store *PlayerStateStore) saveAccessoryState(ctx context.Context, tx *sql.T
 			INSERT INTO player.player_equipped_accessories (player_id, slot_id, accessory_id, updated_at)
 			VALUES ($1, $2, $3, now())
 		`, playerID, slotID, accessoryID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (store *PlayerStateStore) saveEquipmentState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
+	for equipmentID, level := range state.EquipmentLevels {
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO player.player_equipment_training (player_id, equipment_id, level, updated_at)
+			VALUES ($1, $2, $3, now())
+			ON CONFLICT (player_id, equipment_id) DO UPDATE SET
+				level = EXCLUDED.level,
+				updated_at = now()
+		`, playerID, equipmentID, level); err != nil {
 			return err
 		}
 	}
@@ -574,6 +598,30 @@ func (store *PlayerStateStore) loadAccessoryInventory(ctx context.Context, playe
 	}
 
 	return inventory, levels, rows.Err()
+}
+
+func (store *PlayerStateStore) loadEquipmentLevels(ctx context.Context, playerID string) (map[string]int, error) {
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT equipment_id, level
+		FROM player.player_equipment_training
+		WHERE player_id = $1
+	`, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	levels := map[string]int{}
+	for rows.Next() {
+		var equipmentID string
+		var level int
+		if err := rows.Scan(&equipmentID, &level); err != nil {
+			return nil, err
+		}
+		levels[equipmentID] = level
+	}
+
+	return levels, rows.Err()
 }
 
 func (store *PlayerStateStore) loadEquippedAccessories(ctx context.Context, playerID string) (map[string]string, error) {

@@ -76,6 +76,29 @@ func TestMissionClaimsPersist(t *testing.T) {
 	}
 }
 
+func TestEquipmentLevelPersistsAndRaisesPower(t *testing.T) {
+	store := &fakeStateStore{}
+	service := NewService()
+	service.state.Gold = 1000
+	beforePower := service.state.TeamPower
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	result := service.LevelEquipment(weaponID)
+	if !result.Success {
+		t.Fatalf("expected equipment level to succeed, got %#v", result)
+	}
+
+	if store.saved.EquipmentLevels[weaponID] != 1 {
+		t.Fatalf("expected saved weapon level 1, got %d", store.saved.EquipmentLevels[weaponID])
+	}
+	if result.PlayerState.TeamPower <= beforePower {
+		t.Fatalf("expected team power to increase from %d, got %d", beforePower, result.PlayerState.TeamPower)
+	}
+}
+
 type fakeStateStore struct {
 	saved PersistentState
 }

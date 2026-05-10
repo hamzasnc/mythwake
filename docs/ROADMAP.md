@@ -303,6 +303,7 @@ Current backend state:
 - Added economy transaction logging for currency deltas.
 - Added normalized accessory inventory/equipped persistence and a debug accessory overview view.
 - Fixed accessory fusion to produce the next real rarity ID instead of a placeholder `_fused` ID.
+- Added persistent starter equipment training and a debug equipment overview view.
 - Added persistent summon count, daily mission claims, Battle Pass claims, summon history, and debug claim/summon views.
 - Redis is not connected yet.
 
@@ -486,6 +487,7 @@ Progress:
 - Added `debug.v_player_overview`, `debug.v_player_hero_overview`, and `debug.v_player_economy_overview`.
 - Added economy transaction logs for currency delta inspection.
 - Added `player.player_accessory_inventory`, `player.player_equipped_accessories`, and `debug.v_player_accessory_overview`.
+- Added `player.player_equipment_training` and `debug.v_player_equipment_overview`.
 - Added `player.player_summon_state`, `player.player_daily_mission_claims`, `player.player_battle_pass_claims`, `logs.summon_history`, `debug.v_player_claim_overview`, and `debug.v_player_summon_overview`.
 
 Next useful step:

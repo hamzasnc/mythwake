@@ -28,6 +28,9 @@ Current scope:
 - Accessory inventory, accessory levels, and equipped accessories persisted in PostgreSQL
 - Navicat-friendly accessory view:
   - `debug.v_player_accessory_overview`
+- Starter Weapon and Armor training persisted in PostgreSQL
+- Navicat-friendly equipment view:
+  - `debug.v_player_equipment_overview`
 - Summon count, daily mission claims, and Battle Pass claims persisted in PostgreSQL
 - Navicat-friendly meta views:
   - `debug.v_player_claim_overview`
