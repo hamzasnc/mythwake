@@ -55,6 +55,12 @@ func TestHeroDefinitions(t *testing.T) {
 	if !ok || !hero.StarterOwned || hero.SortOrder != 10 {
 		t.Fatalf("unexpected hero_astra definition: %#v ok=%v", hero, ok)
 	}
+	if hero.MaxLevel != 100 || hero.MaxAscension != 10 || hero.BaseAttack != 18 || hero.AttackPerLevel != 5 || hero.AttackPerAscension != 11 {
+		t.Fatalf("unexpected hero_astra attack progression: %#v", hero)
+	}
+	if hero.BaseHealth != 150 || hero.HealthPerLevel != 28 || hero.HealthPerAscension != 70 {
+		t.Fatalf("unexpected hero_astra health progression: %#v", hero)
+	}
 	if _, ok := HeroDefinitionByID("hero_fake"); ok {
 		t.Fatal("unknown hero should not exist")
 	}

@@ -214,6 +214,14 @@ public struct MythwakeHeroDefinitionDto
     public string displayName;
     public int sortOrder;
     public bool starterOwned;
+    public int maxLevel;
+    public int maxAscension;
+    public int baseAttack;
+    public int attackPerLevel;
+    public int attackPerAscension;
+    public int baseHealth;
+    public int healthPerLevel;
+    public int healthPerAscension;
 }
 
 [Serializable]

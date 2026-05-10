@@ -170,10 +170,18 @@ type CurrencyDefinition struct {
 }
 
 type HeroDefinition struct {
-	HeroID       string `json:"heroId"`
-	DisplayName  string `json:"displayName"`
-	SortOrder    int    `json:"sortOrder"`
-	StarterOwned bool   `json:"starterOwned"`
+	HeroID             string `json:"heroId"`
+	DisplayName        string `json:"displayName"`
+	SortOrder          int    `json:"sortOrder"`
+	StarterOwned       bool   `json:"starterOwned"`
+	MaxLevel           int    `json:"maxLevel"`
+	MaxAscension       int    `json:"maxAscension"`
+	BaseAttack         int    `json:"baseAttack"`
+	AttackPerLevel     int    `json:"attackPerLevel"`
+	AttackPerAscension int    `json:"attackPerAscension"`
+	BaseHealth         int    `json:"baseHealth"`
+	HealthPerLevel     int    `json:"healthPerLevel"`
+	HealthPerAscension int    `json:"healthPerAscension"`
 }
 
 type RewardDefinition struct {

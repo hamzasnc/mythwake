@@ -600,6 +600,7 @@ Progress:
 - PostgreSQL-backed APIs now inject the loaded common definition snapshot into live player gameplay balance for combat, rewards, costs, summons, daily missions, and Mission Track rewards.
 - New player starter heroes and initial hero shard rows now come from the active hero definition catalog instead of hardcoded service maps.
 - Accessory equip, level, and fuse actions now use accessory and rarity definitions for slot routing, fuse targets, fuse copy costs, max-level validation, and equipped ATK/HP stat bonuses instead of parsing behavior from item IDs.
+- Hero definitions now carry server-owned stat growth and level/ascension caps; backend team ATK, HP, and Power are derived from those definitions instead of generic hardcoded hero increments.
 
 Next useful step:
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.

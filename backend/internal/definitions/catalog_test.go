@@ -28,6 +28,9 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if len(snapshot.Heroes) != 5 {
 		t.Fatalf("expected 5 hero definitions, got %#v", snapshot.Heroes)
 	}
+	if snapshot.Heroes[0].MaxLevel != 100 || snapshot.Heroes[0].BaseAttack <= 0 || snapshot.Heroes[0].BaseHealth <= 0 {
+		t.Fatalf("expected hero stat definitions, got %#v", snapshot.Heroes[0])
+	}
 	if len(snapshot.Rewards) != 71 {
 		t.Fatalf("expected 71 reward definitions, got %d", len(snapshot.Rewards))
 	}

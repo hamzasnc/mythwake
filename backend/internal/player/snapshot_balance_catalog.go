@@ -52,11 +52,20 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 
 	for _, definition := range snapshot.Heroes {
 		hero := balance.HeroDefinition{
-			ID:           definition.HeroID,
-			DisplayName:  definition.DisplayName,
-			SortOrder:    definition.SortOrder,
-			StarterOwned: definition.StarterOwned,
+			ID:                 definition.HeroID,
+			DisplayName:        definition.DisplayName,
+			SortOrder:          definition.SortOrder,
+			StarterOwned:       definition.StarterOwned,
+			MaxLevel:           definition.MaxLevel,
+			MaxAscension:       definition.MaxAscension,
+			BaseAttack:         definition.BaseAttack,
+			AttackPerLevel:     definition.AttackPerLevel,
+			AttackPerAscension: definition.AttackPerAscension,
+			BaseHealth:         definition.BaseHealth,
+			HealthPerLevel:     definition.HealthPerLevel,
+			HealthPerAscension: definition.HealthPerAscension,
 		}
+		hero = normalizeHeroDefinition(hero, catalog.fallback)
 		catalog.heroes = append(catalog.heroes, hero)
 		catalog.heroesByID[hero.ID] = hero
 	}
@@ -456,4 +465,60 @@ func (catalog *SnapshotBalanceCatalog) exactProgressionCost(domain string, targe
 func deterministicLootRoll(floor int, totalWeight int) int {
 	value := (uint64(max(1, floor)) * 1103515245) + 12345
 	return int(value % uint64(totalWeight))
+}
+
+func normalizeHeroDefinition(definition balance.HeroDefinition, fallback StaticBalanceCatalog) balance.HeroDefinition {
+	if staticDefinition, ok := fallback.HeroDefinitionByID(definition.ID); ok {
+		if definition.MaxLevel <= 0 {
+			definition.MaxLevel = staticDefinition.MaxLevel
+		}
+		if definition.MaxAscension <= 0 {
+			definition.MaxAscension = staticDefinition.MaxAscension
+		}
+		if definition.BaseAttack <= 0 {
+			definition.BaseAttack = staticDefinition.BaseAttack
+		}
+		if definition.AttackPerLevel <= 0 {
+			definition.AttackPerLevel = staticDefinition.AttackPerLevel
+		}
+		if definition.AttackPerAscension <= 0 {
+			definition.AttackPerAscension = staticDefinition.AttackPerAscension
+		}
+		if definition.BaseHealth <= 0 {
+			definition.BaseHealth = staticDefinition.BaseHealth
+		}
+		if definition.HealthPerLevel <= 0 {
+			definition.HealthPerLevel = staticDefinition.HealthPerLevel
+		}
+		if definition.HealthPerAscension <= 0 {
+			definition.HealthPerAscension = staticDefinition.HealthPerAscension
+		}
+	}
+
+	if definition.MaxLevel <= 0 {
+		definition.MaxLevel = 100
+	}
+	if definition.MaxAscension <= 0 {
+		definition.MaxAscension = 10
+	}
+	if definition.BaseAttack <= 0 {
+		definition.BaseAttack = 10
+	}
+	if definition.AttackPerLevel <= 0 {
+		definition.AttackPerLevel = 3
+	}
+	if definition.AttackPerAscension <= 0 {
+		definition.AttackPerAscension = 8
+	}
+	if definition.BaseHealth <= 0 {
+		definition.BaseHealth = 100
+	}
+	if definition.HealthPerLevel <= 0 {
+		definition.HealthPerLevel = 20
+	}
+	if definition.HealthPerAscension <= 0 {
+		definition.HealthPerAscension = 50
+	}
+
+	return definition
 }

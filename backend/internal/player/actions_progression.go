@@ -27,6 +27,13 @@ func (actions heroProgressionActions) LevelHero(ctx context.Context, request Act
 		if !ok {
 			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID))
 		}
+		definition, ok := service.balanceCatalog.HeroDefinitionByID(heroID)
+		if !ok {
+			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero definition: %s", heroID))
+		}
+		if definition.MaxLevel > 0 && level >= definition.MaxLevel {
+			return actionFailure("max_level", fmt.Sprintf("%s is already Lv. %d.", heroID, level))
+		}
 
 		cost := service.balanceCatalog.HeroLevelCost(level)
 		if failure, ok := service.spendCurrency(economy.CurrencyMythEssence, cost); !ok {
@@ -56,8 +63,16 @@ func (actions heroProgressionActions) AscendHero(ctx context.Context, request Ac
 		if _, ok := service.heroLevels[heroID]; !ok {
 			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID))
 		}
+		definition, ok := service.balanceCatalog.HeroDefinitionByID(heroID)
+		if !ok {
+			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero definition: %s", heroID))
+		}
+		currentAscension := service.heroAscensions[heroID]
+		if definition.MaxAscension > 0 && currentAscension >= definition.MaxAscension {
+			return actionFailure("max_ascension", fmt.Sprintf("%s is already +%d.", heroID, currentAscension))
+		}
 
-		cost := service.balanceCatalog.HeroAscensionShardCost(service.heroAscensions[heroID])
+		cost := service.balanceCatalog.HeroAscensionShardCost(currentAscension)
 		if service.heroShards[heroID] < cost {
 			return actionFailure("insufficient_shards", fmt.Sprintf("Need %d shards.", cost))
 		}

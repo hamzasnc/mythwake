@@ -190,6 +190,7 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 		option(service)
 	}
 	service.seedInitialHeroes()
+	service.recalculatePower()
 	service.lastAFKClaimedAt = service.now().UTC()
 	service.dailyDate = dailyDateKey(service.now())
 	service.configureDomainServices()
@@ -206,6 +207,9 @@ func (service *Service) seedInitialHeroes() {
 		}
 		if _, ok := service.heroShards[definition.ID]; !ok {
 			service.heroShards[definition.ID] = 0
+		}
+		if _, ok := service.heroAscensions[definition.ID]; !ok {
+			service.heroAscensions[definition.ID] = 0
 		}
 	}
 }

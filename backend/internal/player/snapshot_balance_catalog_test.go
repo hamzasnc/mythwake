@@ -11,8 +11,8 @@ import (
 func TestSnapshotBalanceCatalogUsesSnapshotCombatDefinitions(t *testing.T) {
 	catalog := NewSnapshotBalanceCatalog(api.DefinitionSnapshot{
 		Heroes: []api.HeroDefinition{
-			{HeroID: "hero_custom", DisplayName: "Custom", SortOrder: 20, StarterOwned: true},
-			{HeroID: "hero_locked", DisplayName: "Locked", SortOrder: 10, StarterOwned: false},
+			{HeroID: "hero_custom", DisplayName: "Custom", SortOrder: 20, StarterOwned: true, MaxLevel: 70, MaxAscension: 7, BaseAttack: 31, AttackPerLevel: 4, AttackPerAscension: 9, BaseHealth: 222, HealthPerLevel: 11, HealthPerAscension: 33},
+			{HeroID: "hero_locked", DisplayName: "Locked", SortOrder: 10, StarterOwned: false, MaxLevel: 60, MaxAscension: 6, BaseAttack: 12, AttackPerLevel: 2, AttackPerAscension: 6, BaseHealth: 150, HealthPerLevel: 9, HealthPerAscension: 22},
 		},
 		Rewards: []api.RewardDefinition{
 			{
@@ -72,7 +72,7 @@ func TestSnapshotBalanceCatalogUsesSnapshotCombatDefinitions(t *testing.T) {
 		t.Fatalf("expected sorted snapshot hero definitions, got %#v", heroes)
 	}
 	hero, ok := catalog.HeroDefinitionByID("hero_custom")
-	if !ok || !hero.StarterOwned {
+	if !ok || !hero.StarterOwned || hero.MaxLevel != 70 || hero.BaseAttack != 31 || hero.HealthPerAscension != 33 {
 		t.Fatalf("expected snapshot hero_custom definition, got %#v ok=%t", hero, ok)
 	}
 }

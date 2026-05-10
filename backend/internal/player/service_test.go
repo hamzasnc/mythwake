@@ -49,8 +49,8 @@ func TestDungeonActionIDUsesSpecificActionForKnownDungeons(t *testing.T) {
 func TestServiceSeedsStarterHeroesFromBalanceCatalog(t *testing.T) {
 	catalog := NewSnapshotBalanceCatalog(api.DefinitionSnapshot{
 		Heroes: []api.HeroDefinition{
-			{HeroID: "hero_custom_starter", StarterOwned: true},
-			{HeroID: "hero_custom_locked", StarterOwned: false},
+			{HeroID: "hero_custom_starter", StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 20, AttackPerLevel: 4, AttackPerAscension: 9, BaseHealth: 200, HealthPerLevel: 15, HealthPerAscension: 60},
+			{HeroID: "hero_custom_locked", StarterOwned: false, MaxLevel: 100, MaxAscension: 10, BaseAttack: 10, AttackPerLevel: 3, AttackPerAscension: 8, BaseHealth: 100, HealthPerLevel: 12, HealthPerAscension: 50},
 		},
 	})
 	service := NewServiceForPlayer("hero-seed-player", withServiceBalanceCatalog(catalog))
@@ -66,6 +66,34 @@ func TestServiceSeedsStarterHeroesFromBalanceCatalog(t *testing.T) {
 	}
 	if _, ok := service.heroShards["hero_custom_locked"]; !ok {
 		t.Fatalf("expected custom hero shard row to be initialized, got %#v", service.heroShards)
+	}
+	if service.state.TeamAttack != 20 || service.state.TeamHealth != 200 {
+		t.Fatalf("expected starter team stats from hero definition, got state=%#v", service.state)
+	}
+}
+
+func TestHeroProgressionRespectsDefinitionCaps(t *testing.T) {
+	catalog := NewSnapshotBalanceCatalog(api.DefinitionSnapshot{
+		Heroes: []api.HeroDefinition{
+			{HeroID: "hero_capped", StarterOwned: true, MaxLevel: 1, MaxAscension: 1, BaseAttack: 20, AttackPerLevel: 4, AttackPerAscension: 9, BaseHealth: 200, HealthPerLevel: 15, HealthPerAscension: 60},
+		},
+	})
+	service := NewServiceForPlayer("hero-cap-player", withServiceBalanceCatalog(catalog))
+	service.state.MythEssence = 100000
+	service.heroShards["hero_capped"] = 100000
+
+	levelResult := service.LevelHero("hero_capped")
+	if levelResult.Success || levelResult.ErrorCode != "max_level" {
+		t.Fatalf("expected max_level, got %#v", levelResult)
+	}
+
+	ascendResult := service.AscendHero("hero_capped")
+	if !ascendResult.Success {
+		t.Fatalf("expected first ascension to succeed, got %#v", ascendResult)
+	}
+	secondAscend := service.AscendHero("hero_capped")
+	if secondAscend.Success || secondAscend.ErrorCode != "max_ascension" {
+		t.Fatalf("expected max_ascension, got %#v", secondAscend)
 	}
 }
 

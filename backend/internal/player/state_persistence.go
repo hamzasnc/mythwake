@@ -119,20 +119,53 @@ func mergeBoolMaps(defaults map[string]bool, persisted map[string]bool) map[stri
 }
 
 func (service *Service) recalculatePower() {
-	power := 148
-	for _, level := range service.heroLevels {
-		power += level * 8
-	}
-	for _, ascension := range service.heroAscensions {
-		power += ascension * 45
-	}
-	power += service.equipmentLevels[weaponID] * 18
-	power += service.equipmentLevels[armorID] * 16
+	heroAttack, heroHealth := service.heroStatTotals()
+	weaponAttack := service.equipmentLevels[weaponID] * 7
+	armorHealth := service.equipmentLevels[armorID] * 65
 	accessoryAttack, accessoryHealth := service.accessoryStatBonuses()
-	power += accessoryAttack + (accessoryHealth / 8)
+
+	teamAttack := heroAttack + weaponAttack + accessoryAttack
+	teamHealth := heroHealth + armorHealth + accessoryHealth
+	power := teamAttack + (teamHealth / 10) + (service.equipmentLevels[weaponID] * 12) + (service.equipmentLevels[armorID] * 12)
+
 	service.state.TeamPower = power
-	service.state.TeamAttack = 96 + (power / 8) + (service.equipmentLevels[weaponID] * 7) + accessoryAttack
-	service.state.TeamHealth = 780 + (power * 2) + (service.equipmentLevels[armorID] * 65) + accessoryHealth
+	service.state.TeamAttack = max(1, teamAttack)
+	service.state.TeamHealth = max(1, teamHealth)
+}
+
+func (service *Service) heroStatTotals() (int, int) {
+	totalAttack := 0
+	totalHealth := 0
+	for heroID, level := range service.heroLevels {
+		definition, ok := service.balanceCatalog.HeroDefinitionByID(heroID)
+		if !ok {
+			continue
+		}
+		level = clampHeroLevel(level, definition.MaxLevel)
+		ascension := clampHeroAscension(service.heroAscensions[heroID], definition.MaxAscension)
+		totalAttack += definition.BaseAttack + ((level - 1) * definition.AttackPerLevel) + (ascension * definition.AttackPerAscension)
+		totalHealth += definition.BaseHealth + ((level - 1) * definition.HealthPerLevel) + (ascension * definition.HealthPerAscension)
+	}
+
+	return totalAttack, totalHealth
+}
+
+func clampHeroLevel(value int, maximum int) int {
+	value = max(1, value)
+	if maximum <= 0 {
+		return value
+	}
+
+	return min(value, maximum)
+}
+
+func clampHeroAscension(value int, maximum int) int {
+	value = max(0, value)
+	if maximum <= 0 {
+		return value
+	}
+
+	return min(value, maximum)
 }
 
 func (service *Service) accessoryStatBonuses() (int, int) {

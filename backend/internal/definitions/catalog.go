@@ -13,7 +13,7 @@ import (
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
-const SchemaVersion = 2
+const SchemaVersion = 3
 
 func Snapshot(apiVersion string) api.DefinitionSnapshot {
 	snapshot := api.DefinitionSnapshot{
@@ -87,10 +87,18 @@ func heroDefinitions() []api.HeroDefinition {
 	response := make([]api.HeroDefinition, 0, len(definitions))
 	for _, definition := range definitions {
 		response = append(response, api.HeroDefinition{
-			HeroID:       definition.ID,
-			DisplayName:  definition.DisplayName,
-			SortOrder:    definition.SortOrder,
-			StarterOwned: definition.StarterOwned,
+			HeroID:             definition.ID,
+			DisplayName:        definition.DisplayName,
+			SortOrder:          definition.SortOrder,
+			StarterOwned:       definition.StarterOwned,
+			MaxLevel:           definition.MaxLevel,
+			MaxAscension:       definition.MaxAscension,
+			BaseAttack:         definition.BaseAttack,
+			AttackPerLevel:     definition.AttackPerLevel,
+			AttackPerAscension: definition.AttackPerAscension,
+			BaseHealth:         definition.BaseHealth,
+			HealthPerLevel:     definition.HealthPerLevel,
+			HealthPerAscension: definition.HealthPerAscension,
 		})
 	}
 	return response

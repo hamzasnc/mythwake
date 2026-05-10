@@ -93,6 +93,7 @@ Backend:
 - Player gameplay actions read balance through an injectable catalog boundary, and PostgreSQL-backed APIs now inject the loaded common definition snapshot into live gameplay logic at startup
 - Backend Daily Mission, Mission Track, and Summon actions now validate against known server balance definitions instead of accepting arbitrary claim IDs
 - Backend new-player starter heroes are seeded from server-owned hero definitions
+- Backend hero definitions now include server-owned stat scaling and level/ascension caps, and team ATK/HP/Power are derived from those definitions
 - Backend Accessory equip, level, and fuse actions now validate against server-owned accessory and rarity definitions instead of deriving slot/fuse behavior from ID strings
 - Equipped Accessories now contribute definition-based ATK/HP to backend team stats
 - PostgreSQL now seeds DB-ready hero, campaign, reward, progression cost, summon, mission, and Mission Track definition tables
@@ -134,6 +135,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.41: Added server-owned hero stat scaling and level/ascension caps to definitions, PostgreSQL seeds, and backend team-stat calculation.
 - Backend 0.2.40: New player starter heroes and initial shard rows are now seeded from the active hero definition catalog instead of hardcoded service maps.
 - Backend 0.2.39: Made Accessory equip, level, and fuse actions definition-driven, including accessory slots, fuse targets, fuse copy costs, rarity max levels, and equipped ATK/HP stat bonuses.
 - Backend 0.2.38: Injected the PostgreSQL-loaded definition snapshot into live player gameplay balance so server actions use DB-backed combat, reward, cost, summon, mission, and Mission Track values.

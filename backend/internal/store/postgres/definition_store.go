@@ -89,7 +89,19 @@ func (store *DefinitionStore) currencyDefinitions(ctx context.Context) ([]api.Cu
 
 func (store *DefinitionStore) heroDefinitions(ctx context.Context) ([]api.HeroDefinition, error) {
 	rows, err := store.db.QueryContext(ctx, `
-		SELECT id, display_name, sort_order, starter_owned
+		SELECT
+			id,
+			display_name,
+			sort_order,
+			starter_owned,
+			max_level,
+			max_ascension,
+			base_attack,
+			attack_per_level,
+			attack_per_ascension,
+			base_health,
+			health_per_level,
+			health_per_ascension
 		FROM common.hero_definitions
 		ORDER BY sort_order, id
 	`)
@@ -101,7 +113,20 @@ func (store *DefinitionStore) heroDefinitions(ctx context.Context) ([]api.HeroDe
 	response := []api.HeroDefinition{}
 	for rows.Next() {
 		var definition api.HeroDefinition
-		if err := rows.Scan(&definition.HeroID, &definition.DisplayName, &definition.SortOrder, &definition.StarterOwned); err != nil {
+		if err := rows.Scan(
+			&definition.HeroID,
+			&definition.DisplayName,
+			&definition.SortOrder,
+			&definition.StarterOwned,
+			&definition.MaxLevel,
+			&definition.MaxAscension,
+			&definition.BaseAttack,
+			&definition.AttackPerLevel,
+			&definition.AttackPerAscension,
+			&definition.BaseHealth,
+			&definition.HealthPerLevel,
+			&definition.HealthPerAscension,
+		); err != nil {
 			return nil, err
 		}
 		response = append(response, definition)

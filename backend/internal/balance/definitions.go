@@ -48,10 +48,18 @@ type DungeonDefinition struct {
 }
 
 type HeroDefinition struct {
-	ID           string
-	DisplayName  string
-	SortOrder    int
-	StarterOwned bool
+	ID                 string
+	DisplayName        string
+	SortOrder          int
+	StarterOwned       bool
+	MaxLevel           int
+	MaxAscension       int
+	BaseAttack         int
+	AttackPerLevel     int
+	AttackPerAscension int
+	BaseHealth         int
+	HealthPerLevel     int
+	HealthPerAscension int
 }
 
 type RewardDefinition struct {
@@ -164,11 +172,11 @@ type SummonBannerDefinition struct {
 }
 
 var heroDefinitions = []HeroDefinition{
-	{ID: "hero_astra", DisplayName: "Astra", SortOrder: 10, StarterOwned: true},
-	{ID: "hero_borin", DisplayName: "Borin", SortOrder: 20, StarterOwned: true},
-	{ID: "hero_cyra", DisplayName: "Cyra", SortOrder: 30, StarterOwned: true},
-	{ID: "hero_dante", DisplayName: "Dante", SortOrder: 40, StarterOwned: true},
-	{ID: "hero_elowen", DisplayName: "Elowen", SortOrder: 50, StarterOwned: true},
+	{ID: "hero_astra", DisplayName: "Astra", SortOrder: 10, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 18, AttackPerLevel: 5, AttackPerAscension: 11, BaseHealth: 150, HealthPerLevel: 28, HealthPerAscension: 70},
+	{ID: "hero_borin", DisplayName: "Borin", SortOrder: 20, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 10, AttackPerLevel: 3, AttackPerAscension: 8, BaseHealth: 230, HealthPerLevel: 42, HealthPerAscension: 55},
+	{ID: "hero_cyra", DisplayName: "Cyra", SortOrder: 30, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 22, AttackPerLevel: 7, AttackPerAscension: 11, BaseHealth: 110, HealthPerLevel: 20, HealthPerAscension: 70},
+	{ID: "hero_dante", DisplayName: "Dante", SortOrder: 40, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 20, AttackPerLevel: 6, AttackPerAscension: 8, BaseHealth: 125, HealthPerLevel: 23, HealthPerAscension: 55},
+	{ID: "hero_elowen", DisplayName: "Elowen", SortOrder: 50, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 12, AttackPerLevel: 4, AttackPerAscension: 14, BaseHealth: 165, HealthPerLevel: 34, HealthPerAscension: 90},
 }
 
 var campaignDefinitions = []CampaignDefinition{

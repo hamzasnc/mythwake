@@ -80,6 +80,7 @@ Current scope:
 - When PostgreSQL is enabled, `/definitions` is loaded from `common.*` definition tables; no-database mode keeps using the static Go catalog.
 - When PostgreSQL is enabled, the same loaded definition snapshot is injected into live gameplay balance for combat stats, dungeon rewards, progression costs, summon rotation, daily missions, and Mission Track rewards.
 - New player starter heroes and initial shard rows are seeded from the active hero definition catalog.
+- Hero definitions carry server-owned stat scaling plus level/ascension caps, and backend team ATK/HP/Power are derived from those rows.
 - Accessory equip, level, and fuse actions use server-owned accessory and rarity definitions for slot selection, fuse targets, fuse copy costs, max level validation, and equipped ATK/HP stat bonuses.
 - Player service gameplay actions route through explicit domain action services while keeping the existing API surface stable.
 - Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.
@@ -87,6 +88,7 @@ Current scope:
 - `GET /definitions` exposes the current server-owned balance/action catalog for client and admin tooling, including auth providers, currencies, heroes, rewards, campaign stages, dungeons, accessories, costs, summons, missions, and action metadata, with content hashes and ETag revalidation.
 - Campaign and dungeon definitions include combat curves/stats so client previews can match server combat.
 - Navicat-friendly common definition views:
+  - `debug.v_common_hero_definition_overview`
   - `debug.v_common_reward_overview`
   - `debug.v_common_progression_cost_overview`
   - `debug.v_common_meta_definition_overview`
