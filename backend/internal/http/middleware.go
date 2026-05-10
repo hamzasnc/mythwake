@@ -3,15 +3,27 @@ package apihttp
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"log"
+	"net"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/hamzasnc/mythwake/backend/internal/config"
 )
 
 type requestIDContextKey struct{}
+
+const (
+	rateLimitCategoryAuth     = "auth"
+	rateLimitCategoryGameplay = "gameplay"
+)
 
 type statusRecorder struct {
 	http.ResponseWriter
@@ -88,6 +100,105 @@ func logRequests(logger *log.Logger, next http.Handler) http.Handler {
 			time.Since(startedAt),
 		)
 	})
+}
+
+type rateLimiter struct {
+	mu      sync.Mutex
+	now     func() time.Time
+	window  time.Duration
+	entries map[string]rateLimitEntry
+}
+
+type rateLimitEntry struct {
+	count   int
+	resetAt time.Time
+}
+
+func withRateLimit(cfg config.Config, next http.Handler) http.Handler {
+	limiter := newRateLimiter(cfg.RateLimitWindow)
+	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		category, limit := rateLimitCategory(cfg, request)
+		if !cfg.RateLimitEnabled || category == "" || limit <= 0 {
+			next.ServeHTTP(response, request)
+			return
+		}
+
+		key := rateLimitKey(category, request)
+		allowed, retryAfter := limiter.Allow(key, limit)
+		if !allowed {
+			response.Header().Set("Retry-After", strconv.Itoa(int(retryAfter.Seconds()+0.999)))
+			writeError(response, request, http.StatusTooManyRequests, "rate_limited", "Too many requests. Try again shortly.")
+			return
+		}
+
+		next.ServeHTTP(response, request)
+	})
+}
+
+func newRateLimiter(window time.Duration) *rateLimiter {
+	if window <= 0 {
+		window = time.Minute
+	}
+
+	return &rateLimiter{
+		now:     time.Now,
+		window:  window,
+		entries: map[string]rateLimitEntry{},
+	}
+}
+
+func (limiter *rateLimiter) Allow(key string, limit int) (bool, time.Duration) {
+	if limit <= 0 {
+		return true, 0
+	}
+
+	now := limiter.now()
+	limiter.mu.Lock()
+	defer limiter.mu.Unlock()
+
+	entry := limiter.entries[key]
+	if entry.resetAt.IsZero() || !entry.resetAt.After(now) {
+		entry = rateLimitEntry{resetAt: now.Add(limiter.window)}
+	}
+
+	if entry.count >= limit {
+		return false, entry.resetAt.Sub(now)
+	}
+
+	entry.count++
+	limiter.entries[key] = entry
+	return true, 0
+}
+
+func rateLimitCategory(cfg config.Config, request *http.Request) (string, int) {
+	if request.Method != http.MethodPost {
+		return "", 0
+	}
+
+	switch request.URL.Path {
+	case "/auth/guest", "/auth/logout":
+		return rateLimitCategoryAuth, cfg.RateLimitAuth
+	default:
+		return rateLimitCategoryGameplay, cfg.RateLimitGameplay
+	}
+}
+
+func rateLimitKey(category string, request *http.Request) string {
+	token := sessionTokenFromRequest(request)
+	if token != "" {
+		hash := sha256.Sum256([]byte(token))
+		return category + ":session:" + hex.EncodeToString(hash[:8])
+	}
+
+	host, _, err := net.SplitHostPort(request.RemoteAddr)
+	if err != nil || host == "" {
+		host = request.RemoteAddr
+	}
+	if host == "" {
+		host = "unknown"
+	}
+
+	return category + ":ip:" + host
 }
 
 func requestIDFromContext(ctx context.Context) string {

@@ -67,13 +67,17 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.28-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.29-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
     $env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
     $env:MYTHWAKE_SESSION_CACHE_TTL = "30s"
     $env:MYTHWAKE_SESSION_TOUCH_WINDOW = "30s"
+    $env:MYTHWAKE_RATE_LIMIT_ENABLED = "true"
+    $env:MYTHWAKE_RATE_LIMIT_WINDOW = "1m"
+    $env:MYTHWAKE_RATE_LIMIT_AUTH = "30"
+    $env:MYTHWAKE_RATE_LIMIT_GAMEPLAY = "240"
     $env:MYTHWAKE_REQUIRE_IDEMPOTENCY = "true"
 
     Remove-Item -LiteralPath $stdoutLog, $stderrLog -Force -ErrorAction SilentlyContinue

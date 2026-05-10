@@ -97,6 +97,7 @@ Backend:
 - Logout flushes a loaded player context before returning when server state is hot in memory
 - Every API response now carries an `X-Request-ID`, and error JSON includes `requestId` for log/client correlation
 - HTTP panic recovery returns a JSON `internal_error` instead of dropping the request
+- In-memory auth/gameplay rate limit middleware protects local API paths and is shaped for a later Redis-backed limiter
 - PostgreSQL E2E smoke script verifies guest auth, protected state, campaign action persistence, manual flush, API restart reload, idempotency replay, and logout revocation
 - Navicat-friendly account/persistence debug views expose auth providers, active sessions, latest action result, and snapshot freshness
 - Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
@@ -116,6 +117,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.29: Added configurable auth/gameplay rate limiting with `429` JSON errors, `Retry-After`, health visibility, and local script knobs.
 - Backend 0.2.28: Added request ID propagation, structured error responses with request IDs, panic recovery, and status-aware request logging.
 - Backend 0.2.27: Added a configurable session validation cache, PostgreSQL touch window, logout state flush, and health/script visibility for session cache settings.
 - Backend 0.2.26 / Prototype 0.2.16: Added session logout/revoke, loaded-player shutdown flushing, Unity app pause/quit backend flush, and logout-aware smoke checks.

@@ -48,3 +48,25 @@ func TestLoadSessionCacheDurations(t *testing.T) {
 		t.Fatalf("expected session touch window 2m, got %s", cfg.SessionTouchWindow)
 	}
 }
+
+func TestLoadRateLimitSettings(t *testing.T) {
+	t.Setenv("MYTHWAKE_RATE_LIMIT_ENABLED", "false")
+	t.Setenv("MYTHWAKE_RATE_LIMIT_WINDOW", "15s")
+	t.Setenv("MYTHWAKE_RATE_LIMIT_AUTH", "7")
+	t.Setenv("MYTHWAKE_RATE_LIMIT_GAMEPLAY", "9")
+
+	cfg := Load()
+
+	if cfg.RateLimitEnabled {
+		t.Fatal("expected rate limiting to be disabled")
+	}
+	if cfg.RateLimitWindow != 15*time.Second {
+		t.Fatalf("expected rate limit window 15s, got %s", cfg.RateLimitWindow)
+	}
+	if cfg.RateLimitAuth != 7 {
+		t.Fatalf("expected auth limit 7, got %d", cfg.RateLimitAuth)
+	}
+	if cfg.RateLimitGameplay != 9 {
+		t.Fatalf("expected gameplay limit 9, got %d", cfg.RateLimitGameplay)
+	}
+}

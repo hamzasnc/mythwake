@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -42,7 +43,7 @@ func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service,
 	}
 
 	router.routes()
-	return withRequestID(logRequests(router.logger, recoverPanic(router.logger, router.mux)))
+	return withRequestID(logRequests(router.logger, recoverPanic(router.logger, withRateLimit(router.config, router.mux))))
 }
 
 func (router *Router) routes() {
@@ -101,6 +102,10 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 		"state_flush_interval": router.config.StateFlushInterval.String(),
 		"session_cache_ttl":    router.config.SessionCacheTTL.String(),
 		"session_touch_window": router.config.SessionTouchWindow.String(),
+		"rate_limit_enabled":   boolLabel(router.config.RateLimitEnabled),
+		"rate_limit_window":    router.config.RateLimitWindow.String(),
+		"rate_limit_auth":      strconv.Itoa(router.config.RateLimitAuth),
+		"rate_limit_gameplay":  strconv.Itoa(router.config.RateLimitGameplay),
 		"require_idempotency":  boolLabel(router.config.RequireIdempotency),
 		"environment":          router.config.Environment,
 		"version":              router.config.Version,

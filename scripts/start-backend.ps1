@@ -4,10 +4,14 @@ param(
     [string]$StateFlushInterval = "30s",
     [string]$SessionCacheTTL = "30s",
     [string]$SessionTouchWindow = "30s",
+    [string]$RateLimitWindow = "1m",
+    [int]$RateLimitAuth = 30,
+    [int]$RateLimitGameplay = 240,
     [ValidateSet("ledger_write_behind", "write_through", "write_behind")]
     [string]$StateWriteMode = "ledger_write_behind",
     [switch]$NoDatabase,
-    [switch]$AllowMissingIdempotency
+    [switch]$AllowMissingIdempotency,
+    [switch]$DisableRateLimit
 )
 
 $ErrorActionPreference = "Stop"
@@ -74,12 +78,16 @@ function Start-PostgresServiceIfNeeded {
 $goExe = Find-Go
 $env:MYTHWAKE_API_ADDR = $ApiAddr
 $env:MYTHWAKE_ENV = "local"
-$env:MYTHWAKE_API_VERSION = "0.2.28"
+$env:MYTHWAKE_API_VERSION = "0.2.29"
 $env:MYTHWAKE_STATE_FLUSH_INTERVAL = $StateFlushInterval
 $env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
 $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
 $env:MYTHWAKE_SESSION_CACHE_TTL = $SessionCacheTTL
 $env:MYTHWAKE_SESSION_TOUCH_WINDOW = $SessionTouchWindow
+$env:MYTHWAKE_RATE_LIMIT_ENABLED = if ($DisableRateLimit) { "false" } else { "true" }
+$env:MYTHWAKE_RATE_LIMIT_WINDOW = $RateLimitWindow
+$env:MYTHWAKE_RATE_LIMIT_AUTH = [string]$RateLimitAuth
+$env:MYTHWAKE_RATE_LIMIT_GAMEPLAY = [string]$RateLimitGameplay
 $env:MYTHWAKE_REQUIRE_IDEMPOTENCY = if ($AllowMissingIdempotency) { "false" } else { "true" }
 
 if ($NoDatabase) {
@@ -112,6 +120,9 @@ Write-Host "State write mode: $StateWriteMode"
 Write-Host "State flush interval: $StateFlushInterval"
 Write-Host "Session cache TTL: $SessionCacheTTL"
 Write-Host "Session touch window: $SessionTouchWindow"
+Write-Host "Rate limit enabled: $($env:MYTHWAKE_RATE_LIMIT_ENABLED)"
+Write-Host "Rate limit window: $RateLimitWindow"
+Write-Host "Rate limit auth/gameplay: $RateLimitAuth / $RateLimitGameplay"
 Write-Host "Require idempotency: $($env:MYTHWAKE_REQUIRE_IDEMPOTENCY)"
 Write-Host "Stop server with Ctrl+C."
 Write-Host ""

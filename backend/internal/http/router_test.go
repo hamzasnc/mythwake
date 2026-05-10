@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
@@ -100,6 +101,80 @@ func TestPanicRecoveryReturnsJSONError(t *testing.T) {
 	}
 	if body.ErrorCode != "internal_error" || body.RequestID != "panic-request-001" {
 		t.Fatalf("expected internal error with request id, got %#v", body)
+	}
+}
+
+func TestAuthRateLimit(t *testing.T) {
+	handler := newTestHandlerWithConfig(config.Config{
+		RateLimitEnabled: true,
+		RateLimitWindow:  time.Minute,
+		RateLimitAuth:    2,
+	})
+
+	for i := 0; i < 2; i++ {
+		response := httptest.NewRecorder()
+		request := httptest.NewRequest(http.MethodPost, "/auth/guest", nil)
+		handler.ServeHTTP(response, request)
+		if response.Code != http.StatusOK {
+			t.Fatalf("expected auth request %d to pass, got %d", i+1, response.Code)
+		}
+	}
+
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/auth/guest", nil)
+	request.Header.Set("X-Request-ID", "auth-limit-001")
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusTooManyRequests {
+		t.Fatalf("expected rate limited auth status 429, got %d", response.Code)
+	}
+	if response.Header().Get("Retry-After") == "" {
+		t.Fatal("expected Retry-After header")
+	}
+
+	var body api.ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.ErrorCode != "rate_limited" || body.RequestID != "auth-limit-001" {
+		t.Fatalf("expected rate limit error with request id, got %#v", body)
+	}
+}
+
+func TestGameplayRateLimitUsesSessionToken(t *testing.T) {
+	handler := newTestHandlerWithConfig(config.Config{
+		RateLimitEnabled:  true,
+		RateLimitWindow:   time.Minute,
+		RateLimitGameplay: 1,
+	})
+	login := loginGuest(t, handler)
+
+	first := httptest.NewRecorder()
+	firstRequest := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addAuth(firstRequest, login.SessionToken)
+	addIdempotencyKey(firstRequest, "campaign-rate-001")
+	handler.ServeHTTP(first, firstRequest)
+	if first.Code != http.StatusOK {
+		t.Fatalf("expected first gameplay request to pass, got %d", first.Code)
+	}
+
+	second := httptest.NewRecorder()
+	secondRequest := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	secondRequest.Header.Set("X-Request-ID", "gameplay-limit-001")
+	addAuth(secondRequest, login.SessionToken)
+	addIdempotencyKey(secondRequest, "campaign-rate-002")
+	handler.ServeHTTP(second, secondRequest)
+
+	if second.Code != http.StatusTooManyRequests {
+		t.Fatalf("expected rate limited gameplay status 429, got %d", second.Code)
+	}
+
+	var body api.ErrorResponse
+	if err := json.NewDecoder(second.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.ErrorCode != "rate_limited" || body.RequestID != "gameplay-limit-001" {
+		t.Fatalf("expected gameplay rate limit error with request id, got %#v", body)
 	}
 }
 
@@ -427,14 +502,26 @@ func TestAccessoryBodyValidation(t *testing.T) {
 }
 
 func newTestHandler() http.Handler {
+	return newTestHandlerWithConfig(config.Config{})
+}
+
+func newTestHandlerWithConfig(cfg config.Config) http.Handler {
+	if cfg.ServiceName == "" {
+		cfg.ServiceName = "test-api"
+	}
+	if cfg.Addr == "" {
+		cfg.Addr = ":0"
+	}
+	if cfg.Environment == "" {
+		cfg.Environment = "test"
+	}
+	if cfg.Version == "" {
+		cfg.Version = "test"
+	}
+	cfg.RequireIdempotency = true
+
 	return NewRouter(
-		config.Config{
-			ServiceName:        "test-api",
-			Addr:               ":0",
-			Environment:        "test",
-			Version:            "test",
-			RequireIdempotency: true,
-		},
+		cfg,
 		log.New(testWriter{}, "", 0),
 		nil,
 		player.NewManager(nil),

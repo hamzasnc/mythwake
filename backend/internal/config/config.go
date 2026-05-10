@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -25,6 +26,10 @@ type Config struct {
 	StateFlushTimeout  time.Duration
 	SessionCacheTTL    time.Duration
 	SessionTouchWindow time.Duration
+	RateLimitEnabled   bool
+	RateLimitWindow    time.Duration
+	RateLimitAuth      int
+	RateLimitGameplay  int
 	RequireIdempotency bool
 }
 
@@ -33,7 +38,7 @@ func Load() Config {
 		ServiceName:        "mythwake-api",
 		Addr:               getEnv("MYTHWAKE_API_ADDR", ":8080"),
 		Environment:        getEnv("MYTHWAKE_ENV", "local"),
-		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.28"),
+		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.29"),
 		DatabaseURL:        os.Getenv("MYTHWAKE_DATABASE_URL"),
 		DatabaseStatus:     "disabled",
 		StateCacheStatus:   "disabled",
@@ -42,6 +47,10 @@ func Load() Config {
 		StateFlushTimeout:  getDurationEnv("MYTHWAKE_STATE_FLUSH_TIMEOUT", 5*time.Second),
 		SessionCacheTTL:    getDurationEnv("MYTHWAKE_SESSION_CACHE_TTL", 30*time.Second),
 		SessionTouchWindow: getDurationEnv("MYTHWAKE_SESSION_TOUCH_WINDOW", 30*time.Second),
+		RateLimitEnabled:   getBoolEnv("MYTHWAKE_RATE_LIMIT_ENABLED", true),
+		RateLimitWindow:    getDurationEnv("MYTHWAKE_RATE_LIMIT_WINDOW", time.Minute),
+		RateLimitAuth:      getIntEnv("MYTHWAKE_RATE_LIMIT_AUTH", 30),
+		RateLimitGameplay:  getIntEnv("MYTHWAKE_RATE_LIMIT_GAMEPLAY", 240),
 		RequireIdempotency: getBoolEnv("MYTHWAKE_REQUIRE_IDEMPOTENCY", true),
 	}
 }
@@ -83,6 +92,20 @@ func getBoolEnv(key string, fallback bool) bool {
 	default:
 		return fallback
 	}
+}
+
+func getIntEnv(key string, fallback int) int {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+
+	parsed, err := strconv.Atoi(value)
+	if err != nil {
+		return fallback
+	}
+
+	return parsed
 }
 
 func getStateWriteMode() string {
