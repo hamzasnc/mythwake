@@ -39,6 +39,11 @@ Current scope:
 - Navicat-friendly meta views:
   - `debug.v_player_claim_overview`
   - `debug.v_player_summon_overview`
+- Navicat-friendly account and persistence views:
+  - `debug.v_account_player_overview`
+  - `debug.v_account_identity_overview`
+  - `debug.v_account_session_overview`
+  - `debug.v_player_persistence_overview`
 - Durable state cache wrapper in front of PostgreSQL
 - Ledger write-behind saves by default: successful economy actions durably write the action/result first, then batch materialized player state
 - Write-through mode is still available for debugging full state persistence on every action
@@ -91,6 +96,7 @@ Shortcut scripts from the repo root:
 ```powershell
 .\scripts\start-backend.cmd
 .\scripts\check-backend.cmd
+.\scripts\check-postgres-e2e.cmd
 ```
 
 `start-backend.cmd` sets the local environment variables, checks PostgreSQL, tries to start the local `postgresql*` Windows service if needed, then runs the API.
@@ -110,6 +116,8 @@ Optional script modes:
 .\scripts\check-backend.cmd -BaseUrl "http://localhost:8080"
 .\scripts\check-backend.cmd -FlushState
 .\scripts\check-backend.cmd -CheckIdempotency
+.\scripts\check-backend.cmd -CheckUnauthorized
+.\scripts\check-postgres-e2e.cmd
 ```
 
 Default address:
@@ -143,6 +151,8 @@ Database behavior:
 - Reusing a key for a different endpoint/body returns an `idempotency_conflict` action result.
 - Missing or malformed keys on gameplay mutations return HTTP 400 before the action is applied.
 - `GET /health` reports `database`, `state_cache`, `state_write_mode`, `state_flush_interval`, and `require_idempotency`.
+- `scripts/check-backend.cmd` performs guest login, sends Bearer auth for protected endpoints, and can verify missing-session `401`s.
+- `scripts/check-postgres-e2e.cmd` starts the API twice against PostgreSQL and verifies login, protected state, campaign persistence, manual flush, restart reload, and idempotency replay.
 
 Endpoints:
 - `POST /auth/guest`

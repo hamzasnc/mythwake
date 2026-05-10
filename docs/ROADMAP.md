@@ -341,6 +341,8 @@ Current backend state:
 - Unity Server Mode can now load and cache the `/definitions` snapshot with ETag revalidation and use it for server-owned dungeon preview values.
 - Player state, flush, and gameplay mutation routes now validate Bearer sessions and resolve the player context from the session token.
 - Unity Server Mode now persists the session token, sends `Authorization: Bearer <sessionToken>`, and retries protected requests once after `401` by refreshing guest auth.
+- Added `scripts/check-postgres-e2e.cmd` to verify PostgreSQL guest auth, protected state, campaign persistence, manual flush, API restart reload, and idempotency replay.
+- Added account/session/persistence debug views for Navicat.
 - Successful idempotent action results save in `player.player_action_results`.
 - Per-action economy deltas save in `logs.player_action_ledger`.
 - Startup restores from the latest durable action result snapshot if materialized tables are behind.
@@ -573,6 +575,7 @@ Progress:
 - Added `internal/auth` with planned provider definitions for guest, email, Google, and Apple plus hashed PostgreSQL session persistence.
 - Added explicit player domain action services for campaign, dungeons, hero progression, equipment, accessories, summons, and missions while preserving the public service API.
 - Added per-player backend service contexts resolved from validated sessions instead of routing protected requests through one hardcoded dev player.
+- Added PostgreSQL E2E restart smoke tooling and session-aware backend smoke checks.
 
 Next useful step:
 - Add Redis for short-lived session/rate-limit/lock coordination after the current PostgreSQL session path is stable.

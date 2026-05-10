@@ -31,7 +31,7 @@ func Load() Config {
 		ServiceName:        "mythwake-api",
 		Addr:               getEnv("MYTHWAKE_API_ADDR", ":8080"),
 		Environment:        getEnv("MYTHWAKE_ENV", "local"),
-		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.24"),
+		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.25"),
 		DatabaseURL:        os.Getenv("MYTHWAKE_DATABASE_URL"),
 		DatabaseStatus:     "disabled",
 		StateCacheStatus:   "disabled",
