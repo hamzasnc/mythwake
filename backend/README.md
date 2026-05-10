@@ -10,6 +10,7 @@ Current scope:
 - Dev player state endpoint
 - Guest auth with random session tokens
 - Logout endpoint that revokes the active session token
+- Short read-through session cache for PostgreSQL-backed auth validation
 - PostgreSQL account identities and hashed session token persistence for guest, email, Google, and Apple login providers
 - Bearer session validation for player state, flush, and gameplay mutation endpoints
 - Per-player service contexts resolved from the authenticated session token
@@ -52,6 +53,7 @@ Current scope:
 - `GET /player/state` returns a full client-ready snapshot.
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
 - `POST /auth/logout` revokes the active session token.
+- Logout flushes the loaded player state before returning when that player is hot in memory.
 - `GET /player/core-state` returns the compact numeric state only.
 - Player state, flush, and gameplay mutation routes reject missing or invalid sessions with `401`.
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
@@ -114,6 +116,7 @@ Optional script modes:
 ```powershell
 .\scripts\start-backend.cmd -NoDatabase
 .\scripts\start-backend.cmd -AllowMissingIdempotency
+.\scripts\start-backend.cmd -SessionCacheTTL "30s" -SessionTouchWindow "30s"
 .\scripts\start-backend.cmd -DatabaseUrl "postgres://mythwake:mythwake@localhost:5432/mythwake?sslmode=disable"
 .\scripts\check-backend.cmd -BaseUrl "http://localhost:8080"
 .\scripts\check-backend.cmd -FlushState
@@ -134,11 +137,15 @@ Optional environment variables:
 - `MYTHWAKE_STATE_WRITE_MODE`, default `ledger_write_behind`, optional `write_through` or `write_behind`
 - `MYTHWAKE_STATE_FLUSH_INTERVAL` such as `30s`, `2m`, or `5m`
 - `MYTHWAKE_STATE_FLUSH_TIMEOUT` such as `5s`
+- `MYTHWAKE_SESSION_CACHE_TTL`, default `30s`; set to `0s` to force DB lookup on every validation
+- `MYTHWAKE_SESSION_TOUCH_WINDOW`, default `30s`; controls how often cached active sessions update `last_seen_at`
 - `MYTHWAKE_REQUIRE_IDEMPOTENCY`, default `true`; set to `false` only for local debugging
 
 Database behavior:
 - If `MYTHWAKE_DATABASE_URL` is empty, the API uses the current in-memory dev state.
 - If `MYTHWAKE_DATABASE_URL` is set, startup connects to PostgreSQL, runs embedded migrations, and stores the dev player state in normalized progression tables.
+- PostgreSQL-backed sessions are cached briefly in-process to avoid a database round trip on every protected request.
+- The touch window updates `account.player_sessions.last_seen_at` at a controlled rate instead of on every request.
 - By default, idempotent gameplay actions update hot server state, synchronously write a durable action ledger/result to PostgreSQL, then queue the materialized player state for flush.
 - This default protects critical economy state from hard process crashes after a successful API response without forcing every materialized table to update immediately.
 - If the API restarts before a materialized flush, startup restores from the latest durable action result snapshot before falling back to normalized tables.
@@ -154,7 +161,7 @@ Database behavior:
 - Per-action currency deltas are written to `logs.player_action_ledger`.
 - Reusing a key for a different endpoint/body returns an `idempotency_conflict` action result.
 - Missing or malformed keys on gameplay mutations return HTTP 400 before the action is applied.
-- `GET /health` reports `database`, `state_cache`, `state_write_mode`, `state_flush_interval`, and `require_idempotency`.
+- `GET /health` reports `database`, `state_cache`, `state_write_mode`, `state_flush_interval`, session cache settings, and `require_idempotency`.
 - `scripts/check-backend.cmd` performs guest login, sends Bearer auth for protected endpoints, and can verify missing-session `401`s.
 - `scripts/check-postgres-e2e.cmd` starts the API twice against PostgreSQL and verifies login, protected state, campaign persistence, manual flush, restart reload, idempotency replay, and logout revocation.
 

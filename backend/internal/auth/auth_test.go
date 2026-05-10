@@ -10,6 +10,8 @@ import (
 type fakeAccountStore struct {
 	identity Identity
 	session  Session
+	findHits int
+	touches  int
 }
 
 func (store *fakeAccountStore) EnsureIdentity(_ context.Context, identity Identity) error {
@@ -23,6 +25,7 @@ func (store *fakeAccountStore) SaveSession(_ context.Context, session Session) e
 }
 
 func (store *fakeAccountStore) FindSessionByTokenHash(_ context.Context, tokenHash string, _ time.Time) (Session, bool, error) {
+	store.findHits++
 	if store.session.TokenHash != tokenHash {
 		return Session{}, false, nil
 	}
@@ -31,6 +34,7 @@ func (store *fakeAccountStore) FindSessionByTokenHash(_ context.Context, tokenHa
 }
 
 func (store *fakeAccountStore) TouchSession(_ context.Context, sessionID string, seenAt time.Time) error {
+	store.touches++
 	if store.session.SessionID == sessionID {
 		store.session.LastSeenAt = seenAt
 	}
@@ -118,6 +122,88 @@ func TestValidateSessionUsesStoredTokenHash(t *testing.T) {
 
 	if validated.PlayerID != issued.PlayerID || validated.TokenHash != issued.TokenHash {
 		t.Fatalf("expected validated stored session, got %#v", validated)
+	}
+}
+
+func TestValidateSessionCachesStoredSession(t *testing.T) {
+	store := &fakeAccountStore{}
+	issuer := NewService(store)
+
+	issued, err := issuer.IssueGuestSessionForPlayer(context.Background(), "player-1", "")
+	if err != nil {
+		t.Fatalf("issue guest session: %v", err)
+	}
+
+	service := NewService(store, WithSessionCacheTTL(time.Minute), WithSessionTouchInterval(time.Minute))
+	if _, err := service.ValidateSession(context.Background(), issued.Token); err != nil {
+		t.Fatalf("first validate session: %v", err)
+	}
+	if _, err := service.ValidateSession(context.Background(), issued.Token); err != nil {
+		t.Fatalf("second validate session: %v", err)
+	}
+
+	if store.findHits != 1 {
+		t.Fatalf("expected one stored session lookup, got %d", store.findHits)
+	}
+	if store.touches != 1 {
+		t.Fatalf("expected one stored session touch, got %d", store.touches)
+	}
+}
+
+func TestValidateSessionRefreshesExpiredCache(t *testing.T) {
+	store := &fakeAccountStore{}
+	now := time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC)
+	issuer := NewService(store)
+	issuer.now = func() time.Time { return now }
+
+	issued, err := issuer.IssueGuestSessionForPlayer(context.Background(), "player-1", "")
+	if err != nil {
+		t.Fatalf("issue guest session: %v", err)
+	}
+
+	service := NewService(store, WithSessionCacheTTL(time.Second), WithSessionTouchInterval(time.Minute))
+	service.now = func() time.Time { return now }
+	if _, err := service.ValidateSession(context.Background(), issued.Token); err != nil {
+		t.Fatalf("first validate session: %v", err)
+	}
+
+	now = now.Add(2 * time.Second)
+	if _, err := service.ValidateSession(context.Background(), issued.Token); err != nil {
+		t.Fatalf("second validate session: %v", err)
+	}
+
+	if store.findHits != 2 {
+		t.Fatalf("expected cache expiry to force second store lookup, got %d", store.findHits)
+	}
+}
+
+func TestValidateSessionTouchesStoreAfterWindow(t *testing.T) {
+	store := &fakeAccountStore{}
+	now := time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC)
+	issuer := NewService(store)
+	issuer.now = func() time.Time { return now }
+
+	issued, err := issuer.IssueGuestSessionForPlayer(context.Background(), "player-1", "")
+	if err != nil {
+		t.Fatalf("issue guest session: %v", err)
+	}
+
+	service := NewService(store, WithSessionCacheTTL(time.Minute), WithSessionTouchInterval(time.Second))
+	service.now = func() time.Time { return now }
+	if _, err := service.ValidateSession(context.Background(), issued.Token); err != nil {
+		t.Fatalf("first validate session: %v", err)
+	}
+
+	now = now.Add(2 * time.Second)
+	if _, err := service.ValidateSession(context.Background(), issued.Token); err != nil {
+		t.Fatalf("second validate session: %v", err)
+	}
+
+	if store.findHits != 1 {
+		t.Fatalf("expected cached session lookup, got %d store lookups", store.findHits)
+	}
+	if store.touches != 2 {
+		t.Fatalf("expected touch after window, got %d touches", store.touches)
 	}
 }
 

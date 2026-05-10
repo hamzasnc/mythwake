@@ -45,6 +45,8 @@ func TestManagerFlushAllFlushesLoadedPlayers(t *testing.T) {
 		t.Fatalf("second service: %v", err)
 	}
 
+	store.saved = map[string]PersistentState{}
+	store.flushCount = 0
 	first.state.Gold = 10
 	second.state.Gold = 20
 
@@ -60,6 +62,51 @@ func TestManagerFlushAllFlushesLoadedPlayers(t *testing.T) {
 	}
 	if store.flushCount != 2 {
 		t.Fatalf("expected two service flush calls, got %d", store.flushCount)
+	}
+}
+
+func TestManagerFlushPlayerIfLoadedOnlyFlushesTarget(t *testing.T) {
+	store := &managerFlushStore{saved: map[string]PersistentState{}}
+	manager := NewManager(store)
+
+	first, err := manager.ServiceForPlayer(context.Background(), "player-a")
+	if err != nil {
+		t.Fatalf("first service: %v", err)
+	}
+	second, err := manager.ServiceForPlayer(context.Background(), "player-b")
+	if err != nil {
+		t.Fatalf("second service: %v", err)
+	}
+
+	store.saved = map[string]PersistentState{}
+	store.flushCount = 0
+	first.state.Gold = 10
+	second.state.Gold = 20
+
+	flushed, err := manager.FlushPlayerIfLoaded(context.Background(), "player-b")
+	if err != nil {
+		t.Fatalf("flush player: %v", err)
+	}
+	if !flushed {
+		t.Fatal("expected loaded player to flush")
+	}
+	if _, ok := store.saved["player-a"]; ok {
+		t.Fatal("expected player-a to remain unflushed")
+	}
+	if store.saved["player-b"].PlayerState.Gold != 20 {
+		t.Fatalf("expected player-b gold 20, got %d", store.saved["player-b"].PlayerState.Gold)
+	}
+}
+
+func TestManagerFlushPlayerIfLoadedSkipsColdPlayer(t *testing.T) {
+	manager := NewManager(nil)
+
+	flushed, err := manager.FlushPlayerIfLoaded(context.Background(), "player-cold")
+	if err != nil {
+		t.Fatalf("flush cold player: %v", err)
+	}
+	if flushed {
+		t.Fatal("expected cold player to be skipped")
 	}
 }
 

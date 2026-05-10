@@ -581,9 +581,11 @@ Progress:
 - Added manager-level loaded player flushing for graceful shutdown.
 - Added Unity app pause/quit backend flush calls for active backend sessions.
 - Extended smoke tooling to verify logout revokes the active session.
+- Added a configurable read-through session cache and PostgreSQL touch window to reduce DB load on protected requests.
+- Logout now flushes a loaded player context before responding when hot player state exists.
 
 Next useful step:
-- Add Redis for short-lived session/rate-limit/lock coordination after the PostgreSQL session lifecycle path is stable.
+- Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.
 - Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
 
 Done when:

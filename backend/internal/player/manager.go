@@ -73,6 +73,26 @@ func (manager *Manager) FlushAll(ctx context.Context) error {
 	return flushError
 }
 
+func (manager *Manager) FlushPlayerIfLoaded(ctx context.Context, playerID string) (bool, error) {
+	playerID = strings.TrimSpace(playerID)
+	if playerID == "" {
+		return false, fmt.Errorf("player id is required")
+	}
+
+	manager.mu.Lock()
+	service, ok := manager.services[playerID]
+	manager.mu.Unlock()
+	if !ok {
+		return false, nil
+	}
+
+	if err := service.FlushState(ctx); err != nil {
+		return true, fmt.Errorf("flush player %s: %w", service.PlayerID(), err)
+	}
+
+	return true, nil
+}
+
 func (manager *Manager) LoadedPlayerCount() int {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()

@@ -110,6 +110,7 @@ if ($CheckLogout) {
     [pscustomobject]@{
         LogoutStatus = $logout.status
         PlayerId = $logout.playerId
+        StateFlushed = $logout.stateFlushed
         ExpectedAfterLogout = 401
         ActualAfterLogout = $revokedStatus
         Passed = $revokedStatus -eq 401

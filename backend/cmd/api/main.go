@@ -22,7 +22,11 @@ import (
 func main() {
 	cfg := config.Load()
 	logger := log.New(os.Stdout, "mythwake-api ", log.LstdFlags|log.LUTC)
-	authService := auth.NewService(nil)
+	authOptions := []auth.ServiceOption{
+		auth.WithSessionCacheTTL(cfg.SessionCacheTTL),
+		auth.WithSessionTouchInterval(cfg.SessionTouchWindow),
+	}
+	authService := auth.NewService(nil, authOptions...)
 	var cachedStateStore *cache.WriteBehindStateStore
 	var stateStore player.StateStore
 
@@ -39,7 +43,7 @@ func main() {
 			cancel()
 			logger.Fatalf("database migration failed: %v", err)
 		}
-		authService = auth.NewService(postgres.NewAccountStore(db))
+		authService = auth.NewService(postgres.NewAccountStore(db), authOptions...)
 		cachedStateStore = cache.NewWriteBehindStateStore(
 			postgres.NewPlayerStateStore(db),
 			cache.Config{

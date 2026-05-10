@@ -99,6 +99,8 @@ func (router *Router) handleHealth(response http.ResponseWriter, request *http.R
 		"state_cache":          router.config.StateCacheStatus,
 		"state_write_mode":     router.config.StateWriteMode,
 		"state_flush_interval": router.config.StateFlushInterval.String(),
+		"session_cache_ttl":    router.config.SessionCacheTTL.String(),
+		"session_touch_window": router.config.SessionTouchWindow.String(),
 		"require_idempotency":  boolLabel(router.config.RequireIdempotency),
 		"environment":          router.config.Environment,
 		"version":              router.config.Version,
@@ -193,9 +195,19 @@ func (router *Router) handleLogout(response http.ResponseWriter, request *http.R
 		return
 	}
 
-	writeJSON(response, http.StatusOK, map[string]string{
-		"status":   "ok",
-		"playerId": session.PlayerID,
+	stateFlushed, err := router.playerManager.FlushPlayerIfLoaded(request.Context(), session.PlayerID)
+	if err != nil {
+		writeJSON(response, http.StatusInternalServerError, map[string]string{
+			"errorCode": "logout_flush_failed",
+			"message":   err.Error(),
+		})
+		return
+	}
+
+	writeJSON(response, http.StatusOK, map[string]any{
+		"status":       "ok",
+		"playerId":     session.PlayerID,
+		"stateFlushed": stateFlushed,
 	})
 }
 

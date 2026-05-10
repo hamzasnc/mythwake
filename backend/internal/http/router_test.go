@@ -143,6 +143,13 @@ func TestLogoutEndpointRevokesSession(t *testing.T) {
 	if logoutResponse.Code != http.StatusOK {
 		t.Fatalf("expected logout status 200, got %d", logoutResponse.Code)
 	}
+	var logoutBody map[string]any
+	if err := json.NewDecoder(logoutResponse.Body).Decode(&logoutBody); err != nil {
+		t.Fatalf("decode logout response: %v", err)
+	}
+	if logoutBody["stateFlushed"] != true {
+		t.Fatalf("expected logout to flush loaded player state, got %#v", logoutBody)
+	}
 
 	stateResponse := httptest.NewRecorder()
 	stateRequest := httptest.NewRequest(http.MethodGet, "/player/state", nil)

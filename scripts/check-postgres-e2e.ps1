@@ -67,11 +67,13 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.26-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.27-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
     $env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
+    $env:MYTHWAKE_SESSION_CACHE_TTL = "30s"
+    $env:MYTHWAKE_SESSION_TOUCH_WINDOW = "30s"
     $env:MYTHWAKE_REQUIRE_IDEMPOTENCY = "true"
 
     Remove-Item -LiteralPath $stdoutLog, $stderrLog -Force -ErrorAction SilentlyContinue
@@ -177,6 +179,7 @@ try {
 
     $logout = Invoke-Json -Method "POST" -Path "/auth/logout" -Headers $authHeaders
     Assert-Equal $logout.status "ok" "Logout should return ok."
+    Assert-Equal $logout.stateFlushed $true "Logout should flush the loaded player state."
 
     $revokedStatus = $null
     try {
@@ -199,6 +202,7 @@ try {
         CampaignStage = $stageAfterFight
         Replay = $replay.replay
         LogoutRevoked = $revokedStatus -eq 401
+        LogoutStateFlushed = $logout.stateFlushed
         StateWriteMode = $StateWriteMode
     } | Format-List
 }
