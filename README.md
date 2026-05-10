@@ -69,12 +69,15 @@ Backend:
 - PostgreSQL schemas split tables into `account`, `common`, `player`, `logs`, and `debug`
 - Navicat-friendly debug views expose player overview, hero overview, and economy history
 - Gear/accessory inventory, accessory levels, and equipped accessories persist in PostgreSQL
+- Summon count, daily mission claims, and Battle Pass claims persist in PostgreSQL
+- Claim and summon debug views are available for Navicat
 - Redis is planned but not connected yet
 - Windows helper scripts:
   - `scripts/start-backend.cmd`
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.6: Added PostgreSQL persistence for summon count, daily claims, Battle Pass claims, and claim/summon debug views.
 - Backend 0.2.5: Added PostgreSQL accessory inventory/equipment persistence and fixed accessory fusion target IDs.
 - Backend 0.2.4: Added PostgreSQL schemas, debug views, and economy transaction logging.
 - Backend 0.2.3: Added normalized PostgreSQL player progression tables and load/save flow for core player state.

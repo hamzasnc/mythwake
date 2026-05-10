@@ -40,6 +40,42 @@ func TestAccessoryFuseTargetStopsAtR4(t *testing.T) {
 	}
 }
 
+func TestSummonCountPersistsAfterPull(t *testing.T) {
+	store := &fakeStateStore{}
+	service := NewService()
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	result := service.PullSummon(heroBannerID)
+	if !result.Success {
+		t.Fatalf("expected summon to succeed, got %#v", result)
+	}
+
+	if store.saved.SummonCount != 1 {
+		t.Fatalf("expected saved summon count 1, got %d", store.saved.SummonCount)
+	}
+}
+
+func TestMissionClaimsPersist(t *testing.T) {
+	store := &fakeStateStore{}
+	service := NewService()
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	result := service.ClaimDailyMission("daily_battles")
+	if !result.Success {
+		t.Fatalf("expected daily claim to succeed, got %#v", result)
+	}
+
+	if !store.saved.ClaimedDaily["daily_battles"] {
+		t.Fatalf("expected daily_battles claim to be saved")
+	}
+}
+
 type fakeStateStore struct {
 	saved PersistentState
 }

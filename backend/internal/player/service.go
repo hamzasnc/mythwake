@@ -30,6 +30,9 @@ type PersistentState struct {
 	AccessoryInventory map[string]int
 	AccessoryLevels    map[string]int
 	EquippedAccessory  map[string]string
+	ClaimedDaily       map[string]bool
+	ClaimedBattlePass  map[string]bool
+	SummonCount        int
 }
 
 type StateSaveSource struct {
@@ -417,6 +420,9 @@ func (service *Service) persistentState() PersistentState {
 		AccessoryInventory: cloneIntMap(service.accessoryInventory),
 		AccessoryLevels:    cloneIntMap(service.accessoryLevels),
 		EquippedAccessory:  cloneStringMap(service.equippedAccessory),
+		ClaimedDaily:       cloneBoolMap(service.claimedDaily),
+		ClaimedBattlePass:  cloneBoolMap(service.claimedBattlePass),
+		SummonCount:        service.summonCount,
 	}
 }
 
@@ -428,6 +434,9 @@ func (service *Service) applyPersistentState(state PersistentState) {
 	service.accessoryInventory = mergeIntMaps(service.accessoryInventory, state.AccessoryInventory)
 	service.accessoryLevels = mergeIntMaps(service.accessoryLevels, state.AccessoryLevels)
 	service.equippedAccessory = mergeStringMaps(service.equippedAccessory, state.EquippedAccessory)
+	service.claimedDaily = mergeBoolMaps(service.claimedDaily, state.ClaimedDaily)
+	service.claimedBattlePass = mergeBoolMaps(service.claimedBattlePass, state.ClaimedBattlePass)
+	service.summonCount = state.SummonCount
 	service.recalculatePower()
 }
 
@@ -457,6 +466,22 @@ func cloneStringMap(values map[string]string) map[string]string {
 
 func mergeStringMaps(defaults map[string]string, persisted map[string]string) map[string]string {
 	merged := cloneStringMap(defaults)
+	for key, value := range persisted {
+		merged[key] = value
+	}
+	return merged
+}
+
+func cloneBoolMap(values map[string]bool) map[string]bool {
+	cloned := make(map[string]bool, len(values))
+	for key, value := range values {
+		cloned[key] = value
+	}
+	return cloned
+}
+
+func mergeBoolMaps(defaults map[string]bool, persisted map[string]bool) map[string]bool {
+	merged := cloneBoolMap(defaults)
 	for key, value := range persisted {
 		merged[key] = value
 	}

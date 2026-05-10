@@ -61,6 +61,9 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	if err := store.saveAccessoryState(ctx, tx, playerID, state); err != nil {
 		return err
 	}
+	if err := store.saveMetaState(ctx, tx, playerID, state, source); err != nil {
+		return err
+	}
 	if err := store.saveEconomyTransaction(ctx, tx, playerID, previousCurrencies, state.PlayerState, source); err != nil {
 		return err
 	}
@@ -154,6 +157,18 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
+	claimedDaily, err := store.loadDailyClaims(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
+	claimedBattlePass, err := store.loadBattlePassClaims(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
+	summonCount, err := store.loadSummonCount(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
 
 	return player.PersistentState{
 		PlayerState:        state,
@@ -163,6 +178,9 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 		AccessoryInventory: accessoryInventory,
 		AccessoryLevels:    accessoryLevels,
 		EquippedAccessory:  equippedAccessory,
+		ClaimedDaily:       claimedDaily,
+		ClaimedBattlePass:  claimedBattlePass,
+		SummonCount:        summonCount,
 	}, true, nil
 }
 
@@ -339,6 +357,67 @@ func (store *PlayerStateStore) saveAccessoryState(ctx context.Context, tx *sql.T
 			INSERT INTO player.player_equipped_accessories (player_id, slot_id, accessory_id, updated_at)
 			VALUES ($1, $2, $3, now())
 		`, playerID, slotID, accessoryID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (store *PlayerStateStore) saveMetaState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState, source player.StateSaveSource) error {
+	if _, err := tx.ExecContext(ctx, `
+		INSERT INTO player.player_summon_state (player_id, summon_count, updated_at)
+		VALUES ($1, $2, now())
+		ON CONFLICT (player_id) DO UPDATE SET
+			summon_count = EXCLUDED.summon_count,
+			updated_at = now()
+	`, playerID, state.SummonCount); err != nil {
+		return err
+	}
+
+	if source.ActionID == "summon_pull" {
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO logs.summon_history (player_id, banner_id, summon_count)
+			VALUES ($1, 'hero_shard_standard', $2)
+		`, playerID, state.SummonCount); err != nil {
+			return err
+		}
+	}
+
+	if _, err := tx.ExecContext(ctx, `
+		DELETE FROM player.player_daily_mission_claims
+		WHERE player_id = $1
+	`, playerID); err != nil {
+		return err
+	}
+
+	for missionID, claimed := range state.ClaimedDaily {
+		if !claimed {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO player.player_daily_mission_claims (player_id, mission_id, claimed, claimed_at, updated_at)
+			VALUES ($1, $2, true, now(), now())
+		`, playerID, missionID); err != nil {
+			return err
+		}
+	}
+
+	if _, err := tx.ExecContext(ctx, `
+		DELETE FROM player.player_battle_pass_claims
+		WHERE player_id = $1
+	`, playerID); err != nil {
+		return err
+	}
+
+	for rewardID, claimed := range state.ClaimedBattlePass {
+		if !claimed {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO player.player_battle_pass_claims (player_id, reward_id, claimed, claimed_at, updated_at)
+			VALUES ($1, $2, true, now(), now())
+		`, playerID, rewardID); err != nil {
 			return err
 		}
 	}
@@ -528,4 +607,69 @@ func accessoryIsEquipped(equipped map[string]string, accessoryID string) bool {
 		}
 	}
 	return false
+}
+
+func (store *PlayerStateStore) loadSummonCount(ctx context.Context, playerID string) (int, error) {
+	var summonCount int
+	err := store.db.QueryRowContext(ctx, `
+		SELECT summon_count
+		FROM player.player_summon_state
+		WHERE player_id = $1
+	`, playerID).Scan(&summonCount)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+
+	return summonCount, nil
+}
+
+func (store *PlayerStateStore) loadDailyClaims(ctx context.Context, playerID string) (map[string]bool, error) {
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT mission_id, claimed
+		FROM player.player_daily_mission_claims
+		WHERE player_id = $1
+	`, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	claims := map[string]bool{}
+	for rows.Next() {
+		var missionID string
+		var claimed bool
+		if err := rows.Scan(&missionID, &claimed); err != nil {
+			return nil, err
+		}
+		claims[missionID] = claimed
+	}
+
+	return claims, rows.Err()
+}
+
+func (store *PlayerStateStore) loadBattlePassClaims(ctx context.Context, playerID string) (map[string]bool, error) {
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT reward_id, claimed
+		FROM player.player_battle_pass_claims
+		WHERE player_id = $1
+	`, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	claims := map[string]bool{}
+	for rows.Next() {
+		var rewardID string
+		var claimed bool
+		if err := rows.Scan(&rewardID, &claimed); err != nil {
+			return nil, err
+		}
+		claims[rewardID] = claimed
+	}
+
+	return claims, rows.Err()
 }
