@@ -15,15 +15,18 @@ func TestWriteBehindStateStoreFlushesLatestStateOnly(t *testing.T) {
 	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
 	defer closeStore(t, store)
 
-	if err := store.SaveState(context.Background(), "player-1", testState(2), player.StateSaveSource{ActionID: "campaign_fight"}); err != nil {
+	if err := store.SaveState(context.Background(), "player-1", testState(2), idempotentSource("campaign_fight", "key-1")); err != nil {
 		t.Fatalf("queue first state: %v", err)
 	}
-	if err := store.SaveState(context.Background(), "player-1", testState(3), player.StateSaveSource{ActionID: "gold_dungeon_run"}); err != nil {
+	if err := store.SaveState(context.Background(), "player-1", testState(3), idempotentSource("gold_dungeon_run", "key-2")); err != nil {
 		t.Fatalf("queue second state: %v", err)
 	}
 
 	if base.saveCount != 0 {
 		t.Fatalf("expected no immediate write, got %d", base.saveCount)
+	}
+	if base.actionSaveCount != 2 {
+		t.Fatalf("expected two immediate action result writes, got %d", base.actionSaveCount)
 	}
 	if stats := store.Stats(); stats.DirtyPlayers != 1 || stats.QueuedSaves != 2 {
 		t.Fatalf("unexpected stats before flush: %#v", stats)
@@ -69,7 +72,7 @@ func TestWriteBehindStateStoreKeepsDirtyStateAfterFlushFailure(t *testing.T) {
 	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
 	defer closeStore(t, store)
 
-	if err := store.SaveState(context.Background(), "player-1", testState(4), player.StateSaveSource{ActionID: "campaign_fight"}); err != nil {
+	if err := store.SaveState(context.Background(), "player-1", testState(4), idempotentSource("campaign_fight", "key-1")); err != nil {
 		t.Fatalf("queue state: %v", err)
 	}
 
@@ -111,27 +114,43 @@ func TestWriteBehindStateStoreDefaultsToWriteThroughDurability(t *testing.T) {
 	}
 }
 
-func TestWriteBehindStateStoreForcesIdempotentActionsToWriteThrough(t *testing.T) {
+func TestWriteBehindStateStoreSavesIdempotentActionResultAndQueuesState(t *testing.T) {
 	base := &fakeStateStore{}
 	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
 	defer closeStore(t, store)
 
-	result := &api.ActionResult{Success: true, ActionID: "summon_pull"}
-	err := store.SaveState(context.Background(), "player-1", testState(6), player.StateSaveSource{
-		ActionID:       "summon_pull",
-		IdempotencyKey: "summon-key-1",
-		RequestHash:    "summon-hash-1",
-		ActionResult:   result,
-	})
+	err := store.SaveState(context.Background(), "player-1", testState(6), idempotentSource("summon_pull", "summon-key-1"))
 	if err != nil {
 		t.Fatalf("save idempotent state: %v", err)
 	}
 
+	if base.actionSaveCount != 1 {
+		t.Fatalf("expected immediate action result save, got %d", base.actionSaveCount)
+	}
+	if base.saveCount != 0 {
+		t.Fatalf("expected materialized state to wait for flush, got %d", base.saveCount)
+	}
+	if stats := store.Stats(); stats.DirtyPlayers != 1 {
+		t.Fatalf("expected dirty write-behind state, got %#v", stats)
+	}
+
+	if err := store.Flush(context.Background()); err != nil {
+		t.Fatalf("flush state: %v", err)
+	}
 	if base.saveCount != 1 {
-		t.Fatalf("expected idempotent action to write through immediately, got %d", base.saveCount)
+		t.Fatalf("expected materialized state flush, got %d", base.saveCount)
 	}
 	if stats := store.Stats(); stats.DirtyPlayers != 0 {
 		t.Fatalf("expected no dirty write-behind state, got %#v", stats)
+	}
+}
+
+func idempotentSource(actionID string, key string) player.StateSaveSource {
+	return player.StateSaveSource{
+		ActionID:       actionID,
+		IdempotencyKey: key,
+		RequestHash:    key + "-hash",
+		ActionResult:   &api.ActionResult{Success: true, ActionID: actionID, IdempotencyKey: key},
 	}
 }
 
@@ -164,10 +183,12 @@ func closeStore(t *testing.T, store *WriteBehindStateStore) {
 }
 
 type fakeStateStore struct {
-	saveError error
-	saveCount int
-	saved     player.PersistentState
-	source    player.StateSaveSource
+	saveError       error
+	actionSaveError error
+	saveCount       int
+	actionSaveCount int
+	saved           player.PersistentState
+	source          player.StateSaveSource
 }
 
 func (store *fakeStateStore) LoadState(context.Context, string) (player.PersistentState, bool, error) {
@@ -181,6 +202,16 @@ func (store *fakeStateStore) SaveState(_ context.Context, _ string, state player
 
 	store.saveCount++
 	store.saved = state
+	store.source = source
+	return nil
+}
+
+func (store *fakeStateStore) SaveActionResult(_ context.Context, _ string, source player.StateSaveSource) error {
+	if store.actionSaveError != nil {
+		return store.actionSaveError
+	}
+
+	store.actionSaveCount++
 	store.source = source
 	return nil
 }

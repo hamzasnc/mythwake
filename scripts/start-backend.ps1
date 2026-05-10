@@ -2,8 +2,8 @@ param(
     [string]$DatabaseUrl = "postgres://mythwake:mythwake@localhost:5432/mythwake?sslmode=disable",
     [string]$ApiAddr = ":8080",
     [string]$StateFlushInterval = "30s",
-    [ValidateSet("write_through", "write_behind")]
-    [string]$StateWriteMode = "write_through",
+    [ValidateSet("ledger_write_behind", "write_through", "write_behind")]
+    [string]$StateWriteMode = "ledger_write_behind",
     [switch]$NoDatabase
 )
 
@@ -71,7 +71,7 @@ function Start-PostgresServiceIfNeeded {
 $goExe = Find-Go
 $env:MYTHWAKE_API_ADDR = $ApiAddr
 $env:MYTHWAKE_ENV = "local"
-$env:MYTHWAKE_API_VERSION = "0.2.11"
+$env:MYTHWAKE_API_VERSION = "0.2.12"
 $env:MYTHWAKE_STATE_FLUSH_INTERVAL = $StateFlushInterval
 $env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
 $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode

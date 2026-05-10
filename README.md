@@ -77,10 +77,11 @@ Backend:
 - Summon count, daily mission claims, and Battle Pass claims persist in PostgreSQL
 - Claim and summon debug views are available for Navicat
 - PostgreSQL writes now sit behind a durable state cache wrapper
-- Critical player saves use write-through by default, so success responses only happen after PostgreSQL commits
-- Optional write-behind mode exists for local/dev batching experiments only
+- Critical server actions now use ledger write-behind by default, so the action/result is durable before success while materialized state can flush in batches
+- Full write-through remains available as a debug mode
 - Server actions support `Idempotency-Key` to make timeout/retry flows replay-safe
 - Successful idempotent action results are stored in `player.player_action_results`
+- Per-action economy deltas are stored in `logs.player_action_ledger`
 - Unity reuses pending idempotency keys after transport failures
 - `POST /player/state/flush` is ready as the future app-pause/disconnect save hook
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
@@ -92,6 +93,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.12: Switched default persistence to durable action ledger plus materialized state write-behind flush.
 - Backend 0.2.11: Added durable idempotent action results, replay-safe server action routing, and Unity pending action keys.
 - Backend 0.2.10: Added durable player state cache wrapper, write-through default saves, optional write-behind mode, cache health fields, manual flush endpoint, and shutdown flushing.
 - 0.2.11: Added Server Mode routing for manual gameplay buttons through the Unity backend client.

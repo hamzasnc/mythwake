@@ -36,7 +36,8 @@ Current scope:
   - `debug.v_player_claim_overview`
   - `debug.v_player_summon_overview`
 - Durable state cache wrapper in front of PostgreSQL
-- Write-through player saves by default so successful economy actions are durable before the API responds
+- Ledger write-behind saves by default: successful economy actions durably write the action/result first, then batch materialized player state
+- Write-through mode is still available for debugging full state persistence on every action
 - Optional write-behind mode for local/dev-only batching experiments
 - `GET /player/state` returns a full client-ready snapshot.
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
@@ -101,22 +102,25 @@ Optional environment variables:
 - `MYTHWAKE_ENV`
 - `MYTHWAKE_API_VERSION`
 - `MYTHWAKE_DATABASE_URL`
-- `MYTHWAKE_STATE_WRITE_MODE`, default `write_through`, optional `write_behind`
+- `MYTHWAKE_STATE_WRITE_MODE`, default `ledger_write_behind`, optional `write_through` or `write_behind`
 - `MYTHWAKE_STATE_FLUSH_INTERVAL` such as `30s`, `2m`, or `5m`
 - `MYTHWAKE_STATE_FLUSH_TIMEOUT` such as `5s`
 
 Database behavior:
 - If `MYTHWAKE_DATABASE_URL` is empty, the API uses the current in-memory dev state.
 - If `MYTHWAKE_DATABASE_URL` is set, startup connects to PostgreSQL, runs embedded migrations, and stores the dev player state in normalized progression tables.
-- By default, gameplay actions update hot server state and synchronously write PostgreSQL before returning success.
-- This default protects critical economy state from hard process crashes after a successful API response.
-- Optional `MYTHWAKE_STATE_WRITE_MODE=write_behind` queues dirty player state and flushes every `MYTHWAKE_STATE_FLUSH_INTERVAL`; use it only for local/dev or non-critical experiments.
-- Write-behind mode also flushes once more during graceful shutdown.
+- By default, idempotent gameplay actions update hot server state, synchronously write a durable action ledger/result to PostgreSQL, then queue the materialized player state for flush.
+- This default protects critical economy state from hard process crashes after a successful API response without forcing every materialized table to update immediately.
+- If the API restarts before a materialized flush, startup restores from the latest durable action result snapshot before falling back to normalized tables.
+- `MYTHWAKE_STATE_WRITE_MODE=write_through` forces the full normalized player state to be saved on every successful action.
+- `MYTHWAKE_STATE_WRITE_MODE=write_behind` is for local/dev-only experiments.
+- Queued materialized state flushes every `MYTHWAKE_STATE_FLUSH_INTERVAL` and once more during graceful shutdown.
 - `POST /player/state/flush` exists as the future app-pause/disconnect hook.
 - New player seed state still writes immediately so first login/startup is durable.
 - The JSON player state snapshot is still written as a fallback/debug mirror.
 - Currency changes are written to `logs.economy_transactions` during DB save.
 - Successful action responses with an `Idempotency-Key` are written to `player.player_action_results`.
+- Per-action currency deltas are written to `logs.player_action_ledger`.
 - Reusing a key for a different endpoint/body returns an `idempotency_conflict` action result.
 - `GET /health` reports `database`, `state_cache`, `state_write_mode`, and `state_flush_interval`.
 

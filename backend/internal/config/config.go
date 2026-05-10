@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	StateWriteModeWriteThrough = "write_through"
-	StateWriteModeWriteBehind  = "write_behind"
+	StateWriteModeLedgerWriteBehind = "ledger_write_behind"
+	StateWriteModeWriteThrough      = "write_through"
+	StateWriteModeWriteBehind       = "write_behind"
 )
 
 type Config struct {
@@ -28,7 +29,7 @@ func Load() Config {
 		ServiceName:        "mythwake-api",
 		Addr:               getEnv("MYTHWAKE_API_ADDR", ":8080"),
 		Environment:        getEnv("MYTHWAKE_ENV", "local"),
-		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.11"),
+		Version:            getEnv("MYTHWAKE_API_VERSION", "0.2.12"),
 		DatabaseURL:        os.Getenv("MYTHWAKE_DATABASE_URL"),
 		DatabaseStatus:     "disabled",
 		StateCacheStatus:   "disabled",
@@ -62,10 +63,11 @@ func getDurationEnv(key string, fallback time.Duration) time.Duration {
 }
 
 func getStateWriteMode() string {
-	value := getEnv("MYTHWAKE_STATE_WRITE_MODE", StateWriteModeWriteThrough)
-	if value == StateWriteModeWriteBehind {
+	value := getEnv("MYTHWAKE_STATE_WRITE_MODE", StateWriteModeLedgerWriteBehind)
+	switch value {
+	case StateWriteModeLedgerWriteBehind, StateWriteModeWriteThrough, StateWriteModeWriteBehind:
 		return value
 	}
 
-	return StateWriteModeWriteThrough
+	return StateWriteModeLedgerWriteBehind
 }

@@ -42,7 +42,7 @@ func main() {
 			cache.Config{
 				FlushInterval: cfg.StateFlushInterval,
 				FlushTimeout:  cfg.StateFlushTimeout,
-				WriteBehind:   cfg.StateWriteMode == config.StateWriteModeWriteBehind,
+				WriteBehind:   cfg.StateWriteMode != config.StateWriteModeWriteThrough,
 			},
 			logger,
 		)

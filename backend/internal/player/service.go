@@ -29,6 +29,10 @@ type ActionResultStore interface {
 	LoadActionResult(ctx context.Context, playerID string, idempotencyKey string) (StoredActionResult, bool, error)
 }
 
+type ActionResultWriter interface {
+	SaveActionResult(ctx context.Context, playerID string, source StateSaveSource) error
+}
+
 type StateFlusher interface {
 	Flush(ctx context.Context) error
 }
@@ -52,6 +56,7 @@ type StateSaveSource struct {
 	RewardID       string
 	IdempotencyKey string
 	RequestHash    string
+	CurrencyDelta  api.Reward
 	ActionResult   *api.ActionResult
 }
 
@@ -245,7 +250,8 @@ func (service *Service) executeAction(ctx context.Context, request ActionRequest
 		return result
 	}
 
-	if err := service.saveState(ctx, request, actionID, outcome.reward, result); err != nil {
+	delta := currencyDelta(beforeState.PlayerState, service.state)
+	if err := service.saveState(ctx, request, actionID, outcome.reward, delta, result); err != nil {
 		service.applyPersistentState(beforeState)
 		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "persistence_failed", fmt.Sprintf("Action could not be saved and was rolled back: %v", err), api.Reward{})
 	}
@@ -629,7 +635,16 @@ func (service *Service) grantReward(reward api.Reward) {
 	service.state.PassXP += reward.PassXP
 }
 
-func (service *Service) saveState(ctx context.Context, request ActionRequest, actionID string, reward api.Reward, result api.ActionResult) error {
+func currencyDelta(before api.PlayerState, after api.PlayerState) api.Reward {
+	return api.Reward{
+		Gold:        after.Gold - before.Gold,
+		Gems:        after.Gems - before.Gems,
+		MythEssence: after.MythEssence - before.MythEssence,
+		PassXP:      after.PassXP - before.PassXP,
+	}
+}
+
+func (service *Service) saveState(ctx context.Context, request ActionRequest, actionID string, reward api.Reward, delta api.Reward, result api.ActionResult) error {
 	if service.stateStore == nil {
 		return nil
 	}
@@ -639,6 +654,7 @@ func (service *Service) saveState(ctx context.Context, request ActionRequest, ac
 		RewardID:       reward.RewardID,
 		IdempotencyKey: request.IdempotencyKey,
 		RequestHash:    request.RequestHash,
+		CurrencyDelta:  delta,
 	}
 	if request.HasIdempotency() {
 		source.ActionResult = &result

@@ -19,7 +19,12 @@ func NewPlayerStateStore(db *sql.DB) *PlayerStateStore {
 }
 
 func (store *PlayerStateStore) LoadState(ctx context.Context, playerID string) (player.PersistentState, bool, error) {
-	state, found, err := store.loadNormalizedState(ctx, playerID)
+	state, found, err := store.loadLatestActionState(ctx, playerID)
+	if err != nil || found {
+		return state, found, err
+	}
+
+	state, found, err = store.loadNormalizedState(ctx, playerID)
 	if err != nil || found {
 		return state, found, err
 	}
@@ -82,6 +87,9 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	if err := store.saveActionResult(ctx, tx, playerID, source); err != nil {
 		return err
 	}
+	if err := store.saveActionLedger(ctx, tx, playerID, source); err != nil {
+		return err
+	}
 
 	return tx.Commit()
 }
@@ -106,6 +114,35 @@ func (store *PlayerStateStore) LoadActionResult(ctx context.Context, playerID st
 	}
 
 	return record, true, nil
+}
+
+func (store *PlayerStateStore) SaveActionResult(ctx context.Context, playerID string, source player.StateSaveSource) error {
+	if source.IdempotencyKey == "" || source.RequestHash == "" || source.ActionResult == nil {
+		return nil
+	}
+
+	tx, err := store.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx, `
+		INSERT INTO account.players (id)
+		VALUES ($1)
+		ON CONFLICT (id) DO UPDATE SET updated_at = now()
+	`, playerID); err != nil {
+		return err
+	}
+
+	if err := store.saveActionResult(ctx, tx, playerID, source); err != nil {
+		return err
+	}
+	if err := store.saveActionLedger(ctx, tx, playerID, source); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (store *PlayerStateStore) saveActionResult(ctx context.Context, tx *sql.Tx, playerID string, source player.StateSaveSource) error {
@@ -148,6 +185,123 @@ func (store *PlayerStateStore) saveActionResult(ctx context.Context, tx *sql.Tx,
 	}
 
 	return nil
+}
+
+func (store *PlayerStateStore) saveActionLedger(ctx context.Context, tx *sql.Tx, playerID string, source player.StateSaveSource) error {
+	if source.IdempotencyKey == "" || source.RequestHash == "" || source.ActionResult == nil {
+		return nil
+	}
+
+	rawResponse, err := json.Marshal(source.ActionResult)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO logs.player_action_ledger (
+			player_id,
+			idempotency_key,
+			action_id,
+			request_hash,
+			success,
+			error_code,
+			reward_id,
+			gold_delta,
+			gems_delta,
+			myth_essence_delta,
+			pass_xp_delta,
+			response,
+			created_at
+		)
+		VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), NULLIF($7, ''), $8, $9, $10, $11, $12, now())
+		ON CONFLICT (player_id, idempotency_key) DO NOTHING
+	`, playerID,
+		source.IdempotencyKey,
+		source.ActionID,
+		source.RequestHash,
+		source.ActionResult.Success,
+		source.ActionResult.ErrorCode,
+		source.RewardID,
+		source.CurrencyDelta.Gold,
+		source.CurrencyDelta.Gems,
+		source.CurrencyDelta.MythEssence,
+		source.CurrencyDelta.PassXP,
+		rawResponse)
+	return err
+}
+
+func (store *PlayerStateStore) loadLatestActionState(ctx context.Context, playerID string) (player.PersistentState, bool, error) {
+	var rawResponse []byte
+	err := store.db.QueryRowContext(ctx, `
+		SELECT response
+		FROM player.player_action_results
+		WHERE player_id = $1
+			AND updated_at >= COALESCE((
+				SELECT updated_at
+				FROM player.player_state_snapshots
+				WHERE player_id = $1
+			), '-infinity'::timestamptz)
+		ORDER BY updated_at DESC
+		LIMIT 1
+	`, playerID).Scan(&rawResponse)
+	if errors.Is(err, sql.ErrNoRows) {
+		return player.PersistentState{}, false, nil
+	}
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
+
+	var result api.ActionResult
+	if err := json.Unmarshal(rawResponse, &result); err != nil {
+		return player.PersistentState{}, false, err
+	}
+	if result.PlayerSnapshot.PlayerID == "" {
+		return player.PersistentState{}, false, nil
+	}
+
+	return persistentStateFromSnapshot(result.PlayerSnapshot), true, nil
+}
+
+func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentState {
+	state := player.PersistentState{
+		PlayerState:        snapshot.State,
+		HeroLevels:         map[string]int{},
+		HeroShards:         map[string]int{},
+		HeroAscensions:     map[string]int{},
+		EquipmentLevels:    map[string]int{},
+		AccessoryInventory: map[string]int{},
+		AccessoryLevels:    map[string]int{},
+		EquippedAccessory:  map[string]string{},
+		ClaimedDaily:       map[string]bool{},
+		ClaimedBattlePass:  map[string]bool{},
+		SummonCount:        snapshot.SummonCount,
+	}
+
+	for _, hero := range snapshot.Heroes {
+		state.HeroLevels[hero.HeroID] = hero.Level
+		state.HeroAscensions[hero.HeroID] = hero.Ascension
+	}
+	for _, shard := range snapshot.HeroShards {
+		state.HeroShards[shard.HeroID] = shard.Shards
+	}
+	for _, equipment := range snapshot.Equipment {
+		state.EquipmentLevels[equipment.EquipmentID] = equipment.Level
+	}
+	for _, accessory := range snapshot.Accessories {
+		state.AccessoryInventory[accessory.AccessoryID] = accessory.Copies
+		state.AccessoryLevels[accessory.AccessoryID] = accessory.Level
+	}
+	for _, equipped := range snapshot.EquippedAccessory {
+		state.EquippedAccessory[equipped.SlotID] = equipped.AccessoryID
+	}
+	for _, claim := range snapshot.DailyClaims {
+		state.ClaimedDaily[claim.ClaimID] = claim.Claimed
+	}
+	for _, claim := range snapshot.BattlePassClaims {
+		state.ClaimedBattlePass[claim.ClaimID] = claim.Claimed
+	}
+
+	return state
 }
 
 func (store *PlayerStateStore) loadSnapshotState(ctx context.Context, playerID string) (player.PersistentState, bool, error) {

@@ -324,11 +324,13 @@ Current backend state:
 - Unity can now ping the backend, guest-login, and apply `/player/state` snapshots through the ingame Backend panel.
 - Unity Server Mode can now execute manual gameplay actions through the backend and refresh from the returned `playerSnapshot`.
 - Added a durable state cache wrapper in front of PostgreSQL.
-- Server gameplay actions now update hot server state first and write PostgreSQL synchronously by default before returning success.
-- Optional write-behind mode exists for local/dev-only batching experiments and flushes on interval plus graceful shutdown.
+- Server gameplay actions now update hot server state first, synchronously write a durable action/result ledger, then queue materialized player state for batched flush by default.
+- Full write-through mode exists for debugging, and local/dev write-behind mode remains available for experiments.
 - Added `POST /player/state/flush` as a future app-pause/disconnect hook.
 - Added durable idempotent action results through `Idempotency-Key`.
-- Successful idempotent action results save in `player.player_action_results` in the same transaction as player state.
+- Successful idempotent action results save in `player.player_action_results`.
+- Per-action economy deltas save in `logs.player_action_ledger`.
+- Startup restores from the latest durable action result snapshot if materialized tables are behind.
 - Unity Server Mode now sends and reuses pending idempotency keys for gameplay actions after transport failures.
 - Redis is not connected yet.
 
@@ -433,8 +435,9 @@ Avoid Redis for:
 
 Current cache stance:
 - The current Go cache wrapper is an in-process MVP for one API instance.
-- Default mode is `write_through`: critical economy actions are durable in PostgreSQL before success is returned.
-- Optional `write_behind` mode is not safe for production economy state because hard process crashes can lose unflushed state.
+- Default mode is `ledger_write_behind`: critical economy actions write a durable action ledger/result before success is returned, while materialized player tables flush in batches.
+- Full `write_through` mode is available for debugging direct table writes.
+- Plain `write_behind` mode is not safe for production economy state unless every critical action also has a durable ledger/result.
 - Redis later should handle cross-process sessions, locks, rate limits, and short-lived coordination.
 - PostgreSQL remains the durable source of truth for player economy and inventory.
 
@@ -525,9 +528,11 @@ Progress:
 - Added `player.player_accessory_inventory`, `player.player_equipped_accessories`, and `debug.v_player_accessory_overview`.
 - Added `player.player_equipment_training` and `debug.v_player_equipment_overview`.
 - Added `player.player_summon_state`, `player.player_daily_mission_claims`, `player.player_battle_pass_claims`, `logs.summon_history`, `debug.v_player_claim_overview`, and `debug.v_player_summon_overview`.
-- Added state cache wrapper with write-through default, optional write-behind interval flush, and graceful shutdown flush.
+- Added state cache wrapper with ledger write-behind default, optional full write-through mode, and graceful shutdown flush.
 - Added a manual player state flush endpoint for client disconnect/app-pause flows.
 - Added `player.player_action_results` and `debug.v_player_action_result_overview` for idempotent action replay.
+- Added `logs.player_action_ledger` and `debug.v_player_action_ledger_overview` for per-action durable economy deltas.
+- Default persistence mode is now durable action ledger plus batched materialized state flush.
 
 Next useful step:
 - Split backend gameplay services out of the current single `player.Service` while keeping the API behavior stable:

@@ -101,11 +101,30 @@ func (store *WriteBehindStateStore) SaveState(ctx context.Context, playerID stri
 	if source.ActionID == seedActionID {
 		return store.base.SaveState(ctx, playerID, state, source)
 	}
-	if source.IdempotencyKey != "" {
-		return store.base.SaveState(ctx, playerID, state, source)
+	if source.IdempotencyKey != "" && source.ActionResult != nil {
+		if actionWriter, ok := store.base.(player.ActionResultWriter); ok {
+			if err := actionWriter.SaveActionResult(ctx, playerID, source); err != nil {
+				return err
+			}
+			if store.config.WriteBehind {
+				source.ActionResult = nil
+				return store.enqueueState(playerID, state, source)
+			}
+		}
 	}
 	if !store.config.WriteBehind {
 		return store.base.SaveState(ctx, playerID, state, source)
+	}
+	if source.IdempotencyKey == "" {
+		return store.base.SaveState(ctx, playerID, state, source)
+	}
+
+	return store.enqueueState(playerID, state, source)
+}
+
+func (store *WriteBehindStateStore) enqueueState(playerID string, state player.PersistentState, source player.StateSaveSource) error {
+	if playerID == "" {
+		return errors.New("player id is required")
 	}
 
 	now := time.Now().UTC()
