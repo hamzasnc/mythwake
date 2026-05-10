@@ -30,6 +30,7 @@ Server Mode should behave like the first real mobile-client path:
 - Backend Smoke is the allowed one-click flow for broad local server checks.
 - Gameplay buttons are disabled while a backend request is in flight.
 - Backend requests carry client request IDs, and structured server errors should be readable without opening server logs.
+- Normal Fight/Dungeon spam should not show HTTP 429; gameplay spam is handled by request gating, idempotency, and player locks.
 - Auto Attack stays local-only and paused in Server Mode until server-side auto/AFK behavior is designed.
 
 ## Smoke Test Checklist

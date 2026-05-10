@@ -118,6 +118,7 @@ Backend:
 - Every API response now carries an `X-Request-ID`, and error JSON includes `requestId` for log/client correlation
 - HTTP panic recovery returns a JSON `internal_error` instead of dropping the request
 - Auth/gameplay rate limit middleware can use Redis or memory through the shared limiter interface
+- Gameplay mutation rate limiting is disabled by default so normal Fight/Dungeon spam is handled by client request gating, idempotency, and per-player locks instead of player-visible 429s
 - Gameplay mutations take a short per-player lock so fast double-taps or multi-instance races fail cleanly with `player_busy`
 - `/health` reports whether gameplay balance is using the static fallback or the PostgreSQL-loaded snapshot
 - Server clock endpoint exposes authoritative UTC time plus daily/weekly reset countdowns for future offline rewards and daily reset validation
@@ -156,6 +157,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Backend 0.2.56: Disabled gameplay mutation rate limiting by default so normal run/fight spam does not surface HTTP 429s; auth rate limiting remains enabled and gameplay limits can still be configured as a high-threshold abuse guard.
 - Prototype 0.2.32: Unity backend requests now carry request IDs, structured backend error bodies are formatted into readable client diagnostics, action-result errors are humanized, Backend-panel Smoke now covers accessory equip/level/fuse candidates plus Daily Summon and Mission Track claims, PostgreSQL E2E verifies structured error/request-id contracts, and AFK edge tests cover future timestamp recovery.
 - Prototype 0.2.31: Unity Server Mode now persists across restarts, auto-bootstraps through the backend, blocks local debug/reset mutations while server-authoritative, gates gameplay during backend requests, shows expanded backend health/cache diagnostics, and adds a Backend-panel Smoke action for compact server-flow testing.
 - Backend 0.2.55: Expanded PostgreSQL E2E coverage across core gameplay mutation endpoints and restart reload checks.

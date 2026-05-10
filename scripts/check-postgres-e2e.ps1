@@ -131,7 +131,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.55-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.56-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_REDIS_ADDR = ""
     $env:MYTHWAKE_REDIS_PASSWORD = ""
@@ -147,7 +147,7 @@ function Start-Api {
     $env:MYTHWAKE_RATE_LIMIT_ENABLED = "true"
     $env:MYTHWAKE_RATE_LIMIT_WINDOW = "1m"
     $env:MYTHWAKE_RATE_LIMIT_AUTH = "30"
-    $env:MYTHWAKE_RATE_LIMIT_GAMEPLAY = "240"
+    $env:MYTHWAKE_RATE_LIMIT_GAMEPLAY = "0"
     $env:MYTHWAKE_PLAYER_LOCK_TTL = "5s"
     $env:MYTHWAKE_PLAYER_CONTEXT_IDLE_TTL = "30m"
     $env:MYTHWAKE_PLAYER_CONTEXT_SWEEP_INTERVAL = "5m"
@@ -168,6 +168,10 @@ function Start-Api {
     if ($health.dev_tools -ne "true") {
         Stop-Api $process
         throw "Expected local E2E API to expose dev tools, got dev_tools=$($health.dev_tools)."
+    }
+    if ($health.rate_limit_gameplay -ne "0") {
+        Stop-Api $process
+        throw "Expected local E2E API gameplay rate limit to be disabled, got rate_limit_gameplay=$($health.rate_limit_gameplay)."
     }
 
     return $process

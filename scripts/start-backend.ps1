@@ -9,7 +9,7 @@ param(
     [int]$RedisDB = 0,
     [string]$RateLimitWindow = "1m",
     [int]$RateLimitAuth = 30,
-    [int]$RateLimitGameplay = 240,
+    [int]$RateLimitGameplay = 0,
     [string]$PlayerLockTTL = "5s",
     [string]$PlayerContextIdleTTL = "30m",
     [string]$PlayerContextSweepInterval = "5m",
@@ -85,7 +85,7 @@ function Start-PostgresServiceIfNeeded {
 $goExe = Find-Go
 $env:MYTHWAKE_API_ADDR = $ApiAddr
 $env:MYTHWAKE_ENV = "local"
-$env:MYTHWAKE_API_VERSION = "0.2.55"
+$env:MYTHWAKE_API_VERSION = "0.2.56"
 $env:MYTHWAKE_STATE_FLUSH_INTERVAL = $StateFlushInterval
 $env:MYTHWAKE_STATE_FLUSH_TIMEOUT = "5s"
 $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode

@@ -66,6 +66,7 @@ Current scope:
 - All responses include `X-Request-ID`; clients may send their own valid `X-Request-ID`.
 - Error responses use `{ "errorCode", "message", "requestId" }`.
 - Rate-limited requests return HTTP 429, `errorCode=rate_limited`, and `Retry-After`.
+- Gameplay mutation rate limiting is disabled by default; normal fight/dungeon spam is controlled by Unity request gating, per-player mutation locks, and idempotency instead of player-visible 429s. Enable `MYTHWAKE_RATE_LIMIT_GAMEPLAY` only as an abuse/ops guard.
 - `GET /time` returns the authoritative server time, Unix milliseconds, and upcoming UTC daily/weekly reset times.
 - `GET /player/core-state` returns the compact numeric state only.
 - Player state, flush, and gameplay mutation routes reject missing or invalid sessions with `401`.
@@ -143,7 +144,7 @@ Optional script modes:
 .\scripts\start-backend.cmd -NoDatabase
 .\scripts\start-backend.cmd -AllowMissingIdempotency
 .\scripts\start-backend.cmd -DisableRateLimit
-.\scripts\start-backend.cmd -RateLimitAuth 60 -RateLimitGameplay 600
+.\scripts\start-backend.cmd -RateLimitAuth 60 -RateLimitGameplay 3600
 .\scripts\start-backend.cmd -SessionCacheTTL "30s" -SessionTouchWindow "30s"
 .\scripts\start-backend.cmd -DatabaseUrl "postgres://mythwake:mythwake@localhost:5432/mythwake?sslmode=disable"
 .\scripts\check-backend.cmd -BaseUrl "http://localhost:8080"
@@ -175,7 +176,7 @@ Optional environment variables:
 - `MYTHWAKE_RATE_LIMIT_ENABLED`, default `true`
 - `MYTHWAKE_RATE_LIMIT_WINDOW`, default `1m`
 - `MYTHWAKE_RATE_LIMIT_AUTH`, default `30` requests per window for auth endpoints
-- `MYTHWAKE_RATE_LIMIT_GAMEPLAY`, default `240` requests per window for gameplay mutation endpoints
+- `MYTHWAKE_RATE_LIMIT_GAMEPLAY`, default `0` disabled for gameplay mutation endpoints; use a high value such as `3600` only for abuse protection
 - `MYTHWAKE_PLAYER_LOCK_STORE`, `memory` or `redis`; defaults to `redis` only when `MYTHWAKE_REDIS_ADDR` is set
 - `MYTHWAKE_PLAYER_LOCK_TTL`, default `5s`
 - `MYTHWAKE_REQUIRE_IDEMPOTENCY`, default `true`; set to `false` only for local debugging

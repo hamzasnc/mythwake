@@ -112,6 +112,16 @@ func TestLoadRateLimitSettings(t *testing.T) {
 	}
 }
 
+func TestLoadDefaultsDisableGameplayRateLimit(t *testing.T) {
+	t.Setenv("MYTHWAKE_RATE_LIMIT_GAMEPLAY", "")
+
+	cfg := Load()
+
+	if cfg.RateLimitGameplay != 0 {
+		t.Fatalf("expected gameplay rate limit to be disabled by default, got %d", cfg.RateLimitGameplay)
+	}
+}
+
 func TestLoadPlayerLockSettings(t *testing.T) {
 	t.Setenv("MYTHWAKE_PLAYER_LOCK_STORE", "memory")
 	t.Setenv("MYTHWAKE_PLAYER_LOCK_TTL", "3s")
