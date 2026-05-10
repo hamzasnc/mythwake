@@ -67,12 +67,13 @@ type PersistentState struct {
 }
 
 type StateSaveSource struct {
-	ActionID       string
-	RewardID       string
-	IdempotencyKey string
-	RequestHash    string
-	CurrencyDelta  api.Reward
-	ActionResult   *api.ActionResult
+	ActionID         string
+	RewardID         string
+	IdempotencyKey   string
+	RequestHash      string
+	ExpectedRevision int64
+	CurrencyDelta    api.Reward
+	ActionResult     *api.ActionResult
 }
 
 type ActionRequest struct {
@@ -85,6 +86,15 @@ type StoredActionResult struct {
 	ActionID     string
 	RequestHash  string
 	ActionResult api.ActionResult
+}
+
+type StaleRevisionError struct {
+	Expected int64
+	Actual   int64
+}
+
+func (err StaleRevisionError) Error() string {
+	return fmt.Sprintf("state revision %d is stale; latest is %d", err.Expected, err.Actual)
 }
 
 func (request ActionRequest) HasIdempotency() bool {
@@ -389,6 +399,12 @@ func (service *Service) executeAction(ctx context.Context, request ActionRequest
 	delta := economy.Delta(beforeState.PlayerState, service.state)
 	if err := service.saveState(ctx, request, actionID, outcome.reward, delta, result); err != nil {
 		service.applyPersistentState(beforeState)
+		var staleRevision StaleRevisionError
+		if errors.As(err, &staleRevision) {
+			service.reloadStateFromStore(ctx)
+			return service.newActionResult(false, actionID, request.IdempotencyKey, false, "stale_player_state", staleRevision.Error(), api.Reward{}, nil)
+		}
+
 		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "persistence_failed", fmt.Sprintf("Action could not be saved and was rolled back: %v", err), api.Reward{}, nil)
 	}
 
@@ -443,6 +459,20 @@ func (service *Service) bumpRevision() {
 	}
 	service.revision++
 	service.updatedAt = service.now().UTC()
+}
+
+func (service *Service) reloadStateFromStore(ctx context.Context) bool {
+	if service.stateStore == nil {
+		return false
+	}
+
+	state, found, err := service.stateStore.LoadState(ctx, service.playerID)
+	if err != nil || !found {
+		return false
+	}
+
+	service.applyPersistentState(state)
+	return true
 }
 
 func (service *Service) spendCurrency(currencyID string, amount int) (actionOutcome, bool) {

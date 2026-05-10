@@ -120,13 +120,18 @@ func TestWriteBehindStateStoreSavesIdempotentActionResultAndQueuesState(t *testi
 	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
 	defer closeStore(t, store)
 
-	err := store.SaveState(context.Background(), "player-1", testState(6), idempotentSource(gameplay.ActionSummonPull, "summon-key-1"))
+	source := idempotentSource(gameplay.ActionSummonPull, "summon-key-1")
+	source.ExpectedRevision = 5
+	err := store.SaveState(context.Background(), "player-1", testState(6), source)
 	if err != nil {
 		t.Fatalf("save idempotent state: %v", err)
 	}
 
 	if base.actionSaveCount != 1 {
 		t.Fatalf("expected immediate action result save, got %d", base.actionSaveCount)
+	}
+	if base.source.ExpectedRevision != 5 || base.source.ActionResult == nil {
+		t.Fatalf("expected durable action write to keep the request revision/result, got %#v", base.source)
 	}
 	if base.saveCount != 0 {
 		t.Fatalf("expected materialized state to wait for flush, got %d", base.saveCount)
@@ -140,6 +145,9 @@ func TestWriteBehindStateStoreSavesIdempotentActionResultAndQueuesState(t *testi
 	}
 	if base.saveCount != 1 {
 		t.Fatalf("expected materialized state flush, got %d", base.saveCount)
+	}
+	if base.source.ExpectedRevision != 0 || base.source.ActionResult != nil {
+		t.Fatalf("expected queued materialized flush to clear stale action revision/result, got %#v", base.source)
 	}
 	if stats := store.Stats(); stats.DirtyPlayers != 0 {
 		t.Fatalf("expected no dirty write-behind state, got %#v", stats)

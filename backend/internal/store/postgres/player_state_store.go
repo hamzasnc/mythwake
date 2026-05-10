@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
@@ -65,7 +64,7 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	if err := store.saveCoreState(ctx, tx, playerID, state.PlayerState); err != nil {
 		return err
 	}
-	if err := store.saveRevisionState(ctx, tx, playerID, state); err != nil {
+	if err := store.saveRevisionState(ctx, tx, playerID, state, source.ExpectedRevision); err != nil {
 		return err
 	}
 	if err := store.saveHeroState(ctx, tx, playerID, state); err != nil {
@@ -97,11 +96,6 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	}
 	if err := store.saveActionResult(ctx, tx, playerID, source); err != nil {
 		return err
-	}
-	if source.ActionResult != nil {
-		if err := store.saveActionResultRevision(ctx, tx, playerID, *source.ActionResult); err != nil {
-			return err
-		}
 	}
 	if err := store.saveActionLedger(ctx, tx, playerID, source); err != nil {
 		return err
@@ -151,6 +145,9 @@ func (store *PlayerStateStore) SaveActionResult(ctx context.Context, playerID st
 		return err
 	}
 
+	if err := store.saveActionResultRevision(ctx, tx, playerID, *source.ActionResult, source.ExpectedRevision); err != nil {
+		return err
+	}
 	if err := store.saveActionResult(ctx, tx, playerID, source); err != nil {
 		return err
 	}
@@ -295,7 +292,7 @@ func (store *PlayerStateStore) saveActionLedger(ctx context.Context, tx *sql.Tx,
 	return err
 }
 
-func (store *PlayerStateStore) saveActionResultRevision(ctx context.Context, tx *sql.Tx, playerID string, result api.ActionResult) error {
+func (store *PlayerStateStore) saveActionResultRevision(ctx context.Context, tx *sql.Tx, playerID string, result api.ActionResult, expectedRevision int64) error {
 	if result.PlayerSnapshot.Revision <= 0 {
 		return nil
 	}
@@ -303,7 +300,7 @@ func (store *PlayerStateStore) saveActionResultRevision(ctx context.Context, tx 
 	return store.saveRevisionState(ctx, tx, playerID, player.PersistentState{
 		Revision:  result.PlayerSnapshot.Revision,
 		UpdatedAt: parseSnapshotTime(result.PlayerSnapshot.UpdatedAtUTC),
-	})
+	}, expectedRevision)
 }
 
 func (store *PlayerStateStore) loadLatestActionState(ctx context.Context, playerID string) (player.PersistentState, bool, error) {
@@ -628,7 +625,7 @@ func (store *PlayerStateStore) saveCoreState(ctx context.Context, tx *sql.Tx, pl
 	return nil
 }
 
-func (store *PlayerStateStore) saveRevisionState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
+func (store *PlayerStateStore) saveRevisionState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState, expectedRevision int64) error {
 	revision := state.Revision
 	if revision < 1 {
 		revision = 1
@@ -648,8 +645,11 @@ func (store *PlayerStateStore) saveRevisionState(ctx context.Context, tx *sql.Tx
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
+	if err == nil && expectedRevision > 0 && currentRevision != expectedRevision {
+		return player.StaleRevisionError{Expected: expectedRevision, Actual: currentRevision}
+	}
 	if err == nil && currentRevision > revision {
-		return fmt.Errorf("state revision %d is older than stored revision %d", revision, currentRevision)
+		return player.StaleRevisionError{Expected: revision, Actual: currentRevision}
 	}
 
 	_, err = tx.ExecContext(ctx, `

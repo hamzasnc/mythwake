@@ -12,11 +12,12 @@ func (service *Service) saveState(ctx context.Context, request ActionRequest, ac
 	}
 
 	source := StateSaveSource{
-		ActionID:       actionID,
-		RewardID:       reward.RewardID,
-		IdempotencyKey: request.IdempotencyKey,
-		RequestHash:    request.RequestHash,
-		CurrencyDelta:  delta,
+		ActionID:         actionID,
+		RewardID:         reward.RewardID,
+		IdempotencyKey:   request.IdempotencyKey,
+		RequestHash:      request.RequestHash,
+		ExpectedRevision: request.ExpectedRevision,
+		CurrencyDelta:    delta,
 	}
 	if request.HasIdempotency() {
 		source.ActionResult = &result

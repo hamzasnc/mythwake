@@ -565,6 +565,26 @@ func TestPersistenceFailureRollsBackHotState(t *testing.T) {
 	}
 }
 
+func TestPersistenceStaleRevisionReloadsLatestState(t *testing.T) {
+	store := &staleOnActionStore{}
+	service := NewService()
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	result := service.FightCampaignWithRequest(context.Background(), ActionRequest{ExpectedRevision: 1})
+	if result.Success || result.ErrorCode != "stale_player_state" {
+		t.Fatalf("expected stale revision rejection, got %#v", result)
+	}
+	if result.PlayerSnapshot.Revision != 3 || result.PlayerState.CampaignStage != 3 {
+		t.Fatalf("expected response to reload latest durable state, got %#v", result)
+	}
+	if state := service.GetSnapshot(); state.Revision != 3 || state.State.CampaignStage != 3 {
+		t.Fatalf("expected hot state to reload latest durable state, got %#v", state)
+	}
+}
+
 type fakeStateStore struct {
 	saved PersistentState
 }
@@ -645,4 +665,27 @@ func (store *failingAfterSeedStore) SaveState(_ context.Context, _ string, _ Per
 	}
 
 	return errTestPersistenceFailed
+}
+
+type staleOnActionStore struct {
+	latest PersistentState
+}
+
+func (store *staleOnActionStore) LoadState(context.Context, string) (PersistentState, bool, error) {
+	if store.latest.Revision < 1 {
+		return PersistentState{}, false, nil
+	}
+
+	return ClonePersistentState(store.latest), true, nil
+}
+
+func (store *staleOnActionStore) SaveState(_ context.Context, _ string, state PersistentState, source StateSaveSource) error {
+	if source.ActionID == gameplay.ActionPlayerStateSeed {
+		store.latest = ClonePersistentState(state)
+		store.latest.PlayerState.CampaignStage = 3
+		store.latest.Revision = 3
+		return nil
+	}
+
+	return StaleRevisionError{Expected: source.ExpectedRevision, Actual: store.latest.Revision}
 }

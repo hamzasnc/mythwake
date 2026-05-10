@@ -107,6 +107,7 @@ func (store *WriteBehindStateStore) SaveState(ctx context.Context, playerID stri
 			}
 			if store.config.WriteBehind {
 				source.ActionResult = nil
+				source.ExpectedRevision = 0
 				return store.enqueueState(playerID, state, source)
 			}
 		}

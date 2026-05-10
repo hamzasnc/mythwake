@@ -345,6 +345,7 @@ Current backend state:
 - Player snapshots and action results now carry server state revisions/action receipts so clients can reason about accepted state versions.
 - Unity gameplay mutations now send the last known server state revision, and the backend rejects stale mutation attempts with the latest snapshot.
 - Action ledger rows now store accepted state revisions, and PostgreSQL guards against older materialized state writes overwriting newer accepted revisions.
+- PostgreSQL action-result writes now lock and enforce expected player state revisions transactionally before accepting gameplay mutations.
 - Unity Backend Ping surfaces state-cache dirty/failure status so local persistence tests do not require opening Navicat first.
 - Player state, flush, and gameplay mutation routes now validate Bearer sessions and resolve the player context from the session token.
 - Unity Server Mode now persists the session token, sends `Authorization: Bearer <sessionToken>`, and retries protected requests once after `401` by refreshing guest auth.
