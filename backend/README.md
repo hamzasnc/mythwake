@@ -59,6 +59,7 @@ Current scope:
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
 - `POST /player/offline/claim` claims server-authoritative AFK Gold and Myth Essence using server time.
 - Daily mission claims require server-tracked progress for the active UTC daily reset window.
+- Campaign and dungeon actions return server-authored combat results with rounds, HP, damage, and win/loss state.
 - `POST /auth/logout` revokes the active session token.
 - Logout flushes the loaded player state before returning when that player is hot in memory.
 - All responses include `X-Request-ID`; clients may send their own valid `X-Request-ID`.
@@ -79,10 +80,12 @@ Current scope:
 - Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.
 - Campaign, dungeon, and summon actions advance server-owned daily mission counters for the active UTC day.
 - `GET /definitions` exposes the current server-owned balance/action catalog for client and admin tooling, including auth providers, currencies, heroes, rewards, campaign stages, dungeons, accessories, costs, summons, missions, and action metadata, with content hashes and ETag revalidation.
+- Campaign and dungeon definitions include combat curves/stats so client previews can match server combat.
 - Navicat-friendly common definition views:
   - `debug.v_common_reward_overview`
   - `debug.v_common_progression_cost_overview`
   - `debug.v_common_meta_definition_overview`
+  - `debug.v_common_combat_definition_overview`
 - Successful idempotent action results are stored in PostgreSQL before the materialized player-state flush.
 - Retrying the same action with the same key returns the stored result with `replay: true` instead of applying rewards/spends again.
 - Graceful shutdown flushes loaded player contexts before closing the state cache.

@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.33-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.34-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"
@@ -130,6 +130,16 @@ $secondProcess = $null
 try {
     Write-Host "Starting first API instance on $baseUrl..."
     $firstProcess = Start-Api
+
+    $definitions = Invoke-Json -Path "/definitions"
+    $stageOneDefinition = $definitions.campaignStages | Where-Object { [int]$_.stageNumber -eq 1 } | Select-Object -First 1
+    if (-not $stageOneDefinition -or [int]$stageOneDefinition.enemyMaxHp -le 0 -or [int]$stageOneDefinition.enemyDamage -le 0) {
+        throw "Expected definitions to include campaign combat stats. Response: $($definitions | ConvertTo-Json -Depth 8)"
+    }
+    $goldDungeonDefinition = $definitions.dungeons | Where-Object { $_.dungeonId -eq "gold_dungeon" } | Select-Object -First 1
+    if (-not $goldDungeonDefinition -or [int]$goldDungeonDefinition.enemyBaseHp -le 0 -or [int]$goldDungeonDefinition.enemyDamagePowerDivisor -le 0) {
+        throw "Expected definitions to include dungeon combat curves. Response: $($definitions | ConvertTo-Json -Depth 8)"
+    }
 
     $unauthorizedStatus = $null
     try {

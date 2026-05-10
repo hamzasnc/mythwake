@@ -26,6 +26,8 @@ const (
 	AFKMinClaimSeconds   = 60
 	AFKMaxClaimSeconds   = 6 * 60 * 60
 	AFKRewardTickSeconds = 60
+
+	MaxCombatRounds = 45
 )
 
 type DungeonDefinition struct {
@@ -36,6 +38,13 @@ type DungeonDefinition struct {
 	RequiredPowerPerFloor int
 	BaseRewardAmount      int
 	RewardPerFloor        int
+	EnemyBaseHP           int
+	EnemyHPPerPower       int
+	EnemyHPPerFloor       int
+	EnemyBaseDamage       int
+	EnemyDamagePerFloor   int
+	EnemyDamagePowerDiv   int
+	MaxCombatRounds       int
 }
 
 type HeroDefinition struct {
@@ -63,16 +72,26 @@ type CampaignDefinition struct {
 	MilestoneBaseGems         int
 	MilestoneGemsPerStage     int
 	MilestonePassXP           int
+	EnemyBaseHP               int
+	EnemyHPPerPower           int
+	EnemyHPPerStageSquared    int
+	EnemyBaseDamage           int
+	EnemyDamagePerStage       int
+	EnemyDamagePowerDiv       int
+	MaxCombatRounds           int
 }
 
 type CampaignStageDefinition struct {
-	ID             string
-	CampaignID     string
-	StageNumber    int
-	DisplayName    string
-	RequiredPower  int
-	RewardID       string
-	EnemyProfileID string
+	ID              string
+	CampaignID      string
+	StageNumber     int
+	DisplayName     string
+	RequiredPower   int
+	RewardID        string
+	EnemyProfileID  string
+	EnemyMaxHP      int
+	EnemyDamage     int
+	MaxCombatRounds int
 }
 
 type AccessorySlotDefinition struct {
@@ -119,6 +138,12 @@ type SummonShardDrop struct {
 	Reward api.Reward
 }
 
+type EnemyCombatStats struct {
+	MaxHP     int
+	Damage    int
+	MaxRounds int
+}
+
 type ProgressionCostDefinition struct {
 	ID             string
 	Domain         string
@@ -158,6 +183,13 @@ var campaignDefinitions = []CampaignDefinition{
 		MilestoneBaseGems:         12,
 		MilestoneGemsPerStage:     1,
 		MilestonePassXP:           25,
+		EnemyBaseHP:               180,
+		EnemyHPPerPower:           2,
+		EnemyHPPerStageSquared:    6,
+		EnemyBaseDamage:           18,
+		EnemyDamagePerStage:       4,
+		EnemyDamagePowerDiv:       50,
+		MaxCombatRounds:           MaxCombatRounds,
 	},
 }
 
@@ -214,6 +246,13 @@ var dungeonDefinitions = map[string]DungeonDefinition{
 		RequiredPowerPerFloor: 50,
 		BaseRewardAmount:      95,
 		RewardPerFloor:        34,
+		EnemyBaseHP:           220,
+		EnemyHPPerPower:       2,
+		EnemyHPPerFloor:       95,
+		EnemyBaseDamage:       26,
+		EnemyDamagePerFloor:   3,
+		EnemyDamagePowerDiv:   48,
+		MaxCombatRounds:       MaxCombatRounds,
 	},
 	DungeonEssence: {
 		ID:                    DungeonEssence,
@@ -223,6 +262,13 @@ var dungeonDefinitions = map[string]DungeonDefinition{
 		RequiredPowerPerFloor: 50,
 		BaseRewardAmount:      110,
 		RewardPerFloor:        40,
+		EnemyBaseHP:           220,
+		EnemyHPPerPower:       2,
+		EnemyHPPerFloor:       95,
+		EnemyBaseDamage:       26,
+		EnemyDamagePerFloor:   3,
+		EnemyDamagePowerDiv:   48,
+		MaxCombatRounds:       MaxCombatRounds,
 	},
 	DungeonGear: {
 		ID:                    DungeonGear,
@@ -232,6 +278,13 @@ var dungeonDefinitions = map[string]DungeonDefinition{
 		RequiredPowerPerFloor: 56,
 		BaseRewardAmount:      0,
 		RewardPerFloor:        0,
+		EnemyBaseHP:           220,
+		EnemyHPPerPower:       2,
+		EnemyHPPerFloor:       95,
+		EnemyBaseDamage:       26,
+		EnemyDamagePerFloor:   4,
+		EnemyDamagePowerDiv:   48,
+		MaxCombatRounds:       MaxCombatRounds,
 	},
 }
 
@@ -354,14 +407,18 @@ func CampaignDefinitions() []CampaignDefinition {
 func CampaignStageDefinitions() []CampaignStageDefinition {
 	definitions := make([]CampaignStageDefinition, 0, 60)
 	for stage := 1; stage <= 60; stage++ {
+		combat := CampaignEnemyCombatStats(stage)
 		definitions = append(definitions, CampaignStageDefinition{
-			ID:             fmt.Sprintf("campaign_stage_%03d", stage),
-			CampaignID:     "main_campaign",
-			StageNumber:    stage,
-			DisplayName:    fmt.Sprintf("Rift Echo %d", stage),
-			RequiredPower:  CampaignRequiredPower(stage),
-			RewardID:       fmt.Sprintf("reward_campaign_stage_%03d", stage),
-			EnemyProfileID: "rift_echo",
+			ID:              fmt.Sprintf("campaign_stage_%03d", stage),
+			CampaignID:      "main_campaign",
+			StageNumber:     stage,
+			DisplayName:     fmt.Sprintf("Rift Echo %d", stage),
+			RequiredPower:   CampaignRequiredPower(stage),
+			RewardID:        fmt.Sprintf("reward_campaign_stage_%03d", stage),
+			EnemyProfileID:  "rift_echo",
+			EnemyMaxHP:      combat.MaxHP,
+			EnemyDamage:     combat.Damage,
+			MaxCombatRounds: combat.MaxRounds,
 		})
 	}
 	return definitions
@@ -437,10 +494,23 @@ func AccessoryDefinitions() []AccessoryDefinition {
 }
 
 func DungeonRequiredPower(definition DungeonDefinition, floor int) int {
+	floor = max(1, floor)
 	return definition.BaseRequiredPower + (floor * definition.RequiredPowerPerFloor)
 }
 
+func DungeonEnemyCombatStats(definition DungeonDefinition, floor int) EnemyCombatStats {
+	floor = max(1, floor)
+	requiredPower := DungeonRequiredPower(definition, floor)
+	powerDivisor := max(1, definition.EnemyDamagePowerDiv)
+	return EnemyCombatStats{
+		MaxHP:     max(1, definition.EnemyBaseHP+(requiredPower*definition.EnemyHPPerPower)+(floor*definition.EnemyHPPerFloor)),
+		Damage:    max(1, definition.EnemyBaseDamage+(floor*definition.EnemyDamagePerFloor)+(requiredPower/powerDivisor)),
+		MaxRounds: max(1, definition.MaxCombatRounds),
+	}
+}
+
 func DungeonReward(definition DungeonDefinition, floor int) api.Reward {
+	floor = max(1, floor)
 	reward := api.Reward{
 		RewardID: fmt.Sprintf("reward_%s_floor_%d", definition.ID, floor),
 	}
@@ -461,10 +531,24 @@ func DungeonReward(definition DungeonDefinition, floor int) api.Reward {
 }
 
 func CampaignRequiredPower(stage int) int {
+	stage = max(1, stage)
 	return 90 + (stage * 46)
 }
 
+func CampaignEnemyCombatStats(stage int) EnemyCombatStats {
+	stage = max(1, stage)
+	definition := campaignDefinitions[0]
+	requiredPower := CampaignRequiredPower(stage)
+	powerDivisor := max(1, definition.EnemyDamagePowerDiv)
+	return EnemyCombatStats{
+		MaxHP:     max(1, definition.EnemyBaseHP+(requiredPower*definition.EnemyHPPerPower)+(stage*stage*definition.EnemyHPPerStageSquared)),
+		Damage:    max(1, definition.EnemyBaseDamage+(stage*definition.EnemyDamagePerStage)+(requiredPower/powerDivisor)),
+		MaxRounds: max(1, definition.MaxCombatRounds),
+	}
+}
+
 func CampaignReward(stage int) api.Reward {
+	stage = max(1, stage)
 	reward := api.Reward{
 		RewardID:    fmt.Sprintf("reward_campaign_stage_%03d", stage),
 		MythEssence: 7 + (stage * 4),

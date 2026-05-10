@@ -17,6 +17,10 @@ func TestDungeonDefinitionsMatchSeededCurves(t *testing.T) {
 	if reward := DungeonReward(gold, 1); reward.Gold != 129 {
 		t.Fatalf("expected floor 1 gold reward 129, got %#v", reward)
 	}
+	goldCombat := DungeonEnemyCombatStats(gold, 1)
+	if goldCombat.MaxHP != 615 || goldCombat.Damage != 32 || goldCombat.MaxRounds != MaxCombatRounds {
+		t.Fatalf("unexpected gold dungeon combat stats: %#v", goldCombat)
+	}
 
 	essence, ok := DungeonDefinitionByID(DungeonEssence)
 	if !ok {
@@ -27,6 +31,14 @@ func TestDungeonDefinitionsMatchSeededCurves(t *testing.T) {
 	}
 	if reward := DungeonReward(essence, 1); reward.MythEssence != 150 {
 		t.Fatalf("expected floor 1 essence reward 150, got %#v", reward)
+	}
+}
+
+func TestCampaignEnemyCombatStats(t *testing.T) {
+	stats := CampaignEnemyCombatStats(1)
+
+	if stats.MaxHP != 458 || stats.Damage != 24 || stats.MaxRounds != MaxCombatRounds {
+		t.Fatalf("unexpected campaign stage 1 combat stats: %#v", stats)
 	}
 }
 

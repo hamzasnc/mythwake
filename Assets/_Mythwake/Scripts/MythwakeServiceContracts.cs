@@ -238,6 +238,13 @@ public struct MythwakeCampaignDefinitionDto
     public int milestoneBaseGems;
     public int milestoneGemsPerStage;
     public int milestonePassXp;
+    public int enemyBaseHp;
+    public int enemyHpPerPower;
+    public int enemyHpPerStageSquared;
+    public int enemyBaseDamage;
+    public int enemyDamagePerStage;
+    public int enemyDamagePowerDivisor;
+    public int maxCombatRounds;
 }
 
 [Serializable]
@@ -250,6 +257,9 @@ public struct MythwakeCampaignStageDefinitionDto
     public int requiredPower;
     public string rewardId;
     public string enemyProfileId;
+    public int enemyMaxHp;
+    public int enemyDamage;
+    public int maxCombatRounds;
 }
 
 [Serializable]
@@ -262,6 +272,13 @@ public struct MythwakeDungeonDefinitionDto
     public int requiredPowerPerFloor;
     public int baseRewardAmount;
     public int rewardPerFloor;
+    public int enemyBaseHp;
+    public int enemyHpPerPower;
+    public int enemyHpPerFloor;
+    public int enemyBaseDamage;
+    public int enemyDamagePerFloor;
+    public int enemyDamagePowerDivisor;
+    public int maxCombatRounds;
 }
 
 [Serializable]

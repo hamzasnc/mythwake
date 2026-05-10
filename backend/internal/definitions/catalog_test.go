@@ -114,6 +114,23 @@ func TestSnapshotCarriesCampaignAndAccessoryDefinitionData(t *testing.T) {
 	if snapshot.CampaignStages[4].RewardID != "reward_campaign_stage_005" || snapshot.CampaignStages[4].RequiredPower != 320 {
 		t.Fatalf("unexpected campaign stage 5 definition: %#v", snapshot.CampaignStages[4])
 	}
+	if snapshot.CampaignStages[0].EnemyMaxHP != 458 || snapshot.CampaignStages[0].EnemyDamage != 24 || snapshot.CampaignStages[0].MaxCombatRounds != 45 {
+		t.Fatalf("unexpected campaign stage 1 combat definition: %#v", snapshot.CampaignStages[0])
+	}
+
+	var foundGoldDungeon bool
+	for _, definition := range snapshot.Dungeons {
+		if definition.DungeonID != "gold_dungeon" {
+			continue
+		}
+		foundGoldDungeon = true
+		if definition.EnemyBaseHP != 220 || definition.EnemyHPPerFloor != 95 || definition.EnemyDamagePowerDivisor != 48 || definition.MaxCombatRounds != 45 {
+			t.Fatalf("unexpected gold dungeon combat definition: %#v", definition)
+		}
+	}
+	if !foundGoldDungeon {
+		t.Fatal("expected gold_dungeon definition")
+	}
 
 	var found bool
 	for _, definition := range snapshot.Accessories {

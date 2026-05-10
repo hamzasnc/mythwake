@@ -194,26 +194,43 @@ type CampaignDefinition struct {
 	MilestoneBaseGems         int    `json:"milestoneBaseGems"`
 	MilestoneGemsPerStage     int    `json:"milestoneGemsPerStage"`
 	MilestonePassXP           int    `json:"milestonePassXp"`
+	EnemyBaseHP               int    `json:"enemyBaseHp"`
+	EnemyHPPerPower           int    `json:"enemyHpPerPower"`
+	EnemyHPPerStageSquared    int    `json:"enemyHpPerStageSquared"`
+	EnemyBaseDamage           int    `json:"enemyBaseDamage"`
+	EnemyDamagePerStage       int    `json:"enemyDamagePerStage"`
+	EnemyDamagePowerDivisor   int    `json:"enemyDamagePowerDivisor"`
+	MaxCombatRounds           int    `json:"maxCombatRounds"`
 }
 
 type CampaignStageDefinition struct {
-	StageID        string `json:"stageId"`
-	CampaignID     string `json:"campaignId"`
-	StageNumber    int    `json:"stageNumber"`
-	DisplayName    string `json:"displayName"`
-	RequiredPower  int    `json:"requiredPower"`
-	RewardID       string `json:"rewardId"`
-	EnemyProfileID string `json:"enemyProfileId"`
+	StageID         string `json:"stageId"`
+	CampaignID      string `json:"campaignId"`
+	StageNumber     int    `json:"stageNumber"`
+	DisplayName     string `json:"displayName"`
+	RequiredPower   int    `json:"requiredPower"`
+	RewardID        string `json:"rewardId"`
+	EnemyProfileID  string `json:"enemyProfileId"`
+	EnemyMaxHP      int    `json:"enemyMaxHp"`
+	EnemyDamage     int    `json:"enemyDamage"`
+	MaxCombatRounds int    `json:"maxCombatRounds"`
 }
 
 type DungeonDefinition struct {
-	DungeonID             string `json:"dungeonId"`
-	DisplayName           string `json:"displayName"`
-	RewardCurrencyID      string `json:"rewardCurrencyId,omitempty"`
-	BaseRequiredPower     int    `json:"baseRequiredPower"`
-	RequiredPowerPerFloor int    `json:"requiredPowerPerFloor"`
-	BaseRewardAmount      int    `json:"baseRewardAmount"`
-	RewardPerFloor        int    `json:"rewardPerFloor"`
+	DungeonID               string `json:"dungeonId"`
+	DisplayName             string `json:"displayName"`
+	RewardCurrencyID        string `json:"rewardCurrencyId,omitempty"`
+	BaseRequiredPower       int    `json:"baseRequiredPower"`
+	RequiredPowerPerFloor   int    `json:"requiredPowerPerFloor"`
+	BaseRewardAmount        int    `json:"baseRewardAmount"`
+	RewardPerFloor          int    `json:"rewardPerFloor"`
+	EnemyBaseHP             int    `json:"enemyBaseHp"`
+	EnemyHPPerPower         int    `json:"enemyHpPerPower"`
+	EnemyHPPerFloor         int    `json:"enemyHpPerFloor"`
+	EnemyBaseDamage         int    `json:"enemyBaseDamage"`
+	EnemyDamagePerFloor     int    `json:"enemyDamagePerFloor"`
+	EnemyDamagePowerDivisor int    `json:"enemyDamagePowerDivisor"`
+	MaxCombatRounds         int    `json:"maxCombatRounds"`
 }
 
 type AccessorySlotDefinition struct {

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.20";
+    public const string PrototypeVersion = "0.2.21";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -3223,13 +3223,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (enemyText != null)
         {
-            var stage = GetStageDefinition(enemyLevel);
-            enemyText.text = $"Stage {enemyLevel}: {stage.enemyName}\nRecommended Power {GetStageRecommendedPower(enemyLevel)}";
+            if (UseBackendDefinitionView() && TryGetBackendCampaignStageDefinition(enemyLevel, out var backendStage))
+            {
+                enemyText.text = $"Stage {enemyLevel}: {backendStage.displayName}\nRecommended Power {backendStage.requiredPower}";
+            }
+            else
+            {
+                var stage = GetStageDefinition(enemyLevel);
+                enemyText.text = $"Stage {enemyLevel}: {stage.enemyName}\nRecommended Power {GetStageRecommendedPower(enemyLevel)}";
+            }
         }
 
         if (enemyHpText != null)
         {
-            enemyHpText.text = $"Enemy HP: {enemyMaxHp}   Enemy Damage: {GetCampaignEnemyDamage(enemyLevel)}";
+            if (UseBackendDefinitionView() && TryGetBackendCampaignStageDefinition(enemyLevel, out var backendStage))
+            {
+                enemyHpText.text = $"Enemy HP: {backendStage.enemyMaxHp}   Enemy Damage: {backendStage.enemyDamage}";
+            }
+            else
+            {
+                enemyHpText.text = $"Enemy HP: {enemyMaxHp}   Enemy Damage: {GetCampaignEnemyDamage(enemyLevel)}";
+            }
         }
 
         RefreshAutoAttackUi();
@@ -4379,6 +4393,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return false;
     }
 
+    private bool TryGetBackendCampaignStageDefinition(int stageNumber, out MythwakeCampaignStageDefinitionDto definition)
+    {
+        definition = default(MythwakeCampaignStageDefinitionDto);
+        if (!TryGetDefinitions(out var definitions) || definitions.campaignStages == null)
+        {
+            return false;
+        }
+
+        stageNumber = Mathf.Max(1, stageNumber);
+        for (var i = 0; i < definitions.campaignStages.Length; i++)
+        {
+            if (definitions.campaignStages[i].stageNumber == stageNumber)
+            {
+                definition = definitions.campaignStages[i];
+                return definition.enemyMaxHp > 0 && definition.enemyDamage > 0;
+            }
+        }
+
+        return false;
+    }
+
     private static int GetBackendDungeonRequiredPower(MythwakeDungeonDefinitionDto definition, int floor)
     {
         floor = Mathf.Max(1, floor);
@@ -4389,6 +4424,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         floor = Mathf.Max(1, floor);
         return Mathf.Max(0, definition.baseRewardAmount + (floor * definition.rewardPerFloor));
+    }
+
+    private static int GetBackendDungeonEnemyHp(MythwakeDungeonDefinitionDto definition, int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        var requiredPower = GetBackendDungeonRequiredPower(definition, floor);
+        var baseHp = definition.enemyBaseHp > 0 ? definition.enemyBaseHp : 220;
+        var hpPerPower = definition.enemyHpPerPower > 0 ? definition.enemyHpPerPower : 2;
+        var hpPerFloor = definition.enemyHpPerFloor > 0 ? definition.enemyHpPerFloor : 95;
+        return Mathf.Max(1, baseHp + (requiredPower * hpPerPower) + (floor * hpPerFloor));
+    }
+
+    private static int GetBackendDungeonEnemyDamage(MythwakeDungeonDefinitionDto definition, int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        var requiredPower = GetBackendDungeonRequiredPower(definition, floor);
+        var baseDamage = definition.enemyBaseDamage > 0 ? definition.enemyBaseDamage : 26;
+        var damagePerFloor = definition.enemyDamagePerFloor > 0 ? definition.enemyDamagePerFloor : definition.dungeonId == GearDungeonDefinition.dungeonId ? 4 : 3;
+        var damagePowerDivisor = definition.enemyDamagePowerDivisor > 0 ? definition.enemyDamagePowerDivisor : 48;
+        return Mathf.Max(1, baseDamage + (floor * damagePerFloor) + (requiredPower / damagePowerDivisor));
     }
 
     private static string ShortHash(string contentHash)
@@ -4922,14 +4977,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (UseBackendDefinitionView() && TryGetBackendDungeonDefinition(localDefinition.dungeonId, out var backendDefinition))
         {
             var requiredPower = GetBackendDungeonRequiredPower(backendDefinition, floor);
+            var enemyHp = GetBackendDungeonEnemyHp(backendDefinition, floor);
+            var enemyDamage = GetBackendDungeonEnemyDamage(backendDefinition, floor);
             if (string.IsNullOrWhiteSpace(backendDefinition.rewardCurrencyId))
             {
-                return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\nServer: random accessory drop";
+                return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\nEnemy HP {enemyHp}  DMG {enemyDamage}  Drop";
             }
 
             var rewardAmount = GetBackendDungeonRewardAmount(backendDefinition, floor);
             var currencyName = GetCurrencyDefinition(backendDefinition.rewardCurrencyId).displayName;
-            return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\nServer: +{rewardAmount} {currencyName}";
+            return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\nEnemy HP {enemyHp}  DMG {enemyDamage}  +{rewardAmount} {currencyName}";
         }
 
         if (localDefinition.dungeonId == GoldDungeonDefinition.dungeonId)

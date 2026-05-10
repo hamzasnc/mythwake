@@ -7,42 +7,39 @@ import (
 	"github.com/hamzasnc/mythwake/backend/internal/balance"
 )
 
-const maxCombatRounds = 45
-
 type combatEnemy struct {
 	mode        string
 	targetID    string
 	targetLevel int
 	maxHP       int
 	damage      int
+	maxRounds   int
 }
 
 func campaignEnemy(stage int) combatEnemy {
 	stage = max(1, stage)
-	requiredPower := balance.CampaignRequiredPower(stage)
+	stats := balance.CampaignEnemyCombatStats(stage)
 	return combatEnemy{
 		mode:        "campaign",
 		targetID:    fmt.Sprintf("campaign_stage_%03d", stage),
 		targetLevel: stage,
-		maxHP:       180 + (requiredPower * 2) + (stage * stage * 6),
-		damage:      18 + (stage * 4) + (requiredPower / 50),
+		maxHP:       stats.MaxHP,
+		damage:      stats.Damage,
+		maxRounds:   stats.MaxRounds,
 	}
 }
 
 func dungeonEnemy(definition balance.DungeonDefinition, floor int) combatEnemy {
 	floor = max(1, floor)
-	requiredPower := balance.DungeonRequiredPower(definition, floor)
-	damageGrowth := 3
-	if definition.ID == balance.DungeonGear {
-		damageGrowth = 4
-	}
+	stats := balance.DungeonEnemyCombatStats(definition, floor)
 
 	return combatEnemy{
 		mode:        "dungeon",
 		targetID:    definition.ID,
 		targetLevel: floor,
-		maxHP:       220 + (requiredPower * 2) + (floor * 95),
-		damage:      26 + (floor * damageGrowth) + (requiredPower / 48),
+		maxHP:       stats.MaxHP,
+		damage:      stats.Damage,
+		maxRounds:   stats.MaxRounds,
 	}
 }
 
@@ -56,7 +53,7 @@ func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
 		Mode:             enemy.mode,
 		TargetID:         enemy.targetID,
 		TargetLevel:      enemy.targetLevel,
-		MaxRounds:        maxCombatRounds,
+		MaxRounds:        max(1, enemy.maxRounds),
 		TeamAttack:       teamAttack,
 		TeamMaxHP:        teamHP,
 		TeamHPRemaining:  teamHP,
@@ -65,7 +62,7 @@ func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
 		EnemyDamage:      enemyDamage,
 	}
 
-	for round := 1; round <= maxCombatRounds; round++ {
+	for round := 1; round <= result.MaxRounds; round++ {
 		result.Rounds = round
 
 		teamDamage := min(teamAttack, enemyHP)

@@ -13,7 +13,7 @@ import (
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
-const SchemaVersion = 1
+const SchemaVersion = 2
 
 func Snapshot(apiVersion string) api.DefinitionSnapshot {
 	snapshot := api.DefinitionSnapshot{
@@ -125,6 +125,13 @@ func campaignDefinitions() []api.CampaignDefinition {
 			MilestoneBaseGems:         definition.MilestoneBaseGems,
 			MilestoneGemsPerStage:     definition.MilestoneGemsPerStage,
 			MilestonePassXP:           definition.MilestonePassXP,
+			EnemyBaseHP:               definition.EnemyBaseHP,
+			EnemyHPPerPower:           definition.EnemyHPPerPower,
+			EnemyHPPerStageSquared:    definition.EnemyHPPerStageSquared,
+			EnemyBaseDamage:           definition.EnemyBaseDamage,
+			EnemyDamagePerStage:       definition.EnemyDamagePerStage,
+			EnemyDamagePowerDivisor:   definition.EnemyDamagePowerDiv,
+			MaxCombatRounds:           definition.MaxCombatRounds,
 		})
 	}
 	return response
@@ -135,13 +142,16 @@ func campaignStageDefinitions() []api.CampaignStageDefinition {
 	response := make([]api.CampaignStageDefinition, 0, len(definitions))
 	for _, definition := range definitions {
 		response = append(response, api.CampaignStageDefinition{
-			StageID:        definition.ID,
-			CampaignID:     definition.CampaignID,
-			StageNumber:    definition.StageNumber,
-			DisplayName:    definition.DisplayName,
-			RequiredPower:  definition.RequiredPower,
-			RewardID:       definition.RewardID,
-			EnemyProfileID: definition.EnemyProfileID,
+			StageID:         definition.ID,
+			CampaignID:      definition.CampaignID,
+			StageNumber:     definition.StageNumber,
+			DisplayName:     definition.DisplayName,
+			RequiredPower:   definition.RequiredPower,
+			RewardID:        definition.RewardID,
+			EnemyProfileID:  definition.EnemyProfileID,
+			EnemyMaxHP:      definition.EnemyMaxHP,
+			EnemyDamage:     definition.EnemyDamage,
+			MaxCombatRounds: definition.MaxCombatRounds,
 		})
 	}
 	return response
@@ -152,13 +162,20 @@ func dungeonDefinitions() []api.DungeonDefinition {
 	response := make([]api.DungeonDefinition, 0, len(definitions))
 	for _, definition := range definitions {
 		response = append(response, api.DungeonDefinition{
-			DungeonID:             definition.ID,
-			DisplayName:           definition.DisplayName,
-			RewardCurrencyID:      definition.RewardCurrencyID,
-			BaseRequiredPower:     definition.BaseRequiredPower,
-			RequiredPowerPerFloor: definition.RequiredPowerPerFloor,
-			BaseRewardAmount:      definition.BaseRewardAmount,
-			RewardPerFloor:        definition.RewardPerFloor,
+			DungeonID:               definition.ID,
+			DisplayName:             definition.DisplayName,
+			RewardCurrencyID:        definition.RewardCurrencyID,
+			BaseRequiredPower:       definition.BaseRequiredPower,
+			RequiredPowerPerFloor:   definition.RequiredPowerPerFloor,
+			BaseRewardAmount:        definition.BaseRewardAmount,
+			RewardPerFloor:          definition.RewardPerFloor,
+			EnemyBaseHP:             definition.EnemyBaseHP,
+			EnemyHPPerPower:         definition.EnemyHPPerPower,
+			EnemyHPPerFloor:         definition.EnemyHPPerFloor,
+			EnemyBaseDamage:         definition.EnemyBaseDamage,
+			EnemyDamagePerFloor:     definition.EnemyDamagePerFloor,
+			EnemyDamagePowerDivisor: definition.EnemyDamagePowerDiv,
+			MaxCombatRounds:         definition.MaxCombatRounds,
 		})
 	}
 	return response
