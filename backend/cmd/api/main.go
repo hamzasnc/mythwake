@@ -27,6 +27,7 @@ func main() {
 		auth.WithSessionTouchInterval(cfg.SessionTouchWindow),
 	}
 	authService := auth.NewService(nil, authOptions...)
+	routerOptions := []apihttp.RouterOption{}
 	var cachedStateStore *cache.WriteBehindStateStore
 	var stateStore player.StateStore
 
@@ -43,6 +44,11 @@ func main() {
 			cancel()
 			logger.Fatalf("database migration failed: %v", err)
 		}
+		definitionStore := postgres.NewDefinitionStore(db)
+		if _, err := definitionStore.Snapshot(setupContext, cfg.Version); err != nil {
+			cancel()
+			logger.Fatalf("database definition catalog failed: %v", err)
+		}
 		authService = auth.NewService(postgres.NewAccountStore(db), authOptions...)
 		cachedStateStore = cache.NewWriteBehindStateStore(
 			postgres.NewPlayerStateStore(db),
@@ -54,6 +60,7 @@ func main() {
 			logger,
 		)
 		stateStore = cachedStateStore
+		routerOptions = append(routerOptions, apihttp.WithDefinitionProvider(definitionStore))
 		cancel()
 		cfg.DatabaseStatus = "connected"
 		cfg.StateCacheStatus = cfg.StateWriteMode
@@ -62,7 +69,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           apihttp.NewRouter(cfg, logger, authService, playerManager),
+		Handler:           apihttp.NewRouter(cfg, logger, authService, playerManager, routerOptions...),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

@@ -19,14 +19,25 @@ import (
 )
 
 type Router struct {
-	config        config.Config
-	logger        *log.Logger
-	mux           *http.ServeMux
-	authService   *auth.Service
-	playerManager *player.Manager
+	config             config.Config
+	logger             *log.Logger
+	mux                *http.ServeMux
+	authService        *auth.Service
+	playerManager      *player.Manager
+	definitionProvider definitions.SnapshotProvider
 }
 
-func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service, playerManager *player.Manager) http.Handler {
+type RouterOption func(*Router)
+
+func WithDefinitionProvider(provider definitions.SnapshotProvider) RouterOption {
+	return func(router *Router) {
+		if provider != nil {
+			router.definitionProvider = provider
+		}
+	}
+}
+
+func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service, playerManager *player.Manager, options ...RouterOption) http.Handler {
 	if authService == nil {
 		authService = auth.NewService(nil)
 	}
@@ -35,11 +46,16 @@ func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service,
 	}
 
 	router := &Router{
-		config:        cfg,
-		logger:        logger,
-		mux:           http.NewServeMux(),
-		authService:   authService,
-		playerManager: playerManager,
+		config:             cfg,
+		logger:             logger,
+		mux:                http.NewServeMux(),
+		authService:        authService,
+		playerManager:      playerManager,
+		definitionProvider: definitions.NewStaticSnapshotProvider(),
+	}
+
+	for _, option := range options {
+		option(router)
 	}
 
 	router.routes()
@@ -70,7 +86,12 @@ func (router *Router) routes() {
 }
 
 func (router *Router) handleDefinitions(response http.ResponseWriter, request *http.Request) {
-	snapshot := definitions.Snapshot(router.config.Version)
+	snapshot, err := router.definitionProvider.Snapshot(request.Context(), router.config.Version)
+	if err != nil {
+		writeError(response, request, http.StatusInternalServerError, "definitions_unavailable", "Definition catalog is temporarily unavailable.")
+		return
+	}
+
 	etag := definitions.ETag(snapshot)
 
 	response.Header().Set("Cache-Control", "private, max-age=60, must-revalidate")

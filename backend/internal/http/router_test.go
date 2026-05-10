@@ -1,7 +1,9 @@
 package apihttp
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
+	"github.com/hamzasnc/mythwake/backend/internal/definitions"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
 )
@@ -267,6 +270,61 @@ func TestDefinitionsEndpoint(t *testing.T) {
 	}
 	if response.Header().Get("Cache-Control") == "" {
 		t.Fatalf("expected Cache-Control header")
+	}
+}
+
+func TestDefinitionsEndpointCanUseInjectedProvider(t *testing.T) {
+	handler := NewRouter(
+		config.Config{ServiceName: "test-api", Addr: ":0", Environment: "test", Version: "db-backed-test"},
+		log.New(testWriter{}, "", 0),
+		nil,
+		player.NewManager(nil),
+		WithDefinitionProvider(fixedDefinitionProvider{}),
+	)
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/definitions", nil)
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+
+	var body api.DefinitionSnapshot
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.APIVersion != "db-backed-test" || len(body.Dungeons) != 1 || body.Dungeons[0].DungeonID != "db_gold" {
+		t.Fatalf("expected injected definition catalog, got %#v", body)
+	}
+	if body.ContentHash == "" || response.Header().Get("ETag") == "" {
+		t.Fatalf("expected hashed injected catalog, got %#v", body)
+	}
+}
+
+func TestDefinitionsEndpointReportsProviderFailures(t *testing.T) {
+	handler := NewRouter(
+		config.Config{ServiceName: "test-api", Addr: ":0", Environment: "test", Version: "test"},
+		log.New(testWriter{}, "", 0),
+		nil,
+		player.NewManager(nil),
+		WithDefinitionProvider(failingDefinitionProvider{}),
+	)
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/definitions", nil)
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status 500, got %d", response.Code)
+	}
+
+	var body api.ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.ErrorCode != "definitions_unavailable" {
+		t.Fatalf("expected definitions error, got %#v", body)
 	}
 }
 
@@ -647,4 +705,30 @@ type testWriter struct{}
 
 func (testWriter) Write(bytes []byte) (int, error) {
 	return len(bytes), nil
+}
+
+type fixedDefinitionProvider struct{}
+
+func (fixedDefinitionProvider) Snapshot(_ context.Context, apiVersion string) (api.DefinitionSnapshot, error) {
+	snapshot := api.DefinitionSnapshot{
+		SchemaVersion: definitions.SchemaVersion,
+		APIVersion:    apiVersion,
+		Dungeons: []api.DungeonDefinition{
+			{DungeonID: "db_gold", DisplayName: "DB Gold"},
+		},
+		SummonBanners: []api.SummonBannerDefinition{
+			{BannerID: "db_banner", DisplayName: "DB Banner"},
+		},
+		GameplayActions: []api.GameplayActionDefinition{
+			{ActionID: gameplay.ActionCampaignFight, Domain: "campaign", RequiresIdempotency: true},
+		},
+	}
+	snapshot.ContentHash = definitions.ContentHash(snapshot)
+	return snapshot, nil
+}
+
+type failingDefinitionProvider struct{}
+
+func (failingDefinitionProvider) Snapshot(context.Context, string) (api.DefinitionSnapshot, error) {
+	return api.DefinitionSnapshot{}, errors.New("definition provider failed")
 }

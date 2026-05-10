@@ -92,6 +92,7 @@ Backend:
 - Backend campaign curves, dungeon curves, costs, and simple reward definitions now live in a central balance package
 - Backend Daily Mission, Mission Track, and Summon actions now validate against known server balance definitions instead of accepting arbitrary claim IDs
 - PostgreSQL now seeds DB-ready hero, campaign, reward, progression cost, summon, mission, and Mission Track definition tables
+- `/definitions` now loads the common definition catalog from PostgreSQL when the database is enabled, with the static Go catalog used only for no-DB local mode
 - Backend player service actions are split by domain files for campaign/dungeons, progression, gear, meta, snapshots, and persistence
 - Backend player actions now route through explicit domain action services for campaign, dungeons, hero progression, equipment, accessories, summons, and missions
 - Guest auth now issues real random session tokens, stores only token hashes when PostgreSQL is enabled, and has account identity tables shaped for guest, email, Google, and Apple login
@@ -127,6 +128,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.35: Added an injectable definition provider and PostgreSQL-backed `/definitions` loader for common balance/catalog tables.
 - Prototype 0.2.22: Extended Unity Server Mode previews to use backend definitions for summon cost/rotation, progression costs, daily missions, and Mission Track rewards.
 - Backend 0.2.34 / Prototype 0.2.21: Added combat balance fields to server definitions, PostgreSQL combat-balance migration/debug view, and Unity server preview rendering.
 - Backend 0.2.33 / Prototype 0.2.20: Added server-authored combat result DTOs for campaign and dungeon actions, persistent combat-loss fight progress, and Unity combat result display.
