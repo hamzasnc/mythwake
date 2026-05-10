@@ -185,7 +185,7 @@ try {
     if (-not $fight.success) {
         throw "Expected campaign fight to succeed. Response: $($fight | ConvertTo-Json -Depth 8)"
     }
-    if (-not $fight.combat -or -not $fight.combat.won -or [int]$fight.combat.rounds -le 0) {
+    if (-not $fight.combat -or -not $fight.combat.won -or [int]$fight.combat.elapsedSeconds -le 0 -or [int]$fight.combat.maxSeconds -ne 30) {
         throw "Expected campaign fight to include a successful server combat result. Response: $($fight | ConvertTo-Json -Depth 8)"
     }
     Assert-Equal $fight.playerSnapshot.playerId $login.playerId "Action snapshot player should match guest login."

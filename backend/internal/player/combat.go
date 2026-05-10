@@ -13,7 +13,7 @@ type combatEnemy struct {
 	targetLevel int
 	maxHP       int
 	damage      int
-	maxRounds   int
+	maxSeconds  int
 }
 
 func (service *Service) campaignEnemy(stage int) combatEnemy {
@@ -25,7 +25,7 @@ func (service *Service) campaignEnemy(stage int) combatEnemy {
 		targetLevel: stage,
 		maxHP:       stats.MaxHP,
 		damage:      stats.Damage,
-		maxRounds:   stats.MaxRounds,
+		maxSeconds:  stats.MaxSeconds,
 	}
 }
 
@@ -39,7 +39,7 @@ func (service *Service) dungeonEnemy(definition balance.DungeonDefinition, floor
 		targetLevel: floor,
 		maxHP:       stats.MaxHP,
 		damage:      stats.Damage,
-		maxRounds:   stats.MaxRounds,
+		maxSeconds:  stats.MaxSeconds,
 	}
 }
 
@@ -53,7 +53,7 @@ func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
 		Mode:             enemy.mode,
 		TargetID:         enemy.targetID,
 		TargetLevel:      enemy.targetLevel,
-		MaxRounds:        max(1, enemy.maxRounds),
+		MaxSeconds:       max(1, enemy.maxSeconds),
 		TeamAttack:       teamAttack,
 		TeamMaxHP:        teamHP,
 		TeamHPRemaining:  teamHP,
@@ -62,8 +62,8 @@ func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
 		EnemyDamage:      enemyDamage,
 	}
 
-	for round := 1; round <= result.MaxRounds; round++ {
-		result.Rounds = round
+	for second := 1; second <= result.MaxSeconds; second++ {
+		result.ElapsedSeconds = second
 
 		teamDamage := min(teamAttack, enemyHP)
 		enemyHP -= teamDamage
@@ -90,9 +90,9 @@ func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
 
 func formatCombatMessage(label string, combat api.CombatResult) string {
 	if combat.Won {
-		return fmt.Sprintf("%s cleared in %d rounds. HP %d/%d, enemy HP %d/%d, dealt %d, took %d.",
+		return fmt.Sprintf("%s cleared in %ds. HP %d/%d, enemy HP %d/%d, dealt %d, took %d.",
 			label,
-			combat.Rounds,
+			combat.ElapsedSeconds,
 			combat.TeamHPRemaining,
 			combat.TeamMaxHP,
 			combat.EnemyHPRemaining,
@@ -102,9 +102,9 @@ func formatCombatMessage(label string, combat api.CombatResult) string {
 		)
 	}
 
-	return fmt.Sprintf("%s failed after %d rounds. HP %d/%d, enemy HP %d/%d, dealt %d, took %d.",
+	return fmt.Sprintf("%s failed after %ds. HP %d/%d, enemy HP %d/%d, dealt %d, took %d.",
 		label,
-		combat.Rounds,
+		combat.ElapsedSeconds,
 		combat.TeamHPRemaining,
 		combat.TeamMaxHP,
 		combat.EnemyHPRemaining,

@@ -83,8 +83,8 @@ type CombatResult struct {
 	TargetID         string `json:"targetId"`
 	TargetLevel      int    `json:"targetLevel"`
 	Won              bool   `json:"won"`
-	Rounds           int    `json:"rounds"`
-	MaxRounds        int    `json:"maxRounds"`
+	ElapsedSeconds   int    `json:"elapsedSeconds"`
+	MaxSeconds       int    `json:"maxSeconds"`
 	TeamAttack       int    `json:"teamAttack"`
 	TeamMaxHP        int    `json:"teamMaxHp"`
 	TeamHPRemaining  int    `json:"teamHpRemaining"`
@@ -200,20 +200,20 @@ type CampaignDefinition struct {
 	EnemyBaseDamage           int    `json:"enemyBaseDamage"`
 	EnemyDamagePerStage       int    `json:"enemyDamagePerStage"`
 	EnemyDamagePowerDivisor   int    `json:"enemyDamagePowerDivisor"`
-	MaxCombatRounds           int    `json:"maxCombatRounds"`
+	MaxCombatSeconds          int    `json:"maxCombatSeconds"`
 }
 
 type CampaignStageDefinition struct {
-	StageID         string `json:"stageId"`
-	CampaignID      string `json:"campaignId"`
-	StageNumber     int    `json:"stageNumber"`
-	DisplayName     string `json:"displayName"`
-	RequiredPower   int    `json:"requiredPower"`
-	RewardID        string `json:"rewardId"`
-	EnemyProfileID  string `json:"enemyProfileId"`
-	EnemyMaxHP      int    `json:"enemyMaxHp"`
-	EnemyDamage     int    `json:"enemyDamage"`
-	MaxCombatRounds int    `json:"maxCombatRounds"`
+	StageID          string `json:"stageId"`
+	CampaignID       string `json:"campaignId"`
+	StageNumber      int    `json:"stageNumber"`
+	DisplayName      string `json:"displayName"`
+	RequiredPower    int    `json:"requiredPower"`
+	RewardID         string `json:"rewardId"`
+	EnemyProfileID   string `json:"enemyProfileId"`
+	EnemyMaxHP       int    `json:"enemyMaxHp"`
+	EnemyDamage      int    `json:"enemyDamage"`
+	MaxCombatSeconds int    `json:"maxCombatSeconds"`
 }
 
 type DungeonDefinition struct {
@@ -230,7 +230,7 @@ type DungeonDefinition struct {
 	EnemyBaseDamage         int    `json:"enemyBaseDamage"`
 	EnemyDamagePerFloor     int    `json:"enemyDamagePerFloor"`
 	EnemyDamagePowerDivisor int    `json:"enemyDamagePowerDivisor"`
-	MaxCombatRounds         int    `json:"maxCombatRounds"`
+	MaxCombatSeconds        int    `json:"maxCombatSeconds"`
 }
 
 type AccessorySlotDefinition struct {

@@ -117,7 +117,7 @@ func TestCampaignFightAdvancesDailyProgress(t *testing.T) {
 	if !result.Success {
 		t.Fatalf("expected campaign fight to succeed, got %#v", result)
 	}
-	if result.Combat == nil || !result.Combat.Won || result.Combat.Rounds <= 0 {
+	if result.Combat == nil || !result.Combat.Won || result.Combat.ElapsedSeconds <= 0 || result.Combat.MaxSeconds != 30 {
 		t.Fatalf("expected successful combat result, got %#v", result.Combat)
 	}
 
@@ -372,7 +372,7 @@ func TestIdempotencyReplayDoesNotApplyActionTwice(t *testing.T) {
 	if !replay.Success || !replay.Replay {
 		t.Fatalf("expected idempotent replay, got %#v", replay)
 	}
-	if replay.Combat == nil || first.Combat == nil || replay.Combat.Rounds != first.Combat.Rounds {
+	if replay.Combat == nil || first.Combat == nil || replay.Combat.ElapsedSeconds != first.Combat.ElapsedSeconds {
 		t.Fatalf("expected replay to include the original combat result, first=%#v replay=%#v", first.Combat, replay.Combat)
 	}
 

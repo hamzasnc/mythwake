@@ -105,8 +105,8 @@ public struct MythwakeCombatResultDto
     public string targetId;
     public int targetLevel;
     public bool won;
-    public int rounds;
-    public int maxRounds;
+    public int elapsedSeconds;
+    public int maxSeconds;
     public int teamAttack;
     public int teamMaxHp;
     public int teamHpRemaining;
@@ -244,7 +244,7 @@ public struct MythwakeCampaignDefinitionDto
     public int enemyBaseDamage;
     public int enemyDamagePerStage;
     public int enemyDamagePowerDivisor;
-    public int maxCombatRounds;
+    public int maxCombatSeconds;
 }
 
 [Serializable]
@@ -259,7 +259,7 @@ public struct MythwakeCampaignStageDefinitionDto
     public string enemyProfileId;
     public int enemyMaxHp;
     public int enemyDamage;
-    public int maxCombatRounds;
+    public int maxCombatSeconds;
 }
 
 [Serializable]
@@ -278,7 +278,7 @@ public struct MythwakeDungeonDefinitionDto
     public int enemyBaseDamage;
     public int enemyDamagePerFloor;
     public int enemyDamagePowerDivisor;
-    public int maxCombatRounds;
+    public int maxCombatSeconds;
 }
 
 [Serializable]

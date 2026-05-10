@@ -59,7 +59,7 @@ Current scope:
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
 - `POST /player/offline/claim` claims server-authoritative AFK Gold and Myth Essence using server time.
 - Daily mission claims require server-tracked progress for the active UTC daily reset window.
-- Campaign and dungeon actions return server-authored combat results with rounds, HP, damage, and win/loss state.
+- Campaign and dungeon actions return server-authored combat results with elapsed seconds, HP, damage, and win/loss state.
 - `POST /auth/logout` revokes the active session token.
 - Logout flushes the loaded player state before returning when that player is hot in memory.
 - All responses include `X-Request-ID`; clients may send their own valid `X-Request-ID`.

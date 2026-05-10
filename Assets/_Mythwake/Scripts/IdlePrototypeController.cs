@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.22";
+    public const string PrototypeVersion = "0.2.23";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -252,7 +252,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         public bool won;
         public bool executed;
-        public int rounds;
+        public int elapsedSeconds;
         public int teamHpRemaining;
         public int enemyHpRemaining;
         public int damageDealt;
@@ -496,7 +496,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int StarterGems = 35;
     private const int StarterMythEssence = 20;
     private const float OfflineGoldRewardRate = 0.5f;
-    private const int MaxCombatRounds = 45;
+    private const int DefaultCombatDurationSeconds = 30;
     private const float WarriorDamageBonusRate = 0.06f;
     private const float MageDamageBonusRate = 0.1f;
     private const float TankDamageReductionRate = 0.18f;
@@ -1257,7 +1257,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (!result.won)
         {
-            var failMessage = $"Gear Dungeon Floor {floor} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
+            var failMessage = $"Gear Dungeon Floor {floor} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
             SetDungeonResult(failMessage);
             RefreshUi();
             return CreateActionResult(false, "gear_dungeon_run", "combat_lost", failMessage);
@@ -1267,7 +1267,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         AddAccessoryInventory(accessory.slotIndex, accessory.rarityIndex, 1);
         gearDungeonFloor++;
 
-        var message = $"Gear Dungeon Floor {floor} cleared in {result.rounds} rounds\nDrop: {GetAccessoryRarityName(accessory.rarityIndex)} {AccessorySlots[accessory.slotIndex].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}";
+        var message = $"Gear Dungeon Floor {floor} cleared in {result.elapsedSeconds}s\nDrop: {GetAccessoryRarityName(accessory.rarityIndex)} {AccessorySlots[accessory.slotIndex].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}";
         SetDungeonResult(message);
         SaveProgress();
         RefreshUi();
@@ -2225,7 +2225,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static bool HasServerCombatResult(MythwakeActionResultDto result)
     {
-        return result.combat.maxRounds > 0 && result.combat.enemyMaxHp > 0;
+        return result.combat.maxSeconds > 0 && result.combat.enemyMaxHp > 0;
     }
 
     private string FormatServerCombatMessage(MythwakeActionResultDto result)
@@ -2234,7 +2234,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var status = combat.won ? "cleared" : "failed";
         var reward = FormatServerReward(result.reward);
         var rewardLine = string.IsNullOrWhiteSpace(reward) ? string.Empty : $"\nReward: {reward}";
-        return $"{GetServerCombatLabel(combat)} {status} in {combat.rounds}/{combat.maxRounds} rounds" +
+        return $"{GetServerCombatLabel(combat)} {status} in {combat.elapsedSeconds}/{combat.maxSeconds}s" +
                $"\nHP {combat.teamHpRemaining}/{combat.teamMaxHp}  Enemy HP {combat.enemyHpRemaining}/{combat.enemyMaxHp}" +
                $"\nATK {combat.teamAttack}  Enemy DMG {combat.enemyDamage}  Dealt {combat.damageDealt}  Took {combat.damageTaken}" +
                rewardLine;
@@ -2604,7 +2604,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
-            var winMessage = $"Campaign Stage {clearedStage} cleared in {result.rounds} rounds\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{milestoneText}";
+            var winMessage = $"Campaign Stage {clearedStage} cleared in {result.elapsedSeconds}s\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{milestoneText}";
             SetDungeonResult(winMessage);
             return CreateActionResult(true, "campaign_fight", string.Empty, winMessage);
         }
@@ -2612,7 +2612,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             enemyMaxHp = stage.maxHp;
             enemyHp = enemyMaxHp;
-            var failMessage = $"Campaign Stage {enemyLevel} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{stage.maxHp}  {FormatCombatResult(result)}";
+            var failMessage = $"Campaign Stage {enemyLevel} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{stage.maxHp}  {FormatCombatResult(result)}";
             SetDungeonResult(failMessage);
             return CreateActionResult(false, "campaign_fight", "combat_lost", failMessage);
         }
@@ -3006,7 +3006,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (!result.won)
         {
-            var failMessage = $"{dungeon.displayName} Floor {floor} failed after {result.rounds} rounds\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
+            var failMessage = $"{dungeon.displayName} Floor {floor} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
             SetDungeonResult(failMessage);
             RefreshUi();
             return CreateActionResult(false, $"{dungeon.dungeonId}_run", "combat_lost", failMessage);
@@ -3023,14 +3023,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             GrantCurrency(GoldCurrencyId, reward);
             goldDungeonFloor++;
             rewardDto = new MythwakeRewardDto { rewardId = $"reward_{dungeon.dungeonId}_floor_{floor}", gold = reward + bonusReward.gold };
-            message = $"{dungeon.displayName} Floor {floor} cleared in {result.rounds} rounds (+{reward} Gold)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
+            message = $"{dungeon.displayName} Floor {floor} cleared in {result.elapsedSeconds}s (+{reward} Gold)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
         }
         else
         {
             GrantCurrency(MythEssenceCurrencyId, reward);
             essenceDungeonFloor++;
             rewardDto = new MythwakeRewardDto { rewardId = $"reward_{dungeon.dungeonId}_floor_{floor}", mythEssence = reward + bonusReward.mythEssence };
-            message = $"{dungeon.displayName} Floor {floor} cleared in {result.rounds} rounds (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
+            message = $"{dungeon.displayName} Floor {floor} cleared in {result.elapsedSeconds}s (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
         }
 
         SetDungeonResult(message);
@@ -3052,10 +3052,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var teamHp = maxTeamHp;
         var enemyHpValue = Mathf.Max(1, targetEnemyHp);
         var teamDamage = GetTeamDamage();
-        var supportHeal = GetSupportHealPerRound(maxTeamHp);
+        var supportHeal = GetSupportHealPerSecond(maxTeamHp);
         enemyDamage = Mathf.Max(1, enemyDamage);
 
-        for (var round = 1; round <= MaxCombatRounds; round++)
+        for (var second = 1; second <= DefaultCombatDurationSeconds; second++)
         {
             var enemyHpBeforeAttack = enemyHpValue;
             enemyHpValue -= teamDamage;
@@ -3071,7 +3071,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (enemyHpValue <= 0)
             {
                 result.won = true;
-                result.rounds = round;
+                result.elapsedSeconds = second;
                 result.teamHpRemaining = Mathf.Max(0, teamHp);
                 result.enemyHpRemaining = 0;
                 return result;
@@ -3083,7 +3083,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (teamHp <= 0)
             {
                 result.won = false;
-                result.rounds = round;
+                result.elapsedSeconds = second;
                 result.teamHpRemaining = 0;
                 result.enemyHpRemaining = Mathf.Max(0, enemyHpValue);
                 return result;
@@ -3098,7 +3098,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         result.won = false;
-        result.rounds = MaxCombatRounds;
+        result.elapsedSeconds = DefaultCombatDurationSeconds;
         result.teamHpRemaining = Mathf.Max(0, teamHp);
         result.enemyHpRemaining = Mathf.Max(0, enemyHpValue);
         return result;
@@ -3234,7 +3234,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (damageText != null)
         {
             damageText.fontSize = 32;
-            damageText.text = $"ATK {damage}   HP {GetTeamHealth()}   Guard -{Mathf.RoundToInt(GetTankDamageReductionRate() * 100f)}%   Heal {GetSupportHealPerRound(GetTeamHealth())}";
+            damageText.text = $"ATK {damage}   HP {GetTeamHealth()}   Guard -{Mathf.RoundToInt(GetTankDamageReductionRate() * 100f)}%   Heal/s {GetSupportHealPerSecond(GetTeamHealth())}";
         }
 
         RefreshDungeonUi();
@@ -5070,7 +5070,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return Mathf.Min(0.5f, CountHeroesWithRole("Tank") * TankDamageReductionRate);
     }
 
-    private int GetSupportHealPerRound(int maxTeamHealth)
+    private int GetSupportHealPerSecond(int maxTeamHealth)
     {
         var supports = CountHeroesWithRole(SupportRoleId);
         if (supports <= 0)

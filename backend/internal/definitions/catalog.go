@@ -131,7 +131,7 @@ func campaignDefinitions() []api.CampaignDefinition {
 			EnemyBaseDamage:           definition.EnemyBaseDamage,
 			EnemyDamagePerStage:       definition.EnemyDamagePerStage,
 			EnemyDamagePowerDivisor:   definition.EnemyDamagePowerDiv,
-			MaxCombatRounds:           definition.MaxCombatRounds,
+			MaxCombatSeconds:          definition.MaxCombatSeconds,
 		})
 	}
 	return response
@@ -142,16 +142,16 @@ func campaignStageDefinitions() []api.CampaignStageDefinition {
 	response := make([]api.CampaignStageDefinition, 0, len(definitions))
 	for _, definition := range definitions {
 		response = append(response, api.CampaignStageDefinition{
-			StageID:         definition.ID,
-			CampaignID:      definition.CampaignID,
-			StageNumber:     definition.StageNumber,
-			DisplayName:     definition.DisplayName,
-			RequiredPower:   definition.RequiredPower,
-			RewardID:        definition.RewardID,
-			EnemyProfileID:  definition.EnemyProfileID,
-			EnemyMaxHP:      definition.EnemyMaxHP,
-			EnemyDamage:     definition.EnemyDamage,
-			MaxCombatRounds: definition.MaxCombatRounds,
+			StageID:          definition.ID,
+			CampaignID:       definition.CampaignID,
+			StageNumber:      definition.StageNumber,
+			DisplayName:      definition.DisplayName,
+			RequiredPower:    definition.RequiredPower,
+			RewardID:         definition.RewardID,
+			EnemyProfileID:   definition.EnemyProfileID,
+			EnemyMaxHP:       definition.EnemyMaxHP,
+			EnemyDamage:      definition.EnemyDamage,
+			MaxCombatSeconds: definition.MaxCombatSeconds,
 		})
 	}
 	return response
@@ -175,7 +175,7 @@ func dungeonDefinitions() []api.DungeonDefinition {
 			EnemyBaseDamage:         definition.EnemyBaseDamage,
 			EnemyDamagePerFloor:     definition.EnemyDamagePerFloor,
 			EnemyDamagePowerDivisor: definition.EnemyDamagePowerDiv,
-			MaxCombatRounds:         definition.MaxCombatRounds,
+			MaxCombatSeconds:        definition.MaxCombatSeconds,
 		})
 	}
 	return response

@@ -161,7 +161,7 @@ func (store *DefinitionStore) campaignDefinitions(ctx context.Context) ([]api.Ca
 			enemy_base_damage,
 			enemy_damage_per_stage,
 			enemy_damage_power_divisor,
-			max_combat_rounds
+			max_combat_seconds
 		FROM common.campaign_curve_definitions
 		ORDER BY id
 	`)
@@ -190,7 +190,7 @@ func (store *DefinitionStore) campaignDefinitions(ctx context.Context) ([]api.Ca
 			&definition.EnemyBaseDamage,
 			&definition.EnemyDamagePerStage,
 			&definition.EnemyDamagePowerDivisor,
-			&definition.MaxCombatRounds,
+			&definition.MaxCombatSeconds,
 		); err != nil {
 			return nil, err
 		}
@@ -212,7 +212,7 @@ func (store *DefinitionStore) campaignStageDefinitions(ctx context.Context) ([]a
 			enemy_profile_id,
 			enemy_max_hp,
 			enemy_damage,
-			max_combat_rounds
+			max_combat_seconds
 		FROM common.campaign_stage_definitions
 		ORDER BY campaign_id, stage_number
 	`)
@@ -234,7 +234,7 @@ func (store *DefinitionStore) campaignStageDefinitions(ctx context.Context) ([]a
 			&definition.EnemyProfileID,
 			&definition.EnemyMaxHP,
 			&definition.EnemyDamage,
-			&definition.MaxCombatRounds,
+			&definition.MaxCombatSeconds,
 		); err != nil {
 			return nil, err
 		}
@@ -260,7 +260,7 @@ func (store *DefinitionStore) dungeonDefinitions(ctx context.Context) ([]api.Dun
 			enemy_base_damage,
 			enemy_damage_per_floor,
 			enemy_damage_power_divisor,
-			max_combat_rounds
+			max_combat_seconds
 		FROM common.dungeon_definitions
 		ORDER BY id
 	`)
@@ -287,7 +287,7 @@ func (store *DefinitionStore) dungeonDefinitions(ctx context.Context) ([]api.Dun
 			&definition.EnemyBaseDamage,
 			&definition.EnemyDamagePerFloor,
 			&definition.EnemyDamagePowerDivisor,
-			&definition.MaxCombatRounds,
+			&definition.MaxCombatSeconds,
 		); err != nil {
 			return nil, err
 		}
