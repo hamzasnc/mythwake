@@ -796,6 +796,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private long backendStateRevision;
     private MythwakeDefinitionSnapshotDto backendDefinitions;
     private bool hasBackendDefinitions;
+    private MythwakeRuntimeArtPresenter runtimeArt;
 
     private void Awake()
     {
@@ -805,6 +806,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         LoadBackendGameplayPreference();
         EnsureRuntimeDebugUi();
         EnsureRuntimeBackendUi();
+        EnsureRuntimeArtUi();
         RegisterNavigation();
         RegisterHeroButtons();
         RegisterDailyMissionButtons();
@@ -972,6 +974,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void Update()
     {
+        if (runtimeArt != null)
+        {
+            runtimeArt.Tick(Time.unscaledDeltaTime);
+        }
+
         if (!autoAttackEnabled)
         {
             return;
@@ -1289,6 +1296,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (!result.won)
         {
             var failMessage = $"Gear Dungeon Floor {floor} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
+            PlayCombatVisual(GearDungeonDefinition.dungeonId, $"Gear Dungeon F{floor}", result, enemyHp);
             SetDungeonResult(failMessage);
             RefreshUi();
             return CreateActionResult(false, "gear_dungeon_run", "combat_lost", failMessage);
@@ -1299,6 +1307,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         gearDungeonFloor++;
 
         var message = $"Gear Dungeon Floor {floor} cleared in {result.elapsedSeconds}s\nDrop: {GetAccessoryRarityName(accessory.rarityIndex)} {AccessorySlots[accessory.slotIndex].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}";
+        PlayCombatVisual(GearDungeonDefinition.dungeonId, $"Gear Dungeon F{floor}", result, enemyHp);
         SetDungeonResult(message);
         SaveProgress();
         RefreshUi();
@@ -1729,6 +1738,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var hero = GetHeroDefinition(heroIndex);
 
         var message = $"{hero.rarityName} pull: {hero.name}\n+{shards} shards";
+        PlaySummonVisual(heroIndex, $"{hero.rarityName} {hero.name}");
         SetSummonResult(message);
         SaveProgress();
         RefreshUi();
@@ -2633,10 +2643,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (!showInSummonPanel && HasServerCombatResult(result))
         {
             message = FormatServerCombatMessage(result);
+            PlayServerCombatVisual(result.combat);
         }
         else if (!result.success)
         {
             message = $"{FormatBackendActionOutcome(result)}\n{message}";
+        }
+        else if (showInSummonPanel)
+        {
+            PlaySummonVisual(selectedHeroIndex, "Server Summon");
         }
 
         if (showInSummonPanel)
@@ -3112,6 +3127,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
             var winMessage = $"Campaign Stage {clearedStage} cleared in {result.elapsedSeconds}s\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{milestoneText}";
+            PlayCombatVisual("campaign", $"Campaign Stage {clearedStage}", result, stage.maxHp);
             SetDungeonResult(winMessage);
             return CreateActionResult(true, "campaign_fight", string.Empty, winMessage);
         }
@@ -3120,6 +3136,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             enemyMaxHp = stage.maxHp;
             enemyHp = enemyMaxHp;
             var failMessage = $"Campaign Stage {enemyLevel} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{stage.maxHp}  {FormatCombatResult(result)}";
+            PlayCombatVisual("campaign", $"Campaign Stage {enemyLevel}", result, stage.maxHp);
             SetDungeonResult(failMessage);
             return CreateActionResult(false, "campaign_fight", "combat_lost", failMessage);
         }
@@ -3517,6 +3534,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (!result.won)
         {
             var failMessage = $"{dungeon.displayName} Floor {floor} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
+            PlayCombatVisual(dungeon.dungeonId, $"{dungeon.displayName} F{floor}", result, enemyHp);
             SetDungeonResult(failMessage);
             RefreshUi();
             return CreateActionResult(false, $"{dungeon.dungeonId}_run", "combat_lost", failMessage);
@@ -3543,6 +3561,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             message = $"{dungeon.displayName} Floor {floor} cleared in {result.elapsedSeconds}s (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
         }
 
+        PlayCombatVisual(dungeon.dungeonId, $"{dungeon.displayName} F{floor}", result, enemyHp);
         SetDungeonResult(message);
         SaveProgress();
         RefreshUi();
@@ -3677,6 +3696,48 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return string.Empty;
     }
 
+    private void PlayCombatVisual(string mode, string label, CombatResult result, int enemyMaxHp)
+    {
+        if (runtimeArt == null)
+        {
+            return;
+        }
+
+        var maxTeamHp = Mathf.Max(1, GetTeamHealth());
+        runtimeArt.PlayCombatResult(mode, label, new CombatVisualResult
+        {
+            won = result.won,
+            elapsedSeconds = result.elapsedSeconds,
+            heroHpPercent = result.teamHpRemaining / (float)maxTeamHp,
+            enemyHpPercent = result.enemyHpRemaining / (float)Mathf.Max(1, enemyMaxHp)
+        });
+    }
+
+    private void PlayServerCombatVisual(MythwakeCombatResultDto combat)
+    {
+        if (runtimeArt == null)
+        {
+            return;
+        }
+
+        var mode = combat.mode == "dungeon" ? combat.targetId : "campaign";
+        runtimeArt.PlayCombatResult(mode, GetServerCombatLabel(combat), new CombatVisualResult
+        {
+            won = combat.won,
+            elapsedSeconds = combat.elapsedSeconds,
+            heroHpPercent = combat.teamHpRemaining / (float)Mathf.Max(1, combat.teamMaxHp),
+            enemyHpPercent = combat.enemyHpRemaining / (float)Mathf.Max(1, combat.enemyMaxHp)
+        });
+    }
+
+    private void PlaySummonVisual(int heroIndex, string label)
+    {
+        if (runtimeArt != null)
+        {
+            runtimeArt.PlaySummonResult(heroIndex, label);
+        }
+    }
+
     private void SetDungeonResult(string result)
     {
         if (dungeonResultText != null)
@@ -3783,6 +3844,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshDailyMissionUi();
         RefreshBattlePassUi();
         RefreshBackendUi();
+        RefreshRuntimeArtUi();
 
         var heroLevelMax = IsHeroLevelMax(selectedHeroIndex);
         var heroAscensionMax = IsHeroAscensionMax(selectedHeroIndex);
@@ -3841,6 +3903,42 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshGameplayInteractivity();
+    }
+
+    private void RefreshRuntimeArtUi()
+    {
+        if (runtimeArt == null)
+        {
+            return;
+        }
+
+        var hero = GetHeroDefinition(selectedHeroIndex);
+        var stage = GetStageDefinition(enemyLevel);
+        var enemyName = stage.enemyName;
+        if (UseBackendDefinitionView() && TryGetBackendCampaignStageDefinition(enemyLevel, out var backendStage))
+        {
+            enemyName = backendStage.displayName;
+        }
+
+        runtimeArt.Refresh(new MythwakeRuntimeArtState
+        {
+            selectedHeroIndex = selectedHeroIndex,
+            selectedHeroName = hero.name,
+            selectedHeroLevel = heroLevels[selectedHeroIndex],
+            selectedHeroAscension = heroAscensions[selectedHeroIndex],
+            teamPower = GetTeamPower(),
+            teamAttack = GetTeamDamage(),
+            teamHealth = GetTeamHealth(),
+            campaignStage = enemyLevel,
+            campaignEnemyName = enemyName,
+            gold = gold,
+            gems = gems,
+            mythEssence = mythEssence,
+            goldDungeonFloor = goldDungeonFloor,
+            essenceDungeonFloor = essenceDungeonFloor,
+            gearDungeonFloor = gearDungeonFloor,
+            backendRequestInProgress = backendRequestInProgress
+        });
     }
 
     private void RefreshGameplayInteractivity()
@@ -6382,6 +6480,53 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendResetButton = CreateRuntimeButton(panelObject.transform, "Backend Reset Button", "Reset", 288, -154, 86, 54);
         backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 384, -154, 86, 54);
         backendModeText = backendModeButton.GetComponentInChildren<TMP_Text>();
+    }
+
+    private void EnsureRuntimeArtUi()
+    {
+        if (runtimeArt == null)
+        {
+            runtimeArt = new MythwakeRuntimeArtPresenter();
+        }
+
+        runtimeArt.Ensure(homePanel, battlePanel, summonPanel, shopPanel);
+        runtimeArt.ApplyButtonStyle(
+            fightButton,
+            goldDungeonButton,
+            essenceDungeonButton,
+            gearDungeonButton,
+            upgradeButton,
+            heroUpgradeButton,
+            heroAscendButton,
+            weaponUpgradeButton,
+            armorUpgradeButton,
+            accessoryEquipButton,
+            accessoryLevelButton,
+            accessoryFuseButton,
+            summonButton,
+            resetButton,
+            homeTabButton,
+            battleTabButton,
+            heroesTabButton,
+            gearTabButton,
+            summonTabButton,
+            shopTabButton,
+            backendHealthButton,
+            backendLoginButton,
+            backendSyncButton,
+            backendAfkButton,
+            backendClockButton,
+            backendDefinitionsButton,
+            backendSmokeButton,
+            backendResetButton,
+            backendModeButton,
+            debugGoldButton,
+            debugEssenceButton,
+            debugGemsButton,
+            debugAccessoryButton);
+        runtimeArt.ApplyButtonStyle(heroSelectButtons);
+        runtimeArt.ApplyButtonStyle(dailyMissionButtons);
+        runtimeArt.ApplyButtonStyle(battlePassRewardButtons);
     }
 
     private void EnsureRuntimeDebugUi()

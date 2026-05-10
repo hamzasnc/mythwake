@@ -44,6 +44,11 @@ desktop.ini
 # Asset store packages / local exports
 *.unitypackage
 
+# Local third-party asset download cache. Curated game assets live in
+# Assets/_Mythwake/Resources/Mythwake/Art/Runtime instead.
+Assets/_Mythwake/ThirdPartyDownloads/
+Assets/_Mythwake/ThirdPartyDownloads.meta
+
 # Imported sample content that is not needed for the game repo
 Assets/TextMesh Pro/Examples & Extras/
 Assets/TextMesh Pro/Examples & Extras.meta
