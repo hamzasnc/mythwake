@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.17
+Prototype version: 0.2.18
 Local save version: 2
 
 Current prototype:
@@ -106,7 +106,7 @@ Backend:
 - Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
 - Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
 - Unity can sync `/time`, keep an approximate in-memory server clock, and show daily/weekly reset timing from the backend
-- Unity has client DTO support for server AFK claim snapshots
+- Unity can manually claim server AFK rewards from the Backend panel and checks them on app resume while Server Mode is active
 - Unity stores the backend session token, sends it automatically, and retries once with a fresh guest login after a `401`
 - Unity reuses pending idempotency keys after transport failures
 - Unity requests a backend state flush on app pause/quit when a backend session is active
@@ -123,6 +123,7 @@ Backend:
 
 Changelog:
 - Backend 0.2.31: Added server-authoritative AFK reward claims with PostgreSQL `player_afk_progress`, crash-safe snapshot replay, and smoke coverage.
+- Prototype 0.2.18: Wired Server Mode AFK claims into Unity with a Backend AFK button, Server Mode activation claim, and resume claim checks.
 - Prototype 0.2.17: Added Unity server-clock DTO/client support and a Backend Clock smoke action using `GET /time`.
 - Backend 0.2.30: Added `GET /time` as a server-authoritative clock with UTC daily and weekly reset boundaries, plus smoke-script coverage.
 - Backend 0.2.29: Added configurable auth/gameplay rate limiting with `429` JSON errors, `Retry-After`, health visibility, and local script knobs.

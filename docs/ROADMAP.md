@@ -590,9 +590,10 @@ Progress:
 - Wired Unity Server Mode to consume the server clock and display reset timing for local smoke testing.
 - Added server-authoritative AFK reward claims for Gold and Myth Essence using server time, a 60 second minimum window, and a 6 hour cap.
 - Persisted AFK claim timestamps in `player.player_afk_progress` and included them in player snapshots/action results for crash-safe replay.
+- Wired Unity Server Mode to claim server AFK rewards through a Backend AFK button, on Server Mode activation, and on app resume when a backend session is active.
 
 Next useful step:
-- Wire Unity Server Mode to claim server AFK rewards on app resume/manual claim while keeping the local prototype path available.
+- Start replacing remaining client-only local reward previews with server-owned action responses where the backend already has matching definitions.
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.
 - Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
 

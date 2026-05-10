@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.17";
+    public const string PrototypeVersion = "0.2.18";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -687,6 +687,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private Button backendHealthButton;
     [SerializeField] private Button backendLoginButton;
     [SerializeField] private Button backendSyncButton;
+    [SerializeField] private Button backendAfkButton;
     [SerializeField] private Button backendClockButton;
     [SerializeField] private Button backendDefinitionsButton;
     [SerializeField] private Button backendModeButton;
@@ -922,6 +923,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             backendSyncButton.onClick.AddListener(SyncBackendState);
         }
 
+        if (backendAfkButton != null)
+        {
+            backendAfkButton.onClick.AddListener(ClaimBackendOfflineRewards);
+        }
+
         if (backendClockButton != null)
         {
             backendClockButton.onClick.AddListener(SyncBackendClock);
@@ -1091,6 +1097,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendSyncButton != null)
         {
             backendSyncButton.onClick.RemoveListener(SyncBackendState);
+        }
+
+        if (backendAfkButton != null)
+        {
+            backendAfkButton.onClick.RemoveListener(ClaimBackendOfflineRewards);
         }
 
         if (backendClockButton != null)
@@ -1871,17 +1882,80 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         StartCoroutine(backendClient.GetServerClock(OnBackendClock));
     }
 
+    public void ClaimBackendOfflineRewards()
+    {
+        ClaimBackendOfflineRewards("manual");
+    }
+
+    private void ClaimBackendOfflineRewards(string reason)
+    {
+        var status = reason == "resume" ? "Server: checking AFK rewards..." : "Server: claiming AFK rewards...";
+        if (!TryStartBackendRequest(status))
+        {
+            return;
+        }
+
+        StartCoroutine(backendClient.ClaimOfflineRewards(OnBackendOfflineClaim));
+    }
+
     public void ToggleBackendGameplayMode()
     {
         backendGameplayEnabled = !backendGameplayEnabled;
-        SetBackendStatus(backendGameplayEnabled ? "Gameplay mode: Server" : "Gameplay mode: Local");
-
-        if (backendGameplayEnabled && !hasBackendDefinitions && TryStartBackendRequest("Server: loading definitions..."))
+        if (!backendGameplayEnabled)
         {
-            StartCoroutine(backendClient.GetDefinitions(OnBackendDefinitions));
+            SetBackendStatus("Gameplay mode: Local");
+            RefreshUi();
+            return;
+        }
+
+        if (TryStartBackendRequest("Server: preparing gameplay mode..."))
+        {
+            StartCoroutine(PrepareBackendGameplayModeRoutine());
         }
 
         RefreshUi();
+    }
+
+    private IEnumerator PrepareBackendGameplayModeRoutine()
+    {
+        if (!hasBackendDefinitions)
+        {
+            var definitionsSuccess = false;
+            var definitionsError = string.Empty;
+            var definitions = default(MythwakeDefinitionSnapshotDto);
+            var definitionsFromCache = false;
+            yield return backendClient.GetDefinitions((success, error, response, fromCache) =>
+            {
+                definitionsSuccess = success;
+                definitionsError = error;
+                definitions = response;
+                definitionsFromCache = fromCache;
+            });
+
+            if (!definitionsSuccess)
+            {
+                FinishBackendRequest($"Definitions sync failed: {definitionsError}");
+                yield break;
+            }
+
+            backendDefinitions = definitions;
+            hasBackendDefinitions = true;
+            var source = definitionsFromCache ? "cache" : "server";
+            SetBackendStatus($"Definitions: {source}  v{definitions.apiVersion}  {ShortHash(definitions.contentHash)}");
+            RefreshUi();
+        }
+
+        var claimSuccess = false;
+        var claimError = string.Empty;
+        var claimResult = default(MythwakeActionResultDto);
+        yield return backendClient.ClaimOfflineRewards((success, error, result) =>
+        {
+            claimSuccess = success;
+            claimError = error;
+            claimResult = result;
+        });
+
+        CompleteBackendOfflineClaim(claimSuccess, claimError, claimResult, "Server mode");
     }
 
     private void ClaimDailyMissionOnBackend(int missionIndex)
@@ -2061,6 +2135,36 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void OnBackendSummonAction(bool success, string error, MythwakeActionResultDto result)
     {
         CompleteBackendAction(success, error, result, showInSummonPanel: true);
+    }
+
+    private void OnBackendOfflineClaim(bool success, string error, MythwakeActionResultDto result)
+    {
+        CompleteBackendOfflineClaim(success, error, result, "Server AFK");
+    }
+
+    private void CompleteBackendOfflineClaim(bool success, string error, MythwakeActionResultDto result, string source)
+    {
+        if (!success)
+        {
+            var failedMessage = $"Server AFK failed: {error}";
+            SetDungeonResult(failedMessage);
+            FinishBackendRequest(failedMessage);
+            return;
+        }
+
+        ApplyBackendSnapshot(result.playerSnapshot);
+        UpdateServerOfflineRewardUi(result);
+
+        var message = string.IsNullOrWhiteSpace(result.message) ? "Server AFK checked." : result.message;
+        SetDungeonResult(message);
+
+        var outcome = result.success ? "ok" : string.IsNullOrWhiteSpace(result.errorCode) ? "failed" : result.errorCode;
+        if (result.replay)
+        {
+            outcome = $"{outcome} replay";
+        }
+
+        FinishBackendRequest($"{source}: {outcome}");
     }
 
     private void CompleteBackendAction(bool success, string error, MythwakeActionResultDto result, bool showInSummonPanel)
@@ -2330,13 +2434,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             SaveProgress();
             FlushBackendLifecycle("pause");
+            return;
         }
+
+        ClaimBackendOfflineRewardsOnResume();
     }
 
     private void OnApplicationQuit()
     {
         SaveProgress();
         FlushBackendLifecycle("quit");
+    }
+
+    private void ClaimBackendOfflineRewardsOnResume()
+    {
+        EnsureRuntimeBackendClient();
+        if (!backendGameplayEnabled || backendClient == null || !backendClient.HasSession || backendRequestInProgress || backendLifecycleFlushInProgress)
+        {
+            return;
+        }
+
+        ClaimBackendOfflineRewards("resume");
     }
 
     private void Fight(bool saveProgress)
@@ -4741,6 +4859,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         offlineRewardText.text = $"Offline: +{CalculateOfflineGoldReward(lastOfflineReward)} Gold, +{lastOfflineReward} Essence ({FormatDuration(lastOfflineSeconds)})";
     }
 
+    private void UpdateServerOfflineRewardUi(MythwakeActionResultDto result)
+    {
+        lastOfflineReward = Mathf.Max(0, result.reward.mythEssence);
+        lastOfflineSeconds = 0;
+
+        if (offlineRewardText == null)
+        {
+            return;
+        }
+
+        if (result.reward.gold > 0 || result.reward.mythEssence > 0)
+        {
+            offlineRewardText.text = $"Server AFK: +{result.reward.gold} Gold, +{result.reward.mythEssence} Essence";
+            return;
+        }
+
+        var message = string.IsNullOrWhiteSpace(result.message) ? "no reward yet" : result.message;
+        offlineRewardText.text = $"Server AFK: {message}";
+    }
+
     private void RefreshSummonUi()
     {
         if (summonCostText != null)
@@ -4977,12 +5115,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendStatusText.fontSizeMin = 16;
         backendStatusText.fontSizeMax = 22;
 
-        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -330, -154, 124, 54);
-        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", -198, -154, 124, 54);
-        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "State", -66, -154, 124, 54);
-        backendClockButton = CreateRuntimeButton(panelObject.transform, "Backend Clock Button", "Clock", 66, -154, 124, 54);
-        backendDefinitionsButton = CreateRuntimeButton(panelObject.transform, "Backend Definitions Button", "Defs", 198, -154, 124, 54);
-        backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 330, -154, 124, 54);
+        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -375, -154, 108, 54);
+        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", -250, -154, 108, 54);
+        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "Sync", -125, -154, 108, 54);
+        backendAfkButton = CreateRuntimeButton(panelObject.transform, "Backend AFK Button", "AFK", 0, -154, 108, 54);
+        backendClockButton = CreateRuntimeButton(panelObject.transform, "Backend Clock Button", "Clock", 125, -154, 108, 54);
+        backendDefinitionsButton = CreateRuntimeButton(panelObject.transform, "Backend Definitions Button", "Defs", 250, -154, 108, 54);
+        backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 375, -154, 108, 54);
         backendModeText = backendModeButton.GetComponentInChildren<TMP_Text>();
     }
 
@@ -5073,6 +5212,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendSyncButton != null)
         {
             backendSyncButton.interactable = interactable;
+        }
+
+        if (backendAfkButton != null)
+        {
+            backendAfkButton.interactable = interactable && backendGameplayEnabled;
         }
 
         if (backendClockButton != null)
