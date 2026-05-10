@@ -46,6 +46,7 @@ Current scope:
 - The Unity prototype can ping, guest-login, sync this snapshot, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
 - Server gameplay POSTs require valid `Idempotency-Key` headers by default.
 - Gameplay action IDs are centralized in `internal/gameplay` so routing, persistence, ledgers, and tests share the same names.
+- Currency IDs, spends, grants, display names, and deltas are centralized in `internal/economy`.
 - Successful idempotent action results are stored in PostgreSQL before the materialized player-state flush.
 - Retrying the same action with the same key returns the stored result with `replay: true` instead of applying rewards/spends again.
 - Graceful shutdown

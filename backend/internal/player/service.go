@@ -2,12 +2,14 @@ package player
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
@@ -251,7 +253,7 @@ func (service *Service) executeAction(ctx context.Context, request ActionRequest
 		return result
 	}
 
-	delta := currencyDelta(beforeState.PlayerState, service.state)
+	delta := economy.Delta(beforeState.PlayerState, service.state)
 	if err := service.saveState(ctx, request, actionID, outcome.reward, delta, result); err != nil {
 		service.applyPersistentState(beforeState)
 		return service.newActionResult(false, actionID, request.IdempotencyKey, false, "persistence_failed", fmt.Sprintf("Action could not be saved and was rolled back: %v", err), api.Reward{})
@@ -335,7 +337,7 @@ func (service *Service) FightCampaignWithRequest(ctx context.Context, request Ac
 			reward.PassXP = 25
 		}
 
-		service.grantReward(reward)
+		economy.Grant(&service.state, reward)
 		service.state.CampaignStage++
 		return actionSuccess(fmt.Sprintf("Campaign Stage %d cleared.", stage), reward)
 	})
@@ -391,11 +393,10 @@ func (service *Service) LevelHeroWithRequest(ctx context.Context, request Action
 		}
 
 		cost := 14 + (level * 6)
-		if service.state.MythEssence < cost {
-			return actionFailure("insufficient_currency", fmt.Sprintf("Need %d Myth Essence.", cost))
+		if failure, ok := service.spendCurrency(economy.CurrencyMythEssence, cost); !ok {
+			return failure
 		}
 
-		service.state.MythEssence -= cost
 		service.heroLevels[heroID] = level + 1
 		service.recalculatePower()
 		return actionSuccess(fmt.Sprintf("%s reached Lv. %d.", heroID, level+1), api.Reward{})
@@ -450,11 +451,10 @@ func (service *Service) LevelEquipmentWithRequest(ctx context.Context, request A
 		}
 
 		cost := baseCost + (level * 35)
-		if service.state.Gold < cost {
-			return actionFailure("insufficient_currency", fmt.Sprintf("Need %d Gold.", cost))
+		if failure, ok := service.spendCurrency(economy.CurrencyGold, cost); !ok {
+			return failure
 		}
 
-		service.state.Gold -= cost
 		service.equipmentLevels[equipmentID] = level + 1
 		service.recalculatePower()
 		return actionSuccess(fmt.Sprintf("%s reached Lv. %d.", equipmentID, level+1), api.Reward{})
@@ -499,11 +499,10 @@ func (service *Service) LevelAccessoryWithRequest(ctx context.Context, request A
 			return actionFailure("missing_item", fmt.Sprintf("Missing accessory: %s.", accessoryID))
 		}
 
-		if service.state.Gold < 35 {
-			return actionFailure("insufficient_currency", "Need 35 Gold.")
+		if failure, ok := service.spendCurrency(economy.CurrencyGold, 35); !ok {
+			return failure
 		}
 
-		service.state.Gold -= 35
 		service.accessoryLevels[accessoryID]++
 		service.recalculatePower()
 		return actionSuccess(fmt.Sprintf("%s reached Lv. %d.", accessoryID, service.accessoryLevels[accessoryID]), api.Reward{})
@@ -547,14 +546,13 @@ func (service *Service) PullSummonWithRequest(ctx context.Context, request Actio
 			return actionFailure("invalid_banner", fmt.Sprintf("Unknown banner: %s", bannerID))
 		}
 
-		if service.state.Gems < 35 {
-			return actionFailure("insufficient_currency", "Need 35 Gems.")
+		if failure, ok := service.spendCurrency(economy.CurrencyGems, 35); !ok {
+			return failure
 		}
 
 		heroes := []string{"hero_astra", "hero_borin", "hero_cyra", "hero_dante", "hero_elowen"}
 		heroID := heroes[service.summonCount%len(heroes)]
 		service.summonCount++
-		service.state.Gems -= 35
 		service.heroShards[heroID] += 7
 		service.recalculatePower()
 		return actionSuccess(fmt.Sprintf("Pulled %s shards.", heroID), api.Reward{RewardID: "reward_summon_shards"})
@@ -576,7 +574,7 @@ func (service *Service) ClaimDailyMissionWithRequest(ctx context.Context, reques
 
 		reward := api.Reward{RewardID: "reward_" + missionID, Gold: 40, Gems: 5, MythEssence: 70, PassXP: 40}
 		service.claimedDaily[missionID] = true
-		service.grantReward(reward)
+		economy.Grant(&service.state, reward)
 		return actionSuccess(fmt.Sprintf("Claimed %s.", missionID), reward)
 	})
 }
@@ -600,7 +598,7 @@ func (service *Service) ClaimBattlePassRewardWithRequest(ctx context.Context, re
 
 		reward := api.Reward{RewardID: rewardID, Gold: 100, Gems: 10}
 		service.claimedBattlePass[rewardID] = true
-		service.grantReward(reward)
+		economy.Grant(&service.state, reward)
 		return actionSuccess(fmt.Sprintf("Claimed %s.", rewardID), reward)
 	})
 }
@@ -620,7 +618,7 @@ func (service *Service) runResourceDungeon(dungeonID string, floor int, isGold b
 		service.state.EssenceDungeonFloor++
 	}
 
-	service.grantReward(reward)
+	economy.Grant(&service.state, reward)
 	return actionSuccess(fmt.Sprintf("%s floor %d cleared.", dungeonID, floor), reward)
 }
 
@@ -637,20 +635,17 @@ func (service *Service) runGearDungeon() actionOutcome {
 	return actionSuccess(fmt.Sprintf("Dropped %s.", accessoryID), api.Reward{RewardID: "reward_gear_drop"})
 }
 
-func (service *Service) grantReward(reward api.Reward) {
-	service.state.Gold += reward.Gold
-	service.state.Gems += reward.Gems
-	service.state.MythEssence += reward.MythEssence
-	service.state.PassXP += reward.PassXP
-}
+func (service *Service) spendCurrency(currencyID string, amount int) (actionOutcome, bool) {
+	if err := economy.Spend(&service.state, currencyID, amount); err != nil {
+		var insufficient economy.InsufficientCurrencyError
+		if errors.As(err, &insufficient) {
+			return actionFailure("insufficient_currency", insufficient.Message()), false
+		}
 
-func currencyDelta(before api.PlayerState, after api.PlayerState) api.Reward {
-	return api.Reward{
-		Gold:        after.Gold - before.Gold,
-		Gems:        after.Gems - before.Gems,
-		MythEssence: after.MythEssence - before.MythEssence,
-		PassXP:      after.PassXP - before.PassXP,
+		return actionFailure("invalid_currency", err.Error()), false
 	}
+
+	return actionOutcome{}, true
 }
 
 func (service *Service) saveState(ctx context.Context, request ActionRequest, actionID string, reward api.Reward, delta api.Reward, result api.ActionResult) error {

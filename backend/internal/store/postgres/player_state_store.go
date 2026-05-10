@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
 )
@@ -353,10 +354,10 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
-	state.Gold = currencies["gold"]
-	state.Gems = currencies["gems"]
-	state.MythEssence = currencies["myth_essence"]
-	state.PassXP = currencies["pass_xp"]
+	state.Gold = currencies[economy.CurrencyGold]
+	state.Gems = currencies[economy.CurrencyGems]
+	state.MythEssence = currencies[economy.CurrencyMythEssence]
+	state.PassXP = currencies[economy.CurrencyPassXP]
 
 	dungeons, err := store.loadDungeons(ctx, playerID)
 	if err != nil {
@@ -439,10 +440,10 @@ func (store *PlayerStateStore) saveCoreState(ctx context.Context, tx *sql.Tx, pl
 	}
 
 	currencies := map[string]int{
-		"gold":         state.Gold,
-		"gems":         state.Gems,
-		"myth_essence": state.MythEssence,
-		"pass_xp":      state.PassXP,
+		economy.CurrencyGold:        state.Gold,
+		economy.CurrencyGems:        state.Gems,
+		economy.CurrencyMythEssence: state.MythEssence,
+		economy.CurrencyPassXP:      state.PassXP,
 	}
 	for currencyID, amount := range currencies {
 		if _, err := tx.ExecContext(ctx, `
@@ -510,10 +511,10 @@ func (store *PlayerStateStore) saveEconomyTransaction(ctx context.Context, tx *s
 		source.ActionID = "player_state_save"
 	}
 
-	goldDelta := state.Gold - previous["gold"]
-	gemsDelta := state.Gems - previous["gems"]
-	mythEssenceDelta := state.MythEssence - previous["myth_essence"]
-	passXPDelta := state.PassXP - previous["pass_xp"]
+	goldDelta := state.Gold - previous[economy.CurrencyGold]
+	gemsDelta := state.Gems - previous[economy.CurrencyGems]
+	mythEssenceDelta := state.MythEssence - previous[economy.CurrencyMythEssence]
+	passXPDelta := state.PassXP - previous[economy.CurrencyPassXP]
 	if goldDelta == 0 && gemsDelta == 0 && mythEssenceDelta == 0 && passXPDelta == 0 {
 		return nil
 	}
