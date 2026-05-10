@@ -84,7 +84,7 @@ Meta:
 - Daily missions
 - Mission Track rewards
 - Basic summon flow with rarity rates
-- Local-only prototype, no backend yet
+- Local/Server teststand with PostgreSQL-backed Server Mode for current core actions
 
 Known design note:
 - Role mechanics exist in prototype code, but roles are not a design focus right now. Do not deepen role-specific gameplay until real/free character assets and character kits are chosen.
@@ -626,10 +626,11 @@ Progress:
 - Added persistent player state revisions, action receipt metadata, and `debug.v_player_revision_overview` for Navicat-level state tracking.
 - Added action-ledger revision columns and monotonic PostgreSQL revision saves to protect batched materialized state writes.
 - Expanded PostgreSQL E2E coverage across starter gameplay mutation endpoints: resource dungeons, gear dungeon, accessory equip, hero level, equipment level, summon, daily mission claim, Battle Pass claim, flush, restart reload, idempotency replay, and logout.
+- Unity Server Mode now persists across app/editor restarts, restores through `/client/bootstrap`, gates gameplay buttons during backend requests, blocks local debug/reset mutations while server-authoritative, surfaces Redis/catalog/lock/hot-player diagnostics in the Backend panel, and includes a compact one-click Server Smoke action.
 
 Next useful step:
+- Turn the current server-backed prototype into a smoother internal test client before adding more backend breadth.
 - Add more Redis-backed short-lived locks only when a specific system needs cross-process coordination.
-- Keep moving individual Unity Server Mode flows away from local-only fallbacks once their backend path is stable.
 - Move domain services into separate packages only when a domain needs independent state, repositories, or balance loaders.
 
 Done when:
@@ -671,7 +672,7 @@ These matter later, but they would slow down the clean core right now.
 
 The best next step is:
 
-Harden the server-authoritative core before adding more gameplay breadth.
+Turn the server-authoritative core into a usable internal test stand before adding more gameplay breadth.
 
 That means:
 - Keep every economy mutation replay-safe.
@@ -679,3 +680,4 @@ That means:
 - Move definition/balance ownership toward PostgreSQL-backed tables.
 - Add Redis only for sessions, rate limits, locks, and other temporary coordination.
 - Keep Unity Server Mode working after each backend batch.
+- Improve the Unity test client enough that Campaign, Dungeons, Gear, Summons, Daily, Mission Track, AFK, reset, restart, and Navicat inspection can be tested without code changes.

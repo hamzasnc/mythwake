@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.30
+Prototype version: 0.2.31
 Local save version: 2
 
 Current prototype:
@@ -22,6 +22,10 @@ Current prototype:
 - Server Mode uses backend definitions for summon, progression cost, daily mission, and Mission Track preview values
 - Server Mode uses backend hero, equipment, accessory, and snapshot team stats for authoritative stat previews
 - Server Mode upgrade buttons now respect backend max-level/max-ascension caps and AFK timing definitions
+- Server Mode preference persists across Unity restarts and reboots through `/client/bootstrap`
+- Server Mode blocks local debug grants/reset so PostgreSQL remains the authoritative test source
+- Gameplay buttons are gated while backend requests are in flight to avoid accidental double actions
+- Backend panel includes a `Smoke` action that runs a compact server-backed Campaign/Dungeon/Progression/Summon/AFK/Flush test sequence
 - Auto Attack stays local-only for now and is paused while Server Mode is active
 - Campaign fights, dungeon runs, and summons now return local action-result DTOs
 - Accessory equip, level, and fuse actions now return local action-result DTOs
@@ -126,7 +130,7 @@ Backend:
 - Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
 - Unity Server Mode activation now uses `/client/bootstrap` to sync clock, definitions, and player state through one authenticated startup contract
 - Unity can sync `/time`, keep an approximate in-memory server clock, and show daily/weekly reset timing from the backend
-- Unity Backend Ping shows server write-mode plus state-cache dirty/failure status for faster local persistence checks
+- Unity Backend Ping shows server write-mode, Redis/catalog/lock store, hot-player, and state-cache dirty/failure status for faster local persistence checks
 - Unity can manually claim server AFK rewards from the Backend panel and checks them on app resume while Server Mode is active
 - Unity reads server daily mission progress from player snapshots when Server Mode syncs/actions complete
 - Unity stores the backend session token, sends it automatically, and retries once with a fresh guest login after a `401`
@@ -146,8 +150,12 @@ Backend:
   - `scripts/start-backend.cmd`
   - `scripts/check-backend.cmd`
   - `scripts/check-postgres-e2e.cmd`
+- Test planning docs:
+  - `docs/ROADMAP.md`
+  - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.31: Unity Server Mode now persists across restarts, auto-bootstraps through the backend, blocks local debug/reset mutations while server-authoritative, gates gameplay during backend requests, shows expanded backend health/cache diagnostics, and adds a Backend-panel Smoke action for compact server-flow testing.
 - Backend 0.2.55: Expanded PostgreSQL E2E coverage across core gameplay mutation endpoints and restart reload checks.
 - Backend 0.2.54: Added configurable idle loaded-player context flushing/unloading with health visibility for long-running API memory control.
 - Backend 0.2.53: Added per-player gameplay mutation locks with memory/Redis implementations and `player_busy` conflict handling.
