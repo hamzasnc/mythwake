@@ -67,7 +67,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.48-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.49-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_STATE_WRITE_MODE = $StateWriteMode
     $env:MYTHWAKE_STATE_FLUSH_INTERVAL = "10m"

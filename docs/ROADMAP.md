@@ -344,6 +344,7 @@ Current backend state:
 - Added authenticated `/client/bootstrap` so mobile startup can fetch server clock, definition snapshot, and player snapshot through one stable contract.
 - Player snapshots and action results now carry server state revisions/action receipts so clients can reason about accepted state versions.
 - Unity gameplay mutations now send the last known server state revision, and the backend rejects stale mutation attempts with the latest snapshot.
+- Action ledger rows now store accepted state revisions, and PostgreSQL guards against older materialized state writes overwriting newer accepted revisions.
 - Unity Backend Ping surfaces state-cache dirty/failure status so local persistence tests do not require opening Navicat first.
 - Player state, flush, and gameplay mutation routes now validate Bearer sessions and resolve the player context from the session token.
 - Unity Server Mode now persists the session token, sends `Authorization: Bearer <sessionToken>`, and retries protected requests once after `401` by refreshing guest auth.
@@ -616,6 +617,7 @@ Progress:
 - Unity Server Mode exposes the local/dev reset through the Backend panel and clears pending client idempotency keys after a successful reset.
 - `/health` now reports state-cache dirty, queued, flushed, failed, last flush, and last error counters; PostgreSQL E2E verifies dirty queue visibility before manual flush and clean state after flush.
 - Added persistent player state revisions, action receipt metadata, and `debug.v_player_revision_overview` for Navicat-level state tracking.
+- Added action-ledger revision columns and monotonic PostgreSQL revision saves to protect batched materialized state writes.
 
 Next useful step:
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.

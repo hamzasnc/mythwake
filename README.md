@@ -146,6 +146,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.49: Action ledger rows now store accepted state revisions and PostgreSQL rejects older materialized state writes over newer accepted revisions.
 - Backend 0.2.48 / Prototype 0.2.30: Unity now sends known player state revisions on gameplay actions and the backend rejects stale mutation attempts with the current snapshot.
 - Backend 0.2.47 / Prototype 0.2.29: Added server state revisions and action receipts to snapshots/results, with PostgreSQL persistence and Unity Backend-panel revision visibility.
 - Backend 0.2.46 / Prototype 0.2.28: Added authenticated `/client/bootstrap` for mobile startup sync and wired Server Mode activation to use it.

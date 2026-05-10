@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
@@ -96,6 +97,11 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	}
 	if err := store.saveActionResult(ctx, tx, playerID, source); err != nil {
 		return err
+	}
+	if source.ActionResult != nil {
+		if err := store.saveActionResultRevision(ctx, tx, playerID, *source.ActionResult); err != nil {
+			return err
+		}
 	}
 	if err := store.saveActionLedger(ctx, tx, playerID, source); err != nil {
 		return err
@@ -260,6 +266,7 @@ func (store *PlayerStateStore) saveActionLedger(ctx context.Context, tx *sql.Tx,
 			idempotency_key,
 			action_id,
 			request_hash,
+			state_revision,
 			success,
 			error_code,
 			reward_id,
@@ -270,12 +277,13 @@ func (store *PlayerStateStore) saveActionLedger(ctx context.Context, tx *sql.Tx,
 			response,
 			created_at
 		)
-		VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), NULLIF($7, ''), $8, $9, $10, $11, $12, now())
+		VALUES ($1, $2, $3, $4, $5, $6, NULLIF($7, ''), NULLIF($8, ''), $9, $10, $11, $12, $13, now())
 		ON CONFLICT (player_id, idempotency_key) DO NOTHING
 	`, playerID,
 		source.IdempotencyKey,
 		source.ActionID,
 		source.RequestHash,
+		source.ActionResult.PlayerSnapshot.Revision,
 		source.ActionResult.Success,
 		source.ActionResult.ErrorCode,
 		source.RewardID,
@@ -285,6 +293,17 @@ func (store *PlayerStateStore) saveActionLedger(ctx context.Context, tx *sql.Tx,
 		source.CurrencyDelta.PassXP,
 		rawResponse)
 	return err
+}
+
+func (store *PlayerStateStore) saveActionResultRevision(ctx context.Context, tx *sql.Tx, playerID string, result api.ActionResult) error {
+	if result.PlayerSnapshot.Revision <= 0 {
+		return nil
+	}
+
+	return store.saveRevisionState(ctx, tx, playerID, player.PersistentState{
+		Revision:  result.PlayerSnapshot.Revision,
+		UpdatedAt: parseSnapshotTime(result.PlayerSnapshot.UpdatedAtUTC),
+	})
 }
 
 func (store *PlayerStateStore) loadLatestActionState(ctx context.Context, playerID string) (player.PersistentState, bool, error) {
@@ -619,7 +638,21 @@ func (store *PlayerStateStore) saveRevisionState(ctx context.Context, tx *sql.Tx
 		updatedAt = time.Now().UTC()
 	}
 
-	_, err := tx.ExecContext(ctx, `
+	var currentRevision int64
+	err := tx.QueryRowContext(ctx, `
+		SELECT revision
+		FROM player.player_state_revisions
+		WHERE player_id = $1
+		FOR UPDATE
+	`, playerID).Scan(&currentRevision)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+	if err == nil && currentRevision > revision {
+		return fmt.Errorf("state revision %d is older than stored revision %d", revision, currentRevision)
+	}
+
+	_, err = tx.ExecContext(ctx, `
 		INSERT INTO player.player_state_revisions (player_id, revision, updated_at)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (player_id) DO UPDATE SET
