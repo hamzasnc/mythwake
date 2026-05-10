@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
 var errTestPersistenceFailed = errors.New("test persistence failed")
@@ -40,6 +42,21 @@ func TestAccessoryFuseTargetUsesNextRarityID(t *testing.T) {
 func TestAccessoryFuseTargetStopsAtR4(t *testing.T) {
 	if target, ok := accessoryFuseTarget("accessory_earrings_r4"); ok {
 		t.Fatalf("expected r4 accessory to have no fuse target, got %s", target)
+	}
+}
+
+func TestDungeonActionIDUsesSpecificActionForKnownDungeons(t *testing.T) {
+	if actionID := dungeonActionID(goldDungeonID); actionID != gameplay.ActionGoldDungeonRun {
+		t.Fatalf("expected gold dungeon action id, got %s", actionID)
+	}
+	if actionID := dungeonActionID(essenceDungeonID); actionID != gameplay.ActionEssenceDungeonRun {
+		t.Fatalf("expected essence dungeon action id, got %s", actionID)
+	}
+	if actionID := dungeonActionID(gearDungeonID); actionID != gameplay.ActionGearDungeonRun {
+		t.Fatalf("expected gear dungeon action id, got %s", actionID)
+	}
+	if actionID := dungeonActionID("unknown"); actionID != gameplay.ActionDungeonRun {
+		t.Fatalf("expected generic dungeon action id, got %s", actionID)
 	}
 }
 
@@ -124,7 +141,7 @@ func TestFlushStateQueuesCurrentStateAndFlushesStore(t *testing.T) {
 	if store.saved.PlayerState.CampaignStage != 2 {
 		t.Fatalf("expected saved campaign stage 2, got %d", store.saved.PlayerState.CampaignStage)
 	}
-	if store.source.ActionID != "player_state_flush" {
+	if store.source.ActionID != gameplay.ActionPlayerStateFlush {
 		t.Fatalf("expected flush source, got %#v", store.source)
 	}
 }

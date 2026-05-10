@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
 )
 
@@ -15,10 +16,10 @@ func TestWriteBehindStateStoreFlushesLatestStateOnly(t *testing.T) {
 	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
 	defer closeStore(t, store)
 
-	if err := store.SaveState(context.Background(), "player-1", testState(2), idempotentSource("campaign_fight", "key-1")); err != nil {
+	if err := store.SaveState(context.Background(), "player-1", testState(2), idempotentSource(gameplay.ActionCampaignFight, "key-1")); err != nil {
 		t.Fatalf("queue first state: %v", err)
 	}
-	if err := store.SaveState(context.Background(), "player-1", testState(3), idempotentSource("gold_dungeon_run", "key-2")); err != nil {
+	if err := store.SaveState(context.Background(), "player-1", testState(3), idempotentSource(gameplay.ActionGoldDungeonRun, "key-2")); err != nil {
 		t.Fatalf("queue second state: %v", err)
 	}
 
@@ -42,7 +43,7 @@ func TestWriteBehindStateStoreFlushesLatestStateOnly(t *testing.T) {
 	if base.saved.PlayerState.CampaignStage != 3 {
 		t.Fatalf("expected latest campaign stage 3, got %d", base.saved.PlayerState.CampaignStage)
 	}
-	if base.source.ActionID != "state_cache_flush:2:gold_dungeon_run" {
+	if base.source.ActionID != gameplay.ActionStateCacheFlush+":2:"+gameplay.ActionGoldDungeonRun {
 		t.Fatalf("expected batched source, got %#v", base.source)
 	}
 	if stats := store.Stats(); stats.DirtyPlayers != 0 || stats.FlushedSaves != 1 {
@@ -55,7 +56,7 @@ func TestWriteBehindStateStoreWritesSeedImmediately(t *testing.T) {
 	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
 	defer closeStore(t, store)
 
-	if err := store.SaveState(context.Background(), "player-1", testState(1), player.StateSaveSource{ActionID: seedActionID}); err != nil {
+	if err := store.SaveState(context.Background(), "player-1", testState(1), player.StateSaveSource{ActionID: gameplay.ActionPlayerStateSeed}); err != nil {
 		t.Fatalf("seed save: %v", err)
 	}
 
@@ -72,7 +73,7 @@ func TestWriteBehindStateStoreKeepsDirtyStateAfterFlushFailure(t *testing.T) {
 	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
 	defer closeStore(t, store)
 
-	if err := store.SaveState(context.Background(), "player-1", testState(4), idempotentSource("campaign_fight", "key-1")); err != nil {
+	if err := store.SaveState(context.Background(), "player-1", testState(4), idempotentSource(gameplay.ActionCampaignFight, "key-1")); err != nil {
 		t.Fatalf("queue state: %v", err)
 	}
 
@@ -99,7 +100,7 @@ func TestWriteBehindStateStoreDefaultsToWriteThroughDurability(t *testing.T) {
 	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second}, nil)
 	defer closeStore(t, store)
 
-	if err := store.SaveState(context.Background(), "player-1", testState(5), player.StateSaveSource{ActionID: "summon_pull"}); err != nil {
+	if err := store.SaveState(context.Background(), "player-1", testState(5), player.StateSaveSource{ActionID: gameplay.ActionSummonPull}); err != nil {
 		t.Fatalf("save state: %v", err)
 	}
 
@@ -119,7 +120,7 @@ func TestWriteBehindStateStoreSavesIdempotentActionResultAndQueuesState(t *testi
 	store := NewWriteBehindStateStore(base, Config{FlushInterval: time.Hour, FlushTimeout: time.Second, WriteBehind: true}, nil)
 	defer closeStore(t, store)
 
-	err := store.SaveState(context.Background(), "player-1", testState(6), idempotentSource("summon_pull", "summon-key-1"))
+	err := store.SaveState(context.Background(), "player-1", testState(6), idempotentSource(gameplay.ActionSummonPull, "summon-key-1"))
 	if err != nil {
 		t.Fatalf("save idempotent state: %v", err)
 	}

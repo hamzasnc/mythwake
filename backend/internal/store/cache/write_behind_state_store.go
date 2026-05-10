@@ -9,10 +9,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
 )
-
-const seedActionID = "player_state_seed"
 
 type Config struct {
 	FlushInterval time.Duration
@@ -98,7 +97,7 @@ func (store *WriteBehindStateStore) SaveState(ctx context.Context, playerID stri
 	}
 
 	state = player.ClonePersistentState(state)
-	if source.ActionID == seedActionID {
+	if source.ActionID == gameplay.ActionPlayerStateSeed {
 		return store.base.SaveState(ctx, playerID, state, source)
 	}
 	if source.IdempotencyKey != "" && source.ActionResult != nil {
@@ -277,10 +276,10 @@ func withDefaults(config Config) Config {
 func batchedSource(queued queuedState) player.StateSaveSource {
 	source := queued.source
 	if source.ActionID == "" {
-		source.ActionID = "state_cache_flush"
+		source.ActionID = gameplay.ActionStateCacheFlush
 	}
 	if queued.updateCount > 1 {
-		source.ActionID = fmt.Sprintf("state_cache_flush:%d:%s", queued.updateCount, source.ActionID)
+		source.ActionID = fmt.Sprintf("%s:%d:%s", gameplay.ActionStateCacheFlush, queued.updateCount, source.ActionID)
 	}
 
 	return source

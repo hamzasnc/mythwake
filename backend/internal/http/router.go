@@ -95,48 +95,33 @@ func (router *Router) handleGuestAuth(response http.ResponseWriter, request *htt
 }
 
 func (router *Router) handleCampaignFight(response http.ResponseWriter, request *http.Request) {
-	action, ok := router.actionRequest(response, request, "")
-	if !ok {
-		return
-	}
-
-	writeActionResult(response, router.playerService.FightCampaignWithRequest(request.Context(), action))
+	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
+		return router.playerService.FightCampaignWithRequest(request.Context(), action)
+	})
 }
 
 func (router *Router) handleDungeonRun(response http.ResponseWriter, request *http.Request) {
-	action, ok := router.actionRequest(response, request, "")
-	if !ok {
-		return
-	}
-
-	writeActionResult(response, router.playerService.RunDungeonWithRequest(request.Context(), action, request.PathValue("dungeon_id")))
+	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
+		return router.playerService.RunDungeonWithRequest(request.Context(), action, request.PathValue("dungeon_id"))
+	})
 }
 
 func (router *Router) handleHeroLevel(response http.ResponseWriter, request *http.Request) {
-	action, ok := router.actionRequest(response, request, "")
-	if !ok {
-		return
-	}
-
-	writeActionResult(response, router.playerService.LevelHeroWithRequest(request.Context(), action, request.PathValue("hero_id")))
+	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
+		return router.playerService.LevelHeroWithRequest(request.Context(), action, request.PathValue("hero_id"))
+	})
 }
 
 func (router *Router) handleHeroAscend(response http.ResponseWriter, request *http.Request) {
-	action, ok := router.actionRequest(response, request, "")
-	if !ok {
-		return
-	}
-
-	writeActionResult(response, router.playerService.AscendHeroWithRequest(request.Context(), action, request.PathValue("hero_id")))
+	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
+		return router.playerService.AscendHeroWithRequest(request.Context(), action, request.PathValue("hero_id"))
+	})
 }
 
 func (router *Router) handleEquipmentLevel(response http.ResponseWriter, request *http.Request) {
-	action, ok := router.actionRequest(response, request, "")
-	if !ok {
-		return
-	}
-
-	writeActionResult(response, router.playerService.LevelEquipmentWithRequest(request.Context(), action, request.PathValue("equipment_id")))
+	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
+		return router.playerService.LevelEquipmentWithRequest(request.Context(), action, request.PathValue("equipment_id"))
+	})
 }
 
 func (router *Router) handleAccessoryEquip(response http.ResponseWriter, request *http.Request) {
@@ -145,12 +130,9 @@ func (router *Router) handleAccessoryEquip(response http.ResponseWriter, request
 		return
 	}
 
-	action, ok := router.actionRequest(response, request, rawBody)
-	if !ok {
-		return
-	}
-
-	writeActionResult(response, router.playerService.EquipAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID))
+	router.writeGameplayAction(response, request, rawBody, func(action player.ActionRequest) api.ActionResult {
+		return router.playerService.EquipAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID)
+	})
 }
 
 func (router *Router) handleAccessoryLevel(response http.ResponseWriter, request *http.Request) {
@@ -159,12 +141,9 @@ func (router *Router) handleAccessoryLevel(response http.ResponseWriter, request
 		return
 	}
 
-	action, ok := router.actionRequest(response, request, rawBody)
-	if !ok {
-		return
-	}
-
-	writeActionResult(response, router.playerService.LevelAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID))
+	router.writeGameplayAction(response, request, rawBody, func(action player.ActionRequest) api.ActionResult {
+		return router.playerService.LevelAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID)
+	})
 }
 
 func (router *Router) handleAccessoryFuse(response http.ResponseWriter, request *http.Request) {
@@ -173,39 +152,27 @@ func (router *Router) handleAccessoryFuse(response http.ResponseWriter, request 
 		return
 	}
 
-	action, ok := router.actionRequest(response, request, rawBody)
-	if !ok {
-		return
-	}
-
-	writeActionResult(response, router.playerService.FuseAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID))
+	router.writeGameplayAction(response, request, rawBody, func(action player.ActionRequest) api.ActionResult {
+		return router.playerService.FuseAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID)
+	})
 }
 
 func (router *Router) handleSummonPull(response http.ResponseWriter, request *http.Request) {
-	action, ok := router.actionRequest(response, request, "")
-	if !ok {
-		return
-	}
-
-	writeActionResult(response, router.playerService.PullSummonWithRequest(request.Context(), action, request.PathValue("banner_id")))
+	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
+		return router.playerService.PullSummonWithRequest(request.Context(), action, request.PathValue("banner_id"))
+	})
 }
 
 func (router *Router) handleDailyMissionClaim(response http.ResponseWriter, request *http.Request) {
-	action, ok := router.actionRequest(response, request, "")
-	if !ok {
-		return
-	}
-
-	writeActionResult(response, router.playerService.ClaimDailyMissionWithRequest(request.Context(), action, request.PathValue("mission_id")))
+	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
+		return router.playerService.ClaimDailyMissionWithRequest(request.Context(), action, request.PathValue("mission_id"))
+	})
 }
 
 func (router *Router) handleBattlePassClaim(response http.ResponseWriter, request *http.Request) {
-	action, ok := router.actionRequest(response, request, "")
-	if !ok {
-		return
-	}
-
-	writeActionResult(response, router.playerService.ClaimBattlePassRewardWithRequest(request.Context(), action, request.PathValue("reward_id")))
+	router.writeGameplayAction(response, request, "", func(action player.ActionRequest) api.ActionResult {
+		return router.playerService.ClaimBattlePassRewardWithRequest(request.Context(), action, request.PathValue("reward_id"))
+	})
 }
 
 func (router *Router) logRequests(next http.Handler) http.Handler {
@@ -227,6 +194,15 @@ func writeJSON(response http.ResponseWriter, statusCode int, payload any) {
 
 func writeActionResult(response http.ResponseWriter, result any) {
 	writeJSON(response, http.StatusOK, result)
+}
+
+func (router *Router) writeGameplayAction(response http.ResponseWriter, request *http.Request, rawBody string, run func(player.ActionRequest) api.ActionResult) {
+	action, ok := router.actionRequest(response, request, rawBody)
+	if !ok {
+		return
+	}
+
+	writeActionResult(response, run(action))
 }
 
 func (router *Router) actionRequest(response http.ResponseWriter, request *http.Request, rawBody string) (player.ActionRequest, bool) {

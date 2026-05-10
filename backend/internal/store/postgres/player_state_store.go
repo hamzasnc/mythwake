@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
 )
 
@@ -620,7 +621,7 @@ func (store *PlayerStateStore) saveMetaState(ctx context.Context, tx *sql.Tx, pl
 		return err
 	}
 
-	if source.ActionID == "summon_pull" {
+	if source.ActionID == gameplay.ActionSummonPull {
 		if _, err := tx.ExecContext(ctx, `
 			INSERT INTO logs.summon_history (player_id, banner_id, summon_count)
 			VALUES ($1, 'hero_shard_standard', $2)

@@ -82,6 +82,7 @@ Backend:
 - Gameplay server actions require a valid `Idempotency-Key` by default, making timeout/retry flows part of the API contract instead of an optional client habit
 - Successful idempotent action results are stored in `player.player_action_results`
 - Per-action economy deltas are stored in `logs.player_action_ledger`
+- Backend gameplay action IDs now live in a central action catalog instead of being scattered string literals
 - Unity reuses pending idempotency keys after transport failures
 - `POST /player/state/flush` is ready as the future app-pause/disconnect save hook
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
@@ -93,6 +94,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.14: Added a central gameplay action catalog and refactored HTTP gameplay handlers through one mutation validation path.
 - Backend 0.2.13: Required idempotency headers for gameplay mutations, added key validation, health visibility, script support, and HTTP/config tests.
 - Backend 0.2.12: Switched default persistence to durable action ledger plus materialized state write-behind flush.
 - Backend 0.2.11: Added durable idempotent action results, replay-safe server action routing, and Unity pending action keys.

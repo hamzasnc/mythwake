@@ -329,6 +329,7 @@ Current backend state:
 - Added `POST /player/state/flush` as a future app-pause/disconnect hook.
 - Added durable idempotent action results through `Idempotency-Key`.
 - Gameplay mutation endpoints now require valid `Idempotency-Key` headers by default.
+- Gameplay action IDs now live in a central backend action catalog for routing, ledgers, persistence sources, and tests.
 - Successful idempotent action results save in `player.player_action_results`.
 - Per-action economy deltas save in `logs.player_action_ledger`.
 - Startup restores from the latest durable action result snapshot if materialized tables are behind.
@@ -548,6 +549,7 @@ Progress:
 - Added `logs.player_action_ledger` and `debug.v_player_action_ledger_overview` for per-action durable economy deltas.
 - Default persistence mode is now durable action ledger plus batched materialized state flush.
 - Added required idempotency headers and validation for gameplay mutation endpoints.
+- Added `internal/gameplay` as the first action catalog slice before splitting the large player service into domain services.
 
 Next useful step:
 - Split backend gameplay services out of the current single `player.Service` while keeping the API behavior stable:

@@ -45,6 +45,7 @@ Current scope:
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
 - The Unity prototype can ping, guest-login, sync this snapshot, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
 - Server gameplay POSTs require valid `Idempotency-Key` headers by default.
+- Gameplay action IDs are centralized in `internal/gameplay` so routing, persistence, ledgers, and tests share the same names.
 - Successful idempotent action results are stored in PostgreSQL before the materialized player-state flush.
 - Retrying the same action with the same key returns the stored result with `replay: true` instead of applying rewards/spends again.
 - Graceful shutdown

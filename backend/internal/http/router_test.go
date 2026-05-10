@@ -10,6 +10,7 @@ import (
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
+	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
 )
 
@@ -66,7 +67,7 @@ func TestCampaignFightEndpoint(t *testing.T) {
 		t.Fatalf("decode response: %v", err)
 	}
 
-	if !body.Success || body.ActionID != "campaign_fight" {
+	if !body.Success || body.ActionID != gameplay.ActionCampaignFight {
 		t.Fatalf("expected successful campaign fight, got %#v", body)
 	}
 	if len(body.PlayerSnapshot.Heroes) == 0 || body.PlayerSnapshot.State.CampaignStage != body.PlayerState.CampaignStage {
@@ -112,6 +113,27 @@ func TestMutatingActionRejectsInvalidIdempotencyHeader(t *testing.T) {
 	}
 	if body["errorCode"] != "invalid_idempotency_key" {
 		t.Fatalf("expected invalid idempotency error, got %#v", body)
+	}
+}
+
+func TestMutatingActionAcceptsLegacyIdempotencyHeader(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	request.Header.Set("X-Idempotency-Key", "legacy-campaign-001")
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+
+	var body api.ActionResult
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.IdempotencyKey != "legacy-campaign-001" {
+		t.Fatalf("expected legacy idempotency key in response, got %#v", body)
 	}
 }
 

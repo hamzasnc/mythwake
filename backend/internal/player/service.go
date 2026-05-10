@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
 const (
@@ -163,7 +164,7 @@ func (service *Service) UseStateStore(ctx context.Context, store StateStore) err
 		return nil
 	}
 
-	return store.SaveState(ctx, service.playerID, service.persistentState(), StateSaveSource{ActionID: "player_state_seed"})
+	return store.SaveState(ctx, service.playerID, service.persistentState(), StateSaveSource{ActionID: gameplay.ActionPlayerStateSeed})
 }
 
 func (service *Service) GuestAuth() api.GuestAuthResponse {
@@ -204,7 +205,7 @@ func (service *Service) FlushState(ctx context.Context) error {
 	state := service.persistentState()
 	service.mu.Unlock()
 
-	if err := store.SaveState(ctx, playerID, state, StateSaveSource{ActionID: "player_state_flush"}); err != nil {
+	if err := store.SaveState(ctx, playerID, state, StateSaveSource{ActionID: gameplay.ActionPlayerStateFlush}); err != nil {
 		return err
 	}
 
@@ -318,7 +319,7 @@ func (service *Service) FightCampaignWithRequest(ctx context.Context, request Ac
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	return service.executeAction(ctx, request, "campaign_fight", func() actionOutcome {
+	return service.executeAction(ctx, request, gameplay.ActionCampaignFight, func() actionOutcome {
 		stage := service.state.CampaignStage
 		requiredPower := 90 + (stage * 46)
 		if service.state.TeamPower < requiredPower {
@@ -348,12 +349,7 @@ func (service *Service) RunDungeonWithRequest(ctx context.Context, request Actio
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	actionID := dungeonID + "_run"
-	if dungeonID != goldDungeonID && dungeonID != essenceDungeonID && dungeonID != gearDungeonID {
-		actionID = "dungeon_run"
-	}
-
-	return service.executeAction(ctx, request, actionID, func() actionOutcome {
+	return service.executeAction(ctx, request, dungeonActionID(dungeonID), func() actionOutcome {
 		switch dungeonID {
 		case goldDungeonID:
 			return service.runResourceDungeon(dungeonID, service.state.GoldDungeonFloor, true)
@@ -367,6 +363,19 @@ func (service *Service) RunDungeonWithRequest(ctx context.Context, request Actio
 	})
 }
 
+func dungeonActionID(dungeonID string) string {
+	switch dungeonID {
+	case goldDungeonID:
+		return gameplay.ActionGoldDungeonRun
+	case essenceDungeonID:
+		return gameplay.ActionEssenceDungeonRun
+	case gearDungeonID:
+		return gameplay.ActionGearDungeonRun
+	default:
+		return gameplay.ActionDungeonRun
+	}
+}
+
 func (service *Service) LevelHero(heroID string) api.ActionResult {
 	return service.LevelHeroWithRequest(context.Background(), ActionRequest{}, heroID)
 }
@@ -375,7 +384,7 @@ func (service *Service) LevelHeroWithRequest(ctx context.Context, request Action
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	return service.executeAction(ctx, request, "hero_level", func() actionOutcome {
+	return service.executeAction(ctx, request, gameplay.ActionHeroLevel, func() actionOutcome {
 		level, ok := service.heroLevels[heroID]
 		if !ok {
 			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID))
@@ -401,7 +410,7 @@ func (service *Service) AscendHeroWithRequest(ctx context.Context, request Actio
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	return service.executeAction(ctx, request, "hero_ascend", func() actionOutcome {
+	return service.executeAction(ctx, request, gameplay.ActionHeroAscend, func() actionOutcome {
 		if _, ok := service.heroLevels[heroID]; !ok {
 			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID))
 		}
@@ -426,7 +435,7 @@ func (service *Service) LevelEquipmentWithRequest(ctx context.Context, request A
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	return service.executeAction(ctx, request, "equipment_level", func() actionOutcome {
+	return service.executeAction(ctx, request, gameplay.ActionEquipmentLevel, func() actionOutcome {
 		level, ok := service.equipmentLevels[equipmentID]
 		if !ok {
 			return actionFailure("invalid_equipment", fmt.Sprintf("Unknown equipment: %s", equipmentID))
@@ -460,7 +469,7 @@ func (service *Service) EquipAccessoryWithRequest(ctx context.Context, request A
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	return service.executeAction(ctx, request, "accessory_equip", func() actionOutcome {
+	return service.executeAction(ctx, request, gameplay.ActionAccessoryEquip, func() actionOutcome {
 		if service.accessoryInventory[accessoryID] <= 0 {
 			return actionFailure("missing_item", fmt.Sprintf("Missing accessory: %s", accessoryID))
 		}
@@ -485,7 +494,7 @@ func (service *Service) LevelAccessoryWithRequest(ctx context.Context, request A
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	return service.executeAction(ctx, request, "accessory_level", func() actionOutcome {
+	return service.executeAction(ctx, request, gameplay.ActionAccessoryLevel, func() actionOutcome {
 		if service.accessoryInventory[accessoryID] <= 0 && !service.accessoryIsEquipped(accessoryID) {
 			return actionFailure("missing_item", fmt.Sprintf("Missing accessory: %s.", accessoryID))
 		}
@@ -509,7 +518,7 @@ func (service *Service) FuseAccessoryWithRequest(ctx context.Context, request Ac
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	return service.executeAction(ctx, request, "accessory_fuse", func() actionOutcome {
+	return service.executeAction(ctx, request, gameplay.ActionAccessoryFuse, func() actionOutcome {
 		if service.accessoryInventory[accessoryID] < 3 {
 			return actionFailure("missing_items", fmt.Sprintf("Need 3 copies of %s.", accessoryID))
 		}
@@ -533,7 +542,7 @@ func (service *Service) PullSummonWithRequest(ctx context.Context, request Actio
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	return service.executeAction(ctx, request, "summon_pull", func() actionOutcome {
+	return service.executeAction(ctx, request, gameplay.ActionSummonPull, func() actionOutcome {
 		if bannerID != heroBannerID {
 			return actionFailure("invalid_banner", fmt.Sprintf("Unknown banner: %s", bannerID))
 		}
@@ -560,7 +569,7 @@ func (service *Service) ClaimDailyMissionWithRequest(ctx context.Context, reques
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	return service.executeAction(ctx, request, "daily_mission_claim", func() actionOutcome {
+	return service.executeAction(ctx, request, gameplay.ActionDailyMissionClaim, func() actionOutcome {
 		if service.claimedDaily[missionID] {
 			return actionFailure("already_claimed", fmt.Sprintf("%s already claimed.", missionID))
 		}
@@ -580,7 +589,7 @@ func (service *Service) ClaimBattlePassRewardWithRequest(ctx context.Context, re
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	return service.executeAction(ctx, request, "battle_pass_claim", func() actionOutcome {
+	return service.executeAction(ctx, request, gameplay.ActionBattlePassClaim, func() actionOutcome {
 		if service.claimedBattlePass[rewardID] {
 			return actionFailure("already_claimed", fmt.Sprintf("%s already claimed.", rewardID))
 		}
