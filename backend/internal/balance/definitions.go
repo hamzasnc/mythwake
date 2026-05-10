@@ -17,6 +17,7 @@ const (
 
 	BannerHeroShardStandard = "hero_shard_standard"
 
+	RewardSummonShards         = "reward_summon_shards"
 	RewardGearDrop             = "reward_gear_drop"
 	StarterGearDropAccessoryID = "accessory_earrings_r0"
 )
@@ -29,6 +30,26 @@ type DungeonDefinition struct {
 	RequiredPowerPerFloor int
 	BaseRewardAmount      int
 	RewardPerFloor        int
+}
+
+type DailyMissionDefinition struct {
+	ID           string
+	DisplayName  string
+	ProgressType string
+	Target       int
+	Reward       api.Reward
+}
+
+type BattlePassRewardDefinition struct {
+	ID             string
+	RequiredPassXP int
+	Reward         api.Reward
+}
+
+type SummonShardDrop struct {
+	HeroID string
+	Shards int
+	Reward api.Reward
 }
 
 var dungeonDefinitions = map[string]DungeonDefinition{
@@ -59,6 +80,46 @@ var dungeonDefinitions = map[string]DungeonDefinition{
 		BaseRewardAmount:      0,
 		RewardPerFloor:        0,
 	},
+}
+
+var dailyMissionDefinitions = []DailyMissionDefinition{
+	{
+		ID:           "daily_battles_15",
+		DisplayName:  "Battle 15 times",
+		ProgressType: "fight",
+		Target:       15,
+		Reward:       api.Reward{RewardID: "reward_daily_battles_15", Gold: 40, Gems: 5, MythEssence: 70, PassXP: 40},
+	},
+	{
+		ID:           "daily_stage_clears_3",
+		DisplayName:  "Clear 3 stages",
+		ProgressType: "stage_clear",
+		Target:       3,
+		Reward:       api.Reward{RewardID: "reward_daily_stage_clears_3", Gold: 70, Gems: 10, MythEssence: 110, PassXP: 40},
+	},
+	{
+		ID:           "daily_summon_1",
+		DisplayName:  "Summon 1 hero",
+		ProgressType: "summon",
+		Target:       1,
+		Reward:       api.Reward{RewardID: "reward_daily_summon_1", Gold: 35, Gems: 20, MythEssence: 55, PassXP: 40},
+	},
+}
+
+var battlePassRewardDefinitions = []BattlePassRewardDefinition{
+	{ID: "mission_track_reward_01", RequiredPassXP: 40, Reward: api.Reward{RewardID: "reward_mission_track_01", Gold: 100, Gems: 10}},
+	{ID: "mission_track_reward_02", RequiredPassXP: 80, Reward: api.Reward{RewardID: "reward_mission_track_02", Gold: 125, Gems: 15, MythEssence: 120}},
+	{ID: "mission_track_reward_03", RequiredPassXP: 120, Reward: api.Reward{RewardID: "reward_mission_track_03", Gold: 175, Gems: 20}},
+	{ID: "mission_track_reward_04", RequiredPassXP: 180, Reward: api.Reward{RewardID: "reward_mission_track_04", Gold: 225, Gems: 25, MythEssence: 180}},
+	{ID: "mission_track_reward_05", RequiredPassXP: 240, Reward: api.Reward{RewardID: "reward_mission_track_05", Gold: 350, Gems: 40, MythEssence: 300}},
+}
+
+var heroShardStandardPool = []SummonShardDrop{
+	{HeroID: "hero_astra", Shards: 7, Reward: api.Reward{RewardID: RewardSummonShards}},
+	{HeroID: "hero_borin", Shards: 7, Reward: api.Reward{RewardID: RewardSummonShards}},
+	{HeroID: "hero_cyra", Shards: 7, Reward: api.Reward{RewardID: RewardSummonShards}},
+	{HeroID: "hero_dante", Shards: 7, Reward: api.Reward{RewardID: RewardSummonShards}},
+	{HeroID: "hero_elowen", Shards: 7, Reward: api.Reward{RewardID: RewardSummonShards}},
 }
 
 func DungeonDefinitionByID(dungeonID string) (DungeonDefinition, bool) {
@@ -138,16 +199,72 @@ func SummonCost(bannerID string) (int, bool) {
 	return 35, true
 }
 
-func DailyMissionReward(missionID string) api.Reward {
-	return api.Reward{RewardID: "reward_" + missionID, Gold: 40, Gems: 5, MythEssence: 70, PassXP: 40}
+func SummonShardReward(bannerID string, summonCount int) (SummonShardDrop, bool) {
+	if bannerID != BannerHeroShardStandard || len(heroShardStandardPool) == 0 {
+		return SummonShardDrop{}, false
+	}
+
+	drop := heroShardStandardPool[summonCount%len(heroShardStandardPool)]
+	return drop, true
 }
 
-func BattlePassRequiredXP(_ string) int {
-	return 40
+func DailyMissionDefinitionByID(missionID string) (DailyMissionDefinition, bool) {
+	for _, definition := range dailyMissionDefinitions {
+		if definition.ID == missionID {
+			return definition, true
+		}
+	}
+
+	return DailyMissionDefinition{}, false
 }
 
-func BattlePassReward(rewardID string) api.Reward {
-	return api.Reward{RewardID: rewardID, Gold: 100, Gems: 10}
+func DailyMissionDefinitions() []DailyMissionDefinition {
+	definitions := make([]DailyMissionDefinition, len(dailyMissionDefinitions))
+	copy(definitions, dailyMissionDefinitions)
+	return definitions
+}
+
+func DailyMissionReward(missionID string) (api.Reward, bool) {
+	definition, ok := DailyMissionDefinitionByID(missionID)
+	if !ok {
+		return api.Reward{}, false
+	}
+
+	return definition.Reward, true
+}
+
+func BattlePassRewardDefinitionByID(rewardID string) (BattlePassRewardDefinition, bool) {
+	for _, definition := range battlePassRewardDefinitions {
+		if definition.ID == rewardID {
+			return definition, true
+		}
+	}
+
+	return BattlePassRewardDefinition{}, false
+}
+
+func BattlePassRewardDefinitions() []BattlePassRewardDefinition {
+	definitions := make([]BattlePassRewardDefinition, len(battlePassRewardDefinitions))
+	copy(definitions, battlePassRewardDefinitions)
+	return definitions
+}
+
+func BattlePassRequiredXP(rewardID string) (int, bool) {
+	definition, ok := BattlePassRewardDefinitionByID(rewardID)
+	if !ok {
+		return 0, false
+	}
+
+	return definition.RequiredPassXP, true
+}
+
+func BattlePassReward(rewardID string) (api.Reward, bool) {
+	definition, ok := BattlePassRewardDefinitionByID(rewardID)
+	if !ok {
+		return api.Reward{}, false
+	}
+
+	return definition.Reward, true
 }
 
 func GearDungeonDropAccessoryID(_ int) string {

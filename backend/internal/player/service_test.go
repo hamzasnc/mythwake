@@ -86,13 +86,66 @@ func TestMissionClaimsPersist(t *testing.T) {
 		t.Fatalf("attach store: %v", err)
 	}
 
-	result := service.ClaimDailyMission("daily_battles")
+	result := service.ClaimDailyMission("daily_battles_15")
 	if !result.Success {
 		t.Fatalf("expected daily claim to succeed, got %#v", result)
 	}
 
-	if !store.saved.ClaimedDaily["daily_battles"] {
-		t.Fatalf("expected daily_battles claim to be saved")
+	if !store.saved.ClaimedDaily["daily_battles_15"] {
+		t.Fatalf("expected daily_battles_15 claim to be saved")
+	}
+}
+
+func TestUnknownMissionClaimIsRejected(t *testing.T) {
+	service := NewService()
+
+	before := service.GetState()
+	result := service.ClaimDailyMission("daily_fake_claim")
+	if result.Success || result.ErrorCode != "invalid_mission" {
+		t.Fatalf("expected invalid mission, got %#v", result)
+	}
+
+	after := service.GetState()
+	if after.Gold != before.Gold || after.Gems != before.Gems || after.MythEssence != before.MythEssence || after.PassXP != before.PassXP {
+		t.Fatalf("invalid mission mutated state: before=%#v after=%#v", before, after)
+	}
+}
+
+func TestBattlePassUsesDefinitionRewards(t *testing.T) {
+	store := &fakeStateStore{}
+	service := NewService()
+	service.state.PassXP = 240
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	result := service.ClaimBattlePassReward("mission_track_reward_05")
+	if !result.Success {
+		t.Fatalf("expected battle pass claim to succeed, got %#v", result)
+	}
+
+	if result.Reward.Gold != 350 || result.Reward.Gems != 40 || result.Reward.MythEssence != 300 {
+		t.Fatalf("expected reward 05 definition, got %#v", result.Reward)
+	}
+	if !store.saved.ClaimedBattlePass["mission_track_reward_05"] {
+		t.Fatalf("expected mission_track_reward_05 claim to be saved")
+	}
+}
+
+func TestUnknownBattlePassRewardIsRejected(t *testing.T) {
+	service := NewService()
+	service.state.PassXP = 999
+
+	before := service.GetState()
+	result := service.ClaimBattlePassReward("mission_track_fake")
+	if result.Success || result.ErrorCode != "invalid_reward" {
+		t.Fatalf("expected invalid battle pass reward, got %#v", result)
+	}
+
+	after := service.GetState()
+	if after.Gold != before.Gold || after.Gems != before.Gems || after.MythEssence != before.MythEssence || after.PassXP != before.PassXP {
+		t.Fatalf("invalid battle pass reward mutated state: before=%#v after=%#v", before, after)
 	}
 }
 

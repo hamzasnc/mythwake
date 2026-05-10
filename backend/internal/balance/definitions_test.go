@@ -54,7 +54,41 @@ func TestProgressionCosts(t *testing.T) {
 	if cost, ok := SummonCost(BannerHeroShardStandard); !ok || cost != 35 {
 		t.Fatalf("expected summon cost 35, got %d ok=%v", cost, ok)
 	}
+	if drop, ok := SummonShardReward(BannerHeroShardStandard, 2); !ok || drop.HeroID != "hero_cyra" || drop.Shards != 7 {
+		t.Fatalf("expected summon drop hero_cyra x7, got %#v ok=%v", drop, ok)
+	}
 	if reward := GearDungeonReward(); reward.RewardID != RewardGearDrop {
 		t.Fatalf("expected gear reward id %s, got %#v", RewardGearDrop, reward)
+	}
+}
+
+func TestDailyMissionDefinitions(t *testing.T) {
+	reward, ok := DailyMissionReward("daily_stage_clears_3")
+	if !ok {
+		t.Fatal("expected daily_stage_clears_3 definition")
+	}
+	if reward.Gold != 70 || reward.Gems != 10 || reward.MythEssence != 110 || reward.PassXP != 40 {
+		t.Fatalf("unexpected daily reward: %#v", reward)
+	}
+	if _, ok := DailyMissionReward("daily_fake_claim"); ok {
+		t.Fatal("unknown daily mission should not have a reward")
+	}
+}
+
+func TestBattlePassRewardDefinitions(t *testing.T) {
+	requiredXP, ok := BattlePassRequiredXP("mission_track_reward_04")
+	if !ok || requiredXP != 180 {
+		t.Fatalf("expected mission_track_reward_04 to require 180 XP, got %d ok=%v", requiredXP, ok)
+	}
+
+	reward, ok := BattlePassReward("mission_track_reward_04")
+	if !ok {
+		t.Fatal("expected mission_track_reward_04 reward")
+	}
+	if reward.Gold != 225 || reward.Gems != 25 || reward.MythEssence != 180 {
+		t.Fatalf("unexpected battle pass reward: %#v", reward)
+	}
+	if _, ok := BattlePassReward("mission_track_fake"); ok {
+		t.Fatal("unknown battle pass reward should not exist")
 	}
 }

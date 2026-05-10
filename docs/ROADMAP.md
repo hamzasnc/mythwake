@@ -332,6 +332,8 @@ Current backend state:
 - Gameplay action IDs now live in a central backend action catalog for routing, ledgers, persistence sources, and tests.
 - Currency IDs, spends, grants, and economy deltas now live in a central backend economy package.
 - Campaign curves, dungeon curves, costs, summons, and simple reward definitions now live in a central backend balance package.
+- Daily Mission, Mission Track, and Summon actions now reject unknown client IDs and resolve rewards through server-owned balance definitions.
+- PostgreSQL now has DB-ready definition tables for heroes, campaign stages, rewards, progression costs, summon pools, daily missions, and Mission Track rewards.
 - Successful idempotent action results save in `player.player_action_results`.
 - Per-action economy deltas save in `logs.player_action_ledger`.
 - Startup restores from the latest durable action result snapshot if materialized tables are behind.
@@ -554,6 +556,8 @@ Progress:
 - Added `internal/gameplay` as the first action catalog slice before splitting the large player service into domain services.
 - Added `internal/economy` for shared backend currency IDs, spend validation, reward grants, and delta calculation.
 - Added `internal/balance` for table-shaped campaign, dungeon, cost, summon, and simple reward definitions.
+- Added `common.hero_definitions`, `common.reward_definitions`, `common.campaign_curve_definitions`, `common.campaign_stage_definitions`, `common.progression_cost_definitions`, `common.summon_banner_definitions`, `common.summon_pool_definitions`, `common.mission_definitions`, and `common.battle_pass_track_definitions`.
+- Added debug views for common rewards, progression costs, and meta reward definitions.
 
 Next useful step:
 - Split backend gameplay services out of the current single `player.Service` while keeping the API behavior stable:

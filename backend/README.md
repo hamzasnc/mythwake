@@ -13,7 +13,7 @@ Current scope:
 - Embedded SQL migrations
 - PostgreSQL player progress tables for currencies, campaign, dungeons, heroes, ascensions, and hero shards
 - JSON player state snapshot mirror for fallback/debugging
-- Seeded definition tables for currencies, dungeons, accessory slots, accessory rarities, and accessories
+- Seeded definition tables for currencies, dungeons, accessory slots, accessory rarities, accessories, heroes, campaign stages, rewards, progression costs, summons, missions, and Mission Track rewards
 - PostgreSQL schemas:
   - `account`
   - `common`
@@ -48,6 +48,11 @@ Current scope:
 - Gameplay action IDs are centralized in `internal/gameplay` so routing, persistence, ledgers, and tests share the same names.
 - Currency IDs, spends, grants, display names, and deltas are centralized in `internal/economy`.
 - Early balance definitions for campaign, dungeons, costs, summons, and simple rewards are centralized in `internal/balance`.
+- Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.
+- Navicat-friendly common definition views:
+  - `debug.v_common_reward_overview`
+  - `debug.v_common_progression_cost_overview`
+  - `debug.v_common_meta_definition_overview`
 - Successful idempotent action results are stored in PostgreSQL before the materialized player-state flush.
 - Retrying the same action with the same key returns the stored result with `replay: true` instead of applying rewards/spends again.
 - Graceful shutdown

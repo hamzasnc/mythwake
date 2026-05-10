@@ -537,12 +537,15 @@ func (service *Service) PullSummonWithRequest(ctx context.Context, request Actio
 			return failure
 		}
 
-		heroes := []string{"hero_astra", "hero_borin", "hero_cyra", "hero_dante", "hero_elowen"}
-		heroID := heroes[service.summonCount%len(heroes)]
+		drop, ok := balance.SummonShardReward(bannerID, service.summonCount)
+		if !ok {
+			return actionFailure("invalid_banner", fmt.Sprintf("Unknown banner: %s", bannerID))
+		}
+
 		service.summonCount++
-		service.heroShards[heroID] += 7
+		service.heroShards[drop.HeroID] += drop.Shards
 		service.recalculatePower()
-		return actionSuccess(fmt.Sprintf("Pulled %s shards.", heroID), api.Reward{RewardID: "reward_summon_shards"})
+		return actionSuccess(fmt.Sprintf("Pulled %s shards.", drop.HeroID), drop.Reward)
 	})
 }
 
@@ -555,11 +558,15 @@ func (service *Service) ClaimDailyMissionWithRequest(ctx context.Context, reques
 	defer service.mu.Unlock()
 
 	return service.executeAction(ctx, request, gameplay.ActionDailyMissionClaim, func() actionOutcome {
+		reward, ok := balance.DailyMissionReward(missionID)
+		if !ok {
+			return actionFailure("invalid_mission", fmt.Sprintf("Unknown daily mission: %s", missionID))
+		}
+
 		if service.claimedDaily[missionID] {
 			return actionFailure("already_claimed", fmt.Sprintf("%s already claimed.", missionID))
 		}
 
-		reward := balance.DailyMissionReward(missionID)
 		service.claimedDaily[missionID] = true
 		economy.Grant(&service.state, reward)
 		return actionSuccess(fmt.Sprintf("Claimed %s.", missionID), reward)
@@ -575,16 +582,24 @@ func (service *Service) ClaimBattlePassRewardWithRequest(ctx context.Context, re
 	defer service.mu.Unlock()
 
 	return service.executeAction(ctx, request, gameplay.ActionBattlePassClaim, func() actionOutcome {
+		requiredPassXP, ok := balance.BattlePassRequiredXP(rewardID)
+		if !ok {
+			return actionFailure("invalid_reward", fmt.Sprintf("Unknown battle pass reward: %s", rewardID))
+		}
+
 		if service.claimedBattlePass[rewardID] {
 			return actionFailure("already_claimed", fmt.Sprintf("%s already claimed.", rewardID))
 		}
 
-		requiredPassXP := balance.BattlePassRequiredXP(rewardID)
 		if service.state.PassXP < requiredPassXP {
 			return actionFailure("not_unlocked", fmt.Sprintf("Need %d Pass XP.", requiredPassXP))
 		}
 
-		reward := balance.BattlePassReward(rewardID)
+		reward, ok := balance.BattlePassReward(rewardID)
+		if !ok {
+			return actionFailure("invalid_reward", fmt.Sprintf("Unknown battle pass reward: %s", rewardID))
+		}
+
 		service.claimedBattlePass[rewardID] = true
 		economy.Grant(&service.state, reward)
 		return actionSuccess(fmt.Sprintf("Claimed %s.", rewardID), reward)
