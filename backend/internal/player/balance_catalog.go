@@ -19,6 +19,8 @@ type BalanceCatalog interface {
 	HeroLevelCost(level int) int
 	HeroAscensionShardCost(ascension int) int
 	EquipmentLevelCost(equipmentID string, level int) (int, bool)
+	AccessoryDefinitionByID(accessoryID string) (balance.AccessoryDefinition, bool)
+	AccessoryRarityDefinitionByID(rarityID string) (balance.AccessoryRarityDefinition, bool)
 	AccessoryLevelCost(accessoryID string, level int) int
 	SummonCost(bannerID string) (int, bool)
 	SummonShardReward(bannerID string, summonCount int) (balance.SummonShardDrop, bool)
@@ -81,6 +83,14 @@ func (StaticBalanceCatalog) HeroAscensionShardCost(ascension int) int {
 
 func (StaticBalanceCatalog) EquipmentLevelCost(equipmentID string, level int) (int, bool) {
 	return balance.EquipmentLevelCost(equipmentID, level)
+}
+
+func (StaticBalanceCatalog) AccessoryDefinitionByID(accessoryID string) (balance.AccessoryDefinition, bool) {
+	return balance.AccessoryDefinitionByID(accessoryID)
+}
+
+func (StaticBalanceCatalog) AccessoryRarityDefinitionByID(rarityID string) (balance.AccessoryRarityDefinition, bool) {
+	return balance.AccessoryRarityDefinitionByID(rarityID)
 }
 
 func (StaticBalanceCatalog) AccessoryLevelCost(accessoryID string, level int) int {

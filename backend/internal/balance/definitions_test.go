@@ -63,6 +63,14 @@ func TestProgressionCosts(t *testing.T) {
 	if cost := AccessoryLevelCost(StarterGearDropAccessoryID, 0); cost != 35 {
 		t.Fatalf("expected accessory level cost 35, got %d", cost)
 	}
+	accessory, ok := AccessoryDefinitionByID(StarterGearDropAccessoryID)
+	if !ok || accessory.SlotID != "earrings" || accessory.RarityID != "r0" || accessory.FuseTargetID != "accessory_earrings_r1" {
+		t.Fatalf("unexpected starter accessory definition: %#v ok=%v", accessory, ok)
+	}
+	rarity, ok := AccessoryRarityDefinitionByID("r0")
+	if !ok || rarity.MaxLevel != 20 || rarity.FuseCopyCost != 3 {
+		t.Fatalf("unexpected r0 rarity definition: %#v ok=%v", rarity, ok)
+	}
 	if cost, ok := SummonCost(BannerHeroShardStandard); !ok || cost != 35 {
 		t.Fatalf("expected summon cost 35, got %d ok=%v", cost, ok)
 	}

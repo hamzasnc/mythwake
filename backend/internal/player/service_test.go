@@ -31,23 +31,6 @@ func TestServicePersistsSuccessfulActionWhenStoreIsAttached(t *testing.T) {
 	}
 }
 
-func TestAccessoryFuseTargetUsesNextRarityID(t *testing.T) {
-	target, ok := accessoryFuseTarget("accessory_earrings_r0")
-	if !ok {
-		t.Fatal("expected r0 accessory to have a fuse target")
-	}
-
-	if target != "accessory_earrings_r1" {
-		t.Fatalf("expected accessory_earrings_r1, got %s", target)
-	}
-}
-
-func TestAccessoryFuseTargetStopsAtR4(t *testing.T) {
-	if target, ok := accessoryFuseTarget("accessory_earrings_r4"); ok {
-		t.Fatalf("expected r4 accessory to have no fuse target, got %s", target)
-	}
-}
-
 func TestDungeonActionIDUsesSpecificActionForKnownDungeons(t *testing.T) {
 	if actionID := dungeonActionID(goldDungeonID); actionID != gameplay.ActionGoldDungeonRun {
 		t.Fatalf("expected gold dungeon action id, got %s", actionID)
@@ -60,6 +43,61 @@ func TestDungeonActionIDUsesSpecificActionForKnownDungeons(t *testing.T) {
 	}
 	if actionID := dungeonActionID("unknown"); actionID != gameplay.ActionDungeonRun {
 		t.Fatalf("expected generic dungeon action id, got %s", actionID)
+	}
+}
+
+func TestAccessoryEquipUsesDefinitionSlot(t *testing.T) {
+	service := NewService()
+	service.accessoryInventory["accessory_necklace_r0"] = 1
+	attackBefore := service.state.TeamAttack
+
+	result := service.EquipAccessory("accessory_necklace_r0")
+	if !result.Success {
+		t.Fatalf("expected accessory equip to succeed, got %#v", result)
+	}
+	if service.equippedAccessory["necklace"] != "accessory_necklace_r0" {
+		t.Fatalf("expected necklace slot to be equipped from definition, got %#v", service.equippedAccessory)
+	}
+	if service.accessoryLevels["accessory_necklace_r0"] != 1 {
+		t.Fatalf("expected equipped accessory to start at level 1, got %d", service.accessoryLevels["accessory_necklace_r0"])
+	}
+	if service.state.TeamAttack <= attackBefore {
+		t.Fatalf("expected equipped accessory stats to increase team attack, before=%d after=%d", attackBefore, service.state.TeamAttack)
+	}
+}
+
+func TestAccessoryFuseUsesDefinitionTargetAndCopyCost(t *testing.T) {
+	service := NewService()
+	service.accessoryInventory["accessory_earrings_r0"] = 3
+
+	result := service.FuseAccessory("accessory_earrings_r0")
+	if !result.Success {
+		t.Fatalf("expected accessory fuse to succeed, got %#v", result)
+	}
+	if service.accessoryInventory["accessory_earrings_r0"] != 0 || service.accessoryInventory["accessory_earrings_r1"] != 1 {
+		t.Fatalf("expected r0 copies spent into r1, inventory=%#v", service.accessoryInventory)
+	}
+}
+
+func TestAccessoryFuseStopsAtDefinitionMaxRarity(t *testing.T) {
+	service := NewService()
+	service.accessoryInventory["accessory_earrings_r4"] = 3
+
+	result := service.FuseAccessory("accessory_earrings_r4")
+	if result.Success || result.ErrorCode != "max_rarity" {
+		t.Fatalf("expected max_rarity, got %#v", result)
+	}
+}
+
+func TestAccessoryLevelRespectsDefinitionMaxLevel(t *testing.T) {
+	service := NewService()
+	service.state.Gold = 100000
+	service.accessoryInventory["accessory_earrings_r0"] = 1
+	service.accessoryLevels["accessory_earrings_r0"] = 20
+
+	result := service.LevelAccessory("accessory_earrings_r0")
+	if result.Success || result.ErrorCode != "max_level" {
+		t.Fatalf("expected max_level, got %#v", result)
 	}
 }
 

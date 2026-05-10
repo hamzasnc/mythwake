@@ -92,6 +92,8 @@ Backend:
 - Backend campaign curves, dungeon curves, costs, and simple reward definitions now live in a central balance package
 - Player gameplay actions read balance through an injectable catalog boundary, and PostgreSQL-backed APIs now inject the loaded common definition snapshot into live gameplay logic at startup
 - Backend Daily Mission, Mission Track, and Summon actions now validate against known server balance definitions instead of accepting arbitrary claim IDs
+- Backend Accessory equip, level, and fuse actions now validate against server-owned accessory and rarity definitions instead of deriving slot/fuse behavior from ID strings
+- Equipped Accessories now contribute definition-based ATK/HP to backend team stats
 - PostgreSQL now seeds DB-ready hero, campaign, reward, progression cost, summon, mission, and Mission Track definition tables
 - `/definitions` now loads the common definition catalog from PostgreSQL when the database is enabled, with the static Go catalog used only for no-DB local mode
 - When PostgreSQL is enabled, combat stats, dungeon rewards, progression costs, summon rotation, daily missions, and Mission Track rewards are resolved from the database-backed gameplay catalog
@@ -131,6 +133,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Backend 0.2.39: Made Accessory equip, level, and fuse actions definition-driven, including accessory slots, fuse targets, fuse copy costs, rarity max levels, and equipped ATK/HP stat bonuses.
 - Backend 0.2.38: Injected the PostgreSQL-loaded definition snapshot into live player gameplay balance so server actions use DB-backed combat, reward, cost, summon, mission, and Mission Track values.
 - Backend 0.2.37 / Prototype 0.2.23: Switched combat contracts, balance definitions, PostgreSQL definitions, and Unity combat text from round limits to 30 second fight timers.
 - Backend 0.2.36: Added an injectable player balance catalog and routed gameplay balance reads through it while preserving the static default catalog.

@@ -17,6 +17,8 @@ type SnapshotBalanceCatalog struct {
 	dungeons              map[string]balance.DungeonDefinition
 	progressionCosts      []api.ProgressionCostDefinition
 	summonBanners         map[string]api.SummonBannerDefinition
+	accessories           map[string]balance.AccessoryDefinition
+	accessoryRarities     map[string]balance.AccessoryRarityDefinition
 	dailyMissions         []balance.DailyMissionDefinition
 	dailyMissionsByID     map[string]balance.DailyMissionDefinition
 	battlePassRewards     map[string]balance.BattlePassRewardDefinition
@@ -30,6 +32,8 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 		rewards:               map[string]api.Reward{},
 		dungeons:              map[string]balance.DungeonDefinition{},
 		summonBanners:         map[string]api.SummonBannerDefinition{},
+		accessories:           map[string]balance.AccessoryDefinition{},
+		accessoryRarities:     map[string]balance.AccessoryRarityDefinition{},
 		dailyMissionsByID:     map[string]balance.DailyMissionDefinition{},
 		battlePassRewards:     map[string]balance.BattlePassRewardDefinition{},
 	}
@@ -74,6 +78,28 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 
 	for _, definition := range snapshot.SummonBanners {
 		catalog.summonBanners[definition.BannerID] = definition
+	}
+
+	for _, definition := range snapshot.AccessoryRarities {
+		catalog.accessoryRarities[definition.RarityID] = balance.AccessoryRarityDefinition{
+			ID:           definition.RarityID,
+			RarityIndex:  definition.RarityIndex,
+			DisplayName:  definition.DisplayName,
+			MaxLevel:     definition.MaxLevel,
+			FuseCopyCost: definition.FuseCopyCost,
+		}
+	}
+
+	for _, definition := range snapshot.Accessories {
+		catalog.accessories[definition.AccessoryID] = balance.AccessoryDefinition{
+			ID:             definition.AccessoryID,
+			SlotID:         definition.SlotID,
+			RarityID:       definition.RarityID,
+			AttackPerLevel: definition.AttackPerLevel,
+			HealthPerLevel: definition.HealthPerLevel,
+			DropWeight:     definition.DropWeight,
+			FuseTargetID:   definition.FuseTargetID,
+		}
 	}
 
 	for _, definition := range snapshot.DailyMissions {
@@ -258,6 +284,22 @@ func (catalog *SnapshotBalanceCatalog) EquipmentLevelCost(equipmentID string, le
 	}
 
 	return catalog.fallback.EquipmentLevelCost(equipmentID, level)
+}
+
+func (catalog *SnapshotBalanceCatalog) AccessoryDefinitionByID(accessoryID string) (balance.AccessoryDefinition, bool) {
+	if definition, ok := catalog.accessories[accessoryID]; ok {
+		return definition, true
+	}
+
+	return catalog.fallback.AccessoryDefinitionByID(accessoryID)
+}
+
+func (catalog *SnapshotBalanceCatalog) AccessoryRarityDefinitionByID(rarityID string) (balance.AccessoryRarityDefinition, bool) {
+	if definition, ok := catalog.accessoryRarities[rarityID]; ok {
+		return definition, true
+	}
+
+	return catalog.fallback.AccessoryRarityDefinitionByID(rarityID)
 }
 
 func (catalog *SnapshotBalanceCatalog) AccessoryLevelCost(accessoryID string, level int) int {

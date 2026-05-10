@@ -487,10 +487,30 @@ func AccessoryRarityDefinitions() []AccessoryRarityDefinition {
 	return definitions
 }
 
+func AccessoryRarityDefinitionByID(rarityID string) (AccessoryRarityDefinition, bool) {
+	for _, definition := range accessoryRarityDefinitions {
+		if definition.ID == rarityID {
+			return definition, true
+		}
+	}
+
+	return AccessoryRarityDefinition{}, false
+}
+
 func AccessoryDefinitions() []AccessoryDefinition {
 	definitions := make([]AccessoryDefinition, len(accessoryDefinitions))
 	copy(definitions, accessoryDefinitions)
 	return definitions
+}
+
+func AccessoryDefinitionByID(accessoryID string) (AccessoryDefinition, bool) {
+	for _, definition := range accessoryDefinitions {
+		if definition.ID == accessoryID {
+			return definition, true
+		}
+	}
+
+	return AccessoryDefinition{}, false
 }
 
 func DungeonRequiredPower(definition DungeonDefinition, floor int) int {

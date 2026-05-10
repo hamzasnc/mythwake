@@ -128,7 +128,28 @@ func (service *Service) recalculatePower() {
 	}
 	power += service.equipmentLevels[weaponID] * 18
 	power += service.equipmentLevels[armorID] * 16
+	accessoryAttack, accessoryHealth := service.accessoryStatBonuses()
+	power += accessoryAttack + (accessoryHealth / 8)
 	service.state.TeamPower = power
-	service.state.TeamAttack = 96 + (power / 8) + (service.equipmentLevels[weaponID] * 7)
-	service.state.TeamHealth = 780 + (power * 2) + (service.equipmentLevels[armorID] * 65)
+	service.state.TeamAttack = 96 + (power / 8) + (service.equipmentLevels[weaponID] * 7) + accessoryAttack
+	service.state.TeamHealth = 780 + (power * 2) + (service.equipmentLevels[armorID] * 65) + accessoryHealth
+}
+
+func (service *Service) accessoryStatBonuses() (int, int) {
+	totalAttack := 0
+	totalHealth := 0
+	for _, accessoryID := range service.equippedAccessory {
+		definition, ok := service.balanceCatalog.AccessoryDefinitionByID(accessoryID)
+		if !ok {
+			continue
+		}
+		level := max(1, service.accessoryLevels[accessoryID])
+		if rarity, ok := service.balanceCatalog.AccessoryRarityDefinitionByID(definition.RarityID); ok && rarity.MaxLevel > 0 {
+			level = min(level, rarity.MaxLevel)
+		}
+		totalAttack += definition.AttackPerLevel * level
+		totalHealth += definition.HealthPerLevel * level
+	}
+
+	return totalAttack, totalHealth
 }

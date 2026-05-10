@@ -3,7 +3,6 @@ package player
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
@@ -24,17 +23,24 @@ func (actions accessoryActions) EquipAccessory(ctx context.Context, request Acti
 	defer service.mu.Unlock()
 
 	return service.executeAction(ctx, request, gameplay.ActionAccessoryEquip, func() actionOutcome {
+		definition, ok := service.balanceCatalog.AccessoryDefinitionByID(accessoryID)
+		if !ok || definition.SlotID == "" {
+			return actionFailure("invalid_accessory", fmt.Sprintf("Unknown accessory: %s.", accessoryID))
+		}
+
 		if service.accessoryInventory[accessoryID] <= 0 {
 			return actionFailure("missing_item", fmt.Sprintf("Missing accessory: %s", accessoryID))
 		}
 
-		slotID := accessorySlot(accessoryID)
-		if current := service.equippedAccessory[slotID]; current != "" {
+		if current := service.equippedAccessory[definition.SlotID]; current != "" {
 			service.accessoryInventory[current]++
 		}
 
 		service.accessoryInventory[accessoryID]--
-		service.equippedAccessory[slotID] = accessoryID
+		if service.accessoryLevels[accessoryID] <= 0 {
+			service.accessoryLevels[accessoryID] = 1
+		}
+		service.equippedAccessory[definition.SlotID] = accessoryID
 		service.recalculatePower()
 		return actionSuccess(fmt.Sprintf("Equipped %s.", accessoryID), api.Reward{})
 	})
@@ -54,11 +60,25 @@ func (actions accessoryActions) LevelAccessory(ctx context.Context, request Acti
 	defer service.mu.Unlock()
 
 	return service.executeAction(ctx, request, gameplay.ActionAccessoryLevel, func() actionOutcome {
+		definition, ok := service.balanceCatalog.AccessoryDefinitionByID(accessoryID)
+		if !ok {
+			return actionFailure("invalid_accessory", fmt.Sprintf("Unknown accessory: %s.", accessoryID))
+		}
+		rarity, ok := service.balanceCatalog.AccessoryRarityDefinitionByID(definition.RarityID)
+		if !ok {
+			return actionFailure("invalid_accessory_rarity", fmt.Sprintf("Unknown accessory rarity: %s.", definition.RarityID))
+		}
+
 		if service.accessoryInventory[accessoryID] <= 0 && !service.accessoryIsEquipped(accessoryID) {
 			return actionFailure("missing_item", fmt.Sprintf("Missing accessory: %s.", accessoryID))
 		}
 
-		cost := service.balanceCatalog.AccessoryLevelCost(accessoryID, service.accessoryLevels[accessoryID])
+		currentLevel := service.accessoryLevels[accessoryID]
+		if currentLevel >= rarity.MaxLevel {
+			return actionFailure("max_level", fmt.Sprintf("%s is already Lv. %d.", accessoryID, currentLevel))
+		}
+
+		cost := service.balanceCatalog.AccessoryLevelCost(accessoryID, currentLevel)
 		if failure, ok := service.spendCurrency(economy.CurrencyGold, cost); !ok {
 			return failure
 		}
@@ -83,16 +103,28 @@ func (actions accessoryActions) FuseAccessory(ctx context.Context, request Actio
 	defer service.mu.Unlock()
 
 	return service.executeAction(ctx, request, gameplay.ActionAccessoryFuse, func() actionOutcome {
-		if service.accessoryInventory[accessoryID] < 3 {
-			return actionFailure("missing_items", fmt.Sprintf("Need 3 copies of %s.", accessoryID))
-		}
-
-		service.accessoryInventory[accessoryID] -= 3
-		fusedID, ok := accessoryFuseTarget(accessoryID)
+		definition, ok := service.balanceCatalog.AccessoryDefinitionByID(accessoryID)
 		if !ok {
+			return actionFailure("invalid_accessory", fmt.Sprintf("Unknown accessory: %s.", accessoryID))
+		}
+		rarity, ok := service.balanceCatalog.AccessoryRarityDefinitionByID(definition.RarityID)
+		if !ok {
+			return actionFailure("invalid_accessory_rarity", fmt.Sprintf("Unknown accessory rarity: %s.", definition.RarityID))
+		}
+		if definition.FuseTargetID == "" {
 			return actionFailure("max_rarity", fmt.Sprintf("%s cannot be fused further.", accessoryID))
 		}
+		if _, ok := service.balanceCatalog.AccessoryDefinitionByID(definition.FuseTargetID); !ok {
+			return actionFailure("invalid_fuse_target", fmt.Sprintf("Unknown fuse target: %s.", definition.FuseTargetID))
+		}
 
+		copyCost := max(1, rarity.FuseCopyCost)
+		if service.accessoryInventory[accessoryID] < copyCost {
+			return actionFailure("missing_items", fmt.Sprintf("Need %d copies of %s.", copyCost, accessoryID))
+		}
+
+		service.accessoryInventory[accessoryID] -= copyCost
+		fusedID := definition.FuseTargetID
 		service.accessoryInventory[fusedID]++
 		return actionSuccess(fmt.Sprintf("Fused into %s.", fusedID), api.Reward{})
 	})
@@ -105,36 +137,4 @@ func (service *Service) accessoryIsEquipped(accessoryID string) bool {
 		}
 	}
 	return false
-}
-
-func accessorySlot(accessoryID string) string {
-	switch {
-	case strings.HasPrefix(accessoryID, "accessory_earrings"):
-		return "earrings"
-	case strings.HasPrefix(accessoryID, "accessory_necklace"):
-		return "necklace"
-	case strings.HasPrefix(accessoryID, "accessory_bracelet"):
-		return "bracelet"
-	case strings.HasPrefix(accessoryID, "accessory_gloves"):
-		return "gloves"
-	case strings.HasPrefix(accessoryID, "accessory_shoes"):
-		return "shoes"
-	default:
-		return "unknown"
-	}
-}
-
-func accessoryFuseTarget(accessoryID string) (string, bool) {
-	switch {
-	case strings.HasSuffix(accessoryID, "_r0"):
-		return strings.TrimSuffix(accessoryID, "_r0") + "_r1", true
-	case strings.HasSuffix(accessoryID, "_r1"):
-		return strings.TrimSuffix(accessoryID, "_r1") + "_r2", true
-	case strings.HasSuffix(accessoryID, "_r2"):
-		return strings.TrimSuffix(accessoryID, "_r2") + "_r3", true
-	case strings.HasSuffix(accessoryID, "_r3"):
-		return strings.TrimSuffix(accessoryID, "_r3") + "_r4", true
-	default:
-		return "", false
-	}
 }

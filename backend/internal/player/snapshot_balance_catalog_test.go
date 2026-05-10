@@ -86,6 +86,9 @@ func TestSnapshotBalanceCatalogUsesSnapshotCostsAndMetaRewards(t *testing.T) {
 			{RewardID: balance.RewardSummonShards, Reward: api.Reward{RewardID: balance.RewardSummonShards}},
 			{RewardID: balance.RewardGearDrop, Reward: api.Reward{RewardID: balance.RewardGearDrop}},
 		},
+		AccessoryRarities: []api.AccessoryRarityDefinition{
+			{RarityID: "test_rarity", MaxLevel: 12, FuseCopyCost: 2},
+		},
 		DailyMissions: []api.DailyMissionDefinition{
 			{MissionID: "daily_test", ProgressType: "fight", Target: 2, Reward: api.Reward{RewardID: "reward_daily_test", Gems: 9}},
 		},
@@ -93,7 +96,7 @@ func TestSnapshotBalanceCatalogUsesSnapshotCostsAndMetaRewards(t *testing.T) {
 			{RewardID: "track_test", RequiredPassXP: 88, Reward: api.Reward{RewardID: "reward_track_test", MythEssence: 44}},
 		},
 		Accessories: []api.AccessoryDefinition{
-			{AccessoryID: "accessory_only_drop", DropWeight: 1},
+			{AccessoryID: "accessory_only_drop", SlotID: "test_slot", RarityID: "test_rarity", DropWeight: 1, FuseTargetID: "accessory_next"},
 		},
 	})
 
@@ -137,5 +140,13 @@ func TestSnapshotBalanceCatalogUsesSnapshotCostsAndMetaRewards(t *testing.T) {
 
 	if accessoryID := catalog.GearDungeonDropAccessoryID(25); accessoryID != "accessory_only_drop" {
 		t.Fatalf("expected only weighted accessory drop, got %s", accessoryID)
+	}
+	accessory, ok := catalog.AccessoryDefinitionByID("accessory_only_drop")
+	if !ok || accessory.SlotID != "test_slot" || accessory.FuseTargetID != "accessory_next" {
+		t.Fatalf("expected snapshot accessory definition, got %#v ok=%t", accessory, ok)
+	}
+	rarity, ok := catalog.AccessoryRarityDefinitionByID("test_rarity")
+	if !ok || rarity.MaxLevel != 12 || rarity.FuseCopyCost != 2 {
+		t.Fatalf("expected snapshot rarity definition, got %#v ok=%t", rarity, ok)
 	}
 }
