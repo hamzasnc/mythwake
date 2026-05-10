@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.23";
+    public const string PrototypeVersion = "0.2.24";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -643,6 +643,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private int armorLevel = StarterEquipmentLevel;
     [NonSerialized] private int backendWeaponLevel;
     [NonSerialized] private int backendArmorLevel;
+    [NonSerialized] private int backendTeamPower;
+    [NonSerialized] private int backendTeamAttack;
+    [NonSerialized] private int backendTeamHealth;
     [SerializeField] private int selectedAccessorySlot;
     [SerializeField] private int selectedAccessoryRarity;
     [SerializeField] private int[] equippedAccessoryRarities = new int[AccessorySlotCount];
@@ -1613,15 +1616,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var slot = accessory.slotIndex;
         var rarity = accessory.rarityIndex;
+        var fuseCost = GetAccessoryFuseCost(rarity);
 
-        if (string.IsNullOrEmpty(accessory.fuseTargetAccessoryId) || GetAccessoryInventoryCount(slot, rarity) < AccessoryFuseCost)
+        if (string.IsNullOrEmpty(accessory.fuseTargetAccessoryId) || GetAccessoryInventoryCount(slot, rarity) < fuseCost)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_fuse", "missing_items", $"Need {AccessoryFuseCost}x {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} to fuse.");
+            return CreateActionResult(false, "accessory_fuse", "missing_items", $"Need {fuseCost}x {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} to fuse.");
         }
 
         var fuseTarget = GetAccessoryDefinitionById(accessory.fuseTargetAccessoryId);
-        AddAccessoryInventory(slot, rarity, -AccessoryFuseCost);
+        AddAccessoryInventory(slot, rarity, -fuseCost);
         AddAccessoryInventory(fuseTarget.slotIndex, fuseTarget.rarityIndex, 1);
         selectedAccessoryRarity = fuseTarget.rarityIndex;
 
@@ -2333,6 +2337,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         goldDungeonFloor = Mathf.Max(1, state.goldDungeonFloor);
         essenceDungeonFloor = Mathf.Max(1, state.essenceDungeonFloor);
         gearDungeonFloor = Mathf.Max(1, state.gearDungeonFloor);
+        backendTeamPower = Mathf.Max(0, state.teamPower);
+        backendTeamAttack = Mathf.Max(0, state.teamAttack);
+        backendTeamHealth = Mathf.Max(0, state.teamHealth);
 
         ApplyBackendHeroes(snapshot.heroes, snapshot.heroShards);
         ApplyBackendEquipment(snapshot.equipment);
@@ -3616,10 +3623,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         weaponLevel = Mathf.Max(StarterEquipmentLevel, weaponLevel);
         armorLevel = Mathf.Max(StarterEquipmentLevel, armorLevel);
+        var displayedWeaponLevel = GetEquipmentDisplayLevel(WeaponTrack, weaponLevel);
+        var displayedArmorLevel = GetEquipmentDisplayLevel(ArmorTrack, armorLevel);
 
         if (equipmentSummaryText != null)
         {
-            equipmentSummaryText.text = $"Equipment\n{WeaponTrack.name} Lv. {weaponLevel}  +{GetEquipmentAttackBonus()} {WeaponTrack.statLabel}\n{ArmorTrack.name} Lv. {armorLevel}  +{GetEquipmentHealthBonus()} {ArmorTrack.statLabel}";
+            equipmentSummaryText.text = $"Equipment\n{WeaponTrack.name} Lv. {displayedWeaponLevel}  +{GetEquipmentAttackBonus()} {WeaponTrack.statLabel}\n{ArmorTrack.name} Lv. {displayedArmorLevel}  +{GetEquipmentHealthBonus()} {ArmorTrack.statLabel}";
         }
 
         if (weaponUpgradeCostText != null)
@@ -3671,10 +3680,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (accessoryFuseText != null)
         {
             var accessory = GetAccessoryDefinition(slot, rarity);
+            var fuseCost = GetAccessoryFuseCost(rarity);
             var nextTier = string.IsNullOrEmpty(accessory.fuseTargetAccessoryId)
                 ? "Max"
                 : GetAccessoryRarityName(GetAccessoryDefinitionById(accessory.fuseTargetAccessoryId).rarityIndex);
-            accessoryFuseText.text = $"Fuse {AccessoryFuseCost}x {GetAccessoryRarityName(rarity)}\nInto {nextTier}";
+            accessoryFuseText.text = $"Fuse {fuseCost}x {GetAccessoryRarityName(rarity)}\nInto {nextTier}";
         }
     }
 
@@ -3699,7 +3709,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (accessoryFuseButton != null)
         {
             var accessory = GetAccessoryDefinition(slot, rarity);
-            accessoryFuseButton.interactable = !string.IsNullOrEmpty(accessory.fuseTargetAccessoryId) && GetAccessoryInventoryCount(slot, rarity) >= AccessoryFuseCost;
+            accessoryFuseButton.interactable = !string.IsNullOrEmpty(accessory.fuseTargetAccessoryId) && GetAccessoryInventoryCount(slot, rarity) >= GetAccessoryFuseCost(rarity);
         }
     }
 
@@ -4461,6 +4471,98 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return false;
     }
 
+    private bool TryGetBackendHeroDefinition(string heroId, out MythwakeHeroDefinitionDto definition)
+    {
+        definition = default(MythwakeHeroDefinitionDto);
+        if (!UseBackendDefinitionView() || !TryGetDefinitions(out var definitions) || definitions.heroes == null)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < definitions.heroes.Length; i++)
+        {
+            if (definitions.heroes[i].heroId == heroId)
+            {
+                definition = definitions.heroes[i];
+                return !string.IsNullOrWhiteSpace(definition.heroId);
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetBackendEquipmentDefinition(string equipmentId, out MythwakeEquipmentDefinitionDto definition)
+    {
+        definition = default(MythwakeEquipmentDefinitionDto);
+        if (!UseBackendDefinitionView() || !TryGetDefinitions(out var definitions) || definitions.equipment == null)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < definitions.equipment.Length; i++)
+        {
+            if (definitions.equipment[i].equipmentId == equipmentId)
+            {
+                definition = definitions.equipment[i];
+                return !string.IsNullOrWhiteSpace(definition.equipmentId);
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetBackendAccessoryDefinition(string accessoryId, out MythwakeAccessoryDefinitionDto definition)
+    {
+        definition = default(MythwakeAccessoryDefinitionDto);
+        if (!UseBackendDefinitionView() || !TryGetDefinitions(out var definitions) || definitions.accessories == null)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < definitions.accessories.Length; i++)
+        {
+            if (definitions.accessories[i].accessoryId == accessoryId)
+            {
+                definition = definitions.accessories[i];
+                return !string.IsNullOrWhiteSpace(definition.accessoryId);
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetBackendAccessoryRarityDefinition(string rarityId, out MythwakeAccessoryRarityDefinitionDto definition)
+    {
+        definition = default(MythwakeAccessoryRarityDefinitionDto);
+        if (!UseBackendDefinitionView() || !TryGetDefinitions(out var definitions) || definitions.accessoryRarities == null)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < definitions.accessoryRarities.Length; i++)
+        {
+            if (definitions.accessoryRarities[i].rarityId == rarityId)
+            {
+                definition = definitions.accessoryRarities[i];
+                return !string.IsNullOrWhiteSpace(definition.rarityId);
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetBackendAccessoryRarityDefinition(int rarity, out MythwakeAccessoryRarityDefinitionDto definition)
+    {
+        definition = default(MythwakeAccessoryRarityDefinitionDto);
+        var localDefinition = GetAccessoryDefinition(0, rarity);
+        if (!TryGetBackendAccessoryDefinition(localDefinition.accessoryId, out var backendAccessory))
+        {
+            return false;
+        }
+
+        return TryGetBackendAccessoryRarityDefinition(backendAccessory.rarityId, out definition);
+    }
+
     private bool TryGetBackendProgressionCostAmount(string costId, string targetId, int progressValue, out int amount, out string currencyId)
     {
         amount = 0;
@@ -4793,6 +4895,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private int GetTeamPower()
     {
+        if (backendGameplayEnabled && backendTeamPower > 0)
+        {
+            return backendTeamPower;
+        }
+
         var power = 0;
 
         for (var i = 0; i < HeroCount; i++)
@@ -4805,6 +4912,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private int GetTeamDamage()
     {
+        if (backendGameplayEnabled && backendTeamAttack > 0)
+        {
+            return backendTeamAttack;
+        }
+
         var multiplier = 1f
             + (CountHeroesWithRole(WarriorRoleId) * WarriorDamageBonusRate)
             + (CountHeroesWithRole(MageRoleId) * MageDamageBonusRate);
@@ -4814,6 +4926,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private int GetTeamHealth()
     {
+        if (backendGameplayEnabled && backendTeamHealth > 0)
+        {
+            return backendTeamHealth;
+        }
+
         var health = 0;
 
         for (var i = 0; i < HeroCount; i++)
@@ -4853,12 +4970,44 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private int GetEquipmentAttackBonus()
     {
+        if (TryGetBackendEquipmentDefinition(WeaponTrack.equipmentId, out var definition))
+        {
+            var level = Mathf.Clamp(GetEquipmentDisplayLevel(WeaponTrack, weaponLevel), 0, Mathf.Max(1, definition.maxLevel));
+            return Mathf.Max(0, definition.attackPerLevel) * level;
+        }
+
         return GetEquipmentBonus(WeaponTrack, weaponLevel);
     }
 
     private int GetEquipmentHealthBonus()
     {
+        if (TryGetBackendEquipmentDefinition(ArmorTrack.equipmentId, out var definition))
+        {
+            var level = Mathf.Clamp(GetEquipmentDisplayLevel(ArmorTrack, armorLevel), 0, Mathf.Max(1, definition.maxLevel));
+            return Mathf.Max(0, definition.healthPerLevel) * level;
+        }
+
         return GetEquipmentBonus(ArmorTrack, armorLevel);
+    }
+
+    private int GetEquipmentDisplayLevel(EquipmentTrackDefinition track, int fallbackLevel)
+    {
+        if (!UseBackendDefinitionView())
+        {
+            return Mathf.Max(StarterEquipmentLevel, fallbackLevel);
+        }
+
+        if (track.equipmentId == WeaponTrack.equipmentId)
+        {
+            return Mathf.Max(0, backendWeaponLevel);
+        }
+
+        if (track.equipmentId == ArmorTrack.equipmentId)
+        {
+            return Mathf.Max(0, backendArmorLevel);
+        }
+
+        return Mathf.Max(0, fallbackLevel);
     }
 
     private int GetAccessoryAttackBonus()
@@ -4895,6 +5044,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var definition = GetAccessoryDefinition(slot, rarity);
+        if (TryGetBackendAccessoryDefinition(definition.accessoryId, out var backendDefinition))
+        {
+            return Mathf.Max(0, backendDefinition.attackPerLevel) * level;
+        }
+
         return definition.attackPerLevel * level;
     }
 
@@ -4906,12 +5060,32 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var definition = GetAccessoryDefinition(slot, rarity);
+        if (TryGetBackendAccessoryDefinition(definition.accessoryId, out var backendDefinition))
+        {
+            return Mathf.Max(0, backendDefinition.healthPerLevel) * level;
+        }
+
         return definition.healthPerLevel * level;
     }
 
     private int GetAccessoryMaxLevel(int rarity)
     {
+        if (TryGetBackendAccessoryRarityDefinition(rarity, out var backendRarity))
+        {
+            return Mathf.Max(1, backendRarity.maxLevel);
+        }
+
         return GetAccessoryDefinition(0, rarity).levelCap;
+    }
+
+    private int GetAccessoryFuseCost(int rarity)
+    {
+        if (TryGetBackendAccessoryRarityDefinition(rarity, out var backendRarity))
+        {
+            return Mathf.Max(1, backendRarity.fuseCopyCost);
+        }
+
+        return AccessoryFuseCost;
     }
 
     private int GetAccessoryLevelCost(int slot)
@@ -4967,6 +5141,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroAscensions();
         var hero = GetHeroDefinition(index);
 
+        if (TryGetBackendHeroDefinition(hero.heroId, out var backendHero))
+        {
+            var level = Mathf.Clamp(heroLevels[index], 1, Mathf.Max(1, backendHero.maxLevel));
+            var ascension = Mathf.Clamp(heroAscensions[index], 0, Mathf.Max(0, backendHero.maxAscension));
+            return Mathf.Max(1, backendHero.baseAttack + ((level - 1) * backendHero.attackPerLevel) + (ascension * backendHero.attackPerAscension));
+        }
+
         return hero.baseAttack
             + (heroLevels[index] * hero.attackGrowth)
             + Mathf.FloorToInt(heroShards[index] * 0.25f)
@@ -4980,6 +5161,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroShards();
         EnsureHeroAscensions();
         var hero = GetHeroDefinition(index);
+
+        if (TryGetBackendHeroDefinition(hero.heroId, out var backendHero))
+        {
+            var level = Mathf.Clamp(heroLevels[index], 1, Mathf.Max(1, backendHero.maxLevel));
+            var ascension = Mathf.Clamp(heroAscensions[index], 0, Mathf.Max(0, backendHero.maxAscension));
+            return Mathf.Max(1, backendHero.baseHealth + ((level - 1) * backendHero.healthPerLevel) + (ascension * backendHero.healthPerAscension));
+        }
 
         return hero.baseHealth
             + (heroLevels[index] * hero.healthGrowth)

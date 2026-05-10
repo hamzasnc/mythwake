@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.23
+Prototype version: 0.2.24
 Local save version: 2
 
 Current prototype:
@@ -20,6 +20,7 @@ Current prototype:
 - Server Mode campaign and dungeon actions now display server combat results with HP, damage, seconds, and rewards
 - Server definitions include campaign and dungeon combat stats so Unity previews match backend combat
 - Server Mode uses backend definitions for summon, progression cost, daily mission, and Mission Track preview values
+- Server Mode uses backend hero, equipment, accessory, and snapshot team stats for authoritative stat previews
 - Auto Attack stays local-only for now and is paused while Server Mode is active
 - Campaign fights, dungeon runs, and summons now return local action-result DTOs
 - Accessory equip, level, and fuse actions now return local action-result DTOs
@@ -138,6 +139,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Prototype 0.2.24: Server Mode stat previews now use backend hero/equipment/accessory definitions and authoritative team ATK/HP/Power from player snapshots.
 - Backend 0.2.43: Moved AFK reward timing and Gold/Myth Essence formula into server-owned definitions, PostgreSQL seeds, and snapshot-driven gameplay balance.
 - Backend 0.2.42: Added server-owned equipment definitions for starter Weapon/Armor stat scaling, max-level validation, PostgreSQL seeds, and definition snapshots.
 - Backend 0.2.41: Added server-owned hero stat scaling and level/ascension caps to definitions, PostgreSQL seeds, and backend team-stat calculation.
