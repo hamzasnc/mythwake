@@ -583,6 +583,7 @@ Progress:
 - Extended smoke tooling to verify logout revokes the active session.
 - Added a configurable read-through session cache and PostgreSQL touch window to reduce DB load on protected requests.
 - Logout now flushes a loaded player context before responding when hot player state exists.
+- Added request IDs, structured error bodies, status-aware request logging, and panic recovery around the HTTP router.
 
 Next useful step:
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.

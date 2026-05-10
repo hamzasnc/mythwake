@@ -18,9 +18,15 @@ function New-IdempotencyHeaders {
 
 Write-Host "Checking Mythwake API at $BaseUrl"
 
-$health = Invoke-RestMethod "$BaseUrl/health"
+$healthResponse = Invoke-WebRequest -UseBasicParsing "$BaseUrl/health"
+$requestId = $healthResponse.Headers["X-Request-ID"]
+if ([string]::IsNullOrWhiteSpace($requestId)) {
+    throw "Expected X-Request-ID header on health response."
+}
+$health = $healthResponse.Content | ConvertFrom-Json
 Write-Host "Health:"
 $health | Format-List
+Write-Host "Request ID: $requestId"
 
 if ($CheckUnauthorized) {
     $unauthorizedStatus = $null

@@ -42,7 +42,7 @@ func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service,
 	}
 
 	router.routes()
-	return router.logRequests(router.mux)
+	return withRequestID(logRequests(router.logger, recoverPanic(router.logger, router.mux)))
 }
 
 func (router *Router) routes() {
@@ -133,10 +133,7 @@ func (router *Router) handlePlayerStateFlush(response http.ResponseWriter, reque
 	}
 
 	if err := playerService.FlushState(request.Context()); err != nil {
-		writeJSON(response, http.StatusInternalServerError, map[string]string{
-			"errorCode": "state_flush_failed",
-			"message":   err.Error(),
-		})
+		writeError(response, request, http.StatusInternalServerError, "state_flush_failed", err.Error())
 		return
 	}
 
@@ -161,10 +158,7 @@ func (router *Router) handleGuestAuth(response http.ResponseWriter, request *htt
 
 	session, err := router.authService.IssueGuestSession(request.Context(), request.UserAgent())
 	if err != nil {
-		writeJSON(response, http.StatusInternalServerError, map[string]string{
-			"errorCode": "guest_auth_failed",
-			"message":   err.Error(),
-		})
+		writeError(response, request, http.StatusInternalServerError, "guest_auth_failed", err.Error())
 		return
 	}
 
@@ -179,28 +173,19 @@ func (router *Router) handleGuestAuth(response http.ResponseWriter, request *htt
 func (router *Router) handleLogout(response http.ResponseWriter, request *http.Request) {
 	token := sessionTokenFromRequest(request)
 	if token == "" {
-		writeJSON(response, http.StatusUnauthorized, map[string]string{
-			"errorCode": "missing_session",
-			"message":   "Bearer session token is required.",
-		})
+		writeError(response, request, http.StatusUnauthorized, "missing_session", "Bearer session token is required.")
 		return
 	}
 
 	session, err := router.authService.RevokeSession(request.Context(), token)
 	if err != nil {
-		writeJSON(response, http.StatusUnauthorized, map[string]string{
-			"errorCode": "invalid_session",
-			"message":   "Session token is invalid or expired.",
-		})
+		writeError(response, request, http.StatusUnauthorized, "invalid_session", "Session token is invalid or expired.")
 		return
 	}
 
 	stateFlushed, err := router.playerManager.FlushPlayerIfLoaded(request.Context(), session.PlayerID)
 	if err != nil {
-		writeJSON(response, http.StatusInternalServerError, map[string]string{
-			"errorCode": "logout_flush_failed",
-			"message":   err.Error(),
-		})
+		writeError(response, request, http.StatusInternalServerError, "logout_flush_failed", err.Error())
 		return
 	}
 
@@ -292,14 +277,6 @@ func (router *Router) handleBattlePassClaim(response http.ResponseWriter, reques
 	})
 }
 
-func (router *Router) logRequests(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-		startedAt := time.Now()
-		next.ServeHTTP(response, request)
-		router.logger.Printf("%s %s %s", request.Method, request.URL.Path, time.Since(startedAt))
-	})
-}
-
 func writeJSON(response http.ResponseWriter, statusCode int, payload any) {
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(statusCode)
@@ -307,6 +284,14 @@ func writeJSON(response http.ResponseWriter, statusCode int, payload any) {
 	if err := json.NewEncoder(response).Encode(payload); err != nil {
 		http.Error(response, "failed to encode response", http.StatusInternalServerError)
 	}
+}
+
+func writeError(response http.ResponseWriter, request *http.Request, statusCode int, errorCode string, message string) {
+	writeJSON(response, statusCode, api.ErrorResponse{
+		ErrorCode: errorCode,
+		Message:   message,
+		RequestID: requestIDFromContext(request.Context()),
+	})
 }
 
 func writeActionResult(response http.ResponseWriter, result any) {
@@ -330,19 +315,13 @@ func (router *Router) writeGameplayAction(response http.ResponseWriter, request 
 func (router *Router) authenticatedPlayerService(response http.ResponseWriter, request *http.Request) (*player.Service, bool) {
 	token := sessionTokenFromRequest(request)
 	if token == "" {
-		writeJSON(response, http.StatusUnauthorized, map[string]string{
-			"errorCode": "missing_session",
-			"message":   "Bearer session token is required.",
-		})
+		writeError(response, request, http.StatusUnauthorized, "missing_session", "Bearer session token is required.")
 		return nil, false
 	}
 
 	session, err := router.authService.ValidateSession(request.Context(), token)
 	if err != nil {
-		writeJSON(response, http.StatusUnauthorized, map[string]string{
-			"errorCode": "invalid_session",
-			"message":   "Session token is invalid or expired.",
-		})
+		writeError(response, request, http.StatusUnauthorized, "invalid_session", "Session token is invalid or expired.")
 		return nil, false
 	}
 
@@ -352,10 +331,7 @@ func (router *Router) authenticatedPlayerService(response http.ResponseWriter, r
 func (router *Router) playerServiceForSession(response http.ResponseWriter, request *http.Request, session auth.Session) (*player.Service, bool) {
 	playerService, err := router.playerManager.ServiceForPlayer(request.Context(), session.PlayerID)
 	if err != nil {
-		writeJSON(response, http.StatusInternalServerError, map[string]string{
-			"errorCode": "player_context_failed",
-			"message":   err.Error(),
-		})
+		writeError(response, request, http.StatusInternalServerError, "player_context_failed", err.Error())
 		return nil, false
 	}
 
@@ -377,17 +353,11 @@ func sessionTokenFromRequest(request *http.Request) string {
 func (router *Router) actionRequest(response http.ResponseWriter, request *http.Request, rawBody string) (player.ActionRequest, bool) {
 	action, errorCode, message := buildActionRequest(request, rawBody)
 	if errorCode != "" {
-		writeJSON(response, http.StatusBadRequest, map[string]string{
-			"errorCode": errorCode,
-			"message":   message,
-		})
+		writeError(response, request, http.StatusBadRequest, errorCode, message)
 		return player.ActionRequest{}, false
 	}
 	if router.config.RequireIdempotency && !action.HasIdempotency() {
-		writeJSON(response, http.StatusBadRequest, map[string]string{
-			"errorCode": "missing_idempotency_key",
-			"message":   "Gameplay mutation requests require an Idempotency-Key header.",
-		})
+		writeError(response, request, http.StatusBadRequest, "missing_idempotency_key", "Gameplay mutation requests require an Idempotency-Key header.")
 		return player.ActionRequest{}, false
 	}
 
@@ -448,27 +418,18 @@ func boolLabel(value bool) string {
 func decodeAccessoryRequest(response http.ResponseWriter, request *http.Request) (api.AccessoryRequest, string, bool) {
 	rawBody, err := io.ReadAll(request.Body)
 	if err != nil {
-		writeJSON(response, http.StatusBadRequest, map[string]string{
-			"errorCode": "invalid_body",
-			"message":   "Could not read request body.",
-		})
+		writeError(response, request, http.StatusBadRequest, "invalid_body", "Could not read request body.")
 		return api.AccessoryRequest{}, "", false
 	}
 
 	var accessoryRequest api.AccessoryRequest
 	if err := json.Unmarshal(rawBody, &accessoryRequest); err != nil {
-		writeJSON(response, http.StatusBadRequest, map[string]string{
-			"errorCode": "invalid_json",
-			"message":   "Expected JSON body with accessoryId.",
-		})
+		writeError(response, request, http.StatusBadRequest, "invalid_json", "Expected JSON body with accessoryId.")
 		return api.AccessoryRequest{}, string(rawBody), false
 	}
 
 	if accessoryRequest.AccessoryID == "" {
-		writeJSON(response, http.StatusBadRequest, map[string]string{
-			"errorCode": "missing_accessory_id",
-			"message":   "Expected accessoryId.",
-		})
+		writeError(response, request, http.StatusBadRequest, "missing_accessory_id", "Expected accessoryId.")
 		return api.AccessoryRequest{}, string(rawBody), false
 	}
 

@@ -87,6 +87,12 @@ type GuestAuthResponse struct {
 	PlayerSnapshot PlayerSnapshot `json:"playerSnapshot"`
 }
 
+type ErrorResponse struct {
+	ErrorCode string `json:"errorCode"`
+	Message   string `json:"message"`
+	RequestID string `json:"requestId,omitempty"`
+}
+
 type AccessoryRequest struct {
 	AccessoryID string `json:"accessoryId"`
 }

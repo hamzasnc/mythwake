@@ -11,6 +11,8 @@ Current scope:
 - Guest auth with random session tokens
 - Logout endpoint that revokes the active session token
 - Short read-through session cache for PostgreSQL-backed auth validation
+- Request ID middleware for client/server log correlation
+- JSON panic recovery for unexpected HTTP handler failures
 - PostgreSQL account identities and hashed session token persistence for guest, email, Google, and Apple login providers
 - Bearer session validation for player state, flush, and gameplay mutation endpoints
 - Per-player service contexts resolved from the authenticated session token
@@ -54,6 +56,8 @@ Current scope:
 - `POST /player/state/flush` forces the current hot player state through the persistence/cache flush path.
 - `POST /auth/logout` revokes the active session token.
 - Logout flushes the loaded player state before returning when that player is hot in memory.
+- All responses include `X-Request-ID`; clients may send their own valid `X-Request-ID`.
+- Error responses use `{ "errorCode", "message", "requestId" }`.
 - `GET /player/core-state` returns the compact numeric state only.
 - Player state, flush, and gameplay mutation routes reject missing or invalid sessions with `401`.
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
@@ -162,6 +166,7 @@ Database behavior:
 - Reusing a key for a different endpoint/body returns an `idempotency_conflict` action result.
 - Missing or malformed keys on gameplay mutations return HTTP 400 before the action is applied.
 - `GET /health` reports `database`, `state_cache`, `state_write_mode`, `state_flush_interval`, session cache settings, and `require_idempotency`.
+- Request logs include request id, method, path, status, bytes, and duration.
 - `scripts/check-backend.cmd` performs guest login, sends Bearer auth for protected endpoints, and can verify missing-session `401`s.
 - `scripts/check-postgres-e2e.cmd` starts the API twice against PostgreSQL and verifies login, protected state, campaign persistence, manual flush, restart reload, idempotency replay, and logout revocation.
 

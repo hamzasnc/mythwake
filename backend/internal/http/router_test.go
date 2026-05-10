@@ -24,6 +24,83 @@ func TestHealthEndpoint(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d", response.Code)
 	}
+	if response.Header().Get("X-Request-ID") == "" {
+		t.Fatal("expected request id response header")
+	}
+}
+
+func TestRequestIDHeaderIsPreserved(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/health", nil)
+	request.Header.Set("X-Request-ID", "client-request-001")
+
+	handler.ServeHTTP(response, request)
+
+	if response.Header().Get("X-Request-ID") != "client-request-001" {
+		t.Fatalf("expected client request id to be preserved, got %q", response.Header().Get("X-Request-ID"))
+	}
+}
+
+func TestInvalidRequestIDHeaderIsReplaced(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/health", nil)
+	request.Header.Set("X-Request-ID", "bad id")
+
+	handler.ServeHTTP(response, request)
+
+	requestID := response.Header().Get("X-Request-ID")
+	if requestID == "" || requestID == "bad id" {
+		t.Fatalf("expected invalid request id to be replaced, got %q", requestID)
+	}
+}
+
+func TestErrorResponseIncludesRequestID(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/player/state", nil)
+	request.Header.Set("X-Request-ID", "client-request-401")
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401, got %d", response.Code)
+	}
+
+	var body api.ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.ErrorCode != "missing_session" || body.RequestID != "client-request-401" {
+		t.Fatalf("expected request id error response, got %#v", body)
+	}
+}
+
+func TestPanicRecoveryReturnsJSONError(t *testing.T) {
+	handler := withRequestID(logRequests(log.New(testWriter{}, "", 0), recoverPanic(log.New(testWriter{}, "", 0), http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		panic("test panic")
+	}))))
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/panic", nil)
+	request.Header.Set("X-Request-ID", "panic-request-001")
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status 500, got %d", response.Code)
+	}
+	if response.Header().Get("X-Request-ID") != "panic-request-001" {
+		t.Fatalf("expected request id header, got %q", response.Header().Get("X-Request-ID"))
+	}
+
+	var body api.ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.ErrorCode != "internal_error" || body.RequestID != "panic-request-001" {
+		t.Fatalf("expected internal error with request id, got %#v", body)
+	}
 }
 
 func TestDefinitionsEndpoint(t *testing.T) {
