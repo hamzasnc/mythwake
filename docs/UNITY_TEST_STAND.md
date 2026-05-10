@@ -11,7 +11,7 @@ The current internal test stand should prove that the core loop works with the G
 - Use the Shop tab Backend panel.
 - Press `Ping` to confirm backend, PostgreSQL, catalog, cache, lock, and hot-player status.
 - Press `Server` to enter Server Mode.
-- Press `Smoke` to run a compact server-backed sequence across Campaign, Dungeons, Hero Level, Weapon Level, Summon, AFK, and Flush.
+- Press `Smoke` to run a compact server-backed sequence across Campaign, Dungeons, Accessory equip/level/fuse candidates, Hero Level, Weapon Level, Summon, Daily Summon claim, Mission Track claim, AFK, and Flush.
 - Run Campaign, Gold Dungeon, Essence Dungeon, Gear Dungeon, Summon, Hero upgrade, Equipment upgrade, Accessory equip/level/fuse, Daily Mission claim, Mission Track claim, AFK claim, Backend Reset, and app restart checks.
 - Inspect PostgreSQL in Navicat after actions.
 - Confirm state survives backend restart and Unity restart.
@@ -29,6 +29,7 @@ Server Mode should behave like the first real mobile-client path:
 - Backend Reset is the allowed reset path for the active dev player.
 - Backend Smoke is the allowed one-click flow for broad local server checks.
 - Gameplay buttons are disabled while a backend request is in flight.
+- Backend requests carry client request IDs, and structured server errors should be readable without opening server logs.
 - Auto Attack stays local-only and paused in Server Mode until server-side auto/AFK behavior is designed.
 
 ## Smoke Test Checklist
@@ -40,7 +41,7 @@ Use this whenever a build feels "ready enough" for a bigger test pass:
 - `scripts/check-postgres-e2e.cmd` passes.
 - Unity `Ping` shows `DB connected`, expected catalog source, cache counters, lock store, and version.
 - Unity `Server` loads a player snapshot and definitions.
-- Unity `Smoke` finishes with `Server smoke complete` or shows the first transport failure.
+- Unity `Smoke` finishes with `Server smoke complete`, shows rejected gameplay outcomes inline, or shows the first transport failure with request diagnostics.
 - Campaign fight updates stage or returns a combat loss without breaking UI.
 - Gold/Essence/Gear dungeons update floors or return a combat loss without breaking UI.
 - Gear Dungeon can drop an accessory copy.
@@ -58,10 +59,9 @@ Use this whenever a build feels "ready enough" for a bigger test pass:
 Do these before asking for real assets or character model input:
 
 1. Build a cleaner Unity test surface for server-backed progression, with fewer prototype debug labels and clearer action feedback.
-2. Add a compact player/account display that shows player ID, revision, server mode, definition hash, and last request result.
-3. Add better client-side error presentation for `player_busy`, stale revision, auth failure, rate limit, backend offline, and validation errors.
-4. Add server-side integration coverage for AFK timing edge cases, stale revision conflicts, concurrent actions, and reset/session boundaries.
-5. Start replacing placeholder UI with a real mobile layout while keeping the same backend action flow.
+2. Add a compact player/account display that shows player ID, revision, server mode, definition hash, and last request result outside the Shop tab.
+3. Add server-side integration coverage for AFK timing edge cases, concurrent actions, and reset/session boundaries.
+4. Start replacing placeholder UI with a real mobile layout while keeping the same backend action flow.
 
 ## Input Needed Later
 

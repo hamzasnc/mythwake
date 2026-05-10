@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.31";
+    public const string PrototypeVersion = "0.2.32";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -2070,6 +2070,56 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             yield break;
         }
 
+        if (TryGetFirstOwnedAccessoryId(out var smokeAccessoryId))
+        {
+            yield return RunBackendSmokeAction("Accessory Equip", callback => backendClient.EquipAccessory(smokeAccessoryId, callback), (ok, line) =>
+            {
+                summary = $"{summary}\n{line}";
+                transportFailed = !ok;
+            });
+            if (transportFailed)
+            {
+                SetDungeonResult(summary);
+                FinishBackendRequest("Server smoke failed during Accessory Equip");
+                yield break;
+            }
+
+            yield return RunBackendSmokeAction("Accessory Level", callback => backendClient.LevelAccessory(smokeAccessoryId, callback), (ok, line) =>
+            {
+                summary = $"{summary}\n{line}";
+                transportFailed = !ok;
+            });
+            if (transportFailed)
+            {
+                SetDungeonResult(summary);
+                FinishBackendRequest("Server smoke failed during Accessory Level");
+                yield break;
+            }
+        }
+        else
+        {
+            summary = $"{summary}\nAccessory Equip: skipped no copy";
+        }
+
+        if (TryGetFuseCandidateAccessoryId(out var smokeFuseAccessoryId))
+        {
+            yield return RunBackendSmokeAction("Accessory Fuse", callback => backendClient.FuseAccessory(smokeFuseAccessoryId, callback), (ok, line) =>
+            {
+                summary = $"{summary}\n{line}";
+                transportFailed = !ok;
+            });
+            if (transportFailed)
+            {
+                SetDungeonResult(summary);
+                FinishBackendRequest("Server smoke failed during Accessory Fuse");
+                yield break;
+            }
+        }
+        else
+        {
+            summary = $"{summary}\nAccessory Fuse: skipped need 3 copies";
+        }
+
         yield return RunBackendSmokeAction("Hero Level", callback => backendClient.LevelHero(GetHeroDefinition(selectedHeroIndex).heroId, callback), (ok, line) =>
         {
             summary = $"{summary}\n{line}";
@@ -2103,6 +2153,30 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             SetDungeonResult(summary);
             FinishBackendRequest("Server smoke failed during Summon");
+            yield break;
+        }
+
+        yield return RunBackendSmokeAction("Daily Summon Claim", callback => backendClient.ClaimDailyMission(GetBackendDailyMissionId(2), callback), (ok, line) =>
+        {
+            summary = $"{summary}\n{line}";
+            transportFailed = !ok;
+        });
+        if (transportFailed)
+        {
+            SetDungeonResult(summary);
+            FinishBackendRequest("Server smoke failed during Daily Claim");
+            yield break;
+        }
+
+        yield return RunBackendSmokeAction("Mission Track Claim", callback => backendClient.ClaimBattlePassReward(GetBackendBattlePassRewardId(0), callback), (ok, line) =>
+        {
+            summary = $"{summary}\n{line}";
+            transportFailed = !ok;
+        });
+        if (transportFailed)
+        {
+            SetDungeonResult(summary);
+            FinishBackendRequest("Server smoke failed during Mission Track Claim");
             yield break;
         }
 
@@ -2154,16 +2228,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             ApplyBackendSnapshot(result.playerSnapshot);
         }
 
-        var outcome = result.success ? "ok" : string.IsNullOrWhiteSpace(result.errorCode) ? "rejected" : result.errorCode;
-        if (result.replay)
-        {
-            outcome = $"{outcome} replay";
-        }
-
+        var outcome = FormatBackendActionOutcome(result);
         var revision = FormatBackendRevisionSuffix(result).Trim();
         var reward = FormatServerReward(result.reward);
+        var note = !result.success && !string.IsNullOrWhiteSpace(result.message) ? $"  {result.message}" : string.Empty;
         var rewardSuffix = string.IsNullOrWhiteSpace(reward) ? string.Empty : $"  {reward}";
-        completed?.Invoke(true, string.IsNullOrWhiteSpace(revision) ? $"{label}: {outcome}{rewardSuffix}" : $"{label}: {outcome}  {revision}{rewardSuffix}");
+        completed?.Invoke(true, string.IsNullOrWhiteSpace(revision) ? $"{label}: {outcome}{rewardSuffix}{note}" : $"{label}: {outcome}  {revision}{rewardSuffix}{note}");
     }
 
     public void ToggleBackendGameplayMode()
@@ -2226,11 +2296,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void ClaimDailyMissionOnBackend(int missionIndex)
     {
         missionIndex = Mathf.Clamp(missionIndex, 0, DailyMissionCount - 1);
-        var missionId = GetDailyMissionDefinition(missionIndex).missionId;
-        if (TryGetBackendDailyMissionDefinition(missionIndex, out var backendMission))
-        {
-            missionId = backendMission.missionId;
-        }
+        var missionId = GetBackendDailyMissionId(missionIndex);
 
         if (TryStartBackendRequest("Server: claiming daily mission..."))
         {
@@ -2241,16 +2307,34 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void ClaimBattlePassRewardOnBackend(int rewardIndex)
     {
         rewardIndex = Mathf.Clamp(rewardIndex, 0, BattlePassRewardCount - 1);
-        var rewardId = GetBattlePassRewardDefinition(rewardIndex).rewardId;
-        if (TryGetBackendBattlePassRewardDefinition(rewardIndex, out var backendReward))
-        {
-            rewardId = backendReward.rewardId;
-        }
+        var rewardId = GetBackendBattlePassRewardId(rewardIndex);
 
         if (TryStartBackendRequest("Server: claiming mission track reward..."))
         {
             StartCoroutine(backendClient.ClaimBattlePassReward(rewardId, OnBackendGameplayAction));
         }
+    }
+
+    private string GetBackendDailyMissionId(int missionIndex)
+    {
+        missionIndex = Mathf.Clamp(missionIndex, 0, DailyMissionCount - 1);
+        if (TryGetBackendDailyMissionDefinition(missionIndex, out var backendMission) && !string.IsNullOrWhiteSpace(backendMission.missionId))
+        {
+            return backendMission.missionId;
+        }
+
+        return GetDailyMissionDefinition(missionIndex).missionId;
+    }
+
+    private string GetBackendBattlePassRewardId(int rewardIndex)
+    {
+        rewardIndex = Mathf.Clamp(rewardIndex, 0, BattlePassRewardCount - 1);
+        if (TryGetBackendBattlePassRewardDefinition(rewardIndex, out var backendReward) && !string.IsNullOrWhiteSpace(backendReward.rewardId))
+        {
+            return backendReward.rewardId;
+        }
+
+        return GetBattlePassRewardDefinition(rewardIndex).rewardId;
     }
 
     public void ResetProgress()
@@ -2522,12 +2606,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var message = string.IsNullOrWhiteSpace(result.message) ? "Server AFK checked." : result.message;
         SetDungeonResult(message);
 
-        var outcome = result.success ? "ok" : string.IsNullOrWhiteSpace(result.errorCode) ? "failed" : result.errorCode;
-        if (result.replay)
-        {
-            outcome = $"{outcome} replay";
-        }
-
+        var outcome = FormatBackendActionOutcome(result);
         FinishBackendRequest($"{source}: {outcome}{FormatBackendRevisionSuffix(result)}");
     }
 
@@ -2550,10 +2629,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         ApplyBackendSnapshot(result.playerSnapshot);
-        var message = string.IsNullOrWhiteSpace(result.message) ? "Server action completed." : result.message;
+        var message = string.IsNullOrWhiteSpace(result.message) ? FormatBackendActionOutcome(result) : result.message;
         if (!showInSummonPanel && HasServerCombatResult(result))
         {
             message = FormatServerCombatMessage(result);
+        }
+        else if (!result.success)
+        {
+            message = $"{FormatBackendActionOutcome(result)}\n{message}";
         }
 
         if (showInSummonPanel)
@@ -2565,12 +2648,68 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             SetDungeonResult(message);
         }
 
-        var outcome = result.success ? "ok" : string.IsNullOrWhiteSpace(result.errorCode) ? "failed" : result.errorCode;
+        var outcome = FormatBackendActionOutcome(result);
+        FinishBackendRequest($"Server action: {outcome}  {result.actionId}{FormatBackendRevisionSuffix(result)}");
+    }
+
+    private static string FormatBackendActionOutcome(MythwakeActionResultDto result)
+    {
+        var outcome = result.success ? "ok" : HumanizeActionErrorCode(result.errorCode);
         if (result.replay)
         {
             outcome = $"{outcome} replay";
         }
-        FinishBackendRequest($"Server action: {outcome}  {result.actionId}{FormatBackendRevisionSuffix(result)}");
+
+        return outcome;
+    }
+
+    private static string HumanizeActionErrorCode(string errorCode)
+    {
+        switch (errorCode)
+        {
+            case "combat_lost":
+                return "combat lost";
+            case "stale_player_state":
+                return "stale state - sync";
+            case "insufficient_currency":
+                return "not enough currency";
+            case "insufficient_shards":
+                return "not enough shards";
+            case "missing_item":
+                return "missing item";
+            case "missing_items":
+                return "missing copies";
+            case "max_level":
+                return "max level";
+            case "max_ascension":
+                return "max ascension";
+            case "max_rarity":
+                return "max rarity";
+            case "already_claimed":
+                return "already claimed";
+            case "not_complete":
+                return "not complete";
+            case "not_unlocked":
+                return "not unlocked";
+            case "invalid_banner":
+                return "invalid banner";
+            case "invalid_mission":
+                return "invalid mission";
+            case "invalid_reward":
+                return "invalid reward";
+            case "invalid_hero":
+                return "invalid hero";
+            case "invalid_equipment":
+                return "invalid equipment";
+            case "invalid_accessory":
+                return "invalid accessory";
+            case "invalid_dungeon":
+                return "invalid dungeon";
+            case "invalid_currency":
+                return "invalid currency";
+            default:
+                return string.IsNullOrWhiteSpace(errorCode) ? "failed" : errorCode.Replace('_', ' ');
+        }
     }
 
     private static string FormatBackendRevisionSuffix(MythwakeActionResultDto result)
@@ -5607,6 +5746,45 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         EnsureAccessories();
         return accessoryInventory[GetAccessoryInventoryIndex(slot, rarity)];
+    }
+
+    private bool TryGetFirstOwnedAccessoryId(out string accessoryId)
+    {
+        EnsureAccessories();
+        for (var rarity = AccessoryRarityCount - 1; rarity >= 0; rarity--)
+        {
+            for (var slot = 0; slot < AccessorySlotCount; slot++)
+            {
+                if (GetAccessoryInventoryCount(slot, rarity) > 0)
+                {
+                    accessoryId = GetAccessoryDefinition(slot, rarity).accessoryId;
+                    return true;
+                }
+            }
+        }
+
+        accessoryId = string.Empty;
+        return false;
+    }
+
+    private bool TryGetFuseCandidateAccessoryId(out string accessoryId)
+    {
+        EnsureAccessories();
+        for (var rarity = 0; rarity < AccessoryRarityCount - 1; rarity++)
+        {
+            for (var slot = 0; slot < AccessorySlotCount; slot++)
+            {
+                var definition = GetAccessoryDefinition(slot, rarity);
+                if (!string.IsNullOrWhiteSpace(definition.fuseTargetAccessoryId) && GetAccessoryInventoryCount(slot, rarity) >= GetAccessoryFuseCost(rarity))
+                {
+                    accessoryId = definition.accessoryId;
+                    return true;
+                }
+            }
+        }
+
+        accessoryId = string.Empty;
+        return false;
     }
 
     private void AddAccessoryInventory(int slot, int rarity, int amount)

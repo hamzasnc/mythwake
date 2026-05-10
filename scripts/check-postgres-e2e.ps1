@@ -43,6 +43,65 @@ function Invoke-Json {
     return Invoke-RestMethod -Method $Method -Uri "$baseUrl$Path" -Headers $Headers
 }
 
+function Invoke-JsonExpectError {
+    param(
+        [string]$Method = "GET",
+        [string]$Path,
+        [hashtable]$Headers = @{},
+        [object]$Body = $null,
+        [int]$ExpectedStatus
+    )
+
+    $request = [System.Net.HttpWebRequest]::Create("$baseUrl$Path")
+    $request.Method = $Method
+    $request.Accept = "application/json"
+    foreach ($header in $Headers.GetEnumerator()) {
+        $request.Headers[$header.Key] = [string]$header.Value
+    }
+
+    if ($null -ne $Body) {
+        $request.ContentType = "application/json"
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes([string]$Body)
+        $request.ContentLength = $bytes.Length
+        $requestStream = $request.GetRequestStream()
+        try {
+            $requestStream.Write($bytes, 0, $bytes.Length)
+        }
+        finally {
+            $requestStream.Close()
+        }
+    }
+
+    try {
+        $response = $request.GetResponse()
+        if ($response) {
+            $response.Close()
+        }
+    }
+    catch [System.Net.WebException] {
+        if (-not $_.Exception.Response) {
+            throw
+        }
+
+        $statusCode = [int]$_.Exception.Response.StatusCode
+        $responseStream = $_.Exception.Response.GetResponseStream()
+        $reader = [System.IO.StreamReader]::new($responseStream)
+        $bodyText = $reader.ReadToEnd()
+        $parsedBody = if ([string]::IsNullOrWhiteSpace($bodyText)) { $null } else { $bodyText | ConvertFrom-Json }
+
+        if ($statusCode -ne $ExpectedStatus) {
+            throw "Expected $Method $Path to fail with HTTP $ExpectedStatus, got $statusCode. Body: $bodyText"
+        }
+
+        return [pscustomobject]@{
+            StatusCode = $statusCode
+            Body = $parsedBody
+        }
+    }
+
+    throw "Expected $Method $Path to fail with HTTP $ExpectedStatus, but it succeeded."
+}
+
 function Wait-Api {
     param(
         [System.Diagnostics.Process]$Process
@@ -236,19 +295,9 @@ try {
         throw "Expected definitions to include dungeon combat curves. Response: $($definitions | ConvertTo-Json -Depth 8)"
     }
 
-    $unauthorizedStatus = $null
-    try {
-        Invoke-Json -Path "/player/state" | Out-Null
-    }
-    catch {
-        if ($_.Exception.Response) {
-            $unauthorizedStatus = [int]$_.Exception.Response.StatusCode
-        }
-        else {
-            throw
-        }
-    }
-    Assert-Equal $unauthorizedStatus 401 "Protected player state should reject missing sessions."
+    $missingSession = Invoke-JsonExpectError -Path "/player/state" -Headers @{ "X-Request-ID" = "e2e-missing-session-001" } -ExpectedStatus 401
+    Assert-Equal $missingSession.Body.errorCode "missing_session" "Protected player state should reject missing sessions with a structured error code."
+    Assert-Equal $missingSession.Body.requestId "e2e-missing-session-001" "Missing-session errors should preserve the client request id."
 
     $login = Invoke-Json -Method "POST" -Path "/auth/guest"
     $authHeaders = @{ "Authorization" = "Bearer $($login.sessionToken)" }
@@ -292,6 +341,14 @@ try {
     if ([string]::IsNullOrWhiteSpace($afk.playerSnapshot.lastAfkClaimUtc)) {
         throw "Expected AFK action snapshot to include lastAfkClaimUtc."
     }
+
+    $missingIdempotency = Invoke-JsonExpectError -Method "POST" -Path "/campaign/fight" -Headers @{
+        "Authorization" = $authHeaders["Authorization"]
+        "X-Player-State-Revision" = [string]$stateBefore.revision
+        "X-Request-ID" = "e2e-missing-idempotency-001"
+    } -ExpectedStatus 400
+    Assert-Equal $missingIdempotency.Body.errorCode "missing_idempotency_key" "Gameplay mutations should reject missing idempotency keys with a structured error code."
+    Assert-Equal $missingIdempotency.Body.requestId "e2e-missing-idempotency-001" "Missing-idempotency errors should preserve the client request id."
 
     $idempotencyKey = "e2e-campaign-$([guid]::NewGuid().ToString("N"))"
     $actionHeaders = @{
@@ -446,19 +503,12 @@ try {
     Assert-Equal $logout.status "ok" "Logout should return ok."
     Assert-Equal $logout.stateFlushed $true "Logout should flush the loaded player state."
 
-    $revokedStatus = $null
-    try {
-        Invoke-Json -Path "/player/state" -Headers $authHeaders | Out-Null
-    }
-    catch {
-        if ($_.Exception.Response) {
-            $revokedStatus = [int]$_.Exception.Response.StatusCode
-        }
-        else {
-            throw
-        }
-    }
-    Assert-Equal $revokedStatus 401 "Revoked session should reject protected state."
+    $revoked = Invoke-JsonExpectError -Path "/player/state" -Headers @{
+        "Authorization" = $authHeaders["Authorization"]
+        "X-Request-ID" = "e2e-revoked-session-001"
+    } -ExpectedStatus 401
+    Assert-Equal $revoked.Body.errorCode "invalid_session" "Revoked session should reject protected state with a structured error code."
+    Assert-Equal $revoked.Body.requestId "e2e-revoked-session-001" "Revoked-session errors should preserve the client request id."
 
     Write-Host "PostgreSQL E2E smoke passed."
     [pscustomobject]@{
@@ -467,7 +517,7 @@ try {
         CampaignStage = [int]$fightAfterReset.playerState.campaignStage
         Replay = $replay.replay
         DevReset = $stateAfterReset.state.campaignStage -eq 1
-        LogoutRevoked = $revokedStatus -eq 401
+        LogoutRevoked = $revoked.StatusCode -eq 401
         LogoutStateFlushed = $logout.stateFlushed
         StateWriteMode = $StateWriteMode
         BalanceCatalog = "postgres_snapshot"

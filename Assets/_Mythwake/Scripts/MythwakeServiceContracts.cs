@@ -143,6 +143,14 @@ public struct MythwakeActionReceiptDto
 }
 
 [Serializable]
+public struct MythwakeBackendErrorDto
+{
+    public string errorCode;
+    public string message;
+    public string requestId;
+}
+
+[Serializable]
 public struct MythwakeGuestAuthResponseDto
 {
     public string playerId;

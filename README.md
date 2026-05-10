@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.31
+Prototype version: 0.2.32
 Local save version: 2
 
 Current prototype:
@@ -25,7 +25,8 @@ Current prototype:
 - Server Mode preference persists across Unity restarts and reboots through `/client/bootstrap`
 - Server Mode blocks local debug grants/reset so PostgreSQL remains the authoritative test source
 - Gameplay buttons are gated while backend requests are in flight to avoid accidental double actions
-- Backend panel includes a `Smoke` action that runs a compact server-backed Campaign/Dungeon/Progression/Summon/AFK/Flush test sequence
+- Backend panel includes a `Smoke` action that runs a compact server-backed Campaign/Dungeon/Gear/Progression/Summon/Daily/Mission Track/AFK/Flush test sequence
+- Unity sends an `X-Request-ID` with backend requests and formats structured backend errors into readable client diagnostics
 - Auto Attack stays local-only for now and is paused while Server Mode is active
 - Campaign fights, dungeon runs, and summons now return local action-result DTOs
 - Accessory equip, level, and fuse actions now return local action-result DTOs
@@ -155,6 +156,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.32: Unity backend requests now carry request IDs, structured backend error bodies are formatted into readable client diagnostics, action-result errors are humanized, Backend-panel Smoke now covers accessory equip/level/fuse candidates plus Daily Summon and Mission Track claims, and PostgreSQL E2E verifies structured error/request-id contracts.
 - Prototype 0.2.31: Unity Server Mode now persists across restarts, auto-bootstraps through the backend, blocks local debug/reset mutations while server-authoritative, gates gameplay during backend requests, shows expanded backend health/cache diagnostics, and adds a Backend-panel Smoke action for compact server-flow testing.
 - Backend 0.2.55: Expanded PostgreSQL E2E coverage across core gameplay mutation endpoints and restart reload checks.
 - Backend 0.2.54: Added configurable idle loaded-player context flushing/unloading with health visibility for long-running API memory control.

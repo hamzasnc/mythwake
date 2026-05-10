@@ -525,10 +525,16 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     private void ApplyCommonHeaders(UnityWebRequest request)
     {
         request.SetRequestHeader("Accept", "application/json");
+        request.SetRequestHeader("X-Request-ID", CreateRequestId());
         if (HasSession)
         {
             request.SetRequestHeader("Authorization", $"Bearer {SessionToken}");
         }
+    }
+
+    private static string CreateRequestId()
+    {
+        return $"unity-{Guid.NewGuid().ToString("N").Substring(0, 24)}";
     }
 
     private string GetOrCreatePendingActionKey(string actionKey)
@@ -573,12 +579,92 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     private static string BuildErrorMessage(UnityWebRequest request, string body)
     {
         var error = string.IsNullOrWhiteSpace(request.error) ? "Backend request failed" : request.error;
+        if (TryParseBackendError(body, out var backendError))
+        {
+            var label = HumanizeErrorCode(backendError.errorCode);
+            var message = string.IsNullOrWhiteSpace(backendError.message) ? error : backendError.message;
+            var requestId = string.IsNullOrWhiteSpace(backendError.requestId) ? string.Empty : $"  request {backendError.requestId}";
+            return $"{request.responseCode}: {label} - {message}{requestId}";
+        }
+
         if (string.IsNullOrWhiteSpace(body))
         {
             return $"{request.responseCode}: {error}";
         }
 
-        return $"{request.responseCode}: {error} - {body}";
+        return $"{request.responseCode}: {error} - {Truncate(body, 480)}";
+    }
+
+    private static bool TryParseBackendError(string body, out MythwakeBackendErrorDto backendError)
+    {
+        backendError = default(MythwakeBackendErrorDto);
+        if (string.IsNullOrWhiteSpace(body) || body.IndexOf("errorCode", StringComparison.OrdinalIgnoreCase) < 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            backendError = JsonUtility.FromJson<MythwakeBackendErrorDto>(body);
+            return !string.IsNullOrWhiteSpace(backendError.errorCode) || !string.IsNullOrWhiteSpace(backendError.message);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+    }
+
+    private static string HumanizeErrorCode(string errorCode)
+    {
+        switch (errorCode)
+        {
+            case "missing_session":
+                return "Missing session";
+            case "invalid_session":
+                return "Invalid session";
+            case "missing_idempotency_key":
+                return "Missing idempotency key";
+            case "invalid_idempotency_key":
+                return "Invalid idempotency key";
+            case "invalid_state_revision":
+                return "Invalid state revision";
+            case "player_busy":
+                return "Player busy";
+            case "rate_limited":
+                return "Rate limited";
+            case "rate_limit_unavailable":
+                return "Rate limit unavailable";
+            case "player_lock_unavailable":
+                return "Player lock unavailable";
+            case "definitions_unavailable":
+                return "Definitions unavailable";
+            case "state_flush_failed":
+                return "State flush failed";
+            case "player_reset_failed":
+                return "Player reset failed";
+            case "guest_auth_failed":
+                return "Guest auth failed";
+            case "invalid_body":
+                return "Invalid body";
+            case "invalid_json":
+                return "Invalid JSON";
+            case "missing_accessory_id":
+                return "Missing accessory id";
+            case "internal_error":
+                return "Internal server error";
+            default:
+                return string.IsNullOrWhiteSpace(errorCode) ? "Backend error" : errorCode.Replace('_', ' ');
+        }
+    }
+
+    private static string Truncate(string value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value) || value.Length <= maxLength)
+        {
+            return value;
+        }
+
+        return $"{value.Substring(0, maxLength)}...";
     }
 
     private const long httpStatusNotModified = 304;
