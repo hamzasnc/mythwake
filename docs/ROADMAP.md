@@ -339,6 +339,7 @@ Current backend state:
 - Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes, ETags, and `304 Not Modified` revalidation.
 - PostgreSQL now has account identity and session tables shaped for guest, email, Google, and Apple login providers; raw session tokens are returned once and only token hashes are stored.
 - Unity Server Mode can now load and cache the `/definitions` snapshot with ETag revalidation and use it for server-owned dungeon preview values.
+- Unity Server Mode can request `/time`, keep an approximate in-memory server UTC value, and show daily/weekly reset timing in the Backend panel.
 - Player state, flush, and gameplay mutation routes now validate Bearer sessions and resolve the player context from the session token.
 - Unity Server Mode now persists the session token, sends `Authorization: Bearer <sessionToken>`, and retries protected requests once after `401` by refreshing guest auth.
 - Added `scripts/check-postgres-e2e.cmd` to verify PostgreSQL guest auth, protected state, campaign persistence, manual flush, API restart reload, and idempotency replay.
@@ -586,6 +587,7 @@ Progress:
 - Added request IDs, structured error bodies, status-aware request logging, and panic recovery around the HTTP router.
 - Added process-local auth/gameplay rate limiting as a temporary limiter foundation before Redis.
 - Added a server-authoritative `GET /time` endpoint with UTC daily and weekly reset boundaries for later offline reward, mission reset, and clock drift validation.
+- Wired Unity Server Mode to consume the server clock and display reset timing for local smoke testing.
 
 Next useful step:
 - Add Redis-backed replacements for the in-process session cache, rate-limit counters, and short-lived locks once local Redis is available.

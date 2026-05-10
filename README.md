@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.16
+Prototype version: 0.2.17
 Local save version: 2
 
 Current prototype:
@@ -104,6 +104,7 @@ Backend:
 - Navicat-friendly account/persistence debug views expose auth providers, active sessions, latest action result, and snapshot freshness
 - Server-owned auth provider, currency, hero, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
 - Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
+- Unity can sync `/time`, keep an approximate in-memory server clock, and show daily/weekly reset timing from the backend
 - Unity stores the backend session token, sends it automatically, and retries once with a fresh guest login after a `401`
 - Unity reuses pending idempotency keys after transport failures
 - Unity requests a backend state flush on app pause/quit when a backend session is active
@@ -119,6 +120,7 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
 
 Changelog:
+- Prototype 0.2.17: Added Unity server-clock DTO/client support and a Backend Clock smoke action using `GET /time`.
 - Backend 0.2.30: Added `GET /time` as a server-authoritative clock with UTC daily and weekly reset boundaries, plus smoke-script coverage.
 - Backend 0.2.29: Added configurable auth/gameplay rate limiting with `429` JSON errors, `Retry-After`, health visibility, and local script knobs.
 - Backend 0.2.28: Added request ID propagation, structured error responses with request IDs, panic recovery, and status-aware request logging.

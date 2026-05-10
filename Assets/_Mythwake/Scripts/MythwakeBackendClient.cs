@@ -18,6 +18,10 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     private readonly Dictionary<string, string> pendingActionKeys = new Dictionary<string, string>();
     private string cachedSessionToken;
     private string cachedPlayerId;
+    private MythwakeServerClockDto lastServerClock;
+    private DateTime lastServerClockUtc;
+    private float lastServerClockRealtime;
+    private bool hasServerClock;
     private const string SessionTokenCacheKey = "Mythwake.Backend.SessionToken";
     private const string PlayerIdCacheKey = "Mythwake.Backend.PlayerId";
     private const string DefinitionsJsonCacheKey = "Mythwake.Backend.Definitions.Json";
@@ -57,6 +61,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     }
 
     public bool HasSession => !string.IsNullOrWhiteSpace(SessionToken);
+    public bool HasServerClock => hasServerClock;
 
     public void ClearSession()
     {
@@ -70,6 +75,19 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     public IEnumerator GetHealth(Action<bool, string, MythwakeHealthDto> completed)
     {
         return SendJson(Get("/health"), completed);
+    }
+
+    public IEnumerator GetServerClock(Action<bool, string, MythwakeServerClockDto> completed)
+    {
+        return SendJson<MythwakeServerClockDto>(Get("/time"), (success, error, clock) =>
+        {
+            if (success)
+            {
+                StoreServerClock(clock);
+            }
+
+            completed?.Invoke(success, error, clock);
+        });
     }
 
     public IEnumerator GuestAuth(Action<bool, string, MythwakeGuestAuthResponseDto> completed)
@@ -475,6 +493,51 @@ public sealed class MythwakeBackendClient : MonoBehaviour
             PlayerPrefs.SetString(PlayerIdCacheKey, cachedPlayerId);
         }
         PlayerPrefs.Save();
+    }
+
+    public bool TryGetApproximateServerUtc(out DateTime serverUtc)
+    {
+        if (!hasServerClock)
+        {
+            serverUtc = DateTime.MinValue;
+            return false;
+        }
+
+        var elapsed = Mathf.Max(0f, Time.realtimeSinceStartup - lastServerClockRealtime);
+        serverUtc = lastServerClockUtc.AddSeconds(elapsed);
+        return true;
+    }
+
+    public bool TryGetLastServerClock(out MythwakeServerClockDto clock)
+    {
+        clock = lastServerClock;
+        return hasServerClock;
+    }
+
+    private void StoreServerClock(MythwakeServerClockDto clock)
+    {
+        if (!TryParseUtc(clock.serverTimeUtc, out var serverUtc))
+        {
+            hasServerClock = false;
+            return;
+        }
+
+        lastServerClock = clock;
+        lastServerClockUtc = serverUtc;
+        lastServerClockRealtime = Time.realtimeSinceStartup;
+        hasServerClock = true;
+    }
+
+    private static bool TryParseUtc(string value, out DateTime utc)
+    {
+        if (DateTime.TryParse(value, null, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out utc))
+        {
+            utc = utc.ToUniversalTime();
+            return true;
+        }
+
+        utc = DateTime.MinValue;
+        return false;
     }
 
     [Serializable]

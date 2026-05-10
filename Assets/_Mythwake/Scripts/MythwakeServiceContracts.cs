@@ -124,6 +124,17 @@ public struct MythwakeHealthDto
 }
 
 [Serializable]
+public struct MythwakeServerClockDto
+{
+    public string serverTimeUtc;
+    public long serverUnixMs;
+    public string dailyResetUtc;
+    public string weeklyResetUtc;
+    public long secondsUntilDailyReset;
+    public long secondsUntilWeeklyReset;
+}
+
+[Serializable]
 public struct MythwakeDefinitionSnapshotDto
 {
     public int schemaVersion;

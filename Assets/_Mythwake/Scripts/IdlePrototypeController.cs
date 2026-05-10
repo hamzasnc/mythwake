@@ -1,11 +1,12 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.16";
+    public const string PrototypeVersion = "0.2.17";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -686,6 +687,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private Button backendHealthButton;
     [SerializeField] private Button backendLoginButton;
     [SerializeField] private Button backendSyncButton;
+    [SerializeField] private Button backendClockButton;
     [SerializeField] private Button backendDefinitionsButton;
     [SerializeField] private Button backendModeButton;
     [SerializeField] private TMP_Text backendModeText;
@@ -920,6 +922,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             backendSyncButton.onClick.AddListener(SyncBackendState);
         }
 
+        if (backendClockButton != null)
+        {
+            backendClockButton.onClick.AddListener(SyncBackendClock);
+        }
+
         if (backendDefinitionsButton != null)
         {
             backendDefinitionsButton.onClick.AddListener(SyncBackendDefinitions);
@@ -1084,6 +1091,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendSyncButton != null)
         {
             backendSyncButton.onClick.RemoveListener(SyncBackendState);
+        }
+
+        if (backendClockButton != null)
+        {
+            backendClockButton.onClick.RemoveListener(SyncBackendClock);
         }
 
         if (backendDefinitionsButton != null)
@@ -1780,7 +1792,43 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        StartCoroutine(backendClient.GetHealth(OnBackendHealth));
+        StartCoroutine(PingBackendRoutine());
+    }
+
+    private IEnumerator PingBackendRoutine()
+    {
+        var healthSuccess = false;
+        var healthError = string.Empty;
+        var health = default(MythwakeHealthDto);
+        yield return backendClient.GetHealth((success, error, response) =>
+        {
+            healthSuccess = success;
+            healthError = error;
+            health = response;
+        });
+
+        if (!healthSuccess)
+        {
+            FinishBackendRequest($"Backend offline: {healthError}");
+            yield break;
+        }
+
+        var clockSuccess = false;
+        var clock = default(MythwakeServerClockDto);
+        yield return backendClient.GetServerClock((success, _, response) =>
+        {
+            clockSuccess = success;
+            clock = response;
+        });
+
+        var writeMode = string.IsNullOrWhiteSpace(health.state_write_mode) ? "unknown" : health.state_write_mode;
+        if (clockSuccess)
+        {
+            FinishBackendRequest($"Backend: {health.status}  DB {health.database}  {writeMode}  v{health.version}  Daily {FormatResetCountdown(clock.secondsUntilDailyReset)}");
+            yield break;
+        }
+
+        FinishBackendRequest($"Backend: {health.status}  DB {health.database}  {writeMode}  v{health.version}");
     }
 
     public void LoginBackend()
@@ -1811,6 +1859,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         StartCoroutine(backendClient.GetDefinitions(OnBackendDefinitions));
+    }
+
+    public void SyncBackendClock()
+    {
+        if (!TryStartBackendRequest("Backend: syncing clock..."))
+        {
+            return;
+        }
+
+        StartCoroutine(backendClient.GetServerClock(OnBackendClock));
     }
 
     public void ToggleBackendGameplayMode()
@@ -1982,6 +2040,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         FinishBackendRequest($"Definitions sync failed: {error}");
+    }
+
+    private void OnBackendClock(bool success, string error, MythwakeServerClockDto clock)
+    {
+        if (success)
+        {
+            FinishBackendRequest($"Clock: {FormatClockTime(clock.serverTimeUtc)}  Daily {FormatResetCountdown(clock.secondsUntilDailyReset)}  Weekly {FormatResetCountdown(clock.secondsUntilWeeklyReset)}");
+            return;
+        }
+
+        FinishBackendRequest($"Clock sync failed: {error}");
     }
 
     private void OnBackendGameplayAction(bool success, string error, MythwakeActionResultDto result)
@@ -4112,6 +4181,39 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return contentHash.Length <= 8 ? contentHash : contentHash.Substring(0, 8);
     }
 
+    private static string FormatClockTime(string serverTimeUtc)
+    {
+        if (!DateTime.TryParse(serverTimeUtc, null, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var parsed))
+        {
+            return "synced";
+        }
+
+        return $"{parsed.ToUniversalTime():HH:mm} UTC";
+    }
+
+    private static string FormatResetCountdown(long seconds)
+    {
+        seconds = Math.Max(0, seconds);
+        var time = TimeSpan.FromSeconds(seconds);
+
+        if (time.TotalDays >= 1)
+        {
+            return $"{(int)time.TotalDays}d {time.Hours}h";
+        }
+
+        if (time.TotalHours >= 1)
+        {
+            return $"{(int)time.TotalHours}h {time.Minutes}m";
+        }
+
+        if (time.TotalMinutes >= 1)
+        {
+            return $"{time.Minutes}m {time.Seconds}s";
+        }
+
+        return $"{time.Seconds}s";
+    }
+
     private MythwakeHeroStateDto[] CreateHeroSnapshot()
     {
         EnsureHeroLevels();
@@ -4875,11 +4977,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendStatusText.fontSizeMin = 16;
         backendStatusText.fontSizeMax = 22;
 
-        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -336, -154, 148, 54);
-        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", -168, -154, 148, 54);
-        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "State", 0, -154, 148, 54);
-        backendDefinitionsButton = CreateRuntimeButton(panelObject.transform, "Backend Definitions Button", "Defs", 168, -154, 148, 54);
-        backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 336, -154, 148, 54);
+        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -330, -154, 124, 54);
+        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", -198, -154, 124, 54);
+        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "State", -66, -154, 124, 54);
+        backendClockButton = CreateRuntimeButton(panelObject.transform, "Backend Clock Button", "Clock", 66, -154, 124, 54);
+        backendDefinitionsButton = CreateRuntimeButton(panelObject.transform, "Backend Definitions Button", "Defs", 198, -154, 124, 54);
+        backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 330, -154, 124, 54);
         backendModeText = backendModeButton.GetComponentInChildren<TMP_Text>();
     }
 
@@ -4970,6 +5073,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendSyncButton != null)
         {
             backendSyncButton.interactable = interactable;
+        }
+
+        if (backendClockButton != null)
+        {
+            backendClockButton.interactable = interactable;
         }
 
         if (backendDefinitionsButton != null)
