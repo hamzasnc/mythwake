@@ -298,6 +298,7 @@ Current backend state:
 - Added environment-based config.
 - Added standard-library HTTP router.
 - Added `GET /health`.
+- Added `GET /definitions` for a read-only server-owned definition snapshot.
 - Added shared API response types for player state, rewards, and action results.
 - Added dev `GET /player/state` endpoint.
 - Added in-memory guest auth endpoint.
@@ -335,6 +336,7 @@ Current backend state:
 - Daily Mission, Mission Track, and Summon actions now reject unknown client IDs and resolve rewards through server-owned balance definitions.
 - PostgreSQL now has DB-ready definition tables for heroes, campaign stages, rewards, progression costs, summon pools, daily missions, and Mission Track rewards.
 - The large backend player service has been split into focused domain files for campaign/dungeons, progression, gear, meta actions, snapshots, and persistence.
+- Server-owned dungeon, cost, summon, mission, Mission Track, and action definitions are exposed through `GET /definitions`.
 - Successful idempotent action results save in `player.player_action_results`.
 - Per-action economy deltas save in `logs.player_action_ledger`.
 - Startup restores from the latest durable action result snapshot if materialized tables are behind.
@@ -560,6 +562,7 @@ Progress:
 - Added `common.hero_definitions`, `common.reward_definitions`, `common.campaign_curve_definitions`, `common.campaign_stage_definitions`, `common.progression_cost_definitions`, `common.summon_banner_definitions`, `common.summon_pool_definitions`, `common.mission_definitions`, and `common.battle_pass_track_definitions`.
 - Added debug views for common rewards, progression costs, and meta reward definitions.
 - Split `backend/internal/player/service.go` into smaller domain files while preserving route behavior and tests.
+- Added `internal/definitions` as a read-only API projection layer for balance and gameplay catalogs.
 
 Next useful step:
 - Continue turning the split player service into explicit domain services where it adds real ownership boundaries:

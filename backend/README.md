@@ -6,6 +6,7 @@ Current scope:
 - Standard-library HTTP server
 - Environment-based config
 - Health endpoint
+- Read-only definitions endpoint
 - Dev player state endpoint
 - In-memory guest auth
 - In-memory action endpoints for campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
@@ -50,6 +51,7 @@ Current scope:
 - Early balance definitions for campaign, dungeons, costs, summons, and simple rewards are centralized in `internal/balance`.
 - Player service gameplay actions are organized by domain files while keeping the existing API surface stable.
 - Daily Mission, Mission Track, and Summon actions validate against server-owned definitions instead of arbitrary client IDs.
+- `GET /definitions` exposes the current server-owned balance/action catalog for client and admin tooling.
 - Navicat-friendly common definition views:
   - `debug.v_common_reward_overview`
   - `debug.v_common_progression_cost_overview`
@@ -139,6 +141,7 @@ Database behavior:
 Endpoints:
 - `POST /auth/guest`
 - `GET /health`
+- `GET /definitions`
 - `GET /player/state`
 - `POST /player/state/flush`
 - `GET /player/core-state`

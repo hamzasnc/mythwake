@@ -26,6 +26,30 @@ func TestHealthEndpoint(t *testing.T) {
 	}
 }
 
+func TestDefinitionsEndpoint(t *testing.T) {
+	handler := newTestHandler()
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/definitions", nil)
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+
+	var body api.DefinitionSnapshot
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+
+	if body.APIVersion != "test" || body.SchemaVersion == 0 {
+		t.Fatalf("expected versioned definition snapshot, got %#v", body)
+	}
+	if len(body.Dungeons) == 0 || len(body.SummonBanners) == 0 || len(body.GameplayActions) == 0 {
+		t.Fatalf("expected populated definitions, got %#v", body)
+	}
+}
+
 func TestGuestAuthEndpoint(t *testing.T) {
 	handler := newTestHandler()
 	response := httptest.NewRecorder()

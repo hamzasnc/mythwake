@@ -12,6 +12,7 @@ import (
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/config"
+	"github.com/hamzasnc/mythwake/backend/internal/definitions"
 	"github.com/hamzasnc/mythwake/backend/internal/player"
 )
 
@@ -37,6 +38,7 @@ func NewRouter(cfg config.Config, logger *log.Logger, playerService *player.Serv
 func (router *Router) routes() {
 	router.mux.HandleFunc("POST /auth/guest", router.handleGuestAuth)
 	router.mux.HandleFunc("GET /health", router.handleHealth)
+	router.mux.HandleFunc("GET /definitions", router.handleDefinitions)
 	router.mux.HandleFunc("GET /player/state", router.handlePlayerState)
 	router.mux.HandleFunc("POST /player/state/flush", router.handlePlayerStateFlush)
 	router.mux.HandleFunc("GET /player/core-state", router.handlePlayerCoreState)
@@ -51,6 +53,10 @@ func (router *Router) routes() {
 	router.mux.HandleFunc("POST /summons/{banner_id}/pull", router.handleSummonPull)
 	router.mux.HandleFunc("POST /missions/{mission_id}/claim", router.handleDailyMissionClaim)
 	router.mux.HandleFunc("POST /battle-pass/{reward_id}/claim", router.handleBattlePassClaim)
+}
+
+func (router *Router) handleDefinitions(response http.ResponseWriter, request *http.Request) {
+	writeJSON(response, http.StatusOK, definitions.Snapshot(router.config.Version))
 }
 
 func (router *Router) handleHealth(response http.ResponseWriter, request *http.Request) {

@@ -2,6 +2,7 @@ package balance
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
@@ -50,6 +51,25 @@ type SummonShardDrop struct {
 	HeroID string
 	Shards int
 	Reward api.Reward
+}
+
+type ProgressionCostDefinition struct {
+	ID             string
+	Domain         string
+	TargetID       string
+	CostCurrencyID string
+	BaseAmount     int
+	AmountPerLevel int
+	Formula        string
+}
+
+type SummonBannerDefinition struct {
+	ID             string
+	DisplayName    string
+	CostCurrencyID string
+	CostAmount     int
+	ResolutionMode string
+	ShardDrops     []SummonShardDrop
 }
 
 var dungeonDefinitions = map[string]DungeonDefinition{
@@ -122,9 +142,68 @@ var heroShardStandardPool = []SummonShardDrop{
 	{HeroID: "hero_elowen", Shards: 7, Reward: api.Reward{RewardID: RewardSummonShards}},
 }
 
+var progressionCostDefinitions = []ProgressionCostDefinition{
+	{
+		ID:             "hero_level_any",
+		Domain:         "hero",
+		TargetID:       "*",
+		CostCurrencyID: economy.CurrencyMythEssence,
+		BaseAmount:     14,
+		AmountPerLevel: 6,
+		Formula:        "base_amount + current_level * amount_per_level",
+	},
+	{
+		ID:             "hero_ascension_any",
+		Domain:         "hero",
+		TargetID:       "*",
+		CostCurrencyID: "hero_shards",
+		BaseAmount:     20,
+		AmountPerLevel: 15,
+		Formula:        "base_amount + current_ascension * amount_per_level",
+	},
+	{
+		ID:             "equipment_weapon_level",
+		Domain:         "equipment",
+		TargetID:       EquipmentWeapon,
+		CostCurrencyID: economy.CurrencyGold,
+		BaseAmount:     80,
+		AmountPerLevel: 35,
+		Formula:        "base_amount + current_level * amount_per_level",
+	},
+	{
+		ID:             "equipment_armor_level",
+		Domain:         "equipment",
+		TargetID:       EquipmentArmor,
+		CostCurrencyID: economy.CurrencyGold,
+		BaseAmount:     75,
+		AmountPerLevel: 35,
+		Formula:        "base_amount + current_level * amount_per_level",
+	},
+	{
+		ID:             "accessory_level_any",
+		Domain:         "accessory",
+		TargetID:       "*",
+		CostCurrencyID: economy.CurrencyGold,
+		BaseAmount:     35,
+		AmountPerLevel: 0,
+		Formula:        "flat base_amount",
+	},
+}
+
 func DungeonDefinitionByID(dungeonID string) (DungeonDefinition, bool) {
 	definition, ok := dungeonDefinitions[dungeonID]
 	return definition, ok
+}
+
+func DungeonDefinitions() []DungeonDefinition {
+	definitions := make([]DungeonDefinition, 0, len(dungeonDefinitions))
+	for _, definition := range dungeonDefinitions {
+		definitions = append(definitions, definition)
+	}
+	sort.Slice(definitions, func(left int, right int) bool {
+		return definitions[left].ID < definitions[right].ID
+	})
+	return definitions
 }
 
 func DungeonRequiredPower(definition DungeonDefinition, floor int) int {
@@ -206,6 +285,27 @@ func SummonShardReward(bannerID string, summonCount int) (SummonShardDrop, bool)
 
 	drop := heroShardStandardPool[summonCount%len(heroShardStandardPool)]
 	return drop, true
+}
+
+func SummonBannerDefinitions() []SummonBannerDefinition {
+	pool := make([]SummonShardDrop, len(heroShardStandardPool))
+	copy(pool, heroShardStandardPool)
+	return []SummonBannerDefinition{
+		{
+			ID:             BannerHeroShardStandard,
+			DisplayName:    "Standard Hero Shards",
+			CostCurrencyID: economy.CurrencyGems,
+			CostAmount:     35,
+			ResolutionMode: "deterministic_rotation",
+			ShardDrops:     pool,
+		},
+	}
+}
+
+func ProgressionCostDefinitions() []ProgressionCostDefinition {
+	definitions := make([]ProgressionCostDefinition, len(progressionCostDefinitions))
+	copy(definitions, progressionCostDefinitions)
+	return definitions
 }
 
 func DailyMissionDefinitionByID(missionID string) (DailyMissionDefinition, bool) {

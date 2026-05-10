@@ -90,3 +90,70 @@ type GuestAuthResponse struct {
 type AccessoryRequest struct {
 	AccessoryID string `json:"accessoryId"`
 }
+
+type DefinitionSnapshot struct {
+	SchemaVersion     int                          `json:"schemaVersion"`
+	APIVersion        string                       `json:"apiVersion"`
+	Dungeons          []DungeonDefinition          `json:"dungeons"`
+	ProgressionCosts  []ProgressionCostDefinition  `json:"progressionCosts"`
+	SummonBanners     []SummonBannerDefinition     `json:"summonBanners"`
+	DailyMissions     []DailyMissionDefinition     `json:"dailyMissions"`
+	BattlePassRewards []BattlePassRewardDefinition `json:"battlePassRewards"`
+	GameplayActions   []GameplayActionDefinition   `json:"gameplayActions"`
+}
+
+type DungeonDefinition struct {
+	DungeonID             string `json:"dungeonId"`
+	DisplayName           string `json:"displayName"`
+	RewardCurrencyID      string `json:"rewardCurrencyId,omitempty"`
+	BaseRequiredPower     int    `json:"baseRequiredPower"`
+	RequiredPowerPerFloor int    `json:"requiredPowerPerFloor"`
+	BaseRewardAmount      int    `json:"baseRewardAmount"`
+	RewardPerFloor        int    `json:"rewardPerFloor"`
+}
+
+type ProgressionCostDefinition struct {
+	CostID         string `json:"costId"`
+	Domain         string `json:"domain"`
+	TargetID       string `json:"targetId"`
+	CostCurrencyID string `json:"costCurrencyId"`
+	BaseAmount     int    `json:"baseAmount"`
+	AmountPerLevel int    `json:"amountPerLevel"`
+	Formula        string `json:"formula"`
+}
+
+type SummonBannerDefinition struct {
+	BannerID       string            `json:"bannerId"`
+	DisplayName    string            `json:"displayName"`
+	CostCurrencyID string            `json:"costCurrencyId"`
+	CostAmount     int               `json:"costAmount"`
+	ResolutionMode string            `json:"resolutionMode"`
+	ShardDrops     []SummonShardDrop `json:"shardDrops"`
+}
+
+type SummonShardDrop struct {
+	HeroID   string `json:"heroId"`
+	Shards   int    `json:"shards"`
+	RewardID string `json:"rewardId"`
+}
+
+type DailyMissionDefinition struct {
+	MissionID    string `json:"missionId"`
+	DisplayName  string `json:"displayName"`
+	ProgressType string `json:"progressType"`
+	Target       int    `json:"target"`
+	Reward       Reward `json:"reward"`
+}
+
+type BattlePassRewardDefinition struct {
+	RewardID       string `json:"rewardId"`
+	RequiredPassXP int    `json:"requiredPassXp"`
+	Reward         Reward `json:"reward"`
+}
+
+type GameplayActionDefinition struct {
+	ActionID            string `json:"actionId"`
+	Domain              string `json:"domain"`
+	RequiresIdempotency bool   `json:"requiresIdempotency"`
+	MaterializedByFlush bool   `json:"materializedByFlush"`
+}

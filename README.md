@@ -64,6 +64,7 @@ Backend:
 - Standard-library HTTP server
 - Config via environment variables
 - `GET /health`
+- `GET /definitions` read-only server definition snapshot for client/admin tooling
 - `GET /player/state` dev response using the same player-state shape as the Unity service contract
 - In-memory pre-PostgreSQL action endpoints for auth, campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
 - Optional PostgreSQL connection using `MYTHWAKE_DATABASE_URL`
@@ -88,6 +89,7 @@ Backend:
 - Backend Daily Mission, Mission Track, and Summon actions now validate against known server balance definitions instead of accepting arbitrary claim IDs
 - PostgreSQL now seeds DB-ready hero, campaign, reward, progression cost, summon, mission, and Mission Track definition tables
 - Backend player service actions are split by domain files for campaign/dungeons, progression, gear, meta, snapshots, and persistence
+- Server-owned dungeon, cost, summon, mission, Mission Track, and action definitions are exposed through `GET /definitions`
 - Unity reuses pending idempotency keys after transport failures
 - `POST /player/state/flush` is ready as the future app-pause/disconnect save hook
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
@@ -99,6 +101,7 @@ Backend:
   - `scripts/check-backend.cmd`
 
 Changelog:
+- Backend 0.2.19: Added a read-only `/definitions` endpoint for server-owned gameplay and balance definitions.
 - Backend 0.2.18: Split the large player service into focused domain files without changing API behavior.
 - Backend 0.2.17: Added server-validated meta/summon balance definitions and PostgreSQL seed tables for hero, campaign, reward, cost, summon, mission, and Mission Track definitions.
 - Backend 0.2.16: Added a backend balance definition package for campaign, dungeon, cost, summon, and simple reward curves.
