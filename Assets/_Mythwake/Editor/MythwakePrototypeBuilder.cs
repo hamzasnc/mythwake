@@ -7,6 +7,8 @@ using UnityEngine.UI;
 
 public static class MythwakePrototypeBuilder
 {
+    private const string HomeNavbarAssetRoot = "Assets/_Mythwake/UI/Home Screen/bottom_navbar/";
+
     private static readonly Color BackgroundColor = new Color(0.07f, 0.1f, 0.16f);
     private static readonly Color PanelColor = new Color(0.12f, 0.16f, 0.24f, 0.95f);
     private static readonly Color ButtonColor = new Color(0.17f, 0.39f, 0.72f);
@@ -415,6 +417,11 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "gearTabButton", gearTab);
         SetObject(serializedController, "summonTabButton", summonTab);
         SetObject(serializedController, "shopTabButton", shopTab);
+        SetObject(serializedController, "homeNavbarTexture", LoadHomeNavbarTexture("navbar.png"));
+        SetObject(serializedController, "homeNavbarVillageTexture", LoadHomeNavbarTexture("village_btn.png"));
+        SetObject(serializedController, "homeNavbarDungeonsTexture", LoadHomeNavbarTexture("dungeons_btn.png"));
+        SetObject(serializedController, "homeNavbarHeroesTexture", LoadHomeNavbarTexture("heroes_btn.png"));
+        SetObject(serializedController, "homeNavbarSummonTexture", LoadHomeNavbarTexture("summon_btn.png"));
         serializedController.ApplyModifiedPropertiesWithoutUndo();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
@@ -422,6 +429,38 @@ public static class MythwakePrototypeBuilder
 
         Selection.activeGameObject = root;
         Debug.Log("Mythwake prototype UI was created.");
+    }
+
+    [MenuItem("Tools/Mythwake/Bind Home Navbar Assets")]
+    public static void BindHomeNavbarAssetsToOpenScene()
+    {
+        AssetDatabase.ImportAsset(HomeNavbarAssetRoot, ImportAssetOptions.ImportRecursive);
+
+        var controller = Object.FindAnyObjectByType<IdlePrototypeController>();
+        if (controller == null)
+        {
+            EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+            controller = Object.FindAnyObjectByType<IdlePrototypeController>();
+        }
+
+        if (controller == null)
+        {
+            Debug.LogWarning("No IdlePrototypeController found. Build the prototype UI first.");
+            return;
+        }
+
+        var serializedController = new SerializedObject(controller);
+        SetObject(serializedController, "homeNavbarTexture", LoadHomeNavbarTexture("navbar.png"));
+        SetObject(serializedController, "homeNavbarVillageTexture", LoadHomeNavbarTexture("village_btn.png"));
+        SetObject(serializedController, "homeNavbarDungeonsTexture", LoadHomeNavbarTexture("dungeons_btn.png"));
+        SetObject(serializedController, "homeNavbarHeroesTexture", LoadHomeNavbarTexture("heroes_btn.png"));
+        SetObject(serializedController, "homeNavbarSummonTexture", LoadHomeNavbarTexture("summon_btn.png"));
+        serializedController.ApplyModifiedPropertiesWithoutUndo();
+
+        EditorUtility.SetDirty(controller);
+        EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+        EditorSceneManager.SaveOpenScenes();
+        Debug.Log("Mythwake home navbar assets were bound to the open scene.");
     }
 
     private static void EnsureEventSystem()
@@ -582,5 +621,10 @@ public static class MythwakePrototypeBuilder
         {
             property.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
         }
+    }
+
+    private static Texture2D LoadHomeNavbarTexture(string fileName)
+    {
+        return AssetDatabase.LoadAssetAtPath<Texture2D>($"{HomeNavbarAssetRoot}{fileName}");
     }
 }

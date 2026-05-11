@@ -14176,6 +14176,11 @@ MonoBehaviour:
   shopTabButton: {fileID: 1775089888}
   activeTabColor: {r: 0.22, g: 0.48, b: 0.86, a: 1}
   inactiveTabColor: {r: 0.11, g: 0.14, b: 0.2, a: 1}
+  homeNavbarTexture: {fileID: 2800000, guid: 825e17b55007daf47a8d69373715f8e0, type: 3}
+  homeNavbarVillageTexture: {fileID: 2800000, guid: c8122d4e6988f7e4fb65f9115052c473, type: 3}
+  homeNavbarDungeonsTexture: {fileID: 2800000, guid: 48071a7b2f6b0d94a8b0ed7436fc44f7, type: 3}
+  homeNavbarHeroesTexture: {fileID: 2800000, guid: 850cba69784ed9a45a630167f8fdaf49, type: 3}
+  homeNavbarSummonTexture: {fileID: 2800000, guid: 1f55af746729ec34c8e75e170d5d2bfc, type: 3}
 --- !u!4 &1618811118
 Transform:
   m_ObjectHideFlags: 0

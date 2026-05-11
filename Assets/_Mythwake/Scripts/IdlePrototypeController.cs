@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.33";
+    public const string PrototypeVersion = "0.2.34";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -787,6 +787,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private Color activeTabColor = new Color(0.22f, 0.48f, 0.86f);
     [SerializeField] private Color inactiveTabColor = new Color(0.11f, 0.14f, 0.2f);
 
+    [Header("Home Navbar Art")]
+    [SerializeField] private Texture2D homeNavbarTexture;
+    [SerializeField] private Texture2D homeNavbarVillageTexture;
+    [SerializeField] private Texture2D homeNavbarDungeonsTexture;
+    [SerializeField] private Texture2D homeNavbarHeroesTexture;
+    [SerializeField] private Texture2D homeNavbarSummonTexture;
+
     private float autoAttackTimer;
     private int lastOfflineGoldReward;
     private int lastOfflineReward;
@@ -811,6 +818,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button homeBeginButton;
     private TMP_Text menuHeaderText;
     private RawImage[] heroCardPortraits;
+    private RectTransform artBottomNavRoot;
+    private RawImage villageNavImage;
+    private RawImage dungeonsNavImage;
+    private RawImage heroesNavImage;
+    private RawImage summonNavImage;
+    private Button villageNavButton;
+    private Button campaignNavButton;
+    private Button dungeonsNavButton;
+    private Button heroesNavButton;
+    private Button summonNavButton;
 
     private void Awake()
     {
@@ -4145,6 +4162,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             homeBeginButton.onClick.AddListener(ShowBattle);
         }
 
+        if (villageNavButton != null)
+        {
+            villageNavButton.onClick.AddListener(ShowHome);
+        }
+
+        if (campaignNavButton != null)
+        {
+            campaignNavButton.onClick.AddListener(ShowBattle);
+        }
+
+        if (dungeonsNavButton != null)
+        {
+            dungeonsNavButton.onClick.AddListener(ShowDungeons);
+        }
+
+        if (heroesNavButton != null)
+        {
+            heroesNavButton.onClick.AddListener(ShowHeroes);
+        }
+
+        if (summonNavButton != null)
+        {
+            summonNavButton.onClick.AddListener(ShowSummon);
+        }
+
         if (battleTabButton != null)
         {
             battleTabButton.onClick.AddListener(ShowBattle);
@@ -4186,6 +4228,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (homeBeginButton != null)
         {
             homeBeginButton.onClick.RemoveListener(ShowBattle);
+        }
+
+        if (villageNavButton != null)
+        {
+            villageNavButton.onClick.RemoveListener(ShowHome);
+        }
+
+        if (campaignNavButton != null)
+        {
+            campaignNavButton.onClick.RemoveListener(ShowBattle);
+        }
+
+        if (dungeonsNavButton != null)
+        {
+            dungeonsNavButton.onClick.RemoveListener(ShowDungeons);
+        }
+
+        if (heroesNavButton != null)
+        {
+            heroesNavButton.onClick.RemoveListener(ShowHeroes);
+        }
+
+        if (summonNavButton != null)
+        {
+            summonNavButton.onClick.RemoveListener(ShowSummon);
         }
 
         if (battleTabButton != null)
@@ -4238,6 +4305,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetTabState(gearTabButton, screen == AppScreen.Gear);
         SetTabState(summonTabButton, screen == AppScreen.Summon);
         SetTabState(shopTabButton, screen == AppScreen.Shop);
+
+        SetArtNavState(villageNavImage, villageNavButton, screen == AppScreen.Home);
+        SetArtNavState(heroesNavImage, heroesNavButton, screen == AppScreen.Heroes);
+        SetArtNavState(dungeonsNavImage, dungeonsNavButton, screen == AppScreen.Dungeons);
+        SetArtNavState(summonNavImage, summonNavButton, screen == AppScreen.Summon);
     }
 
     private void SetPanel(GameObject panel, bool isVisible)
@@ -4256,6 +4328,29 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         button.targetGraphic.color = isActive ? activeTabColor : inactiveTabColor;
+    }
+
+    private static void SetArtNavState(RawImage image, Button button, bool isActive)
+    {
+        if (image == null)
+        {
+            return;
+        }
+
+        image.color = isActive ? Color.white : new Color(0.78f, 0.78f, 0.78f, 0.96f);
+
+        if (button == null)
+        {
+            return;
+        }
+
+        var colors = button.colors;
+        colors.normalColor = image.color;
+        colors.highlightedColor = Color.white;
+        colors.pressedColor = new Color(0.8f, 0.95f, 1f, 1f);
+        colors.selectedColor = Color.white;
+        colors.disabledColor = new Color(0.45f, 0.45f, 0.45f, 0.55f);
+        button.colors = colors;
     }
 
     private void RefreshHeroUi()
@@ -6541,6 +6636,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureRuntimeHomeActions();
         EnsureRuntimeMenuHeader();
         EnsureRuntimeHeroCardArt();
+        EnsureRuntimeBottomNavbarArt();
         LayoutBottomNavigation();
         LayoutHomeScreen();
         LayoutBattleScreen();
@@ -6675,6 +6771,39 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void EnsureRuntimeBottomNavbarArt()
+    {
+        if (artBottomNavRoot != null)
+        {
+            return;
+        }
+
+        var navbarTexture = GetHomeNavbarTexture("navbar");
+        if (navbarTexture == null)
+        {
+            return;
+        }
+
+        var tabParent = homeTabButton != null && homeTabButton.transform.parent != null ? homeTabButton.transform.parent : null;
+        if (tabParent == null)
+        {
+            return;
+        }
+
+        var artObject = new GameObject("Mythwake Art Bottom Navbar", typeof(RectTransform));
+        artObject.transform.SetParent(tabParent, false);
+        artBottomNavRoot = artObject.GetComponent<RectTransform>();
+        SetRuntimeRect(artBottomNavRoot, Vector2.zero, new Vector2(1080, 256), new Vector2(0.5f, 0.5f));
+        artBottomNavRoot.SetAsLastSibling();
+
+        CreateRuntimeRawImage(artBottomNavRoot, "Navbar Backplate", navbarTexture, Vector2.zero, new Vector2(1080, 256), new Vector2(0.5f, 0.5f));
+        heroesNavButton = CreateNavbarButton(artBottomNavRoot, "Heroes Navbar Button", GetHomeNavbarTexture("heroes"), new Vector2(-390, 18), new Vector2(174, 194), out heroesNavImage);
+        villageNavButton = CreateNavbarButton(artBottomNavRoot, "Village Navbar Button", GetHomeNavbarTexture("village"), new Vector2(-218, 12), new Vector2(170, 186), out villageNavImage);
+        campaignNavButton = CreateTransparentNavbarButton(artBottomNavRoot, "Campaign Navbar Button", new Vector2(0, 18), new Vector2(286, 170));
+        dungeonsNavButton = CreateNavbarButton(artBottomNavRoot, "Dungeons Navbar Button", GetHomeNavbarTexture("dungeons"), new Vector2(220, 12), new Vector2(171, 187), out dungeonsNavImage);
+        summonNavButton = CreateNavbarButton(artBottomNavRoot, "Summon Navbar Button", GetHomeNavbarTexture("summon"), new Vector2(398, 18), new Vector2(183, 194), out summonNavImage);
+    }
+
     private void EnsureRuntimeDungeonsPanel()
     {
         if (dungeonsPanel != null)
@@ -6751,14 +6880,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             bottomNavRoot = tabParent.GetComponent<RectTransform>();
             if (bottomNavRoot != null)
             {
-                bottomNavRoot.sizeDelta = new Vector2(860, 118);
+                bottomNavRoot.sizeDelta = artBottomNavRoot != null ? new Vector2(1080, 256) : new Vector2(860, 118);
             }
 
             var navImage = tabParent.GetComponent<Image>();
             if (navImage != null)
             {
-                navImage.color = new Color(0.18f, 0.08f, 0.035f, 0.98f);
+                navImage.color = artBottomNavRoot != null ? Color.clear : new Color(0.18f, 0.08f, 0.035f, 0.98f);
+                navImage.raycastTarget = artBottomNavRoot == null;
             }
+        }
+
+        if (artBottomNavRoot != null)
+        {
+            SetRuntimeRect(artBottomNavRoot, Vector2.zero, new Vector2(1080, 256), new Vector2(0.5f, 0.5f));
+            HideLegacyTab(homeTabButton);
+            HideLegacyTab(battleTabButton);
+            HideLegacyTab(dungeonsTabButton);
+            HideLegacyTab(heroesTabButton);
+            HideLegacyTab(gearTabButton);
+            HideLegacyTab(summonTabButton);
+            HideLegacyTab(shopTabButton);
+            return;
         }
 
         var tabs = new[] { homeTabButton, battleTabButton, dungeonsTabButton, heroesTabButton, gearTabButton, summonTabButton, shopTabButton };
@@ -6775,6 +6918,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             SetRuntimeRect(tabs[i].GetComponent<RectTransform>(), new Vector2(startX + spacing * i, 0), new Vector2(106, 92), new Vector2(0.5f, 0.5f));
             SetButtonLabel(tabs[i], labels[i]);
+        }
+    }
+
+    private static void HideLegacyTab(Button button)
+    {
+        if (button != null)
+        {
+            button.gameObject.SetActive(false);
         }
     }
 
@@ -7213,16 +7364,51 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static RawImage CreateRuntimeRawImage(Transform parent, string name, string textureName, Vector2 anchoredPosition, Vector2 rectSize)
     {
+        return CreateRuntimeRawImage(parent, name, LoadRuntimeTexture(textureName), anchoredPosition, rectSize, new Vector2(0.5f, 1f));
+    }
+
+    private static RawImage CreateRuntimeRawImage(Transform parent, string name, Texture texture, Vector2 anchoredPosition, Vector2 rectSize, Vector2 anchor)
+    {
         var imageObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
         imageObject.transform.SetParent(parent, false);
         var rectTransform = imageObject.GetComponent<RectTransform>();
-        SetRuntimeRect(rectTransform, anchoredPosition, rectSize, new Vector2(0.5f, 1f));
+        SetRuntimeRect(rectTransform, anchoredPosition, rectSize, anchor);
 
         var rawImage = imageObject.GetComponent<RawImage>();
-        rawImage.texture = LoadRuntimeTexture(textureName);
+        rawImage.texture = texture;
         rawImage.raycastTarget = false;
         rawImage.color = Color.white;
         return rawImage;
+    }
+
+    private static Button CreateNavbarButton(Transform parent, string name, Texture2D texture, Vector2 anchoredPosition, Vector2 rectSize, out RawImage image)
+    {
+        var buttonObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage), typeof(Button));
+        buttonObject.transform.SetParent(parent, false);
+        SetRuntimeRect(buttonObject.GetComponent<RectTransform>(), anchoredPosition, rectSize, new Vector2(0.5f, 0.5f));
+
+        image = buttonObject.GetComponent<RawImage>();
+        image.texture = texture;
+        image.raycastTarget = true;
+        image.color = Color.white;
+
+        var button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = image;
+        return button;
+    }
+
+    private static Button CreateTransparentNavbarButton(Transform parent, string name, Vector2 anchoredPosition, Vector2 rectSize)
+    {
+        var buttonObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        buttonObject.transform.SetParent(parent, false);
+        SetRuntimeRect(buttonObject.GetComponent<RectTransform>(), anchoredPosition, rectSize, new Vector2(0.5f, 0.5f));
+
+        var image = buttonObject.GetComponent<Image>();
+        image.color = new Color(1f, 1f, 1f, 0f);
+
+        var button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = image;
+        return button;
     }
 
     private static Texture2D LoadRuntimeTexture(string textureName)
@@ -7247,6 +7433,55 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         sprite.texture.filterMode = FilterMode.Point;
         return sprite.texture;
+    }
+
+    private Texture2D GetHomeNavbarTexture(string textureName)
+    {
+        Texture2D texture = textureName switch
+        {
+            "navbar" => homeNavbarTexture,
+            "village" => homeNavbarVillageTexture,
+            "dungeons" => homeNavbarDungeonsTexture,
+            "heroes" => homeNavbarHeroesTexture,
+            "summon" => homeNavbarSummonTexture,
+            _ => null
+        };
+
+        if (texture != null)
+        {
+            return texture;
+        }
+
+        var resourcesTexture = Resources.Load<Texture2D>($"Mythwake/UI/HomeScreen/BottomNavbar/{textureName}");
+        if (resourcesTexture != null)
+        {
+            resourcesTexture.filterMode = FilterMode.Bilinear;
+            return resourcesTexture;
+        }
+
+#if UNITY_EDITOR
+        var fileName = textureName switch
+        {
+            "navbar" => "navbar.png",
+            "village" => "village_btn.png",
+            "dungeons" => "dungeons_btn.png",
+            "heroes" => "heroes_btn.png",
+            "summon" => "summon_btn.png",
+            _ => string.Empty
+        };
+
+        if (!string.IsNullOrEmpty(fileName))
+        {
+            var editorTexture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/_Mythwake/UI/Home Screen/bottom_navbar/{fileName}");
+            if (editorTexture != null)
+            {
+                editorTexture.filterMode = FilterMode.Bilinear;
+                return editorTexture;
+            }
+        }
+#endif
+
+        return null;
     }
 
     private void RefreshBackendUi()
