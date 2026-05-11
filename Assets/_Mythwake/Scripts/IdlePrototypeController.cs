@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.37";
+    public const string PrototypeVersion = "0.2.41";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -706,6 +706,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private TMP_Text backendModeText;
 
     [Header("UI")]
+    [SerializeField] private string playerDisplayName = "Player";
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text versionText;
     [SerializeField] private TMP_Text goldText;
@@ -813,6 +814,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private Texture2D homeStageLevelBadgeTexture;
     [SerializeField] private Texture2D homeStageModeBadgeTexture;
     [SerializeField] private Texture2D homeStageExtraBadgeTexture;
+    [SerializeField] private Texture2D homeWorldMapButtonTexture;
+    [SerializeField] private Texture2D homeChatButtonTexture;
+    [SerializeField] private Texture2D homePowerIconTexture;
 
     private float autoAttackTimer;
     private int lastOfflineGoldReward;
@@ -834,9 +838,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RectTransform bottomNavRoot;
     private TMP_Text topGemAmountText;
     private TMP_Text topGoldAmountText;
+    private TMP_Text topPlayerNameText;
+    private TMP_Text topPowerText;
     private TMP_Text heroEssenceAmountText;
     private RawImage topGemIconImage;
     private RawImage topGoldIconImage;
+    private RawImage topPowerIconImage;
     private RawImage heroEssenceIconImage;
     private RawImage topbarFrameImage;
     private RectTransform homeActionRoot;
@@ -847,6 +854,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button homeRewardsButton;
     private Button homeTreasureChestButton;
     private Button homeShopButton;
+    private Button homeWorldMapButton;
+    private Button homeChatButton;
+    private Button topGemPlusButton;
+    private Button homeShortcutToggleButton;
+    private Button homeLeftShortcutToggleButton;
+    private TMP_Text homeShortcutToggleText;
+    private TMP_Text homeLeftShortcutToggleText;
+    private RectTransform chatPopupRoot;
+    private Button chatCloseButton;
+    private RectTransform homeLeftShortcutShadow;
+    private RectTransform homeRightShortcutShadow;
+    private bool homeShortcutsExpanded;
     private RectTransform inventoryPopupRoot;
     private RectTransform fastRewardsPopupRoot;
     private TMP_Text inventoryPopupText;
@@ -1290,6 +1309,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void HideFastRewardsPopup()
     {
         SetFastRewardsPopupVisible(false);
+    }
+
+    private void ShowChatPopup()
+    {
+        SetChatPopupVisible(true);
+    }
+
+    private void HideChatPopup()
+    {
+        SetChatPopupVisible(false);
     }
 
     private void RedeemFastRewards()
@@ -4313,6 +4342,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             homeShopButton.onClick.AddListener(ShowShop);
         }
 
+        if (homeWorldMapButton != null)
+        {
+            homeWorldMapButton.onClick.AddListener(ShowHome);
+        }
+
+        if (homeChatButton != null)
+        {
+            homeChatButton.onClick.AddListener(ShowChatPopup);
+        }
+
+        if (topGemPlusButton != null)
+        {
+            topGemPlusButton.onClick.AddListener(ShowShop);
+        }
+
+        if (homeShortcutToggleButton != null)
+        {
+            homeShortcutToggleButton.onClick.AddListener(ToggleHomeShortcuts);
+        }
+
+        if (homeLeftShortcutToggleButton != null)
+        {
+            homeLeftShortcutToggleButton.onClick.AddListener(ToggleHomeShortcuts);
+        }
+
         if (inventoryCloseButton != null)
         {
             inventoryCloseButton.onClick.AddListener(HideInventoryPopup);
@@ -4326,6 +4380,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (fastRewardsRedeemButton != null)
         {
             fastRewardsRedeemButton.onClick.AddListener(RedeemFastRewards);
+        }
+
+        if (chatCloseButton != null)
+        {
+            chatCloseButton.onClick.AddListener(HideChatPopup);
         }
 
         if (villageNavButton != null)
@@ -4416,6 +4475,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             homeShopButton.onClick.RemoveListener(ShowShop);
         }
 
+        if (homeWorldMapButton != null)
+        {
+            homeWorldMapButton.onClick.RemoveListener(ShowHome);
+        }
+
+        if (homeChatButton != null)
+        {
+            homeChatButton.onClick.RemoveListener(ShowChatPopup);
+        }
+
+        if (topGemPlusButton != null)
+        {
+            topGemPlusButton.onClick.RemoveListener(ShowShop);
+        }
+
+        if (homeShortcutToggleButton != null)
+        {
+            homeShortcutToggleButton.onClick.RemoveListener(ToggleHomeShortcuts);
+        }
+
+        if (homeLeftShortcutToggleButton != null)
+        {
+            homeLeftShortcutToggleButton.onClick.RemoveListener(ToggleHomeShortcuts);
+        }
+
         if (inventoryCloseButton != null)
         {
             inventoryCloseButton.onClick.RemoveListener(HideInventoryPopup);
@@ -4429,6 +4513,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (fastRewardsRedeemButton != null)
         {
             fastRewardsRedeemButton.onClick.RemoveListener(RedeemFastRewards);
+        }
+
+        if (chatCloseButton != null)
+        {
+            chatCloseButton.onClick.RemoveListener(HideChatPopup);
         }
 
         if (villageNavButton != null)
@@ -6777,6 +6866,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return $"Prototype v{PrototypeVersion}  Save v{saveVersion}";
     }
 
+    private string GetPlayerDisplayName()
+    {
+        if (!string.IsNullOrWhiteSpace(playerDisplayName))
+        {
+            return playerDisplayName;
+        }
+
+        if (backendClient != null && backendClient.HasSession && !string.IsNullOrWhiteSpace(backendClient.PlayerId))
+        {
+            return backendClient.PlayerId;
+        }
+
+        return "Player";
+    }
+
     private void EnsureRuntimeBackendClient()
     {
         if (backendClient != null)
@@ -6872,13 +6976,38 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (generatedTopbar != null)
         {
             topbarFrameImage = CreateRuntimeRawImage(topBarObject.transform, "Generated Topbar Frame", generatedTopbar, Vector2.zero, new Vector2(1080, 176), new Vector2(0.5f, 1f));
-            topGemAmountText = CreateTopbarAmountText(topBarObject.transform, "Top Mythic Gem Amount", new Vector2(58, -36), new Vector2(160, 42));
+            topGemAmountText = CreateTopbarAmountText(topBarObject.transform, "Top Mythic Gem Amount", new Vector2(50, -36), new Vector2(160, 42));
             topGoldAmountText = CreateTopbarAmountText(topBarObject.transform, "Top Gold Amount", new Vector2(338, -36), new Vector2(205, 42));
         }
         else
         {
             topGemAmountText = CreateTopResourceCounter(topBarObject.transform, "Top Mythic Gem Counter", GetCurrencyIconTexture("mythic_gem"), new Vector2(120, -58), new Vector2(220, 54), out topGemIconImage);
             topGoldAmountText = CreateTopResourceCounter(topBarObject.transform, "Top Gold Counter", GetCurrencyIconTexture("gold_coin"), new Vector2(380, -58), new Vector2(285, 54), out topGoldIconImage);
+        }
+
+        topPlayerNameText = CreateRuntimeText(topBarObject.transform, "Top Player Name", GetPlayerDisplayName(), 30, new Vector2(-180, -18), new Vector2(250, 42));
+        topPlayerNameText.alignment = TextAlignmentOptions.Left;
+        topPlayerNameText.fontStyle = FontStyles.Bold;
+        topPlayerNameText.textWrappingMode = TextWrappingModes.NoWrap;
+        topPlayerNameText.enableAutoSizing = true;
+        topPlayerNameText.fontSizeMin = 20;
+        topPlayerNameText.fontSizeMax = 30;
+
+        topPowerIconImage = CreateRuntimeRawImage(topBarObject.transform, "Top Combat Power Icon", GetHomeGeneratedTexture("home_power_icon"), new Vector2(-320, -92), new Vector2(42, 36), new Vector2(0.5f, 1f));
+        topPowerText = CreateRuntimeText(topBarObject.transform, "Top Combat Power", "0", 23, new Vector2(-174, -88), new Vector2(220, 34));
+        topPowerText.alignment = TextAlignmentOptions.Left;
+        topPowerText.fontStyle = FontStyles.Bold;
+        topPowerText.textWrappingMode = TextWrappingModes.NoWrap;
+        topPowerText.enableAutoSizing = true;
+        topPowerText.fontSizeMin = 16;
+        topPowerText.fontSizeMax = 23;
+        topPowerText.color = Color.white;
+
+        topGemPlusButton = CreateRuntimeButton(topBarObject.transform, "Top Gem Shop Plus Button", "+", 174, -24, 44, 44);
+        var plusImage = topGemPlusButton.GetComponent<Image>();
+        if (plusImage != null)
+        {
+            plusImage.color = new Color(0.55f, 0.32f, 0.15f, 0.96f);
         }
 
         SetComponentActive(titleText, false);
@@ -6923,16 +7052,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         homeActionRoot = rootObject.GetComponent<RectTransform>();
         StretchRuntime(homeActionRoot, Vector2.zero);
 
-        CreateRuntimeRawImage(homeActionRoot, "Home Stage Level Badge", GetHomeGeneratedTexture("home_stage_level_badge"), new Vector2(0, -246), new Vector2(520, 99), new Vector2(0.5f, 1f));
-        homeStageLevelBadgeText = CreateRuntimeText(homeActionRoot, "Home Stage Level Text", "Stufe 1", 38, new Vector2(38, -268), new Vector2(360, 50));
+        homeLeftShortcutShadow = CreateRuntimePanel(homeActionRoot, "Home Left Shortcut Shadow", new Vector2(-430, -135), new Vector2(142, 230), new Color(0f, 0f, 0f, 0.28f));
+        homeRightShortcutShadow = CreateRuntimePanel(homeActionRoot, "Home Right Shortcut Shadow", new Vector2(430, -80), new Vector2(148, 340), new Color(0f, 0f, 0f, 0.28f));
+        homeLeftShortcutShadow.SetAsFirstSibling();
+        homeRightShortcutShadow.SetAsFirstSibling();
+
+        CreateRuntimeRawImage(homeActionRoot, "Home Stage Level Badge", GetHomeGeneratedTexture("home_stage_level_badge"), new Vector2(0, -72), new Vector2(490, 92), new Vector2(0.5f, 1f));
+        homeStageLevelBadgeText = CreateRuntimeText(homeActionRoot, "Home Stage Level Text", "Stufe 1", 38, new Vector2(38, -93), new Vector2(340, 50));
         homeStageLevelBadgeText.fontStyle = FontStyles.Bold;
         homeStageLevelBadgeText.textWrappingMode = TextWrappingModes.NoWrap;
         homeStageLevelBadgeText.enableAutoSizing = true;
         homeStageLevelBadgeText.fontSizeMin = 26;
         homeStageLevelBadgeText.fontSizeMax = 38;
 
-        CreateRuntimeRawImage(homeActionRoot, "Home Stage Mode Badge", GetHomeGeneratedTexture("home_stage_mode_badge"), new Vector2(0, -332), new Vector2(420, 76), new Vector2(0.5f, 1f));
-        homeStageModeBadgeText = CreateRuntimeText(homeActionRoot, "Home Stage Mode Text", "Albtraum", 38, new Vector2(42, -344), new Vector2(305, 52));
+        CreateRuntimeRawImage(homeActionRoot, "Home Stage Mode Badge", GetHomeGeneratedTexture("home_stage_mode_badge"), new Vector2(0, -134), new Vector2(390, 70), new Vector2(0.5f, 1f));
+        homeStageModeBadgeText = CreateRuntimeText(homeActionRoot, "Home Stage Mode Text", "Albtraum", 38, new Vector2(42, -144), new Vector2(275, 48));
         homeStageModeBadgeText.fontStyle = FontStyles.Bold;
         homeStageModeBadgeText.textWrappingMode = TextWrappingModes.NoWrap;
         homeStageModeBadgeText.enableAutoSizing = true;
@@ -6940,13 +7074,33 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         homeStageModeBadgeText.fontSizeMax = 38;
         homeStageModeBadgeText.color = new Color(0.87f, 0.5f, 1f);
 
-        CreateRuntimeRawImage(homeActionRoot, "Home Stage Extra Badge", GetHomeGeneratedTexture("home_stage_extra_badge"), new Vector2(0, -404), new Vector2(196, 70), new Vector2(0.5f, 1f));
+        CreateRuntimeRawImage(homeActionRoot, "Home Stage Extra Badge", GetHomeGeneratedTexture("home_stage_extra_badge"), new Vector2(0, -182), new Vector2(170, 61), new Vector2(0.5f, 1f));
 
-        homeShopButton = CreateRuntimeImageButton(homeActionRoot, "Home Shop Button", GetHomeGeneratedTexture("home_shop_button"), new Vector2(-430, -262), new Vector2(150, 171), out _);
-        homeQuestButton = CreateRuntimeImageButton(homeActionRoot, "Home Quest Button", GetHomeGeneratedTexture("home_quest_button"), new Vector2(430, -262), new Vector2(150, 171), out _);
-        homeRewardsButton = CreateRuntimeImageButton(homeActionRoot, "Home Fast Rewards Button", GetHomeGeneratedTexture("home_fast_rewards_button"), new Vector2(395, -790), new Vector2(150, 171), out _);
-        homeTreasureChestButton = CreateRuntimeImageButton(homeActionRoot, "Home Inventory Chest Button", GetHomeGeneratedTexture("home_treasure_chest_button"), new Vector2(430, -132), new Vector2(132, 150), out _);
-        homeBeginButton = CreateRuntimeImageButton(homeActionRoot, "Home Battle Button", GetHomeGeneratedTexture("home_battle_button"), new Vector2(0, -1010), new Vector2(430, 131), out _);
+        homeShopButton = CreateRuntimeImageButton(homeActionRoot, "Home Shop Button", GetHomeGeneratedTexture("home_shop_button"), new Vector2(-430, -150), new Vector2(145, 165), out _);
+        homeTreasureChestButton = CreateRuntimeImageButton(homeActionRoot, "Home Inventory Chest Button", GetHomeGeneratedTexture("home_treasure_chest_button"), new Vector2(430, -88), new Vector2(130, 148), out _);
+        homeQuestButton = CreateRuntimeImageButton(homeActionRoot, "Home Quest Button", GetHomeGeneratedTexture("home_quest_button"), new Vector2(430, -238), new Vector2(145, 165), out _);
+        homeShortcutToggleButton = CreateRuntimeButton(homeActionRoot, "Home Shortcut Toggle Button", "^", 430, -410, 70, 42);
+        homeShortcutToggleText = homeShortcutToggleButton.GetComponentInChildren<TMP_Text>();
+        var toggleImage = homeShortcutToggleButton.GetComponent<Image>();
+        if (toggleImage != null)
+        {
+            toggleImage.color = new Color(0.06f, 0.04f, 0.03f, 0.62f);
+        }
+
+        homeLeftShortcutToggleButton = CreateRuntimeButton(homeActionRoot, "Home Left Shortcut Toggle Button", "^", -430, -332, 70, 42);
+        homeLeftShortcutToggleText = homeLeftShortcutToggleButton.GetComponentInChildren<TMP_Text>();
+        var leftToggleImage = homeLeftShortcutToggleButton.GetComponent<Image>();
+        if (leftToggleImage != null)
+        {
+            leftToggleImage.color = new Color(0.06f, 0.04f, 0.03f, 0.62f);
+        }
+
+        homeWorldMapButton = CreateRuntimeImageButton(homeActionRoot, "Home World Map Button", GetHomeGeneratedTexture("home_world_map_button"), new Vector2(-410, -1010), new Vector2(150, 171), out _);
+        homeRewardsButton = CreateRuntimeImageButton(homeActionRoot, "Home Fast Rewards Button", GetHomeGeneratedTexture("home_fast_rewards_button"), new Vector2(395, -1010), new Vector2(150, 171), out _);
+        homeChatButton = CreateRuntimeImageButton(homeActionRoot, "Home Chat Button", GetHomeGeneratedTexture("home_chat_button"), new Vector2(-432, -835), new Vector2(126, 126), out _);
+        homeBeginButton = CreateRuntimeImageButton(homeActionRoot, "Home Battle Button", GetHomeGeneratedTexture("home_battle_button"), new Vector2(0, -1090), new Vector2(430, 131), out _);
+
+        SetHomeShortcutsExpanded(homeShortcutsExpanded);
     }
 
     private void EnsureRuntimeHomePopups()
@@ -6975,6 +7129,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         fastRewardsRedeemButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Redeem Button", "Redeem", -120, -290, 210, 58);
         fastRewardsCloseButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Close Button", "Close", 145, -290, 160, 58);
         fastRewardsPopupRoot.gameObject.SetActive(false);
+
+        chatPopupRoot = CreateRuntimePopup(homeActionRoot, "Chat Popup", new Vector2(-210, -590), new Vector2(560, 240), "Chat");
+        var chatBodyText = CreateRuntimeText(chatPopupRoot, "Chat Body", "Chat UI kommt spaeter hier rein.\nDer Home-Button und Handler sind schon vorbereitet.", 23, new Vector2(0, -98), new Vector2(480, 92));
+        chatBodyText.enableAutoSizing = true;
+        chatBodyText.fontSizeMin = 17;
+        chatBodyText.fontSizeMax = 23;
+        chatBodyText.textWrappingMode = TextWrappingModes.Normal;
+        chatCloseButton = CreateRuntimeButton(chatPopupRoot, "Chat Close Button", "Close", 0, -184, 170, 52);
+        chatPopupRoot.gameObject.SetActive(false);
     }
 
     private void EnsureRuntimeMenuHeader()
@@ -7461,6 +7624,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         topBarRoot.SetAsLastSibling();
 
+        if (topPlayerNameText != null)
+        {
+            topPlayerNameText.transform.SetAsLastSibling();
+            topPlayerNameText.gameObject.SetActive(true);
+            topPlayerNameText.text = GetPlayerDisplayName();
+        }
+
+        if (topPowerText != null)
+        {
+            topPowerText.transform.SetAsLastSibling();
+            topPowerText.gameObject.SetActive(true);
+            topPowerText.text = FormatCompactNumber(GetTeamPower());
+        }
+
+        if (topPowerIconImage != null)
+        {
+            topPowerIconImage.transform.SetAsLastSibling();
+            topPowerIconImage.gameObject.SetActive(true);
+            topPowerIconImage.texture = GetHomeGeneratedTexture("home_power_icon");
+        }
+
         if (topGemAmountText != null)
         {
             topGemAmountText.transform.SetAsLastSibling();
@@ -7483,6 +7667,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (topGoldIconImage != null)
         {
             topGoldIconImage.texture = GetCurrencyIconTexture("gold_coin");
+        }
+
+        if (topGemPlusButton != null)
+        {
+            topGemPlusButton.transform.SetAsLastSibling();
+            topGemPlusButton.gameObject.SetActive(true);
         }
 
         if (heroEssenceAmountText != null)
@@ -7518,6 +7708,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             homeStageModeBadgeText.text = "Albtraum";
         }
 
+        SetHomeShortcutsExpanded(homeShortcutsExpanded);
         RefreshFastRewardsPopupUi();
 
     }
@@ -7535,6 +7726,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (fastRewardsPopupRoot != null)
             {
                 fastRewardsPopupRoot.gameObject.SetActive(false);
+            }
+
+            if (chatPopupRoot != null)
+            {
+                chatPopupRoot.gameObject.SetActive(false);
             }
 
             inventoryPopupRoot.SetAsLastSibling();
@@ -7556,8 +7752,86 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 inventoryPopupRoot.gameObject.SetActive(false);
             }
 
+            if (chatPopupRoot != null)
+            {
+                chatPopupRoot.gameObject.SetActive(false);
+            }
+
             fastRewardsPopupRoot.SetAsLastSibling();
             RefreshFastRewardsPopupUi();
+        }
+    }
+
+    private void SetChatPopupVisible(bool isVisible)
+    {
+        if (chatPopupRoot == null)
+        {
+            return;
+        }
+
+        chatPopupRoot.gameObject.SetActive(isVisible);
+        if (isVisible)
+        {
+            if (inventoryPopupRoot != null)
+            {
+                inventoryPopupRoot.gameObject.SetActive(false);
+            }
+
+            if (fastRewardsPopupRoot != null)
+            {
+                fastRewardsPopupRoot.gameObject.SetActive(false);
+            }
+
+            chatPopupRoot.SetAsLastSibling();
+        }
+    }
+
+    private void ToggleHomeShortcuts()
+    {
+        SetHomeShortcutsExpanded(!homeShortcutsExpanded);
+    }
+
+    private void SetHomeShortcutsExpanded(bool isExpanded)
+    {
+        homeShortcutsExpanded = isExpanded;
+
+        SetComponentActive(homeShopButton, true);
+        SetComponentActive(homeTreasureChestButton, true);
+        SetComponentActive(homeQuestButton, isExpanded);
+
+        if (homeLeftShortcutShadow != null)
+        {
+            homeLeftShortcutShadow.gameObject.SetActive(true);
+            SetRuntimeRect(homeLeftShortcutShadow, new Vector2(-430, -135), new Vector2(142, 230), new Vector2(0.5f, 1f));
+        }
+
+        if (homeRightShortcutShadow != null)
+        {
+            homeRightShortcutShadow.gameObject.SetActive(true);
+            SetRuntimeRect(
+                homeRightShortcutShadow,
+                new Vector2(430, -80),
+                isExpanded ? new Vector2(148, 340) : new Vector2(148, 205),
+                new Vector2(0.5f, 1f));
+        }
+
+        if (homeShortcutToggleButton != null)
+        {
+            var toggleRect = homeShortcutToggleButton.GetComponent<RectTransform>();
+            if (toggleRect != null)
+            {
+                SetRuntimeRect(toggleRect, new Vector2(430, isExpanded ? -410 : -252), new Vector2(70, 42), new Vector2(0.5f, 1f));
+            }
+        }
+
+        if (homeShortcutToggleText != null)
+        {
+            homeShortcutToggleText.text = isExpanded ? "^" : "v";
+        }
+
+        if (homeLeftShortcutToggleText != null)
+        {
+            homeLeftShortcutToggleText.text = isExpanded ? "^" : "v";
         }
     }
 
@@ -7953,6 +8227,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             "home_stage_level_badge" => homeStageLevelBadgeTexture,
             "home_stage_mode_badge" => homeStageModeBadgeTexture,
             "home_stage_extra_badge" => homeStageExtraBadgeTexture,
+            "home_world_map_button" => homeWorldMapButtonTexture,
+            "home_chat_button" => homeChatButtonTexture,
+            "home_power_icon" => homePowerIconTexture,
             _ => null
         };
 
