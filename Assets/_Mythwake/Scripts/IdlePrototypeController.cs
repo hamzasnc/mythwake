@@ -7405,10 +7405,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static TMP_Text CreateTopResourceCounter(Transform parent, string name, Texture2D icon, Vector2 anchoredPosition, Vector2 size, out RawImage iconImage)
     {
         var chip = CreateRuntimePanel(parent, $"{name} Chip", anchoredPosition, size, new Color(0.025f, 0.035f, 0.035f, 0.82f));
-        iconImage = CreateRuntimeRawImage(chip, $"{name} Icon", icon, new Vector2((-size.x * 0.5f) + 32f, -size.y * 0.5f), new Vector2(42, 56), new Vector2(0.5f, 1f));
+        var iconHeight = Mathf.Min(42f, size.y - 14f);
+        var iconWidth = icon != null && icon.height > 0 ? iconHeight * icon.width / icon.height : iconHeight;
+        iconImage = CreateRuntimeRawImage(chip, $"{name} Icon", icon, new Vector2((-size.x * 0.5f) + 34f, 0f), new Vector2(iconWidth, iconHeight), new Vector2(0.5f, 0.5f));
 
-        var amountText = CreateRuntimeText(chip, $"{name} Amount", "0", 25, new Vector2(22, -13), new Vector2(size.x - 80f, 34));
-        amountText.alignment = TextAlignmentOptions.Left;
+        var amountText = CreateRuntimeText(chip, $"{name} Amount", "0", 25, new Vector2(26, 0f), new Vector2(size.x - 84f, size.y - 14f));
+        amountText.alignment = TextAlignmentOptions.MidlineLeft;
         amountText.fontStyle = FontStyles.Bold;
         amountText.textWrappingMode = TextWrappingModes.NoWrap;
         amountText.enableAutoSizing = true;
