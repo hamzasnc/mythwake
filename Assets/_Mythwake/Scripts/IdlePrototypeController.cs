@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.36";
+    public const string PrototypeVersion = "0.2.37";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -432,6 +432,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int dailySummonCount;
         public int battlePassXp;
         public string lastSeenUtcTicks;
+        public float afkRewardStoredSeconds;
         public int[] heroLevels;
         public int[] heroShards;
         public int[] heroAscensions;
@@ -498,6 +499,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int StarterGems = 35;
     private const int StarterMythEssence = 20;
     private const float OfflineGoldRewardRate = 0.5f;
+    private const int AfkRewardMaxSeconds = 24 * 60 * 60;
+    private const float AfkRewardAutosaveSeconds = 30f;
     private const int DefaultCombatDurationSeconds = 30;
     private const float WarriorDamageBonusRate = 0.06f;
     private const float MageDamageBonusRate = 0.1f;
@@ -685,7 +688,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [Header("Idle")]
     [SerializeField] private bool autoAttackEnabled = true;
     [SerializeField] private float autoAttackInterval = 1f;
-    [SerializeField] private int maxOfflineSeconds = 6 * 60 * 60;
+    [SerializeField] private float afkRewardStoredSeconds;
 
     [Header("Backend")]
     [SerializeField] private MythwakeBackendClient backendClient;
@@ -804,6 +807,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private Texture2D homeBattleButtonTexture;
     [SerializeField] private Texture2D homeQuestButtonTexture;
     [SerializeField] private Texture2D homeRewardsButtonTexture;
+    [SerializeField] private Texture2D homeFastRewardsButtonTexture;
     [SerializeField] private Texture2D homeTreasureChestButtonTexture;
     [SerializeField] private Texture2D homeShopButtonTexture;
     [SerializeField] private Texture2D homeStageLevelBadgeTexture;
@@ -815,6 +819,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private int lastOfflineReward;
     private int lastOfflineSeconds;
     private bool lastOfflineRewardIsServer;
+    private float afkRewardAutosaveTimer;
     private AppScreen activeScreen = AppScreen.Home;
     private bool backendRequestInProgress;
     private bool backendLifecycleFlushInProgress;
@@ -842,6 +847,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button homeRewardsButton;
     private Button homeTreasureChestButton;
     private Button homeShopButton;
+    private RectTransform inventoryPopupRoot;
+    private RectTransform fastRewardsPopupRoot;
+    private TMP_Text inventoryPopupText;
+    private TMP_Text fastRewardsPopupText;
+    private Button inventoryCloseButton;
+    private Button fastRewardsCloseButton;
+    private Button fastRewardsRedeemButton;
     private TMP_Text menuHeaderText;
     private RawImage[] heroCardPortraits;
     private RectTransform artBottomNavRoot;
@@ -858,7 +870,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void Awake()
     {
         LoadProgress();
-        ClaimOfflineRewards();
+        BankAfkElapsedSinceLastSeen();
         EnsureRuntimeBackendClient();
         LoadBackendGameplayPreference();
         EnsureRuntimeDebugUi();
@@ -1036,6 +1048,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             runtimeArt.Tick(Time.unscaledDeltaTime);
         }
+
+        TickAfkRewards(Time.deltaTime);
 
         if (!autoAttackEnabled)
         {
@@ -1258,15 +1272,53 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         ShowScreen(AppScreen.Shop);
     }
 
-    private void ClaimHomeTreasureChest()
+    private void ShowInventoryPopup()
+    {
+        SetInventoryPopupVisible(true);
+    }
+
+    private void HideInventoryPopup()
+    {
+        SetInventoryPopupVisible(false);
+    }
+
+    private void ShowFastRewardsPopup()
+    {
+        SetFastRewardsPopupVisible(true);
+    }
+
+    private void HideFastRewardsPopup()
+    {
+        SetFastRewardsPopupVisible(false);
+    }
+
+    private void RedeemFastRewards()
     {
         if (backendGameplayEnabled && backendClient != null && backendClient.HasSession)
         {
-            ClaimBackendOfflineRewards("home_chest");
+            ClaimBackendOfflineRewards("fast_rewards");
             return;
         }
 
-        ClaimOfflineRewards();
+        var rewardSeconds = Mathf.FloorToInt(afkRewardStoredSeconds);
+        var pendingGold = CalculateAfkGoldReward(afkRewardStoredSeconds);
+        var pendingEssence = CalculateAfkEssenceReward(afkRewardStoredSeconds);
+        if (pendingGold <= 0 && pendingEssence <= 0)
+        {
+            RefreshFastRewardsPopupUi();
+            return;
+        }
+
+        lastOfflineGoldReward = pendingGold;
+        lastOfflineReward = pendingEssence;
+        lastOfflineSeconds = rewardSeconds;
+        lastOfflineRewardIsServer = false;
+
+        GrantCurrency(GoldCurrencyId, pendingGold);
+        GrantCurrency(MythEssenceCurrencyId, pendingEssence);
+        afkRewardStoredSeconds = 0f;
+        afkRewardAutosaveTimer = 0f;
+        SaveProgress();
         RefreshUi();
     }
 
@@ -3359,6 +3411,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             dailySummonCount = dailySummonCount,
             battlePassXp = battlePassXp,
             lastSeenUtcTicks = lastSeenUtcTicks,
+            afkRewardStoredSeconds = afkRewardStoredSeconds,
             heroLevels = CopyIntArray(heroLevels, HeroCount, 1),
             heroShards = CopyIntArray(heroShards, HeroCount, 0),
             heroAscensions = CopyIntArray(heroAscensions, HeroCount, 0),
@@ -3392,6 +3445,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         summonCount = Mathf.Max(0, data.summonCount);
         battlePassXp = Mathf.Max(0, data.battlePassXp);
         lastSeenUtcTicks = data.lastSeenUtcTicks ?? string.Empty;
+        afkRewardStoredSeconds = Mathf.Clamp(data.afkRewardStoredSeconds, 0f, GetAfkRewardMaxSeconds());
         heroLevels = CopyIntArray(data.heroLevels, HeroCount, 1);
         heroShards = CopyIntArray(data.heroShards, HeroCount, 0);
         heroAscensions = CopyIntArray(data.heroAscensions, HeroCount, 0);
@@ -3443,6 +3497,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
         summonCount = Mathf.Max(0, summonCount);
         battlePassXp = Mathf.Max(0, battlePassXp);
+        afkRewardStoredSeconds = Mathf.Clamp(afkRewardStoredSeconds, 0f, GetAfkRewardMaxSeconds());
         damage = GetTeamDamage();
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
     }
@@ -3469,7 +3524,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return target;
     }
 
-    private void ClaimOfflineRewards()
+    private void BankAfkElapsedSinceLastSeen()
     {
         lastOfflineGoldReward = 0;
         lastOfflineReward = 0;
@@ -3484,7 +3539,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var lastSeenUtc = new DateTime(ticks, DateTimeKind.Utc);
         var elapsedSeconds = Mathf.FloorToInt((float)(DateTime.UtcNow - lastSeenUtc).TotalSeconds);
-        lastOfflineSeconds = Mathf.Clamp(elapsedSeconds, 0, maxOfflineSeconds);
+        lastOfflineSeconds = Mathf.Clamp(elapsedSeconds, 0, GetAfkRewardMaxSeconds());
 
         if (lastOfflineSeconds <= 0)
         {
@@ -3492,21 +3547,58 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        lastOfflineReward = CalculateOfflineReward(lastOfflineSeconds);
-        var offlineGoldReward = CalculateOfflineGoldReward(lastOfflineReward);
-        lastOfflineGoldReward = offlineGoldReward;
-        GrantCurrency(GoldCurrencyId, offlineGoldReward);
-        GrantCurrency(MythEssenceCurrencyId, lastOfflineReward);
+        afkRewardStoredSeconds = Mathf.Clamp(afkRewardStoredSeconds + lastOfflineSeconds, 0f, GetAfkRewardMaxSeconds());
         SaveProgress();
     }
 
-    private int CalculateOfflineReward(int offlineSeconds)
+    private void TickAfkRewards(float deltaSeconds)
     {
-        var attacks = Mathf.FloorToInt(offlineSeconds / Mathf.Max(0.1f, autoAttackInterval));
-        var enemyClearSeconds = Mathf.Max(1, Mathf.CeilToInt(enemyMaxHp / (float)Mathf.Max(1, GetTeamDamage())));
-        var enemyKills = Mathf.Max(0, attacks / enemyClearSeconds);
+        if (deltaSeconds <= 0f || backendGameplayEnabled)
+        {
+            return;
+        }
 
-        return enemyKills * GetStageReward(enemyLevel);
+        var before = Mathf.FloorToInt(afkRewardStoredSeconds);
+        afkRewardStoredSeconds = Mathf.Clamp(afkRewardStoredSeconds + deltaSeconds, 0f, GetAfkRewardMaxSeconds());
+        var after = Mathf.FloorToInt(afkRewardStoredSeconds);
+
+        if (after != before)
+        {
+            RefreshFastRewardsPopupUi();
+            RefreshOfflineRewardUi();
+        }
+
+        afkRewardAutosaveTimer += deltaSeconds;
+        if (afkRewardAutosaveTimer >= AfkRewardAutosaveSeconds)
+        {
+            afkRewardAutosaveTimer = 0f;
+            SaveProgress();
+        }
+    }
+
+    private int GetAfkRewardMaxSeconds()
+    {
+        return AfkRewardMaxSeconds;
+    }
+
+    private float GetAfkEssencePerSecond()
+    {
+        return Mathf.Max(0.05f, GetStageReward(enemyLevel) / (float)DefaultCombatDurationSeconds);
+    }
+
+    private float GetAfkGoldPerSecond()
+    {
+        return Mathf.Max(0.05f, GetAfkEssencePerSecond() * OfflineGoldRewardRate);
+    }
+
+    private int CalculateAfkEssenceReward(float rewardSeconds)
+    {
+        return Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0f, rewardSeconds) * GetAfkEssencePerSecond()));
+    }
+
+    private int CalculateAfkGoldReward(float rewardSeconds)
+    {
+        return Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0f, rewardSeconds) * GetAfkGoldPerSecond()));
     }
 
     private int CalculateOfflineGoldReward(int offlineEssenceReward)
@@ -4208,17 +4300,32 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (homeRewardsButton != null)
         {
-            homeRewardsButton.onClick.AddListener(ShowShop);
+            homeRewardsButton.onClick.AddListener(ShowFastRewardsPopup);
         }
 
         if (homeTreasureChestButton != null)
         {
-            homeTreasureChestButton.onClick.AddListener(ClaimHomeTreasureChest);
+            homeTreasureChestButton.onClick.AddListener(ShowInventoryPopup);
         }
 
         if (homeShopButton != null)
         {
             homeShopButton.onClick.AddListener(ShowShop);
+        }
+
+        if (inventoryCloseButton != null)
+        {
+            inventoryCloseButton.onClick.AddListener(HideInventoryPopup);
+        }
+
+        if (fastRewardsCloseButton != null)
+        {
+            fastRewardsCloseButton.onClick.AddListener(HideFastRewardsPopup);
+        }
+
+        if (fastRewardsRedeemButton != null)
+        {
+            fastRewardsRedeemButton.onClick.AddListener(RedeemFastRewards);
         }
 
         if (villageNavButton != null)
@@ -4296,17 +4403,32 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (homeRewardsButton != null)
         {
-            homeRewardsButton.onClick.RemoveListener(ShowShop);
+            homeRewardsButton.onClick.RemoveListener(ShowFastRewardsPopup);
         }
 
         if (homeTreasureChestButton != null)
         {
-            homeTreasureChestButton.onClick.RemoveListener(ClaimHomeTreasureChest);
+            homeTreasureChestButton.onClick.RemoveListener(ShowInventoryPopup);
         }
 
         if (homeShopButton != null)
         {
             homeShopButton.onClick.RemoveListener(ShowShop);
+        }
+
+        if (inventoryCloseButton != null)
+        {
+            inventoryCloseButton.onClick.RemoveListener(HideInventoryPopup);
+        }
+
+        if (fastRewardsCloseButton != null)
+        {
+            fastRewardsCloseButton.onClick.RemoveListener(HideFastRewardsPopup);
+        }
+
+        if (fastRewardsRedeemButton != null)
+        {
+            fastRewardsRedeemButton.onClick.RemoveListener(RedeemFastRewards);
         }
 
         if (villageNavButton != null)
@@ -6403,13 +6525,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        if (lastOfflineGoldReward <= 0 && lastOfflineReward <= 0)
-        {
-            offlineRewardText.text = "Offline: no reward yet";
-            return;
-        }
-
-        offlineRewardText.text = $"Offline: +{lastOfflineGoldReward} Gold, +{lastOfflineReward} Essence ({FormatDuration(lastOfflineSeconds)})";
+        var pendingGold = CalculateAfkGoldReward(afkRewardStoredSeconds);
+        var pendingEssence = CalculateAfkEssenceReward(afkRewardStoredSeconds);
+        offlineRewardText.text =
+            $"Fast Rewards: +{FormatCompactNumber(pendingGold)} Gold, +{FormatCompactNumber(pendingEssence)} Essence " +
+            $"({FormatDuration(Mathf.FloorToInt(afkRewardStoredSeconds))}/{FormatDuration(GetAfkRewardMaxSeconds())})";
     }
 
     private void UpdateServerOfflineRewardUi(MythwakeActionResultDto result)
@@ -6713,6 +6833,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureRuntimeDungeonsTab();
         EnsureRuntimeScreenBackdrops();
         EnsureRuntimeHomeActions();
+        EnsureRuntimeHomePopups();
         EnsureRuntimeMenuHeader();
         EnsureRuntimeHeroCardArt();
         EnsureRuntimeHeroEssenceCounter();
@@ -6823,9 +6944,37 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         homeShopButton = CreateRuntimeImageButton(homeActionRoot, "Home Shop Button", GetHomeGeneratedTexture("home_shop_button"), new Vector2(-430, -262), new Vector2(150, 171), out _);
         homeQuestButton = CreateRuntimeImageButton(homeActionRoot, "Home Quest Button", GetHomeGeneratedTexture("home_quest_button"), new Vector2(430, -262), new Vector2(150, 171), out _);
-        homeRewardsButton = CreateRuntimeImageButton(homeActionRoot, "Home Rewards Button", GetHomeGeneratedTexture("home_rewards_button"), new Vector2(-430, -486), new Vector2(150, 171), out _);
-        homeTreasureChestButton = CreateRuntimeImageButton(homeActionRoot, "Home Treasure Chest Button", GetHomeGeneratedTexture("home_treasure_chest_button"), new Vector2(430, -486), new Vector2(150, 171), out _);
+        homeRewardsButton = CreateRuntimeImageButton(homeActionRoot, "Home Fast Rewards Button", GetHomeGeneratedTexture("home_fast_rewards_button"), new Vector2(395, -790), new Vector2(150, 171), out _);
+        homeTreasureChestButton = CreateRuntimeImageButton(homeActionRoot, "Home Inventory Chest Button", GetHomeGeneratedTexture("home_treasure_chest_button"), new Vector2(430, -132), new Vector2(132, 150), out _);
         homeBeginButton = CreateRuntimeImageButton(homeActionRoot, "Home Battle Button", GetHomeGeneratedTexture("home_battle_button"), new Vector2(0, -1010), new Vector2(430, 131), out _);
+    }
+
+    private void EnsureRuntimeHomePopups()
+    {
+        if (homeActionRoot == null || inventoryPopupRoot != null)
+        {
+            return;
+        }
+
+        inventoryPopupRoot = CreateRuntimePopup(homeActionRoot, "Inventory Popup", new Vector2(0, -365), new Vector2(720, 300), "Inventory");
+        inventoryPopupText = CreateRuntimeText(inventoryPopupRoot, "Inventory Body", "Inventory kommt hier rein.\nItem use kommt spaeter, Button ist schon ready.", 24, new Vector2(0, -102), new Vector2(620, 118));
+        inventoryPopupText.enableAutoSizing = true;
+        inventoryPopupText.fontSizeMin = 18;
+        inventoryPopupText.fontSizeMax = 24;
+        inventoryPopupText.textWrappingMode = TextWrappingModes.Normal;
+        inventoryCloseButton = CreateRuntimeButton(inventoryPopupRoot, "Inventory Close Button", "Close", 0, -230, 180, 54);
+        inventoryPopupRoot.gameObject.SetActive(false);
+
+        fastRewardsPopupRoot = CreateRuntimePopup(homeActionRoot, "Fast Rewards Popup", new Vector2(0, -380), new Vector2(760, 370), "Fast Rewards");
+        fastRewardsPopupText = CreateRuntimeText(fastRewardsPopupRoot, "Fast Rewards Body", string.Empty, 24, new Vector2(0, -95), new Vector2(660, 165));
+        fastRewardsPopupText.alignment = TextAlignmentOptions.Center;
+        fastRewardsPopupText.enableAutoSizing = true;
+        fastRewardsPopupText.fontSizeMin = 18;
+        fastRewardsPopupText.fontSizeMax = 24;
+        fastRewardsPopupText.textWrappingMode = TextWrappingModes.Normal;
+        fastRewardsRedeemButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Redeem Button", "Redeem", -120, -290, 210, 58);
+        fastRewardsCloseButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Close Button", "Close", 145, -290, 160, 58);
+        fastRewardsPopupRoot.gameObject.SetActive(false);
     }
 
     private void EnsureRuntimeMenuHeader()
@@ -7369,6 +7518,68 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             homeStageModeBadgeText.text = "Albtraum";
         }
 
+        RefreshFastRewardsPopupUi();
+
+    }
+
+    private void SetInventoryPopupVisible(bool isVisible)
+    {
+        if (inventoryPopupRoot == null)
+        {
+            return;
+        }
+
+        inventoryPopupRoot.gameObject.SetActive(isVisible);
+        if (isVisible)
+        {
+            if (fastRewardsPopupRoot != null)
+            {
+                fastRewardsPopupRoot.gameObject.SetActive(false);
+            }
+
+            inventoryPopupRoot.SetAsLastSibling();
+        }
+    }
+
+    private void SetFastRewardsPopupVisible(bool isVisible)
+    {
+        if (fastRewardsPopupRoot == null)
+        {
+            return;
+        }
+
+        fastRewardsPopupRoot.gameObject.SetActive(isVisible);
+        if (isVisible)
+        {
+            if (inventoryPopupRoot != null)
+            {
+                inventoryPopupRoot.gameObject.SetActive(false);
+            }
+
+            fastRewardsPopupRoot.SetAsLastSibling();
+            RefreshFastRewardsPopupUi();
+        }
+    }
+
+    private void RefreshFastRewardsPopupUi()
+    {
+        if (fastRewardsPopupText == null)
+        {
+            return;
+        }
+
+        var storedSeconds = Mathf.FloorToInt(afkRewardStoredSeconds);
+        var pendingGold = CalculateAfkGoldReward(afkRewardStoredSeconds);
+        var pendingEssence = CalculateAfkEssenceReward(afkRewardStoredSeconds);
+        fastRewardsPopupText.text =
+            $"Stored: {FormatDuration(storedSeconds)} / {FormatDuration(GetAfkRewardMaxSeconds())}\n" +
+            $"Rate: +{FormatRate(GetAfkGoldPerSecond())} Gold/s   +{FormatRate(GetAfkEssencePerSecond())} Essence/s\n" +
+            $"Ready: +{FormatCompactNumber(pendingGold)} Gold   +{FormatCompactNumber(pendingEssence)} Essence";
+
+        if (fastRewardsRedeemButton != null)
+        {
+            fastRewardsRedeemButton.interactable = pendingGold > 0 || pendingEssence > 0;
+        }
     }
 
     private static string FormatCompactNumber(int value)
@@ -7389,6 +7600,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return value.ToString();
+    }
+
+    private static string FormatRate(float value)
+    {
+        return value >= 10f ? $"{value:0.#}" : $"{value:0.##}";
     }
 
     private static void SetTextArrayActive(TMP_Text[] texts, bool active)
@@ -7553,6 +7769,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return amountText;
     }
 
+    private static RectTransform CreateRuntimePopup(Transform parent, string name, Vector2 anchoredPosition, Vector2 rectSize, string title)
+    {
+        var popup = CreateRuntimePanel(parent, name, anchoredPosition, rectSize, new Color(0.08f, 0.045f, 0.025f, 0.97f));
+        var image = popup.GetComponent<Image>();
+        if (image != null)
+        {
+            image.raycastTarget = true;
+        }
+
+        var titleText = CreateRuntimeText(popup, "Title", title, 32, new Vector2(0, -28), new Vector2(rectSize.x - 80f, 48));
+        titleText.fontStyle = FontStyles.Bold;
+        titleText.color = new Color(1f, 0.9f, 0.65f);
+        titleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        var divider = CreateRuntimePanel(popup, "Divider", new Vector2(0, -82), new Vector2(rectSize.x - 90f, 4), new Color(0.8f, 0.55f, 0.24f, 0.85f));
+        divider.SetAsFirstSibling();
+        return popup;
+    }
+
     private static RectTransform CreateRuntimePanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 rectSize, Color color)
     {
         var panelObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -7712,6 +7947,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             "home_battle_button" => homeBattleButtonTexture,
             "home_quest_button" => homeQuestButtonTexture,
             "home_rewards_button" => homeRewardsButtonTexture,
+            "home_fast_rewards_button" => homeFastRewardsButtonTexture != null ? homeFastRewardsButtonTexture : homeRewardsButtonTexture,
             "home_treasure_chest_button" => homeTreasureChestButtonTexture,
             "home_shop_button" => homeShopButtonTexture,
             "home_stage_level_badge" => homeStageLevelBadgeTexture,
