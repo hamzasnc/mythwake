@@ -6751,8 +6751,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (generatedTopbar != null)
         {
             topbarFrameImage = CreateRuntimeRawImage(topBarObject.transform, "Generated Topbar Frame", generatedTopbar, Vector2.zero, new Vector2(1080, 176), new Vector2(0.5f, 1f));
-            topGemAmountText = CreateTopbarAmountText(topBarObject.transform, "Top Mythic Gem Amount", new Vector2(68, -36), new Vector2(160, 42));
-            topGoldAmountText = CreateTopbarAmountText(topBarObject.transform, "Top Gold Amount", new Vector2(348, -36), new Vector2(205, 42));
+            topGemAmountText = CreateTopbarAmountText(topBarObject.transform, "Top Mythic Gem Amount", new Vector2(58, -36), new Vector2(160, 42));
+            topGoldAmountText = CreateTopbarAmountText(topBarObject.transform, "Top Gold Amount", new Vector2(338, -36), new Vector2(205, 42));
         }
         else
         {
