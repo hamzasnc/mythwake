@@ -39,7 +39,6 @@ public sealed class MythwakeRuntimeArtPresenter
     private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();
     private readonly Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();
 
-    private RectTransform homeRoot;
     private RectTransform battleRoot;
     private RectTransform dungeonsRoot;
     private RectTransform gearRoot;
@@ -47,13 +46,11 @@ public sealed class MythwakeRuntimeArtPresenter
     private RawImage battleHeroImage;
     private RawImage battleEnemyImage;
     private RawImage battleVfxImage;
-    private RawImage homeHeroImage;
     private RawImage gearHeroImage;
     private RawImage summonHeroImage;
     private RawImage summonVfxImage;
     private TMP_Text battleTitleText;
     private TMP_Text battleMetaText;
-    private TMP_Text resourceText;
     private TMP_Text dungeonText;
     private TMP_Text summonTitleText;
     private Image heroHpFill;
@@ -75,18 +72,6 @@ public sealed class MythwakeRuntimeArtPresenter
 
     public void Ensure(GameObject homePanel, GameObject battlePanel, GameObject dungeonsPanel, GameObject heroesPanel, GameObject gearPanel, GameObject summonPanel, GameObject shopPanel)
     {
-        if (homePanel != null && homeRoot == null)
-        {
-            homeRoot = CreatePanel(homePanel.transform, "Runtime Art Home Backdrop", new Vector2(0f, -116f), new Vector2(900f, 790f), new Color(0.05f, 0.08f, 0.13f, 0.92f));
-            homeRoot.SetAsFirstSibling();
-            CreateBackgroundLayers(homeRoot);
-            CreateTextureImage(homeRoot, "Map Castle Route", "bg_castle", new Vector2(-255f, -170f), new Vector2(104f, 104f));
-            CreateTextureImage(homeRoot, "Map Tower Route", "dungeon_portal", new Vector2(255f, -320f), new Vector2(92f, 92f));
-            CreateTextureImage(homeRoot, "Map Treasure Route", "icon_gold", new Vector2(-205f, -470f), new Vector2(72f, 72f));
-            homeHeroImage = CreateTextureImage(homeRoot, "Map Party Leader", "hero_cyra", new Vector2(0f, -560f), new Vector2(150f, 150f));
-            resourceText = CreateText(homeRoot, "Campaign Route Label", "Campaign Route", 24, new Vector2(0f, -654f), new Vector2(820f, 42f), FontStyles.Bold);
-        }
-
         if (battlePanel != null && battleRoot == null)
         {
             battleRoot = CreatePanel(battlePanel.transform, "Runtime Art Battle Stage", new Vector2(0f, -330f), new Vector2(820f, 315f), new Color(0.05f, 0.07f, 0.12f, 0.94f));
@@ -187,7 +172,6 @@ public sealed class MythwakeRuntimeArtPresenter
     public void Refresh(MythwakeRuntimeArtState state)
     {
         var heroTexture = GetHeroTextureName(state.selectedHeroIndex);
-        SetTexture(homeHeroImage, heroTexture);
         SetTexture(battleHeroImage, heroTexture);
         SetTexture(gearHeroImage, heroTexture);
         SetTexture(summonHeroImage, GetHeroTextureName(currentSummonHeroIndex));
@@ -203,11 +187,6 @@ public sealed class MythwakeRuntimeArtPresenter
         {
             var mode = state.backendRequestInProgress ? "Server resolving..." : currentBattleMeta;
             battleMetaText.text = $"{mode} | {state.selectedHeroName} Lv {state.selectedHeroLevel}+{state.selectedHeroAscension} | Power {state.teamPower}";
-        }
-
-        if (resourceText != null)
-        {
-            resourceText.text = $"Stage {state.campaignStage}   {state.campaignEnemyName}   Power {state.teamPower}";
         }
 
         if (dungeonText != null)

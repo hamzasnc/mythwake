@@ -816,12 +816,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text runtimeDungeonResultText;
     private RectTransform topBarRoot;
     private RectTransform bottomNavRoot;
-    private TMP_Text topProfileText;
-    private TMP_Text topPowerText;
     private TMP_Text topGemAmountText;
     private TMP_Text topGoldAmountText;
     private TMP_Text heroEssenceAmountText;
-    private RawImage topAvatarImage;
     private RawImage topGemIconImage;
     private RawImage topGoldIconImage;
     private RawImage heroEssenceIconImage;
@@ -4179,7 +4176,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (campaignNavButton != null)
         {
-            campaignNavButton.onClick.AddListener(ShowBattle);
+            campaignNavButton.onClick.AddListener(ShowHome);
         }
 
         if (dungeonsNavButton != null)
@@ -4247,7 +4244,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (campaignNavButton != null)
         {
-            campaignNavButton.onClick.RemoveListener(ShowBattle);
+            campaignNavButton.onClick.RemoveListener(ShowHome);
         }
 
         if (dungeonsNavButton != null)
@@ -6675,23 +6672,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         topBarRoot.SetAsLastSibling();
 
         var topBarImage = topBarObject.GetComponent<Image>();
-        topBarImage.color = new Color(0.24f, 0.12f, 0.055f, 0.98f);
+        topBarImage.color = Color.clear;
         topBarImage.raycastTarget = false;
 
-        CreateRuntimePanel(topBarObject.transform, "Top Avatar Ring", new Vector2(-390, -58), new Vector2(92, 92), new Color(0.86f, 0.61f, 0.22f, 0.32f));
-        topAvatarImage = CreateRuntimeRawImage(topBarObject.transform, "Top Avatar", "hero_elowen", new Vector2(-390, -58), new Vector2(82, 82));
-
-        topProfileText = CreateRuntimeText(topBarObject.transform, "Top Profile Text", "Mythwake", 24, new Vector2(-260, -20), new Vector2(260, 34));
-        topProfileText.alignment = TextAlignmentOptions.Left;
-        topProfileText.fontStyle = FontStyles.Bold;
-
-        topPowerText = CreateRuntimeText(topBarObject.transform, "Top Power Text", "Power 0", 23, new Vector2(-260, -62), new Vector2(260, 40));
-        topPowerText.alignment = TextAlignmentOptions.Left;
-        topPowerText.color = new Color(1f, 0.86f, 0.36f);
-        topPowerText.fontStyle = FontStyles.Bold;
-
-        topGemAmountText = CreateTopResourceCounter(topBarObject.transform, "Top Mythic Gem Counter", GetCurrencyIconTexture("mythic_gem"), new Vector2(58, -58), new Vector2(205, 54), out topGemIconImage);
-        topGoldAmountText = CreateTopResourceCounter(topBarObject.transform, "Top Gold Counter", GetCurrencyIconTexture("gold_coin"), new Vector2(298, -58), new Vector2(285, 54), out topGoldIconImage);
+        topGemAmountText = CreateTopResourceCounter(topBarObject.transform, "Top Mythic Gem Counter", GetCurrencyIconTexture("mythic_gem"), new Vector2(120, -58), new Vector2(220, 54), out topGemIconImage);
+        topGoldAmountText = CreateTopResourceCounter(topBarObject.transform, "Top Gold Counter", GetCurrencyIconTexture("gold_coin"), new Vector2(380, -58), new Vector2(285, 54), out topGoldIconImage);
 
         SetComponentActive(titleText, false);
         SetComponentActive(versionText, false);
@@ -6959,11 +6944,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void LayoutHomeScreen()
     {
-        MoveUiElement(homeStageText, homePanel, new Vector2(-270, -180), new Vector2(300, 76));
-        MoveUiElement(homePowerText, homePanel, new Vector2(-270, -258), new Vector2(300, 44));
-        MoveUiElement(nextGoalText, homePanel, new Vector2(0, -675), new Vector2(720, 86));
-        MoveUiElement(offlineRewardText, homePanel, new Vector2(255, -760), new Vector2(300, 64));
-        MoveUiElement(homeBeginButton, homePanel, new Vector2(0, -825), new Vector2(360, 76));
+        if (homePanel == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < homePanel.transform.childCount; i++)
+        {
+            homePanel.transform.GetChild(i).gameObject.SetActive(false);
+        }
     }
 
     private void LayoutBattleScreen()
@@ -7058,9 +7047,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             for (var i = 0; i < dailyMissionButtons.Length; i++)
             {
+                SetComponentActive(dailyMissionButtons[i], true);
                 MoveUiElement(dailyMissionButtons[i], shopPanel, new Vector2(0, -230 - i * 82), new Vector2(720, 70));
                 if (dailyMissionTexts != null && i < dailyMissionTexts.Length)
                 {
+                    SetComponentActive(dailyMissionTexts[i], true);
                     MoveUiElement(dailyMissionTexts[i], dailyMissionButtons[i] != null ? dailyMissionButtons[i].gameObject : null, new Vector2(0, -8), new Vector2(690, 52));
                 }
             }
@@ -7205,17 +7196,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         topBarRoot.SetAsLastSibling();
 
-        var hero = GetHeroDefinition(selectedHeroIndex);
-        if (topProfileText != null)
-        {
-            topProfileText.text = $"Mythwake  Lv {heroLevels[selectedHeroIndex]}";
-        }
-
-        if (topPowerText != null)
-        {
-            topPowerText.text = $"Power {GetTeamPower()}";
-        }
-
         if (topGemAmountText != null)
         {
             topGemAmountText.text = FormatCompactNumber(gems);
@@ -7246,10 +7226,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroEssenceIconImage.texture = GetCurrencyIconTexture("exp_shard");
         }
 
-        if (topAvatarImage != null)
-        {
-            topAvatarImage.texture = LoadRuntimeTexture($"hero_{hero.name.ToLowerInvariant()}");
-        }
     }
 
     private static string FormatCompactNumber(int value)
