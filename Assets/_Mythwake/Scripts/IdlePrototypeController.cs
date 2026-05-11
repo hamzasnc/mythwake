@@ -7410,7 +7410,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         iconImage = CreateRuntimeRawImage(chip, $"{name} Icon", icon, new Vector2((-size.x * 0.5f) + 34f, 0f), new Vector2(iconWidth, iconHeight), new Vector2(0.5f, 0.5f));
 
         var amountText = CreateRuntimeText(chip, $"{name} Amount", "0", 25, new Vector2(26, 0f), new Vector2(size.x - 84f, size.y - 14f));
-        amountText.alignment = TextAlignmentOptions.MidlineLeft;
+        SetRuntimeRect(amountText.rectTransform, new Vector2(26, 0f), new Vector2(size.x - 84f, size.y - 14f), new Vector2(0.5f, 0.5f));
+        amountText.alignment = TextAlignmentOptions.MidlineRight;
         amountText.fontStyle = FontStyles.Bold;
         amountText.textWrappingMode = TextWrappingModes.NoWrap;
         amountText.enableAutoSizing = true;
