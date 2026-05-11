@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.34";
+    public const string PrototypeVersion = "0.2.35";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -794,6 +794,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private Texture2D homeNavbarHeroesTexture;
     [SerializeField] private Texture2D homeNavbarSummonTexture;
 
+    [Header("Currency Icons")]
+    [SerializeField] private Texture2D expShardIconTexture;
+    [SerializeField] private Texture2D goldCoinIconTexture;
+    [SerializeField] private Texture2D mythicGemIconTexture;
+
     private float autoAttackTimer;
     private int lastOfflineGoldReward;
     private int lastOfflineReward;
@@ -813,8 +818,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RectTransform bottomNavRoot;
     private TMP_Text topProfileText;
     private TMP_Text topPowerText;
-    private TMP_Text topCurrencyText;
+    private TMP_Text topGemAmountText;
+    private TMP_Text topGoldAmountText;
+    private TMP_Text heroEssenceAmountText;
     private RawImage topAvatarImage;
+    private RawImage topGemIconImage;
+    private RawImage topGoldIconImage;
+    private RawImage heroEssenceIconImage;
     private Button homeBeginButton;
     private TMP_Text menuHeaderText;
     private RawImage[] heroCardPortraits;
@@ -6636,6 +6646,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureRuntimeHomeActions();
         EnsureRuntimeMenuHeader();
         EnsureRuntimeHeroCardArt();
+        EnsureRuntimeHeroEssenceCounter();
         EnsureRuntimeBottomNavbarArt();
         LayoutBottomNavigation();
         LayoutHomeScreen();
@@ -6679,9 +6690,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         topPowerText.color = new Color(1f, 0.86f, 0.36f);
         topPowerText.fontStyle = FontStyles.Bold;
 
-        topCurrencyText = CreateRuntimeText(topBarObject.transform, "Top Currency Text", "Gold 0   Gems 0   Essence 0", 24, new Vector2(170, -38), new Vector2(520, 46));
-        topCurrencyText.alignment = TextAlignmentOptions.Right;
-        topCurrencyText.fontStyle = FontStyles.Bold;
+        topGemAmountText = CreateTopResourceCounter(topBarObject.transform, "Top Mythic Gem Counter", GetCurrencyIconTexture("mythic_gem"), new Vector2(58, -58), new Vector2(205, 54), out topGemIconImage);
+        topGoldAmountText = CreateTopResourceCounter(topBarObject.transform, "Top Gold Counter", GetCurrencyIconTexture("gold_coin"), new Vector2(298, -58), new Vector2(285, 54), out topGoldIconImage);
 
         SetComponentActive(titleText, false);
         SetComponentActive(versionText, false);
@@ -6769,6 +6779,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             portrait.color = Color.white;
             heroCardPortraits[i] = portrait;
         }
+    }
+
+    private void EnsureRuntimeHeroEssenceCounter()
+    {
+        if (heroesPanel == null || heroEssenceAmountText != null)
+        {
+            return;
+        }
+
+        var chip = CreateRuntimePanel(heroesPanel.transform, "Hero Essence Counter", new Vector2(292, -248), new Vector2(245, 52), new Color(0.08f, 0.035f, 0.08f, 0.84f));
+        heroEssenceIconImage = CreateRuntimeRawImage(chip, "Hero Essence Icon", GetCurrencyIconTexture("exp_shard"), new Vector2(-96, -26), new Vector2(42, 55), new Vector2(0.5f, 1f));
+        heroEssenceAmountText = CreateRuntimeText(chip, "Hero Essence Amount Text", "0", 22, new Vector2(18, -12), new Vector2(170, 34));
+        heroEssenceAmountText.alignment = TextAlignmentOptions.Left;
+        heroEssenceAmountText.fontStyle = FontStyles.Bold;
+        heroEssenceAmountText.textWrappingMode = TextWrappingModes.NoWrap;
+        heroEssenceAmountText.enableAutoSizing = true;
+        heroEssenceAmountText.fontSizeMin = 16;
+        heroEssenceAmountText.fontSizeMax = 22;
     }
 
     private void EnsureRuntimeBottomNavbarArt()
@@ -7188,9 +7216,34 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             topPowerText.text = $"Power {GetTeamPower()}";
         }
 
-        if (topCurrencyText != null)
+        if (topGemAmountText != null)
         {
-            topCurrencyText.text = $"Gold {FormatCompactNumber(gold)}    Gems {FormatCompactNumber(gems)}    Essence {FormatCompactNumber(mythEssence)}";
+            topGemAmountText.text = FormatCompactNumber(gems);
+        }
+
+        if (topGoldAmountText != null)
+        {
+            topGoldAmountText.text = FormatCompactNumber(gold);
+        }
+
+        if (topGemIconImage != null)
+        {
+            topGemIconImage.texture = GetCurrencyIconTexture("mythic_gem");
+        }
+
+        if (topGoldIconImage != null)
+        {
+            topGoldIconImage.texture = GetCurrencyIconTexture("gold_coin");
+        }
+
+        if (heroEssenceAmountText != null)
+        {
+            heroEssenceAmountText.text = $"Essence {FormatCompactNumber(mythEssence)}";
+        }
+
+        if (heroEssenceIconImage != null)
+        {
+            heroEssenceIconImage.texture = GetCurrencyIconTexture("exp_shard");
         }
 
         if (topAvatarImage != null)
@@ -7349,6 +7402,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return button;
     }
 
+    private static TMP_Text CreateTopResourceCounter(Transform parent, string name, Texture2D icon, Vector2 anchoredPosition, Vector2 size, out RawImage iconImage)
+    {
+        var chip = CreateRuntimePanel(parent, $"{name} Chip", anchoredPosition, size, new Color(0.025f, 0.035f, 0.035f, 0.82f));
+        iconImage = CreateRuntimeRawImage(chip, $"{name} Icon", icon, new Vector2((-size.x * 0.5f) + 32f, -size.y * 0.5f), new Vector2(42, 56), new Vector2(0.5f, 1f));
+
+        var amountText = CreateRuntimeText(chip, $"{name} Amount", "0", 25, new Vector2(22, -13), new Vector2(size.x - 80f, 34));
+        amountText.alignment = TextAlignmentOptions.Left;
+        amountText.fontStyle = FontStyles.Bold;
+        amountText.textWrappingMode = TextWrappingModes.NoWrap;
+        amountText.enableAutoSizing = true;
+        amountText.fontSizeMin = 16;
+        amountText.fontSizeMax = 25;
+        return amountText;
+    }
+
     private static RectTransform CreateRuntimePanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 rectSize, Color color)
     {
         var panelObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -7478,6 +7546,41 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 editorTexture.filterMode = FilterMode.Bilinear;
                 return editorTexture;
             }
+        }
+#endif
+
+        return null;
+    }
+
+    private Texture2D GetCurrencyIconTexture(string iconName)
+    {
+        Texture2D texture = iconName switch
+        {
+            "exp_shard" => expShardIconTexture,
+            "gold_coin" => goldCoinIconTexture,
+            "mythic_gem" => mythicGemIconTexture,
+            _ => null
+        };
+
+        if (texture != null)
+        {
+            texture.filterMode = FilterMode.Bilinear;
+            return texture;
+        }
+
+        var resourcesTexture = Resources.Load<Texture2D>($"Mythwake/UI/icons/{iconName}");
+        if (resourcesTexture != null)
+        {
+            resourcesTexture.filterMode = FilterMode.Bilinear;
+            return resourcesTexture;
+        }
+
+#if UNITY_EDITOR
+        var editorTexture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/_Mythwake/UI/icons/{iconName}.png");
+        if (editorTexture != null)
+        {
+            editorTexture.filterMode = FilterMode.Bilinear;
+            return editorTexture;
         }
 #endif
 

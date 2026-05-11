@@ -8,6 +8,7 @@ using UnityEngine.UI;
 public static class MythwakePrototypeBuilder
 {
     private const string HomeNavbarAssetRoot = "Assets/_Mythwake/UI/Home Screen/bottom_navbar/";
+    private const string CurrencyIconAssetRoot = "Assets/_Mythwake/UI/icons/";
 
     private static readonly Color BackgroundColor = new Color(0.07f, 0.1f, 0.16f);
     private static readonly Color PanelColor = new Color(0.12f, 0.16f, 0.24f, 0.95f);
@@ -422,6 +423,9 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "homeNavbarDungeonsTexture", LoadHomeNavbarTexture("dungeons_btn.png"));
         SetObject(serializedController, "homeNavbarHeroesTexture", LoadHomeNavbarTexture("heroes_btn.png"));
         SetObject(serializedController, "homeNavbarSummonTexture", LoadHomeNavbarTexture("summon_btn.png"));
+        SetObject(serializedController, "expShardIconTexture", LoadCurrencyIconTexture("exp_shard.png"));
+        SetObject(serializedController, "goldCoinIconTexture", LoadCurrencyIconTexture("gold_coin.png"));
+        SetObject(serializedController, "mythicGemIconTexture", LoadCurrencyIconTexture("mythic_gem.png"));
         serializedController.ApplyModifiedPropertiesWithoutUndo();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
@@ -435,6 +439,7 @@ public static class MythwakePrototypeBuilder
     public static void BindHomeNavbarAssetsToOpenScene()
     {
         AssetDatabase.ImportAsset(HomeNavbarAssetRoot, ImportAssetOptions.ImportRecursive);
+        AssetDatabase.ImportAsset(CurrencyIconAssetRoot, ImportAssetOptions.ImportRecursive);
 
         var controller = Object.FindAnyObjectByType<IdlePrototypeController>();
         if (controller == null)
@@ -455,6 +460,9 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "homeNavbarDungeonsTexture", LoadHomeNavbarTexture("dungeons_btn.png"));
         SetObject(serializedController, "homeNavbarHeroesTexture", LoadHomeNavbarTexture("heroes_btn.png"));
         SetObject(serializedController, "homeNavbarSummonTexture", LoadHomeNavbarTexture("summon_btn.png"));
+        SetObject(serializedController, "expShardIconTexture", LoadCurrencyIconTexture("exp_shard.png"));
+        SetObject(serializedController, "goldCoinIconTexture", LoadCurrencyIconTexture("gold_coin.png"));
+        SetObject(serializedController, "mythicGemIconTexture", LoadCurrencyIconTexture("mythic_gem.png"));
         serializedController.ApplyModifiedPropertiesWithoutUndo();
 
         EditorUtility.SetDirty(controller);
@@ -626,5 +634,10 @@ public static class MythwakePrototypeBuilder
     private static Texture2D LoadHomeNavbarTexture(string fileName)
     {
         return AssetDatabase.LoadAssetAtPath<Texture2D>($"{HomeNavbarAssetRoot}{fileName}");
+    }
+
+    private static Texture2D LoadCurrencyIconTexture(string fileName)
+    {
+        return AssetDatabase.LoadAssetAtPath<Texture2D>($"{CurrencyIconAssetRoot}{fileName}");
     }
 }
