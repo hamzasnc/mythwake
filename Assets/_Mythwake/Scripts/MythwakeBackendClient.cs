@@ -262,7 +262,14 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
     public IEnumerator PullSummon(string bannerId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendAuthenticatedActionJson($"summon_pull:{bannerId}", () => Post($"/summons/{EscapePath(bannerId)}/pull"), completed);
+        return PullSummon(bannerId, 1, completed);
+    }
+
+    public IEnumerator PullSummon(string bannerId, int count, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        count = Mathf.Clamp(count, 1, 300);
+        var countQuery = count > 1 ? $"?count={count}" : string.Empty;
+        return SendAuthenticatedActionJson($"summon_pull:{bannerId}:{count}", () => Post($"/summons/{EscapePath(bannerId)}/pull{countQuery}"), completed);
     }
 
     public IEnumerator ClaimDailyMission(string missionId, Action<bool, string, MythwakeActionResultDto> completed)

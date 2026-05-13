@@ -22,7 +22,7 @@ func TestCombatReplayIncludesHeroManaAndUltimateEvents(t *testing.T) {
 	for _, hero := range combat.Heroes {
 		if hero.HeroID == "hero_dante" {
 			danteFound = true
-			if hero.MaxMana != 25 || hero.AutoAttackManaGain != 10 || hero.PassiveID != "passive_momentum" {
+			if hero.MaxMana != 25 || hero.AutoAttackManaGain != 2 || hero.PassiveID != "passive_momentum" {
 				t.Fatalf("unexpected Dante mana/passive data: %#v", hero)
 			}
 		}

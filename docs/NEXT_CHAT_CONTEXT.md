@@ -1,6 +1,6 @@
 # Mythwake Next Chat Context
 
-Last updated: 2026-05-13
+Last updated: 2026-05-14
 
 This file is meant to be pasted/read first in a new Codex chat so the project can continue without re-explaining everything.
 
@@ -73,7 +73,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.60`
+- Prototype `0.2.73`
 - Save version `2`
 
 Important Unity scripts:
@@ -88,16 +88,16 @@ Latest local gameplay/UI batch:
 - Combat visuals now use curated 2D idle/run/attack frame sequences under `Assets/_Mythwake/Resources/Mythwake/Art/CombatAnimated/`.
 - Latest combat loop uses per-unit visual state: each unit has position, current target, attack cooldown, and attack animation timing.
 - Melee units run to the nearest living target, stay beside it, and keep attacking there on their own attack-speed timer.
-- Melee units now close fully onto ranged targets instead of stopping at the shared midpoint.
+- Melee units now close directly beside their current target instead of stopping at the shared midpoint, including ranged targets.
 - Ranged units stay back and fire projectiles on their own timer.
 - Multiple heroes/enemies can attack at the same time; combat is no longer an A -> B -> C alternating sequence.
 - Normal hits reduce only one target HP bar.
 - Fight UI now has bottom hero skill cards with portrait, per-character mana bar, ready glow, click-to-queue ultimate, and an AUTO toggle above the right side of the cards.
-- Character mana is per hero, not team-wide. Heroes start at 0, autoattacks add mana, Dante gets extra mana on successful hits, and each hero has a different max mana.
+- Character mana is per hero, not team-wide. Heroes start at 0, no longer gain passive timer mana, gain +2 mana on successful hits, and each hero has a different max mana.
 - Current local visual loop supports AA mana gain, Elowen passive heals, queued/manual ultimates, and auto-ultimates when AUTO is enabled.
 - Formation can be adjusted before campaign/dungeon fights with tap-to-swap slots: tap a hero slot, other valid slots glow, tap one to swap. Fight start positions now follow the chosen formation order, and the chosen order is saved locally.
 - Formation now has an `Auto next after win (skills AUTO)` checkbox. When enabled, a won campaign/dungeon fight automatically starts the next stage/floor with the same formation and forces skill AUTO on.
-- Visible fight playback now uses real seconds: a 30s timeout takes 30 real seconds instead of being compressed into a shorter visual playback.
+- Visible fight playback now uses real seconds instead of compressing the timeout into a shorter visual playback.
 - Enemy HP bars now show HP percentage text. Dungeon bosses use a large top boss HP bar with percentage instead of the small overhead enemy bar.
 - Prototype combat stats now include Crit, Accuracy, and Defense. Local combat uses Accuracy/Crit for expected damage and Defense for incoming damage reduction; backend combat has a matching deterministic miss/crit/defense layer.
 - Heroes screen now opens a dedicated hero detail overlay when tapping a hero card. The overlay shows rarity/title/name, a large centered hero portrait, side gear slots, live level/power/stats/resources, Level Up, Gear buttons, and Story/Hero/Skills-style tabs.
@@ -105,11 +105,18 @@ Latest local gameplay/UI batch:
 - Fight screen now has an `End Fight` button. It cancels the current visible fight, disables Auto Continue/skill AUTO, stops pending auto-continue coroutines, and returns to the result popup without applying local fight rewards. Auto-next only queues after victory while the Formation checkbox is enabled.
 - Fight screen now has a small `x2` speed toggle next to the skill `AUTO` button. When enabled, the visible fight timer, movement, attacks, animation playback, mana gain cadence, and result timing run at double speed.
 - Hero ultimates now create a short AFK-Arena-style moment: combat time/timeout pauses, regular attacks pause, the arena slows/dims, and the casting hero stays highlighted while their ultimate animation plays at normal speed before combat resumes.
-- Default combat duration is now 60 seconds on client and backend, and hero ultimates have higher damage multipliers so they feel more visible and worth using.
-- Hero detail gear slots are clickable. Clicking Weapon/Armor shows the current global track and an Open Gear option; clicking accessory slots shows all compatible rarity pieces for that slot with copy counts, equipped state, and tap-to-equip when a copy is available.
+- Default combat duration is now 30 seconds on client and backend, and hero ultimates have higher damage multipliers so they feel more visible and worth using.
+- Hero detail gear slots are clickable. Weapon/Armor and accessories are now tracked per hero locally, so equipping or leveling gear on Astra no longer makes Dante wear the same item. Clicking accessory slots shows all compatible rarity pieces for that slot with copy counts, equipped state, and tap-to-equip when a copy is available.
+- Heroes screen has a bottom-style `Hero` / `Set Team` subtab flow. `Hero` lists team members first, then sorts by rarity and power with Asc/Desc plus attack-type filters. `Set Team` lets the player tap or drag slots/hero cards to place/swap heroes, and includes Auto-Set for the highest-power lineup.
+- Hero overview was cleaned toward an AFK-style roster: old selected-hero summary/header/upgrade/essence layers are hidden, the screen uses one dark roster backdrop with a teal filter bar, larger name-less hero cards, level/stars/shard progress, and bottom `Held` / `Team festlegen` subtabs.
+- Summon screen now starts an AFK-style hero draw banner section with a fantasy background, visible `Summon` and `Summon 10` buttons, gem costs on each button, and a 10-pull cost discount. The layout is ordered top-to-bottom as selected hero banner image, summon buttons, then the rotation carousel; the summon buttons use a brown AFK-style look with the `mythic_gem` icon at 20x27 on the left and a small white cost label below it. The old large yellow parchment is hidden on Summon, summon count is a small left-side chip, and rates sit in their own highlighted teal/gold box. A bottom banner carousel now shows preview boxes with left/right arrows and swipe gestures; switching banners changes the featured heroes and local summon odds for now.
+- Summoning now opens a result popup that groups all drawn heroes and shows how many times each appeared. Local and backend summon pools now grant 1 shard per duplicate pull. The result popup has bottom `x10` and `x300` buttons, disabled when gems are insufficient, plus an `Auto-Summon` checkbox that keeps pulling in x10 chunks up to 300 total pulls.
+- Campaign/Village fights can now keep running while the player leaves through the bottom nav to edit heroes/gear, then pressing Village/Battle resumes the active fight/result. Team formation changes during such a fight abort the current fight without granting rewards. Dungeon fights/formations hide the top resource bar and bottom navbar for a focused boss-fight view.
+- Visible fight end conditions now stop immediately once the winning side has killed/disappeared all enemies, instead of waiting out the remaining visual duration while the displayed damage total keeps climbing.
 - Melee engagement is stabilized: units lock a fixed melee position when acquiring a target, instead of recalculating from a moving target every frame. Fight positions are also clamped to the arena bounds.
 - Victory/defeat result screens wait for the visible HP bars to reach their intended end state, with a short cleanup extension if the backend result finished before the visual target deaths did.
 - Dante and Iron Hound were flipped to face the correct direction.
+- Dead units now disappear from the arena instead of standing at 0% HP. Hero HP moved out of the field and onto the bottom hero skill cards above the mana bar; Dante's bottom portrait uses the same right-facing flip as the fight sprite.
 - The old static slash/magic image VFX are no longer used in the fight loop.
 - Asset source tracking is in `docs/ART_SOURCES.md`.
 
@@ -119,7 +126,8 @@ Latest backend combat direction:
 - This is still request/response replay, not a live combat command stream. True manual server-authoritative ultimate clicks still need a follow-up endpoint or websocket-style command path.
 
 Latest verification notes:
-- `go test ./internal/balance ./internal/player` passes.
+- `go test ./internal/balance ./internal/player ./internal/http` passes from `backend/`.
+- `dotnet msbuild Assembly-CSharp.csproj /p:FrameworkPathOverride="C:\Users\Hamza\.nuget\packages\microsoft.netframework.referenceassemblies.net471\1.0.3\build\.NETFramework\v4.7.1" /v:minimal` passes with existing Unity serialized-field warnings.
 - `git diff --check` passes for touched client/backend/docs files, with existing LF->CRLF warnings on some backend/docs files.
 - Direct `dotnet build` fails on this machine because .NET Framework 4.7.1 reference assemblies are not installed globally.
 - MSBuild can compile Unity csproj files when passed a temp ReferenceAssemblies path from `Microsoft.NETFramework.ReferenceAssemblies.net471`.
@@ -194,7 +202,7 @@ AFK/offline rewards:
 
 Combat:
 - Combat should be time-based, not round-based.
-- Default fight duration is 60 seconds.
+- Default fight duration is 30 seconds.
 - Backend/client text should talk in seconds, not rounds.
 - Campaign/dungeon fights can win or lose based on team HP/damage/enemy stats.
 
@@ -569,7 +577,7 @@ The next chat should continue in this order unless the user redirects:
 - Myth Essence should be AFK/offline + dungeon based, not normal fight reward for now.
 - Offline/AFK gives both Gold and Myth Essence.
 - Dungeons should be tower-like and endless upward.
-- Combat should be seconds-based, 60 seconds default.
+- Combat should be seconds-based, 30 seconds default.
 - User wants visible in-game progress now.
 - Normal play must never show rate-limit errors from fighting/running dungeons.
 - No data loss ever after successful gameplay responses.

@@ -120,8 +120,8 @@ func TestProgressionCosts(t *testing.T) {
 	if cost, ok := SummonCost(BannerHeroShardStandard); !ok || cost != 35 {
 		t.Fatalf("expected summon cost 35, got %d ok=%v", cost, ok)
 	}
-	if drop, ok := SummonShardReward(BannerHeroShardStandard, 2); !ok || drop.HeroID != "hero_cyra" || drop.Shards != 7 {
-		t.Fatalf("expected summon drop hero_cyra x7, got %#v ok=%v", drop, ok)
+	if drop, ok := SummonShardReward(BannerHeroShardStandard, 2); !ok || drop.HeroID != "hero_cyra" || drop.Shards != 1 {
+		t.Fatalf("expected summon drop hero_cyra x1, got %#v ok=%v", drop, ok)
 	}
 	if reward := GearDungeonReward(); reward.RewardID != RewardGearDrop {
 		t.Fatalf("expected gear reward id %s, got %#v", RewardGearDrop, reward)

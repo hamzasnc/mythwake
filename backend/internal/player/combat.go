@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	combatAutoAttackManaGain = 5
+	combatAutoAttackManaGain = 2
 	combatReplayStepMS       = 100
 	combatMaxReplayEvents    = 180
 )
@@ -418,9 +418,6 @@ func heroMaxMana(heroID string) int {
 }
 
 func heroAutoAttackManaGain(heroID string) int {
-	if heroID == "hero_dante" {
-		return combatAutoAttackManaGain + 5
-	}
 	return combatAutoAttackManaGain
 }
 
@@ -466,7 +463,7 @@ func heroPassiveID(heroID string) string {
 func heroPassiveName(heroID string) string {
 	switch heroID {
 	case "hero_dante":
-		return "Momentum: +5 mana on successful hits"
+		return "Momentum: +2 mana on successful hits"
 	case "hero_elowen":
 		return "Grove Mending: 25% attacks heal the team"
 	default:

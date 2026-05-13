@@ -3,21 +3,29 @@ package player
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
+
+const maxSummonPullCount = 300
 
 func (service *Service) PullSummon(bannerID string) api.ActionResult {
 	return service.PullSummonWithRequest(context.Background(), ActionRequest{}, bannerID)
 }
 
 func (service *Service) PullSummonWithRequest(ctx context.Context, request ActionRequest, bannerID string) api.ActionResult {
-	return service.summonActions.PullSummon(ctx, request, bannerID)
+	return service.PullSummonCountWithRequest(ctx, request, bannerID, 1)
 }
 
-func (actions summonActions) PullSummon(ctx context.Context, request ActionRequest, bannerID string) api.ActionResult {
+func (service *Service) PullSummonCountWithRequest(ctx context.Context, request ActionRequest, bannerID string, count int) api.ActionResult {
+	return service.summonActions.PullSummon(ctx, request, bannerID, count)
+}
+
+func (actions summonActions) PullSummon(ctx context.Context, request ActionRequest, bannerID string, count int) api.ActionResult {
 	service := actions.service
 	service.mu.Lock()
 	defer service.mu.Unlock()
@@ -28,21 +36,63 @@ func (actions summonActions) PullSummon(ctx context.Context, request ActionReque
 		}
 
 		cost, _ := service.balanceCatalog.SummonCost(bannerID)
-		if failure, ok := service.spendCurrency(economy.CurrencyGems, cost); !ok {
+		count = normalizeSummonPullCount(count)
+		if failure, ok := service.spendCurrency(economy.CurrencyGems, summonPackCost(cost, count)); !ok {
 			return failure
 		}
 
-		drop, ok := service.balanceCatalog.SummonShardReward(bannerID, service.summonCount)
-		if !ok {
-			return actionFailure("invalid_banner", fmt.Sprintf("Unknown banner: %s", bannerID))
+		dropTotals := map[string]int{}
+		dropOrder := make([]string, 0, count)
+		for i := 0; i < count; i++ {
+			drop, ok := service.balanceCatalog.SummonShardReward(bannerID, service.summonCount)
+			if !ok {
+				return actionFailure("invalid_banner", fmt.Sprintf("Unknown banner: %s", bannerID))
+			}
+
+			if _, exists := dropTotals[drop.HeroID]; !exists {
+				dropOrder = append(dropOrder, drop.HeroID)
+			}
+
+			service.summonCount++
+			service.dailySummonCount++
+			service.heroShards[drop.HeroID] += drop.Shards
+			dropTotals[drop.HeroID] += drop.Shards
 		}
 
-		service.summonCount++
-		service.dailySummonCount++
-		service.heroShards[drop.HeroID] += drop.Shards
 		service.recalculatePower()
-		return actionSuccess(fmt.Sprintf("Pulled %s shards.", drop.HeroID), drop.Reward)
+		return actionSuccess(formatSummonPullMessage(count, dropOrder, dropTotals), api.Reward{RewardID: balance.RewardSummonShards})
 	})
+}
+
+func normalizeSummonPullCount(count int) int {
+	if count < 1 {
+		return 1
+	}
+	if count > maxSummonPullCount {
+		return maxSummonPullCount
+	}
+	return count
+}
+
+func summonPackCost(singleCost int, count int) int {
+	count = normalizeSummonPullCount(count)
+	if count >= 10 {
+		return singleCost * count * 9 / 10
+	}
+	return singleCost * count
+}
+
+func formatSummonPullMessage(count int, dropOrder []string, dropTotals map[string]int) string {
+	if count <= 1 && len(dropOrder) > 0 {
+		return fmt.Sprintf("Pulled %s shards.", dropOrder[0])
+	}
+
+	parts := make([]string, 0, len(dropOrder))
+	for _, heroID := range dropOrder {
+		parts = append(parts, fmt.Sprintf("%s +%d", heroID, dropTotals[heroID]))
+	}
+
+	return fmt.Sprintf("Pulled %d heroes: %s.", count, strings.Join(parts, ", "))
 }
 
 func (service *Service) ClaimDailyMission(missionID string) api.ActionResult {

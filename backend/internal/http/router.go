@@ -457,9 +457,29 @@ func (router *Router) handleAccessoryFuse(response http.ResponseWriter, request 
 }
 
 func (router *Router) handleSummonPull(response http.ResponseWriter, request *http.Request) {
+	count, ok := summonPullCount(response, request)
+	if !ok {
+		return
+	}
+
 	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
-		return playerService.PullSummonWithRequest(request.Context(), action, request.PathValue("banner_id"))
+		return playerService.PullSummonCountWithRequest(request.Context(), action, request.PathValue("banner_id"), count)
 	})
+}
+
+func summonPullCount(response http.ResponseWriter, request *http.Request) (int, bool) {
+	value := strings.TrimSpace(request.URL.Query().Get("count"))
+	if value == "" {
+		return 1, true
+	}
+
+	count, err := strconv.Atoi(value)
+	if err != nil || count < 1 || count > 300 {
+		writeError(response, request, http.StatusBadRequest, "invalid_summon_count", "Summon count must be between 1 and 300.")
+		return 0, false
+	}
+
+	return count, true
 }
 
 func (router *Router) handleDailyMissionClaim(response http.ResponseWriter, request *http.Request) {

@@ -254,11 +254,11 @@ INSERT INTO common.summon_pool_definitions (
 	rotation_order,
 	reward_id
 ) VALUES
-	('hero_shard_standard', 'hero_astra', 7, 10, 'reward_summon_shards'),
-	('hero_shard_standard', 'hero_borin', 7, 20, 'reward_summon_shards'),
-	('hero_shard_standard', 'hero_cyra', 7, 30, 'reward_summon_shards'),
-	('hero_shard_standard', 'hero_dante', 7, 40, 'reward_summon_shards'),
-	('hero_shard_standard', 'hero_elowen', 7, 50, 'reward_summon_shards')
+	('hero_shard_standard', 'hero_astra', 1, 10, 'reward_summon_shards'),
+	('hero_shard_standard', 'hero_borin', 1, 20, 'reward_summon_shards'),
+	('hero_shard_standard', 'hero_cyra', 1, 30, 'reward_summon_shards'),
+	('hero_shard_standard', 'hero_dante', 1, 40, 'reward_summon_shards'),
+	('hero_shard_standard', 'hero_elowen', 1, 50, 'reward_summon_shards')
 ON CONFLICT (banner_id, hero_id) DO UPDATE SET
 	shard_amount = EXCLUDED.shard_amount,
 	rotation_order = EXCLUDED.rotation_order,

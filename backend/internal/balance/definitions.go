@@ -27,7 +27,7 @@ const (
 	AFKMaxClaimSeconds   = 6 * 60 * 60
 	AFKRewardTickSeconds = 60
 
-	DefaultCombatDurationSeconds = 60
+	DefaultCombatDurationSeconds = 30
 	DungeonBossHpNumerator       = 18
 	DungeonBossHpDenominator     = 10
 )
@@ -372,11 +372,11 @@ var battlePassRewardDefinitions = []BattlePassRewardDefinition{
 }
 
 var heroShardStandardPool = []SummonShardDrop{
-	{HeroID: "hero_astra", Shards: 7, Reward: api.Reward{RewardID: RewardSummonShards}},
-	{HeroID: "hero_borin", Shards: 7, Reward: api.Reward{RewardID: RewardSummonShards}},
-	{HeroID: "hero_cyra", Shards: 7, Reward: api.Reward{RewardID: RewardSummonShards}},
-	{HeroID: "hero_dante", Shards: 7, Reward: api.Reward{RewardID: RewardSummonShards}},
-	{HeroID: "hero_elowen", Shards: 7, Reward: api.Reward{RewardID: RewardSummonShards}},
+	{HeroID: "hero_astra", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
+	{HeroID: "hero_borin", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
+	{HeroID: "hero_cyra", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
+	{HeroID: "hero_dante", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
+	{HeroID: "hero_elowen", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
 }
 
 var progressionCostDefinitions = []ProgressionCostDefinition{

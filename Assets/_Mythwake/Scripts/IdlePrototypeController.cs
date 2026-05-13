@@ -2,11 +2,12 @@ using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.60";
+    public const string PrototypeVersion = "0.2.73";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -403,16 +404,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         public string bannerId;
         public string displayName;
+        public string promoText;
         public string costCurrencyId;
         public int costAmount;
+        public int[] featuredHeroIndexes;
         public SummonRateDefinition[] rates;
 
-        public SummonBannerDefinition(string bannerId, string displayName, string costCurrencyId, int costAmount, SummonRateDefinition[] rates)
+        public SummonBannerDefinition(string bannerId, string displayName, string promoText, string costCurrencyId, int costAmount, int[] featuredHeroIndexes, SummonRateDefinition[] rates)
         {
             this.bannerId = bannerId;
             this.displayName = displayName;
+            this.promoText = promoText;
             this.costCurrencyId = costCurrencyId;
             this.costAmount = costAmount;
+            this.featuredHeroIndexes = featuredHeroIndexes;
             this.rates = rates;
         }
     }
@@ -439,6 +444,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         Campaign,
         Dungeon
+    }
+
+    private enum HeroesTabMode
+    {
+        Hero,
+        SetTeam
+    }
+
+    private enum HeroSortDirection
+    {
+        Descending,
+        Ascending
+    }
+
+    private enum HeroAttackTypeFilter
+    {
+        All,
+        Melee,
+        Ranged
     }
 
     [Serializable]
@@ -474,6 +498,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int[] heroAscensions;
         public int[] formationSlotHeroIndices;
         public bool autoContinueFightsEnabled;
+        public int[] heroWeaponLevels;
+        public int[] heroArmorLevels;
+        public int[] heroEquippedAccessoryRarities;
+        public int[] heroEquippedAccessoryLevels;
         public int[] equippedAccessoryRarities;
         public int[] equippedAccessoryLevels;
         public int[] accessoryInventory;
@@ -501,6 +529,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const string EquippedAccessoryRarityKeyPrefix = "Mythwake.Prototype.Accessory.EquippedRarity.";
     private const string EquippedAccessoryLevelKeyPrefix = "Mythwake.Prototype.Accessory.EquippedLevel.";
     private const string AccessoryInventoryKeyPrefix = "Mythwake.Prototype.Accessory.Inventory.";
+    private const string HeroWeaponLevelKeyPrefix = "Mythwake.Prototype.HeroEquipment.WeaponLevel.";
+    private const string HeroArmorLevelKeyPrefix = "Mythwake.Prototype.HeroEquipment.ArmorLevel.";
+    private const string HeroEquippedAccessoryRarityKeyPrefix = "Mythwake.Prototype.HeroAccessory.EquippedRarity.";
+    private const string HeroEquippedAccessoryLevelKeyPrefix = "Mythwake.Prototype.HeroAccessory.EquippedLevel.";
     private const string LastSeenUtcKey = "Mythwake.Prototype.LastSeenUtc";
     private const string SelectedHeroKey = "Mythwake.Prototype.SelectedHero";
     private const string HeroLevelKeyPrefix = "Mythwake.Prototype.HeroLevel.";
@@ -532,6 +564,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int BattlePassRewardCount = 5;
     private const int AccessorySlotCount = 5;
     private const int AccessoryRarityCount = 5;
+    private const int SummonCarouselCardCount = 3;
+    private const int SummonFeaturedHeroCount = 3;
+    private const int SummonCarouselHeroSlotsPerCard = 2;
+    private const int MaxSummonPullCount = 300;
+    private const int SummonAutoStepCount = 10;
     private const int BattlePassXpPerDailyClaim = 40;
     private const int SummonCost = 35;
     private const int StarterGems = 35;
@@ -539,9 +576,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const float OfflineGoldRewardRate = 0.5f;
     private const int AfkRewardMaxSeconds = 24 * 60 * 60;
     private const float AfkRewardAutosaveSeconds = 30f;
-    private const int DefaultCombatDurationSeconds = 60;
+    private const int DefaultCombatDurationSeconds = 30;
     private const float FightUltimateCinematicSeconds = 0.9f;
     private const float FightUltimateWorldSlowScale = 0.18f;
+    private const int FightAutoAttackManaGain = 2;
     private const float WarriorDamageBonusRate = 0.06f;
     private const float MageDamageBonusRate = 0.1f;
     private const float TankDamageReductionRate = 0.18f;
@@ -660,14 +698,47 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static readonly SummonBannerDefinition HeroShardBanner = new SummonBannerDefinition(
         "hero_shard_standard",
         "Awaken Heroes",
+        "First x10 pack has a 10% discount",
         GemsCurrencyId,
         SummonCost,
+        new[] { 3, 4, 2 },
         new[]
         {
             new SummonRateDefinition(LegendaryRarityId, 10, new[] { 4 }),
             new SummonRateDefinition(EpicRarityId, 45, new[] { 0, 2 }),
             new SummonRateDefinition(RareRarityId, 100, new[] { 1, 3 })
         });
+
+    private static readonly SummonBannerDefinition[] LocalSummonBanners =
+    {
+        HeroShardBanner,
+        new SummonBannerDefinition(
+            "hero_shard_vanguard",
+            "Vanguard Oath",
+            "Higher Epic chance for frontline teams",
+            GemsCurrencyId,
+            SummonCost,
+            new[] { 0, 3, 1 },
+            new[]
+            {
+                new SummonRateDefinition(LegendaryRarityId, 6, new[] { 4 }),
+                new SummonRateDefinition(EpicRarityId, 58, new[] { 0 }),
+                new SummonRateDefinition(RareRarityId, 100, new[] { 1, 3 })
+            }),
+        new SummonBannerDefinition(
+            "hero_shard_mystic",
+            "Mystic Bloom",
+            "Better Legendary odds for support and mages",
+            GemsCurrencyId,
+            SummonCost,
+            new[] { 4, 2, 0 },
+            new[]
+            {
+                new SummonRateDefinition(LegendaryRarityId, 15, new[] { 4 }),
+                new SummonRateDefinition(EpicRarityId, 50, new[] { 2, 0 }),
+                new SummonRateDefinition(RareRarityId, 100, new[] { 1, 3 })
+            })
+    };
 
     private static readonly StageDefinition[] StarterStageDefinitions =
     {
@@ -698,6 +769,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private int gearDungeonFloor = 1;
     [SerializeField] private int weaponLevel = StarterEquipmentLevel;
     [SerializeField] private int armorLevel = StarterEquipmentLevel;
+    [SerializeField] private int[] heroWeaponLevels = new int[HeroCount];
+    [SerializeField] private int[] heroArmorLevels = new int[HeroCount];
     [NonSerialized] private int backendWeaponLevel;
     [NonSerialized] private int backendArmorLevel;
     [NonSerialized] private int backendTeamPower;
@@ -707,6 +780,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private int selectedAccessoryRarity;
     [SerializeField] private int[] equippedAccessoryRarities = new int[AccessorySlotCount];
     [SerializeField] private int[] equippedAccessoryLevels = new int[AccessorySlotCount];
+    [SerializeField] private int[] heroEquippedAccessoryRarities = new int[HeroCount * AccessorySlotCount];
+    [SerializeField] private int[] heroEquippedAccessoryLevels = new int[HeroCount * AccessorySlotCount];
     [SerializeField] private int[] accessoryInventory = new int[AccessorySlotCount * AccessoryRarityCount];
     [SerializeField] private int selectedHeroIndex;
     [SerializeField] private int[] heroLevels = new int[HeroCount];
@@ -938,7 +1013,39 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button fastRewardsCloseButton;
     private Button fastRewardsRedeemButton;
     private TMP_Text menuHeaderText;
+    private HeroesTabMode heroesTabMode = HeroesTabMode.Hero;
+    private HeroSortDirection heroSortDirection = HeroSortDirection.Descending;
+    private HeroAttackTypeFilter heroAttackTypeFilter = HeroAttackTypeFilter.All;
+    private Button heroRosterTabButton;
+    private Button heroSetTeamTabButton;
+    private TMP_Text heroRosterTabText;
+    private TMP_Text heroSetTeamTabText;
+    private Button heroSortToggleButton;
+    private TMP_Text heroSortToggleText;
+    private Button heroAttackTypeFilterButton;
+    private TMP_Text heroAttackTypeFilterText;
+    private RectTransform heroCleanBackdropRoot;
+    private RectTransform heroRosterFilterRoot;
+    private TMP_Text heroRosterCountText;
+    private RectTransform heroSubTabRoot;
+    private Button heroAutoSetTeamButton;
+    private TMP_Text heroTeamHintText;
+    private RectTransform heroTeamRoot;
+    private RawImage[] heroTeamSlotPortraits;
+    private TMP_Text[] heroTeamSlotTexts;
+    private Image[] heroTeamSlotFrames;
+    private Button[] heroTeamSlotButtons;
+    private int selectedHeroTeamSlotIndex = -1;
+    private int draggedHeroCardIndex = -1;
+    private int draggedHeroTeamSlotIndex = -1;
+    private int[] heroCardDisplayIndices;
     private RawImage[] heroCardPortraits;
+    private TMP_Text[] heroCardLevelTexts;
+    private TMP_Text[] heroCardStarTexts;
+    private TMP_Text[] heroCardShardTexts;
+    private TMP_Text[] heroCardRoleBadgeTexts;
+    private TMP_Text[] heroCardTeamBadgeTexts;
+    private Image[] heroCardShardFills;
     private RectTransform heroDetailRoot;
     private RawImage heroDetailPortrait;
     private TMP_Text heroDetailRarityText;
@@ -972,6 +1079,47 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button dungeonsNavButton;
     private Button heroesNavButton;
     private Button summonNavButton;
+    private RectTransform summonOfferRoot;
+    private TMP_Text summonOfferTitleText;
+    private TMP_Text summonOfferPromoText;
+    private TMP_Text summonSingleCostText;
+    private TMP_Text summonTenCostText;
+    private Button summonTenButton;
+    private RawImage[] summonOfferHeroImages;
+    private RectTransform summonResultBoxRoot;
+    private RectTransform summonResultPopupRoot;
+    private TMP_Text summonResultPopupTitleText;
+    private TMP_Text summonAutoToggleText;
+    private Image summonAutoCheckboxImage;
+    private TMP_Text summonAutoCheckboxMarkText;
+    private Button summonResultCloseButton;
+    private Button summonResultTenButton;
+    private Button summonResultMaxButton;
+    private Button summonAutoToggleButton;
+    private RawImage[] summonResultHeroImages;
+    private TMP_Text[] summonResultHeroNameTexts;
+    private TMP_Text[] summonResultHeroCountTexts;
+    private Image[] summonResultHeroFrames;
+    private TMP_Text summonResultTenCostText;
+    private TMP_Text summonResultMaxCostText;
+    private RectTransform summonCountChipRoot;
+    private RectTransform summonRatesBoxRoot;
+    private RectTransform summonCarouselRoot;
+    private Button summonCarouselPreviousButton;
+    private Button summonCarouselNextButton;
+    private Button[] summonCarouselButtons;
+    private Image[] summonCarouselFrames;
+    private TMP_Text[] summonCarouselTitleTexts;
+    private TMP_Text[] summonCarouselRateTexts;
+    private RawImage[] summonCarouselHeroImages;
+    private int[] summonCarouselCardBannerIndices;
+    private int selectedSummonBannerIndex;
+    private float summonCarouselDragStartX;
+    private bool summonAutoEnabled;
+    private bool summonAutoRunning;
+    private int summonAutoRemainingPulls;
+    private int pendingBackendSummonCount = 1;
+    private Coroutine summonAutoCoroutine;
     private RectTransform formationRoot;
     private RectTransform fightRoot;
     private RectTransform fightResultRoot;
@@ -1019,6 +1167,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RectTransform[] fightEnemyProjectileRects;
     private Button[] fightSkillButtons;
     private Image[] fightSkillBackplates;
+    private Image[] fightSkillHpFills;
+    private TMP_Text[] fightSkillHpTexts;
     private Image[] fightSkillManaFills;
     private RawImage[] fightSkillPortraits;
     private TMP_Text[] fightSkillNameTexts;
@@ -1031,6 +1181,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private int[] fightHeroMaxManaValues;
     private bool[] fightHeroUltimateQueued;
     private float[] fightHeroUltimateStartedAt;
+    private float[] fightHeroVisibleHpPercents;
     private bool fightAutoSkillsEnabled;
     private bool fightDoubleSpeedEnabled;
     private TMP_Text[] fightFloatingTexts;
@@ -1039,6 +1190,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button fightContinueButton;
     private Button fightEndButton;
     private bool fightCancelRequested;
+    private Coroutine activeFightCoroutine;
 
     private void Awake()
     {
@@ -1174,6 +1326,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             summonButton.onClick.AddListener(SummonOnce);
         }
+
+        if (summonTenButton != null)
+        {
+            summonTenButton.onClick.AddListener(SummonTen);
+        }
+
+        RegisterSummonCarouselButtons();
+        RegisterSummonResultButtons();
 
         if (resetButton != null)
         {
@@ -1401,6 +1561,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             summonButton.onClick.RemoveListener(SummonOnce);
         }
 
+        if (summonTenButton != null)
+        {
+            summonTenButton.onClick.RemoveListener(SummonTen);
+        }
+
+        UnregisterSummonCarouselButtons();
+        UnregisterSummonResultButtons();
+
         if (resetButton != null)
         {
             resetButton.onClick.RemoveListener(ResetProgress);
@@ -1479,37 +1647,94 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void ShowHome()
     {
+        if (ShouldResumeCampaignFightFromVillage())
+        {
+            ShowScreen(AppScreen.Battle);
+            return;
+        }
+
         ShowScreen(AppScreen.Home);
     }
 
     public void ShowBattle()
     {
+        if (HasVisibleBattleToResume())
+        {
+            ShowScreen(AppScreen.Battle);
+            return;
+        }
+
         ShowFormationScreen();
     }
 
     public void ShowDungeons()
     {
+        if (IsDungeonBattleFocusLocked())
+        {
+            ShowScreen(AppScreen.Battle);
+            return;
+        }
+
         ShowScreen(AppScreen.Dungeons);
     }
 
     public void ShowHeroes()
     {
+        if (IsDungeonBattleFocusLocked())
+        {
+            ShowScreen(AppScreen.Battle);
+            return;
+        }
+
         ShowScreen(AppScreen.Heroes);
     }
 
     public void ShowGear()
     {
+        if (IsDungeonBattleFocusLocked())
+        {
+            ShowScreen(AppScreen.Battle);
+            return;
+        }
+
         ShowScreen(AppScreen.Gear);
     }
 
     public void ShowSummon()
     {
+        if (IsDungeonBattleFocusLocked())
+        {
+            ShowScreen(AppScreen.Battle);
+            return;
+        }
+
         ShowScreen(AppScreen.Summon);
     }
 
     public void ShowShop()
     {
+        if (IsDungeonBattleFocusLocked())
+        {
+            ShowScreen(AppScreen.Battle);
+            return;
+        }
+
         ShowScreen(AppScreen.Shop);
+    }
+
+    private bool ShouldResumeCampaignFightFromVillage()
+    {
+        return battleTargetMode == BattleTargetMode.Campaign && HasVisibleBattleToResume();
+    }
+
+    private bool HasVisibleBattleToResume()
+    {
+        return battleFlowMode != BattleFlowMode.Formation && (campaignFightInProgress || battleFlowMode == BattleFlowMode.Result);
+    }
+
+    private bool IsDungeonBattleFocusLocked()
+    {
+        return battleTargetMode == BattleTargetMode.Dungeon && HasVisibleBattleToResume();
     }
 
     private void ShowInventoryPopup()
@@ -1633,6 +1858,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         ShowCampaignFightResult(false, "Fight Ended", "Auto battle stopped. No rewards were claimed for this cancelled fight.");
     }
 
+    private void StartTrackedFightCoroutine(IEnumerator routine)
+    {
+        if (routine == null)
+        {
+            return;
+        }
+
+        if (activeFightCoroutine != null)
+        {
+            StopCoroutine(activeFightCoroutine);
+            activeFightCoroutine = null;
+        }
+
+        activeFightCoroutine = StartCoroutine(TrackFightCoroutine(routine));
+    }
+
+    private IEnumerator TrackFightCoroutine(IEnumerator routine)
+    {
+        yield return routine;
+        activeFightCoroutine = null;
+    }
+
     private bool ConsumeFightCancelRequest()
     {
         if (!fightCancelRequested)
@@ -1678,7 +1925,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        StartCoroutine(PlayLocalCampaignFightRoutine());
+        StartTrackedFightCoroutine(PlayLocalCampaignFightRoutine());
     }
 
     private void StartDungeonFightFromFormation()
@@ -1699,7 +1946,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        StartCoroutine(PlayLocalDungeonFightRoutine());
+        StartTrackedFightCoroutine(PlayLocalDungeonFightRoutine());
     }
 
     private void ToggleFormationAutoContinue()
@@ -2015,11 +2262,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private MythwakeActionResultDto LevelEquipmentTrack(EquipmentTrackDefinition track, bool isWeapon)
     {
-        var currentLevel = isWeapon ? weaponLevel : armorLevel;
+        var heroIndex = GetSelectedHeroIndex();
+        var currentLevel = GetHeroEquipmentLevel(heroIndex, isWeapon);
         currentLevel = Mathf.Max(StarterEquipmentLevel, currentLevel);
         if (IsEquipmentLevelMax(track, currentLevel))
         {
-            var maxResult = CreateActionResult(false, "equipment_level", "max_level", $"{track.name} is already max level.");
+            var maxResult = CreateActionResult(false, "equipment_level", "max_level", $"{GetHeroDefinition(heroIndex).name}'s {track.name} is already max level.");
             RefreshUi();
             return maxResult;
         }
@@ -2028,25 +2276,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (!TrySpendCurrency(GoldCurrencyId, cost))
         {
-            var failMessage = $"Need {cost} Gold to level {track.name}.";
+            var failMessage = $"Need {cost} Gold to level {GetHeroDefinition(heroIndex).name}'s {track.name}.";
             RefreshUi();
             return CreateActionResult(false, "equipment_level", "insufficient_currency", failMessage);
         }
 
-        if (isWeapon)
-        {
-            weaponLevel = currentLevel + 1;
-            damage = GetTeamDamage();
-        }
-        else
-        {
-            armorLevel = currentLevel + 1;
-        }
+        SetHeroEquipmentLevel(heroIndex, isWeapon, currentLevel + 1);
+        damage = GetTeamDamage();
 
         SaveProgress();
         RefreshUi();
-        var newLevel = isWeapon ? weaponLevel : armorLevel;
-        return CreateActionResult(true, "equipment_level", string.Empty, $"{track.name} reached Lv. {newLevel}.");
+        var newLevel = GetHeroEquipmentLevel(heroIndex, isWeapon);
+        return CreateActionResult(true, "equipment_level", string.Empty, $"{GetHeroDefinition(heroIndex).name}'s {track.name} reached Lv. {newLevel}.");
     }
 
     public void PreviousAccessorySlot()
@@ -2106,6 +2347,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var slot = accessory.slotIndex;
         var rarity = accessory.rarityIndex;
+        var heroIndex = GetSelectedHeroIndex();
 
         if (GetAccessoryInventoryCount(slot, rarity) <= 0)
         {
@@ -2113,24 +2355,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return CreateActionResult(false, "accessory_equip", "missing_item", $"No {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} copy to equip.");
         }
 
-        if (equippedAccessoryRarities[slot] == rarity)
+        if (GetHeroEquippedAccessoryRarity(heroIndex, slot) == rarity)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_equip", "already_equipped", $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is already equipped.");
+            return CreateActionResult(false, "accessory_equip", "already_equipped", $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is already equipped on {GetHeroDefinition(heroIndex).name}.");
         }
 
-        if (equippedAccessoryRarities[slot] >= 0)
+        var previousRarity = GetHeroEquippedAccessoryRarity(heroIndex, slot);
+        if (previousRarity >= 0)
         {
-            AddAccessoryInventory(slot, equippedAccessoryRarities[slot], 1);
+            AddAccessoryInventory(slot, previousRarity, 1);
         }
 
         AddAccessoryInventory(slot, rarity, -1);
-        equippedAccessoryRarities[slot] = rarity;
-        equippedAccessoryLevels[slot] = 1;
+        SetHeroEquippedAccessory(heroIndex, slot, rarity, 1);
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "accessory_equip", string.Empty, $"Equipped {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name}.");
+        return CreateActionResult(true, "accessory_equip", string.Empty, $"Equipped {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} on {GetHeroDefinition(heroIndex).name}.");
     }
 
     public void LevelSelectedAccessory()
@@ -2164,18 +2406,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var slot = accessory.slotIndex;
         var rarity = accessory.rarityIndex;
+        var heroIndex = GetSelectedHeroIndex();
 
-        if (equippedAccessoryRarities[slot] != rarity)
+        if (GetHeroEquippedAccessoryRarity(heroIndex, slot) != rarity)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_level", "not_equipped", $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is not equipped.");
+            return CreateActionResult(false, "accessory_level", "not_equipped", $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is not equipped on {GetHeroDefinition(heroIndex).name}.");
         }
 
         var maxLevel = GetAccessoryMaxLevel(rarity);
-        if (equippedAccessoryLevels[slot] >= maxLevel)
+        var currentLevel = GetHeroEquippedAccessoryLevel(heroIndex, slot);
+        if (currentLevel >= maxLevel)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_level", "max_level", $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is already max level.");
+            return CreateActionResult(false, "accessory_level", "max_level", $"{GetHeroDefinition(heroIndex).name}'s {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is already max level.");
         }
 
         var cost = GetAccessoryLevelCost(slot);
@@ -2185,12 +2429,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return CreateActionResult(false, "accessory_level", "insufficient_currency", $"Need {cost} Gold to level {AccessorySlots[slot].name}.");
         }
 
-        equippedAccessoryLevels[slot]++;
+        SetHeroEquippedAccessory(heroIndex, slot, rarity, currentLevel + 1);
         damage = GetTeamDamage();
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "accessory_level", string.Empty, $"Leveled {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} to Lv. {equippedAccessoryLevels[slot]}.");
+        return CreateActionResult(true, "accessory_level", string.Empty, $"Leveled {GetHeroDefinition(heroIndex).name}'s {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} to Lv. {GetHeroEquippedAccessoryLevel(heroIndex, slot)}.");
     }
 
     public void FuseSelectedAccessory()
@@ -2243,22 +2487,124 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void SummonOnce()
     {
+        SummonMany(1);
+    }
+
+    public void SummonTen()
+    {
+        SummonMany(10);
+    }
+
+    private void ShowPreviousSummonBanner()
+    {
+        SelectSummonBanner(selectedSummonBannerIndex - 1);
+    }
+
+    private void ShowNextSummonBanner()
+    {
+        SelectSummonBanner(selectedSummonBannerIndex + 1);
+    }
+
+    private void SelectSummonCarouselCard0()
+    {
+        SelectSummonCarouselCard(0);
+    }
+
+    private void SelectSummonCarouselCard1()
+    {
+        SelectSummonCarouselCard(1);
+    }
+
+    private void SelectSummonCarouselCard2()
+    {
+        SelectSummonCarouselCard(2);
+    }
+
+    private void SelectSummonCarouselCard(int cardIndex)
+    {
+        if (summonCarouselCardBannerIndices == null || cardIndex < 0 || cardIndex >= summonCarouselCardBannerIndices.Length)
+        {
+            return;
+        }
+
+        SelectSummonBanner(summonCarouselCardBannerIndices[cardIndex]);
+    }
+
+    private void SelectSummonBanner(int bannerIndex)
+    {
+        var wrappedIndex = WrapSummonBannerIndex(bannerIndex);
+        if (wrappedIndex == selectedSummonBannerIndex)
+        {
+            return;
+        }
+
+        selectedSummonBannerIndex = wrappedIndex;
+        RefreshSummonUi();
+    }
+
+    private void BeginSummonCarouselDrag(BaseEventData eventData)
+    {
+        if (eventData is PointerEventData pointerEvent)
+        {
+            summonCarouselDragStartX = pointerEvent.position.x;
+        }
+    }
+
+    private void EndSummonCarouselDrag(BaseEventData eventData)
+    {
+        if (!(eventData is PointerEventData pointerEvent))
+        {
+            return;
+        }
+
+        var deltaX = pointerEvent.position.x - summonCarouselDragStartX;
+        if (Mathf.Abs(deltaX) < 70f)
+        {
+            return;
+        }
+
+        if (deltaX < 0f)
+        {
+            ShowNextSummonBanner();
+        }
+        else
+        {
+            ShowPreviousSummonBanner();
+        }
+    }
+
+    private void SummonMany(int count)
+    {
+        var activeBanner = GetActiveSummonBanner();
         if (backendGameplayEnabled)
         {
-            if (TryStartBackendRequest("Server: summon pull..."))
+            var backendCount = Mathf.Clamp(count, 1, MaxSummonPullCount);
+            if (TryStartBackendRequest(backendCount == 1 ? "Server: summon pull..." : $"Server: summon x{backendCount}..."))
             {
-                StartCoroutine(backendClient.PullSummon(HeroShardBanner.bannerId, OnBackendSummonAction));
+                var backendBannerId = activeBanner.bannerId == HeroShardBanner.bannerId ? activeBanner.bannerId : HeroShardBanner.bannerId;
+                pendingBackendSummonCount = backendCount;
+                StartCoroutine(backendClient.PullSummon(backendBannerId, backendCount, OnBackendSummonAction));
             }
 
             return;
         }
 
-        Pull(HeroShardBanner.bannerId);
+        PullMany(activeBanner.bannerId, count);
     }
 
     public MythwakeActionResultDto Pull(string bannerId)
     {
-        if (bannerId != HeroShardBanner.bannerId)
+        return PullMany(bannerId, 1);
+    }
+
+    public MythwakeActionResultDto PullMany(string bannerId, int count)
+    {
+        return PullManyInternal(bannerId, count, true, true);
+    }
+
+    private MythwakeActionResultDto PullManyInternal(string bannerId, int count, bool showResultPopup, bool allowAutoContinue)
+    {
+        if (!TryGetLocalSummonBanner(bannerId, out var banner))
         {
             var invalidBanner = CreateActionResult(false, "summon_pull", "invalid_banner", $"Unknown banner: {bannerId}");
             SetSummonResult(invalidBanner.message);
@@ -2266,10 +2612,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return invalidBanner;
         }
 
-        var summonCost = GetSummonCost();
+        count = Mathf.Clamp(count, 1, MaxSummonPullCount);
+        var summonCost = GetSummonPackCost(count, banner);
         if (!TrySpendCurrency(GemsCurrencyId, summonCost))
         {
-            var failMessage = $"Need {summonCost} Gems for a summon.";
+            var failMessage = count == 1
+                ? $"Need {summonCost} Gems for a summon."
+                : $"Need {summonCost} Gems for Summon x{count}.";
             SetSummonResult(failMessage);
             RefreshUi();
             return CreateActionResult(false, "summon_pull", "insufficient_currency", failMessage);
@@ -2277,22 +2626,121 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         EnsureHeroShards();
 
-        summonCount++;
-        dailySummonCount++;
+        var shardTotals = new int[HeroDefinitions.Length];
+        var drawCounts = new int[HeroDefinitions.Length];
+        var lastHeroIndex = 0;
+        var totalShards = 0;
+        for (var i = 0; i < count; i++)
+        {
+            summonCount++;
+            dailySummonCount++;
 
-        var heroIndex = RollSummonHero();
-        var shards = GetSummonShardReward(heroIndex);
-        heroShards[heroIndex] += shards;
-        selectedHeroIndex = heroIndex;
+            var heroIndex = RollSummonHero(banner);
+            var shards = GetSummonShardReward(heroIndex);
+            heroShards[heroIndex] += shards;
+            shardTotals[heroIndex] += shards;
+            drawCounts[heroIndex]++;
+            totalShards += shards;
+            lastHeroIndex = heroIndex;
+        }
+
+        selectedHeroIndex = lastHeroIndex;
         damage = GetTeamDamage();
-        var hero = GetHeroDefinition(heroIndex);
+        var hero = GetHeroDefinition(lastHeroIndex);
 
-        var message = $"{hero.rarityName} pull: {hero.name}\n+{shards} shards";
-        PlaySummonVisual(heroIndex, $"{hero.rarityName} {hero.name}");
+        var message = count == 1
+            ? $"{hero.rarityName} pull: {hero.name}\n+{shardTotals[lastHeroIndex]} shards"
+            : BuildSummonPackResultMessage(count, totalShards, shardTotals);
+        PlaySummonVisual(lastHeroIndex, count == 1 ? $"{hero.rarityName} {hero.name}" : $"Summon x{count}");
         SetSummonResult(message);
+        if (showResultPopup)
+        {
+            ShowSummonResultPopup(drawCounts, count);
+        }
+
         SaveProgress();
         RefreshUi();
+        if (allowAutoContinue && summonAutoEnabled && count < MaxSummonPullCount)
+        {
+            StartSummonAutoRoutine(MaxSummonPullCount - count);
+        }
+
         return CreateActionResult(true, "summon_pull", string.Empty, message);
+    }
+
+    private void SummonResultTen()
+    {
+        SummonMany(SummonAutoStepCount);
+    }
+
+    private void SummonResultMax()
+    {
+        SummonMany(MaxSummonPullCount);
+    }
+
+    private void ToggleSummonAuto()
+    {
+        summonAutoEnabled = !summonAutoEnabled;
+        if (!summonAutoEnabled && summonAutoCoroutine != null)
+        {
+            StopCoroutine(summonAutoCoroutine);
+            summonAutoCoroutine = null;
+            summonAutoRunning = false;
+            summonAutoRemainingPulls = 0;
+        }
+
+        RefreshSummonAutoToggle();
+        RefreshUi();
+    }
+
+    private void StartSummonAutoRoutine(int remainingPulls)
+    {
+        if (!summonAutoEnabled || remainingPulls <= 0)
+        {
+            return;
+        }
+
+        if (summonAutoCoroutine != null)
+        {
+            StopCoroutine(summonAutoCoroutine);
+        }
+
+        summonAutoRemainingPulls = Mathf.Clamp(remainingPulls, 0, MaxSummonPullCount);
+        summonAutoCoroutine = StartCoroutine(SummonAutoRoutine());
+    }
+
+    private IEnumerator SummonAutoRoutine()
+    {
+        summonAutoRunning = true;
+        RefreshSummonAutoToggle();
+        RefreshUi();
+
+        while (summonAutoEnabled && summonAutoRemainingPulls > 0)
+        {
+            yield return new WaitForSecondsRealtime(0.16f);
+
+            var activeBanner = GetActiveSummonBanner();
+            var nextPulls = Mathf.Min(SummonAutoStepCount, summonAutoRemainingPulls);
+            if (gems < GetSummonPackCost(nextPulls, activeBanner))
+            {
+                break;
+            }
+
+            var result = PullManyInternal(activeBanner.bannerId, nextPulls, true, false);
+            if (!result.success)
+            {
+                break;
+            }
+
+            summonAutoRemainingPulls -= nextPulls;
+            RefreshSummonAutoToggle();
+        }
+
+        summonAutoRunning = false;
+        summonAutoRemainingPulls = 0;
+        summonAutoCoroutine = null;
+        RefreshSummonAutoToggle();
+        RefreshUi();
     }
 
     public void ClaimDailyBattleMission()
@@ -2918,6 +3366,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         gearDungeonFloor = 1;
         weaponLevel = StarterEquipmentLevel;
         armorLevel = StarterEquipmentLevel;
+        heroWeaponLevels = CreateFilledIntArray(HeroCount, StarterEquipmentLevel);
+        heroArmorLevels = CreateFilledIntArray(HeroCount, StarterEquipmentLevel);
         selectedAccessorySlot = 0;
         selectedAccessoryRarity = 0;
         enemyMaxHp = GetStageMaxHp(enemyLevel);
@@ -2938,11 +3388,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroAscensions[i] = 0;
         }
 
-        for (var i = 0; i < AccessorySlotCount; i++)
-        {
-            equippedAccessoryRarities[i] = -1;
-            equippedAccessoryLevels[i] = 0;
-        }
+        equippedAccessoryRarities = CreateFilledIntArray(AccessorySlotCount, -1);
+        equippedAccessoryLevels = new int[AccessorySlotCount];
+        heroEquippedAccessoryRarities = CreateFilledIntArray(HeroCount * AccessorySlotCount, -1);
+        heroEquippedAccessoryLevels = new int[HeroCount * AccessorySlotCount];
 
         for (var i = 0; i < accessoryInventory.Length; i++)
         {
@@ -3169,7 +3618,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (HasServerCombatResult(result))
         {
             message = FormatServerCombatMessage(result);
-            StartCoroutine(PlayServerCampaignFightRoutine(result));
+            StartTrackedFightCoroutine(PlayServerCampaignFightRoutine(result));
         }
         else
         {
@@ -3213,7 +3662,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             message = FormatServerCombatMessage(result);
             selectedDungeonId = string.IsNullOrWhiteSpace(result.combat.targetId) ? selectedDungeonId : result.combat.targetId;
-            StartCoroutine(PlayServerDungeonFightRoutine(result));
+            StartTrackedFightCoroutine(PlayServerDungeonFightRoutine(result));
         }
         else
         {
@@ -3229,6 +3678,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void OnBackendSummonAction(bool success, string error, MythwakeActionResultDto result)
     {
         CompleteBackendAction(success, error, result, showInSummonPanel: true);
+        if (success && result.success)
+        {
+            ShowBackendSummonResultPopup(result.message, pendingBackendSummonCount);
+        }
+
+        pendingBackendSummonCount = 1;
     }
 
     private void OnBackendOfflineClaim(bool success, string error, MythwakeActionResultDto result)
@@ -3966,6 +4421,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         gearDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(GearDungeonFloorKey, gearDungeonFloor));
         weaponLevel = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt(WeaponLevelKey, weaponLevel));
         armorLevel = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt(ArmorLevelKey, armorLevel));
+        heroWeaponLevels = new int[HeroCount];
+        heroArmorLevels = new int[HeroCount];
+        for (var i = 0; i < HeroCount; i++)
+        {
+            heroWeaponLevels[i] = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt($"{HeroWeaponLevelKeyPrefix}{i}", weaponLevel));
+            heroArmorLevels[i] = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt($"{HeroArmorLevelKeyPrefix}{i}", armorLevel));
+        }
+
         selectedAccessorySlot = Mathf.Clamp(PlayerPrefs.GetInt(SelectedAccessorySlotKey, selectedAccessorySlot), 0, AccessorySlotCount - 1);
         selectedAccessoryRarity = Mathf.Clamp(PlayerPrefs.GetInt(SelectedAccessoryRarityKey, selectedAccessoryRarity), 0, AccessoryRarityCount - 1);
         enemyLevel = Mathf.Max(1, PlayerPrefs.GetInt(EnemyLevelKey, enemyLevel));
@@ -3975,6 +4438,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureHeroEquipment();
         EnsureAccessories();
 
         for (var i = 0; i < heroLevels.Length; i++)
@@ -3991,6 +4455,40 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (equippedAccessoryRarities[i] < 0)
             {
                 equippedAccessoryLevels[i] = 0;
+            }
+        }
+
+        heroEquippedAccessoryRarities = CreateFilledIntArray(HeroCount * AccessorySlotCount, -1);
+        heroEquippedAccessoryLevels = new int[HeroCount * AccessorySlotCount];
+        var hasHeroAccessoryPrefs = false;
+        for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
+        {
+            for (var slot = 0; slot < AccessorySlotCount; slot++)
+            {
+                var index = GetHeroAccessoryIndex(heroIndex, slot);
+                var rarityKey = $"{HeroEquippedAccessoryRarityKeyPrefix}{index}";
+                if (!PlayerPrefs.HasKey(rarityKey))
+                {
+                    continue;
+                }
+
+                hasHeroAccessoryPrefs = true;
+                heroEquippedAccessoryRarities[index] = Mathf.Clamp(PlayerPrefs.GetInt(rarityKey, -1), -1, AccessoryRarityCount - 1);
+                heroEquippedAccessoryLevels[index] = Mathf.Clamp(PlayerPrefs.GetInt($"{HeroEquippedAccessoryLevelKeyPrefix}{index}", 0), 0, GetAccessoryMaxLevel(Mathf.Max(0, heroEquippedAccessoryRarities[index])));
+            }
+        }
+
+        if (!hasHeroAccessoryPrefs)
+        {
+            var heroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+            for (var slot = 0; slot < AccessorySlotCount; slot++)
+            {
+                if (equippedAccessoryRarities[slot] >= 0)
+                {
+                    var index = GetHeroAccessoryIndex(heroIndex, slot);
+                    heroEquippedAccessoryRarities[index] = equippedAccessoryRarities[slot];
+                    heroEquippedAccessoryLevels[index] = equippedAccessoryLevels[slot];
+                }
             }
         }
 
@@ -4022,6 +4520,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureHeroEquipment();
         EnsureAccessories();
         EnsureDailyMissionClaims();
         EnsureBattlePassRewardClaims();
@@ -4059,6 +4558,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroAscensions = CopyIntArray(heroAscensions, HeroCount, 0),
             formationSlotHeroIndices = CopyIntArray(this.formationSlotHeroIndices, HeroCount, -1),
             autoContinueFightsEnabled = this.autoContinueFightsEnabled,
+            heroWeaponLevels = CopyIntArray(heroWeaponLevels, HeroCount, StarterEquipmentLevel),
+            heroArmorLevels = CopyIntArray(heroArmorLevels, HeroCount, StarterEquipmentLevel),
+            heroEquippedAccessoryRarities = CopyIntArray(heroEquippedAccessoryRarities, HeroCount * AccessorySlotCount, -1),
+            heroEquippedAccessoryLevels = CopyIntArray(heroEquippedAccessoryLevels, HeroCount * AccessorySlotCount, 0),
             equippedAccessoryRarities = CopyIntArray(equippedAccessoryRarities, AccessorySlotCount, -1),
             equippedAccessoryLevels = CopyIntArray(equippedAccessoryLevels, AccessorySlotCount, 0),
             accessoryInventory = CopyIntArray(accessoryInventory, AccessorySlotCount * AccessoryRarityCount, 0),
@@ -4096,6 +4599,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         formationSlotHeroIndices = CopyIntArray(data.formationSlotHeroIndices, HeroCount, -1);
         autoContinueFightsEnabled = data.autoContinueFightsEnabled;
         fightAutoSkillsEnabled = autoContinueFightsEnabled;
+        heroWeaponLevels = data.heroWeaponLevels == null ? null : CopyIntArray(data.heroWeaponLevels, HeroCount, StarterEquipmentLevel);
+        heroArmorLevels = data.heroArmorLevels == null ? null : CopyIntArray(data.heroArmorLevels, HeroCount, StarterEquipmentLevel);
+        heroEquippedAccessoryRarities = data.heroEquippedAccessoryRarities == null ? null : CopyIntArray(data.heroEquippedAccessoryRarities, HeroCount * AccessorySlotCount, -1);
+        heroEquippedAccessoryLevels = data.heroEquippedAccessoryLevels == null ? null : CopyIntArray(data.heroEquippedAccessoryLevels, HeroCount * AccessorySlotCount, 0);
 
         EnsureFormationOrder();
         equippedAccessoryRarities = CopyIntArray(data.equippedAccessoryRarities, AccessorySlotCount, -1);
@@ -4525,18 +5032,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private int[] CreateHeroCombatHealthValues()
     {
         var values = new int[HeroCount];
-        var baseHealthTotal = 0;
-        for (var i = 0; i < HeroCount; i++)
-        {
-            baseHealthTotal += Mathf.Max(1, GetHeroHealth(i));
-        }
-
-        var bonusHealth = GetEquipmentHealthBonus() + GetAccessoryHealthBonus();
         for (var i = 0; i < values.Length; i++)
         {
-            var heroHealth = Mathf.Max(1, GetHeroHealth(i));
-            var bonusShare = Mathf.RoundToInt(bonusHealth * (heroHealth / (float)Mathf.Max(1, baseHealthTotal)));
-            values[i] = Mathf.Max(1, heroHealth + bonusShare);
+            values[i] = GetHeroCombatMaxHealth(i);
         }
 
         return values;
@@ -4545,16 +5043,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private int GetHeroCombatMaxHealth(int heroIndex)
     {
         heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
-        var baseHealthTotal = 0;
-        for (var i = 0; i < HeroCount; i++)
-        {
-            baseHealthTotal += Mathf.Max(1, GetHeroHealth(i));
-        }
-
-        var heroHealth = Mathf.Max(1, GetHeroHealth(heroIndex));
-        var bonusHealth = GetEquipmentHealthBonus() + GetAccessoryHealthBonus();
-        var bonusShare = Mathf.RoundToInt(bonusHealth * (heroHealth / (float)Mathf.Max(1, baseHealthTotal)));
-        return Mathf.Max(1, heroHealth + bonusShare);
+        return Mathf.Max(1, GetHeroHealth(heroIndex) + GetHeroGearHealthBonus(heroIndex));
     }
 
     private static int GetHeroCombatHealthTotal(int[] heroHpValues)
@@ -4774,6 +5263,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var ultimateCinematicHeroIndex = -1;
         var ultimateCinematicRemaining = 0f;
         InitializeFightSkillState();
+        RefreshFightSkillHealthUi(heroHpPercents);
 
         if (fightResultRoot != null)
         {
@@ -4798,6 +5288,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             timer += combatDeltaTime;
             animationTimer += animationDeltaTime;
             slowedWorldAnimationTimer += worldDeltaTime;
+
             if (!ultimateCinematicActive)
             {
                 slowedWorldAnimationTimer = animationTimer;
@@ -4839,6 +5330,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             SetFillValues(fightEnemyHpFills, enemyHpPercents, activeEnemyCount);
             SetHpPercentTexts(fightEnemyHpPercentTexts, enemyHpPercents, activeEnemyCount);
             RefreshFightBossHpUi(singleBoss, enemyHpPercents);
+            RefreshFightSkillHealthUi(heroHpPercents);
             RefreshFightSkillUi(animationTimer);
             AnimateFightUnitsWithState(
                 heroStates,
@@ -4890,6 +5382,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshFightBossHpUi(singleBoss, enemyHpPercents);
         SetProjectilesVisible(fightHeroProjectileImages, false);
         SetProjectilesVisible(fightEnemyProjectileImages, false);
+        RefreshFightSkillHealthUi(heroHpPercents);
         RefreshFightSkillUi(animationTimer);
         if (fightTimerText != null)
         {
@@ -4975,6 +5468,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         fightHeroMaxManaValues = new int[HeroCount];
         fightHeroUltimateQueued = new bool[HeroCount];
         fightHeroUltimateStartedAt = new float[HeroCount];
+        fightHeroVisibleHpPercents = CreateCombatHealthPercents(HeroCount);
         for (var i = 0; i < HeroCount; i++)
         {
             fightHeroMaxManaValues[i] = GetHeroMaxMana(i);
@@ -4987,6 +5481,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshFightSkillUi(0f);
+        RefreshFightSkillHealthUi(fightHeroVisibleHpPercents);
         RefreshFightAutoSkillButton();
         RefreshFightSpeedButton();
     }
@@ -5060,7 +5555,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        if (heroIndex < 0 || heroIndex >= HeroCount || fightHeroManaValues[heroIndex] < fightHeroMaxManaValues[heroIndex])
+        if (heroIndex < 0
+            || heroIndex >= HeroCount
+            || fightHeroManaValues[heroIndex] < fightHeroMaxManaValues[heroIndex]
+            || (fightHeroVisibleHpPercents != null && heroIndex < fightHeroVisibleHpPercents.Length && fightHeroVisibleHpPercents[heroIndex] <= 0.001f))
         {
             return;
         }
@@ -5197,8 +5695,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var maxMana = i < fightHeroMaxManaValues.Length ? Mathf.Max(1, fightHeroMaxManaValues[i]) : GetHeroMaxMana(i);
             var mana = i < fightHeroManaValues.Length ? Mathf.Clamp(fightHeroManaValues[i], 0, maxMana) : 0;
-            var ready = mana >= maxMana;
-            var queued = fightHeroUltimateQueued != null && i < fightHeroUltimateQueued.Length && fightHeroUltimateQueued[i];
+            var alive = fightHeroVisibleHpPercents == null || i >= fightHeroVisibleHpPercents.Length || fightHeroVisibleHpPercents[i] > 0.001f;
+            var ready = alive && mana >= maxMana;
+            var queued = alive && fightHeroUltimateQueued != null && i < fightHeroUltimateQueued.Length && fightHeroUltimateQueued[i];
             var activeAge = fightHeroUltimateStartedAt != null && i < fightHeroUltimateStartedAt.Length ? timer - fightHeroUltimateStartedAt[i] : 99f;
             var pulse = ready ? (0.5f + Mathf.Sin(Time.unscaledTime * 7.5f) * 0.5f) : 0f;
             var activePulse = IsFightActionActive(activeAge) ? Mathf.Sin(Mathf.Clamp01(activeAge / 0.72f) * Mathf.PI) : 0f;
@@ -5222,20 +5721,57 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (fightSkillPortraits != null && i < fightSkillPortraits.Length && fightSkillPortraits[i] != null)
             {
-                fightSkillPortraits[i].color = ready ? Color.white : new Color(0.72f, 0.78f, 0.86f, 0.94f);
+                fightSkillPortraits[i].color = !alive
+                    ? new Color(0.38f, 0.38f, 0.42f, 0.72f)
+                    : ready ? Color.white : new Color(0.72f, 0.78f, 0.86f, 0.94f);
                 var scale = 1f + (ready ? 0.04f * pulse : 0f) + (activePulse * 0.12f);
-                fightSkillPortraits[i].rectTransform.localScale = new Vector3(scale, scale, 1f);
+                fightSkillPortraits[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i) * scale, scale, 1f);
             }
 
             if (fightSkillNameTexts != null && i < fightSkillNameTexts.Length && fightSkillNameTexts[i] != null)
             {
-                fightSkillNameTexts[i].color = ready ? new Color(1f, 0.86f, 0.3f) : Color.white;
+                fightSkillNameTexts[i].color = !alive
+                    ? new Color(0.72f, 0.72f, 0.76f)
+                    : ready ? new Color(1f, 0.86f, 0.3f) : Color.white;
             }
 
             if (fightSkillManaTexts != null && i < fightSkillManaTexts.Length && fightSkillManaTexts[i] != null)
             {
                 fightSkillManaTexts[i].text = $"{mana}/{maxMana}";
                 fightSkillManaTexts[i].color = ready ? new Color(1f, 0.82f, 0.25f) : new Color(0.74f, 0.9f, 1f);
+            }
+        }
+    }
+
+    private void RefreshFightSkillHealthUi(float[] heroHpPercents)
+    {
+        if (heroHpPercents == null)
+        {
+            return;
+        }
+
+        if (fightHeroVisibleHpPercents == null || fightHeroVisibleHpPercents.Length != HeroCount)
+        {
+            fightHeroVisibleHpPercents = new float[HeroCount];
+        }
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var percent = i < heroHpPercents.Length ? Mathf.Clamp01(heroHpPercents[i]) : 0f;
+            fightHeroVisibleHpPercents[i] = percent;
+
+            if (fightSkillHpFills != null && i < fightSkillHpFills.Length && fightSkillHpFills[i] != null)
+            {
+                SetRuntimeFillPercent(fightSkillHpFills[i], percent);
+                fightSkillHpFills[i].color = percent <= 0.001f
+                    ? new Color(0.34f, 0.34f, 0.36f, 0.95f)
+                    : Color.Lerp(new Color(0.92f, 0.26f, 0.18f, 0.96f), new Color(0.16f, 0.78f, 0.33f, 0.96f), Mathf.Clamp01(percent * 1.4f));
+            }
+
+            if (fightSkillHpTexts != null && i < fightSkillHpTexts.Length && fightSkillHpTexts[i] != null)
+            {
+                fightSkillHpTexts[i].text = percent <= 0.001f ? "KO" : FormatPercent(percent);
+                fightSkillHpTexts[i].color = percent <= 0.001f ? new Color(0.86f, 0.86f, 0.9f) : Color.white;
             }
         }
     }
@@ -5325,7 +5861,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 continue;
             }
 
-            var visible = i < activeCount;
+            var visible = i < activeCount && values[i] > 0.001f;
             texts[i].gameObject.SetActive(visible);
             if (visible)
             {
@@ -5586,6 +6122,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         int enemyCount,
         float enemyEndPercent)
     {
+        if (won && !HasLivingCombatant(enemyHpPercents, enemyCount))
+        {
+            return false;
+        }
+
+        if (!won && !HasLivingCombatant(heroHpPercents, heroCount))
+        {
+            return false;
+        }
+
         if (timer < visualDuration)
         {
             return true;
@@ -5600,6 +6146,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var count = won ? enemyCount : heroCount;
         var targetAverage = won ? enemyEndPercent : teamEndPercent;
         return GetAverageCombatHealth(values, count) > targetAverage + 0.002f;
+    }
+
+    private static bool HasLivingCombatant(float[] healthPercents, int activeCount)
+    {
+        if (healthPercents == null)
+        {
+            return false;
+        }
+
+        activeCount = Mathf.Clamp(activeCount, 0, healthPercents.Length);
+        for (var i = 0; i < activeCount; i++)
+        {
+            if (healthPercents[i] > 0.001f)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void UpdateFightVisualMovement(
@@ -5803,21 +6368,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static Vector2 GetMeleeContactPosition(Vector2 attackerPosition, Vector2 targetPosition, bool attackerIsHero, int attackerIndex, int targetIndex, bool targetIsRanged)
     {
         var laneSign = attackerIsHero ? 1f : -1f;
-        var laneOffset = ((attackerIndex + targetIndex) % 3 - 1) * 16f * laneSign;
-        if (targetIsRanged)
-        {
-            var closeSideOffset = attackerIsHero ? -82f : 82f;
-            return ClampFightArenaPosition(targetPosition + new Vector2(closeSideOffset, laneOffset));
-        }
-
-        var center = (attackerPosition + targetPosition) * 0.5f;
-        var sideOffset = attackerIsHero ? -58f : 58f;
-        return ClampFightArenaPosition(center + new Vector2(sideOffset, laneOffset));
+        var laneOffset = ((attackerIndex + targetIndex) % 3 - 1) * 18f * laneSign;
+        var closeSideOffset = attackerIsHero ? -82f : 82f;
+        return ClampFightArenaPosition(targetPosition + new Vector2(closeSideOffset, laneOffset));
     }
 
     private static float GetFightVisualMeleeRange(bool targetIsRanged)
     {
-        return targetIsRanged ? 118f : 148f;
+        return targetIsRanged ? 118f : 132f;
     }
 
     private static Vector2 ClampFightArenaPosition(Vector2 position)
@@ -5986,7 +6544,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static int GetHeroAutoAttackManaGain(int heroIndex)
     {
-        return GetHeroTextureName(heroIndex) == "hero_dante" ? 10 : 5;
+        return FightAutoAttackManaGain;
     }
 
     private static float GetHeroUltimateDamageMultiplier(int heroIndex)
@@ -6128,6 +6686,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         fill.transform.parent.gameObject.SetActive(isVisible);
     }
 
+    private static Image GetHealthFill(Image[] fills, int index)
+    {
+        return fills != null && index >= 0 && index < fills.Length ? fills[index] : null;
+    }
+
     private static bool HasFrames(Texture2D[] frames)
     {
         return frames != null && frames.Length > 0 && frames[0] != null;
@@ -6221,7 +6784,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             ApplyFightUnitAnimationFrame(fightHeroImages, i, frames, frameSpeed, i * 1.3f, unitAnimationTimer);
             SetFightUnitColor(fightHeroImages, i, alive, tint);
             SetFightUnitScale(fightHeroImages, i, GetHeroFacingScale(i), scaleMultiplier);
-            SetFightUnitPosition(fightHeroRects, fightHeroHpFills, i, position, -128f);
+            SetHealthFillVisible(GetHealthFill(fightHeroHpFills, i), false);
+            SetFightUnitPosition(fightHeroRects, null, i, position, -128f);
         }
 
         for (var i = 0; i < HeroCount; i++)
@@ -6270,6 +6834,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             ApplyFightUnitAnimationFrame(fightEnemyImages, i, frames, frameSpeed, i * 1.7f, unitAnimationTimer);
             SetFightUnitColor(fightEnemyImages, i, alive, tint);
             SetFightUnitScale(fightEnemyImages, i, GetEnemyFacingScale(enemyTextureName), 1f);
+            SetHealthFillVisible(GetHealthFill(fightEnemyHpFills, i), alive && !singleBoss);
             SetFightUnitPosition(fightEnemyRects, fightEnemyHpFills, i, position, singleBoss ? -218f : -122f);
         }
     }
@@ -6322,7 +6887,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        images[index].color = alive ? aliveColor : new Color(0.6f, 0.6f, 0.6f, 0.45f);
+        images[index].gameObject.SetActive(alive);
+        images[index].color = alive ? aliveColor : new Color(0.6f, 0.6f, 0.6f, 0f);
     }
 
     private static void SetFightUnitScale(RawImage[] images, int index, float facingScale, float scaleMultiplier)
@@ -6475,6 +7041,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void RefreshUi()
     {
         EnsureHeroLevels();
+        EnsureHeroEquipment();
+        EnsureAccessories();
         damage = GetTeamDamage();
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
 
@@ -6624,7 +7192,22 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (summonButton != null)
         {
-            summonButton.interactable = gems >= GetSummonCost();
+            summonButton.interactable = gems >= GetSummonPackCost(1);
+        }
+
+        if (summonTenButton != null)
+        {
+            summonTenButton.interactable = gems >= GetSummonPackCost(10);
+        }
+
+        if (summonResultTenButton != null)
+        {
+            summonResultTenButton.interactable = !summonAutoRunning && gems >= GetSummonPackCost(SummonAutoStepCount);
+        }
+
+        if (summonResultMaxButton != null)
+        {
+            summonResultMaxButton.interactable = !summonAutoRunning && gems >= GetSummonPackCost(MaxSummonPullCount);
         }
 
         RefreshGameplayInteractivity();
@@ -6668,7 +7251,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void RefreshGameplayInteractivity()
     {
-        var canInteract = !backendRequestInProgress && !backendLifecycleFlushInProgress && !campaignFightInProgress;
+        var busy = backendRequestInProgress || backendLifecycleFlushInProgress;
+        var canInteract = !busy && !campaignFightInProgress;
+        var canManageHeroes = !busy && !IsDungeonBattleFocusLocked();
+        var canChangeTeam = !busy && (!campaignFightInProgress || battleTargetMode == BattleTargetMode.Campaign);
         var canConfirmFormation = battleTargetMode == BattleTargetMode.Dungeon || selectedCampaignStage == enemyLevel;
 
         SetButtonInteractable(fightButton, canInteract);
@@ -6683,32 +7269,43 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonInteractable(essenceDungeonButton, canInteract);
         SetButtonInteractable(gearDungeonButton, canInteract);
         GateButton(upgradeButton, canInteract);
-        GateButton(heroUpgradeButton, canInteract);
-        GateButton(heroAscendButton, canInteract);
+        GateButton(heroUpgradeButton, canManageHeroes);
+        GateButton(heroAscendButton, canManageHeroes);
         SetButtonInteractable(heroDetailCloseButton, true);
-        SetButtonInteractable(heroDetailPreviousButton, canInteract);
-        SetButtonInteractable(heroDetailNextButton, canInteract);
-        SetButtonsInteractable(heroDetailGearSlotButtons, canInteract);
+        SetButtonInteractable(heroDetailPreviousButton, canManageHeroes);
+        SetButtonInteractable(heroDetailNextButton, canManageHeroes);
+        SetButtonsInteractable(heroDetailGearSlotButtons, canManageHeroes);
         SetButtonInteractable(heroDetailGearListCloseButton, true);
-        GateButton(heroDetailLevelButton, canInteract);
-        SetButtonInteractable(heroDetailEquipGearButton, canInteract);
-        SetButtonInteractable(heroDetailRemoveGearButton, canInteract);
-        GateButton(weaponUpgradeButton, canInteract);
-        GateButton(armorUpgradeButton, canInteract);
-        SetButtonInteractable(accessoryPreviousSlotButton, canInteract);
-        SetButtonInteractable(accessoryNextSlotButton, canInteract);
-        SetButtonInteractable(accessoryPreviousRarityButton, canInteract);
-        SetButtonInteractable(accessoryNextRarityButton, canInteract);
-        GateButton(accessoryEquipButton, canInteract);
-        GateButton(accessoryLevelButton, canInteract);
+        SetButtonInteractable(heroRosterTabButton, canManageHeroes);
+        SetButtonInteractable(heroSetTeamTabButton, canManageHeroes);
+        SetButtonInteractable(heroSortToggleButton, canManageHeroes);
+        SetButtonInteractable(heroAttackTypeFilterButton, canManageHeroes);
+        SetButtonInteractable(heroAutoSetTeamButton, canChangeTeam);
+        SetButtonsInteractable(heroTeamSlotButtons, canChangeTeam);
+        GateButton(heroDetailLevelButton, canManageHeroes);
+        SetButtonInteractable(heroDetailEquipGearButton, canManageHeroes);
+        SetButtonInteractable(heroDetailRemoveGearButton, canManageHeroes);
+        GateButton(weaponUpgradeButton, canManageHeroes);
+        GateButton(armorUpgradeButton, canManageHeroes);
+        SetButtonInteractable(accessoryPreviousSlotButton, canManageHeroes);
+        SetButtonInteractable(accessoryNextSlotButton, canManageHeroes);
+        SetButtonInteractable(accessoryPreviousRarityButton, canManageHeroes);
+        SetButtonInteractable(accessoryNextRarityButton, canManageHeroes);
+        GateButton(accessoryEquipButton, canManageHeroes);
+        GateButton(accessoryLevelButton, canManageHeroes);
         GateButton(accessoryFuseButton, canInteract);
         GateButton(summonButton, canInteract);
+        GateButton(summonTenButton, canInteract);
+        GateButton(summonResultTenButton, canInteract);
+        GateButton(summonResultMaxButton, canInteract);
+        SetButtonInteractable(summonResultCloseButton, true);
+        SetButtonInteractable(summonAutoToggleButton, canInteract || summonAutoRunning);
         SetButtonInteractable(resetButton, canInteract && !backendGameplayEnabled);
         SetButtonInteractable(debugGoldButton, canInteract && !backendGameplayEnabled);
         SetButtonInteractable(debugEssenceButton, canInteract && !backendGameplayEnabled);
         SetButtonInteractable(debugGemsButton, canInteract && !backendGameplayEnabled);
         SetButtonInteractable(debugAccessoryButton, canInteract && !backendGameplayEnabled);
-        SetButtonsInteractable(heroSelectButtons, canInteract);
+        SetButtonsInteractable(heroSelectButtons, canManageHeroes);
         GateButtons(dailyMissionButtons, canInteract);
         GateButtons(battlePassRewardButtons, canInteract);
         RefreshHeroDetailGearList();
@@ -6760,28 +7357,104 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (heroSelectButtons == null || heroSelectButtons.Length == 0)
         {
+            RegisterHeroScreenControls();
             return;
         }
 
-        if (heroSelectButtons.Length > 0 && heroSelectButtons[0] != null) heroSelectButtons[0].onClick.AddListener(SelectHero0);
-        if (heroSelectButtons.Length > 1 && heroSelectButtons[1] != null) heroSelectButtons[1].onClick.AddListener(SelectHero1);
-        if (heroSelectButtons.Length > 2 && heroSelectButtons[2] != null) heroSelectButtons[2].onClick.AddListener(SelectHero2);
-        if (heroSelectButtons.Length > 3 && heroSelectButtons[3] != null) heroSelectButtons[3].onClick.AddListener(SelectHero3);
-        if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.AddListener(SelectHero4);
+        if (heroSelectButtons.Length > 0 && heroSelectButtons[0] != null) heroSelectButtons[0].onClick.AddListener(SelectHeroCard0);
+        if (heroSelectButtons.Length > 1 && heroSelectButtons[1] != null) heroSelectButtons[1].onClick.AddListener(SelectHeroCard1);
+        if (heroSelectButtons.Length > 2 && heroSelectButtons[2] != null) heroSelectButtons[2].onClick.AddListener(SelectHeroCard2);
+        if (heroSelectButtons.Length > 3 && heroSelectButtons[3] != null) heroSelectButtons[3].onClick.AddListener(SelectHeroCard3);
+        if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.AddListener(SelectHeroCard4);
+
+        RegisterHeroScreenControls();
+        RegisterHeroDragTriggers();
     }
 
     private void UnregisterHeroButtons()
     {
         if (heroSelectButtons == null || heroSelectButtons.Length == 0)
         {
+            UnregisterHeroScreenControls();
             return;
         }
 
-        if (heroSelectButtons.Length > 0 && heroSelectButtons[0] != null) heroSelectButtons[0].onClick.RemoveListener(SelectHero0);
-        if (heroSelectButtons.Length > 1 && heroSelectButtons[1] != null) heroSelectButtons[1].onClick.RemoveListener(SelectHero1);
-        if (heroSelectButtons.Length > 2 && heroSelectButtons[2] != null) heroSelectButtons[2].onClick.RemoveListener(SelectHero2);
-        if (heroSelectButtons.Length > 3 && heroSelectButtons[3] != null) heroSelectButtons[3].onClick.RemoveListener(SelectHero3);
-        if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.RemoveListener(SelectHero4);
+        if (heroSelectButtons.Length > 0 && heroSelectButtons[0] != null) heroSelectButtons[0].onClick.RemoveListener(SelectHeroCard0);
+        if (heroSelectButtons.Length > 1 && heroSelectButtons[1] != null) heroSelectButtons[1].onClick.RemoveListener(SelectHeroCard1);
+        if (heroSelectButtons.Length > 2 && heroSelectButtons[2] != null) heroSelectButtons[2].onClick.RemoveListener(SelectHeroCard2);
+        if (heroSelectButtons.Length > 3 && heroSelectButtons[3] != null) heroSelectButtons[3].onClick.RemoveListener(SelectHeroCard3);
+        if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.RemoveListener(SelectHeroCard4);
+
+        UnregisterHeroScreenControls();
+    }
+
+    private void RegisterHeroDragTriggers()
+    {
+        if (heroSelectButtons != null)
+        {
+            for (var i = 0; i < heroSelectButtons.Length; i++)
+            {
+                var button = heroSelectButtons[i];
+                if (button == null)
+                {
+                    continue;
+                }
+
+                var capturedIndex = i;
+                AddEventTrigger(button.gameObject, EventTriggerType.BeginDrag, eventData => BeginHeroCardDrag(capturedIndex));
+                AddEventTrigger(button.gameObject, EventTriggerType.EndDrag, eventData => EndHeroCardDrag(capturedIndex, eventData));
+            }
+        }
+
+        if (heroTeamSlotButtons != null)
+        {
+            for (var i = 0; i < heroTeamSlotButtons.Length; i++)
+            {
+                var button = heroTeamSlotButtons[i];
+                if (button == null)
+                {
+                    continue;
+                }
+
+                var capturedIndex = i;
+                AddEventTrigger(button.gameObject, EventTriggerType.BeginDrag, eventData => BeginHeroTeamSlotDrag(capturedIndex));
+                AddEventTrigger(button.gameObject, EventTriggerType.EndDrag, eventData => EndHeroTeamSlotDrag(capturedIndex, eventData));
+            }
+        }
+    }
+
+    private void RegisterHeroScreenControls()
+    {
+        if (heroRosterTabButton != null) heroRosterTabButton.onClick.AddListener(ShowHeroesRosterTab);
+        if (heroSetTeamTabButton != null) heroSetTeamTabButton.onClick.AddListener(ShowHeroesSetTeamTab);
+        if (heroSortToggleButton != null) heroSortToggleButton.onClick.AddListener(ToggleHeroSortDirection);
+        if (heroAttackTypeFilterButton != null) heroAttackTypeFilterButton.onClick.AddListener(CycleHeroAttackTypeFilter);
+        if (heroAutoSetTeamButton != null) heroAutoSetTeamButton.onClick.AddListener(AutoSetTeamByPower);
+        if (heroTeamSlotButtons != null)
+        {
+            if (heroTeamSlotButtons.Length > 0 && heroTeamSlotButtons[0] != null) heroTeamSlotButtons[0].onClick.AddListener(SelectHeroTeamSlot0);
+            if (heroTeamSlotButtons.Length > 1 && heroTeamSlotButtons[1] != null) heroTeamSlotButtons[1].onClick.AddListener(SelectHeroTeamSlot1);
+            if (heroTeamSlotButtons.Length > 2 && heroTeamSlotButtons[2] != null) heroTeamSlotButtons[2].onClick.AddListener(SelectHeroTeamSlot2);
+            if (heroTeamSlotButtons.Length > 3 && heroTeamSlotButtons[3] != null) heroTeamSlotButtons[3].onClick.AddListener(SelectHeroTeamSlot3);
+            if (heroTeamSlotButtons.Length > 4 && heroTeamSlotButtons[4] != null) heroTeamSlotButtons[4].onClick.AddListener(SelectHeroTeamSlot4);
+        }
+    }
+
+    private void UnregisterHeroScreenControls()
+    {
+        if (heroRosterTabButton != null) heroRosterTabButton.onClick.RemoveListener(ShowHeroesRosterTab);
+        if (heroSetTeamTabButton != null) heroSetTeamTabButton.onClick.RemoveListener(ShowHeroesSetTeamTab);
+        if (heroSortToggleButton != null) heroSortToggleButton.onClick.RemoveListener(ToggleHeroSortDirection);
+        if (heroAttackTypeFilterButton != null) heroAttackTypeFilterButton.onClick.RemoveListener(CycleHeroAttackTypeFilter);
+        if (heroAutoSetTeamButton != null) heroAutoSetTeamButton.onClick.RemoveListener(AutoSetTeamByPower);
+        if (heroTeamSlotButtons != null)
+        {
+            if (heroTeamSlotButtons.Length > 0 && heroTeamSlotButtons[0] != null) heroTeamSlotButtons[0].onClick.RemoveListener(SelectHeroTeamSlot0);
+            if (heroTeamSlotButtons.Length > 1 && heroTeamSlotButtons[1] != null) heroTeamSlotButtons[1].onClick.RemoveListener(SelectHeroTeamSlot1);
+            if (heroTeamSlotButtons.Length > 2 && heroTeamSlotButtons[2] != null) heroTeamSlotButtons[2].onClick.RemoveListener(SelectHeroTeamSlot2);
+            if (heroTeamSlotButtons.Length > 3 && heroTeamSlotButtons[3] != null) heroTeamSlotButtons[3].onClick.RemoveListener(SelectHeroTeamSlot3);
+            if (heroTeamSlotButtons.Length > 4 && heroTeamSlotButtons[4] != null) heroTeamSlotButtons[4].onClick.RemoveListener(SelectHeroTeamSlot4);
+        }
     }
 
     private void RegisterHeroDetailGearButtons()
@@ -6890,15 +7563,34 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (battlePassRewardButtons.Length > 4 && battlePassRewardButtons[4] != null) battlePassRewardButtons[4].onClick.RemoveListener(ClaimBattlePassReward5);
     }
 
-    private void SelectHero0() => SelectHero(0);
-    private void SelectHero1() => SelectHero(1);
-    private void SelectHero2() => SelectHero(2);
-    private void SelectHero3() => SelectHero(3);
-    private void SelectHero4() => SelectHero(4);
+    private void SelectHeroCard0() => SelectHeroCard(0);
+    private void SelectHeroCard1() => SelectHeroCard(1);
+    private void SelectHeroCard2() => SelectHeroCard(2);
+    private void SelectHeroCard3() => SelectHeroCard(3);
+    private void SelectHeroCard4() => SelectHeroCard(4);
+
+    private void SelectHeroCard(int cardIndex)
+    {
+        var heroIndex = GetHeroCardDisplayIndex(cardIndex);
+        if (heroIndex < 0)
+        {
+            return;
+        }
+
+        if (activeScreen == AppScreen.Heroes && heroesTabMode == HeroesTabMode.SetTeam)
+        {
+            AssignHeroToSelectedTeamSlot(heroIndex);
+            return;
+        }
+
+        SelectHero(heroIndex);
+    }
 
     private void SelectHero(int index)
     {
         selectedHeroIndex = Mathf.Clamp(index, 0, HeroCount - 1);
+        SyncSelectedHeroEquipmentMirrors();
+        SyncSelectedHeroAccessoryMirrors();
         SaveProgress();
         RefreshUi();
 
@@ -6906,6 +7598,333 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             ShowHeroDetail(selectedHeroIndex);
         }
+    }
+
+    private void ShowHeroesRosterTab()
+    {
+        heroesTabMode = HeroesTabMode.Hero;
+        selectedHeroTeamSlotIndex = -1;
+        RefreshHeroUi();
+        RefreshGameplayInteractivity();
+    }
+
+    private void ShowHeroesSetTeamTab()
+    {
+        heroesTabMode = HeroesTabMode.SetTeam;
+        selectedHeroTeamSlotIndex = -1;
+        HideHeroDetail();
+        RefreshHeroUi();
+        RefreshGameplayInteractivity();
+    }
+
+    private void ToggleHeroSortDirection()
+    {
+        heroSortDirection = heroSortDirection == HeroSortDirection.Descending
+            ? HeroSortDirection.Ascending
+            : HeroSortDirection.Descending;
+        RefreshHeroUi();
+    }
+
+    private void CycleHeroAttackTypeFilter()
+    {
+        heroAttackTypeFilter = heroAttackTypeFilter == HeroAttackTypeFilter.All
+            ? HeroAttackTypeFilter.Melee
+            : heroAttackTypeFilter == HeroAttackTypeFilter.Melee
+                ? HeroAttackTypeFilter.Ranged
+                : HeroAttackTypeFilter.All;
+        RefreshHeroUi();
+    }
+
+    private void AutoSetTeamByPower()
+    {
+        if (!CanChangeHeroTeamNow())
+        {
+            return;
+        }
+
+        EnsureFormationOrder();
+        var indices = CreateAllHeroIndices();
+        SortHeroIndicesByPower(indices, descending: true);
+        var changed = false;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            changed |= formationSlotHeroIndices[i] != indices[i];
+            formationSlotHeroIndices[i] = indices[i];
+        }
+
+        selectedHeroTeamSlotIndex = -1;
+        if (changed)
+        {
+            CancelCampaignFightForFormationChange();
+        }
+
+        SaveProgress();
+        RefreshUi();
+    }
+
+    private bool CanChangeHeroTeamNow()
+    {
+        return !backendRequestInProgress && !backendLifecycleFlushInProgress && (!campaignFightInProgress || battleTargetMode == BattleTargetMode.Campaign);
+    }
+
+    private void CancelCampaignFightForFormationChange()
+    {
+        if (!campaignFightInProgress || battleTargetMode != BattleTargetMode.Campaign)
+        {
+            return;
+        }
+
+        fightCancelRequested = true;
+        if (activeFightCoroutine != null)
+        {
+            StopCoroutine(activeFightCoroutine);
+            activeFightCoroutine = null;
+            fightCancelRequested = false;
+        }
+
+        campaignFightInProgress = false;
+        autoContinueFightsEnabled = false;
+        fightAutoSkillsEnabled = false;
+        if (autoContinueFightCoroutine != null)
+        {
+            StopCoroutine(autoContinueFightCoroutine);
+            autoContinueFightCoroutine = null;
+        }
+
+        SetProjectilesVisible(fightHeroProjectileImages, false);
+        SetProjectilesVisible(fightEnemyProjectileImages, false);
+        SetBattleFlowMode(BattleFlowMode.Formation);
+        SetDungeonResult("Fight cancelled because the team formation changed.");
+        RefreshFormationAutoContinueToggle();
+        RefreshFightAutoSkillButton();
+    }
+
+    private void SelectHeroTeamSlot0() => SelectHeroTeamSlot(0);
+    private void SelectHeroTeamSlot1() => SelectHeroTeamSlot(1);
+    private void SelectHeroTeamSlot2() => SelectHeroTeamSlot(2);
+    private void SelectHeroTeamSlot3() => SelectHeroTeamSlot(3);
+    private void SelectHeroTeamSlot4() => SelectHeroTeamSlot(4);
+
+    private void SelectHeroTeamSlot(int slotIndex)
+    {
+        if (!CanChangeHeroTeamNow())
+        {
+            return;
+        }
+
+        EnsureFormationOrder();
+        slotIndex = Mathf.Clamp(slotIndex, 0, HeroCount - 1);
+        if (selectedHeroTeamSlotIndex < 0)
+        {
+            selectedHeroTeamSlotIndex = slotIndex;
+        }
+        else if (selectedHeroTeamSlotIndex == slotIndex)
+        {
+            selectedHeroTeamSlotIndex = -1;
+        }
+        else
+        {
+            SwapTeamSlots(selectedHeroTeamSlotIndex, slotIndex);
+            selectedHeroTeamSlotIndex = -1;
+            CancelCampaignFightForFormationChange();
+            SaveProgress();
+        }
+
+        RefreshHeroUi();
+    }
+
+    private void AssignHeroToSelectedTeamSlot(int heroIndex)
+    {
+        if (!CanChangeHeroTeamNow())
+        {
+            return;
+        }
+
+        EnsureFormationOrder();
+        heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
+        selectedHeroIndex = heroIndex;
+        SyncSelectedHeroEquipmentMirrors();
+        SyncSelectedHeroAccessoryMirrors();
+
+        var currentSlot = FindFormationSlotForHero(heroIndex);
+        if (selectedHeroTeamSlotIndex < 0)
+        {
+            selectedHeroTeamSlotIndex = currentSlot >= 0 ? currentSlot : 0;
+            RefreshHeroUi();
+            return;
+        }
+
+        var targetSlot = Mathf.Clamp(selectedHeroTeamSlotIndex, 0, HeroCount - 1);
+        if (currentSlot == targetSlot)
+        {
+            selectedHeroTeamSlotIndex = -1;
+            RefreshHeroUi();
+            return;
+        }
+
+        if (currentSlot >= 0)
+        {
+            SwapTeamSlots(targetSlot, currentSlot);
+        }
+        else
+        {
+            formationSlotHeroIndices[targetSlot] = heroIndex;
+        }
+
+        selectedHeroTeamSlotIndex = -1;
+        CancelCampaignFightForFormationChange();
+        SaveProgress();
+        RefreshUi();
+    }
+
+    private void SwapTeamSlots(int firstSlot, int secondSlot)
+    {
+        EnsureFormationOrder();
+        firstSlot = Mathf.Clamp(firstSlot, 0, HeroCount - 1);
+        secondSlot = Mathf.Clamp(secondSlot, 0, HeroCount - 1);
+        var firstHero = formationSlotHeroIndices[firstSlot];
+        formationSlotHeroIndices[firstSlot] = formationSlotHeroIndices[secondSlot];
+        formationSlotHeroIndices[secondSlot] = firstHero;
+    }
+
+    private void BeginHeroCardDrag(int cardIndex)
+    {
+        draggedHeroCardIndex = cardIndex;
+    }
+
+    private void EndHeroCardDrag(int cardIndex, BaseEventData eventData)
+    {
+        if (activeScreen != AppScreen.Heroes)
+        {
+            draggedHeroCardIndex = -1;
+            return;
+        }
+
+        var targetSlot = GetPointerHeroTeamSlot(eventData);
+        if (targetSlot >= 0)
+        {
+            selectedHeroTeamSlotIndex = targetSlot;
+            var heroIndex = GetHeroCardDisplayIndex(draggedHeroCardIndex >= 0 ? draggedHeroCardIndex : cardIndex);
+            if (heroIndex >= 0)
+            {
+                heroesTabMode = HeroesTabMode.SetTeam;
+                AssignHeroToSelectedTeamSlot(heroIndex);
+            }
+        }
+
+        draggedHeroCardIndex = -1;
+    }
+
+    private void BeginHeroTeamSlotDrag(int slotIndex)
+    {
+        draggedHeroTeamSlotIndex = Mathf.Clamp(slotIndex, 0, HeroCount - 1);
+    }
+
+    private void EndHeroTeamSlotDrag(int slotIndex, BaseEventData eventData)
+    {
+        if (activeScreen != AppScreen.Heroes || !CanChangeHeroTeamNow())
+        {
+            draggedHeroTeamSlotIndex = -1;
+            return;
+        }
+
+        var targetSlot = GetPointerHeroTeamSlot(eventData);
+        var sourceSlot = draggedHeroTeamSlotIndex >= 0 ? draggedHeroTeamSlotIndex : Mathf.Clamp(slotIndex, 0, HeroCount - 1);
+        if (targetSlot >= 0 && targetSlot != sourceSlot)
+        {
+            heroesTabMode = HeroesTabMode.SetTeam;
+            SwapTeamSlots(sourceSlot, targetSlot);
+            selectedHeroTeamSlotIndex = -1;
+            CancelCampaignFightForFormationChange();
+            SaveProgress();
+            RefreshUi();
+        }
+
+        draggedHeroTeamSlotIndex = -1;
+    }
+
+    private int GetPointerHeroTeamSlot(BaseEventData eventData)
+    {
+        var pointerEvent = eventData as PointerEventData;
+        if (pointerEvent == null || heroTeamSlotFrames == null)
+        {
+            return -1;
+        }
+
+        for (var slotIndex = 0; slotIndex < heroTeamSlotFrames.Length; slotIndex++)
+        {
+            var frame = heroTeamSlotFrames[slotIndex];
+            if (frame == null)
+            {
+                continue;
+            }
+
+            var rect = frame.GetComponent<RectTransform>();
+            if (rect != null && RectTransformUtility.RectangleContainsScreenPoint(rect, pointerEvent.position, pointerEvent.pressEventCamera))
+            {
+                return slotIndex;
+            }
+        }
+
+        return -1;
+    }
+
+    private static void AddEventTrigger(GameObject target, EventTriggerType triggerType, Action<BaseEventData> callback)
+    {
+        if (target == null || callback == null)
+        {
+            return;
+        }
+
+        var trigger = target.GetComponent<EventTrigger>();
+        if (trigger == null)
+        {
+            trigger = target.AddComponent<EventTrigger>();
+        }
+
+        var entry = new EventTrigger.Entry { eventID = triggerType };
+        entry.callback.AddListener(eventData => callback(eventData));
+        trigger.triggers.Add(entry);
+    }
+
+    private void RegisterSummonCarouselButtons()
+    {
+        if (summonCarouselPreviousButton != null) summonCarouselPreviousButton.onClick.AddListener(ShowPreviousSummonBanner);
+        if (summonCarouselNextButton != null) summonCarouselNextButton.onClick.AddListener(ShowNextSummonBanner);
+        if (summonCarouselButtons != null)
+        {
+            if (summonCarouselButtons.Length > 0 && summonCarouselButtons[0] != null) summonCarouselButtons[0].onClick.AddListener(SelectSummonCarouselCard0);
+            if (summonCarouselButtons.Length > 1 && summonCarouselButtons[1] != null) summonCarouselButtons[1].onClick.AddListener(SelectSummonCarouselCard1);
+            if (summonCarouselButtons.Length > 2 && summonCarouselButtons[2] != null) summonCarouselButtons[2].onClick.AddListener(SelectSummonCarouselCard2);
+        }
+    }
+
+    private void UnregisterSummonCarouselButtons()
+    {
+        if (summonCarouselPreviousButton != null) summonCarouselPreviousButton.onClick.RemoveListener(ShowPreviousSummonBanner);
+        if (summonCarouselNextButton != null) summonCarouselNextButton.onClick.RemoveListener(ShowNextSummonBanner);
+        if (summonCarouselButtons != null)
+        {
+            if (summonCarouselButtons.Length > 0 && summonCarouselButtons[0] != null) summonCarouselButtons[0].onClick.RemoveListener(SelectSummonCarouselCard0);
+            if (summonCarouselButtons.Length > 1 && summonCarouselButtons[1] != null) summonCarouselButtons[1].onClick.RemoveListener(SelectSummonCarouselCard1);
+            if (summonCarouselButtons.Length > 2 && summonCarouselButtons[2] != null) summonCarouselButtons[2].onClick.RemoveListener(SelectSummonCarouselCard2);
+        }
+    }
+
+    private void RegisterSummonResultButtons()
+    {
+        if (summonResultCloseButton != null) summonResultCloseButton.onClick.AddListener(HideSummonResultPopup);
+        if (summonResultTenButton != null) summonResultTenButton.onClick.AddListener(SummonResultTen);
+        if (summonResultMaxButton != null) summonResultMaxButton.onClick.AddListener(SummonResultMax);
+        if (summonAutoToggleButton != null) summonAutoToggleButton.onClick.AddListener(ToggleSummonAuto);
+    }
+
+    private void UnregisterSummonResultButtons()
+    {
+        if (summonResultCloseButton != null) summonResultCloseButton.onClick.RemoveListener(HideSummonResultPopup);
+        if (summonResultTenButton != null) summonResultTenButton.onClick.RemoveListener(SummonResultTen);
+        if (summonResultMaxButton != null) summonResultMaxButton.onClick.RemoveListener(SummonResultMax);
+        if (summonAutoToggleButton != null) summonAutoToggleButton.onClick.RemoveListener(ToggleSummonAuto);
     }
 
     private void RegisterNavigation()
@@ -7254,6 +8273,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         ApplyBattleFlowVisibility();
+        ApplyNavigationChromeVisibility();
     }
 
     private void SetBattleFlowMode(BattleFlowMode mode)
@@ -7293,6 +8313,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (fightSpeedButton != null)
         {
             fightSpeedButton.gameObject.SetActive(battleVisible && battleFlowMode == BattleFlowMode.Fight);
+        }
+
+        ApplyNavigationChromeVisibility();
+    }
+
+    private void ApplyNavigationChromeVisibility()
+    {
+        var hideChrome = activeScreen == AppScreen.Battle && battleTargetMode == BattleTargetMode.Dungeon;
+        if (topBarRoot != null)
+        {
+            topBarRoot.gameObject.SetActive(!hideChrome);
+        }
+
+        if (bottomNavRoot != null)
+        {
+            bottomNavRoot.gameObject.SetActive(!hideChrome);
+        }
+
+        if (artBottomNavRoot != null)
+        {
+            artBottomNavRoot.gameObject.SetActive(!hideChrome);
         }
     }
 
@@ -7342,6 +8383,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureFormationOrder();
+        RebuildHeroCardDisplayIndices();
 
         if (teamSlotTexts != null)
         {
@@ -7357,24 +8400,371 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (selectedHeroText != null)
         {
             var hero = GetHeroDefinition(selectedHeroIndex);
-            selectedHeroText.text = $"{hero.name}  Lv. {FormatCappedValue(heroLevels[selectedHeroIndex], GetHeroLevelCap(selectedHeroIndex))}  Asc. {FormatCappedValue(heroAscensions[selectedHeroIndex], GetHeroAscensionCap(selectedHeroIndex))}\n{hero.rarityName} {hero.roleName}  Power {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroAttack(selectedHeroIndex)}  HP {GetHeroHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
+            selectedHeroText.text = $"{hero.name}  Lv. {FormatCappedValue(heroLevels[selectedHeroIndex], GetHeroLevelCap(selectedHeroIndex))}  Asc. {FormatCappedValue(heroAscensions[selectedHeroIndex], GetHeroAscensionCap(selectedHeroIndex))}\n{hero.rarityName} {GetHeroAttackTypeLabel(selectedHeroIndex)}  Power {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroEffectiveAttack(selectedHeroIndex)}  HP {GetHeroCombatMaxHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
         }
 
         if (heroCardTexts != null)
         {
-            for (var i = 0; i < Mathf.Min(heroCardTexts.Length, HeroCount); i++)
+            for (var i = 0; i < heroCardTexts.Length; i++)
             {
+                var heroIndex = GetHeroCardDisplayIndex(i);
                 if (heroCardTexts[i] != null)
                 {
-                    var hero = GetHeroDefinition(i);
-                    var marker = i == selectedHeroIndex ? "> " : string.Empty;
-                    heroCardTexts[i].text = $"{marker}{hero.name}\nLv {FormatCappedValue(heroLevels[i], GetHeroLevelCap(i))}  A{FormatCappedValue(heroAscensions[i], GetHeroAscensionCap(i))}\nPower {GetHeroPower(i)}";
+                    heroCardTexts[i].text = string.Empty;
+                    heroCardTexts[i].gameObject.SetActive(false);
+                }
+
+                RefreshHeroRosterCardText(i, heroIndex);
+            }
+        }
+        else if (heroCardLevelTexts != null)
+        {
+            for (var i = 0; i < heroCardLevelTexts.Length; i++)
+            {
+                RefreshHeroRosterCardText(i, GetHeroCardDisplayIndex(i));
+            }
+        }
+
+        RefreshHeroesTabModeUi();
+        RefreshHeroTeamUi();
+        RefreshHeroCardVisuals();
+        RefreshHeroDetailUi();
+    }
+
+    private void RefreshHeroRosterCardText(int cardIndex, int heroIndex)
+    {
+        var visible = heroIndex >= 0;
+        if (heroCardLevelTexts != null && cardIndex < heroCardLevelTexts.Length && heroCardLevelTexts[cardIndex] != null)
+        {
+            heroCardLevelTexts[cardIndex].gameObject.SetActive(visible);
+            heroCardLevelTexts[cardIndex].text = visible ? $"Lv. {FormatCappedValue(heroLevels[heroIndex], GetHeroLevelCap(heroIndex))}" : string.Empty;
+        }
+
+        if (heroCardStarTexts != null && cardIndex < heroCardStarTexts.Length && heroCardStarTexts[cardIndex] != null)
+        {
+            heroCardStarTexts[cardIndex].gameObject.SetActive(visible);
+            heroCardStarTexts[cardIndex].text = visible ? GetHeroRarityStars(heroIndex) : string.Empty;
+        }
+
+        if (heroCardRoleBadgeTexts != null && cardIndex < heroCardRoleBadgeTexts.Length && heroCardRoleBadgeTexts[cardIndex] != null)
+        {
+            heroCardRoleBadgeTexts[cardIndex].transform.parent.gameObject.SetActive(visible);
+            heroCardRoleBadgeTexts[cardIndex].text = visible ? (IsHeroRangedCombatant(heroIndex) ? "R" : "M") : string.Empty;
+        }
+
+        if (heroCardTeamBadgeTexts != null && cardIndex < heroCardTeamBadgeTexts.Length && heroCardTeamBadgeTexts[cardIndex] != null)
+        {
+            heroCardTeamBadgeTexts[cardIndex].transform.parent.gameObject.SetActive(visible && FindFormationSlotForHero(heroIndex) >= 0);
+        }
+
+        if (heroCardShardTexts != null && cardIndex < heroCardShardTexts.Length && heroCardShardTexts[cardIndex] != null)
+        {
+            var ascensionNeed = visible ? Mathf.Max(1, GetHeroAscensionCost(heroIndex)) : 1;
+            heroCardShardTexts[cardIndex].gameObject.SetActive(visible);
+            heroCardShardTexts[cardIndex].text = visible ? $"{heroShards[heroIndex]}/{ascensionNeed}" : string.Empty;
+            if (heroCardShardFills != null && cardIndex < heroCardShardFills.Length && heroCardShardFills[cardIndex] != null)
+            {
+                SetRuntimeFillPercent(heroCardShardFills[cardIndex], visible ? heroShards[heroIndex] / (float)ascensionNeed : 0f);
+                heroCardShardFills[cardIndex].transform.parent.gameObject.SetActive(visible);
+            }
+        }
+        else if (heroCardShardFills != null && cardIndex < heroCardShardFills.Length && heroCardShardFills[cardIndex] != null)
+        {
+            heroCardShardFills[cardIndex].transform.parent.gameObject.SetActive(visible);
+            if (!visible)
+            {
+                SetRuntimeFillPercent(heroCardShardFills[cardIndex], 0f);
+            }
+        }
+    }
+
+    private void RefreshHeroesTabModeUi()
+    {
+        var isSetTeam = heroesTabMode == HeroesTabMode.SetTeam;
+        LayoutHeroCards();
+        SetComponentActive(heroTeamRoot, isSetTeam);
+        SetComponentActive(heroAutoSetTeamButton, isSetTeam);
+        SetComponentActive(heroTeamHintText, isSetTeam);
+        HideLegacyHeroesOverviewElements();
+        SetComponentActive(heroSortToggleButton, !isSetTeam);
+        SetComponentActive(heroAttackTypeFilterButton, !isSetTeam);
+        SetComponentActive(heroRosterFilterRoot, !isSetTeam);
+
+        SetHeroSubTabVisual(heroRosterTabButton, heroRosterTabText, !isSetTeam);
+        SetHeroSubTabVisual(heroSetTeamTabButton, heroSetTeamTabText, isSetTeam);
+
+        if (heroSortToggleText != null)
+        {
+            heroSortToggleText.text = heroSortDirection == HeroSortDirection.Descending ? "Desc" : "Asc";
+        }
+
+        if (heroAttackTypeFilterText != null)
+        {
+            heroAttackTypeFilterText.text = heroAttackTypeFilter == HeroAttackTypeFilter.All
+                ? "Alle"
+                : heroAttackTypeFilter == HeroAttackTypeFilter.Melee ? "Melee" : "Ranged";
+        }
+
+        if (heroRosterCountText != null)
+        {
+            heroRosterCountText.text = $"{CountVisibleHeroCards()}/{HeroCount}";
+        }
+
+        if (heroTeamHintText != null)
+        {
+            heroTeamHintText.text = selectedHeroTeamSlotIndex >= 0
+                ? "Tap a hero card or another slot to place/swap."
+                : "Tap a slot, then choose a hero. Auto-Set uses highest power.";
+        }
+    }
+
+    private void HideLegacyHeroesOverviewElements()
+    {
+        if (heroesPanel != null)
+        {
+            HideHeroesPanelChild("Hero Header");
+            HideHeroesPanelChild("Selected Hero Card");
+        }
+
+        SetComponentActive(selectedHeroText, false);
+        SetComponentActive(heroUpgradeButton, false);
+        SetComponentActive(heroAscendButton, false);
+        if (heroEssenceAmountText != null && heroEssenceAmountText.transform.parent != null)
+        {
+            heroEssenceAmountText.transform.parent.gameObject.SetActive(false);
+        }
+    }
+
+    private void HideHeroesPanelChild(string childName)
+    {
+        if (heroesPanel == null)
+        {
+            return;
+        }
+
+        var child = heroesPanel.transform.Find(childName);
+        if (child != null)
+        {
+            child.gameObject.SetActive(false);
+        }
+    }
+
+    private void SetHeroSubTabVisual(Button button, TMP_Text text, bool active)
+    {
+        if (button != null)
+        {
+            var image = button.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = active ? new Color(0.1f, 0.56f, 0.62f, 0.96f) : new Color(0.18f, 0.12f, 0.07f, 0.88f);
+            }
+        }
+
+        if (text != null)
+        {
+            text.color = active ? new Color(1f, 0.94f, 0.68f) : new Color(0.84f, 0.76f, 0.62f);
+        }
+    }
+
+    private void RefreshHeroTeamUi()
+    {
+        if (heroTeamRoot == null)
+        {
+            return;
+        }
+
+        EnsureFormationOrder();
+        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        {
+            var heroIndex = formationSlotHeroIndices[Mathf.Clamp(slotIndex, 0, formationSlotHeroIndices.Length - 1)];
+            heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
+            var hero = GetHeroDefinition(heroIndex);
+            if (heroTeamSlotPortraits != null && slotIndex < heroTeamSlotPortraits.Length && heroTeamSlotPortraits[slotIndex] != null)
+            {
+                heroTeamSlotPortraits[slotIndex].texture = LoadCombatTexture(GetHeroTextureName(heroIndex), "idle", 0, GetHeroTextureName(heroIndex));
+                heroTeamSlotPortraits[slotIndex].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
+                heroTeamSlotPortraits[slotIndex].color = Color.white;
+            }
+
+            if (heroTeamSlotTexts != null && slotIndex < heroTeamSlotTexts.Length && heroTeamSlotTexts[slotIndex] != null)
+            {
+                heroTeamSlotTexts[slotIndex].text = $"{slotIndex + 1}. {hero.name}\nPower {GetHeroPower(heroIndex)}";
+            }
+
+            if (heroTeamSlotFrames != null && slotIndex < heroTeamSlotFrames.Length && heroTeamSlotFrames[slotIndex] != null)
+            {
+                heroTeamSlotFrames[slotIndex].color = selectedHeroTeamSlotIndex == slotIndex
+                    ? new Color(1f, 0.74f, 0.18f, 0.96f)
+                    : new Color(0.1f, 0.14f, 0.19f, 0.82f);
+            }
+        }
+    }
+
+    private void RebuildHeroCardDisplayIndices()
+    {
+        var filtered = CreateFilledIntArray(HeroCount, -1);
+        var count = 0;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            if (!DoesHeroMatchAttackTypeFilter(i))
+            {
+                continue;
+            }
+
+            filtered[count] = i;
+            count++;
+        }
+
+        for (var i = 0; i < count - 1; i++)
+        {
+            for (var j = i + 1; j < count; j++)
+            {
+                if (CompareHeroCardOrder(filtered[i], filtered[j]) > 0)
+                {
+                    var temp = filtered[i];
+                    filtered[i] = filtered[j];
+                    filtered[j] = temp;
                 }
             }
         }
 
-        RefreshHeroCardVisuals();
-        RefreshHeroDetailUi();
+        heroCardDisplayIndices = filtered;
+    }
+
+    private int CountVisibleHeroCards()
+    {
+        if (heroCardDisplayIndices == null || heroCardDisplayIndices.Length != HeroCount)
+        {
+            RebuildHeroCardDisplayIndices();
+        }
+
+        var count = 0;
+        for (var i = 0; i < heroCardDisplayIndices.Length; i++)
+        {
+            if (heroCardDisplayIndices[i] >= 0)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private int GetHeroCardDisplayIndex(int cardIndex)
+    {
+        if (heroCardDisplayIndices == null || heroCardDisplayIndices.Length != HeroCount)
+        {
+            RebuildHeroCardDisplayIndices();
+        }
+
+        return cardIndex >= 0 && cardIndex < heroCardDisplayIndices.Length ? heroCardDisplayIndices[cardIndex] : -1;
+    }
+
+    private int CompareHeroCardOrder(int firstHeroIndex, int secondHeroIndex)
+    {
+        var firstTeamSlot = FindFormationSlotForHero(firstHeroIndex);
+        var secondTeamSlot = FindFormationSlotForHero(secondHeroIndex);
+        var firstInTeam = firstTeamSlot >= 0;
+        var secondInTeam = secondTeamSlot >= 0;
+        if (firstInTeam != secondInTeam)
+        {
+            return firstInTeam ? -1 : 1;
+        }
+
+        var rarityCompare = GetHeroRarityRank(firstHeroIndex).CompareTo(GetHeroRarityRank(secondHeroIndex));
+        if (rarityCompare != 0)
+        {
+            return heroSortDirection == HeroSortDirection.Descending ? -rarityCompare : rarityCompare;
+        }
+
+        var powerCompare = GetHeroPower(firstHeroIndex).CompareTo(GetHeroPower(secondHeroIndex));
+        if (powerCompare != 0)
+        {
+            return heroSortDirection == HeroSortDirection.Descending ? -powerCompare : powerCompare;
+        }
+
+        return string.Compare(GetHeroDefinition(firstHeroIndex).name, GetHeroDefinition(secondHeroIndex).name, StringComparison.Ordinal);
+    }
+
+    private bool DoesHeroMatchAttackTypeFilter(int heroIndex)
+    {
+        if (heroesTabMode == HeroesTabMode.SetTeam)
+        {
+            return true;
+        }
+
+        if (heroAttackTypeFilter == HeroAttackTypeFilter.All)
+        {
+            return true;
+        }
+
+        var isRanged = IsHeroRangedCombatant(heroIndex);
+        return heroAttackTypeFilter == HeroAttackTypeFilter.Ranged ? isRanged : !isRanged;
+    }
+
+    private static string GetHeroAttackTypeLabel(int heroIndex)
+    {
+        return IsHeroRangedCombatant(heroIndex) ? "Ranged" : "Melee";
+    }
+
+    private static int GetHeroRarityRank(int heroIndex)
+    {
+        var rarityId = GetHeroDefinition(heroIndex).rarityId;
+        if (rarityId == LegendaryRarityId)
+        {
+            return 3;
+        }
+
+        if (rarityId == EpicRarityId)
+        {
+            return 2;
+        }
+
+        return 1;
+    }
+
+    private static string GetHeroRarityStars(int heroIndex)
+    {
+        var rank = GetHeroRarityRank(heroIndex);
+        if (rank >= 3)
+        {
+            return "*****";
+        }
+
+        return rank == 2 ? "****" : "***";
+    }
+
+    private int[] CreateAllHeroIndices()
+    {
+        var indices = new int[HeroCount];
+        for (var i = 0; i < HeroCount; i++)
+        {
+            indices[i] = i;
+        }
+
+        return indices;
+    }
+
+    private void SortHeroIndicesByPower(int[] indices, bool descending)
+    {
+        if (indices == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < indices.Length - 1; i++)
+        {
+            for (var j = i + 1; j < indices.Length; j++)
+            {
+                var compare = GetHeroPower(indices[i]).CompareTo(GetHeroPower(indices[j]));
+                if (descending ? compare < 0 : compare > 0)
+                {
+                    var temp = indices[i];
+                    indices[i] = indices[j];
+                    indices[j] = temp;
+                }
+            }
+        }
     }
 
     private void RefreshNextGoalUi()
@@ -7436,26 +8826,29 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void RefreshEquipmentUi()
     {
-        weaponLevel = Mathf.Max(StarterEquipmentLevel, weaponLevel);
-        armorLevel = Mathf.Max(StarterEquipmentLevel, armorLevel);
-        var displayedWeaponLevel = GetEquipmentDisplayLevel(WeaponTrack, weaponLevel);
-        var displayedArmorLevel = GetEquipmentDisplayLevel(ArmorTrack, armorLevel);
+        EnsureHeroEquipment();
+        var heroIndex = GetSelectedHeroIndex();
+        var hero = GetHeroDefinition(heroIndex);
+        var heroWeaponLevel = GetHeroEquipmentLevel(heroIndex, isWeapon: true);
+        var heroArmorLevel = GetHeroEquipmentLevel(heroIndex, isWeapon: false);
+        var displayedWeaponLevel = GetEquipmentDisplayLevel(WeaponTrack, heroWeaponLevel);
+        var displayedArmorLevel = GetEquipmentDisplayLevel(ArmorTrack, heroArmorLevel);
 
         if (equipmentSummaryText != null)
         {
-            equipmentSummaryText.text = $"Equipment\n{WeaponTrack.name} Lv. {FormatCappedValue(displayedWeaponLevel, GetEquipmentLevelCap(WeaponTrack))}  +{GetEquipmentAttackBonus()} {WeaponTrack.statLabel}\n{ArmorTrack.name} Lv. {FormatCappedValue(displayedArmorLevel, GetEquipmentLevelCap(ArmorTrack))}  +{GetEquipmentHealthBonus()} {ArmorTrack.statLabel}";
+            equipmentSummaryText.text = $"{hero.name} Equipment\n{WeaponTrack.name} Lv. {FormatCappedValue(displayedWeaponLevel, GetEquipmentLevelCap(WeaponTrack))}  +{GetHeroEquipmentAttackBonus(heroIndex)} {WeaponTrack.statLabel}\n{ArmorTrack.name} Lv. {FormatCappedValue(displayedArmorLevel, GetEquipmentLevelCap(ArmorTrack))}  +{GetHeroEquipmentHealthBonus(heroIndex)} {ArmorTrack.statLabel}";
         }
 
         if (weaponUpgradeCostText != null)
         {
-            weaponUpgradeCostText.text = IsEquipmentLevelMax(WeaponTrack, weaponLevel)
+            weaponUpgradeCostText.text = IsEquipmentLevelMax(WeaponTrack, heroWeaponLevel)
                 ? $"{WeaponTrack.name}\nMax Lv. {GetEquipmentLevelCap(WeaponTrack)}"
                 : $"{WeaponTrack.name} +1\n{GetWeaponUpgradeCost()} Gold";
         }
 
         if (armorUpgradeCostText != null)
         {
-            armorUpgradeCostText.text = IsEquipmentLevelMax(ArmorTrack, armorLevel)
+            armorUpgradeCostText.text = IsEquipmentLevelMax(ArmorTrack, heroArmorLevel)
                 ? $"{ArmorTrack.name}\nMax Lv. {GetEquipmentLevelCap(ArmorTrack)}"
                 : $"{ArmorTrack.name} +1\n{GetArmorUpgradeCost()} Gold";
         }
@@ -7466,10 +8859,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAccessories();
         var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
+        var heroIndex = GetSelectedHeroIndex();
 
         if (accessorySummaryText != null)
         {
-            accessorySummaryText.text = $"Accessories\nATK +{GetAccessoryAttackBonus()}  HP +{GetAccessoryHealthBonus()}\nGear Dungeon Floor {gearDungeonFloor}";
+            accessorySummaryText.text = $"{GetHeroDefinition(heroIndex).name} Accessories\nATK +{GetHeroAccessoryAttackBonus(heroIndex)}  HP +{GetHeroAccessoryHealthBonus(heroIndex)}\nGear Dungeon Floor {gearDungeonFloor}";
         }
 
         if (accessorySelectedText != null)
@@ -7490,7 +8884,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (accessoryLevelText != null)
         {
-            var equippedRarity = equippedAccessoryRarities[slot];
+            var equippedRarity = GetHeroEquippedAccessoryRarity(heroIndex, slot);
             accessoryLevelText.text = equippedRarity < 0
                 ? "Level Equipped\nNo item"
                 : $"Level Equipped\n{GetAccessoryLevelCost(slot)} Gold";
@@ -7512,12 +8906,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAccessories();
         var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
-        var equippedRarity = equippedAccessoryRarities[slot];
-        var canLevel = equippedRarity >= 0 && equippedAccessoryLevels[slot] < GetAccessoryMaxLevel(equippedRarity) && gold >= GetAccessoryLevelCost(slot);
+        var heroIndex = GetSelectedHeroIndex();
+        var equippedRarity = GetHeroEquippedAccessoryRarity(heroIndex, slot);
+        var canLevel = equippedRarity >= 0 && GetHeroEquippedAccessoryLevel(heroIndex, slot) < GetAccessoryMaxLevel(equippedRarity) && gold >= GetAccessoryLevelCost(slot);
 
         if (accessoryEquipButton != null)
         {
-            accessoryEquipButton.interactable = equippedAccessoryRarities[slot] != rarity && GetAccessoryInventoryCount(slot, rarity) > 0;
+            accessoryEquipButton.interactable = GetHeroEquippedAccessoryRarity(heroIndex, slot) != rarity && GetAccessoryInventoryCount(slot, rarity) > 0;
         }
 
         if (accessoryLevelButton != null)
@@ -7534,13 +8929,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private string GetEquippedAccessoryText(int slot)
     {
-        var rarity = equippedAccessoryRarities[slot];
+        var heroIndex = GetSelectedHeroIndex();
+        var rarity = GetHeroEquippedAccessoryRarity(heroIndex, slot);
         if (rarity < 0)
         {
             return "None";
         }
 
-        var level = equippedAccessoryLevels[slot];
+        var level = GetHeroEquippedAccessoryLevel(heroIndex, slot);
         return $"{GetAccessoryRarityName(rarity)} Lv. {level}/{GetAccessoryMaxLevel(rarity)} (+{GetAccessoryAttackFor(slot, rarity, level)} ATK, +{GetAccessoryHealthFor(slot, rarity, level)} HP)";
     }
 
@@ -7558,11 +8954,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private bool HasAccessoryCopiesToEquip()
     {
         EnsureAccessories();
+        var heroIndex = GetSelectedHeroIndex();
         for (var slot = 0; slot < AccessorySlotCount; slot++)
         {
             for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
             {
-                if (accessoryInventory[GetAccessoryInventoryIndex(slot, rarity)] > 0 && equippedAccessoryRarities[slot] != rarity)
+                if (accessoryInventory[GetAccessoryInventoryIndex(slot, rarity)] > 0 && GetHeroEquippedAccessoryRarity(heroIndex, slot) != rarity)
                 {
                     return true;
                 }
@@ -7620,6 +9017,29 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void EnsureHeroEquipment()
+    {
+        var legacyWeaponLevel = Mathf.Max(StarterEquipmentLevel, weaponLevel);
+        var legacyArmorLevel = Mathf.Max(StarterEquipmentLevel, armorLevel);
+        if (heroWeaponLevels == null || heroWeaponLevels.Length != HeroCount)
+        {
+            heroWeaponLevels = CreateFilledIntArray(HeroCount, legacyWeaponLevel);
+        }
+
+        if (heroArmorLevels == null || heroArmorLevels.Length != HeroCount)
+        {
+            heroArmorLevels = CreateFilledIntArray(HeroCount, legacyArmorLevel);
+        }
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            heroWeaponLevels[i] = Mathf.Max(StarterEquipmentLevel, heroWeaponLevels[i] <= 0 ? legacyWeaponLevel : heroWeaponLevels[i]);
+            heroArmorLevels[i] = Mathf.Max(StarterEquipmentLevel, heroArmorLevels[i] <= 0 ? legacyArmorLevel : heroArmorLevels[i]);
+        }
+
+        SyncSelectedHeroEquipmentMirrors();
+    }
+
     private void EnsureAccessories()
     {
         if (equippedAccessoryRarities == null || equippedAccessoryRarities.Length != AccessorySlotCount)
@@ -7641,6 +9061,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             accessoryInventory = new int[AccessorySlotCount * AccessoryRarityCount];
         }
 
+        var needsHeroAccessoryMigration = heroEquippedAccessoryRarities == null || heroEquippedAccessoryRarities.Length != HeroCount * AccessorySlotCount;
+        if (needsHeroAccessoryMigration)
+        {
+            var legacyRarities = CopyIntArray(equippedAccessoryRarities, AccessorySlotCount, -1);
+            var legacyLevels = CopyIntArray(equippedAccessoryLevels, AccessorySlotCount, 0);
+            heroEquippedAccessoryRarities = CreateFilledIntArray(HeroCount * AccessorySlotCount, -1);
+            heroEquippedAccessoryLevels = new int[HeroCount * AccessorySlotCount];
+            var heroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+            for (var slot = 0; slot < AccessorySlotCount; slot++)
+            {
+                var rarity = Mathf.Clamp(legacyRarities[slot], -1, AccessoryRarityCount - 1);
+                if (rarity >= 0)
+                {
+                    var index = GetHeroAccessoryIndex(heroIndex, slot);
+                    heroEquippedAccessoryRarities[index] = rarity;
+                    heroEquippedAccessoryLevels[index] = Mathf.Clamp(legacyLevels[slot], 1, GetAccessoryMaxLevel(rarity));
+                }
+            }
+        }
+
+        if (heroEquippedAccessoryLevels == null || heroEquippedAccessoryLevels.Length != HeroCount * AccessorySlotCount)
+        {
+            heroEquippedAccessoryLevels = new int[HeroCount * AccessorySlotCount];
+        }
+
         for (var i = 0; i < AccessorySlotCount; i++)
         {
             equippedAccessoryRarities[i] = Mathf.Clamp(equippedAccessoryRarities[i], -1, AccessoryRarityCount - 1);
@@ -7657,6 +9102,135 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         for (var i = 0; i < accessoryInventory.Length; i++)
         {
             accessoryInventory[i] = Mathf.Max(0, accessoryInventory[i]);
+        }
+
+        for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
+        {
+            for (var slot = 0; slot < AccessorySlotCount; slot++)
+            {
+                var index = GetHeroAccessoryIndex(heroIndex, slot);
+                heroEquippedAccessoryRarities[index] = Mathf.Clamp(heroEquippedAccessoryRarities[index], -1, AccessoryRarityCount - 1);
+                if (heroEquippedAccessoryRarities[index] < 0)
+                {
+                    heroEquippedAccessoryLevels[index] = 0;
+                }
+                else
+                {
+                    heroEquippedAccessoryLevels[index] = Mathf.Clamp(heroEquippedAccessoryLevels[index], 1, GetAccessoryMaxLevel(heroEquippedAccessoryRarities[index]));
+                }
+            }
+        }
+
+        SyncSelectedHeroAccessoryMirrors();
+    }
+
+    private static int[] CreateFilledIntArray(int length, int value)
+    {
+        var values = new int[Mathf.Max(0, length)];
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] = value;
+        }
+
+        return values;
+    }
+
+    private static int GetHeroAccessoryIndex(int heroIndex, int slot)
+    {
+        heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
+        slot = Mathf.Clamp(slot, 0, AccessorySlotCount - 1);
+        return (heroIndex * AccessorySlotCount) + slot;
+    }
+
+    private int GetSelectedHeroIndex()
+    {
+        return Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+    }
+
+    private int GetHeroEquipmentLevel(int heroIndex, bool isWeapon)
+    {
+        EnsureHeroEquipment();
+        heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
+        return Mathf.Max(StarterEquipmentLevel, isWeapon ? heroWeaponLevels[heroIndex] : heroArmorLevels[heroIndex]);
+    }
+
+    private void SetHeroEquipmentLevel(int heroIndex, bool isWeapon, int level)
+    {
+        EnsureHeroEquipment();
+        heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
+        level = Mathf.Max(StarterEquipmentLevel, level);
+        if (isWeapon)
+        {
+            heroWeaponLevels[heroIndex] = level;
+        }
+        else
+        {
+            heroArmorLevels[heroIndex] = level;
+        }
+
+        SyncSelectedHeroEquipmentMirrors();
+    }
+
+    private int GetHeroEquippedAccessoryRarity(int heroIndex, int slot)
+    {
+        EnsureAccessories();
+        return heroEquippedAccessoryRarities[GetHeroAccessoryIndex(heroIndex, slot)];
+    }
+
+    private int GetHeroEquippedAccessoryLevel(int heroIndex, int slot)
+    {
+        EnsureAccessories();
+        return heroEquippedAccessoryLevels[GetHeroAccessoryIndex(heroIndex, slot)];
+    }
+
+    private void SetHeroEquippedAccessory(int heroIndex, int slot, int rarity, int level)
+    {
+        EnsureAccessories();
+        var index = GetHeroAccessoryIndex(heroIndex, slot);
+        heroEquippedAccessoryRarities[index] = Mathf.Clamp(rarity, -1, AccessoryRarityCount - 1);
+        heroEquippedAccessoryLevels[index] = heroEquippedAccessoryRarities[index] < 0
+            ? 0
+            : Mathf.Clamp(level, 1, GetAccessoryMaxLevel(heroEquippedAccessoryRarities[index]));
+        SyncSelectedHeroAccessoryMirrors();
+    }
+
+    private void SyncSelectedHeroEquipmentMirrors()
+    {
+        var heroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+        if (heroWeaponLevels != null && heroIndex < heroWeaponLevels.Length)
+        {
+            weaponLevel = Mathf.Max(StarterEquipmentLevel, heroWeaponLevels[heroIndex]);
+        }
+
+        if (heroArmorLevels != null && heroIndex < heroArmorLevels.Length)
+        {
+            armorLevel = Mathf.Max(StarterEquipmentLevel, heroArmorLevels[heroIndex]);
+        }
+    }
+
+    private void SyncSelectedHeroAccessoryMirrors()
+    {
+        if (equippedAccessoryRarities == null || equippedAccessoryRarities.Length != AccessorySlotCount)
+        {
+            equippedAccessoryRarities = CreateFilledIntArray(AccessorySlotCount, -1);
+        }
+
+        if (equippedAccessoryLevels == null || equippedAccessoryLevels.Length != AccessorySlotCount)
+        {
+            equippedAccessoryLevels = new int[AccessorySlotCount];
+        }
+
+        if (heroEquippedAccessoryRarities == null || heroEquippedAccessoryRarities.Length != HeroCount * AccessorySlotCount)
+        {
+            return;
+        }
+
+        var heroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+        for (var slot = 0; slot < AccessorySlotCount; slot++)
+        {
+            var index = GetHeroAccessoryIndex(heroIndex, slot);
+            equippedAccessoryRarities[slot] = heroEquippedAccessoryRarities[index];
+            equippedAccessoryLevels[slot] = heroEquippedAccessoryLevels != null && index < heroEquippedAccessoryLevels.Length ? heroEquippedAccessoryLevels[index] : 0;
         }
     }
 
@@ -8095,19 +9669,131 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return rarityId;
     }
 
+    private SummonBannerDefinition GetActiveSummonBanner()
+    {
+        return GetSummonBanner(WrapSummonBannerIndex(selectedSummonBannerIndex));
+    }
+
+    private static SummonBannerDefinition GetSummonBanner(int bannerIndex)
+    {
+        if (LocalSummonBanners == null || LocalSummonBanners.Length == 0)
+        {
+            return HeroShardBanner;
+        }
+
+        return LocalSummonBanners[WrapSummonBannerIndex(bannerIndex)];
+    }
+
+    private static bool TryGetLocalSummonBanner(string bannerId, out SummonBannerDefinition banner)
+    {
+        if (LocalSummonBanners != null)
+        {
+            for (var i = 0; i < LocalSummonBanners.Length; i++)
+            {
+                if (LocalSummonBanners[i].bannerId == bannerId)
+                {
+                    banner = LocalSummonBanners[i];
+                    return true;
+                }
+            }
+        }
+
+        banner = default(SummonBannerDefinition);
+        return false;
+    }
+
+    private static int WrapSummonBannerIndex(int bannerIndex)
+    {
+        var count = LocalSummonBanners == null || LocalSummonBanners.Length == 0 ? 1 : LocalSummonBanners.Length;
+        if (count <= 1)
+        {
+            return 0;
+        }
+
+        return ((bannerIndex % count) + count) % count;
+    }
+
+    private static int GetSummonBannerFeaturedHeroIndex(SummonBannerDefinition banner, int slotIndex)
+    {
+        if (banner.featuredHeroIndexes != null && banner.featuredHeroIndexes.Length > 0)
+        {
+            return Mathf.Clamp(banner.featuredHeroIndexes[Mathf.Abs(slotIndex) % banner.featuredHeroIndexes.Length], 0, HeroCount - 1);
+        }
+
+        return 0;
+    }
+
     private int GetSummonCost()
     {
-        if (TryGetBackendSummonBannerDefinition(HeroShardBanner.bannerId, out var backendBanner))
+        return GetSummonCost(GetActiveSummonBanner());
+    }
+
+    private int GetSummonCost(SummonBannerDefinition banner)
+    {
+        if (TryGetBackendSummonBannerDefinition(banner.bannerId, out var backendBanner))
         {
             return Mathf.Max(0, backendBanner.costAmount);
         }
 
-        return HeroShardBanner.costAmount;
+        return Mathf.Max(0, banner.costAmount);
+    }
+
+    private string GetSummonBannerDisplayName()
+    {
+        var banner = GetActiveSummonBanner();
+        if (TryGetBackendSummonBannerDefinition(banner.bannerId, out var backendBanner) && !string.IsNullOrWhiteSpace(backendBanner.displayName))
+        {
+            return backendBanner.displayName;
+        }
+
+        return banner.displayName;
+    }
+
+    private int GetSummonPackCost(int count)
+    {
+        return GetSummonPackCost(count, GetActiveSummonBanner());
+    }
+
+    private int GetSummonPackCost(int count, SummonBannerDefinition banner)
+    {
+        count = Mathf.Clamp(count, 1, MaxSummonPullCount);
+        var singleCost = GetSummonCost(banner);
+        if (count >= 10)
+        {
+            return Mathf.RoundToInt(singleCost * count * 0.9f);
+        }
+
+        return singleCost * count;
+    }
+
+    private static string BuildSummonPackResultMessage(int count, int totalShards, int[] shardTotals)
+    {
+        var message = $"Summon x{count} complete\n+{totalShards} total shards";
+        if (shardTotals == null)
+        {
+            return message;
+        }
+
+        var shown = 0;
+        for (var i = 0; i < Mathf.Min(shardTotals.Length, HeroDefinitions.Length); i++)
+        {
+            if (shardTotals[i] <= 0)
+            {
+                continue;
+            }
+
+            message += shown == 0 ? "\n" : "  ";
+            message += $"{GetHeroDefinition(i).name} +{shardTotals[i]}";
+            shown++;
+        }
+
+        return message;
     }
 
     private string GetSummonRatesText()
     {
-        if (TryGetBackendSummonBannerDefinition(HeroShardBanner.bannerId, out var backendBanner))
+        var banner = GetActiveSummonBanner();
+        if (TryGetBackendSummonBannerDefinition(banner.bannerId, out var backendBanner))
         {
             var serverText = $"{backendBanner.displayName}\nCost {backendBanner.costAmount} {GetCurrencyDefinition(backendBanner.costCurrencyId).displayName}";
             if (backendBanner.shardDrops == null || backendBanner.shardDrops.Length == 0)
@@ -8133,17 +9819,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var text = "Rates";
 
-        if (HeroShardBanner.rates == null || HeroShardBanner.rates.Length == 0)
+        if (banner.rates == null || banner.rates.Length == 0)
         {
             return text;
         }
 
-        for (var i = HeroShardBanner.rates.Length - 1; i >= 0; i--)
+        for (var i = banner.rates.Length - 1; i >= 0; i--)
         {
-            var lowerBound = i > 0 ? HeroShardBanner.rates[i - 1].cumulativeChance : 0;
-            var chance = Mathf.Max(0, HeroShardBanner.rates[i].cumulativeChance - lowerBound);
-            text += i == HeroShardBanner.rates.Length - 1 ? "\n" : "  ";
-            text += $"{GetHeroRarityName(HeroShardBanner.rates[i].rarityId)} {chance}%";
+            var lowerBound = i > 0 ? banner.rates[i - 1].cumulativeChance : 0;
+            var chance = Mathf.Max(0, banner.rates[i].cumulativeChance - lowerBound);
+            text += i == banner.rates.Length - 1 ? "\n" : "  ";
+            text += $"{GetHeroRarityName(banner.rates[i].rarityId)} {chance}%";
         }
 
         return text;
@@ -8856,7 +10542,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             power += GetHeroPower(i);
         }
 
-        return power + GetEquipmentPower() + GetAccessoryPower();
+        return Mathf.Max(1, power);
     }
 
     private int GetTeamDamage()
@@ -8866,11 +10552,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return backendTeamAttack;
         }
 
-        var multiplier = 1f
-            + (CountHeroesWithRole(WarriorRoleId) * WarriorDamageBonusRate)
-            + (CountHeroesWithRole(MageRoleId) * MageDamageBonusRate);
+        var damageTotal = 0;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            damageTotal += GetHeroEffectiveAttack(i);
+        }
 
-        return Mathf.Max(1, Mathf.FloorToInt((GetTeamBaseAttack() + GetEquipmentAttackBonus() + GetAccessoryAttackBonus()) * multiplier));
+        return Mathf.Max(1, damageTotal);
     }
 
     private int GetTeamHealth()
@@ -8884,10 +10572,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         for (var i = 0; i < HeroCount; i++)
         {
-            health += GetHeroHealth(i);
+            health += GetHeroCombatMaxHealth(i);
         }
 
-        return Mathf.Max(1, health + GetEquipmentHealthBonus() + GetAccessoryHealthBonus());
+        return Mathf.Max(1, health);
     }
 
     private int GetTeamBaseAttack()
@@ -8905,20 +10593,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private int GetHeroEffectiveAttack(int index)
     {
         index = Mathf.Clamp(index, 0, HeroCount - 1);
-        var heroAttack = Mathf.Max(1, GetHeroAttack(index));
-        var baseAttackTotal = Mathf.Max(1, GetTeamBaseAttack());
-        var bonusAttack = GetEquipmentAttackBonus() + GetAccessoryAttackBonus();
-        var roleMultiplier = 1f
-            + (CountHeroesWithRole(WarriorRoleId) * WarriorDamageBonusRate)
-            + (CountHeroesWithRole(MageRoleId) * MageDamageBonusRate);
-        var bonusShare = bonusAttack * (heroAttack / (float)baseAttackTotal);
-        return Mathf.Max(1, Mathf.RoundToInt((heroAttack + bonusShare) * roleMultiplier));
+        return Mathf.Max(1, Mathf.RoundToInt((GetHeroAttack(index) + GetHeroGearAttackBonus(index)) * GetTeamRoleDamageMultiplier()));
     }
 
     private int GetHeroPower(int index)
     {
-        return GetHeroAttack(index)
-            + Mathf.FloorToInt(GetHeroHealth(index) / 8f)
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        return GetHeroEffectiveAttack(index)
+            + Mathf.FloorToInt(GetHeroCombatMaxHealth(index) / 8f)
             + GetHeroDefense(index)
             + Mathf.FloorToInt(GetHeroCritChancePercent(index) * 1.6f)
             + Mathf.FloorToInt((GetHeroAccuracyPercent(index) - 80) * 1.2f);
@@ -8926,34 +10608,56 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private int GetEquipmentPower()
     {
-        return GetEquipmentAttackBonus() + Mathf.FloorToInt(GetEquipmentHealthBonus() / 8f);
+        var power = 0;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            power += GetHeroEquipmentAttackBonus(i) + Mathf.FloorToInt(GetHeroEquipmentHealthBonus(i) / 8f);
+        }
+
+        return power;
     }
 
     private int GetAccessoryPower()
     {
-        return GetAccessoryAttackBonus() + Mathf.FloorToInt(GetAccessoryHealthBonus() / 8f);
+        var power = 0;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            power += GetHeroAccessoryAttackBonus(i) + Mathf.FloorToInt(GetHeroAccessoryHealthBonus(i) / 8f);
+        }
+
+        return power;
     }
 
     private int GetEquipmentAttackBonus()
     {
-        if (TryGetBackendEquipmentDefinition(WeaponTrack.equipmentId, out var definition))
-        {
-            var level = Mathf.Clamp(GetEquipmentDisplayLevel(WeaponTrack, weaponLevel), 0, Mathf.Max(1, definition.maxLevel));
-            return Mathf.Max(0, definition.attackPerLevel) * level;
-        }
-
-        return GetEquipmentBonus(WeaponTrack, weaponLevel);
+        return GetHeroEquipmentAttackBonus(GetSelectedHeroIndex());
     }
 
     private int GetEquipmentHealthBonus()
     {
+        return GetHeroEquipmentHealthBonus(GetSelectedHeroIndex());
+    }
+
+    private int GetHeroEquipmentAttackBonus(int heroIndex)
+    {
+        if (TryGetBackendEquipmentDefinition(WeaponTrack.equipmentId, out var definition))
+        {
+            var level = Mathf.Clamp(GetEquipmentDisplayLevel(WeaponTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: true)), 0, Mathf.Max(1, definition.maxLevel));
+            return Mathf.Max(0, definition.attackPerLevel) * level;
+        }
+
+        return GetEquipmentBonus(WeaponTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: true));
+    }
+
+    private int GetHeroEquipmentHealthBonus(int heroIndex)
+    {
         if (TryGetBackendEquipmentDefinition(ArmorTrack.equipmentId, out var definition))
         {
-            var level = Mathf.Clamp(GetEquipmentDisplayLevel(ArmorTrack, armorLevel), 0, Mathf.Max(1, definition.maxLevel));
+            var level = Mathf.Clamp(GetEquipmentDisplayLevel(ArmorTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: false)), 0, Mathf.Max(1, definition.maxLevel));
             return Mathf.Max(0, definition.healthPerLevel) * level;
         }
 
-        return GetEquipmentBonus(ArmorTrack, armorLevel);
+        return GetEquipmentBonus(ArmorTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: false));
     }
 
     private int GetEquipmentDisplayLevel(EquipmentTrackDefinition track, int fallbackLevel)
@@ -8999,28 +10703,48 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private int GetAccessoryAttackBonus()
     {
+        return GetHeroAccessoryAttackBonus(GetSelectedHeroIndex());
+    }
+
+    private int GetAccessoryHealthBonus()
+    {
+        return GetHeroAccessoryHealthBonus(GetSelectedHeroIndex());
+    }
+
+    private int GetHeroAccessoryAttackBonus(int heroIndex)
+    {
         EnsureAccessories();
         var attack = 0;
 
         for (var slot = 0; slot < AccessorySlotCount; slot++)
         {
-            attack += GetAccessoryAttackFor(slot, equippedAccessoryRarities[slot], equippedAccessoryLevels[slot]);
+            attack += GetAccessoryAttackFor(slot, GetHeroEquippedAccessoryRarity(heroIndex, slot), GetHeroEquippedAccessoryLevel(heroIndex, slot));
         }
 
         return attack;
     }
 
-    private int GetAccessoryHealthBonus()
+    private int GetHeroAccessoryHealthBonus(int heroIndex)
     {
         EnsureAccessories();
         var health = 0;
 
         for (var slot = 0; slot < AccessorySlotCount; slot++)
         {
-            health += GetAccessoryHealthFor(slot, equippedAccessoryRarities[slot], equippedAccessoryLevels[slot]);
+            health += GetAccessoryHealthFor(slot, GetHeroEquippedAccessoryRarity(heroIndex, slot), GetHeroEquippedAccessoryLevel(heroIndex, slot));
         }
 
         return health;
+    }
+
+    private int GetHeroGearAttackBonus(int heroIndex)
+    {
+        return GetHeroEquipmentAttackBonus(heroIndex) + GetHeroAccessoryAttackBonus(heroIndex);
+    }
+
+    private int GetHeroGearHealthBonus(int heroIndex)
+    {
+        return GetHeroEquipmentHealthBonus(heroIndex) + GetHeroAccessoryHealthBonus(heroIndex);
     }
 
     private int GetAccessoryAttackFor(int slot, int rarity, int level)
@@ -9231,10 +10955,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var defense = 0;
         for (var i = 0; i < HeroCount; i++)
         {
-            defense += GetHeroDefense(i);
+            defense += GetHeroDefense(i) + Mathf.FloorToInt(GetHeroGearHealthBonus(i) / 95f);
         }
 
-        return defense + Mathf.FloorToInt((GetEquipmentHealthBonus() + GetAccessoryHealthBonus()) / 95f);
+        return defense;
     }
 
     private int GetTeamCritChancePercent()
@@ -9243,7 +10967,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var weightedCrit = 0f;
         for (var i = 0; i < HeroCount; i++)
         {
-            var attack = Mathf.Max(1, GetHeroAttack(i));
+            var attack = Mathf.Max(1, GetHeroEffectiveAttack(i));
             totalAttack += attack;
             weightedCrit += attack * GetHeroCritChancePercent(i);
         }
@@ -9257,7 +10981,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var weightedAccuracy = 0f;
         for (var i = 0; i < HeroCount; i++)
         {
-            var attack = Mathf.Max(1, GetHeroAttack(i));
+            var attack = Mathf.Max(1, GetHeroEffectiveAttack(i));
             totalAttack += attack;
             weightedAccuracy += attack * GetHeroAccuracyPercent(i);
         }
@@ -9338,12 +11062,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private int GetWeaponUpgradeCost()
     {
-        return GetEquipmentUpgradeCost(WeaponTrack, weaponLevel);
+        return GetEquipmentUpgradeCost(WeaponTrack, GetHeroEquipmentLevel(GetSelectedHeroIndex(), isWeapon: true));
     }
 
     private int GetArmorUpgradeCost()
     {
-        return GetEquipmentUpgradeCost(ArmorTrack, armorLevel);
+        return GetEquipmentUpgradeCost(ArmorTrack, GetHeroEquipmentLevel(GetSelectedHeroIndex(), isWeapon: false));
     }
 
     private int GetEquipmentUpgradeCost(EquipmentTrackDefinition track, int level)
@@ -9374,6 +11098,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return count;
     }
 
+    private float GetTeamRoleDamageMultiplier()
+    {
+        return 1f
+            + (CountHeroesWithRole(WarriorRoleId) * WarriorDamageBonusRate)
+            + (CountHeroesWithRole(MageRoleId) * MageDamageBonusRate);
+    }
+
     private bool ShouldExecuteEnemy(int enemyHpRemaining, int enemyMaxHp)
     {
         if (CountHeroesWithRole(RangerRoleId) <= 0)
@@ -9398,8 +11129,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
         enemyDamage = Mathf.Max(1, enemyDamage);
         var afterGuard = enemyDamage * (1f - GetTankDamageReductionRate());
-        var sharedGearDefense = Mathf.FloorToInt((GetEquipmentHealthBonus() + GetAccessoryHealthBonus()) / Mathf.Max(1f, HeroCount * 95f));
-        var defense = Mathf.Max(0, GetHeroDefense(heroIndex) + sharedGearDefense);
+        var gearDefense = Mathf.FloorToInt(GetHeroGearHealthBonus(heroIndex) / 95f);
+        var defense = Mathf.Max(0, GetHeroDefense(heroIndex) + gearDefense);
         var defenseReduction = defense / Mathf.Max(1f, defense + (enemyDamage * 8f));
         defenseReduction = Mathf.Clamp(defenseReduction, 0f, 0.45f);
         return Mathf.Max(1, Mathf.CeilToInt(afterGuard * (1f - defenseReduction)));
@@ -9583,6 +11314,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void RefreshSummonUi()
     {
+        var activeBanner = GetActiveSummonBanner();
         if (summonCostText != null)
         {
             summonCostText.text = $"Cost: {GetSummonCost()} Gems";
@@ -9591,17 +11323,186 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (summonRatesText != null)
         {
             summonRatesText.text = GetSummonRatesText();
+            summonRatesText.fontSize = 20;
+            summonRatesText.fontSizeMin = 16;
+            summonRatesText.fontSizeMax = 20;
+            summonRatesText.enableAutoSizing = true;
+            summonRatesText.fontStyle = FontStyles.Bold;
+            summonRatesText.color = new Color(1f, 0.92f, 0.55f);
+            summonRatesText.alignment = TextAlignmentOptions.Center;
         }
 
         if (summonCountText != null)
         {
-            summonCountText.text = $"Summons: {summonCount}";
+            summonCountText.text = $"Summons {summonCount}";
+            summonCountText.fontSize = 18;
+            summonCountText.fontSizeMin = 14;
+            summonCountText.fontSizeMax = 18;
+            summonCountText.enableAutoSizing = true;
+            summonCountText.fontStyle = FontStyles.Bold;
+            summonCountText.color = new Color(0.75f, 0.92f, 1f);
+            summonCountText.alignment = TextAlignmentOptions.Left;
+            summonCountText.textWrappingMode = TextWrappingModes.NoWrap;
         }
 
         if (summonResultText != null && string.IsNullOrWhiteSpace(summonResultText.text))
         {
             summonResultText.text = "Summon heroes to collect shards and raise team power.";
         }
+
+        if (summonResultText != null)
+        {
+            summonResultText.fontSize = 22;
+            summonResultText.fontSizeMin = 17;
+            summonResultText.fontSizeMax = 22;
+            summonResultText.enableAutoSizing = true;
+            summonResultText.fontStyle = FontStyles.Bold;
+            summonResultText.color = new Color(0.72f, 0.86f, 1f);
+            summonResultText.alignment = TextAlignmentOptions.Center;
+        }
+
+        if (summonOfferTitleText != null)
+        {
+            summonOfferTitleText.text = GetSummonBannerDisplayName();
+        }
+
+        if (summonOfferPromoText != null)
+        {
+            summonOfferPromoText.text = string.IsNullOrWhiteSpace(activeBanner.promoText)
+                ? "Featured hero shard rotation"
+                : activeBanner.promoText;
+        }
+
+        RefreshSummonOfferHeroes(activeBanner);
+        RefreshSummonCarousel();
+
+        SetButtonLabel(summonButton, "Summon");
+        SetButtonLabel(summonTenButton, "Summon 10");
+
+        if (summonSingleCostText != null)
+        {
+            summonSingleCostText.text = GetSummonPackCost(1).ToString();
+        }
+
+        if (summonTenCostText != null)
+        {
+            summonTenCostText.text = GetSummonPackCost(10).ToString();
+        }
+
+        if (summonResultTenCostText != null)
+        {
+            summonResultTenCostText.text = GetSummonPackCost(SummonAutoStepCount, activeBanner).ToString();
+        }
+
+        if (summonResultMaxCostText != null)
+        {
+            summonResultMaxCostText.text = GetSummonPackCost(MaxSummonPullCount, activeBanner).ToString();
+        }
+
+        RefreshSummonAutoToggle();
+    }
+
+    private void RefreshSummonOfferHeroes(SummonBannerDefinition banner)
+    {
+        if (summonOfferHeroImages == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < summonOfferHeroImages.Length; i++)
+        {
+            var image = summonOfferHeroImages[i];
+            if (image == null)
+            {
+                continue;
+            }
+
+            var heroIndex = GetSummonBannerFeaturedHeroIndex(banner, i);
+            image.texture = LoadRuntimeTexture($"hero_{GetHeroDefinition(heroIndex).name.ToLowerInvariant()}");
+            image.rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
+            image.color = Color.white;
+        }
+    }
+
+    private void RefreshSummonCarousel()
+    {
+        if (summonCarouselButtons == null)
+        {
+            return;
+        }
+
+        if (summonCarouselCardBannerIndices == null || summonCarouselCardBannerIndices.Length != summonCarouselButtons.Length)
+        {
+            summonCarouselCardBannerIndices = new int[summonCarouselButtons.Length];
+        }
+
+        for (var cardIndex = 0; cardIndex < summonCarouselButtons.Length; cardIndex++)
+        {
+            var bannerIndex = WrapSummonBannerIndex(selectedSummonBannerIndex + cardIndex - 1);
+            summonCarouselCardBannerIndices[cardIndex] = bannerIndex;
+            var banner = GetSummonBanner(bannerIndex);
+            var isSelected = bannerIndex == WrapSummonBannerIndex(selectedSummonBannerIndex);
+
+            if (summonCarouselFrames != null && cardIndex < summonCarouselFrames.Length && summonCarouselFrames[cardIndex] != null)
+            {
+                summonCarouselFrames[cardIndex].color = isSelected
+                    ? new Color(0.95f, 0.67f, 0.3f, 0.98f)
+                    : new Color(0.12f, 0.075f, 0.045f, 0.94f);
+            }
+
+            if (summonCarouselTitleTexts != null && cardIndex < summonCarouselTitleTexts.Length && summonCarouselTitleTexts[cardIndex] != null)
+            {
+                summonCarouselTitleTexts[cardIndex].text = banner.displayName;
+                summonCarouselTitleTexts[cardIndex].color = isSelected ? new Color(1f, 0.93f, 0.58f) : new Color(0.88f, 0.78f, 0.62f);
+            }
+
+            if (summonCarouselRateTexts != null && cardIndex < summonCarouselRateTexts.Length && summonCarouselRateTexts[cardIndex] != null)
+            {
+                summonCarouselRateTexts[cardIndex].text = GetSummonBannerLeadRateText(banner);
+                summonCarouselRateTexts[cardIndex].color = isSelected ? new Color(0.74f, 1f, 0.95f) : new Color(0.66f, 0.86f, 0.82f);
+            }
+
+            if (summonCarouselHeroImages == null)
+            {
+                continue;
+            }
+
+            for (var heroSlot = 0; heroSlot < SummonCarouselHeroSlotsPerCard; heroSlot++)
+            {
+                var imageIndex = cardIndex * SummonCarouselHeroSlotsPerCard + heroSlot;
+                if (imageIndex < 0 || imageIndex >= summonCarouselHeroImages.Length || summonCarouselHeroImages[imageIndex] == null)
+                {
+                    continue;
+                }
+
+                var heroIndex = GetSummonBannerFeaturedHeroIndex(banner, heroSlot);
+                summonCarouselHeroImages[imageIndex].texture = LoadRuntimeTexture($"hero_{GetHeroDefinition(heroIndex).name.ToLowerInvariant()}");
+                summonCarouselHeroImages[imageIndex].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
+                summonCarouselHeroImages[imageIndex].color = isSelected ? Color.white : new Color(0.86f, 0.86f, 0.86f, 0.92f);
+            }
+        }
+    }
+
+    private static string GetSummonBannerLeadRateText(SummonBannerDefinition banner)
+    {
+        if (banner.rates == null || banner.rates.Length == 0)
+        {
+            return "Rates";
+        }
+
+        var bestRateIndex = Mathf.Clamp(banner.rates.Length - 1, 0, banner.rates.Length - 1);
+        for (var i = 0; i < banner.rates.Length; i++)
+        {
+            if (banner.rates[i].rarityId == LegendaryRarityId)
+            {
+                bestRateIndex = i;
+                break;
+            }
+        }
+
+        var lowerBound = bestRateIndex > 0 ? banner.rates[bestRateIndex - 1].cumulativeChance : 0;
+        var chance = Mathf.Max(0, banner.rates[bestRateIndex].cumulativeChance - lowerBound);
+        return $"{GetHeroRarityName(banner.rates[bestRateIndex].rarityId)} {chance}%";
     }
 
     private void RefreshDailyMissionUi()
@@ -9682,17 +11583,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
-    private int RollSummonHero()
+    private int RollSummonHero(SummonBannerDefinition banner)
     {
         var roll = UnityEngine.Random.Range(0, 100);
 
-        if (HeroShardBanner.rates != null)
+        if (banner.rates != null)
         {
-            for (var i = 0; i < HeroShardBanner.rates.Length; i++)
+            for (var i = 0; i < banner.rates.Length; i++)
             {
-                if (roll < HeroShardBanner.rates[i].cumulativeChance)
+                if (roll < banner.rates[i].cumulativeChance)
                 {
-                    return PickRandomHero(HeroShardBanner.rates[i].heroIndexes);
+                    return PickRandomHero(banner.rates[i].heroIndexes);
                 }
             }
         }
@@ -9712,7 +11613,156 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private int GetSummonShardReward(int heroIndex)
     {
-        return GetHeroDefinition(heroIndex).summonShardReward;
+        return 1;
+    }
+
+    private void ShowSummonResultPopup(int[] drawCounts, int pullCount)
+    {
+        EnsureRuntimeSummonResultPopup();
+        if (summonResultPopupRoot == null)
+        {
+            return;
+        }
+
+        summonResultPopupRoot.gameObject.SetActive(true);
+        summonResultPopupRoot.SetAsLastSibling();
+        if (summonResultPopupTitleText != null)
+        {
+            summonResultPopupTitleText.text = pullCount <= 1 ? "Summon Result" : $"Summon x{pullCount} Result";
+        }
+
+        var slotIndex = 0;
+        for (var heroIndex = 0; heroIndex < HeroDefinitions.Length && slotIndex < HeroCount; heroIndex++)
+        {
+            var drawCount = drawCounts != null && heroIndex < drawCounts.Length ? drawCounts[heroIndex] : 0;
+            if (drawCount <= 0)
+            {
+                continue;
+            }
+
+            var hero = GetHeroDefinition(heroIndex);
+            if (summonResultHeroFrames != null && slotIndex < summonResultHeroFrames.Length && summonResultHeroFrames[slotIndex] != null)
+            {
+                var frame = summonResultHeroFrames[slotIndex];
+                frame.gameObject.SetActive(true);
+                frame.color = GetHeroRarityColor(hero.rarityId);
+            }
+
+            if (summonResultHeroImages != null && slotIndex < summonResultHeroImages.Length && summonResultHeroImages[slotIndex] != null)
+            {
+                summonResultHeroImages[slotIndex].texture = LoadCombatTexture(GetHeroTextureName(heroIndex), "idle", 0, GetHeroTextureName(heroIndex));
+                summonResultHeroImages[slotIndex].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
+            }
+
+            if (summonResultHeroNameTexts != null && slotIndex < summonResultHeroNameTexts.Length && summonResultHeroNameTexts[slotIndex] != null)
+            {
+                summonResultHeroNameTexts[slotIndex].text = hero.name;
+                summonResultHeroNameTexts[slotIndex].color = new Color(1f, 0.95f, 0.78f);
+            }
+
+            if (summonResultHeroCountTexts != null && slotIndex < summonResultHeroCountTexts.Length && summonResultHeroCountTexts[slotIndex] != null)
+            {
+                summonResultHeroCountTexts[slotIndex].text = $"x{drawCount}";
+            }
+
+            slotIndex++;
+        }
+
+        for (var i = slotIndex; i < HeroCount; i++)
+        {
+            if (summonResultHeroFrames != null && i < summonResultHeroFrames.Length && summonResultHeroFrames[i] != null)
+            {
+                summonResultHeroFrames[i].gameObject.SetActive(false);
+            }
+        }
+
+        RefreshSummonAutoToggle();
+        RefreshUi();
+    }
+
+    private void ShowBackendSummonResultPopup(string message, int pullCount)
+    {
+        var drawCounts = new int[HeroDefinitions.Length];
+        var anyCount = false;
+        for (var heroIndex = 0; heroIndex < HeroDefinitions.Length; heroIndex++)
+        {
+            var heroId = GetHeroDefinition(heroIndex).heroId;
+            var count = ExtractBackendSummonCount(message, heroId);
+            if (count <= 0 && pullCount == 1 && !string.IsNullOrWhiteSpace(message) && message.Contains(heroId))
+            {
+                count = 1;
+            }
+
+            if (count <= 0)
+            {
+                continue;
+            }
+
+            drawCounts[heroIndex] = count;
+            anyCount = true;
+        }
+
+        if (!anyCount)
+        {
+            return;
+        }
+
+        ShowSummonResultPopup(drawCounts, Mathf.Clamp(pullCount, 1, MaxSummonPullCount));
+    }
+
+    private static int ExtractBackendSummonCount(string message, string heroId)
+    {
+        if (string.IsNullOrWhiteSpace(message) || string.IsNullOrWhiteSpace(heroId))
+        {
+            return 0;
+        }
+
+        var token = $"{heroId} +";
+        var index = message.IndexOf(token, StringComparison.Ordinal);
+        if (index < 0)
+        {
+            return 0;
+        }
+
+        index += token.Length;
+        var count = 0;
+        while (index < message.Length && char.IsDigit(message[index]))
+        {
+            count = (count * 10) + (message[index] - '0');
+            index++;
+        }
+
+        return count;
+    }
+
+    private void HideSummonResultPopup()
+    {
+        if (summonResultPopupRoot != null)
+        {
+            summonResultPopupRoot.gameObject.SetActive(false);
+        }
+    }
+
+    private void RefreshSummonAutoToggle()
+    {
+        if (summonAutoCheckboxImage != null)
+        {
+            summonAutoCheckboxImage.color = summonAutoEnabled
+                ? new Color(1f, 0.78f, 0.18f, 0.98f)
+                : new Color(0.04f, 0.025f, 0.02f, 0.92f);
+        }
+
+        if (summonAutoCheckboxMarkText != null)
+        {
+            summonAutoCheckboxMarkText.text = summonAutoEnabled ? "X" : string.Empty;
+        }
+
+        if (summonAutoToggleText != null)
+        {
+            summonAutoToggleText.text = summonAutoRunning
+                ? $"Auto-Summon {summonAutoRemainingPulls}"
+                : "Auto-Summon";
+        }
     }
 
     private void SetSummonResult(string result)
@@ -9773,6 +11823,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             PlayerPrefs.DeleteKey($"{HeroLevelKeyPrefix}{i}");
             PlayerPrefs.DeleteKey($"{HeroShardKeyPrefix}{i}");
             PlayerPrefs.DeleteKey($"{HeroAscensionKeyPrefix}{i}");
+            PlayerPrefs.DeleteKey($"{HeroWeaponLevelKeyPrefix}{i}");
+            PlayerPrefs.DeleteKey($"{HeroArmorLevelKeyPrefix}{i}");
+        }
+
+        for (var i = 0; i < HeroCount * AccessorySlotCount; i++)
+        {
+            PlayerPrefs.DeleteKey($"{HeroEquippedAccessoryRarityKeyPrefix}{i}");
+            PlayerPrefs.DeleteKey($"{HeroEquippedAccessoryLevelKeyPrefix}{i}");
         }
 
         for (var i = 0; i < DailyMissionCount; i++)
@@ -9874,6 +11932,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureRuntimeDungeonsPanel();
         EnsureRuntimeDungeonsTab();
         EnsureRuntimeScreenBackdrops();
+        EnsureRuntimeSummonOffer();
         EnsureRuntimeHomeActions();
         EnsureRuntimeCampaignMap();
         EnsureRuntimeHomePopups();
@@ -9881,6 +11940,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureRuntimeMenuHeader();
         EnsureRuntimeHeroCardArt();
         EnsureRuntimeHeroEssenceCounter();
+        EnsureRuntimeHeroesTabs();
         EnsureRuntimeHeroDetailWindow();
         EnsureRuntimeBottomNavbarArt();
         LayoutBottomNavigation();
@@ -9961,10 +12021,268 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void EnsureRuntimeScreenBackdrops()
     {
-        EnsureParchmentBackdrop(heroesPanel, "Heroes Parchment Backdrop");
         EnsureParchmentBackdrop(gearPanel, "Gear Parchment Backdrop");
         EnsureParchmentBackdrop(summonPanel, "Summon Parchment Backdrop");
         EnsureParchmentBackdrop(shopPanel, "Shop Parchment Backdrop");
+    }
+
+    private void EnsureRuntimeSummonOffer()
+    {
+        if (summonPanel == null)
+        {
+            return;
+        }
+
+        if (summonOfferRoot != null)
+        {
+            EnsureRuntimeSummonResultPopup();
+            return;
+        }
+
+        var legacyBanner = summonPanel.transform.Find("Summon Banner");
+        if (legacyBanner != null)
+        {
+            legacyBanner.gameObject.SetActive(false);
+        }
+
+        var legacyRatesCard = summonPanel.transform.Find("Summon Rates Card");
+        if (legacyRatesCard != null)
+        {
+            legacyRatesCard.gameObject.SetActive(false);
+        }
+
+        summonOfferRoot = CreateRuntimePanel(summonPanel.transform, "Summon Offer Banner", new Vector2(0, -312), new Vector2(820, 458), new Color(0.08f, 0.045f, 0.025f, 0.98f));
+        summonOfferRoot.SetAsLastSibling();
+        CreateLayeredRuntimeBackground(summonOfferRoot, new Vector2(780, 386), 0.78f);
+
+        CreateRuntimePanel(summonOfferRoot, "Summon Offer Top Shade", new Vector2(0, -18), new Vector2(782, 122), new Color(0.04f, 0.025f, 0.018f, 0.55f));
+        CreateRuntimePanel(summonOfferRoot, "Summon Offer Promo Shade", new Vector2(0, -104), new Vector2(560, 42), new Color(0.025f, 0.02f, 0.018f, 0.48f));
+        CreateRuntimePanel(summonOfferRoot, "Summon Offer Bottom Shade", new Vector2(0, -344), new Vector2(782, 86), new Color(0.055f, 0.028f, 0.016f, 0.84f));
+        CreateRuntimePanel(summonOfferRoot, "Summon Offer Border Top", new Vector2(0, -10), new Vector2(790, 5), new Color(0.92f, 0.62f, 0.28f, 0.9f));
+        CreateRuntimePanel(summonOfferRoot, "Summon Offer Border Bottom", new Vector2(0, -448), new Vector2(790, 5), new Color(0.92f, 0.62f, 0.28f, 0.9f));
+
+        summonOfferHeroImages = new RawImage[SummonFeaturedHeroCount];
+        summonOfferHeroImages[0] = CreateRuntimeRawImage(summonOfferRoot, "Summon Offer Hero Left", LoadRuntimeTexture("hero_dante"), new Vector2(-248, -248), new Vector2(172, 172), new Vector2(0.5f, 1f));
+        summonOfferHeroImages[1] = CreateRuntimeRawImage(summonOfferRoot, "Summon Offer Hero Right", LoadRuntimeTexture("hero_elowen"), new Vector2(248, -242), new Vector2(172, 172), new Vector2(0.5f, 1f));
+        summonOfferHeroImages[2] = CreateRuntimeRawImage(summonOfferRoot, "Summon Offer Hero Center", LoadRuntimeTexture("hero_cyra"), new Vector2(0, -222), new Vector2(172, 172), new Vector2(0.5f, 1f));
+
+        summonOfferTitleText = CreateRuntimeText(summonOfferRoot, "Summon Offer Title", "Awaken Heroes", 34, new Vector2(0, -52), new Vector2(720, 50));
+        summonOfferTitleText.fontStyle = FontStyles.Bold;
+        summonOfferTitleText.color = new Color(1f, 0.92f, 0.62f);
+        summonOfferTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        summonOfferPromoText = CreateRuntimeText(summonOfferRoot, "Summon Offer Promo", "First x10 pack has a 10% discount", 24, new Vector2(0, -102), new Vector2(540, 36));
+        summonOfferPromoText.fontStyle = FontStyles.Bold;
+        summonOfferPromoText.color = new Color(0.72f, 1f, 0.94f);
+        summonOfferPromoText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        if (summonButton == null)
+        {
+            summonButton = CreateRuntimeButton(summonPanel.transform, "Summon Button", "Summon", -190, -786, 300, 82);
+        }
+
+        summonTenButton = CreateRuntimeButton(summonPanel.transform, "Summon Ten Button", "Summon 10", 190, -786, 300, 82);
+        CreateRuntimeRawImage(summonButton.transform, "Gem Icon", GetCurrencyIconTexture("mythic_gem"), new Vector2(-122, -24), new Vector2(20, 27), new Vector2(0.5f, 1f));
+        CreateRuntimeRawImage(summonTenButton.transform, "Gem Icon", GetCurrencyIconTexture("mythic_gem"), new Vector2(-122, -24), new Vector2(20, 27), new Vector2(0.5f, 1f));
+        summonSingleCostText = CreateSummonButtonCostText(summonButton.transform, "Single Cost");
+        summonTenCostText = CreateSummonButtonCostText(summonTenButton.transform, "Ten Cost");
+
+        summonResultBoxRoot = CreateRuntimePanel(summonPanel.transform, "Summon Result Strip", new Vector2(0, -890), new Vector2(760, 70), new Color(0.09f, 0.13f, 0.22f, 0.94f));
+        summonCountChipRoot = CreateRuntimePanel(summonPanel.transform, "Summon Count Chip", new Vector2(-286, -976), new Vector2(210, 52), new Color(0.06f, 0.16f, 0.22f, 0.95f));
+        summonRatesBoxRoot = CreateRuntimePanel(summonPanel.transform, "Summon Rates Box", new Vector2(130, -976), new Vector2(510, 118), new Color(0.08f, 0.2f, 0.26f, 0.95f));
+        CreateRuntimePanel(summonRatesBoxRoot, "Rates Box Glow", new Vector2(0, -4), new Vector2(480, 4), new Color(0.3f, 0.95f, 0.92f, 0.72f));
+
+        summonCarouselRoot = CreateRuntimePanel(summonPanel.transform, "Summon Banner Carousel", new Vector2(0, -890), new Vector2(820, 142), new Color(0.07f, 0.035f, 0.02f, 0.96f));
+        CreateRuntimePanel(summonCarouselRoot, "Carousel Top Line", new Vector2(0, -8), new Vector2(790, 4), new Color(0.82f, 0.55f, 0.24f, 0.85f));
+        summonCarouselPreviousButton = CreateRuntimeButton(summonCarouselRoot, "Summon Carousel Previous", "<", -366, -40, 58, 78);
+        summonCarouselNextButton = CreateRuntimeButton(summonCarouselRoot, "Summon Carousel Next", ">", 366, -40, 58, 78);
+        StyleSummonCarouselArrowButton(summonCarouselPreviousButton);
+        StyleSummonCarouselArrowButton(summonCarouselNextButton);
+        summonCarouselButtons = new Button[SummonCarouselCardCount];
+        summonCarouselFrames = new Image[SummonCarouselCardCount];
+        summonCarouselTitleTexts = new TMP_Text[SummonCarouselCardCount];
+        summonCarouselRateTexts = new TMP_Text[SummonCarouselCardCount];
+        summonCarouselHeroImages = new RawImage[SummonCarouselCardCount * SummonCarouselHeroSlotsPerCard];
+        summonCarouselCardBannerIndices = new int[SummonCarouselCardCount];
+        CreateSummonCarouselCard(0, new Vector2(-256, -24), new Vector2(214, 100));
+        CreateSummonCarouselCard(1, new Vector2(0, -18), new Vector2(292, 112));
+        CreateSummonCarouselCard(2, new Vector2(256, -24), new Vector2(214, 100));
+        AddSummonCarouselSwipeTarget(summonCarouselRoot.gameObject);
+        EnsureRuntimeSummonResultPopup();
+    }
+
+    private void EnsureRuntimeSummonResultPopup()
+    {
+        if (summonPanel == null || summonResultPopupRoot != null)
+        {
+            return;
+        }
+
+        summonResultPopupRoot = CreateRuntimePanel(summonPanel.transform, "Summon Result Popup", new Vector2(0, -140), new Vector2(900, 1040), new Color(0.01f, 0.01f, 0.014f, 0.92f));
+        summonResultPopupRoot.SetAsLastSibling();
+        CreateRuntimePanel(summonResultPopupRoot, "Result Parchment", new Vector2(0, -455), new Vector2(820, 740), new Color(0.15f, 0.09f, 0.055f, 0.98f));
+        CreateRuntimePanel(summonResultPopupRoot, "Result Header Glow", new Vector2(0, -70), new Vector2(640, 12), new Color(1f, 0.75f, 0.23f, 0.95f));
+        summonResultPopupTitleText = CreateRuntimeText(summonResultPopupRoot, "Result Title", "Summon Results", 34, new Vector2(0, -36), new Vector2(760, 58));
+        summonResultPopupTitleText.fontStyle = FontStyles.Bold;
+        summonResultPopupTitleText.color = new Color(1f, 0.86f, 0.28f);
+
+        summonResultHeroImages = new RawImage[HeroCount];
+        summonResultHeroNameTexts = new TMP_Text[HeroCount];
+        summonResultHeroCountTexts = new TMP_Text[HeroCount];
+        summonResultHeroFrames = new Image[HeroCount];
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var row = i < 3 ? 0 : 1;
+            var column = row == 0 ? i : i - 3;
+            var x = row == 0 ? -260f + (column * 260f) : -130f + (column * 260f);
+            var y = row == 0 ? -175f : -445f;
+            var card = CreateRuntimePanel(summonResultPopupRoot, $"Result Hero Card {i + 1}", new Vector2(x, y), new Vector2(205, 244), new Color(0.62f, 0.26f, 0.12f, 0.96f));
+            summonResultHeroFrames[i] = card.GetComponent<Image>();
+            CreateRuntimePanel(card, "Inner Glow", new Vector2(0, -118), new Vector2(188, 18), new Color(1f, 0.72f, 0.28f, 0.5f));
+            summonResultHeroImages[i] = CreateRuntimeRawImage(card, "Hero", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -14), new Vector2(150, 150), new Vector2(0.5f, 1f));
+            summonResultHeroNameTexts[i] = CreateRuntimeText(card, "Name", string.Empty, 19, new Vector2(0, -166), new Vector2(178, 28));
+            summonResultHeroNameTexts[i].fontStyle = FontStyles.Bold;
+            summonResultHeroNameTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
+            summonResultHeroNameTexts[i].enableAutoSizing = true;
+            summonResultHeroNameTexts[i].fontSizeMin = 13;
+            summonResultHeroNameTexts[i].fontSizeMax = 19;
+            summonResultHeroCountTexts[i] = CreateRuntimeText(card, "Draw Count", string.Empty, 30, new Vector2(0, -202), new Vector2(178, 38));
+            summonResultHeroCountTexts[i].fontStyle = FontStyles.Bold;
+            summonResultHeroCountTexts[i].color = Color.white;
+            card.gameObject.SetActive(false);
+        }
+
+        summonAutoToggleButton = CreateRuntimeButton(summonResultPopupRoot, "Auto Summon Toggle", string.Empty, 0, -742, 330, 58);
+        var autoLabel = summonAutoToggleButton.transform.Find("Label");
+        if (autoLabel != null)
+        {
+            autoLabel.gameObject.SetActive(false);
+        }
+
+        var checkbox = CreateRuntimePanel(summonAutoToggleButton.transform, "Checkbox", new Vector2(-130, -9), new Vector2(34, 34), new Color(0.04f, 0.025f, 0.02f, 0.92f));
+        summonAutoCheckboxImage = checkbox.GetComponent<Image>();
+        summonAutoCheckboxMarkText = CreateRuntimeText(checkbox, "Mark", string.Empty, 26, new Vector2(0, -1), new Vector2(32, 32));
+        summonAutoCheckboxMarkText.fontStyle = FontStyles.Bold;
+        summonAutoCheckboxMarkText.color = new Color(0.05f, 0.03f, 0.01f);
+        summonAutoToggleText = CreateRuntimeText(summonAutoToggleButton.transform, "Auto Text", "Auto-Summon", 26, new Vector2(38, -9), new Vector2(240, 38));
+        summonAutoToggleText.alignment = TextAlignmentOptions.Left;
+        summonAutoToggleText.fontStyle = FontStyles.Bold;
+        summonAutoToggleText.color = new Color(1f, 0.86f, 0.28f);
+
+        summonResultTenButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Ten", "x10", -270, -850, 265, 96);
+        summonResultMaxButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Max", "x300", 270, -850, 265, 96);
+        summonResultCloseButton = CreateRuntimeButton(summonResultPopupRoot, "Result Close", "X", 0, -850, 86, 86);
+        CreateRuntimeRawImage(summonResultTenButton.transform, "Gem Icon", GetCurrencyIconTexture("mythic_gem"), new Vector2(-92, -58), new Vector2(20, 27), new Vector2(0.5f, 1f));
+        CreateRuntimeRawImage(summonResultMaxButton.transform, "Gem Icon", GetCurrencyIconTexture("mythic_gem"), new Vector2(-92, -58), new Vector2(20, 27), new Vector2(0.5f, 1f));
+        summonResultTenCostText = CreateSummonResultButtonCostText(summonResultTenButton.transform, "Cost");
+        summonResultMaxCostText = CreateSummonResultButtonCostText(summonResultMaxButton.transform, "Cost");
+
+        summonResultPopupRoot.gameObject.SetActive(false);
+    }
+
+    private void CreateSummonCarouselCard(int cardIndex, Vector2 anchoredPosition, Vector2 size)
+    {
+        if (summonCarouselRoot == null || summonCarouselButtons == null || cardIndex < 0 || cardIndex >= summonCarouselButtons.Length)
+        {
+            return;
+        }
+
+        var button = CreateRuntimeButton(summonCarouselRoot, $"Summon Carousel Card {cardIndex + 1}", string.Empty, anchoredPosition.x, anchoredPosition.y, size.x, size.y);
+        summonCarouselButtons[cardIndex] = button;
+        summonCarouselFrames[cardIndex] = button.GetComponent<Image>();
+        if (summonCarouselFrames[cardIndex] != null)
+        {
+            summonCarouselFrames[cardIndex].color = new Color(0.12f, 0.075f, 0.045f, 0.94f);
+        }
+
+        var label = button.transform.Find("Label");
+        if (label != null)
+        {
+            label.gameObject.SetActive(false);
+        }
+
+        CreateLayeredRuntimeBackground(button.transform, new Vector2(size.x - 14f, size.y - 16f), 0.32f);
+        CreateRuntimePanel(button.transform, "Thumbnail Shade", new Vector2(0, -58), new Vector2(size.x - 18f, 42), new Color(0.02f, 0.015f, 0.012f, 0.58f));
+        summonCarouselTitleTexts[cardIndex] = CreateRuntimeText(button.transform, "Title", string.Empty, 15, new Vector2(0, -8), new Vector2(size.x - 22f, 24));
+        summonCarouselTitleTexts[cardIndex].fontStyle = FontStyles.Bold;
+        summonCarouselTitleTexts[cardIndex].fontSizeMin = 11;
+        summonCarouselTitleTexts[cardIndex].fontSizeMax = 15;
+        summonCarouselTitleTexts[cardIndex].enableAutoSizing = true;
+        summonCarouselTitleTexts[cardIndex].textWrappingMode = TextWrappingModes.NoWrap;
+
+        summonCarouselRateTexts[cardIndex] = CreateRuntimeText(button.transform, "Lead Rate", string.Empty, 14, new Vector2(0, -73), new Vector2(size.x - 22f, 20));
+        summonCarouselRateTexts[cardIndex].fontStyle = FontStyles.Bold;
+        summonCarouselRateTexts[cardIndex].fontSizeMin = 10;
+        summonCarouselRateTexts[cardIndex].fontSizeMax = 14;
+        summonCarouselRateTexts[cardIndex].enableAutoSizing = true;
+        summonCarouselRateTexts[cardIndex].textWrappingMode = TextWrappingModes.NoWrap;
+
+        var leftHeroIndex = cardIndex * SummonCarouselHeroSlotsPerCard;
+        var rightHeroIndex = leftHeroIndex + 1;
+        summonCarouselHeroImages[leftHeroIndex] = CreateRuntimeRawImage(button.transform, "Hero Preview Left", LoadRuntimeTexture("hero_astra"), new Vector2(-42, -38), new Vector2(72, 72), new Vector2(0.5f, 1f));
+        summonCarouselHeroImages[rightHeroIndex] = CreateRuntimeRawImage(button.transform, "Hero Preview Right", LoadRuntimeTexture("hero_elowen"), new Vector2(42, -38), new Vector2(72, 72), new Vector2(0.5f, 1f));
+        AddSummonCarouselSwipeTarget(button.gameObject);
+    }
+
+    private void AddSummonCarouselSwipeTarget(GameObject target)
+    {
+        AddEventTrigger(target, EventTriggerType.BeginDrag, BeginSummonCarouselDrag);
+        AddEventTrigger(target, EventTriggerType.EndDrag, EndSummonCarouselDrag);
+    }
+
+    private static void StyleSummonCarouselArrowButton(Button button)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        var image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = new Color(0.43f, 0.23f, 0.1f, 0.96f);
+        }
+
+        var label = button.transform.Find("Label")?.GetComponent<TMP_Text>();
+        if (label != null)
+        {
+            label.fontSize = 34;
+            label.fontSizeMin = 24;
+            label.fontSizeMax = 34;
+            label.color = new Color(1f, 0.82f, 0.42f);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+    }
+
+    private static TMP_Text CreateSummonButtonCostText(Transform parent, string name)
+    {
+        var text = CreateRuntimeText(parent, name, string.Empty, 14, new Vector2(-122, -50), new Vector2(58, 18));
+        text.alignment = TextAlignmentOptions.Center;
+        text.fontStyle = FontStyles.Bold;
+        text.fontSizeMin = 11;
+        text.fontSizeMax = 14;
+        text.enableAutoSizing = true;
+        text.color = Color.white;
+        text.outlineColor = new Color(0.12f, 0.06f, 0.02f, 1f);
+        text.outlineWidth = 0.12f;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        return text;
+    }
+
+    private static TMP_Text CreateSummonResultButtonCostText(Transform parent, string name)
+    {
+        var text = CreateRuntimeText(parent, name, string.Empty, 25, new Vector2(-24, -58), new Vector2(140, 34));
+        text.alignment = TextAlignmentOptions.Left;
+        text.fontStyle = FontStyles.Bold;
+        text.fontSizeMin = 16;
+        text.fontSizeMax = 25;
+        text.enableAutoSizing = true;
+        text.color = Color.white;
+        text.outlineColor = new Color(0.12f, 0.06f, 0.02f, 1f);
+        text.outlineWidth = 0.18f;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        return text;
     }
 
     private void EnsureParchmentBackdrop(GameObject panel, string name)
@@ -10203,7 +12521,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         formationEnemyText.fontSizeMin = 16;
         formationEnemyText.fontSizeMax = 23;
 
-        formationHintText = CreateRuntimeText(formationRoot, "Formation Hint", "Confirm starts a visible 30s combat sim.", 20, new Vector2(0, -770), new Vector2(760, 40));
+        formationHintText = CreateRuntimeText(formationRoot, "Formation Hint", $"Confirm starts a visible {DefaultCombatDurationSeconds}s combat sim.", 20, new Vector2(0, -770), new Vector2(760, 40));
         formationHintText.color = new Color(0.78f, 0.84f, 0.92f);
 
         formationAutoContinueButton = CreateRuntimeButton(formationRoot, "Formation Auto Continue Toggle", string.Empty, 0, -835, 560, 50);
@@ -10278,6 +12596,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             fightHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
             fightHeroRects[i] = fightHeroImages[i].GetComponent<RectTransform>();
             fightHeroHpFills[i] = CreateRuntimeHealthFill(fightRoot, $"Fight Hero HP {i + 1}", heroPositions[i] + new Vector2(0, -128), 118, new Color(0.16f, 0.78f, 0.33f));
+            SetHealthFillVisible(fightHeroHpFills[i], false);
 
             var enemyTextureName = GetCampaignEnemyTextureName(1, i);
             fightEnemyImages[i] = CreateRuntimeRawImage(fightRoot, $"Fight Enemy {i + 1}", LoadCombatTexture(enemyTextureName, "idle", 0, "enemy_campaign"), enemyPositions[i], new Vector2(126, 126), new Vector2(0.5f, 1f));
@@ -10323,6 +12642,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         fightSkillButtons = new Button[HeroCount];
         fightSkillBackplates = new Image[HeroCount];
+        fightSkillHpFills = new Image[HeroCount];
+        fightSkillHpTexts = new TMP_Text[HeroCount];
         fightSkillManaFills = new Image[HeroCount];
         fightSkillPortraits = new RawImage[HeroCount];
         fightSkillNameTexts = new TMP_Text[HeroCount];
@@ -10347,8 +12668,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             fightSkillButtons[i] = button;
 
             var portrait = CreateRuntimeRawImage(cardObject.transform, "Portrait", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -12), new Vector2(104, 112), new Vector2(0.5f, 1f));
+            portrait.rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
             portrait.raycastTarget = false;
             fightSkillPortraits[i] = portrait;
+
+            fightSkillHpFills[i] = CreateRuntimeHealthFill(cardObject.transform, "HP Back", new Vector2(0, -114), 104, new Color(0.16f, 0.78f, 0.33f, 0.96f));
+            var hpBack = fightSkillHpFills[i].transform.parent.GetComponent<RectTransform>();
+            if (hpBack != null)
+            {
+                hpBack.sizeDelta = new Vector2(104, 13);
+            }
+
+            fightSkillHpTexts[i] = CreateRuntimeText(fightSkillHpFills[i].transform.parent, "HP Text", "100%", 10, Vector2.zero, new Vector2(98, 13));
+            fightSkillHpTexts[i].fontStyle = FontStyles.Bold;
+            fightSkillHpTexts[i].raycastTarget = false;
 
             var manaBack = CreateRuntimePanel(cardObject.transform, "Mana Back", new Vector2(0, -132), new Vector2(104, 14), new Color(0.02f, 0.025f, 0.04f, 0.94f));
             var manaFillObject = new GameObject("Mana Fill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -10441,12 +12774,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void EnsureRuntimeHeroCardArt()
     {
-        if (heroSelectButtons == null || heroCardPortraits != null)
+        if (heroSelectButtons == null || (heroCardPortraits != null && heroCardShardFills != null))
         {
             return;
         }
 
         heroCardPortraits = new RawImage[heroSelectButtons.Length];
+        heroCardLevelTexts = new TMP_Text[heroSelectButtons.Length];
+        heroCardStarTexts = new TMP_Text[heroSelectButtons.Length];
+        heroCardShardTexts = new TMP_Text[heroSelectButtons.Length];
+        heroCardRoleBadgeTexts = new TMP_Text[heroSelectButtons.Length];
+        heroCardTeamBadgeTexts = new TMP_Text[heroSelectButtons.Length];
+        heroCardShardFills = new Image[heroSelectButtons.Length];
         for (var i = 0; i < heroSelectButtons.Length; i++)
         {
             var button = heroSelectButtons[i];
@@ -10459,20 +12798,66 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (existing != null)
             {
                 heroCardPortraits[i] = existing.GetComponent<RawImage>();
-                continue;
+            }
+            else
+            {
+                var portraitMat = CreateRuntimePanel(button.transform, "Runtime Hero Portrait Matte", new Vector2(0, -10), new Vector2(138, 148), new Color(1f, 1f, 1f, 0.13f));
+                portraitMat.SetAsFirstSibling();
+
+                var portraitObject = new GameObject("Runtime Hero Portrait", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+                portraitObject.transform.SetParent(button.transform, false);
+                var portraitRect = portraitObject.GetComponent<RectTransform>();
+                SetRuntimeRect(portraitRect, new Vector2(0, -12), new Vector2(132, 132), new Vector2(0.5f, 1f));
+                portraitObject.transform.SetSiblingIndex(1);
+
+                var portrait = portraitObject.GetComponent<RawImage>();
+                portrait.raycastTarget = false;
+                portrait.color = Color.white;
+                heroCardPortraits[i] = portrait;
             }
 
-            var portraitObject = new GameObject("Runtime Hero Portrait", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
-            portraitObject.transform.SetParent(button.transform, false);
-            var portraitRect = portraitObject.GetComponent<RectTransform>();
-            SetRuntimeRect(portraitRect, new Vector2(0, -14), new Vector2(78, 78), new Vector2(0.5f, 1f));
-            portraitObject.transform.SetAsFirstSibling();
+            heroCardRoleBadgeTexts[i] = CreateHeroCardBadge(button.transform, "Runtime Hero Role Badge", new Vector2(-48, -8), "M");
+            heroCardTeamBadgeTexts[i] = CreateHeroCardBadge(button.transform, "Runtime Hero Team Badge", new Vector2(48, -8), "T");
 
-            var portrait = portraitObject.GetComponent<RawImage>();
-            portrait.raycastTarget = false;
-            portrait.color = Color.white;
-            heroCardPortraits[i] = portrait;
+            heroCardLevelTexts[i] = CreateRuntimeText(button.transform, "Runtime Hero Level", string.Empty, 22, new Vector2(0, -112), new Vector2(128, 30));
+            heroCardLevelTexts[i].fontStyle = FontStyles.Bold;
+            heroCardLevelTexts[i].color = new Color(1f, 0.86f, 0.24f);
+            heroCardLevelTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
+            heroCardLevelTexts[i].raycastTarget = false;
+
+            heroCardStarTexts[i] = CreateRuntimeText(button.transform, "Runtime Hero Stars", string.Empty, 20, new Vector2(0, -142), new Vector2(132, 24));
+            heroCardStarTexts[i].fontStyle = FontStyles.Bold;
+            heroCardStarTexts[i].color = new Color(1f, 0.76f, 0.23f);
+            heroCardStarTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
+            heroCardStarTexts[i].raycastTarget = false;
+
+            var shardBack = CreateRuntimePanel(button.transform, "Runtime Hero Shard Back", new Vector2(0, -178), new Vector2(132, 26), new Color(0.02f, 0.025f, 0.025f, 0.86f));
+            var fillObject = new GameObject("Runtime Hero Shard Fill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            fillObject.transform.SetParent(shardBack, false);
+            var fillRect = fillObject.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            heroCardShardFills[i] = fillObject.GetComponent<Image>();
+            heroCardShardFills[i].color = new Color(0.08f, 0.78f, 0.86f, 0.96f);
+            heroCardShardFills[i].raycastTarget = false;
+
+            heroCardShardTexts[i] = CreateRuntimeText(shardBack, "Runtime Hero Shards", string.Empty, 16, Vector2.zero, new Vector2(126, 26));
+            heroCardShardTexts[i].fontStyle = FontStyles.Bold;
+            heroCardShardTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
+            heroCardShardTexts[i].raycastTarget = false;
         }
+    }
+
+    private static TMP_Text CreateHeroCardBadge(Transform parent, string name, Vector2 anchoredPosition, string label)
+    {
+        var badge = CreateRuntimePanel(parent, name, anchoredPosition, new Vector2(42, 34), new Color(0.04f, 0.48f, 0.46f, 0.94f));
+        var text = CreateRuntimeText(badge, "Label", label, 18, new Vector2(0, -3), new Vector2(38, 24));
+        text.fontStyle = FontStyles.Bold;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.raycastTarget = false;
+        return text;
     }
 
     private void EnsureRuntimeHeroEssenceCounter()
@@ -10491,6 +12876,89 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroEssenceAmountText.enableAutoSizing = true;
         heroEssenceAmountText.fontSizeMin = 16;
         heroEssenceAmountText.fontSizeMax = 22;
+    }
+
+    private void EnsureRuntimeHeroesTabs()
+    {
+        if (heroesPanel == null || heroRosterTabButton != null)
+        {
+            return;
+        }
+
+        var oldBackdrop = heroesPanel.transform.Find("Heroes Parchment Backdrop");
+        if (oldBackdrop != null)
+        {
+            oldBackdrop.gameObject.SetActive(false);
+        }
+        HideLegacyHeroesOverviewElements();
+
+        heroCleanBackdropRoot = CreateRuntimePanel(heroesPanel.transform, "Heroes Clean Backdrop", new Vector2(0, -176), new Vector2(1080, 1040), new Color(0.045f, 0.055f, 0.068f, 0.98f));
+        heroCleanBackdropRoot.SetAsFirstSibling();
+
+        heroRosterFilterRoot = CreateRuntimePanel(heroesPanel.transform, "Hero Roster Filter Bar", new Vector2(0, -186), new Vector2(1080, 104), new Color(0.09f, 0.28f, 0.34f, 0.96f));
+        heroRosterCountText = CreateRuntimeText(heroRosterFilterRoot, "Hero Count", "5/5", 34, new Vector2(-405, -24), new Vector2(210, 56));
+        heroRosterCountText.alignment = TextAlignmentOptions.Left;
+        heroRosterCountText.fontStyle = FontStyles.Bold;
+        heroRosterCountText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        heroSortToggleButton = CreateRuntimeButton(heroRosterFilterRoot, "Hero Sort Direction Button", "Desc", -130, -20, 142, 58);
+        heroSortToggleText = heroSortToggleButton.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        heroAttackTypeFilterButton = CreateRuntimeButton(heroRosterFilterRoot, "Hero Attack Type Filter Button", "Alle", 250, -20, 300, 58);
+        heroAttackTypeFilterText = heroAttackTypeFilterButton.GetComponentInChildren<TMP_Text>(includeInactive: true);
+
+        heroSubTabRoot = CreateRuntimePanel(heroesPanel.transform, "Hero Sub Tab Bar", new Vector2(0, -1050), new Vector2(820, 82), new Color(0.55f, 0.52f, 0.45f, 0.92f));
+        heroRosterTabButton = CreateRuntimeButton(heroSubTabRoot, "Heroes Roster Tab", "Held", -206, -9, 290, 64);
+        heroSetTeamTabButton = CreateRuntimeButton(heroSubTabRoot, "Heroes Set Team Tab", "Team festlegen", 136, -9, 360, 64);
+        heroRosterTabText = heroRosterTabButton.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        heroSetTeamTabText = heroSetTeamTabButton.GetComponentInChildren<TMP_Text>(includeInactive: true);
+
+        var rootObject = new GameObject("Heroes Set Team Root", typeof(RectTransform));
+        rootObject.transform.SetParent(heroesPanel.transform, false);
+        heroTeamRoot = rootObject.GetComponent<RectTransform>();
+        SetRuntimeRect(heroTeamRoot, new Vector2(0, -288), new Vector2(900, 350), new Vector2(0.5f, 1f));
+
+        var back = CreateRuntimePanel(heroTeamRoot, "Team Backplate", Vector2.zero, new Vector2(900, 350), new Color(0.055f, 0.075f, 0.095f, 0.92f));
+        back.SetAsFirstSibling();
+
+        heroTeamHintText = CreateRuntimeText(heroTeamRoot, "Team Hint", string.Empty, 19, new Vector2(0, -18), new Vector2(740, 38));
+        heroTeamHintText.color = new Color(0.78f, 0.9f, 1f);
+        heroTeamHintText.enableAutoSizing = true;
+        heroTeamHintText.fontSizeMin = 13;
+        heroTeamHintText.fontSizeMax = 19;
+
+        heroAutoSetTeamButton = CreateRuntimeButton(heroTeamRoot, "Auto Set Team Button", "Auto-Set", 308, -288, 172, 48);
+
+        heroTeamSlotPortraits = new RawImage[HeroCount];
+        heroTeamSlotTexts = new TMP_Text[HeroCount];
+        heroTeamSlotFrames = new Image[HeroCount];
+        heroTeamSlotButtons = new Button[HeroCount];
+        const float spacing = 154f;
+        var startX = -308f;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var slotObject = new GameObject($"Hero Team Slot {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            slotObject.transform.SetParent(heroTeamRoot, false);
+            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), new Vector2(startX + spacing * i, -82), new Vector2(136, 190), new Vector2(0.5f, 1f));
+
+            var frame = slotObject.GetComponent<Image>();
+            frame.color = new Color(0.1f, 0.14f, 0.19f, 0.82f);
+            heroTeamSlotFrames[i] = frame;
+
+            var button = slotObject.GetComponent<Button>();
+            button.targetGraphic = frame;
+            heroTeamSlotButtons[i] = button;
+
+            heroTeamSlotPortraits[i] = CreateRuntimeRawImage(slotObject.transform, "Portrait", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -12), new Vector2(108, 116), new Vector2(0.5f, 1f));
+            heroTeamSlotPortraits[i].raycastTarget = false;
+            heroTeamSlotTexts[i] = CreateRuntimeText(slotObject.transform, "Label", string.Empty, 15, new Vector2(0, -132), new Vector2(122, 44));
+            heroTeamSlotTexts[i].fontStyle = FontStyles.Bold;
+            heroTeamSlotTexts[i].enableAutoSizing = true;
+            heroTeamSlotTexts[i].fontSizeMin = 10;
+            heroTeamSlotTexts[i].fontSizeMax = 15;
+            heroTeamSlotTexts[i].raycastTarget = false;
+        }
+
+        heroTeamRoot.gameObject.SetActive(false);
     }
 
     private void EnsureRuntimeHeroDetailWindow()
@@ -10853,11 +13321,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void LayoutHeroesScreen()
     {
-        MoveUiElement(selectedHeroText, heroesPanel, new Vector2(0, -155), new Vector2(760, 90));
+        var oldBackdrop = heroesPanel != null ? heroesPanel.transform.Find("Heroes Parchment Backdrop") : null;
+        if (oldBackdrop != null)
+        {
+            oldBackdrop.gameObject.SetActive(false);
+        }
+        HideLegacyHeroesOverviewElements();
+
+        MoveUiElement(selectedHeroText, heroesPanel, new Vector2(0, -142), new Vector2(760, 82));
+        MoveUiElement(heroCleanBackdropRoot, heroesPanel, new Vector2(0, -176), new Vector2(1080, 1040));
+        if (heroCleanBackdropRoot != null)
+        {
+            heroCleanBackdropRoot.SetAsFirstSibling();
+        }
+
+        MoveUiElement(heroRosterFilterRoot, heroesPanel, new Vector2(0, -186), new Vector2(1080, 104));
+        MoveUiElement(heroSortToggleButton, heroRosterFilterRoot != null ? heroRosterFilterRoot.gameObject : heroesPanel, new Vector2(-130, -20), new Vector2(142, 58));
+        MoveUiElement(heroAttackTypeFilterButton, heroRosterFilterRoot != null ? heroRosterFilterRoot.gameObject : heroesPanel, new Vector2(250, -20), new Vector2(300, 58));
+        MoveUiElement(heroSubTabRoot, heroesPanel, new Vector2(0, -1050), new Vector2(820, 82));
+        MoveUiElement(heroRosterTabButton, heroSubTabRoot != null ? heroSubTabRoot.gameObject : heroesPanel, new Vector2(-206, -9), new Vector2(290, 64));
+        MoveUiElement(heroSetTeamTabButton, heroSubTabRoot != null ? heroSubTabRoot.gameObject : heroesPanel, new Vector2(136, -9), new Vector2(360, 64));
+        MoveUiElement(heroTeamRoot, heroesPanel, new Vector2(0, -288), new Vector2(900, 350));
         LayoutHeroCards();
         SetTextArrayActive(teamSlotTexts, false);
-        MoveUiElement(heroUpgradeButton, heroesPanel, new Vector2(-205, -845), new Vector2(330, 72));
-        MoveUiElement(heroAscendButton, heroesPanel, new Vector2(205, -845), new Vector2(330, 72));
+        SetComponentActive(heroUpgradeButton, false);
+        SetComponentActive(heroAscendButton, false);
     }
 
     private void LayoutHeroCards()
@@ -10867,10 +13355,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        const float cardWidth = 132f;
-        const float cardHeight = 128f;
-        var xPositions = new[] { -304f, -152f, 0f, 152f, 304f };
-        var yPositions = new[] { -292f, -435f, -578f };
+        const float cardWidth = 154f;
+        const float cardHeight = 226f;
+        var xPositions = new[] { -348f, -174f, 0f, 174f, 348f };
+        var yPositions = heroesTabMode == HeroesTabMode.SetTeam
+            ? new[] { -670f, -910f, -1150f }
+            : new[] { -332f, -572f, -812f };
 
         for (var i = 0; i < heroSelectButtons.Length; i++)
         {
@@ -10880,7 +13370,40 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (heroCardTexts != null && i < heroCardTexts.Length)
             {
-                MoveUiElement(heroCardTexts[i], heroSelectButtons[i] != null ? heroSelectButtons[i].gameObject : null, new Vector2(0, -86), new Vector2(122, 36));
+                MoveUiElement(heroCardTexts[i], heroSelectButtons[i] != null ? heroSelectButtons[i].gameObject : null, new Vector2(0, -145), new Vector2(132, 70));
+            }
+
+            if (heroCardPortraits != null && i < heroCardPortraits.Length && heroCardPortraits[i] != null)
+            {
+                SetRuntimeRect(heroCardPortraits[i].rectTransform, new Vector2(0, -12), new Vector2(132, 132), new Vector2(0.5f, 1f));
+            }
+
+            if (heroCardLevelTexts != null && i < heroCardLevelTexts.Length)
+            {
+                MoveUiElement(heroCardLevelTexts[i], heroSelectButtons[i] != null ? heroSelectButtons[i].gameObject : null, new Vector2(0, -112), new Vector2(128, 30));
+            }
+
+            if (heroCardStarTexts != null && i < heroCardStarTexts.Length)
+            {
+                MoveUiElement(heroCardStarTexts[i], heroSelectButtons[i] != null ? heroSelectButtons[i].gameObject : null, new Vector2(0, -142), new Vector2(132, 24));
+            }
+
+            if (heroCardShardFills != null && i < heroCardShardFills.Length && heroCardShardFills[i] != null)
+            {
+                var shardBack = heroCardShardFills[i].transform.parent.GetComponent<RectTransform>();
+                SetRuntimeRect(shardBack, new Vector2(0, -178), new Vector2(132, 26), new Vector2(0.5f, 1f));
+            }
+
+            if (heroCardRoleBadgeTexts != null && i < heroCardRoleBadgeTexts.Length && heroCardRoleBadgeTexts[i] != null)
+            {
+                var badge = heroCardRoleBadgeTexts[i].transform.parent.GetComponent<RectTransform>();
+                SetRuntimeRect(badge, new Vector2(-48, -8), new Vector2(42, 34), new Vector2(0.5f, 1f));
+            }
+
+            if (heroCardTeamBadgeTexts != null && i < heroCardTeamBadgeTexts.Length && heroCardTeamBadgeTexts[i] != null)
+            {
+                var badge = heroCardTeamBadgeTexts[i].transform.parent.GetComponent<RectTransform>();
+                SetRuntimeRect(badge, new Vector2(48, -8), new Vector2(42, 34), new Vector2(0.5f, 1f));
             }
         }
     }
@@ -10904,11 +13427,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void LayoutSummonScreen()
     {
-        MoveUiElement(summonCostText, summonPanel, new Vector2(0, -690), new Vector2(760, 42));
-        MoveUiElement(summonRatesText, summonPanel, new Vector2(0, -748), new Vector2(760, 70));
-        MoveUiElement(summonResultText, summonPanel, new Vector2(0, -828), new Vector2(760, 72));
-        MoveUiElement(summonCountText, summonPanel, new Vector2(0, -905), new Vector2(760, 36));
-        MoveUiElement(summonButton, summonPanel, new Vector2(0, -960), new Vector2(360, 66));
+        SetComponentActive(summonCostText, false);
+        var summonBackdrop = summonPanel != null ? summonPanel.transform.Find("Summon Parchment Backdrop")?.GetComponent<RectTransform>() : null;
+        SetComponentActive(summonBackdrop, false);
+        MoveUiElement(summonOfferRoot, summonPanel, new Vector2(0, -312), new Vector2(820, 458));
+        MoveUiElement(summonButton, summonPanel, new Vector2(-190, -786), new Vector2(300, 82));
+        MoveUiElement(summonTenButton, summonPanel, new Vector2(190, -786), new Vector2(300, 82));
+        MoveUiElement(summonSingleCostText, summonButton != null ? summonButton.gameObject : null, new Vector2(-122, -50), new Vector2(58, 18));
+        MoveUiElement(summonTenCostText, summonTenButton != null ? summonTenButton.gameObject : null, new Vector2(-122, -50), new Vector2(58, 18));
+        MoveUiElement(summonCarouselRoot, summonPanel, new Vector2(0, -900), new Vector2(820, 142));
+        MoveUiElement(summonCarouselPreviousButton, summonCarouselRoot != null ? summonCarouselRoot.gameObject : null, new Vector2(-366, -40), new Vector2(58, 78));
+        MoveUiElement(summonCarouselNextButton, summonCarouselRoot != null ? summonCarouselRoot.gameObject : null, new Vector2(366, -40), new Vector2(58, 78));
+        MoveUiElement(summonResultBoxRoot, summonPanel, new Vector2(0, -1046), new Vector2(760, 64));
+        MoveUiElement(summonCountChipRoot, summonPanel, new Vector2(-286, -1128), new Vector2(210, 52));
+        MoveUiElement(summonRatesBoxRoot, summonPanel, new Vector2(130, -1128), new Vector2(510, 118));
+        MoveUiElement(summonResultText, summonResultBoxRoot != null ? summonResultBoxRoot.gameObject : summonPanel, new Vector2(0, -10), new Vector2(700, 50));
+        MoveUiElement(summonCountText, summonCountChipRoot != null ? summonCountChipRoot.gameObject : summonPanel, new Vector2(4, -11), new Vector2(176, 32));
+        MoveUiElement(summonRatesText, summonRatesBoxRoot != null ? summonRatesBoxRoot.gameObject : summonPanel, new Vector2(0, -22), new Vector2(470, 84));
+        MoveUiElement(summonResultPopupRoot, summonPanel, new Vector2(0, -140), new Vector2(900, 1040));
     }
 
     private void LayoutShopScreen()
@@ -11040,12 +13576,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 continue;
             }
 
+            var heroIndex = GetHeroCardDisplayIndex(i);
+            button.gameObject.SetActive(heroIndex >= 0);
+            if (heroIndex < 0)
+            {
+                continue;
+            }
+
             var frame = button.GetComponent<Image>();
             if (frame != null)
             {
-                frame.color = i == selectedHeroIndex
-                    ? new Color(1f, 0.78f, 0.25f, 1f)
-                    : new Color(0.72f, 0.42f, 0.18f, 1f);
+                var isSelected = heroIndex == selectedHeroIndex;
+                var isTeamTarget = heroesTabMode == HeroesTabMode.SetTeam && selectedHeroTeamSlotIndex >= 0 && FindFormationSlotForHero(heroIndex) == selectedHeroTeamSlotIndex;
+                var rarityColor = GetHeroRosterCardColor(heroIndex);
+                frame.sprite = null;
+                frame.type = Image.Type.Simple;
+                frame.color = isSelected || isTeamTarget
+                    ? Color.Lerp(rarityColor, new Color(1f, 0.95f, 0.58f, 1f), 0.45f)
+                    : FindFormationSlotForHero(heroIndex) >= 0
+                        ? Color.Lerp(rarityColor, new Color(0.12f, 0.68f, 0.64f, 1f), 0.2f)
+                        : rarityColor;
             }
 
             if (heroCardPortraits == null || i >= heroCardPortraits.Length || heroCardPortraits[i] == null)
@@ -11053,10 +13603,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 continue;
             }
 
-            var hero = GetHeroDefinition(Mathf.Clamp(i, 0, HeroCount - 1));
+            var hero = GetHeroDefinition(heroIndex);
             heroCardPortraits[i].texture = LoadRuntimeTexture($"hero_{hero.name.ToLowerInvariant()}");
+            heroCardPortraits[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
             heroCardPortraits[i].color = Color.white;
         }
+    }
+
+    private static Color GetHeroRosterCardColor(int heroIndex)
+    {
+        var rarityId = GetHeroDefinition(heroIndex).rarityId;
+        if (rarityId == LegendaryRarityId)
+        {
+            return new Color(0.9f, 0.55f, 0.13f, 0.98f);
+        }
+
+        if (rarityId == EpicRarityId)
+        {
+            return new Color(0.62f, 0.37f, 0.78f, 0.98f);
+        }
+
+        return new Color(0.52f, 0.62f, 0.22f, 0.98f);
     }
 
     private void ShowHeroDetail(int index)
@@ -11237,9 +13804,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         EnsureAccessories();
+        var heroIndex = GetSelectedHeroIndex();
         if (selectedHeroDetailGearSlotIndex < 2)
         {
-            RefreshHeroDetailEquipmentTrackList(selectedHeroDetailGearSlotIndex == 0 ? WeaponTrack : ArmorTrack, selectedHeroDetailGearSlotIndex == 0 ? weaponLevel : armorLevel);
+            RefreshHeroDetailEquipmentTrackList(
+                selectedHeroDetailGearSlotIndex == 0 ? WeaponTrack : ArmorTrack,
+                selectedHeroDetailGearSlotIndex == 0 ? GetHeroEquipmentLevel(heroIndex, isWeapon: true) : GetHeroEquipmentLevel(heroIndex, isWeapon: false),
+                heroIndex);
             return;
         }
 
@@ -11266,8 +13837,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             optionButton.gameObject.SetActive(true);
             var copies = GetAccessoryInventoryCount(accessorySlot, rarity);
-            var equipped = equippedAccessoryRarities[accessorySlot] == rarity;
-            var levelText = equipped ? $"  Equipped Lv {equippedAccessoryLevels[accessorySlot]}" : string.Empty;
+            var equipped = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot) == rarity;
+            var levelText = equipped ? $"  Equipped Lv {GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot)}" : string.Empty;
             var actionText = equipped ? "Equipped" : copies > 0 ? "Tap to equip" : "No copy";
             if (optionText != null)
             {
@@ -11288,11 +13859,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
-    private void RefreshHeroDetailEquipmentTrackList(EquipmentTrackDefinition track, int level)
+    private void RefreshHeroDetailEquipmentTrackList(EquipmentTrackDefinition track, int level, int heroIndex)
     {
+        var hero = GetHeroDefinition(heroIndex);
         if (heroDetailGearListTitleText != null)
         {
-            heroDetailGearListTitleText.text = $"{track.name} Gear";
+            heroDetailGearListTitleText.text = $"{hero.name} {track.name}";
         }
 
         for (var i = 0; i < AccessoryRarityCount; i++)
@@ -11314,9 +13886,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (optionText != null)
             {
+                var bonus = track.equipmentId == WeaponTrack.equipmentId ? GetHeroEquipmentAttackBonus(heroIndex) : GetHeroEquipmentHealthBonus(heroIndex);
                 optionText.text = i == 0
-                    ? $"{track.name} Lv {GetEquipmentDisplayLevel(track, level)}   +{GetEquipmentBonus(track, level)} {track.statLabel}\nGlobal equipment track"
-                    : "Open Gear screen";
+                    ? $"{track.name} Lv {GetEquipmentDisplayLevel(track, level)}   +{bonus} {track.statLabel}\nEquipped on {hero.name}"
+                    : $"Open Gear screen for {hero.name}";
             }
         }
     }
@@ -11365,14 +13938,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private string GetHeroDetailGearSlotText(int slotIndex)
     {
+        var heroIndex = GetSelectedHeroIndex();
         if (slotIndex == 0)
         {
-            return $"{WeaponTrack.name}\nLv {GetEquipmentDisplayLevel(WeaponTrack, weaponLevel)}";
+            return $"{WeaponTrack.name}\nLv {GetEquipmentDisplayLevel(WeaponTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: true))}";
         }
 
         if (slotIndex == 1)
         {
-            return $"{ArmorTrack.name}\nLv {GetEquipmentDisplayLevel(ArmorTrack, armorLevel)}";
+            return $"{ArmorTrack.name}\nLv {GetEquipmentDisplayLevel(ArmorTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: false))}";
         }
 
         var accessorySlot = slotIndex - 2;
@@ -11381,13 +13955,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return "Locked";
         }
 
-        var rarity = equippedAccessoryRarities[accessorySlot];
+        var rarity = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot);
         if (rarity < 0)
         {
             return $"{AccessorySlots[accessorySlot].name}\nEmpty";
         }
 
-        return $"{AccessorySlots[accessorySlot].name}\n{GetAccessoryRarityName(rarity)} Lv {equippedAccessoryLevels[accessorySlot]}";
+        return $"{AccessorySlots[accessorySlot].name}\n{GetAccessoryRarityName(rarity)} Lv {GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot)}";
     }
 
     private Color GetHeroDetailGearSlotColor(int slotIndex)
@@ -11403,7 +13977,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return new Color(0.18f, 0.13f, 0.1f, 0.78f);
         }
 
-        var rarity = equippedAccessoryRarities[accessorySlot];
+        var rarity = GetHeroEquippedAccessoryRarity(GetSelectedHeroIndex(), accessorySlot);
         return rarity >= 0 ? GetAccessoryRarityColor(rarity) : new Color(0.36f, 0.22f, 0.13f, 0.9f);
     }
 
@@ -11684,6 +14258,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private int FindFormationSlotForHero(int heroIndex)
+    {
+        EnsureFormationOrder();
+        heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
+        for (var slotIndex = 0; slotIndex < formationSlotHeroIndices.Length; slotIndex++)
+        {
+            if (formationSlotHeroIndices[slotIndex] == heroIndex)
+            {
+                return slotIndex;
+            }
+        }
+
+        return -1;
+    }
+
     private void SelectFormationSlot(int slotIndex)
     {
         if (campaignFightInProgress || backendRequestInProgress || backendLifecycleFlushInProgress)
@@ -11851,7 +14440,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                     ? "Server Mode resolves rewards, then plays the visible fight."
                     : isDungeon
                         ? "Confirm starts a single-boss dungeon fight."
-                        : "Confirm starts a visible 30s combat sim.";
+                        : $"Confirm starts a visible {DefaultCombatDurationSeconds}s combat sim.";
             }
         }
     }
@@ -12162,6 +14751,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             accessoryLevelButton,
             accessoryFuseButton,
             summonButton,
+            summonTenButton,
+            summonResultTenButton,
+            summonResultMaxButton,
+            summonResultCloseButton,
+            summonAutoToggleButton,
             resetButton,
             homeTabButton,
             battleTabButton,
@@ -12185,6 +14779,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             debugAccessoryButton,
             fightEndButton,
             homeBeginButton,
+            heroRosterTabButton,
+            heroSetTeamTabButton,
+            heroSortToggleButton,
+            heroAttackTypeFilterButton,
+            heroAutoSetTeamButton,
             heroDetailCloseButton,
             heroDetailPreviousButton,
             heroDetailNextButton,
@@ -12192,9 +14791,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroDetailEquipGearButton,
             heroDetailRemoveGearButton);
         runtimeArt.ApplyButtonStyle(heroSelectButtons);
+        runtimeArt.ApplyButtonStyle(heroTeamSlotButtons);
         runtimeArt.ApplyButtonStyle(dailyMissionButtons);
         runtimeArt.ApplyButtonStyle(battlePassRewardButtons);
-        runtimeArt.ApplyButtonStyle("ui_button_blue", fightButton, summonButton, homeBeginButton);
+        runtimeArt.ApplyButtonStyle("ui_button_blue", fightButton, homeBeginButton);
     }
 
     private void EnsureRuntimeDebugUi()
