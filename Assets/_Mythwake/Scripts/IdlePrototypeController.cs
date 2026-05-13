@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.57";
+    public const string PrototypeVersion = "0.2.58";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1023,11 +1023,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text[] fightSkillManaTexts;
     private Button fightAutoSkillButton;
     private TMP_Text fightAutoSkillButtonText;
+    private Button fightSpeedButton;
+    private TMP_Text fightSpeedButtonText;
     private int[] fightHeroManaValues;
     private int[] fightHeroMaxManaValues;
     private bool[] fightHeroUltimateQueued;
     private float[] fightHeroUltimateStartedAt;
     private bool fightAutoSkillsEnabled;
+    private bool fightDoubleSpeedEnabled;
     private TMP_Text[] fightFloatingTexts;
     private TMP_Text fightResultTitleText;
     private TMP_Text fightResultBodyText;
@@ -4780,8 +4783,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         while (!fightCancelRequested && ShouldContinueFightVisual(timer, visualDuration, maxVisualDuration, won, heroHpPercents, HeroCount, teamEndPercent, enemyHpPercents, activeEnemyCount, enemyEndPercent))
         {
             var realDeltaTime = Mathf.Min(Time.unscaledDeltaTime, 0.25f);
-            var simulationDeltaTime = Mathf.Min(realDeltaTime, 0.05f);
-            timer += realDeltaTime;
+            var scaledDeltaTime = realDeltaTime * GetFightTimeScale();
+            var simulationDeltaTime = Mathf.Min(scaledDeltaTime, 0.05f);
+            timer += scaledDeltaTime;
             var progress = Mathf.Clamp01(timer / visualDuration);
             var smooth = Mathf.SmoothStep(0f, 1f, progress);
             var shownSecond = Mathf.Clamp(Mathf.FloorToInt(timer), 0, DefaultCombatDurationSeconds);
@@ -4944,6 +4948,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         RefreshFightSkillUi(0f);
         RefreshFightAutoSkillButton();
+        RefreshFightSpeedButton();
     }
 
     private void ToggleFightAutoSkills()
@@ -4972,6 +4977,39 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             fightAutoSkillButtonText.text = fightAutoSkillsEnabled ? "AUTO\nON" : "AUTO";
             fightAutoSkillButtonText.color = fightAutoSkillsEnabled ? new Color(0.18f, 0.09f, 0.02f) : Color.white;
+        }
+    }
+
+    private void ToggleFightSpeed()
+    {
+        fightDoubleSpeedEnabled = !fightDoubleSpeedEnabled;
+        RefreshFightSpeedButton();
+    }
+
+    private float GetFightTimeScale()
+    {
+        return fightDoubleSpeedEnabled ? 2f : 1f;
+    }
+
+    private void RefreshFightSpeedButton()
+    {
+        if (fightSpeedButton == null)
+        {
+            return;
+        }
+
+        var image = fightSpeedButton.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = fightDoubleSpeedEnabled
+                ? new Color(0.26f, 0.76f, 1f, 0.98f)
+                : new Color(0.12f, 0.13f, 0.17f, 0.9f);
+        }
+
+        if (fightSpeedButtonText != null)
+        {
+            fightSpeedButtonText.text = fightDoubleSpeedEnabled ? "x2\nON" : "x2";
+            fightSpeedButtonText.color = fightDoubleSpeedEnabled ? new Color(0.02f, 0.08f, 0.14f) : Color.white;
         }
     }
 
@@ -7151,6 +7189,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (fightEndButton != null)
         {
             fightEndButton.gameObject.SetActive(battleVisible && battleFlowMode == BattleFlowMode.Fight);
+        }
+
+        if (fightAutoSkillButton != null)
+        {
+            fightAutoSkillButton.gameObject.SetActive(battleVisible && battleFlowMode == BattleFlowMode.Fight);
+        }
+
+        if (fightSpeedButton != null)
+        {
+            fightSpeedButton.gameObject.SetActive(battleVisible && battleFlowMode == BattleFlowMode.Fight);
         }
     }
 
@@ -10237,10 +10285,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             fightSkillManaTexts[i].raycastTarget = false;
         }
 
-        fightAutoSkillButton = CreateRuntimeButton(fightRoot, "Fight Auto Skill Button", "AUTO", 370, -966, 104, 56);
+        fightAutoSkillButton = CreateRuntimeButton(fightRoot, "Fight Auto Skill Button", "AUTO", 316, -966, 96, 56);
         fightAutoSkillButton.onClick.AddListener(ToggleFightAutoSkills);
         fightAutoSkillButtonText = fightAutoSkillButton.GetComponentInChildren<TMP_Text>();
         RefreshFightAutoSkillButton();
+
+        fightSpeedButton = CreateRuntimeButton(fightRoot, "Fight Speed Button", "x2", 424, -966, 82, 56);
+        fightSpeedButton.onClick.AddListener(ToggleFightSpeed);
+        fightSpeedButtonText = fightSpeedButton.GetComponentInChildren<TMP_Text>();
+        RefreshFightSpeedButton();
     }
 
     private void EnsureRuntimeHomePopups()

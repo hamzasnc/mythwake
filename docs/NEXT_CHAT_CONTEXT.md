@@ -73,7 +73,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.57`
+- Prototype `0.2.58`
 - Save version `2`
 
 Important Unity scripts:
@@ -103,6 +103,7 @@ Latest local gameplay/UI batch:
 - Heroes screen now opens a dedicated hero detail overlay when tapping a hero card. The overlay shows rarity/title/name, a large centered hero portrait, side gear slots, live level/power/stats/resources, Level Up, Gear buttons, and Story/Hero/Skills-style tabs.
 - Hero detail no longer shows infinite local caps as `2147483647`. Visible/local combat now applies hero stats per hit: ATK drives hit damage, HP/DEF reduce per-target damage pressure, CRIT can multiply hits, and ACC can miss before mana/passives trigger.
 - Fight screen now has an `End Fight` button. It cancels the current visible fight, disables Auto Continue/skill AUTO, stops pending auto-continue coroutines, and returns to the result popup without applying local fight rewards. Auto-next only queues after victory while the Formation checkbox is enabled.
+- Fight screen now has a small `x2` speed toggle next to the skill `AUTO` button. When enabled, the visible fight timer, movement, attacks, animation playback, mana gain cadence, and result timing run at double speed.
 - Hero detail gear slots are clickable. Clicking Weapon/Armor shows the current global track and an Open Gear option; clicking accessory slots shows all compatible rarity pieces for that slot with copy counts, equipped state, and tap-to-equip when a copy is available.
 - Melee engagement is stabilized: units lock a fixed melee position when acquiring a target, instead of recalculating from a moving target every frame. Fight positions are also clamped to the arena bounds.
 - Victory/defeat result screens wait for the visible HP bars to reach their intended end state, with a short cleanup extension if the backend result finished before the visual target deaths did.
