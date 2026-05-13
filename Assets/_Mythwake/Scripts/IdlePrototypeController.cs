@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.58";
+    public const string PrototypeVersion = "0.2.60";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -539,7 +539,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const float OfflineGoldRewardRate = 0.5f;
     private const int AfkRewardMaxSeconds = 24 * 60 * 60;
     private const float AfkRewardAutosaveSeconds = 30f;
-    private const int DefaultCombatDurationSeconds = 30;
+    private const int DefaultCombatDurationSeconds = 60;
+    private const float FightUltimateCinematicSeconds = 0.9f;
+    private const float FightUltimateWorldSlowScale = 0.18f;
     private const float WarriorDamageBonusRate = 0.06f;
     private const float MageDamageBonusRate = 0.1f;
     private const float TankDamageReductionRate = 0.18f;
@@ -4767,6 +4769,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var enemyBasePositions = singleBoss ? GetFightBossEnemyPositions() : GetFightEnemyPositions();
         var heroStates = CreateFightVisualUnitStates(heroBasePositions, HeroCount, 0.2f);
         var enemyStates = CreateFightVisualUnitStates(enemyBasePositions, activeEnemyCount, 0.45f);
+        var animationTimer = 0f;
+        var slowedWorldAnimationTimer = 0f;
+        var ultimateCinematicHeroIndex = -1;
+        var ultimateCinematicRemaining = 0f;
         InitializeFightSkillState();
 
         if (fightResultRoot != null)
@@ -4783,9 +4789,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         while (!fightCancelRequested && ShouldContinueFightVisual(timer, visualDuration, maxVisualDuration, won, heroHpPercents, HeroCount, teamEndPercent, enemyHpPercents, activeEnemyCount, enemyEndPercent))
         {
             var realDeltaTime = Mathf.Min(Time.unscaledDeltaTime, 0.25f);
+            var ultimateCinematicActive = ultimateCinematicHeroIndex >= 0 && ultimateCinematicRemaining > 0f;
             var scaledDeltaTime = realDeltaTime * GetFightTimeScale();
-            var simulationDeltaTime = Mathf.Min(scaledDeltaTime, 0.05f);
-            timer += scaledDeltaTime;
+            var combatDeltaTime = ultimateCinematicActive ? 0f : scaledDeltaTime;
+            var worldDeltaTime = ultimateCinematicActive ? realDeltaTime * FightUltimateWorldSlowScale : scaledDeltaTime;
+            var animationDeltaTime = ultimateCinematicActive ? realDeltaTime : scaledDeltaTime;
+            var simulationDeltaTime = Mathf.Min(worldDeltaTime, 0.05f);
+            timer += combatDeltaTime;
+            animationTimer += animationDeltaTime;
+            slowedWorldAnimationTimer += worldDeltaTime;
+            if (!ultimateCinematicActive)
+            {
+                slowedWorldAnimationTimer = animationTimer;
+            }
+
             var progress = Mathf.Clamp01(timer / visualDuration);
             var smooth = Mathf.SmoothStep(0f, 1f, progress);
             var shownSecond = Mathf.Clamp(Mathf.FloorToInt(timer), 0, DefaultCombatDurationSeconds);
@@ -4793,34 +4810,57 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (fightTimerText != null)
             {
-                fightTimerText.text = $"00:{remainingSeconds:00}";
+                fightTimerText.text = FormatFightTimer(remainingSeconds);
             }
 
             if (fightStatusText != null)
             {
-                fightStatusText.text = $"Dealt {FormatCompactNumber(Mathf.RoundToInt(damageDealt * smooth))}   Took {FormatCompactNumber(Mathf.RoundToInt(damageTaken * smooth))}";
+                fightStatusText.text = ultimateCinematicActive
+                    ? $"{GetHeroDefinition(ultimateCinematicHeroIndex).name} unleashes Ultimate"
+                    : $"Dealt {FormatCompactNumber(Mathf.RoundToInt(damageDealt * smooth))}   Took {FormatCompactNumber(Mathf.RoundToInt(damageTaken * smooth))}";
             }
 
             UpdateFightVisualMovement(heroStates, HeroCount, heroHpPercents, enemyStates, activeEnemyCount, enemyHpPercents, true, simulationDeltaTime);
             UpdateFightVisualMovement(enemyStates, activeEnemyCount, enemyHpPercents, heroStates, HeroCount, heroHpPercents, false, simulationDeltaTime);
             var finishScale = timer > visualDuration ? 1.85f : 1f;
-            ResolveFightVisualAttacks(heroStates, HeroCount, heroHpPercents, enemyStates, activeEnemyCount, enemyHpPercents, true, timer, enemyEndPercent, heroDamageUnit * finishScale, stageNumber, enemyDamage, ref floatingIndex);
-            ResolveFightVisualAttacks(enemyStates, activeEnemyCount, enemyHpPercents, heroStates, HeroCount, heroHpPercents, false, timer, teamEndPercent, enemyDamageUnit * finishScale, stageNumber, enemyDamage, ref floatingIndex);
-            ResolveFightHeroUltimates(heroStates, heroHpPercents, enemyStates, activeEnemyCount, enemyHpPercents, timer, enemyEndPercent, heroDamageUnit * finishScale, ref floatingIndex);
+            if (!ultimateCinematicActive)
+            {
+                ResolveFightVisualAttacks(heroStates, HeroCount, heroHpPercents, enemyStates, activeEnemyCount, enemyHpPercents, true, timer, animationTimer, enemyEndPercent, heroDamageUnit * finishScale, stageNumber, enemyDamage, ref floatingIndex);
+                ResolveFightVisualAttacks(enemyStates, activeEnemyCount, enemyHpPercents, heroStates, HeroCount, heroHpPercents, false, timer, animationTimer, teamEndPercent, enemyDamageUnit * finishScale, stageNumber, enemyDamage, ref floatingIndex);
+                var ultimateHeroIndex = ResolveFightHeroUltimates(heroStates, heroHpPercents, enemyStates, activeEnemyCount, enemyHpPercents, timer, animationTimer, enemyEndPercent, heroDamageUnit * finishScale, ref floatingIndex);
+                if (ultimateHeroIndex >= 0)
+                {
+                    ultimateCinematicHeroIndex = ultimateHeroIndex;
+                    ultimateCinematicRemaining = FightUltimateCinematicSeconds;
+                }
+            }
 
             SetFillValues(fightHeroHpFills, heroHpPercents, HeroCount);
             SetFillValues(fightEnemyHpFills, enemyHpPercents, activeEnemyCount);
             SetHpPercentTexts(fightEnemyHpPercentTexts, enemyHpPercents, activeEnemyCount);
             RefreshFightBossHpUi(singleBoss, enemyHpPercents);
-            RefreshFightSkillUi(timer);
+            RefreshFightSkillUi(animationTimer);
             AnimateFightUnitsWithState(
                 heroStates,
                 enemyStates,
                 heroHpPercents,
                 enemyHpPercents,
                 activeEnemyCount,
-                timer,
-                singleBoss);
+                animationTimer,
+                slowedWorldAnimationTimer,
+                singleBoss,
+                ultimateCinematicHeroIndex,
+                ultimateCinematicRemaining);
+
+            if (ultimateCinematicHeroIndex >= 0)
+            {
+                ultimateCinematicRemaining = Mathf.Max(0f, ultimateCinematicRemaining - realDeltaTime);
+                if (ultimateCinematicRemaining <= 0f)
+                {
+                    ultimateCinematicHeroIndex = -1;
+                    slowedWorldAnimationTimer = animationTimer;
+                }
+            }
 
             yield return null;
         }
@@ -4850,7 +4890,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshFightBossHpUi(singleBoss, enemyHpPercents);
         SetProjectilesVisible(fightHeroProjectileImages, false);
         SetProjectilesVisible(fightEnemyProjectileImages, false);
-        RefreshFightSkillUi(timer);
+        RefreshFightSkillUi(animationTimer);
         if (fightTimerText != null)
         {
             fightTimerText.text = won ? "Clear" : "00:00";
@@ -5052,20 +5092,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
-    private void ResolveFightHeroUltimates(
+    private int ResolveFightHeroUltimates(
         FightVisualUnitState[] heroStates,
         float[] heroHpPercents,
         FightVisualUnitState[] enemyStates,
         int activeEnemyCount,
         float[] enemyHpPercents,
         float timer,
+        float animationTimer,
         float enemyEndPercent,
         float heroDamageUnit,
         ref int floatingIndex)
     {
         if (heroStates == null || enemyStates == null || heroHpPercents == null || enemyHpPercents == null || fightHeroManaValues == null || fightHeroMaxManaValues == null)
         {
-            return;
+            return -1;
         }
 
         for (var i = 0; i < HeroCount && i < heroStates.Length && i < heroHpPercents.Length; i++)
@@ -5100,10 +5141,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (fightHeroUltimateStartedAt != null && i < fightHeroUltimateStartedAt.Length)
             {
-                fightHeroUltimateStartedAt[i] = timer;
+                fightHeroUltimateStartedAt[i] = animationTimer;
             }
 
-            state.attackStartedAt = timer;
+            state.attackStartedAt = animationTimer;
             state.nextAttackTime = Mathf.Max(state.nextAttackTime, timer + 0.45f);
             heroStates[i] = state;
 
@@ -5112,8 +5153,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (heroId == "hero_elowen")
             {
                 HealCombatHealth(heroHpPercents, HeroCount, 0.18f);
+                ApplyTargetDamageTowardAverage(
+                    enemyHpPercents,
+                    state.targetIndex,
+                    activeEnemyCount,
+                    enemyEndPercent,
+                    heroDamageUnit * GetFightVisualDamageWeight(true, i) * GetHeroUltimateDamageMultiplier(i));
                 ShowFightFloatingText(floatingIndex++, "Wild Bloom", state.position + new Vector2(0, -120), new Color(0.55f, 1f, 0.62f));
-                continue;
+                return i;
             }
 
             if (heroId == "hero_borin")
@@ -5132,7 +5179,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 ShowFightFloatingText(floatingIndex++, "ULT", targetPosition + new Vector2(0, -118), new Color(1f, 0.82f, 0.24f));
             }
+
+            return i;
         }
+
+        return -1;
     }
 
     private void RefreshFightSkillUi(float timer)
@@ -5639,6 +5690,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         float[] targetHealthPercents,
         bool attackersAreHeroes,
         float timer,
+        float animationTimer,
         float targetEndAverage,
         float damageUnit,
         int stageNumber,
@@ -5676,7 +5728,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 continue;
             }
 
-            state.attackStartedAt = timer;
+            state.attackStartedAt = animationTimer;
             state.nextAttackTime = timer + GetFightVisualAttackInterval(attackersAreHeroes, i) * UnityEngine.Random.Range(0.94f, 1.08f);
             attackers[i] = state;
 
@@ -5942,20 +5994,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var heroId = GetHeroTextureName(heroIndex);
         if (heroId == "hero_cyra")
         {
-            return 4.25f;
+            return 7.5f;
         }
 
         if (heroId == "hero_dante")
         {
-            return 3.65f;
+            return 6.25f;
         }
 
         if (heroId == "hero_borin")
         {
-            return 1.65f;
+            return 3.5f;
         }
 
-        return 2.6f;
+        if (heroId == "hero_elowen")
+        {
+            return 3.4f;
+        }
+
+        return 4.8f;
     }
 
     private float GetExpectedHeroVisualAttackWeight(float visualDuration)
@@ -6097,20 +6154,43 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         float[] heroHpPercents,
         float[] enemyHpPercents,
         int activeEnemyCount,
-        float timer,
-        bool singleBoss)
+        float animationTimer,
+        float slowedWorldAnimationTimer,
+        bool singleBoss,
+        int ultimateCinematicHeroIndex,
+        float ultimateCinematicRemaining)
     {
         SetProjectilesVisible(fightHeroProjectileImages, false);
         SetProjectilesVisible(fightEnemyProjectileImages, false);
+        var ultimateCinematicActive = ultimateCinematicHeroIndex >= 0 && ultimateCinematicRemaining > 0f;
+        var ultimateProgress = ultimateCinematicActive ? Mathf.Clamp01(1f - (ultimateCinematicRemaining / FightUltimateCinematicSeconds)) : 0f;
+        var ultimatePulse = ultimateCinematicActive ? Mathf.Sin(ultimateProgress * Mathf.PI) : 0f;
 
         for (var i = 0; i < HeroCount; i++)
         {
             var state = heroStates != null && i < heroStates.Length ? heroStates[i] : default;
-            var position = state.position + new Vector2(0f, Mathf.Sin(Time.unscaledTime * 5.4f + i) * 4.5f);
+            var unitAnimationTimer = ultimateCinematicActive && i != ultimateCinematicHeroIndex ? slowedWorldAnimationTimer : animationTimer;
+            var position = state.position + new Vector2(0f, Mathf.Sin(unitAnimationTimer * 5.4f + i) * 4.5f);
             var alive = heroHpPercents != null && i < heroHpPercents.Length && heroHpPercents[i] > 0.001f;
             var frames = GetFightFrameSet(fightHeroIdleFrames, i);
             var frameSpeed = 6.8f;
-            var actionAge = timer - state.attackStartedAt;
+            var actionAge = unitAnimationTimer - state.attackStartedAt;
+            var tint = Color.white;
+            var scaleMultiplier = 1f;
+
+            if (ultimateCinematicActive && alive)
+            {
+                if (i == ultimateCinematicHeroIndex)
+                {
+                    tint = Color.Lerp(Color.white, new Color(1f, 0.88f, 0.28f, 1f), 0.35f + ultimatePulse * 0.45f);
+                    scaleMultiplier = 1f + ultimatePulse * 0.18f;
+                    position += new Vector2(0f, -18f * ultimatePulse);
+                }
+                else
+                {
+                    tint = new Color(0.62f, 0.68f, 0.82f, 0.62f);
+                }
+            }
 
             if (alive && state.isMoving)
             {
@@ -6138,8 +6218,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 }
             }
 
-            ApplyFightUnitAnimationFrame(fightHeroImages, i, frames, frameSpeed, i * 1.3f);
-            SetFightUnitColor(fightHeroImages, i, alive);
+            ApplyFightUnitAnimationFrame(fightHeroImages, i, frames, frameSpeed, i * 1.3f, unitAnimationTimer);
+            SetFightUnitColor(fightHeroImages, i, alive, tint);
+            SetFightUnitScale(fightHeroImages, i, GetHeroFacingScale(i), scaleMultiplier);
             SetFightUnitPosition(fightHeroRects, fightHeroHpFills, i, position, -128f);
         }
 
@@ -6151,12 +6232,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
 
             var state = enemyStates != null && i < enemyStates.Length ? enemyStates[i] : default;
-            var position = state.position + new Vector2(0f, Mathf.Sin(Time.unscaledTime * 5.1f + i * 1.4f) * 4f);
+            var unitAnimationTimer = ultimateCinematicActive ? slowedWorldAnimationTimer : animationTimer;
+            var position = state.position + new Vector2(0f, Mathf.Sin(unitAnimationTimer * 5.1f + i * 1.4f) * 4f);
             var alive = enemyHpPercents != null && i < enemyHpPercents.Length && enemyHpPercents[i] > 0.001f;
             var frames = GetFightFrameSet(fightEnemyIdleFrames, i);
             var frameSpeed = 6.2f;
             var enemyTextureName = GetFightEnemyTextureName(i);
-            var actionAge = timer - state.attackStartedAt;
+            var actionAge = unitAnimationTimer - state.attackStartedAt;
+            var tint = ultimateCinematicActive && alive ? new Color(0.58f, 0.62f, 0.72f, 0.58f) : Color.white;
 
             if (alive && state.isMoving)
             {
@@ -6184,8 +6267,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 }
             }
 
-            ApplyFightUnitAnimationFrame(fightEnemyImages, i, frames, frameSpeed, i * 1.7f);
-            SetFightUnitColor(fightEnemyImages, i, alive);
+            ApplyFightUnitAnimationFrame(fightEnemyImages, i, frames, frameSpeed, i * 1.7f, unitAnimationTimer);
+            SetFightUnitColor(fightEnemyImages, i, alive, tint);
+            SetFightUnitScale(fightEnemyImages, i, GetEnemyFacingScale(enemyTextureName), 1f);
             SetFightUnitPosition(fightEnemyRects, fightEnemyHpFills, i, position, singleBoss ? -218f : -122f);
         }
     }
@@ -6220,25 +6304,35 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return Array.Empty<Texture2D>();
     }
 
-    private static void ApplyFightUnitAnimationFrame(RawImage[] images, int index, Texture2D[] frames, float speed, float phaseOffset)
+    private static void ApplyFightUnitAnimationFrame(RawImage[] images, int index, Texture2D[] frames, float speed, float phaseOffset, float animationTimer)
     {
         if (images == null || index < 0 || index >= images.Length || images[index] == null || !HasFrames(frames))
         {
             return;
         }
 
-        var frameIndex = Mathf.Abs(Mathf.FloorToInt(Time.unscaledTime * Mathf.Max(1f, speed) + phaseOffset)) % frames.Length;
+        var frameIndex = Mathf.Abs(Mathf.FloorToInt(animationTimer * Mathf.Max(1f, speed) + phaseOffset)) % frames.Length;
         images[index].texture = frames[frameIndex];
     }
 
-    private static void SetFightUnitColor(RawImage[] images, int index, bool alive)
+    private static void SetFightUnitColor(RawImage[] images, int index, bool alive, Color aliveColor)
     {
         if (images == null || index < 0 || index >= images.Length || images[index] == null)
         {
             return;
         }
 
-        images[index].color = alive ? Color.white : new Color(0.6f, 0.6f, 0.6f, 0.45f);
+        images[index].color = alive ? aliveColor : new Color(0.6f, 0.6f, 0.6f, 0.45f);
+    }
+
+    private static void SetFightUnitScale(RawImage[] images, int index, float facingScale, float scaleMultiplier)
+    {
+        if (images == null || index < 0 || index >= images.Length || images[index] == null)
+        {
+            return;
+        }
+
+        images[index].rectTransform.localScale = new Vector3(facingScale * Mathf.Max(0.1f, scaleMultiplier), Mathf.Max(0.1f, scaleMultiplier), 1f);
     }
 
     private static void SetFightUnitPosition(RectTransform[] rects, Image[] hpFills, int index, Vector2 position, float healthBarOffsetY)
@@ -10147,7 +10241,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         fightVsText = CreateRuntimeText(fightRoot, "Fight VS Text", "VS", 38, new Vector2(0, -130), new Vector2(820, 52));
         fightVsText.fontStyle = FontStyles.Bold;
-        fightTimerText = CreateRuntimeText(fightRoot, "Fight Timer Text", "00:30", 25, new Vector2(0, -184), new Vector2(320, 42));
+        fightTimerText = CreateRuntimeText(fightRoot, "Fight Timer Text", FormatFightTimer(DefaultCombatDurationSeconds), 25, new Vector2(0, -184), new Vector2(320, 42));
         fightTimerText.fontStyle = FontStyles.Bold;
         fightStatusText = CreateRuntimeText(fightRoot, "Fight Status Text", "Ready", 23, new Vector2(0, -930), new Vector2(820, 58));
         fightStatusText.enableAutoSizing = true;
@@ -12694,6 +12788,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         rectTransform.anchorMax = Vector2.one;
         rectTransform.offsetMin = padding;
         rectTransform.offsetMax = -padding;
+    }
+
+    private static string FormatFightTimer(int seconds)
+    {
+        seconds = Mathf.Max(0, seconds);
+        return $"{seconds / 60:00}:{seconds % 60:00}";
     }
 
     private string FormatDuration(int seconds)

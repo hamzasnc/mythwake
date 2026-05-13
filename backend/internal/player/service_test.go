@@ -206,7 +206,7 @@ func TestCampaignFightAdvancesDailyProgress(t *testing.T) {
 	if !result.Success {
 		t.Fatalf("expected campaign fight to succeed, got %#v", result)
 	}
-	if result.Combat == nil || !result.Combat.Won || result.Combat.ElapsedSeconds <= 0 || result.Combat.MaxSeconds != 30 {
+	if result.Combat == nil || !result.Combat.Won || result.Combat.ElapsedSeconds <= 0 || result.Combat.MaxSeconds != balance.DefaultCombatDurationSeconds {
 		t.Fatalf("expected successful combat result, got %#v", result.Combat)
 	}
 

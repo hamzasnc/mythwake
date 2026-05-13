@@ -498,15 +498,15 @@ func heroUltimateName(heroID string) string {
 func heroUltimateEffect(heroID string, attack int, teamMaxHP int) (int, int) {
 	switch heroID {
 	case "hero_borin":
-		return attack, max(1, teamMaxHP/12)
+		return attack * 3, max(1, teamMaxHP/12)
 	case "hero_cyra":
-		return attack * 3, 0
+		return attack * 6, 0
 	case "hero_dante":
-		return attack*2 + max(1, attack/2), 0
+		return attack * 5, 0
 	case "hero_elowen":
-		return 0, max(1, teamMaxHP/4)
+		return attack * 3, max(1, teamMaxHP/4)
 	default:
-		return attack * 2, 0
+		return attack * 4, 0
 	}
 }
 

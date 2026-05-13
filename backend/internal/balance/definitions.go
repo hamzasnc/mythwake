@@ -27,7 +27,7 @@ const (
 	AFKMaxClaimSeconds   = 6 * 60 * 60
 	AFKRewardTickSeconds = 60
 
-	DefaultCombatDurationSeconds = 30
+	DefaultCombatDurationSeconds = 60
 	DungeonBossHpNumerator       = 18
 	DungeonBossHpDenominator     = 10
 )

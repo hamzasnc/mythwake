@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
@@ -129,7 +130,7 @@ func TestSnapshotCarriesCampaignAndAccessoryDefinitionData(t *testing.T) {
 	if snapshot.CampaignStages[4].RewardID != "reward_campaign_stage_005" || snapshot.CampaignStages[4].RequiredPower != 320 {
 		t.Fatalf("unexpected campaign stage 5 definition: %#v", snapshot.CampaignStages[4])
 	}
-	if snapshot.CampaignStages[0].EnemyMaxHP != 458 || snapshot.CampaignStages[0].EnemyDamage != 24 || snapshot.CampaignStages[0].MaxCombatSeconds != 30 {
+	if snapshot.CampaignStages[0].EnemyMaxHP != 458 || snapshot.CampaignStages[0].EnemyDamage != 24 || snapshot.CampaignStages[0].MaxCombatSeconds != balance.DefaultCombatDurationSeconds {
 		t.Fatalf("unexpected campaign stage 1 combat definition: %#v", snapshot.CampaignStages[0])
 	}
 
@@ -139,7 +140,7 @@ func TestSnapshotCarriesCampaignAndAccessoryDefinitionData(t *testing.T) {
 			continue
 		}
 		foundGoldDungeon = true
-		if definition.EnemyBaseHP != 220 || definition.EnemyHPPerFloor != 95 || definition.EnemyDamagePowerDivisor != 48 || definition.MaxCombatSeconds != 30 {
+		if definition.EnemyBaseHP != 220 || definition.EnemyHPPerFloor != 95 || definition.EnemyDamagePowerDivisor != 48 || definition.MaxCombatSeconds != balance.DefaultCombatDurationSeconds {
 			t.Fatalf("unexpected gold dungeon combat definition: %#v", definition)
 		}
 	}
