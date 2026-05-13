@@ -28,6 +28,8 @@ const (
 	AFKRewardTickSeconds = 60
 
 	DefaultCombatDurationSeconds = 30
+	DungeonBossHpNumerator       = 18
+	DungeonBossHpDenominator     = 10
 )
 
 type DungeonDefinition struct {
@@ -613,11 +615,16 @@ func DungeonEnemyCombatStats(definition DungeonDefinition, floor int) EnemyComba
 	floor = max(1, floor)
 	requiredPower := DungeonRequiredPower(definition, floor)
 	powerDivisor := max(1, definition.EnemyDamagePowerDiv)
+	baseMaxHP := definition.EnemyBaseHP + (requiredPower * definition.EnemyHPPerPower) + (floor * definition.EnemyHPPerFloor)
 	return EnemyCombatStats{
-		MaxHP:      max(1, definition.EnemyBaseHP+(requiredPower*definition.EnemyHPPerPower)+(floor*definition.EnemyHPPerFloor)),
+		MaxHP:      DungeonBossMaxHP(baseMaxHP),
 		Damage:     max(1, definition.EnemyBaseDamage+(floor*definition.EnemyDamagePerFloor)+(requiredPower/powerDivisor)),
 		MaxSeconds: max(1, definition.MaxCombatSeconds),
 	}
+}
+
+func DungeonBossMaxHP(baseMaxHP int) int {
+	return max(1, (baseMaxHP*DungeonBossHpNumerator)/DungeonBossHpDenominator)
 }
 
 func DungeonReward(definition DungeonDefinition, floor int) api.Reward {

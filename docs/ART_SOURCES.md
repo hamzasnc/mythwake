@@ -11,6 +11,12 @@ The curated PNGs under `Assets/_Mythwake/Resources/Mythwake/Art/Runtime/` are so
 - `Particle Pack` by Kenney: slash, magic, and summon VFX textures.
 - `UI Pack` and `UI Pack (RPG Expansion)` by Kenney: button and panel styling textures.
 
+The curated frame sequences under `Assets/_Mythwake/Resources/Mythwake/Art/CombatAnimated/` replace the temporary static battle portraits with 2D idle-combat models. Raw downloaded archives stay outside the repo; only normalized, renamed runtime frames are committed.
+
+- `Knight, Princess and Dragon 2` by akylrum: CC0 hero and dragon idle/run/attack frame sequences.
+- `Adventurer and Slime game Sprites` by Segel/Segel2D: CC0 adventurer and slime idle/run/attack frame sequences.
+- `Enemy Galore I` by Admurin: CC-BY 4.0 enemy idle/run/attack frame sequences. Required attribution: `https://admurin.itch.io/ - Admurin`.
+
 ## Source Links
 
 - https://kenney.nl/assets/tiny-dungeon
@@ -18,6 +24,9 @@ The curated PNGs under `Assets/_Mythwake/Resources/Mythwake/Art/Runtime/` are so
 - https://kenney.nl/assets/particle-pack
 - https://kenney.nl/assets/ui-pack
 - https://kenney.nl/assets/ui-pack-rpg-expansion
+- https://opengameart.org/content/knight-princess-and-dragon-2
+- https://opengameart.org/content/adventurer-and-slime-game-sprites
+- https://opengameart.org/content/enemy-galore-i
 
 ## Repo Policy
 

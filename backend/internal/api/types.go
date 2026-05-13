@@ -81,20 +81,49 @@ type Reward struct {
 }
 
 type CombatResult struct {
-	Mode             string `json:"mode"`
-	TargetID         string `json:"targetId"`
-	TargetLevel      int    `json:"targetLevel"`
-	Won              bool   `json:"won"`
-	ElapsedSeconds   int    `json:"elapsedSeconds"`
-	MaxSeconds       int    `json:"maxSeconds"`
-	TeamAttack       int    `json:"teamAttack"`
-	TeamMaxHP        int    `json:"teamMaxHp"`
+	Mode             string            `json:"mode"`
+	TargetID         string            `json:"targetId"`
+	TargetLevel      int               `json:"targetLevel"`
+	Won              bool              `json:"won"`
+	ElapsedSeconds   int               `json:"elapsedSeconds"`
+	MaxSeconds       int               `json:"maxSeconds"`
+	TeamAttack       int               `json:"teamAttack"`
+	TeamMaxHP        int               `json:"teamMaxHp"`
+	TeamHPRemaining  int               `json:"teamHpRemaining"`
+	EnemyMaxHP       int               `json:"enemyMaxHp"`
+	EnemyHPRemaining int               `json:"enemyHpRemaining"`
+	EnemyDamage      int               `json:"enemyDamage"`
+	DamageDealt      int               `json:"damageDealt"`
+	DamageTaken      int               `json:"damageTaken"`
+	Heroes           []CombatHeroState `json:"heroes,omitempty"`
+	Events           []CombatEvent     `json:"events,omitempty"`
+}
+
+type CombatHeroState struct {
+	HeroID             string `json:"heroId"`
+	DisplayName        string `json:"displayName"`
+	MaxMana            int    `json:"maxMana"`
+	ManaRemaining      int    `json:"manaRemaining"`
+	AutoAttackManaGain int    `json:"autoAttackManaGain"`
+	PassiveID          string `json:"passiveId"`
+	PassiveName        string `json:"passiveName"`
+	UltimateID         string `json:"ultimateId"`
+	UltimateName       string `json:"ultimateName"`
+	UltimateCooldownMS int    `json:"ultimateCooldownMs"`
+}
+
+type CombatEvent struct {
+	TimeMS           int    `json:"timeMs"`
+	EventType        string `json:"eventType"`
+	ActorID          string `json:"actorId,omitempty"`
+	ActorIndex       int    `json:"actorIndex"`
+	TargetID         string `json:"targetId,omitempty"`
+	TargetIndex      int    `json:"targetIndex"`
+	SkillID          string `json:"skillId,omitempty"`
+	Amount           int    `json:"amount"`
+	ManaAfter        int    `json:"manaAfter"`
 	TeamHPRemaining  int    `json:"teamHpRemaining"`
-	EnemyMaxHP       int    `json:"enemyMaxHp"`
 	EnemyHPRemaining int    `json:"enemyHpRemaining"`
-	EnemyDamage      int    `json:"enemyDamage"`
-	DamageDealt      int    `json:"damageDealt"`
-	DamageTaken      int    `json:"damageTaken"`
 }
 
 type ActionResult struct {

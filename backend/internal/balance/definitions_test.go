@@ -18,7 +18,7 @@ func TestDungeonDefinitionsMatchSeededCurves(t *testing.T) {
 		t.Fatalf("expected floor 1 gold reward 129, got %#v", reward)
 	}
 	goldCombat := DungeonEnemyCombatStats(gold, 1)
-	if goldCombat.MaxHP != 615 || goldCombat.Damage != 32 || goldCombat.MaxSeconds != DefaultCombatDurationSeconds {
+	if goldCombat.MaxHP != 1107 || goldCombat.Damage != 32 || goldCombat.MaxSeconds != DefaultCombatDurationSeconds {
 		t.Fatalf("unexpected gold dungeon combat stats: %#v", goldCombat)
 	}
 

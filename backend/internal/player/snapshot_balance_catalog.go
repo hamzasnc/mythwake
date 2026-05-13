@@ -265,8 +265,9 @@ func (catalog *SnapshotBalanceCatalog) DungeonEnemyCombatStats(definition balanc
 	floor = max(1, floor)
 	requiredPower := definition.BaseRequiredPower + (floor * definition.RequiredPowerPerFloor)
 	powerDivisor := max(1, definition.EnemyDamagePowerDiv)
+	baseMaxHP := definition.EnemyBaseHP + (requiredPower * definition.EnemyHPPerPower) + (floor * definition.EnemyHPPerFloor)
 	return balance.EnemyCombatStats{
-		MaxHP:      max(1, definition.EnemyBaseHP+(requiredPower*definition.EnemyHPPerPower)+(floor*definition.EnemyHPPerFloor)),
+		MaxHP:      balance.DungeonBossMaxHP(baseMaxHP),
 		Damage:     max(1, definition.EnemyBaseDamage+(floor*definition.EnemyDamagePerFloor)+(requiredPower/powerDivisor)),
 		MaxSeconds: max(1, definition.MaxCombatSeconds),
 	}

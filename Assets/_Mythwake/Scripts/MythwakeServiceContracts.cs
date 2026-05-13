@@ -117,6 +117,39 @@ public struct MythwakeCombatResultDto
     public int enemyDamage;
     public int damageDealt;
     public int damageTaken;
+    public MythwakeCombatHeroStateDto[] heroes;
+    public MythwakeCombatEventDto[] events;
+}
+
+[Serializable]
+public struct MythwakeCombatHeroStateDto
+{
+    public string heroId;
+    public string displayName;
+    public int maxMana;
+    public int manaRemaining;
+    public int autoAttackManaGain;
+    public string passiveId;
+    public string passiveName;
+    public string ultimateId;
+    public string ultimateName;
+    public int ultimateCooldownMs;
+}
+
+[Serializable]
+public struct MythwakeCombatEventDto
+{
+    public int timeMs;
+    public string eventType;
+    public string actorId;
+    public int actorIndex;
+    public string targetId;
+    public int targetIndex;
+    public string skillId;
+    public int amount;
+    public int manaAfter;
+    public int teamHpRemaining;
+    public int enemyHpRemaining;
 }
 
 [Serializable]

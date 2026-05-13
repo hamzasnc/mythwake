@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.41";
+    public const string PrototypeVersion = "0.2.57";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -86,6 +86,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int ascensionCostGrowth;
         public int ascensionAttack;
         public int ascensionHealth;
+        public int critChancePercent;
+        public int accuracyPercent;
+        public int defense;
 
         public HeroDefinition(
             string heroId,
@@ -102,7 +105,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             int ascensionBaseCost,
             int ascensionCostGrowth,
             int ascensionAttack,
-            int ascensionHealth)
+            int ascensionHealth,
+            int critChancePercent,
+            int accuracyPercent,
+            int defense)
         {
             this.heroId = heroId;
             this.name = name;
@@ -119,6 +125,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             this.ascensionCostGrowth = ascensionCostGrowth;
             this.ascensionAttack = ascensionAttack;
             this.ascensionHealth = ascensionHealth;
+            this.critChancePercent = critChancePercent;
+            this.accuracyPercent = accuracyPercent;
+            this.defense = defense;
         }
     }
 
@@ -258,6 +267,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int damageDealt;
         public int damageTaken;
         public int healingDone;
+        public int criticalHits;
+        public int missedHits;
+    }
+
+    private struct FightVisualUnitState
+    {
+        public Vector2 position;
+        public Vector2 lockedMeleePosition;
+        public int targetIndex;
+        public int lockedMeleeTargetIndex;
+        public float nextAttackTime;
+        public float attackStartedAt;
+        public bool hasLockedMeleePosition;
+        public bool isMoving;
     }
 
     private struct EquipmentTrackDefinition
@@ -405,6 +428,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         Shop
     }
 
+    private enum BattleFlowMode
+    {
+        Formation,
+        Fight,
+        Result
+    }
+
+    private enum BattleTargetMode
+    {
+        Campaign,
+        Dungeon
+    }
+
     [Serializable]
     private sealed class PrototypeSaveData
     {
@@ -436,6 +472,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int[] heroLevels;
         public int[] heroShards;
         public int[] heroAscensions;
+        public int[] formationSlotHeroIndices;
+        public bool autoContinueFightsEnabled;
         public int[] equippedAccessoryRarities;
         public int[] equippedAccessoryLevels;
         public int[] accessoryInventory;
@@ -507,9 +545,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const float TankDamageReductionRate = 0.18f;
     private const float SupportHealRate = 0.04f;
     private const float RangerExecuteThresholdRate = 0.12f;
+    private const float CritDamageMultiplier = 1.5f;
     private const int StarterEquipmentLevel = 1;
     private const int CampaignMilestoneInterval = 5;
     private const int DungeonBonusInterval = 5;
+    private const float DungeonBossHpMultiplier = 1.8f;
     private const int AccessoryFuseCost = 3;
     private const int DebugGoldAmount = 500;
     private const int DebugGemAmount = 30;
@@ -554,11 +594,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static readonly HeroDefinition[] HeroDefinitions =
     {
-        new HeroDefinition("hero_astra", "Astra", WarriorRoleId, "Warrior", EpicRarityId, "Epic", 18, 5, 150, 28, 7, 25, 15, 11, 70),
-        new HeroDefinition("hero_borin", "Borin", TankRoleId, "Tank", RareRarityId, "Rare", 10, 3, 230, 42, 10, 20, 15, 8, 55),
-        new HeroDefinition("hero_cyra", "Cyra", MageRoleId, "Mage", EpicRarityId, "Epic", 22, 7, 110, 20, 7, 25, 15, 11, 70),
-        new HeroDefinition("hero_dante", "Dante", RangerRoleId, "Ranger", RareRarityId, "Rare", 20, 6, 125, 23, 10, 20, 15, 8, 55),
-        new HeroDefinition("hero_elowen", "Elowen", SupportRoleId, "Support", LegendaryRarityId, "Legendary", 12, 4, 165, 34, 5, 30, 15, 14, 90)
+        new HeroDefinition("hero_astra", "Astra", WarriorRoleId, "Warrior", EpicRarityId, "Epic", 18, 5, 150, 28, 7, 25, 15, 11, 70, 12, 92, 8),
+        new HeroDefinition("hero_borin", "Borin", TankRoleId, "Tank", RareRarityId, "Rare", 10, 3, 230, 42, 10, 20, 15, 8, 55, 5, 88, 24),
+        new HeroDefinition("hero_cyra", "Cyra", MageRoleId, "Mage", EpicRarityId, "Epic", 22, 7, 110, 20, 7, 25, 15, 11, 70, 15, 90, 6),
+        new HeroDefinition("hero_dante", "Dante", RangerRoleId, "Ranger", RareRarityId, "Rare", 20, 6, 125, 23, 10, 20, 15, 8, 55, 18, 95, 8),
+        new HeroDefinition("hero_elowen", "Elowen", SupportRoleId, "Support", LegendaryRarityId, "Legendary", 12, 4, 165, 34, 5, 30, 15, 14, 90, 8, 90, 14)
+    };
+
+    private static readonly string[] CampaignEnemyCombatTextureNames =
+    {
+        "enemy_rat",
+        "enemy_bat",
+        "enemy_slime",
+        "enemy_canine",
+        "enemy_golem",
+        "enemy_dragon"
     };
 
     private static readonly DailyMissionDefinition[] DailyMissionDefinitions =
@@ -686,7 +736,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     };
 
     [Header("Idle")]
-    [SerializeField] private bool autoAttackEnabled = true;
+    [SerializeField] private bool autoAttackEnabled;
     [SerializeField] private float autoAttackInterval = 1f;
     [SerializeField] private float afkRewardStoredSeconds;
 
@@ -827,6 +877,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private AppScreen activeScreen = AppScreen.Home;
     private bool backendRequestInProgress;
     private bool backendLifecycleFlushInProgress;
+    private bool campaignFightInProgress;
+    private int selectedCampaignStage = 1;
+    private BattleFlowMode battleFlowMode = BattleFlowMode.Formation;
+    private BattleTargetMode battleTargetMode = BattleTargetMode.Campaign;
+    private string selectedDungeonId = GoldDungeonDefinition.dungeonId;
     private string backendStatus = "Backend: local prototype mode";
     private long backendStateRevision;
     private MythwakeDefinitionSnapshotDto backendDefinitions;
@@ -861,6 +916,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button homeLeftShortcutToggleButton;
     private TMP_Text homeShortcutToggleText;
     private TMP_Text homeLeftShortcutToggleText;
+    private RectTransform homeCampaignMapRoot;
+    private RectTransform campaignStagePreviewRoot;
+    private TMP_Text campaignStagePreviewText;
+    private Button[] campaignStageButtons;
+    private TMP_Text[] campaignStageButtonTexts;
+    private RawImage[] campaignStageButtonIcons;
+    private Image[] campaignStageButtonFrames;
     private RectTransform chatPopupRoot;
     private Button chatCloseButton;
     private RectTransform homeLeftShortcutShadow;
@@ -875,6 +937,29 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button fastRewardsRedeemButton;
     private TMP_Text menuHeaderText;
     private RawImage[] heroCardPortraits;
+    private RectTransform heroDetailRoot;
+    private RawImage heroDetailPortrait;
+    private TMP_Text heroDetailRarityText;
+    private TMP_Text heroDetailTitleText;
+    private TMP_Text heroDetailNameText;
+    private TMP_Text heroDetailPowerText;
+    private TMP_Text heroDetailStatsText;
+    private TMP_Text heroDetailResourceText;
+    private TMP_Text[] heroDetailGearSlotTexts;
+    private Image[] heroDetailGearSlotFrames;
+    private Button[] heroDetailGearSlotButtons;
+    private RectTransform heroDetailGearListRoot;
+    private TMP_Text heroDetailGearListTitleText;
+    private TMP_Text[] heroDetailGearOptionTexts;
+    private Button[] heroDetailGearOptionButtons;
+    private Button heroDetailGearListCloseButton;
+    private Button heroDetailCloseButton;
+    private Button heroDetailPreviousButton;
+    private Button heroDetailNextButton;
+    private Button heroDetailLevelButton;
+    private Button heroDetailEquipGearButton;
+    private Button heroDetailRemoveGearButton;
+    private int selectedHeroDetailGearSlotIndex = -1;
     private RectTransform artBottomNavRoot;
     private RawImage villageNavImage;
     private RawImage dungeonsNavImage;
@@ -885,10 +970,77 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button dungeonsNavButton;
     private Button heroesNavButton;
     private Button summonNavButton;
+    private RectTransform formationRoot;
+    private RectTransform fightRoot;
+    private RectTransform fightResultRoot;
+    private TMP_Text formationHeaderText;
+    private TMP_Text formationEnemyText;
+    private TMP_Text formationTeamText;
+    private TMP_Text formationHintText;
+    private RawImage formationEnemyImage;
+    private Button[] formationSlotButtons;
+    private Image[] formationSlotFrames;
+    private RawImage[] formationHeroImages;
+    private TMP_Text[] formationHeroTexts;
+    private Button formationAutoContinueButton;
+    private Image formationAutoContinueBox;
+    private TMP_Text formationAutoContinueMarkText;
+    private TMP_Text formationAutoContinueText;
+    private Button formationConfirmButton;
+    private Button formationBackButton;
+    private int[] formationSlotHeroIndices;
+    private int selectedFormationSlotIndex = -1;
+    private bool autoContinueFightsEnabled;
+    private Coroutine autoContinueFightCoroutine;
+    private TMP_Text fightVsText;
+    private TMP_Text fightTimerText;
+    private TMP_Text fightStatusText;
+    private RawImage[] fightHeroImages;
+    private RawImage[] fightEnemyImages;
+    private RectTransform[] fightHeroRects;
+    private RectTransform[] fightEnemyRects;
+    private Image[] fightHeroHpFills;
+    private Image[] fightEnemyHpFills;
+    private TMP_Text[] fightEnemyHpPercentTexts;
+    private Image fightBossHpFill;
+    private TMP_Text fightBossHpText;
+    private Texture2D[][] fightHeroIdleFrames;
+    private Texture2D[][] fightHeroRunFrames;
+    private Texture2D[][] fightHeroAttackFrames;
+    private Texture2D[][] fightEnemyIdleFrames;
+    private Texture2D[][] fightEnemyRunFrames;
+    private Texture2D[][] fightEnemyAttackFrames;
+    private string[] fightEnemyTextureNames;
+    private Image[] fightHeroProjectileImages;
+    private Image[] fightEnemyProjectileImages;
+    private RectTransform[] fightHeroProjectileRects;
+    private RectTransform[] fightEnemyProjectileRects;
+    private Button[] fightSkillButtons;
+    private Image[] fightSkillBackplates;
+    private Image[] fightSkillManaFills;
+    private RawImage[] fightSkillPortraits;
+    private TMP_Text[] fightSkillNameTexts;
+    private TMP_Text[] fightSkillManaTexts;
+    private Button fightAutoSkillButton;
+    private TMP_Text fightAutoSkillButtonText;
+    private int[] fightHeroManaValues;
+    private int[] fightHeroMaxManaValues;
+    private bool[] fightHeroUltimateQueued;
+    private float[] fightHeroUltimateStartedAt;
+    private bool fightAutoSkillsEnabled;
+    private TMP_Text[] fightFloatingTexts;
+    private TMP_Text fightResultTitleText;
+    private TMP_Text fightResultBodyText;
+    private Button fightContinueButton;
+    private Button fightEndButton;
+    private bool fightCancelRequested;
 
     private void Awake()
     {
         LoadProgress();
+        autoAttackEnabled = false;
+        selectedCampaignStage = Mathf.Max(1, enemyLevel);
+        EnsureFormationOrder();
         BankAfkElapsedSinceLastSeen();
         EnsureRuntimeBackendClient();
         LoadBackendGameplayPreference();
@@ -935,6 +1087,38 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             heroAscendButton.onClick.AddListener(AscendSelectedHero);
         }
+
+        if (heroDetailCloseButton != null)
+        {
+            heroDetailCloseButton.onClick.AddListener(HideHeroDetail);
+        }
+
+        if (heroDetailPreviousButton != null)
+        {
+            heroDetailPreviousButton.onClick.AddListener(ShowPreviousHeroDetail);
+        }
+
+        if (heroDetailNextButton != null)
+        {
+            heroDetailNextButton.onClick.AddListener(ShowNextHeroDetail);
+        }
+
+        if (heroDetailLevelButton != null)
+        {
+            heroDetailLevelButton.onClick.AddListener(UpgradeDamage);
+        }
+
+        if (heroDetailEquipGearButton != null)
+        {
+            heroDetailEquipGearButton.onClick.AddListener(ShowGear);
+        }
+
+        if (heroDetailRemoveGearButton != null)
+        {
+            heroDetailRemoveGearButton.onClick.AddListener(ShowGear);
+        }
+
+        RegisterHeroDetailGearButtons();
 
         if (weaponUpgradeButton != null)
         {
@@ -1130,6 +1314,38 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroAscendButton.onClick.RemoveListener(AscendSelectedHero);
         }
 
+        if (heroDetailCloseButton != null)
+        {
+            heroDetailCloseButton.onClick.RemoveListener(HideHeroDetail);
+        }
+
+        if (heroDetailPreviousButton != null)
+        {
+            heroDetailPreviousButton.onClick.RemoveListener(ShowPreviousHeroDetail);
+        }
+
+        if (heroDetailNextButton != null)
+        {
+            heroDetailNextButton.onClick.RemoveListener(ShowNextHeroDetail);
+        }
+
+        if (heroDetailLevelButton != null)
+        {
+            heroDetailLevelButton.onClick.RemoveListener(UpgradeDamage);
+        }
+
+        if (heroDetailEquipGearButton != null)
+        {
+            heroDetailEquipGearButton.onClick.RemoveListener(ShowGear);
+        }
+
+        if (heroDetailRemoveGearButton != null)
+        {
+            heroDetailRemoveGearButton.onClick.RemoveListener(ShowGear);
+        }
+
+        UnregisterHeroDetailGearButtons();
+
         if (weaponUpgradeButton != null)
         {
             weaponUpgradeButton.onClick.RemoveListener(UpgradeWeapon);
@@ -1263,7 +1479,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void ShowBattle()
     {
-        ShowScreen(AppScreen.Battle);
+        ShowFormationScreen();
     }
 
     public void ShowDungeons()
@@ -1321,6 +1537,205 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetChatPopupVisible(false);
     }
 
+    private void ShowFormationScreen()
+    {
+        if (campaignFightInProgress)
+        {
+            return;
+        }
+
+        battleTargetMode = BattleTargetMode.Campaign;
+        if (selectedCampaignStage != enemyLevel)
+        {
+            selectedCampaignStage = Mathf.Max(1, enemyLevel);
+        }
+
+        selectedFormationSlotIndex = -1;
+        SetBattleFlowMode(BattleFlowMode.Formation);
+        ShowScreen(AppScreen.Battle);
+        RefreshUi();
+    }
+
+    private void ShowDungeonFormation(string dungeonId)
+    {
+        if (campaignFightInProgress)
+        {
+            return;
+        }
+
+        selectedDungeonId = ResolveDungeonDefinition(dungeonId).dungeonId;
+        battleTargetMode = BattleTargetMode.Dungeon;
+        selectedFormationSlotIndex = -1;
+        SetBattleFlowMode(BattleFlowMode.Formation);
+        ShowScreen(AppScreen.Battle);
+        RefreshUi();
+    }
+
+    private void BackToCampaignMap()
+    {
+        if (campaignFightInProgress)
+        {
+            return;
+        }
+
+        selectedFormationSlotIndex = -1;
+        SetBattleFlowMode(BattleFlowMode.Formation);
+        ShowScreen(battleTargetMode == BattleTargetMode.Dungeon ? AppScreen.Dungeons : AppScreen.Home);
+    }
+
+    private void ContinueAfterCampaignFight()
+    {
+        if (autoContinueFightCoroutine != null)
+        {
+            StopCoroutine(autoContinueFightCoroutine);
+            autoContinueFightCoroutine = null;
+        }
+
+        fightCancelRequested = false;
+        campaignFightInProgress = false;
+        if (battleTargetMode == BattleTargetMode.Campaign)
+        {
+            selectedCampaignStage = Mathf.Max(1, enemyLevel);
+        }
+
+        selectedFormationSlotIndex = -1;
+        SetBattleFlowMode(BattleFlowMode.Formation);
+        ShowScreen(battleTargetMode == BattleTargetMode.Dungeon ? AppScreen.Dungeons : AppScreen.Home);
+        RefreshUi();
+    }
+
+    private void EndCurrentFight()
+    {
+        if (!campaignFightInProgress && battleFlowMode != BattleFlowMode.Fight)
+        {
+            return;
+        }
+
+        fightCancelRequested = true;
+        autoContinueFightsEnabled = false;
+        fightAutoSkillsEnabled = false;
+        if (autoContinueFightCoroutine != null)
+        {
+            StopCoroutine(autoContinueFightCoroutine);
+            autoContinueFightCoroutine = null;
+        }
+
+        SetProjectilesVisible(fightHeroProjectileImages, false);
+        SetProjectilesVisible(fightEnemyProjectileImages, false);
+        RefreshFormationAutoContinueToggle();
+        RefreshFightAutoSkillButton();
+        SaveProgress();
+        ShowCampaignFightResult(false, "Fight Ended", "Auto battle stopped. No rewards were claimed for this cancelled fight.");
+    }
+
+    private bool ConsumeFightCancelRequest()
+    {
+        if (!fightCancelRequested)
+        {
+            return false;
+        }
+
+        fightCancelRequested = false;
+        return true;
+    }
+
+    private void StartCampaignFightFromFormation()
+    {
+        if (campaignFightInProgress || backendRequestInProgress || backendLifecycleFlushInProgress)
+        {
+            return;
+        }
+
+        if (battleTargetMode == BattleTargetMode.Dungeon)
+        {
+            StartDungeonFightFromFormation();
+            return;
+        }
+
+        if (selectedCampaignStage != enemyLevel)
+        {
+            selectedCampaignStage = Mathf.Max(1, enemyLevel);
+            RefreshUi();
+            return;
+        }
+
+        selectedFormationSlotIndex = -1;
+        fightAutoSkillsEnabled = autoContinueFightsEnabled;
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: campaign fight..."))
+            {
+                campaignFightInProgress = true;
+                SetBattleFlowMode(BattleFlowMode.Fight);
+                StartCoroutine(backendClient.FightCampaign(OnBackendCampaignFightVisual));
+            }
+
+            return;
+        }
+
+        StartCoroutine(PlayLocalCampaignFightRoutine());
+    }
+
+    private void StartDungeonFightFromFormation()
+    {
+        selectedDungeonId = ResolveDungeonDefinition(selectedDungeonId).dungeonId;
+        selectedFormationSlotIndex = -1;
+        fightAutoSkillsEnabled = autoContinueFightsEnabled;
+        if (backendGameplayEnabled)
+        {
+            var dungeon = ResolveDungeonDefinition(selectedDungeonId);
+            if (TryStartBackendRequest($"Server: {dungeon.displayName.ToLowerInvariant()} boss..."))
+            {
+                campaignFightInProgress = true;
+                SetBattleFlowMode(BattleFlowMode.Fight);
+                StartCoroutine(backendClient.RunDungeon(selectedDungeonId, OnBackendDungeonFightVisual));
+            }
+
+            return;
+        }
+
+        StartCoroutine(PlayLocalDungeonFightRoutine());
+    }
+
+    private void ToggleFormationAutoContinue()
+    {
+        autoContinueFightsEnabled = !autoContinueFightsEnabled;
+        fightAutoSkillsEnabled = autoContinueFightsEnabled;
+        if (!autoContinueFightsEnabled && autoContinueFightCoroutine != null)
+        {
+            StopCoroutine(autoContinueFightCoroutine);
+            autoContinueFightCoroutine = null;
+        }
+
+        RefreshFormationAutoContinueToggle();
+        RefreshFightAutoSkillButton();
+        SaveProgress();
+    }
+
+    private void RefreshFormationAutoContinueToggle()
+    {
+        if (formationAutoContinueBox != null)
+        {
+            formationAutoContinueBox.color = autoContinueFightsEnabled
+                ? new Color(0.12f, 0.82f, 0.58f, 0.98f)
+                : new Color(0.04f, 0.055f, 0.08f, 0.96f);
+        }
+
+        if (formationAutoContinueMarkText != null)
+        {
+            formationAutoContinueMarkText.text = autoContinueFightsEnabled ? "X" : string.Empty;
+            formationAutoContinueMarkText.color = autoContinueFightsEnabled ? new Color(0.02f, 0.06f, 0.05f) : Color.white;
+        }
+
+        if (formationAutoContinueText != null)
+        {
+            formationAutoContinueText.text = "Auto next after win (skills AUTO)";
+            formationAutoContinueText.color = autoContinueFightsEnabled
+                ? new Color(0.84f, 1f, 0.9f)
+                : new Color(0.78f, 0.84f, 0.92f);
+        }
+    }
+
     private void RedeemFastRewards()
     {
         if (backendGameplayEnabled && backendClient != null && backendClient.HasSession)
@@ -1368,47 +1783,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void RunGoldDungeon()
     {
-        if (backendGameplayEnabled)
-        {
-            if (TryStartBackendRequest("Server: gold dungeon..."))
-            {
-                StartCoroutine(backendClient.RunDungeon(GoldDungeonDefinition.dungeonId, OnBackendGameplayAction));
-            }
-
-            return;
-        }
-
-        RunDungeon(GoldDungeonDefinition.dungeonId);
+        ShowDungeonFormation(GoldDungeonDefinition.dungeonId);
     }
 
     public void RunEssenceDungeon()
     {
-        if (backendGameplayEnabled)
-        {
-            if (TryStartBackendRequest("Server: essence dungeon..."))
-            {
-                StartCoroutine(backendClient.RunDungeon(EssenceDungeonDefinition.dungeonId, OnBackendGameplayAction));
-            }
-
-            return;
-        }
-
-        RunDungeon(EssenceDungeonDefinition.dungeonId);
+        ShowDungeonFormation(EssenceDungeonDefinition.dungeonId);
     }
 
     public void RunGearDungeon()
     {
-        if (backendGameplayEnabled)
-        {
-            if (TryStartBackendRequest("Server: gear dungeon..."))
-            {
-                StartCoroutine(backendClient.RunDungeon(GearDungeonDefinition.dungeonId, OnBackendGameplayAction));
-            }
-
-            return;
-        }
-
-        RunDungeon(GearDungeonDefinition.dungeonId);
+        ShowDungeonFormation(GearDungeonDefinition.dungeonId);
     }
 
     public MythwakeActionResultDto FightCampaign()
@@ -1448,13 +1833,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var enemyHp = GetGearDungeonEnemyHp(floor);
         var enemyDamage = GetGearDungeonEnemyDamage(floor);
         var result = SimulateCombat(enemyHp, enemyDamage);
+        var actionResult = ApplyGearDungeonResult(floor, result, enemyHp);
+        SaveProgress();
+        RefreshUi();
+        return actionResult;
+    }
 
+    private MythwakeActionResultDto ApplyGearDungeonResult(int floor, CombatResult result, int enemyHp)
+    {
         if (!result.won)
         {
             var failMessage = $"Gear Dungeon Floor {floor} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
             PlayCombatVisual(GearDungeonDefinition.dungeonId, $"Gear Dungeon F{floor}", result, enemyHp);
             SetDungeonResult(failMessage);
-            RefreshUi();
             return CreateActionResult(false, "gear_dungeon_run", "combat_lost", failMessage);
         }
 
@@ -1465,8 +1856,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var message = $"Gear Dungeon Floor {floor} cleared in {result.elapsedSeconds}s\nDrop: {GetAccessoryRarityName(accessory.rarityIndex)} {AccessorySlots[accessory.slotIndex].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}";
         PlayCombatVisual(GearDungeonDefinition.dungeonId, $"Gear Dungeon F{floor}", result, enemyHp);
         SetDungeonResult(message);
-        SaveProgress();
-        RefreshUi();
         return CreateActionResult(true, "gear_dungeon_run", string.Empty, message);
     }
 
@@ -2746,6 +3135,92 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         CompleteBackendAction(success, error, result, showInSummonPanel: false);
     }
 
+    private void OnBackendCampaignFightVisual(bool success, string error, MythwakeActionResultDto result)
+    {
+        if (!success)
+        {
+            campaignFightInProgress = false;
+            SetBattleFlowMode(BattleFlowMode.Formation);
+            SetDungeonResult($"Server request failed: {error}");
+            FinishBackendRequest($"Server request failed: {error}");
+            return;
+        }
+
+        if (fightCancelRequested)
+        {
+            ApplyBackendSnapshot(result.playerSnapshot);
+            fightCancelRequested = false;
+            campaignFightInProgress = false;
+            autoContinueFightsEnabled = false;
+            fightAutoSkillsEnabled = false;
+            SetBattleFlowMode(BattleFlowMode.Result);
+            ShowCampaignFightResult(false, "Fight Ended", "Auto battle stopped. Server result was received, but no auto-continue will run.");
+            FinishBackendRequest($"Server action finished after fight cancellation.  {result.actionId}{FormatBackendRevisionSuffix(result)}");
+            return;
+        }
+
+        ApplyBackendSnapshot(result.playerSnapshot);
+        var message = string.IsNullOrWhiteSpace(result.message) ? FormatBackendActionOutcome(result) : result.message;
+        if (HasServerCombatResult(result))
+        {
+            message = FormatServerCombatMessage(result);
+            StartCoroutine(PlayServerCampaignFightRoutine(result));
+        }
+        else
+        {
+            campaignFightInProgress = false;
+            SetBattleFlowMode(BattleFlowMode.Result);
+            ShowCampaignFightResult(result.success, "Campaign Result", message);
+        }
+
+        SetDungeonResult(message);
+        FinishBackendRequest($"Server action: {FormatBackendActionOutcome(result)}  {result.actionId}{FormatBackendRevisionSuffix(result)}");
+    }
+
+    private void OnBackendDungeonFightVisual(bool success, string error, MythwakeActionResultDto result)
+    {
+        if (!success)
+        {
+            campaignFightInProgress = false;
+            SetBattleFlowMode(BattleFlowMode.Formation);
+            SetDungeonResult($"Server request failed: {error}");
+            FinishBackendRequest($"Server request failed: {error}");
+            return;
+        }
+
+        if (fightCancelRequested)
+        {
+            ApplyBackendSnapshot(result.playerSnapshot);
+            fightCancelRequested = false;
+            campaignFightInProgress = false;
+            autoContinueFightsEnabled = false;
+            fightAutoSkillsEnabled = false;
+            SetBattleFlowMode(BattleFlowMode.Result);
+            ShowCampaignFightResult(false, "Fight Ended", "Auto battle stopped. Server result was received, but no auto-continue will run.");
+            FinishBackendRequest($"Server action finished after fight cancellation.  {result.actionId}{FormatBackendRevisionSuffix(result)}");
+            return;
+        }
+
+        battleTargetMode = BattleTargetMode.Dungeon;
+        ApplyBackendSnapshot(result.playerSnapshot);
+        var message = string.IsNullOrWhiteSpace(result.message) ? FormatBackendActionOutcome(result) : result.message;
+        if (HasServerCombatResult(result))
+        {
+            message = FormatServerCombatMessage(result);
+            selectedDungeonId = string.IsNullOrWhiteSpace(result.combat.targetId) ? selectedDungeonId : result.combat.targetId;
+            StartCoroutine(PlayServerDungeonFightRoutine(result));
+        }
+        else
+        {
+            campaignFightInProgress = false;
+            SetBattleFlowMode(BattleFlowMode.Result);
+            ShowCampaignFightResult(result.success, "Dungeon Result", message);
+        }
+
+        SetDungeonResult(message);
+        FinishBackendRequest($"Server action: {FormatBackendActionOutcome(result)}  {result.actionId}{FormatBackendRevisionSuffix(result)}");
+    }
+
     private void OnBackendSummonAction(bool success, string error, MythwakeActionResultDto result)
     {
         CompleteBackendAction(success, error, result, showInSummonPanel: true);
@@ -3005,6 +3480,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         mythEssence = Mathf.Max(0, state.mythEssence);
         battlePassXp = Mathf.Max(0, state.passXp);
         enemyLevel = Mathf.Max(1, state.campaignStage);
+        selectedCampaignStage = Mathf.Max(1, enemyLevel);
         goldDungeonFloor = Mathf.Max(1, state.goldDungeonFloor);
         essenceDungeonFloor = Mathf.Max(1, state.essenceDungeonFloor);
         gearDungeonFloor = Mathf.Max(1, state.gearDungeonFloor);
@@ -3267,18 +3743,149 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshUi();
     }
 
+    private IEnumerator PlayLocalCampaignFightRoutine()
+    {
+        campaignFightInProgress = true;
+        battleTargetMode = BattleTargetMode.Campaign;
+        SetBattleFlowMode(BattleFlowMode.Fight);
+        RefreshUi();
+
+        damage = GetTeamDamage();
+        dailyFightCount++;
+        var stageNumber = enemyLevel;
+        var stage = GetStageDefinition(stageNumber);
+        var result = SimulateCombat(stage.maxHp, GetCampaignEnemyDamage(stageNumber));
+        yield return PlayCampaignFightVisualRoutine(
+            result.won,
+            stageNumber,
+            stage.enemyName,
+            result.elapsedSeconds,
+            GetTeamHealth(),
+            result.teamHpRemaining,
+            stage.maxHp,
+            result.enemyHpRemaining,
+            result.damageDealt,
+            result.damageTaken);
+        if (ConsumeFightCancelRequest())
+        {
+            yield break;
+        }
+
+        var actionResult = ApplyCampaignFightResult(stageNumber, stage, result);
+        SaveProgress();
+        RefreshUi();
+        ShowCampaignFightResult(actionResult.success, actionResult.success ? "Victory" : "Defeat", actionResult.message);
+    }
+
+    private IEnumerator PlayLocalDungeonFightRoutine()
+    {
+        campaignFightInProgress = true;
+        battleTargetMode = BattleTargetMode.Dungeon;
+        SetBattleFlowMode(BattleFlowMode.Fight);
+        RefreshUi();
+
+        damage = GetTeamDamage();
+        dailyFightCount++;
+        var dungeon = ResolveDungeonDefinition(selectedDungeonId);
+        var floor = GetDungeonFloor(dungeon.dungeonId);
+        var enemyHp = GetDungeonEnemyHp(dungeon, floor);
+        var enemyDamage = GetDungeonEnemyDamage(dungeon, floor);
+        var result = SimulateCombat(enemyHp, enemyDamage);
+        yield return PlayCampaignFightVisualRoutine(
+            result.won,
+            floor,
+            $"{dungeon.displayName} F{floor}  VS  {GetDungeonBossName(dungeon.dungeonId)}",
+            result.elapsedSeconds,
+            GetTeamHealth(),
+            result.teamHpRemaining,
+            enemyHp,
+            result.enemyHpRemaining,
+            result.damageDealt,
+            result.damageTaken,
+            singleBoss: true,
+            bossTextureName: GetDungeonBossTextureName(dungeon.dungeonId),
+            enemyDamage: enemyDamage);
+        if (ConsumeFightCancelRequest())
+        {
+            yield break;
+        }
+
+        var actionResult = ApplyDungeonFightResult(dungeon.dungeonId, floor, result, enemyHp);
+        SaveProgress();
+        RefreshUi();
+        ShowCampaignFightResult(actionResult.success, actionResult.success ? "Boss Cleared" : "Boss Failed", actionResult.message);
+    }
+
+    private IEnumerator PlayServerCampaignFightRoutine(MythwakeActionResultDto result)
+    {
+        var combat = result.combat;
+        battleTargetMode = BattleTargetMode.Campaign;
+        yield return PlayCampaignFightVisualRoutine(
+            combat.won,
+            combat.targetLevel,
+            GetServerCombatLabel(combat),
+            combat.elapsedSeconds,
+            combat.teamMaxHp,
+            combat.teamHpRemaining,
+            combat.enemyMaxHp,
+            combat.enemyHpRemaining,
+            combat.damageDealt,
+            combat.damageTaken);
+        if (ConsumeFightCancelRequest())
+        {
+            yield break;
+        }
+
+        var message = HasServerCombatResult(result) ? FormatServerCombatMessage(result) : result.message;
+        ShowCampaignFightResult(result.success, result.success ? "Victory" : "Defeat", message);
+    }
+
+    private IEnumerator PlayServerDungeonFightRoutine(MythwakeActionResultDto result)
+    {
+        var combat = result.combat;
+        battleTargetMode = BattleTargetMode.Dungeon;
+        selectedDungeonId = string.IsNullOrWhiteSpace(combat.targetId) ? selectedDungeonId : combat.targetId;
+        yield return PlayCampaignFightVisualRoutine(
+            combat.won,
+            combat.targetLevel,
+            $"{GetServerCombatLabel(combat)}  VS  {GetDungeonBossName(selectedDungeonId)}",
+            combat.elapsedSeconds,
+            combat.teamMaxHp,
+            combat.teamHpRemaining,
+            combat.enemyMaxHp,
+            combat.enemyHpRemaining,
+            combat.damageDealt,
+            combat.damageTaken,
+            singleBoss: true,
+            bossTextureName: GetDungeonBossTextureName(selectedDungeonId),
+            enemyDamage: combat.enemyDamage);
+        if (ConsumeFightCancelRequest())
+        {
+            yield break;
+        }
+
+        var message = HasServerCombatResult(result) ? FormatServerCombatMessage(result) : result.message;
+        ShowCampaignFightResult(result.success, result.success ? "Boss Cleared" : "Boss Failed", message);
+    }
+
     private MythwakeActionResultDto ExecuteCampaignFight()
     {
         damage = GetTeamDamage();
         dailyFightCount++;
-        var stage = GetStageDefinition(enemyLevel);
-        var result = SimulateCombat(stage.maxHp, GetCampaignEnemyDamage(enemyLevel));
+        var stageNumber = enemyLevel;
+        var stage = GetStageDefinition(stageNumber);
+        var result = SimulateCombat(stage.maxHp, GetCampaignEnemyDamage(stageNumber));
+        return ApplyCampaignFightResult(stageNumber, stage, result);
+    }
 
+    private MythwakeActionResultDto ApplyCampaignFightResult(int stageNumber, StageDefinition stage, CombatResult result)
+    {
         if (result.won)
         {
-            var clearedStage = enemyLevel;
+            var clearedStage = stageNumber;
             var milestoneText = GrantCampaignMilestoneReward(clearedStage);
-            enemyLevel++;
+            enemyLevel = Mathf.Max(enemyLevel, clearedStage + 1);
+            selectedCampaignStage = Mathf.Max(1, enemyLevel);
             dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
@@ -3291,8 +3898,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             enemyMaxHp = stage.maxHp;
             enemyHp = enemyMaxHp;
-            var failMessage = $"Campaign Stage {enemyLevel} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{stage.maxHp}  {FormatCombatResult(result)}";
-            PlayCombatVisual("campaign", $"Campaign Stage {enemyLevel}", result, stage.maxHp);
+            var failMessage = $"Campaign Stage {stageNumber} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{stage.maxHp}  {FormatCombatResult(result)}";
+            PlayCombatVisual("campaign", $"Campaign Stage {stageNumber}", result, stage.maxHp);
             SetDungeonResult(failMessage);
             return CreateActionResult(false, "campaign_fight", "combat_lost", failMessage);
         }
@@ -3413,6 +4020,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAccessories();
         EnsureDailyMissionClaims();
         EnsureBattlePassRewardClaims();
+        EnsureFormationOrder();
 
         return new PrototypeSaveData
         {
@@ -3444,6 +4052,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroLevels = CopyIntArray(heroLevels, HeroCount, 1),
             heroShards = CopyIntArray(heroShards, HeroCount, 0),
             heroAscensions = CopyIntArray(heroAscensions, HeroCount, 0),
+            formationSlotHeroIndices = CopyIntArray(this.formationSlotHeroIndices, HeroCount, -1),
+            autoContinueFightsEnabled = this.autoContinueFightsEnabled,
             equippedAccessoryRarities = CopyIntArray(equippedAccessoryRarities, AccessorySlotCount, -1),
             equippedAccessoryLevels = CopyIntArray(equippedAccessoryLevels, AccessorySlotCount, 0),
             accessoryInventory = CopyIntArray(accessoryInventory, AccessorySlotCount * AccessoryRarityCount, 0),
@@ -3478,6 +4088,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroLevels = CopyIntArray(data.heroLevels, HeroCount, 1);
         heroShards = CopyIntArray(data.heroShards, HeroCount, 0);
         heroAscensions = CopyIntArray(data.heroAscensions, HeroCount, 0);
+        formationSlotHeroIndices = CopyIntArray(data.formationSlotHeroIndices, HeroCount, -1);
+        autoContinueFightsEnabled = data.autoContinueFightsEnabled;
+        fightAutoSkillsEnabled = autoContinueFightsEnabled;
+
+        EnsureFormationOrder();
         equippedAccessoryRarities = CopyIntArray(data.equippedAccessoryRarities, AccessorySlotCount, -1);
         equippedAccessoryLevels = CopyIntArray(data.equippedAccessoryLevels, AccessorySlotCount, 0);
         accessoryInventory = CopyIntArray(data.accessoryInventory, AccessorySlotCount * AccessoryRarityCount, 0);
@@ -3509,6 +4124,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAccessories();
         EnsureDailyMissionClaims();
         EnsureBattlePassRewardClaims();
+        EnsureFormationOrder();
 
         gold = Mathf.Max(0, gold);
         gems = Mathf.Max(0, gems);
@@ -3726,13 +4342,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var enemyHp = GetDungeonEnemyHp(dungeon, floor);
         var enemyDamage = GetDungeonEnemyDamage(dungeon, floor);
         var result = SimulateCombat(enemyHp, enemyDamage);
+        var actionResult = ApplyResourceDungeonResult(isGoldDungeon, floor, result, enemyHp);
+        SaveProgress();
+        RefreshUi();
+        return actionResult;
+    }
 
+    private MythwakeActionResultDto ApplyResourceDungeonResult(bool isGoldDungeon, int floor, CombatResult result, int enemyHp)
+    {
+        var dungeon = isGoldDungeon ? GoldDungeonDefinition : EssenceDungeonDefinition;
         if (!result.won)
         {
             var failMessage = $"{dungeon.displayName} Floor {floor} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
             PlayCombatVisual(dungeon.dungeonId, $"{dungeon.displayName} F{floor}", result, enemyHp);
             SetDungeonResult(failMessage);
-            RefreshUi();
             return CreateActionResult(false, $"{dungeon.dungeonId}_run", "combat_lost", failMessage);
         }
 
@@ -3759,9 +4382,29 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         PlayCombatVisual(dungeon.dungeonId, $"{dungeon.displayName} F{floor}", result, enemyHp);
         SetDungeonResult(message);
-        SaveProgress();
-        RefreshUi();
         return CreateActionResult(true, $"{dungeon.dungeonId}_run", string.Empty, message, rewardDto);
+    }
+
+    private MythwakeActionResultDto ApplyDungeonFightResult(string dungeonId, int floor, CombatResult result, int enemyHp)
+    {
+        if (dungeonId == GoldDungeonDefinition.dungeonId)
+        {
+            return ApplyResourceDungeonResult(isGoldDungeon: true, floor, result, enemyHp);
+        }
+
+        if (dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return ApplyResourceDungeonResult(isGoldDungeon: false, floor, result, enemyHp);
+        }
+
+        if (dungeonId == GearDungeonDefinition.dungeonId)
+        {
+            return ApplyGearDungeonResult(floor, result, enemyHp);
+        }
+
+        var message = $"Unknown dungeon: {dungeonId}";
+        SetDungeonResult(message);
+        return CreateActionResult(false, "run_dungeon", "invalid_dungeon", message);
     }
 
     private int GetCampaignEnemyDamage(int stage)
@@ -3774,17 +4417,59 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         var result = new CombatResult();
         var maxTeamHp = GetTeamHealth();
-        var teamHp = maxTeamHp;
         var enemyHpValue = Mathf.Max(1, targetEnemyHp);
-        var teamDamage = GetTeamDamage();
-        var supportHeal = GetSupportHealPerSecond(maxTeamHp);
+        var heroHpValues = CreateHeroCombatHealthValues();
+        var nextHeroAttackTimes = new float[HeroCount];
+        for (var i = 0; i < nextHeroAttackTimes.Length; i++)
+        {
+            nextHeroAttackTimes[i] = 0.25f + (i * 0.17f);
+        }
+
+        var enemyNextAttackTime = 0.9f;
         enemyDamage = Mathf.Max(1, enemyDamage);
 
-        for (var second = 1; second <= DefaultCombatDurationSeconds; second++)
+        const float simulationStep = 0.1f;
+        for (var timer = 0f; timer <= DefaultCombatDurationSeconds + 0.001f; timer += simulationStep)
         {
-            var enemyHpBeforeAttack = enemyHpValue;
-            enemyHpValue -= teamDamage;
-            result.damageDealt += Mathf.Min(enemyHpBeforeAttack, teamDamage);
+            for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
+            {
+                if (heroHpValues[heroIndex] <= 0 || timer + 0.001f < nextHeroAttackTimes[heroIndex])
+                {
+                    continue;
+                }
+
+                nextHeroAttackTimes[heroIndex] = timer + GetFightVisualAttackInterval(true, heroIndex) * UnityEngine.Random.Range(0.94f, 1.08f);
+                if (!RollPercentChance(GetHeroAccuracyPercent(heroIndex)))
+                {
+                    result.missedHits++;
+                    continue;
+                }
+
+                var hitDamage = Mathf.Max(1, GetHeroEffectiveAttack(heroIndex));
+                if (RollPercentChance(GetHeroCritChancePercent(heroIndex)))
+                {
+                    hitDamage = Mathf.Max(1, Mathf.RoundToInt(hitDamage * CritDamageMultiplier));
+                    result.criticalHits++;
+                }
+
+                hitDamage = Mathf.Min(hitDamage, enemyHpValue);
+                enemyHpValue -= hitDamage;
+                result.damageDealt += hitDamage;
+
+                if (GetHeroTextureName(heroIndex) == "hero_elowen" && RollPercentChance(25))
+                {
+                    result.healingDone += HealHeroCombatHealthValues(heroHpValues, Mathf.Max(1, Mathf.FloorToInt(maxTeamHp * 0.035f)));
+                }
+
+                if (enemyHpValue <= 0)
+                {
+                    result.won = true;
+                    result.elapsedSeconds = Mathf.Clamp(Mathf.CeilToInt(timer), 1, DefaultCombatDurationSeconds);
+                    result.teamHpRemaining = GetHeroCombatHealthTotal(heroHpValues);
+                    result.enemyHpRemaining = 0;
+                    return result;
+                }
+            }
 
             if (enemyHpValue > 0 && ShouldExecuteEnemy(enemyHpValue, targetEnemyHp))
             {
@@ -3796,43 +4481,158 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (enemyHpValue <= 0)
             {
                 result.won = true;
-                result.elapsedSeconds = second;
-                result.teamHpRemaining = Mathf.Max(0, teamHp);
+                result.elapsedSeconds = Mathf.Clamp(Mathf.CeilToInt(timer), 1, DefaultCombatDurationSeconds);
+                result.teamHpRemaining = GetHeroCombatHealthTotal(heroHpValues);
                 result.enemyHpRemaining = 0;
                 return result;
             }
 
-            var mitigatedDamage = GetMitigatedEnemyDamage(enemyDamage);
-            result.damageTaken += Mathf.Min(teamHp, mitigatedDamage);
-            teamHp -= mitigatedDamage;
-            if (teamHp <= 0)
+            if (timer + 0.001f >= enemyNextAttackTime)
             {
-                result.won = false;
-                result.elapsedSeconds = second;
-                result.teamHpRemaining = 0;
-                result.enemyHpRemaining = Mathf.Max(0, enemyHpValue);
-                return result;
-            }
+                var targetHero = PickLocalCombatEnemyTarget(heroHpValues);
+                if (targetHero >= 0)
+                {
+                    var mitigatedDamage = GetMitigatedEnemyDamageAgainstHero(enemyDamage, targetHero);
+                    var damageTaken = Mathf.Min(heroHpValues[targetHero], mitigatedDamage);
+                    heroHpValues[targetHero] -= damageTaken;
+                    result.damageTaken += damageTaken;
+                }
 
-            if (supportHeal > 0 && teamHp < maxTeamHp)
-            {
-                var actualHeal = Mathf.Min(supportHeal, maxTeamHp - teamHp);
-                teamHp += actualHeal;
-                result.healingDone += actualHeal;
+                enemyNextAttackTime = timer + 1.45f;
+                if (GetHeroCombatHealthTotal(heroHpValues) <= 0)
+                {
+                    result.won = false;
+                    result.elapsedSeconds = Mathf.Clamp(Mathf.CeilToInt(timer), 1, DefaultCombatDurationSeconds);
+                    result.teamHpRemaining = 0;
+                    result.enemyHpRemaining = Mathf.Max(0, enemyHpValue);
+                    return result;
+                }
             }
         }
 
         result.won = false;
         result.elapsedSeconds = DefaultCombatDurationSeconds;
-        result.teamHpRemaining = Mathf.Max(0, teamHp);
+        result.teamHpRemaining = GetHeroCombatHealthTotal(heroHpValues);
         result.enemyHpRemaining = Mathf.Max(0, enemyHpValue);
         return result;
+    }
+
+    private int[] CreateHeroCombatHealthValues()
+    {
+        var values = new int[HeroCount];
+        var baseHealthTotal = 0;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            baseHealthTotal += Mathf.Max(1, GetHeroHealth(i));
+        }
+
+        var bonusHealth = GetEquipmentHealthBonus() + GetAccessoryHealthBonus();
+        for (var i = 0; i < values.Length; i++)
+        {
+            var heroHealth = Mathf.Max(1, GetHeroHealth(i));
+            var bonusShare = Mathf.RoundToInt(bonusHealth * (heroHealth / (float)Mathf.Max(1, baseHealthTotal)));
+            values[i] = Mathf.Max(1, heroHealth + bonusShare);
+        }
+
+        return values;
+    }
+
+    private int GetHeroCombatMaxHealth(int heroIndex)
+    {
+        heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
+        var baseHealthTotal = 0;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            baseHealthTotal += Mathf.Max(1, GetHeroHealth(i));
+        }
+
+        var heroHealth = Mathf.Max(1, GetHeroHealth(heroIndex));
+        var bonusHealth = GetEquipmentHealthBonus() + GetAccessoryHealthBonus();
+        var bonusShare = Mathf.RoundToInt(bonusHealth * (heroHealth / (float)Mathf.Max(1, baseHealthTotal)));
+        return Mathf.Max(1, heroHealth + bonusShare);
+    }
+
+    private static int GetHeroCombatHealthTotal(int[] heroHpValues)
+    {
+        if (heroHpValues == null)
+        {
+            return 0;
+        }
+
+        var total = 0;
+        for (var i = 0; i < heroHpValues.Length; i++)
+        {
+            total += Mathf.Max(0, heroHpValues[i]);
+        }
+
+        return total;
+    }
+
+    private int HealHeroCombatHealthValues(int[] heroHpValues, int totalHeal)
+    {
+        if (heroHpValues == null || totalHeal <= 0)
+        {
+            return 0;
+        }
+
+        var healed = 0;
+        var share = Mathf.Max(1, Mathf.CeilToInt(totalHeal / (float)Mathf.Max(1, heroHpValues.Length)));
+        for (var i = 0; i < heroHpValues.Length; i++)
+        {
+            if (heroHpValues[i] <= 0)
+            {
+                continue;
+            }
+
+            var maxHealth = GetHeroCombatMaxHealth(i);
+            var amount = Mathf.Min(share, maxHealth - heroHpValues[i]);
+            if (amount <= 0)
+            {
+                continue;
+            }
+
+            heroHpValues[i] += amount;
+            healed += amount;
+        }
+
+        return healed;
+    }
+
+    private int PickLocalCombatEnemyTarget(int[] heroHpValues)
+    {
+        if (heroHpValues == null || heroHpValues.Length == 0)
+        {
+            return -1;
+        }
+
+        EnsureFormationOrder();
+        if (formationSlotHeroIndices != null)
+        {
+            for (var slot = 0; slot < formationSlotHeroIndices.Length; slot++)
+            {
+                var heroIndex = Mathf.Clamp(formationSlotHeroIndices[slot], 0, HeroCount - 1);
+                if (heroIndex < heroHpValues.Length && heroHpValues[heroIndex] > 0)
+                {
+                    return heroIndex;
+                }
+            }
+        }
+
+        for (var i = 0; i < heroHpValues.Length; i++)
+        {
+            if (heroHpValues[i] > 0)
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private string FormatCombatResult(CombatResult result)
     {
         var executeText = result.executed ? "  Execute" : string.Empty;
-        return $"DMG {result.damageDealt}  Took {result.damageTaken}  Heal {result.healingDone}{executeText}";
+        return $"DMG {result.damageDealt}  Took {result.damageTaken}  Heal {result.healingDone}  Crit {result.criticalHits}  Miss {result.missedHits}{executeText}";
     }
 
     private int GetGoldDungeonReward(int floor)
@@ -3926,6 +4726,1594 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         });
     }
 
+    private IEnumerator PlayCampaignFightVisualRoutine(
+        bool won,
+        int stageNumber,
+        string enemyLabel,
+        int elapsedSeconds,
+        int teamMaxHp,
+        int teamHpRemaining,
+        int enemyMaxHp,
+        int enemyHpRemaining,
+        int damageDealt,
+        int damageTaken,
+        bool singleBoss = false,
+        string bossTextureName = null,
+        int enemyDamage = 0)
+    {
+        SetBattleFlowMode(BattleFlowMode.Fight);
+        ApplyBattleFlowVisibility();
+        HideFightFloatingTexts();
+        PrepareFightAnimationTextures(stageNumber, singleBoss, bossTextureName);
+        ConfigureFightEnemyPresentation(singleBoss);
+
+        teamMaxHp = Mathf.Max(1, teamMaxHp);
+        enemyMaxHp = Mathf.Max(1, enemyMaxHp);
+        elapsedSeconds = Mathf.Clamp(elapsedSeconds, 1, DefaultCombatDurationSeconds);
+        var teamEndPercent = Mathf.Clamp01(teamHpRemaining / (float)teamMaxHp);
+        var enemyEndPercent = Mathf.Clamp01(enemyHpRemaining / (float)enemyMaxHp);
+        var visualDuration = Mathf.Clamp(elapsedSeconds, 1f, DefaultCombatDurationSeconds);
+        var timer = 0f;
+        var activeEnemyCount = singleBoss ? 1 : HeroCount;
+        var heroHpPercents = CreateCombatHealthPercents(HeroCount);
+        var enemyHpPercents = CreateCombatHealthPercents(activeEnemyCount);
+        var heroDamageUnit = Mathf.Max(0.0025f, (1f - enemyEndPercent) * activeEnemyCount / GetExpectedHeroVisualAttackWeight(visualDuration));
+        var enemyDamageUnit = Mathf.Max(0.0025f, (1f - teamEndPercent) * HeroCount / GetExpectedEnemyVisualAttackWeight(visualDuration, activeEnemyCount));
+        var floatingIndex = 0;
+        var heroBasePositions = GetCurrentFightHeroPositions();
+        var enemyBasePositions = singleBoss ? GetFightBossEnemyPositions() : GetFightEnemyPositions();
+        var heroStates = CreateFightVisualUnitStates(heroBasePositions, HeroCount, 0.2f);
+        var enemyStates = CreateFightVisualUnitStates(enemyBasePositions, activeEnemyCount, 0.45f);
+        InitializeFightSkillState();
+
+        if (fightResultRoot != null)
+        {
+            fightResultRoot.gameObject.SetActive(false);
+        }
+
+        if (fightVsText != null)
+        {
+            fightVsText.text = singleBoss ? enemyLabel : $"Stage {stageNumber}  VS  {enemyLabel}";
+        }
+
+        var maxVisualDuration = visualDuration;
+        while (!fightCancelRequested && ShouldContinueFightVisual(timer, visualDuration, maxVisualDuration, won, heroHpPercents, HeroCount, teamEndPercent, enemyHpPercents, activeEnemyCount, enemyEndPercent))
+        {
+            var realDeltaTime = Mathf.Min(Time.unscaledDeltaTime, 0.25f);
+            var simulationDeltaTime = Mathf.Min(realDeltaTime, 0.05f);
+            timer += realDeltaTime;
+            var progress = Mathf.Clamp01(timer / visualDuration);
+            var smooth = Mathf.SmoothStep(0f, 1f, progress);
+            var shownSecond = Mathf.Clamp(Mathf.FloorToInt(timer), 0, DefaultCombatDurationSeconds);
+            var remainingSeconds = Mathf.Max(0, DefaultCombatDurationSeconds - shownSecond);
+
+            if (fightTimerText != null)
+            {
+                fightTimerText.text = $"00:{remainingSeconds:00}";
+            }
+
+            if (fightStatusText != null)
+            {
+                fightStatusText.text = $"Dealt {FormatCompactNumber(Mathf.RoundToInt(damageDealt * smooth))}   Took {FormatCompactNumber(Mathf.RoundToInt(damageTaken * smooth))}";
+            }
+
+            UpdateFightVisualMovement(heroStates, HeroCount, heroHpPercents, enemyStates, activeEnemyCount, enemyHpPercents, true, simulationDeltaTime);
+            UpdateFightVisualMovement(enemyStates, activeEnemyCount, enemyHpPercents, heroStates, HeroCount, heroHpPercents, false, simulationDeltaTime);
+            var finishScale = timer > visualDuration ? 1.85f : 1f;
+            ResolveFightVisualAttacks(heroStates, HeroCount, heroHpPercents, enemyStates, activeEnemyCount, enemyHpPercents, true, timer, enemyEndPercent, heroDamageUnit * finishScale, stageNumber, enemyDamage, ref floatingIndex);
+            ResolveFightVisualAttacks(enemyStates, activeEnemyCount, enemyHpPercents, heroStates, HeroCount, heroHpPercents, false, timer, teamEndPercent, enemyDamageUnit * finishScale, stageNumber, enemyDamage, ref floatingIndex);
+            ResolveFightHeroUltimates(heroStates, heroHpPercents, enemyStates, activeEnemyCount, enemyHpPercents, timer, enemyEndPercent, heroDamageUnit * finishScale, ref floatingIndex);
+
+            SetFillValues(fightHeroHpFills, heroHpPercents, HeroCount);
+            SetFillValues(fightEnemyHpFills, enemyHpPercents, activeEnemyCount);
+            SetHpPercentTexts(fightEnemyHpPercentTexts, enemyHpPercents, activeEnemyCount);
+            RefreshFightBossHpUi(singleBoss, enemyHpPercents);
+            RefreshFightSkillUi(timer);
+            AnimateFightUnitsWithState(
+                heroStates,
+                enemyStates,
+                heroHpPercents,
+                enemyHpPercents,
+                activeEnemyCount,
+                timer,
+                singleBoss);
+
+            yield return null;
+        }
+
+        if (fightCancelRequested)
+        {
+            SetProjectilesVisible(fightHeroProjectileImages, false);
+            SetProjectilesVisible(fightEnemyProjectileImages, false);
+            if (fightTimerText != null)
+            {
+                fightTimerText.text = "Ended";
+            }
+
+            if (fightStatusText != null)
+            {
+                fightStatusText.text = "Fight stopped.";
+            }
+
+            yield break;
+        }
+
+        ReduceCombatHealthToAverage(heroHpPercents, HeroCount, teamEndPercent);
+        ReduceCombatHealthToAverage(enemyHpPercents, activeEnemyCount, enemyEndPercent);
+        SetFillValues(fightHeroHpFills, heroHpPercents, HeroCount);
+        SetFillValues(fightEnemyHpFills, enemyHpPercents, activeEnemyCount);
+        SetHpPercentTexts(fightEnemyHpPercentTexts, enemyHpPercents, activeEnemyCount);
+        RefreshFightBossHpUi(singleBoss, enemyHpPercents);
+        SetProjectilesVisible(fightHeroProjectileImages, false);
+        SetProjectilesVisible(fightEnemyProjectileImages, false);
+        RefreshFightSkillUi(timer);
+        if (fightTimerText != null)
+        {
+            fightTimerText.text = won ? "Clear" : "00:00";
+        }
+
+        if (fightStatusText != null)
+        {
+            fightStatusText.text = won ? "Enemy team defeated." : "Your team ran out of time or HP.";
+        }
+    }
+
+    private void ShowCampaignFightResult(bool success, string title, string body)
+    {
+        campaignFightInProgress = false;
+        SetBattleFlowMode(BattleFlowMode.Result);
+
+        if (fightResultTitleText != null)
+        {
+            fightResultTitleText.text = title;
+            fightResultTitleText.color = success ? new Color(1f, 0.86f, 0.34f) : new Color(1f, 0.42f, 0.36f);
+        }
+
+        if (fightResultBodyText != null)
+        {
+            fightResultBodyText.text = body;
+        }
+
+        if (fightContinueButton != null)
+        {
+            fightContinueButton.interactable = true;
+        }
+
+        RefreshGameplayInteractivity();
+        QueueAutoContinueFight(success);
+    }
+
+    private void QueueAutoContinueFight(bool success)
+    {
+        if (!success || !autoContinueFightsEnabled || fightCancelRequested)
+        {
+            return;
+        }
+
+        if (autoContinueFightCoroutine != null)
+        {
+            StopCoroutine(autoContinueFightCoroutine);
+        }
+
+        autoContinueFightCoroutine = StartCoroutine(AutoContinueFightAfterVictoryRoutine());
+    }
+
+    private IEnumerator AutoContinueFightAfterVictoryRoutine()
+    {
+        yield return new WaitForSeconds(0.75f);
+        autoContinueFightCoroutine = null;
+
+        if (!autoContinueFightsEnabled || campaignFightInProgress || backendRequestInProgress || backendLifecycleFlushInProgress || activeScreen != AppScreen.Battle)
+        {
+            yield break;
+        }
+
+        selectedFormationSlotIndex = -1;
+        fightAutoSkillsEnabled = true;
+        if (battleTargetMode == BattleTargetMode.Campaign)
+        {
+            selectedCampaignStage = Mathf.Max(1, enemyLevel);
+        }
+
+        if (battleTargetMode == BattleTargetMode.Dungeon)
+        {
+            StartDungeonFightFromFormation();
+        }
+        else
+        {
+            StartCampaignFightFromFormation();
+        }
+    }
+
+    private void InitializeFightSkillState()
+    {
+        fightHeroManaValues = new int[HeroCount];
+        fightHeroMaxManaValues = new int[HeroCount];
+        fightHeroUltimateQueued = new bool[HeroCount];
+        fightHeroUltimateStartedAt = new float[HeroCount];
+        for (var i = 0; i < HeroCount; i++)
+        {
+            fightHeroMaxManaValues[i] = GetHeroMaxMana(i);
+            fightHeroUltimateStartedAt[i] = -99f;
+        }
+
+        if (autoContinueFightsEnabled)
+        {
+            fightAutoSkillsEnabled = true;
+        }
+
+        RefreshFightSkillUi(0f);
+        RefreshFightAutoSkillButton();
+    }
+
+    private void ToggleFightAutoSkills()
+    {
+        fightAutoSkillsEnabled = !fightAutoSkillsEnabled;
+        RefreshFightAutoSkillButton();
+        RefreshFightSkillUi(0f);
+    }
+
+    private void RefreshFightAutoSkillButton()
+    {
+        if (fightAutoSkillButton == null)
+        {
+            return;
+        }
+
+        var image = fightAutoSkillButton.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = fightAutoSkillsEnabled
+                ? new Color(1f, 0.68f, 0.2f, 0.98f)
+                : new Color(0.12f, 0.13f, 0.17f, 0.9f);
+        }
+
+        if (fightAutoSkillButtonText != null)
+        {
+            fightAutoSkillButtonText.text = fightAutoSkillsEnabled ? "AUTO\nON" : "AUTO";
+            fightAutoSkillButtonText.color = fightAutoSkillsEnabled ? new Color(0.18f, 0.09f, 0.02f) : Color.white;
+        }
+    }
+
+    private void QueueFightHeroUltimate(int heroIndex)
+    {
+        if (fightHeroManaValues == null || fightHeroMaxManaValues == null || fightHeroUltimateQueued == null)
+        {
+            return;
+        }
+
+        if (heroIndex < 0 || heroIndex >= HeroCount || fightHeroManaValues[heroIndex] < fightHeroMaxManaValues[heroIndex])
+        {
+            return;
+        }
+
+        fightHeroUltimateQueued[heroIndex] = true;
+        RefreshFightSkillUi(0f);
+    }
+
+    private void GainFightHeroMana(int heroIndex, int amount)
+    {
+        if (fightHeroManaValues == null || fightHeroMaxManaValues == null || heroIndex < 0 || heroIndex >= HeroCount)
+        {
+            return;
+        }
+
+        fightHeroManaValues[heroIndex] = Mathf.Clamp(fightHeroManaValues[heroIndex] + Mathf.Max(0, amount), 0, Mathf.Max(1, fightHeroMaxManaValues[heroIndex]));
+    }
+
+    private void TryApplyHeroPassiveOnHit(int heroIndex, float[] heroHpPercents, int heroCount, Vector2 targetPosition, ref int floatingIndex)
+    {
+        var heroId = GetHeroTextureName(heroIndex);
+        if (heroId == "hero_elowen" && UnityEngine.Random.value <= 0.25f)
+        {
+            var healed = HealCombatHealth(heroHpPercents, heroCount, 0.035f);
+            if (healed > 0.001f)
+            {
+                ShowFightFloatingText(floatingIndex++, "+Heal", targetPosition + new Vector2(0, -128), new Color(0.45f, 1f, 0.58f));
+            }
+        }
+    }
+
+    private void ResolveFightHeroUltimates(
+        FightVisualUnitState[] heroStates,
+        float[] heroHpPercents,
+        FightVisualUnitState[] enemyStates,
+        int activeEnemyCount,
+        float[] enemyHpPercents,
+        float timer,
+        float enemyEndPercent,
+        float heroDamageUnit,
+        ref int floatingIndex)
+    {
+        if (heroStates == null || enemyStates == null || heroHpPercents == null || enemyHpPercents == null || fightHeroManaValues == null || fightHeroMaxManaValues == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < HeroCount && i < heroStates.Length && i < heroHpPercents.Length; i++)
+        {
+            if (heroHpPercents[i] <= 0.001f || fightHeroManaValues[i] < fightHeroMaxManaValues[i])
+            {
+                continue;
+            }
+
+            if (!fightAutoSkillsEnabled && (fightHeroUltimateQueued == null || !fightHeroUltimateQueued[i]))
+            {
+                continue;
+            }
+
+            var state = heroStates[i];
+            if (!IsFightTargetAlive(state.targetIndex, enemyHpPercents, activeEnemyCount))
+            {
+                state.targetIndex = FindNearestLivingVisualTarget(state.position, enemyStates, enemyHpPercents, activeEnemyCount);
+            }
+
+            if (state.targetIndex < 0 || !IsFightVisualInRange(state, enemyStates[state.targetIndex].position, true, i))
+            {
+                heroStates[i] = state;
+                continue;
+            }
+
+            fightHeroManaValues[i] = 0;
+            if (fightHeroUltimateQueued != null)
+            {
+                fightHeroUltimateQueued[i] = false;
+            }
+
+            if (fightHeroUltimateStartedAt != null && i < fightHeroUltimateStartedAt.Length)
+            {
+                fightHeroUltimateStartedAt[i] = timer;
+            }
+
+            state.attackStartedAt = timer;
+            state.nextAttackTime = Mathf.Max(state.nextAttackTime, timer + 0.45f);
+            heroStates[i] = state;
+
+            var heroId = GetHeroTextureName(i);
+            var targetPosition = enemyStates[state.targetIndex].position;
+            if (heroId == "hero_elowen")
+            {
+                HealCombatHealth(heroHpPercents, HeroCount, 0.18f);
+                ShowFightFloatingText(floatingIndex++, "Wild Bloom", state.position + new Vector2(0, -120), new Color(0.55f, 1f, 0.62f));
+                continue;
+            }
+
+            if (heroId == "hero_borin")
+            {
+                HealCombatHealth(heroHpPercents, HeroCount, 0.06f);
+            }
+
+            var damage = ApplyTargetDamageTowardAverage(
+                enemyHpPercents,
+                state.targetIndex,
+                activeEnemyCount,
+                enemyEndPercent,
+                heroDamageUnit * GetFightVisualDamageWeight(true, i) * GetHeroUltimateDamageMultiplier(i));
+
+            if (damage > 0.001f)
+            {
+                ShowFightFloatingText(floatingIndex++, "ULT", targetPosition + new Vector2(0, -118), new Color(1f, 0.82f, 0.24f));
+            }
+        }
+    }
+
+    private void RefreshFightSkillUi(float timer)
+    {
+        if (fightSkillButtons == null || fightSkillManaFills == null || fightHeroManaValues == null || fightHeroMaxManaValues == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var maxMana = i < fightHeroMaxManaValues.Length ? Mathf.Max(1, fightHeroMaxManaValues[i]) : GetHeroMaxMana(i);
+            var mana = i < fightHeroManaValues.Length ? Mathf.Clamp(fightHeroManaValues[i], 0, maxMana) : 0;
+            var ready = mana >= maxMana;
+            var queued = fightHeroUltimateQueued != null && i < fightHeroUltimateQueued.Length && fightHeroUltimateQueued[i];
+            var activeAge = fightHeroUltimateStartedAt != null && i < fightHeroUltimateStartedAt.Length ? timer - fightHeroUltimateStartedAt[i] : 99f;
+            var pulse = ready ? (0.5f + Mathf.Sin(Time.unscaledTime * 7.5f) * 0.5f) : 0f;
+            var activePulse = IsFightActionActive(activeAge) ? Mathf.Sin(Mathf.Clamp01(activeAge / 0.72f) * Mathf.PI) : 0f;
+
+            if (fightSkillManaFills[i] != null)
+            {
+                SetRuntimeFillPercent(fightSkillManaFills[i], mana / (float)maxMana);
+                fightSkillManaFills[i].color = ready
+                    ? new Color(1f, 0.68f, 0.18f, 0.98f)
+                    : new Color(0.14f, 0.66f, 1f, 0.94f);
+            }
+
+            if (fightSkillBackplates != null && i < fightSkillBackplates.Length && fightSkillBackplates[i] != null)
+            {
+                fightSkillBackplates[i].color = queued
+                    ? new Color(1f, 0.52f, 0.14f, 1f)
+                    : ready
+                        ? Color.Lerp(new Color(0.24f, 0.14f, 0.04f, 0.98f), new Color(1f, 0.77f, 0.2f, 1f), pulse)
+                        : new Color(0.07f, 0.09f, 0.13f, 0.96f);
+            }
+
+            if (fightSkillPortraits != null && i < fightSkillPortraits.Length && fightSkillPortraits[i] != null)
+            {
+                fightSkillPortraits[i].color = ready ? Color.white : new Color(0.72f, 0.78f, 0.86f, 0.94f);
+                var scale = 1f + (ready ? 0.04f * pulse : 0f) + (activePulse * 0.12f);
+                fightSkillPortraits[i].rectTransform.localScale = new Vector3(scale, scale, 1f);
+            }
+
+            if (fightSkillNameTexts != null && i < fightSkillNameTexts.Length && fightSkillNameTexts[i] != null)
+            {
+                fightSkillNameTexts[i].color = ready ? new Color(1f, 0.86f, 0.3f) : Color.white;
+            }
+
+            if (fightSkillManaTexts != null && i < fightSkillManaTexts.Length && fightSkillManaTexts[i] != null)
+            {
+                fightSkillManaTexts[i].text = $"{mana}/{maxMana}";
+                fightSkillManaTexts[i].color = ready ? new Color(1f, 0.82f, 0.25f) : new Color(0.74f, 0.9f, 1f);
+            }
+        }
+    }
+
+    private static float HealCombatHealth(float[] healthPercents, int activeCount, float healPercent)
+    {
+        if (healthPercents == null || healPercent <= 0f)
+        {
+            return 0f;
+        }
+
+        activeCount = Mathf.Clamp(activeCount, 0, healthPercents.Length);
+        if (activeCount <= 0)
+        {
+            return 0f;
+        }
+
+        var totalHealed = 0f;
+        var share = healPercent / activeCount;
+        for (var i = 0; i < activeCount; i++)
+        {
+            var before = Mathf.Clamp01(healthPercents[i]);
+            healthPercents[i] = Mathf.Min(1f, before + share);
+            totalHealed += healthPercents[i] - before;
+        }
+
+        return totalHealed;
+    }
+
+    private static void SetFillArray(Image[] fills, float percent)
+    {
+        SetFillArray(fills, percent, fills == null ? 0 : fills.Length);
+    }
+
+    private static void SetFillArray(Image[] fills, float percent, int activeCount)
+    {
+        if (fills == null)
+        {
+            return;
+        }
+
+        activeCount = Mathf.Clamp(activeCount, 0, fills.Length);
+        for (var i = 0; i < activeCount; i++)
+        {
+            SetRuntimeFillPercent(fills[i], percent);
+        }
+    }
+
+    private static float[] CreateCombatHealthPercents(int count)
+    {
+        count = Mathf.Max(0, count);
+        var values = new float[count];
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] = 1f;
+        }
+
+        return values;
+    }
+
+    private static void SetFillValues(Image[] fills, float[] values, int activeCount)
+    {
+        if (fills == null || values == null)
+        {
+            return;
+        }
+
+        activeCount = Mathf.Clamp(activeCount, 0, Mathf.Min(fills.Length, values.Length));
+        for (var i = 0; i < activeCount; i++)
+        {
+            SetRuntimeFillPercent(fills[i], values[i]);
+        }
+    }
+
+    private static void SetHpPercentTexts(TMP_Text[] texts, float[] values, int activeCount)
+    {
+        if (texts == null || values == null)
+        {
+            return;
+        }
+
+        activeCount = Mathf.Clamp(activeCount, 0, Mathf.Min(texts.Length, values.Length));
+        for (var i = 0; i < texts.Length; i++)
+        {
+            if (texts[i] == null)
+            {
+                continue;
+            }
+
+            var visible = i < activeCount;
+            texts[i].gameObject.SetActive(visible);
+            if (visible)
+            {
+                texts[i].text = FormatPercent(values[i]);
+            }
+        }
+    }
+
+    private void RefreshFightBossHpUi(bool singleBoss, float[] enemyHpPercents)
+    {
+        var bossHpRoot = fightBossHpFill == null || fightBossHpFill.transform.parent == null ? null : fightBossHpFill.transform.parent.gameObject;
+        if (bossHpRoot != null)
+        {
+            bossHpRoot.SetActive(singleBoss);
+        }
+
+        if (!singleBoss || enemyHpPercents == null || enemyHpPercents.Length == 0)
+        {
+            return;
+        }
+
+        var percent = Mathf.Clamp01(enemyHpPercents[0]);
+        SetRuntimeFillPercent(fightBossHpFill, percent);
+        if (fightBossHpText != null)
+        {
+            fightBossHpText.text = $"Boss HP {FormatPercent(percent)}";
+        }
+    }
+
+    private static string FormatPercent(float value)
+    {
+        return $"{Mathf.CeilToInt(Mathf.Clamp01(value) * 100f)}%";
+    }
+
+    private static float GetAverageCombatHealth(float[] values, int activeCount)
+    {
+        if (values == null)
+        {
+            return 0f;
+        }
+
+        activeCount = Mathf.Clamp(activeCount, 0, values.Length);
+        if (activeCount <= 0)
+        {
+            return 0f;
+        }
+
+        var total = 0f;
+        for (var i = 0; i < activeCount; i++)
+        {
+            total += Mathf.Clamp01(values[i]);
+        }
+
+        return total / activeCount;
+    }
+
+    private static int PickNextLivingCombatant(float[] healthPercents, int startIndex, int activeCount)
+    {
+        if (healthPercents == null)
+        {
+            return -1;
+        }
+
+        activeCount = Mathf.Clamp(activeCount, 0, healthPercents.Length);
+        for (var offset = 0; offset < activeCount; offset++)
+        {
+            var index = (Mathf.Max(0, startIndex) + offset) % activeCount;
+            if (healthPercents[index] > 0.001f)
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
+    private static int FindNearestLivingCombatant(Vector2 source, Vector2[] targetPositions, float[] targetHealthPercents, int activeCount)
+    {
+        if (targetPositions == null || targetHealthPercents == null)
+        {
+            return -1;
+        }
+
+        activeCount = Mathf.Clamp(activeCount, 0, Mathf.Min(targetPositions.Length, targetHealthPercents.Length));
+        var closestIndex = -1;
+        var closestDistance = float.MaxValue;
+        for (var i = 0; i < activeCount; i++)
+        {
+            if (targetHealthPercents[i] <= 0.001f)
+            {
+                continue;
+            }
+
+            var distance = (targetPositions[i] - source).sqrMagnitude;
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+
+        return closestIndex;
+    }
+
+    private static float ApplyTargetDamageTowardAverage(float[] healthPercents, int targetIndex, int activeCount, float targetAverage, float requestedDamagePercent)
+    {
+        if (healthPercents == null || targetIndex < 0 || targetIndex >= healthPercents.Length)
+        {
+            return 0f;
+        }
+
+        activeCount = Mathf.Clamp(activeCount, 0, healthPercents.Length);
+        if (activeCount <= 0)
+        {
+            return 0f;
+        }
+
+        targetAverage = Mathf.Clamp01(targetAverage);
+        requestedDamagePercent = Mathf.Max(0f, requestedDamagePercent);
+        var remainingTotalDamage = Mathf.Max(0f, (GetAverageCombatHealth(healthPercents, activeCount) - targetAverage) * activeCount);
+        var actualDamage = Mathf.Min(requestedDamagePercent, remainingTotalDamage, Mathf.Clamp01(healthPercents[targetIndex]));
+        healthPercents[targetIndex] = Mathf.Max(0f, healthPercents[targetIndex] - actualDamage);
+        return actualDamage;
+    }
+
+    private static void ReduceCombatHealthToAverage(float[] healthPercents, int activeCount, float targetAverage)
+    {
+        if (healthPercents == null)
+        {
+            return;
+        }
+
+        activeCount = Mathf.Clamp(activeCount, 0, healthPercents.Length);
+        if (activeCount <= 0)
+        {
+            return;
+        }
+
+        targetAverage = Mathf.Clamp01(targetAverage);
+        var excess = Mathf.Max(0f, (GetAverageCombatHealth(healthPercents, activeCount) - targetAverage) * activeCount);
+        var guard = 0;
+        while (excess > 0.001f && guard++ < activeCount * 2)
+        {
+            var reducibleCount = 0;
+            for (var i = 0; i < activeCount; i++)
+            {
+                if (healthPercents[i] > targetAverage + 0.001f)
+                {
+                    reducibleCount++;
+                }
+            }
+
+            if (reducibleCount <= 0)
+            {
+                break;
+            }
+
+            var share = excess / reducibleCount;
+            var changed = false;
+            for (var i = 0; i < activeCount && excess > 0.001f; i++)
+            {
+                if (healthPercents[i] <= targetAverage + 0.001f)
+                {
+                    continue;
+                }
+
+                var reduction = Mathf.Min(share, healthPercents[i] - targetAverage, excess);
+                if (reduction <= 0.001f)
+                {
+                    continue;
+                }
+
+                healthPercents[i] = Mathf.Max(0f, healthPercents[i] - reduction);
+                excess -= reduction;
+                changed = true;
+            }
+
+            if (!changed)
+            {
+                break;
+            }
+        }
+    }
+
+    private static Vector2 GetIndexedPosition(Vector2[] positions, int index)
+    {
+        return positions != null && index >= 0 && index < positions.Length ? positions[index] : Vector2.zero;
+    }
+
+    private static FightVisualUnitState[] CreateFightVisualUnitStates(Vector2[] positions, int count, float firstAttackOffset)
+    {
+        count = Mathf.Clamp(count, 0, positions == null ? 0 : positions.Length);
+        var states = new FightVisualUnitState[count];
+        for (var i = 0; i < count; i++)
+        {
+            states[i] = new FightVisualUnitState
+            {
+                position = ClampFightArenaPosition(GetIndexedPosition(positions, i)),
+                lockedMeleePosition = Vector2.zero,
+                targetIndex = -1,
+                lockedMeleeTargetIndex = -1,
+                nextAttackTime = firstAttackOffset + (i * 0.16f),
+                attackStartedAt = -99f,
+                hasLockedMeleePosition = false,
+                isMoving = false
+            };
+        }
+
+        return states;
+    }
+
+    private static bool IsFightTargetAlive(int targetIndex, float[] targetHealthPercents, int activeTargetCount)
+    {
+        return targetHealthPercents != null
+            && targetIndex >= 0
+            && targetIndex < activeTargetCount
+            && targetIndex < targetHealthPercents.Length
+            && targetHealthPercents[targetIndex] > 0.001f;
+    }
+
+    private static int FindNearestLivingVisualTarget(Vector2 source, FightVisualUnitState[] targetStates, float[] targetHealthPercents, int activeTargetCount)
+    {
+        if (targetStates == null || targetHealthPercents == null)
+        {
+            return -1;
+        }
+
+        activeTargetCount = Mathf.Clamp(activeTargetCount, 0, Mathf.Min(targetStates.Length, targetHealthPercents.Length));
+        var closestIndex = -1;
+        var closestDistance = float.MaxValue;
+        for (var i = 0; i < activeTargetCount; i++)
+        {
+            if (targetHealthPercents[i] <= 0.001f)
+            {
+                continue;
+            }
+
+            var distance = (targetStates[i].position - source).sqrMagnitude;
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+
+        return closestIndex;
+    }
+
+    private static bool ShouldContinueFightVisual(
+        float timer,
+        float visualDuration,
+        float maxVisualDuration,
+        bool won,
+        float[] heroHpPercents,
+        int heroCount,
+        float teamEndPercent,
+        float[] enemyHpPercents,
+        int enemyCount,
+        float enemyEndPercent)
+    {
+        if (timer < visualDuration)
+        {
+            return true;
+        }
+
+        if (timer >= maxVisualDuration)
+        {
+            return false;
+        }
+
+        var values = won ? enemyHpPercents : heroHpPercents;
+        var count = won ? enemyCount : heroCount;
+        var targetAverage = won ? enemyEndPercent : teamEndPercent;
+        return GetAverageCombatHealth(values, count) > targetAverage + 0.002f;
+    }
+
+    private void UpdateFightVisualMovement(
+        FightVisualUnitState[] attackers,
+        int attackerCount,
+        float[] attackerHealthPercents,
+        FightVisualUnitState[] targets,
+        int activeTargetCount,
+        float[] targetHealthPercents,
+        bool attackersAreHeroes,
+        float deltaTime)
+    {
+        if (attackers == null || targets == null || attackerHealthPercents == null)
+        {
+            return;
+        }
+
+        attackerCount = Mathf.Clamp(attackerCount, 0, Mathf.Min(attackers.Length, attackerHealthPercents.Length));
+        for (var i = 0; i < attackerCount; i++)
+        {
+            var state = attackers[i];
+            if (attackerHealthPercents[i] <= 0.001f)
+            {
+                state.isMoving = false;
+                attackers[i] = state;
+                continue;
+            }
+
+            if (!IsFightTargetAlive(state.targetIndex, targetHealthPercents, activeTargetCount))
+            {
+                state.targetIndex = FindNearestLivingVisualTarget(state.position, targets, targetHealthPercents, activeTargetCount);
+                state.hasLockedMeleePosition = false;
+                state.lockedMeleeTargetIndex = -1;
+            }
+
+            if (state.targetIndex < 0)
+            {
+                state.isMoving = false;
+                attackers[i] = state;
+                continue;
+            }
+
+            if (IsFightVisualRanged(attackersAreHeroes, i))
+            {
+                state.isMoving = false;
+                state.position = ClampFightArenaPosition(state.position);
+                attackers[i] = state;
+                continue;
+            }
+
+            var targetIsRanged = IsFightVisualRanged(!attackersAreHeroes, state.targetIndex);
+            if (!state.hasLockedMeleePosition || state.lockedMeleeTargetIndex != state.targetIndex)
+            {
+                state.lockedMeleePosition = GetMeleeContactPosition(state.position, targets[state.targetIndex].position, attackersAreHeroes, i, state.targetIndex, targetIsRanged);
+                state.lockedMeleeTargetIndex = state.targetIndex;
+                state.hasLockedMeleePosition = true;
+            }
+            else if (Vector2.Distance(state.position, state.lockedMeleePosition) <= 10f
+                && Vector2.Distance(state.lockedMeleePosition, targets[state.targetIndex].position) > GetFightVisualMeleeRange(targetIsRanged) + 28f)
+            {
+                state.lockedMeleePosition = GetMeleeContactPosition(state.position, targets[state.targetIndex].position, attackersAreHeroes, i, state.targetIndex, targetIsRanged);
+            }
+
+            var desiredPosition = state.lockedMeleePosition;
+            var distance = Vector2.Distance(state.position, desiredPosition);
+            if (distance > 6f)
+            {
+                var moveSpeed = attackersAreHeroes ? GetHeroVisualMoveSpeed(i) : GetEnemyVisualMoveSpeed(GetFightEnemyTextureName(i));
+                state.position = ClampFightArenaPosition(Vector2.MoveTowards(state.position, desiredPosition, moveSpeed * deltaTime));
+                state.isMoving = true;
+            }
+            else
+            {
+                state.position = ClampFightArenaPosition(desiredPosition);
+                state.isMoving = false;
+            }
+
+            attackers[i] = state;
+        }
+    }
+
+    private void ResolveFightVisualAttacks(
+        FightVisualUnitState[] attackers,
+        int attackerCount,
+        float[] attackerHealthPercents,
+        FightVisualUnitState[] targets,
+        int activeTargetCount,
+        float[] targetHealthPercents,
+        bool attackersAreHeroes,
+        float timer,
+        float targetEndAverage,
+        float damageUnit,
+        int stageNumber,
+        int enemyDamage,
+        ref int floatingIndex)
+    {
+        if (attackers == null || targets == null || attackerHealthPercents == null || targetHealthPercents == null)
+        {
+            return;
+        }
+
+        attackerCount = Mathf.Clamp(attackerCount, 0, Mathf.Min(attackers.Length, attackerHealthPercents.Length));
+        for (var i = 0; i < attackerCount; i++)
+        {
+            var state = attackers[i];
+            if (attackerHealthPercents[i] <= 0.001f)
+            {
+                continue;
+            }
+
+            if (!IsFightTargetAlive(state.targetIndex, targetHealthPercents, activeTargetCount))
+            {
+                state.targetIndex = FindNearestLivingVisualTarget(state.position, targets, targetHealthPercents, activeTargetCount);
+            }
+
+            if (state.targetIndex < 0 || !IsFightVisualInRange(state, targets[state.targetIndex].position, attackersAreHeroes, i))
+            {
+                attackers[i] = state;
+                continue;
+            }
+
+            if (timer < state.nextAttackTime)
+            {
+                attackers[i] = state;
+                continue;
+            }
+
+            state.attackStartedAt = timer;
+            state.nextAttackTime = timer + GetFightVisualAttackInterval(attackersAreHeroes, i) * UnityEngine.Random.Range(0.94f, 1.08f);
+            attackers[i] = state;
+
+            if (GetAverageCombatHealth(targetHealthPercents, activeTargetCount) <= targetEndAverage + 0.002f)
+            {
+                continue;
+            }
+
+            var targetPosition = targets[state.targetIndex].position;
+            if (attackersAreHeroes && !RollPercentChance(GetHeroAccuracyPercent(i)))
+            {
+                ShowFightFloatingText(floatingIndex++, "MISS", targetPosition + new Vector2(UnityEngine.Random.Range(-36, 36), UnityEngine.Random.Range(-88, -32)), new Color(0.72f, 0.82f, 0.95f));
+                continue;
+            }
+
+            var crit = attackersAreHeroes && RollPercentChance(GetHeroCritChancePercent(i));
+            var damageWeight = GetFightVisualDamageWeight(attackersAreHeroes, i);
+            var requestedDamage = damageUnit * damageWeight * UnityEngine.Random.Range(0.86f, 1.16f);
+            if (attackersAreHeroes && crit)
+            {
+                requestedDamage *= CritDamageMultiplier;
+            }
+            else if (!attackersAreHeroes)
+            {
+                requestedDamage *= GetFightVisualHeroIncomingDamageWeight(state.targetIndex, enemyDamage > 0 ? enemyDamage : GetCampaignEnemyDamage(stageNumber));
+            }
+
+            var actualDamage = ApplyTargetDamageTowardAverage(
+                targetHealthPercents,
+                state.targetIndex,
+                activeTargetCount,
+                targetEndAverage,
+                requestedDamage);
+
+            if (actualDamage <= 0.001f)
+            {
+                continue;
+            }
+
+            if (attackersAreHeroes)
+            {
+                GainFightHeroMana(i, GetHeroAutoAttackManaGain(i));
+                TryApplyHeroPassiveOnHit(i, attackerHealthPercents, attackerCount, targets[state.targetIndex].position, ref floatingIndex);
+            }
+
+            var damageNumber = attackersAreHeroes
+                ? Mathf.Max(1, Mathf.RoundToInt(GetHeroEffectiveAttack(i) * (crit ? CritDamageMultiplier : 1f) * UnityEngine.Random.Range(0.8f, 1.22f)))
+                : Mathf.Max(1, Mathf.RoundToInt(GetMitigatedEnemyDamageAgainstHero(enemyDamage > 0 ? enemyDamage : GetCampaignEnemyDamage(stageNumber), state.targetIndex) * GetFightVisualDamageWeight(false, i) * UnityEngine.Random.Range(0.88f, 1.12f)));
+            var color = crit ? new Color(1f, 0.46f, 0.16f) : attackersAreHeroes ? new Color(1f, 0.84f, 0.28f) : new Color(1f, 0.34f, 0.3f);
+            var prefix = crit ? "CRIT " : string.Empty;
+            ShowFightFloatingText(floatingIndex++, $"{prefix}-{FormatCompactNumber(damageNumber)}", targetPosition + new Vector2(UnityEngine.Random.Range(-36, 36), UnityEngine.Random.Range(-88, -32)), color);
+        }
+    }
+
+    private bool IsFightVisualRanged(bool isHero, int index)
+    {
+        return isHero ? IsHeroRangedCombatant(index) : IsEnemyRangedCombatant(GetFightEnemyTextureName(index));
+    }
+
+    private bool IsFightVisualInRange(FightVisualUnitState attacker, Vector2 target, bool isHero, int index)
+    {
+        if (!IsFightVisualRanged(isHero, index))
+        {
+            return attacker.hasLockedMeleePosition
+                && Vector2.Distance(attacker.position, attacker.lockedMeleePosition) <= 8f
+                && Vector2.Distance(attacker.position, target) <= GetFightVisualMeleeRange(IsFightVisualRanged(!isHero, attacker.targetIndex));
+        }
+
+        return Vector2.Distance(attacker.position, target) <= 760f;
+    }
+
+    private static Vector2 GetMeleeContactPosition(Vector2 attackerPosition, Vector2 targetPosition, bool attackerIsHero, int attackerIndex, int targetIndex, bool targetIsRanged)
+    {
+        var laneSign = attackerIsHero ? 1f : -1f;
+        var laneOffset = ((attackerIndex + targetIndex) % 3 - 1) * 16f * laneSign;
+        if (targetIsRanged)
+        {
+            var closeSideOffset = attackerIsHero ? -82f : 82f;
+            return ClampFightArenaPosition(targetPosition + new Vector2(closeSideOffset, laneOffset));
+        }
+
+        var center = (attackerPosition + targetPosition) * 0.5f;
+        var sideOffset = attackerIsHero ? -58f : 58f;
+        return ClampFightArenaPosition(center + new Vector2(sideOffset, laneOffset));
+    }
+
+    private static float GetFightVisualMeleeRange(bool targetIsRanged)
+    {
+        return targetIsRanged ? 118f : 148f;
+    }
+
+    private static Vector2 ClampFightArenaPosition(Vector2 position)
+    {
+        return new Vector2(
+            Mathf.Clamp(position.x, -365f, 365f),
+            Mathf.Clamp(position.y, -815f, -330f));
+    }
+
+    private static float GetHeroVisualMoveSpeed(int heroIndex)
+    {
+        var heroId = GetHeroTextureName(heroIndex);
+        if (heroId == "hero_dante")
+        {
+            return 335f;
+        }
+
+        if (heroId == "hero_borin")
+        {
+            return 230f;
+        }
+
+        return 285f;
+    }
+
+    private static float GetEnemyVisualMoveSpeed(string enemyTextureName)
+    {
+        if (enemyTextureName == "enemy_canine")
+        {
+            return 330f;
+        }
+
+        if (enemyTextureName == "enemy_golem")
+        {
+            return 210f;
+        }
+
+        return 260f;
+    }
+
+    private float GetFightVisualAttackInterval(bool isHero, int index)
+    {
+        if (isHero)
+        {
+            var heroId = GetHeroTextureName(index);
+            if (heroId == "hero_dante")
+            {
+                return 0.95f;
+            }
+
+            if (heroId == "hero_borin")
+            {
+                return 1.6f;
+            }
+
+            if (heroId == "hero_cyra")
+            {
+                return 1.25f;
+            }
+
+            if (heroId == "hero_elowen")
+            {
+                return 1.7f;
+            }
+
+            return 1.12f;
+        }
+
+        var enemyTextureName = GetFightEnemyTextureName(index);
+        if (enemyTextureName == "enemy_canine")
+        {
+            return 1.25f;
+        }
+
+        if (enemyTextureName == "enemy_golem")
+        {
+            return 2.05f;
+        }
+
+        if (enemyTextureName == "enemy_dragon")
+        {
+            return 1.85f;
+        }
+
+        if (enemyTextureName == "enemy_bat")
+        {
+            return 1.35f;
+        }
+
+        if (enemyTextureName == "enemy_slime")
+        {
+            return 1.9f;
+        }
+
+        return 1.55f;
+    }
+
+    private float GetFightVisualDamageWeight(bool isHero, int index)
+    {
+        if (isHero)
+        {
+            return Mathf.Clamp(GetHeroEffectiveAttack(index) / Mathf.Max(1f, GetTeamDamage() / (float)HeroCount), 0.65f, 1.65f);
+        }
+
+        var enemyTextureName = GetFightEnemyTextureName(index);
+        if (enemyTextureName == "enemy_golem")
+        {
+            return 1.35f;
+        }
+
+        if (enemyTextureName == "enemy_dragon")
+        {
+            return 1.45f;
+        }
+
+        if (enemyTextureName == "enemy_canine")
+        {
+            return 1.15f;
+        }
+
+        return 1f;
+    }
+
+    private float GetFightVisualHeroIncomingDamageWeight(int heroIndex, int enemyDamage)
+    {
+        heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
+        var averageHeroHealth = GetTeamHealth() / (float)Mathf.Max(1, HeroCount);
+        var heroHealth = Mathf.Max(1f, GetHeroCombatMaxHealth(heroIndex));
+        var healthWeight = averageHeroHealth / heroHealth;
+        var averageMitigatedDamage = Mathf.Max(1f, GetMitigatedEnemyDamage(enemyDamage));
+        var heroMitigatedDamage = Mathf.Max(1f, GetMitigatedEnemyDamageAgainstHero(enemyDamage, heroIndex));
+        var defenseWeight = heroMitigatedDamage / averageMitigatedDamage;
+        return Mathf.Clamp(healthWeight * defenseWeight, 0.4f, 1.85f);
+    }
+
+    private static int GetHeroMaxMana(int heroIndex)
+    {
+        var heroId = GetHeroTextureName(heroIndex);
+        if (heroId == "hero_dante")
+        {
+            return 25;
+        }
+
+        if (heroId == "hero_astra")
+        {
+            return 26;
+        }
+
+        if (heroId == "hero_cyra")
+        {
+            return 27;
+        }
+
+        if (heroId == "hero_elowen")
+        {
+            return 28;
+        }
+
+        if (heroId == "hero_borin")
+        {
+            return 30;
+        }
+
+        return 28;
+    }
+
+    private static int GetHeroAutoAttackManaGain(int heroIndex)
+    {
+        return GetHeroTextureName(heroIndex) == "hero_dante" ? 10 : 5;
+    }
+
+    private static float GetHeroUltimateDamageMultiplier(int heroIndex)
+    {
+        var heroId = GetHeroTextureName(heroIndex);
+        if (heroId == "hero_cyra")
+        {
+            return 4.25f;
+        }
+
+        if (heroId == "hero_dante")
+        {
+            return 3.65f;
+        }
+
+        if (heroId == "hero_borin")
+        {
+            return 1.65f;
+        }
+
+        return 2.6f;
+    }
+
+    private float GetExpectedHeroVisualAttackWeight(float visualDuration)
+    {
+        var total = 0f;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            total += GetFightVisualDamageWeight(true, i) * Mathf.Max(1f, visualDuration / GetFightVisualAttackInterval(true, i));
+        }
+
+        return Mathf.Max(1f, total);
+    }
+
+    private float GetExpectedEnemyVisualAttackWeight(float visualDuration, int activeEnemyCount)
+    {
+        var total = 0f;
+        activeEnemyCount = Mathf.Clamp(activeEnemyCount, 0, HeroCount);
+        for (var i = 0; i < activeEnemyCount; i++)
+        {
+            total += GetFightVisualDamageWeight(false, i) * Mathf.Max(1f, visualDuration / GetFightVisualAttackInterval(false, i));
+        }
+
+        return Mathf.Max(1f, total);
+    }
+
+    private void PrepareFightAnimationTextures(int stageNumber, bool singleBoss = false, string bossTextureName = null)
+    {
+        fightHeroIdleFrames = new Texture2D[HeroCount][];
+        fightHeroRunFrames = new Texture2D[HeroCount][];
+        fightHeroAttackFrames = new Texture2D[HeroCount][];
+        fightEnemyIdleFrames = new Texture2D[HeroCount][];
+        fightEnemyRunFrames = new Texture2D[HeroCount][];
+        fightEnemyAttackFrames = new Texture2D[HeroCount][];
+        fightEnemyTextureNames = new string[HeroCount];
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var heroTextureName = GetHeroTextureName(i);
+            fightHeroIdleFrames[i] = LoadCombatAnimationFrames(heroTextureName, "idle", heroTextureName);
+            fightHeroRunFrames[i] = LoadCombatAnimationFrames(heroTextureName, "run", heroTextureName);
+            fightHeroAttackFrames[i] = LoadCombatAnimationFrames(heroTextureName, "attack", heroTextureName);
+            SetRawImageTexture(fightHeroImages, i, GetFirstTexture(fightHeroIdleFrames[i]));
+            if (fightHeroImages != null && i < fightHeroImages.Length && fightHeroImages[i] != null)
+            {
+                fightHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
+            }
+
+            var enemyTextureName = singleBoss
+                ? (string.IsNullOrWhiteSpace(bossTextureName) ? GetDungeonBossTextureName(selectedDungeonId) : bossTextureName)
+                : GetCampaignEnemyTextureName(stageNumber, i);
+            fightEnemyTextureNames[i] = enemyTextureName;
+            fightEnemyIdleFrames[i] = LoadCombatAnimationFrames(enemyTextureName, "idle", "enemy_campaign");
+            fightEnemyRunFrames[i] = LoadCombatAnimationFrames(enemyTextureName, "run", "enemy_campaign");
+            fightEnemyAttackFrames[i] = LoadCombatAnimationFrames(enemyTextureName, "attack", "enemy_campaign");
+            SetRawImageTexture(fightEnemyImages, i, GetFirstTexture(fightEnemyIdleFrames[i]));
+            if (fightEnemyImages != null && i < fightEnemyImages.Length && fightEnemyImages[i] != null)
+            {
+                fightEnemyImages[i].rectTransform.localScale = new Vector3(GetEnemyFacingScale(enemyTextureName), 1f, 1f);
+            }
+        }
+    }
+
+    private void ConfigureFightEnemyPresentation(bool singleBoss)
+    {
+        var positions = singleBoss ? GetFightBossEnemyPositions() : GetFightEnemyPositions();
+        if (fightBossHpFill != null && fightBossHpFill.transform.parent != null)
+        {
+            fightBossHpFill.transform.parent.gameObject.SetActive(singleBoss);
+        }
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var visible = !singleBoss || i == 0;
+            var showSmallHp = visible && !singleBoss;
+            if (fightEnemyImages != null && i < fightEnemyImages.Length && fightEnemyImages[i] != null)
+            {
+                fightEnemyImages[i].gameObject.SetActive(visible);
+                fightEnemyImages[i].rectTransform.sizeDelta = singleBoss ? new Vector2(230, 230) : new Vector2(126, 126);
+                var enemyTextureName = fightEnemyTextureNames != null && i < fightEnemyTextureNames.Length ? fightEnemyTextureNames[i] : GetCampaignEnemyTextureName(1, i);
+                fightEnemyImages[i].rectTransform.localScale = new Vector3(GetEnemyFacingScale(enemyTextureName), 1f, 1f);
+            }
+
+            if (fightEnemyRects != null && i < fightEnemyRects.Length && fightEnemyRects[i] != null && i < positions.Length)
+            {
+                fightEnemyRects[i].anchoredPosition = positions[i];
+            }
+
+            if (fightEnemyHpFills != null && i < fightEnemyHpFills.Length)
+            {
+                SetHealthFillVisible(fightEnemyHpFills[i], showSmallHp);
+                if (fightEnemyHpFills[i] != null && i < positions.Length)
+                {
+                    var hpRect = fightEnemyHpFills[i].transform.parent.GetComponent<RectTransform>();
+                    hpRect.sizeDelta = new Vector2(singleBoss ? 220f : 112f, hpRect.sizeDelta.y);
+                    hpRect.anchoredPosition = positions[i] + new Vector2(0, singleBoss ? -218 : -122);
+                }
+            }
+
+            if (fightEnemyHpPercentTexts != null && i < fightEnemyHpPercentTexts.Length && fightEnemyHpPercentTexts[i] != null)
+            {
+                fightEnemyHpPercentTexts[i].gameObject.SetActive(showSmallHp);
+            }
+        }
+    }
+
+    private static void SetHealthFillVisible(Image fill, bool isVisible)
+    {
+        if (fill == null || fill.transform.parent == null)
+        {
+            return;
+        }
+
+        fill.transform.parent.gameObject.SetActive(isVisible);
+    }
+
+    private static bool HasFrames(Texture2D[] frames)
+    {
+        return frames != null && frames.Length > 0 && frames[0] != null;
+    }
+
+    private static Texture2D GetFirstTexture(Texture2D[] frames)
+    {
+        return HasFrames(frames) ? frames[0] : null;
+    }
+
+    private static void SetRawImageTexture(RawImage[] images, int index, Texture2D texture)
+    {
+        if (images == null || index < 0 || index >= images.Length || images[index] == null || texture == null)
+        {
+            return;
+        }
+
+        images[index].texture = texture;
+    }
+
+    private void AnimateFightUnitsWithState(
+        FightVisualUnitState[] heroStates,
+        FightVisualUnitState[] enemyStates,
+        float[] heroHpPercents,
+        float[] enemyHpPercents,
+        int activeEnemyCount,
+        float timer,
+        bool singleBoss)
+    {
+        SetProjectilesVisible(fightHeroProjectileImages, false);
+        SetProjectilesVisible(fightEnemyProjectileImages, false);
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var state = heroStates != null && i < heroStates.Length ? heroStates[i] : default;
+            var position = state.position + new Vector2(0f, Mathf.Sin(Time.unscaledTime * 5.4f + i) * 4.5f);
+            var alive = heroHpPercents != null && i < heroHpPercents.Length && heroHpPercents[i] > 0.001f;
+            var frames = GetFightFrameSet(fightHeroIdleFrames, i);
+            var frameSpeed = 6.8f;
+            var actionAge = timer - state.attackStartedAt;
+
+            if (alive && state.isMoving)
+            {
+                frames = GetFightFrameSet(fightHeroRunFrames, i, fightHeroIdleFrames);
+                frameSpeed = 10.5f;
+            }
+
+            if (alive && IsFightActionActive(actionAge))
+            {
+                var phase = Mathf.Clamp01(actionAge / 0.72f);
+                if (IsHeroRangedCombatant(i))
+                {
+                    frames = GetFightFrameSet(fightHeroAttackFrames, i, fightHeroIdleFrames);
+                    frameSpeed = 10.5f;
+                    position += new Vector2(Mathf.Sin(phase * Mathf.PI * 2f) * 5f, Mathf.Sin(phase * Mathf.PI) * 7f);
+                    if (enemyStates != null && state.targetIndex >= 0 && state.targetIndex < enemyStates.Length)
+                    {
+                        AnimateProjectile(GetProjectileImage(fightHeroProjectileImages, i), GetProjectileRect(fightHeroProjectileRects, i), state.position + new Vector2(58f, -64f), enemyStates[state.targetIndex].position + new Vector2(-54f, -70f), phase);
+                    }
+                }
+                else
+                {
+                    frames = GetFightFrameSet(fightHeroAttackFrames, i, fightHeroIdleFrames);
+                    frameSpeed = 12f;
+                }
+            }
+
+            ApplyFightUnitAnimationFrame(fightHeroImages, i, frames, frameSpeed, i * 1.3f);
+            SetFightUnitColor(fightHeroImages, i, alive);
+            SetFightUnitPosition(fightHeroRects, fightHeroHpFills, i, position, -128f);
+        }
+
+        for (var i = 0; i < HeroCount; i++)
+        {
+            if (i >= activeEnemyCount)
+            {
+                continue;
+            }
+
+            var state = enemyStates != null && i < enemyStates.Length ? enemyStates[i] : default;
+            var position = state.position + new Vector2(0f, Mathf.Sin(Time.unscaledTime * 5.1f + i * 1.4f) * 4f);
+            var alive = enemyHpPercents != null && i < enemyHpPercents.Length && enemyHpPercents[i] > 0.001f;
+            var frames = GetFightFrameSet(fightEnemyIdleFrames, i);
+            var frameSpeed = 6.2f;
+            var enemyTextureName = GetFightEnemyTextureName(i);
+            var actionAge = timer - state.attackStartedAt;
+
+            if (alive && state.isMoving)
+            {
+                frames = GetFightFrameSet(fightEnemyRunFrames, i, fightEnemyIdleFrames);
+                frameSpeed = 10f;
+            }
+
+            if (alive && IsFightActionActive(actionAge))
+            {
+                var phase = Mathf.Clamp01(actionAge / 0.72f);
+                if (IsEnemyRangedCombatant(enemyTextureName))
+                {
+                    frames = GetFightFrameSet(fightEnemyAttackFrames, i, fightEnemyIdleFrames);
+                    frameSpeed = 10.5f;
+                    position += new Vector2(Mathf.Sin(phase * Mathf.PI * 2f) * -5f, Mathf.Sin(phase * Mathf.PI) * 7f);
+                    if (heroStates != null && state.targetIndex >= 0 && state.targetIndex < heroStates.Length)
+                    {
+                        AnimateProjectile(GetProjectileImage(fightEnemyProjectileImages, i), GetProjectileRect(fightEnemyProjectileRects, i), state.position + new Vector2(-58f, -64f), heroStates[state.targetIndex].position + new Vector2(54f, -70f), phase);
+                    }
+                }
+                else
+                {
+                    frames = GetFightFrameSet(fightEnemyAttackFrames, i, fightEnemyIdleFrames);
+                    frameSpeed = 11.5f;
+                }
+            }
+
+            ApplyFightUnitAnimationFrame(fightEnemyImages, i, frames, frameSpeed, i * 1.7f);
+            SetFightUnitColor(fightEnemyImages, i, alive);
+            SetFightUnitPosition(fightEnemyRects, fightEnemyHpFills, i, position, singleBoss ? -218f : -122f);
+        }
+    }
+
+    private static bool IsFightActionActive(float actionAge)
+    {
+        return actionAge >= 0f && actionAge <= 0.72f;
+    }
+
+    private string GetFightEnemyTextureName(int index)
+    {
+        if (fightEnemyTextureNames != null && index >= 0 && index < fightEnemyTextureNames.Length && !string.IsNullOrWhiteSpace(fightEnemyTextureNames[index]))
+        {
+            return fightEnemyTextureNames[index];
+        }
+
+        return "enemy_rat";
+    }
+
+    private static Texture2D[] GetFightFrameSet(Texture2D[][] preferredFrames, int index, Texture2D[][] fallbackFrames = null)
+    {
+        if (preferredFrames != null && index >= 0 && index < preferredFrames.Length && HasFrames(preferredFrames[index]))
+        {
+            return preferredFrames[index];
+        }
+
+        if (fallbackFrames != null && index >= 0 && index < fallbackFrames.Length && HasFrames(fallbackFrames[index]))
+        {
+            return fallbackFrames[index];
+        }
+
+        return Array.Empty<Texture2D>();
+    }
+
+    private static void ApplyFightUnitAnimationFrame(RawImage[] images, int index, Texture2D[] frames, float speed, float phaseOffset)
+    {
+        if (images == null || index < 0 || index >= images.Length || images[index] == null || !HasFrames(frames))
+        {
+            return;
+        }
+
+        var frameIndex = Mathf.Abs(Mathf.FloorToInt(Time.unscaledTime * Mathf.Max(1f, speed) + phaseOffset)) % frames.Length;
+        images[index].texture = frames[frameIndex];
+    }
+
+    private static void SetFightUnitColor(RawImage[] images, int index, bool alive)
+    {
+        if (images == null || index < 0 || index >= images.Length || images[index] == null)
+        {
+            return;
+        }
+
+        images[index].color = alive ? Color.white : new Color(0.6f, 0.6f, 0.6f, 0.45f);
+    }
+
+    private static void SetFightUnitPosition(RectTransform[] rects, Image[] hpFills, int index, Vector2 position, float healthBarOffsetY)
+    {
+        if (rects != null && index >= 0 && index < rects.Length && rects[index] != null)
+        {
+            rects[index].anchoredPosition = position;
+        }
+
+        if (hpFills == null || index < 0 || index >= hpFills.Length || hpFills[index] == null || hpFills[index].transform.parent == null)
+        {
+            return;
+        }
+
+        var hpRect = hpFills[index].transform.parent.GetComponent<RectTransform>();
+        if (hpRect != null)
+        {
+            hpRect.anchoredPosition = position + new Vector2(0f, healthBarOffsetY);
+        }
+    }
+
+    private static void SetProjectileVisible(Image image, bool isVisible)
+    {
+        if (image != null)
+        {
+            image.gameObject.SetActive(isVisible);
+        }
+    }
+
+    private static void SetProjectilesVisible(Image[] images, bool isVisible)
+    {
+        if (images == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < images.Length; i++)
+        {
+            SetProjectileVisible(images[i], isVisible);
+        }
+    }
+
+    private static Image GetProjectileImage(Image[] images, int index)
+    {
+        return images != null && index >= 0 && index < images.Length ? images[index] : null;
+    }
+
+    private static RectTransform GetProjectileRect(RectTransform[] rects, int index)
+    {
+        return rects != null && index >= 0 && index < rects.Length ? rects[index] : null;
+    }
+
+    private static void AnimateProjectile(Image image, RectTransform rect, Vector2 from, Vector2 to, float phase)
+    {
+        if (image == null || rect == null)
+        {
+            return;
+        }
+
+        if (phase < 0.16f || phase > 0.88f)
+        {
+            return;
+        }
+
+        var t = Mathf.InverseLerp(0.16f, 0.88f, phase);
+        var smooth = Mathf.SmoothStep(0f, 1f, t);
+        var delta = to - from;
+        rect.anchoredPosition = Vector2.Lerp(from, to, smooth);
+        rect.sizeDelta = new Vector2(44f + Mathf.Sin(t * Mathf.PI) * 20f, 9f);
+        rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+
+        var color = image.color;
+        color.a = Mathf.Clamp01(Mathf.Sin(t * Mathf.PI) * 0.95f);
+        image.color = color;
+        image.gameObject.SetActive(true);
+    }
+
+    private void ShowFightFloatingText(int index, string text, Vector2 position, Color color)
+    {
+        if (fightFloatingTexts == null || fightFloatingTexts.Length == 0)
+        {
+            return;
+        }
+
+        var label = fightFloatingTexts[Mathf.Abs(index) % fightFloatingTexts.Length];
+        if (label == null)
+        {
+            return;
+        }
+
+        label.gameObject.SetActive(true);
+        label.text = text;
+        label.color = color;
+        label.rectTransform.anchoredPosition = position;
+        label.transform.SetAsLastSibling();
+    }
+
+    private void HideFightFloatingTexts()
+    {
+        if (fightFloatingTexts == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < fightFloatingTexts.Length; i++)
+        {
+            if (fightFloatingTexts[i] != null)
+            {
+                fightFloatingTexts[i].gameObject.SetActive(false);
+            }
+        }
+    }
+
     private void PlaySummonVisual(int heroIndex, string label)
     {
         if (runtimeArt != null)
@@ -4006,7 +6394,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (damageText != null)
         {
             damageText.fontSize = 32;
-            damageText.text = $"ATK {damage}   HP {GetTeamHealth()}   Guard -{Mathf.RoundToInt(GetTankDamageReductionRate() * 100f)}%   Heal/s {GetSupportHealPerSecond(GetTeamHealth())}";
+            damageText.text = $"ATK {damage}   HP {GetTeamHealth()}   Crit {GetTeamCritChancePercent()}%   Acc {GetTeamAccuracyPercent()}%   DEF {GetTeamDefense()}";
         }
 
         RefreshDungeonUi();
@@ -4048,6 +6436,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshRuntimeArtUi();
         RefreshTopBarUi();
         RefreshHomeGeneratedUi();
+        RefreshCampaignMapUi();
+        RefreshFormationUi();
 
         var heroLevelMax = IsHeroLevelMax(selectedHeroIndex);
         var heroAscensionMax = IsHeroAscensionMax(selectedHeroIndex);
@@ -4146,15 +6536,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void RefreshGameplayInteractivity()
     {
-        var canInteract = !backendRequestInProgress && !backendLifecycleFlushInProgress;
+        var canInteract = !backendRequestInProgress && !backendLifecycleFlushInProgress && !campaignFightInProgress;
+        var canConfirmFormation = battleTargetMode == BattleTargetMode.Dungeon || selectedCampaignStage == enemyLevel;
 
         SetButtonInteractable(fightButton, canInteract);
+        SetButtonInteractable(homeBeginButton, canInteract && selectedCampaignStage == enemyLevel);
+        SetButtonInteractable(formationConfirmButton, canInteract && canConfirmFormation);
+        SetButtonInteractable(formationBackButton, canInteract);
+        SetButtonInteractable(formationAutoContinueButton, canInteract);
+        SetButtonInteractable(fightEndButton, campaignFightInProgress || battleFlowMode == BattleFlowMode.Fight);
+        SetButtonsInteractable(formationSlotButtons, canInteract);
+        SetButtonsInteractable(campaignStageButtons, canInteract);
         SetButtonInteractable(goldDungeonButton, canInteract);
         SetButtonInteractable(essenceDungeonButton, canInteract);
         SetButtonInteractable(gearDungeonButton, canInteract);
         GateButton(upgradeButton, canInteract);
         GateButton(heroUpgradeButton, canInteract);
         GateButton(heroAscendButton, canInteract);
+        SetButtonInteractable(heroDetailCloseButton, true);
+        SetButtonInteractable(heroDetailPreviousButton, canInteract);
+        SetButtonInteractable(heroDetailNextButton, canInteract);
+        SetButtonsInteractable(heroDetailGearSlotButtons, canInteract);
+        SetButtonInteractable(heroDetailGearListCloseButton, true);
+        GateButton(heroDetailLevelButton, canInteract);
+        SetButtonInteractable(heroDetailEquipGearButton, canInteract);
+        SetButtonInteractable(heroDetailRemoveGearButton, canInteract);
         GateButton(weaponUpgradeButton, canInteract);
         GateButton(armorUpgradeButton, canInteract);
         SetButtonInteractable(accessoryPreviousSlotButton, canInteract);
@@ -4173,6 +6579,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonsInteractable(heroSelectButtons, canInteract);
         GateButtons(dailyMissionButtons, canInteract);
         GateButtons(battlePassRewardButtons, canInteract);
+        RefreshHeroDetailGearList();
     }
 
     private static void SetButtonsInteractable(Button[] buttons, bool interactable)
@@ -4245,6 +6652,60 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.RemoveListener(SelectHero4);
     }
 
+    private void RegisterHeroDetailGearButtons()
+    {
+        if (heroDetailGearSlotButtons != null && heroDetailGearSlotButtons.Length > 0)
+        {
+            if (heroDetailGearSlotButtons.Length > 0 && heroDetailGearSlotButtons[0] != null) heroDetailGearSlotButtons[0].onClick.AddListener(ShowHeroDetailGearSlot0);
+            if (heroDetailGearSlotButtons.Length > 1 && heroDetailGearSlotButtons[1] != null) heroDetailGearSlotButtons[1].onClick.AddListener(ShowHeroDetailGearSlot1);
+            if (heroDetailGearSlotButtons.Length > 2 && heroDetailGearSlotButtons[2] != null) heroDetailGearSlotButtons[2].onClick.AddListener(ShowHeroDetailGearSlot2);
+            if (heroDetailGearSlotButtons.Length > 3 && heroDetailGearSlotButtons[3] != null) heroDetailGearSlotButtons[3].onClick.AddListener(ShowHeroDetailGearSlot3);
+            if (heroDetailGearSlotButtons.Length > 4 && heroDetailGearSlotButtons[4] != null) heroDetailGearSlotButtons[4].onClick.AddListener(ShowHeroDetailGearSlot4);
+            if (heroDetailGearSlotButtons.Length > 5 && heroDetailGearSlotButtons[5] != null) heroDetailGearSlotButtons[5].onClick.AddListener(ShowHeroDetailGearSlot5);
+        }
+
+        if (heroDetailGearOptionButtons != null && heroDetailGearOptionButtons.Length > 0)
+        {
+            if (heroDetailGearOptionButtons.Length > 0 && heroDetailGearOptionButtons[0] != null) heroDetailGearOptionButtons[0].onClick.AddListener(EquipHeroDetailGearOption0);
+            if (heroDetailGearOptionButtons.Length > 1 && heroDetailGearOptionButtons[1] != null) heroDetailGearOptionButtons[1].onClick.AddListener(EquipHeroDetailGearOption1);
+            if (heroDetailGearOptionButtons.Length > 2 && heroDetailGearOptionButtons[2] != null) heroDetailGearOptionButtons[2].onClick.AddListener(EquipHeroDetailGearOption2);
+            if (heroDetailGearOptionButtons.Length > 3 && heroDetailGearOptionButtons[3] != null) heroDetailGearOptionButtons[3].onClick.AddListener(EquipHeroDetailGearOption3);
+            if (heroDetailGearOptionButtons.Length > 4 && heroDetailGearOptionButtons[4] != null) heroDetailGearOptionButtons[4].onClick.AddListener(EquipHeroDetailGearOption4);
+        }
+
+        if (heroDetailGearListCloseButton != null)
+        {
+            heroDetailGearListCloseButton.onClick.AddListener(HideHeroDetailGearList);
+        }
+    }
+
+    private void UnregisterHeroDetailGearButtons()
+    {
+        if (heroDetailGearSlotButtons != null && heroDetailGearSlotButtons.Length > 0)
+        {
+            if (heroDetailGearSlotButtons.Length > 0 && heroDetailGearSlotButtons[0] != null) heroDetailGearSlotButtons[0].onClick.RemoveListener(ShowHeroDetailGearSlot0);
+            if (heroDetailGearSlotButtons.Length > 1 && heroDetailGearSlotButtons[1] != null) heroDetailGearSlotButtons[1].onClick.RemoveListener(ShowHeroDetailGearSlot1);
+            if (heroDetailGearSlotButtons.Length > 2 && heroDetailGearSlotButtons[2] != null) heroDetailGearSlotButtons[2].onClick.RemoveListener(ShowHeroDetailGearSlot2);
+            if (heroDetailGearSlotButtons.Length > 3 && heroDetailGearSlotButtons[3] != null) heroDetailGearSlotButtons[3].onClick.RemoveListener(ShowHeroDetailGearSlot3);
+            if (heroDetailGearSlotButtons.Length > 4 && heroDetailGearSlotButtons[4] != null) heroDetailGearSlotButtons[4].onClick.RemoveListener(ShowHeroDetailGearSlot4);
+            if (heroDetailGearSlotButtons.Length > 5 && heroDetailGearSlotButtons[5] != null) heroDetailGearSlotButtons[5].onClick.RemoveListener(ShowHeroDetailGearSlot5);
+        }
+
+        if (heroDetailGearOptionButtons != null && heroDetailGearOptionButtons.Length > 0)
+        {
+            if (heroDetailGearOptionButtons.Length > 0 && heroDetailGearOptionButtons[0] != null) heroDetailGearOptionButtons[0].onClick.RemoveListener(EquipHeroDetailGearOption0);
+            if (heroDetailGearOptionButtons.Length > 1 && heroDetailGearOptionButtons[1] != null) heroDetailGearOptionButtons[1].onClick.RemoveListener(EquipHeroDetailGearOption1);
+            if (heroDetailGearOptionButtons.Length > 2 && heroDetailGearOptionButtons[2] != null) heroDetailGearOptionButtons[2].onClick.RemoveListener(EquipHeroDetailGearOption2);
+            if (heroDetailGearOptionButtons.Length > 3 && heroDetailGearOptionButtons[3] != null) heroDetailGearOptionButtons[3].onClick.RemoveListener(EquipHeroDetailGearOption3);
+            if (heroDetailGearOptionButtons.Length > 4 && heroDetailGearOptionButtons[4] != null) heroDetailGearOptionButtons[4].onClick.RemoveListener(EquipHeroDetailGearOption4);
+        }
+
+        if (heroDetailGearListCloseButton != null)
+        {
+            heroDetailGearListCloseButton.onClick.RemoveListener(HideHeroDetailGearList);
+        }
+    }
+
     private void RegisterDailyMissionButtons()
     {
         if (dailyMissionButtons == null || dailyMissionButtons.Length == 0)
@@ -4308,6 +6769,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         selectedHeroIndex = Mathf.Clamp(index, 0, HeroCount - 1);
         SaveProgress();
         RefreshUi();
+
+        if (activeScreen == AppScreen.Heroes)
+        {
+            ShowHeroDetail(selectedHeroIndex);
+        }
     }
 
     private void RegisterNavigation()
@@ -4385,6 +6851,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (chatCloseButton != null)
         {
             chatCloseButton.onClick.AddListener(HideChatPopup);
+        }
+
+        if (formationConfirmButton != null)
+        {
+            formationConfirmButton.onClick.AddListener(StartCampaignFightFromFormation);
+        }
+
+        if (formationBackButton != null)
+        {
+            formationBackButton.onClick.AddListener(BackToCampaignMap);
+        }
+
+        if (formationAutoContinueButton != null)
+        {
+            formationAutoContinueButton.onClick.AddListener(ToggleFormationAutoContinue);
+        }
+
+        if (fightContinueButton != null)
+        {
+            fightContinueButton.onClick.AddListener(ContinueAfterCampaignFight);
+        }
+
+        if (fightEndButton != null)
+        {
+            fightEndButton.onClick.AddListener(EndCurrentFight);
         }
 
         if (villageNavButton != null)
@@ -4520,6 +7011,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             chatCloseButton.onClick.RemoveListener(HideChatPopup);
         }
 
+        if (formationConfirmButton != null)
+        {
+            formationConfirmButton.onClick.RemoveListener(StartCampaignFightFromFormation);
+        }
+
+        if (formationBackButton != null)
+        {
+            formationBackButton.onClick.RemoveListener(BackToCampaignMap);
+        }
+
+        if (formationAutoContinueButton != null)
+        {
+            formationAutoContinueButton.onClick.RemoveListener(ToggleFormationAutoContinue);
+        }
+
+        if (fightContinueButton != null)
+        {
+            fightContinueButton.onClick.RemoveListener(ContinueAfterCampaignFight);
+        }
+
+        if (fightEndButton != null)
+        {
+            fightEndButton.onClick.RemoveListener(EndCurrentFight);
+        }
+
         if (villageNavButton != null)
         {
             villageNavButton.onClick.RemoveListener(ShowHome);
@@ -4600,6 +7116,42 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetArtNavState(heroesNavImage, heroesNavButton, screen == AppScreen.Heroes);
         SetArtNavState(dungeonsNavImage, dungeonsNavButton, screen == AppScreen.Dungeons);
         SetArtNavState(summonNavImage, summonNavButton, screen == AppScreen.Summon);
+        if (screen != AppScreen.Heroes && heroDetailRoot != null)
+        {
+            heroDetailRoot.gameObject.SetActive(false);
+        }
+
+        ApplyBattleFlowVisibility();
+    }
+
+    private void SetBattleFlowMode(BattleFlowMode mode)
+    {
+        battleFlowMode = mode;
+        ApplyBattleFlowVisibility();
+    }
+
+    private void ApplyBattleFlowVisibility()
+    {
+        var battleVisible = activeScreen == AppScreen.Battle;
+        if (formationRoot != null)
+        {
+            formationRoot.gameObject.SetActive(battleVisible && battleFlowMode == BattleFlowMode.Formation);
+        }
+
+        if (fightRoot != null)
+        {
+            fightRoot.gameObject.SetActive(battleVisible && (battleFlowMode == BattleFlowMode.Fight || battleFlowMode == BattleFlowMode.Result));
+        }
+
+        if (fightResultRoot != null)
+        {
+            fightResultRoot.gameObject.SetActive(battleVisible && battleFlowMode == BattleFlowMode.Result);
+        }
+
+        if (fightEndButton != null)
+        {
+            fightEndButton.gameObject.SetActive(battleVisible && battleFlowMode == BattleFlowMode.Fight);
+        }
     }
 
     private void SetPanel(GameObject panel, bool isVisible)
@@ -4680,6 +7232,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshHeroCardVisuals();
+        RefreshHeroDetailUi();
     }
 
     private void RefreshNextGoalUi()
@@ -5136,6 +7689,84 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return HeroDefinitions[index];
     }
 
+    private static string GetHeroTextureName(int index)
+    {
+        return GetHeroDefinition(index).heroId;
+    }
+
+    private static string GetCampaignEnemyTextureName(int stageNumber, int enemyIndex)
+    {
+        if (CampaignEnemyCombatTextureNames.Length == 0)
+        {
+            return "enemy_rat";
+        }
+
+        if (stageNumber % 10 == 0 && enemyIndex == 0)
+        {
+            return "enemy_dragon";
+        }
+
+        if (stageNumber % 5 == 0 && enemyIndex == 0)
+        {
+            return "enemy_golem";
+        }
+
+        var regularEnemyCount = Mathf.Max(1, CampaignEnemyCombatTextureNames.Length - 1);
+        var textureIndex = Mathf.Abs(stageNumber + enemyIndex - 1) % regularEnemyCount;
+        return CampaignEnemyCombatTextureNames[textureIndex];
+    }
+
+    private static string GetDungeonBossTextureName(string dungeonId)
+    {
+        if (dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return "enemy_dragon";
+        }
+
+        if (dungeonId == GearDungeonDefinition.dungeonId)
+        {
+            return "enemy_canine";
+        }
+
+        return "enemy_golem";
+    }
+
+    private static string GetDungeonBossName(string dungeonId)
+    {
+        if (dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return "Rift Dragon";
+        }
+
+        if (dungeonId == GearDungeonDefinition.dungeonId)
+        {
+            return "Iron Hound";
+        }
+
+        return "Treasure Golem";
+    }
+
+    private static float GetHeroFacingScale(int heroIndex)
+    {
+        return GetHeroTextureName(heroIndex) == "hero_dante" ? -1f : 1f;
+    }
+
+    private static float GetEnemyFacingScale(string enemyTextureName)
+    {
+        return enemyTextureName == "enemy_canine" ? 1f : -1f;
+    }
+
+    private static bool IsHeroRangedCombatant(int heroIndex)
+    {
+        var roleId = GetHeroDefinition(heroIndex).roleId;
+        return roleId == MageRoleId || roleId == SupportRoleId;
+    }
+
+    private static bool IsEnemyRangedCombatant(string enemyTextureName)
+    {
+        return enemyTextureName == "enemy_dragon" || enemyTextureName == "enemy_bat";
+    }
+
     private static bool TryGetHeroIndexById(string heroId, out int heroIndex)
     {
         for (var i = 0; i < HeroDefinitions.Length; i++)
@@ -5378,7 +8009,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static int GetDungeonEnemyHp(DungeonDefinition dungeon, int floor)
     {
-        return GetScaledDefinitionValue(dungeon.baseEnemyHp, dungeon.enemyHpScale, dungeon.enemyHpGrowth, floor);
+        return Mathf.Max(1, Mathf.FloorToInt(GetScaledDefinitionValue(dungeon.baseEnemyHp, dungeon.enemyHpScale, dungeon.enemyHpGrowth, floor) * DungeonBossHpMultiplier));
     }
 
     private static int GetDungeonEnemyDamage(DungeonDefinition dungeon, int floor)
@@ -5804,7 +8435,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var baseHp = definition.enemyBaseHp > 0 ? definition.enemyBaseHp : 220;
         var hpPerPower = definition.enemyHpPerPower > 0 ? definition.enemyHpPerPower : 2;
         var hpPerFloor = definition.enemyHpPerFloor > 0 ? definition.enemyHpPerFloor : 95;
-        return Mathf.Max(1, baseHp + (requiredPower * hpPerPower) + (floor * hpPerFloor));
+        return Mathf.Max(1, Mathf.FloorToInt((baseHp + (requiredPower * hpPerPower) + (floor * hpPerFloor)) * DungeonBossHpMultiplier));
     }
 
     private static int GetBackendDungeonEnemyDamage(MythwakeDungeonDefinitionDto definition, int floor)
@@ -5815,6 +8446,36 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var damagePerFloor = definition.enemyDamagePerFloor > 0 ? definition.enemyDamagePerFloor : definition.dungeonId == GearDungeonDefinition.dungeonId ? 4 : 3;
         var damagePowerDivisor = definition.enemyDamagePowerDivisor > 0 ? definition.enemyDamagePowerDivisor : 48;
         return Mathf.Max(1, baseDamage + (floor * damagePerFloor) + (requiredPower / damagePowerDivisor));
+    }
+
+    private DungeonDefinition ResolveDungeonDefinition(string dungeonId)
+    {
+        if (dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return EssenceDungeonDefinition;
+        }
+
+        if (dungeonId == GearDungeonDefinition.dungeonId)
+        {
+            return GearDungeonDefinition;
+        }
+
+        return GoldDungeonDefinition;
+    }
+
+    private int GetDungeonFloor(string dungeonId)
+    {
+        if (dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return Mathf.Max(1, essenceDungeonFloor);
+        }
+
+        if (dungeonId == GearDungeonDefinition.dungeonId)
+        {
+            return Mathf.Max(1, gearDungeonFloor);
+        }
+
+        return Mathf.Max(1, goldDungeonFloor);
     }
 
     private static string ShortHash(string contentHash)
@@ -6099,9 +8760,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return attack;
     }
 
+    private int GetHeroEffectiveAttack(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        var heroAttack = Mathf.Max(1, GetHeroAttack(index));
+        var baseAttackTotal = Mathf.Max(1, GetTeamBaseAttack());
+        var bonusAttack = GetEquipmentAttackBonus() + GetAccessoryAttackBonus();
+        var roleMultiplier = 1f
+            + (CountHeroesWithRole(WarriorRoleId) * WarriorDamageBonusRate)
+            + (CountHeroesWithRole(MageRoleId) * MageDamageBonusRate);
+        var bonusShare = bonusAttack * (heroAttack / (float)baseAttackTotal);
+        return Mathf.Max(1, Mathf.RoundToInt((heroAttack + bonusShare) * roleMultiplier));
+    }
+
     private int GetHeroPower(int index)
     {
-        return GetHeroAttack(index) + Mathf.FloorToInt(GetHeroHealth(index) / 8f);
+        return GetHeroAttack(index)
+            + Mathf.FloorToInt(GetHeroHealth(index) / 8f)
+            + GetHeroDefense(index)
+            + Mathf.FloorToInt(GetHeroCritChancePercent(index) * 1.6f)
+            + Mathf.FloorToInt((GetHeroAccuracyPercent(index) - 80) * 1.2f);
     }
 
     private int GetEquipmentPower()
@@ -6381,6 +9059,78 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             + (heroAscensions[index] * hero.ascensionHealth);
     }
 
+    private int GetHeroCritChancePercent(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        EnsureHeroAscensions();
+        var hero = GetHeroDefinition(index);
+        return Mathf.Clamp(hero.critChancePercent + Mathf.FloorToInt(heroAscensions[index] * 0.6f), 0, 75);
+    }
+
+    private int GetHeroAccuracyPercent(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        EnsureHeroAscensions();
+        var hero = GetHeroDefinition(index);
+        return Mathf.Clamp(hero.accuracyPercent + Mathf.FloorToInt(heroAscensions[index] * 0.35f), 50, 100);
+    }
+
+    private int GetHeroDefense(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        EnsureHeroLevels();
+        EnsureHeroAscensions();
+        var hero = GetHeroDefinition(index);
+        return Mathf.Max(0, hero.defense + Mathf.FloorToInt(heroLevels[index] * 0.45f) + (heroAscensions[index] * 3));
+    }
+
+    private int GetTeamDefense()
+    {
+        var defense = 0;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            defense += GetHeroDefense(i);
+        }
+
+        return defense + Mathf.FloorToInt((GetEquipmentHealthBonus() + GetAccessoryHealthBonus()) / 95f);
+    }
+
+    private int GetTeamCritChancePercent()
+    {
+        var totalAttack = 0f;
+        var weightedCrit = 0f;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var attack = Mathf.Max(1, GetHeroAttack(i));
+            totalAttack += attack;
+            weightedCrit += attack * GetHeroCritChancePercent(i);
+        }
+
+        return Mathf.Clamp(Mathf.RoundToInt(weightedCrit / Mathf.Max(1f, totalAttack)), 0, 100);
+    }
+
+    private int GetTeamAccuracyPercent()
+    {
+        var totalAttack = 0f;
+        var weightedAccuracy = 0f;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var attack = Mathf.Max(1, GetHeroAttack(i));
+            totalAttack += attack;
+            weightedAccuracy += attack * GetHeroAccuracyPercent(i);
+        }
+
+        return Mathf.Clamp(Mathf.RoundToInt(weightedAccuracy / Mathf.Max(1f, totalAttack)), 0, 100);
+    }
+
+    private int GetTeamCombatDamagePerSecond()
+    {
+        var baseDamage = GetTeamDamage();
+        var accuracyRate = GetTeamAccuracyPercent() / 100f;
+        var critRate = GetTeamCritChancePercent() / 100f;
+        return Mathf.Max(1, Mathf.RoundToInt(baseDamage * accuracyRate * (1f + (critRate * (CritDamageMultiplier - 1f)))));
+    }
+
     private int GetHeroUpgradeCost(int index)
     {
         index = Mathf.Clamp(index, 0, HeroCount - 1);
@@ -6494,7 +9244,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private int GetMitigatedEnemyDamage(int enemyDamage)
     {
-        return Mathf.Max(1, Mathf.CeilToInt(enemyDamage * (1f - GetTankDamageReductionRate())));
+        var afterGuard = enemyDamage * (1f - GetTankDamageReductionRate());
+        var defense = GetTeamDefense();
+        var defenseReduction = defense / Mathf.Max(1f, defense + (enemyDamage * 8f));
+        defenseReduction = Mathf.Clamp(defenseReduction, 0f, 0.45f);
+        return Mathf.Max(1, Mathf.CeilToInt(afterGuard * (1f - defenseReduction)));
+    }
+
+    private int GetMitigatedEnemyDamageAgainstHero(int enemyDamage, int heroIndex)
+    {
+        heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
+        enemyDamage = Mathf.Max(1, enemyDamage);
+        var afterGuard = enemyDamage * (1f - GetTankDamageReductionRate());
+        var sharedGearDefense = Mathf.FloorToInt((GetEquipmentHealthBonus() + GetAccessoryHealthBonus()) / Mathf.Max(1f, HeroCount * 95f));
+        var defense = Mathf.Max(0, GetHeroDefense(heroIndex) + sharedGearDefense);
+        var defenseReduction = defense / Mathf.Max(1f, defense + (enemyDamage * 8f));
+        defenseReduction = Mathf.Clamp(defenseReduction, 0f, 0.45f);
+        return Mathf.Max(1, Mathf.CeilToInt(afterGuard * (1f - defenseReduction)));
+    }
+
+    private static bool RollPercentChance(int chancePercent)
+    {
+        return UnityEngine.Random.Range(0, 100) < Mathf.Clamp(chancePercent, 0, 100);
     }
 
     private float GetTankDamageReductionRate()
@@ -6568,25 +9339,50 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             var enemyDamage = GetBackendDungeonEnemyDamage(backendDefinition, floor);
             if (string.IsNullOrWhiteSpace(backendDefinition.rewardCurrencyId))
             {
-                return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\nEnemy HP {enemyHp}  DMG {enemyDamage}  Drop";
+                return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\n{GetDungeonBossName(localDefinition.dungeonId)} HP {enemyHp}  DMG {enemyDamage}  Formation";
             }
 
             var rewardAmount = GetBackendDungeonRewardAmount(backendDefinition, floor);
             var currencyName = GetCurrencyDefinition(backendDefinition.rewardCurrencyId).displayName;
-            return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\nEnemy HP {enemyHp}  DMG {enemyDamage}  +{rewardAmount} {currencyName}";
+            return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\n{GetDungeonBossName(localDefinition.dungeonId)} HP {enemyHp}  +{rewardAmount} {currencyName}";
         }
 
         if (localDefinition.dungeonId == GoldDungeonDefinition.dungeonId)
         {
-            return $"{localDefinition.displayName} F{floor}  Rec {GetDungeonRecommendedPower(floor)}\n+{GetGoldDungeonReward(floor)} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
+            return $"{localDefinition.displayName} F{floor}  Rec {GetDungeonRecommendedPower(floor)}\nBoss HP {FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor))}  +{GetGoldDungeonReward(floor)} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
         }
 
         if (localDefinition.dungeonId == EssenceDungeonDefinition.dungeonId)
         {
-            return $"{localDefinition.displayName} F{floor}  Rec {GetDungeonRecommendedPower(floor)}\n+{GetEssenceDungeonReward(floor)} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
+            return $"{localDefinition.displayName} F{floor}  Rec {GetDungeonRecommendedPower(floor)}\nBoss HP {FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor))}  +{GetEssenceDungeonReward(floor)} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
         }
 
-        return $"{localDefinition.displayName} F{floor}  Rec {GetGearDungeonRecommendedPower(floor)}\nRandom accessory drop";
+        return $"{localDefinition.displayName} F{floor}  Rec {GetGearDungeonRecommendedPower(floor)}\nBoss HP {FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor))}  Accessory drop";
+    }
+
+    private string FormatDungeonFormationRewardLine(DungeonDefinition dungeon, int floor)
+    {
+        if (UseBackendDefinitionView() && TryGetBackendDungeonDefinition(dungeon.dungeonId, out var backendDefinition))
+        {
+            if (string.IsNullOrWhiteSpace(backendDefinition.rewardCurrencyId))
+            {
+                return "Reward: random accessory drop";
+            }
+
+            return $"Reward: +{GetBackendDungeonRewardAmount(backendDefinition, floor)} {GetCurrencyDefinition(backendDefinition.rewardCurrencyId).displayName}";
+        }
+
+        if (dungeon.dungeonId == GoldDungeonDefinition.dungeonId)
+        {
+            return $"Reward: +{GetGoldDungeonReward(floor)} {GetCurrencyDefinition(dungeon.rewardCurrencyId).displayName}";
+        }
+
+        if (dungeon.dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return $"Reward: +{GetEssenceDungeonReward(floor)} {GetCurrencyDefinition(dungeon.rewardCurrencyId).displayName}";
+        }
+
+        return "Reward: random accessory drop";
     }
 
     private void RefreshOfflineRewardUi()
@@ -6937,10 +9733,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureRuntimeDungeonsTab();
         EnsureRuntimeScreenBackdrops();
         EnsureRuntimeHomeActions();
+        EnsureRuntimeCampaignMap();
         EnsureRuntimeHomePopups();
+        EnsureRuntimeBattleFlowUi();
         EnsureRuntimeMenuHeader();
         EnsureRuntimeHeroCardArt();
         EnsureRuntimeHeroEssenceCounter();
+        EnsureRuntimeHeroDetailWindow();
         EnsureRuntimeBottomNavbarArt();
         LayoutBottomNavigation();
         LayoutHomeScreen();
@@ -7103,6 +9902,347 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetHomeShortcutsExpanded(homeShortcutsExpanded);
     }
 
+    private void EnsureRuntimeCampaignMap()
+    {
+        if (homeActionRoot == null || homeCampaignMapRoot != null)
+        {
+            return;
+        }
+
+        var rootObject = new GameObject("Home Campaign Map Root", typeof(RectTransform));
+        rootObject.transform.SetParent(homeActionRoot, false);
+        homeCampaignMapRoot = rootObject.GetComponent<RectTransform>();
+        SetRuntimeRect(homeCampaignMapRoot, new Vector2(0, -245), new Vector2(860, 710), new Vector2(0.5f, 1f));
+        homeCampaignMapRoot.SetAsFirstSibling();
+
+        var mapBack = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Backplate", Vector2.zero, new Vector2(860, 710), new Color(0.08f, 0.12f, 0.19f, 0.98f));
+        mapBack.SetAsFirstSibling();
+        CreateLayeredRuntimeBackground(mapBack, new Vector2(860, 710), 0.72f);
+
+        var lake = CreateRuntimePanel(mapBack, "Frozen River", new Vector2(-118, -535), new Vector2(690, 54), new Color(0.5f, 0.8f, 1f, 0.34f));
+        lake.localRotation = Quaternion.Euler(0f, 0f, -8f);
+
+        var nodePositions = GetCampaignMapNodePositions();
+        for (var i = 0; i < nodePositions.Length - 1; i++)
+        {
+            CreateCampaignPathSegment(homeCampaignMapRoot, nodePositions[i], nodePositions[i + 1]);
+        }
+
+        campaignStageButtons = new Button[nodePositions.Length];
+        campaignStageButtonTexts = new TMP_Text[nodePositions.Length];
+        campaignStageButtonIcons = new RawImage[nodePositions.Length];
+        campaignStageButtonFrames = new Image[nodePositions.Length];
+
+        for (var i = 0; i < nodePositions.Length; i++)
+        {
+            campaignStageButtons[i] = CreateCampaignStageButton(homeCampaignMapRoot, i, nodePositions[i]);
+        }
+
+        campaignStagePreviewRoot = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Stage Preview", new Vector2(0, -620), new Vector2(790, 118), new Color(0.03f, 0.035f, 0.055f, 0.82f));
+        campaignStagePreviewText = CreateRuntimeText(campaignStagePreviewRoot, "Campaign Stage Preview Text", string.Empty, 22, new Vector2(0, -16), new Vector2(740, 88));
+        campaignStagePreviewText.enableAutoSizing = true;
+        campaignStagePreviewText.fontSizeMin = 16;
+        campaignStagePreviewText.fontSizeMax = 22;
+        campaignStagePreviewText.alignment = TextAlignmentOptions.Center;
+    }
+
+    private Button CreateCampaignStageButton(Transform parent, int nodeIndex, Vector2 position)
+    {
+        var buttonObject = new GameObject($"Campaign Stage Node {nodeIndex + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        buttonObject.transform.SetParent(parent, false);
+        SetRuntimeRect(buttonObject.GetComponent<RectTransform>(), position, new Vector2(104, 118), new Vector2(0.5f, 1f));
+
+        var frame = buttonObject.GetComponent<Image>();
+        frame.color = new Color(0.21f, 0.12f, 0.21f, 0.96f);
+
+        var icon = CreateRuntimeRawImage(buttonObject.transform, "Stage Icon", LoadCombatTexture("enemy_rat", "idle", 0, "enemy_campaign"), new Vector2(0, -18), new Vector2(70, 70), new Vector2(0.5f, 1f));
+        icon.raycastTarget = false;
+
+        var text = CreateRuntimeText(buttonObject.transform, "Stage Label", "1-1", 20, new Vector2(0, -86), new Vector2(92, 28));
+        text.fontStyle = FontStyles.Bold;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 14;
+        text.fontSizeMax = 20;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.raycastTarget = false;
+
+        campaignStageButtonFrames[nodeIndex] = frame;
+        campaignStageButtonIcons[nodeIndex] = icon;
+        campaignStageButtonTexts[nodeIndex] = text;
+
+        var capturedIndex = nodeIndex;
+        var button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = frame;
+        button.onClick.AddListener(() => SelectVisibleCampaignStage(capturedIndex));
+        return button;
+    }
+
+    private void CreateCampaignPathSegment(Transform parent, Vector2 start, Vector2 end)
+    {
+        var midpoint = (start + end) * 0.5f;
+        var delta = end - start;
+        var length = Mathf.Max(1f, delta.magnitude);
+        var segment = CreateRuntimePanel(parent, "Campaign Path Segment", midpoint, new Vector2(length + 24f, 18f), new Color(0.74f, 0.82f, 0.93f, 0.68f));
+        segment.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+    }
+
+    private void EnsureRuntimeBattleFlowUi()
+    {
+        if (battlePanel == null || formationRoot != null)
+        {
+            return;
+        }
+
+        EnsureRuntimeFormationUi();
+        EnsureRuntimeFightUi();
+        ApplyBattleFlowVisibility();
+    }
+
+    private void EnsureRuntimeFormationUi()
+    {
+        var rootObject = new GameObject("Campaign Formation Root", typeof(RectTransform));
+        rootObject.transform.SetParent(battlePanel.transform, false);
+        formationRoot = rootObject.GetComponent<RectTransform>();
+        StretchRuntime(formationRoot, Vector2.zero);
+
+        var backdrop = CreateRuntimePanel(formationRoot, "Formation Backdrop", new Vector2(0, -150), new Vector2(880, 1120), new Color(0.06f, 0.045f, 0.055f, 0.96f));
+        CreateLayeredRuntimeBackground(backdrop, new Vector2(880, 1120), 0.52f);
+
+        formationHeaderText = CreateRuntimeText(formationRoot, "Formation Header", "Formation", 34, new Vector2(0, -118), new Vector2(780, 50));
+        formationHeaderText.fontStyle = FontStyles.Bold;
+
+        formationTeamText = CreateRuntimeText(formationRoot, "Formation Team Power", string.Empty, 23, new Vector2(0, -172), new Vector2(780, 40));
+        formationTeamText.color = new Color(0.78f, 0.91f, 1f);
+        formationTeamText.fontStyle = FontStyles.Bold;
+        formationTeamText.enableAutoSizing = true;
+        formationTeamText.fontSizeMin = 15;
+        formationTeamText.fontSizeMax = 23;
+
+        var arena = CreateRuntimePanel(formationRoot, "Formation Arena Preview", new Vector2(0, -235), new Vector2(820, 410), new Color(0.03f, 0.045f, 0.07f, 0.88f));
+        CreateLayeredRuntimeBackground(arena, new Vector2(820, 410), 0.62f);
+
+        EnsureFormationOrder();
+        formationSlotButtons = new Button[HeroCount];
+        formationSlotFrames = new Image[HeroCount];
+        formationHeroImages = new RawImage[HeroCount];
+        formationHeroTexts = new TMP_Text[HeroCount];
+        var heroPositions = GetFormationHeroPositions();
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var slotObject = new GameObject($"Formation Slot {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            slotObject.transform.SetParent(arena, false);
+            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), heroPositions[i] + new Vector2(0, 4), new Vector2(158, 172), new Vector2(0.5f, 1f));
+
+            var slotFrame = slotObject.GetComponent<Image>();
+            slotFrame.color = new Color(0.1f, 0.13f, 0.2f, 0.62f);
+            formationSlotFrames[i] = slotFrame;
+
+            var slotButton = slotObject.GetComponent<Button>();
+            slotButton.targetGraphic = slotFrame;
+            var capturedSlot = i;
+            slotButton.onClick.AddListener(() => SelectFormationSlot(capturedSlot));
+            formationSlotButtons[i] = slotButton;
+
+            formationHeroImages[i] = CreateRuntimeRawImage(arena, $"Formation Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(124, 124), new Vector2(0.5f, 1f));
+            formationHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
+            formationHeroImages[i].raycastTarget = false;
+            formationHeroTexts[i] = CreateRuntimeText(arena, $"Formation Hero Label {i + 1}", string.Empty, 16, heroPositions[i] + new Vector2(0, -112), new Vector2(126, 26));
+            formationHeroTexts[i].fontStyle = FontStyles.Bold;
+            formationHeroTexts[i].enableAutoSizing = true;
+            formationHeroTexts[i].fontSizeMin = 12;
+            formationHeroTexts[i].fontSizeMax = 16;
+            formationHeroTexts[i].raycastTarget = false;
+        }
+
+        formationEnemyImage = CreateRuntimeRawImage(arena, "Formation Enemy", LoadCombatTexture("enemy_rat", "idle", 0, "enemy_campaign"), new Vector2(260, -164), new Vector2(150, 150), new Vector2(0.5f, 1f));
+        formationEnemyImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale("enemy_rat"), 1f, 1f);
+        formationEnemyText = CreateRuntimeText(formationRoot, "Formation Enemy Text", string.Empty, 23, new Vector2(0, -675), new Vector2(780, 82));
+        formationEnemyText.enableAutoSizing = true;
+        formationEnemyText.fontSizeMin = 16;
+        formationEnemyText.fontSizeMax = 23;
+
+        formationHintText = CreateRuntimeText(formationRoot, "Formation Hint", "Confirm starts a visible 30s combat sim.", 20, new Vector2(0, -770), new Vector2(760, 40));
+        formationHintText.color = new Color(0.78f, 0.84f, 0.92f);
+
+        formationAutoContinueButton = CreateRuntimeButton(formationRoot, "Formation Auto Continue Toggle", string.Empty, 0, -835, 560, 50);
+        var autoContinueButtonImage = formationAutoContinueButton.GetComponent<Image>();
+        if (autoContinueButtonImage != null)
+        {
+            autoContinueButtonImage.color = new Color(0.02f, 0.025f, 0.04f, 0.4f);
+        }
+
+        formationAutoContinueBox = CreateRuntimePanel(formationAutoContinueButton.transform, "Checkbox", new Vector2(-250, 0), new Vector2(34, 34), new Color(0.04f, 0.055f, 0.08f, 0.96f)).GetComponent<Image>();
+        formationAutoContinueMarkText = CreateRuntimeText(formationAutoContinueButton.transform, "Checkbox Mark", string.Empty, 24, new Vector2(-250, 0), new Vector2(34, 34));
+        formationAutoContinueMarkText.fontStyle = FontStyles.Bold;
+        formationAutoContinueMarkText.raycastTarget = false;
+        formationAutoContinueText = CreateRuntimeText(formationAutoContinueButton.transform, "Auto Continue Label", "Auto next after win (skills AUTO)", 20, new Vector2(34, 0), new Vector2(470, 38));
+        formationAutoContinueText.alignment = TextAlignmentOptions.Left;
+        formationAutoContinueText.enableAutoSizing = true;
+        formationAutoContinueText.fontSizeMin = 14;
+        formationAutoContinueText.fontSizeMax = 20;
+        formationAutoContinueText.raycastTarget = false;
+        RefreshFormationAutoContinueToggle();
+
+        formationBackButton = CreateRuntimeButton(formationRoot, "Formation Back Button", "Back", -225, -900, 210, 62);
+        formationConfirmButton = CreateRuntimeButton(formationRoot, "Formation Confirm Button", "Confirm", 135, -900, 330, 70);
+    }
+
+    private void EnsureRuntimeFightUi()
+    {
+        var rootObject = new GameObject("Campaign Fight Root", typeof(RectTransform));
+        rootObject.transform.SetParent(battlePanel.transform, false);
+        fightRoot = rootObject.GetComponent<RectTransform>();
+        StretchRuntime(fightRoot, Vector2.zero);
+
+        var backdrop = CreateRuntimePanel(fightRoot, "Fight Arena Backdrop", new Vector2(0, -110), new Vector2(960, 1190), new Color(0.045f, 0.055f, 0.07f, 0.98f));
+        CreateLayeredRuntimeBackground(backdrop, new Vector2(960, 1190), 0.76f);
+
+        fightVsText = CreateRuntimeText(fightRoot, "Fight VS Text", "VS", 38, new Vector2(0, -130), new Vector2(820, 52));
+        fightVsText.fontStyle = FontStyles.Bold;
+        fightTimerText = CreateRuntimeText(fightRoot, "Fight Timer Text", "00:30", 25, new Vector2(0, -184), new Vector2(320, 42));
+        fightTimerText.fontStyle = FontStyles.Bold;
+        fightStatusText = CreateRuntimeText(fightRoot, "Fight Status Text", "Ready", 23, new Vector2(0, -930), new Vector2(820, 58));
+        fightStatusText.enableAutoSizing = true;
+        fightStatusText.fontSizeMin = 16;
+        fightStatusText.fontSizeMax = 23;
+        fightEndButton = CreateRuntimeButton(fightRoot, "Fight End Button", "End Fight", -386, -842, 142, 58);
+        var fightEndButtonImage = fightEndButton.GetComponent<Image>();
+        if (fightEndButtonImage != null)
+        {
+            fightEndButtonImage.color = new Color(0.48f, 0.16f, 0.12f, 0.96f);
+        }
+
+        fightBossHpFill = CreateRuntimeHealthFill(fightRoot, "Fight Boss Top HP", new Vector2(0, -230), 690, new Color(0.88f, 0.16f, 0.2f));
+        var bossHpBack = fightBossHpFill.transform.parent.GetComponent<RectTransform>();
+        bossHpBack.sizeDelta = new Vector2(690, 34);
+        fightBossHpText = CreateRuntimeText(fightBossHpFill.transform.parent, "Boss HP Text", "Boss HP 100%", 21, Vector2.zero, new Vector2(670, 34));
+        fightBossHpText.fontStyle = FontStyles.Bold;
+        fightBossHpText.raycastTarget = false;
+        fightBossHpFill.transform.parent.gameObject.SetActive(false);
+
+        fightHeroImages = new RawImage[HeroCount];
+        fightEnemyImages = new RawImage[HeroCount];
+        fightHeroRects = new RectTransform[HeroCount];
+        fightEnemyRects = new RectTransform[HeroCount];
+        fightHeroHpFills = new Image[HeroCount];
+        fightEnemyHpFills = new Image[HeroCount];
+        fightEnemyHpPercentTexts = new TMP_Text[HeroCount];
+
+        var heroPositions = GetFightHeroPositions();
+        var enemyPositions = GetFightEnemyPositions();
+        for (var i = 0; i < HeroCount; i++)
+        {
+            fightHeroImages[i] = CreateRuntimeRawImage(fightRoot, $"Fight Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(132, 132), new Vector2(0.5f, 1f));
+            fightHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
+            fightHeroRects[i] = fightHeroImages[i].GetComponent<RectTransform>();
+            fightHeroHpFills[i] = CreateRuntimeHealthFill(fightRoot, $"Fight Hero HP {i + 1}", heroPositions[i] + new Vector2(0, -128), 118, new Color(0.16f, 0.78f, 0.33f));
+
+            var enemyTextureName = GetCampaignEnemyTextureName(1, i);
+            fightEnemyImages[i] = CreateRuntimeRawImage(fightRoot, $"Fight Enemy {i + 1}", LoadCombatTexture(enemyTextureName, "idle", 0, "enemy_campaign"), enemyPositions[i], new Vector2(126, 126), new Vector2(0.5f, 1f));
+            fightEnemyImages[i].rectTransform.localScale = new Vector3(GetEnemyFacingScale(enemyTextureName), 1f, 1f);
+            fightEnemyRects[i] = fightEnemyImages[i].GetComponent<RectTransform>();
+            fightEnemyHpFills[i] = CreateRuntimeHealthFill(fightRoot, $"Fight Enemy HP {i + 1}", enemyPositions[i] + new Vector2(0, -122), 112, new Color(0.86f, 0.18f, 0.22f));
+            fightEnemyHpPercentTexts[i] = CreateRuntimeText(fightEnemyHpFills[i].transform.parent, "HP Percent", "100%", 12, Vector2.zero, new Vector2(108, 15));
+            fightEnemyHpPercentTexts[i].fontStyle = FontStyles.Bold;
+            fightEnemyHpPercentTexts[i].raycastTarget = false;
+        }
+
+        fightHeroProjectileImages = new Image[HeroCount];
+        fightEnemyProjectileImages = new Image[HeroCount];
+        fightHeroProjectileRects = new RectTransform[HeroCount];
+        fightEnemyProjectileRects = new RectTransform[HeroCount];
+        for (var i = 0; i < HeroCount; i++)
+        {
+            fightHeroProjectileImages[i] = CreateRuntimeProjectile(fightRoot, $"Hero Projectile {i + 1}", new Color(0.38f, 0.94f, 1f, 0.92f), out fightHeroProjectileRects[i]);
+            fightEnemyProjectileImages[i] = CreateRuntimeProjectile(fightRoot, $"Enemy Projectile {i + 1}", new Color(1f, 0.36f, 0.24f, 0.92f), out fightEnemyProjectileRects[i]);
+        }
+
+        CreateFightSkillBar();
+
+        fightFloatingTexts = new TMP_Text[4];
+        for (var i = 0; i < fightFloatingTexts.Length; i++)
+        {
+            fightFloatingTexts[i] = CreateRuntimeText(fightRoot, $"Fight Floating Text {i + 1}", string.Empty, 26, new Vector2(0, -520), new Vector2(220, 44));
+            fightFloatingTexts[i].fontStyle = FontStyles.Bold;
+            fightFloatingTexts[i].gameObject.SetActive(false);
+        }
+
+        fightResultRoot = CreateRuntimePopup(fightRoot, "Campaign Fight Result Popup", new Vector2(0, -360), new Vector2(760, 360), "Result");
+        fightResultTitleText = fightResultRoot.Find("Title").GetComponent<TMP_Text>();
+        fightResultBodyText = CreateRuntimeText(fightResultRoot, "Result Body", string.Empty, 22, new Vector2(0, -105), new Vector2(660, 150));
+        fightResultBodyText.enableAutoSizing = true;
+        fightResultBodyText.fontSizeMin = 15;
+        fightResultBodyText.fontSizeMax = 22;
+        fightContinueButton = CreateRuntimeButton(fightResultRoot, "Fight Continue Button", "Continue", 0, -286, 240, 62);
+        fightResultRoot.gameObject.SetActive(false);
+    }
+
+    private void CreateFightSkillBar()
+    {
+        fightSkillButtons = new Button[HeroCount];
+        fightSkillBackplates = new Image[HeroCount];
+        fightSkillManaFills = new Image[HeroCount];
+        fightSkillPortraits = new RawImage[HeroCount];
+        fightSkillNameTexts = new TMP_Text[HeroCount];
+        fightSkillManaTexts = new TMP_Text[HeroCount];
+
+        const float spacing = 154f;
+        var startX = -308f;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var cardObject = new GameObject($"Fight Skill Card {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            cardObject.transform.SetParent(fightRoot, false);
+            SetRuntimeRect(cardObject.GetComponent<RectTransform>(), new Vector2(startX + spacing * i, -1048), new Vector2(132, 180), new Vector2(0.5f, 1f));
+
+            var backplate = cardObject.GetComponent<Image>();
+            backplate.color = new Color(0.07f, 0.09f, 0.13f, 0.96f);
+            fightSkillBackplates[i] = backplate;
+
+            var button = cardObject.GetComponent<Button>();
+            button.targetGraphic = backplate;
+            var capturedIndex = i;
+            button.onClick.AddListener(() => QueueFightHeroUltimate(capturedIndex));
+            fightSkillButtons[i] = button;
+
+            var portrait = CreateRuntimeRawImage(cardObject.transform, "Portrait", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -12), new Vector2(104, 112), new Vector2(0.5f, 1f));
+            portrait.raycastTarget = false;
+            fightSkillPortraits[i] = portrait;
+
+            var manaBack = CreateRuntimePanel(cardObject.transform, "Mana Back", new Vector2(0, -132), new Vector2(104, 14), new Color(0.02f, 0.025f, 0.04f, 0.94f));
+            var manaFillObject = new GameObject("Mana Fill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            manaFillObject.transform.SetParent(manaBack, false);
+            var manaFillRect = manaFillObject.GetComponent<RectTransform>();
+            manaFillRect.anchorMin = Vector2.zero;
+            manaFillRect.anchorMax = Vector2.one;
+            manaFillRect.offsetMin = Vector2.zero;
+            manaFillRect.offsetMax = Vector2.zero;
+            fightSkillManaFills[i] = manaFillObject.GetComponent<Image>();
+            fightSkillManaFills[i].color = new Color(0.16f, 0.68f, 1f, 0.96f);
+            fightSkillManaFills[i].raycastTarget = false;
+
+            fightSkillNameTexts[i] = CreateRuntimeText(cardObject.transform, "Name", GetHeroDefinition(i).name, 16, new Vector2(0, -150), new Vector2(118, 24));
+            fightSkillNameTexts[i].fontStyle = FontStyles.Bold;
+            fightSkillNameTexts[i].enableAutoSizing = true;
+            fightSkillNameTexts[i].fontSizeMin = 11;
+            fightSkillNameTexts[i].fontSizeMax = 16;
+            fightSkillNameTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
+            fightSkillNameTexts[i].raycastTarget = false;
+
+            fightSkillManaTexts[i] = CreateRuntimeText(cardObject.transform, "Mana", "0/100", 14, new Vector2(0, -168), new Vector2(118, 22));
+            fightSkillManaTexts[i].color = new Color(0.74f, 0.9f, 1f);
+            fightSkillManaTexts[i].enableAutoSizing = true;
+            fightSkillManaTexts[i].fontSizeMin = 10;
+            fightSkillManaTexts[i].fontSizeMax = 14;
+            fightSkillManaTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
+            fightSkillManaTexts[i].raycastTarget = false;
+        }
+
+        fightAutoSkillButton = CreateRuntimeButton(fightRoot, "Fight Auto Skill Button", "AUTO", 370, -966, 104, 56);
+        fightAutoSkillButton.onClick.AddListener(ToggleFightAutoSkills);
+        fightAutoSkillButtonText = fightAutoSkillButton.GetComponentInChildren<TMP_Text>();
+        RefreshFightAutoSkillButton();
+    }
+
     private void EnsureRuntimeHomePopups()
     {
         if (homeActionRoot == null || inventoryPopupRoot != null)
@@ -7204,6 +10344,147 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroEssenceAmountText.enableAutoSizing = true;
         heroEssenceAmountText.fontSizeMin = 16;
         heroEssenceAmountText.fontSizeMax = 22;
+    }
+
+    private void EnsureRuntimeHeroDetailWindow()
+    {
+        if (heroesPanel == null || heroDetailRoot != null)
+        {
+            return;
+        }
+
+        heroDetailRoot = CreateRuntimePanel(heroesPanel.transform, "Hero Detail Window", new Vector2(0, -118), new Vector2(860, 1186), new Color(0.07f, 0.035f, 0.022f, 0.98f));
+        heroDetailRoot.SetAsLastSibling();
+
+        var rootImage = heroDetailRoot.GetComponent<Image>();
+        if (rootImage != null)
+        {
+            rootImage.raycastTarget = true;
+        }
+
+        CreateLayeredRuntimeBackground(heroDetailRoot, new Vector2(820, 680), 0.18f);
+        CreateRuntimePanel(heroDetailRoot, "Hero Detail Top Glow", new Vector2(0, -38), new Vector2(520, 10), new Color(0.08f, 0.78f, 1f, 0.72f));
+        CreateRuntimePanel(heroDetailRoot, "Hero Detail Name Backplate", new Vector2(0, -58), new Vector2(520, 126), new Color(0.11f, 0.05f, 0.035f, 0.58f));
+        CreateRuntimePanel(heroDetailRoot, "Hero Detail Stage", new Vector2(0, -210), new Vector2(460, 430), new Color(0.95f, 0.55f, 0.24f, 0.15f));
+        CreateRuntimePanel(heroDetailRoot, "Hero Detail Stat Backplate", new Vector2(0, -724), new Vector2(780, 160), new Color(0.1f, 0.045f, 0.035f, 0.78f));
+
+        heroDetailRarityText = CreateRuntimeText(heroDetailRoot, "Hero Detail Rarity", string.Empty, 30, new Vector2(0, -47), new Vector2(500, 34));
+        heroDetailRarityText.fontStyle = FontStyles.Bold;
+        heroDetailRarityText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        heroDetailTitleText = CreateRuntimeText(heroDetailRoot, "Hero Detail Title", string.Empty, 27, new Vector2(0, -82), new Vector2(520, 34));
+        heroDetailTitleText.fontStyle = FontStyles.Bold;
+        heroDetailTitleText.color = new Color(1f, 0.88f, 0.64f);
+        heroDetailTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        heroDetailNameText = CreateRuntimeText(heroDetailRoot, "Hero Detail Name", string.Empty, 34, new Vector2(0, -118), new Vector2(520, 42));
+        heroDetailNameText.fontStyle = FontStyles.Bold;
+        heroDetailNameText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        heroDetailPortrait = CreateRuntimeRawImage(heroDetailRoot, "Hero Detail Portrait", LoadCombatTexture(GetHeroTextureName(selectedHeroIndex), "idle", 0, GetHeroTextureName(selectedHeroIndex)), new Vector2(0, -265), new Vector2(315, 315), new Vector2(0.5f, 1f));
+
+        heroDetailGearSlotTexts = new TMP_Text[6];
+        heroDetailGearSlotFrames = new Image[6];
+        heroDetailGearSlotButtons = new Button[6];
+        for (var i = 0; i < heroDetailGearSlotTexts.Length; i++)
+        {
+            var side = i < 3 ? -1f : 1f;
+            var row = i % 3;
+            var slotRoot = CreateRuntimePanel(heroDetailRoot, $"Hero Detail Gear Slot {i + 1}", new Vector2(side * 340f, -205f - row * 145f), new Vector2(114, 114), new Color(0.07f, 0.035f, 0.025f, 0.92f));
+            heroDetailGearSlotFrames[i] = slotRoot.GetComponent<Image>();
+            heroDetailGearSlotFrames[i].raycastTarget = true;
+            heroDetailGearSlotButtons[i] = slotRoot.gameObject.AddComponent<Button>();
+            heroDetailGearSlotButtons[i].targetGraphic = heroDetailGearSlotFrames[i];
+            var inner = CreateRuntimePanel(slotRoot, "Inner", new Vector2(0, -9), new Vector2(90, 82), new Color(0.15f, 0.075f, 0.04f, 0.82f));
+            inner.SetAsFirstSibling();
+            heroDetailGearSlotTexts[i] = CreateRuntimeText(slotRoot, "Label", string.Empty, 15, new Vector2(0, -26), new Vector2(100, 66));
+            heroDetailGearSlotTexts[i].fontStyle = FontStyles.Bold;
+            heroDetailGearSlotTexts[i].enableAutoSizing = true;
+            heroDetailGearSlotTexts[i].fontSizeMin = 10;
+            heroDetailGearSlotTexts[i].fontSizeMax = 15;
+            heroDetailGearSlotTexts[i].raycastTarget = false;
+        }
+
+        heroDetailPowerText = CreateRuntimeText(heroDetailRoot, "Hero Detail Power", string.Empty, 31, new Vector2(0, -668), new Vector2(520, 44));
+        heroDetailPowerText.fontStyle = FontStyles.Bold;
+        heroDetailPowerText.color = new Color(1f, 0.82f, 0.34f);
+        heroDetailPowerText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        heroDetailStatsText = CreateRuntimeText(heroDetailRoot, "Hero Detail Stats", string.Empty, 23, new Vector2(0, -734), new Vector2(780, 84));
+        heroDetailStatsText.fontStyle = FontStyles.Bold;
+        heroDetailStatsText.enableAutoSizing = true;
+        heroDetailStatsText.fontSizeMin = 16;
+        heroDetailStatsText.fontSizeMax = 23;
+
+        heroDetailResourceText = CreateRuntimeText(heroDetailRoot, "Hero Detail Resources", string.Empty, 20, new Vector2(0, -835), new Vector2(780, 40));
+        heroDetailResourceText.color = new Color(0.82f, 0.9f, 1f);
+        heroDetailResourceText.enableAutoSizing = true;
+        heroDetailResourceText.fontSizeMin = 14;
+        heroDetailResourceText.fontSizeMax = 20;
+        heroDetailResourceText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        heroDetailPreviousButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Previous Button", "<", -360, -605, 76, 72);
+        heroDetailNextButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Next Button", ">", 360, -605, 76, 72);
+        heroDetailRemoveGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Remove Gear Button", "Remove Gear", -250, -898, 210, 62);
+        heroDetailLevelButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Level Button", "Level Up", 0, -902, 260, 74);
+        heroDetailEquipGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Equip Gear Button", "Equip Gear", 250, -898, 210, 62);
+
+        var tabBack = CreateRuntimePanel(heroDetailRoot, "Hero Detail Tabs Backplate", new Vector2(0, -1000), new Vector2(640, 78), new Color(0.045f, 0.027f, 0.02f, 0.86f));
+        CreateRuntimeText(tabBack, "Story Tab", "Story", 22, new Vector2(-210, -18), new Vector2(160, 44)).color = new Color(0.86f, 0.72f, 0.52f);
+        var heroTabText = CreateRuntimeText(tabBack, "Hero Tab", "Hero", 24, new Vector2(0, -17), new Vector2(160, 44));
+        heroTabText.fontStyle = FontStyles.Bold;
+        heroTabText.color = new Color(1f, 0.93f, 0.68f);
+        CreateRuntimeText(tabBack, "Skills Tab", "Skills", 22, new Vector2(210, -18), new Vector2(160, 44)).color = new Color(0.86f, 0.72f, 0.52f);
+
+        heroDetailCloseButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Close Button", "X", 385, -24, 52, 52);
+        CreateHeroDetailGearList();
+        heroDetailRoot.gameObject.SetActive(false);
+    }
+
+    private void CreateHeroDetailGearList()
+    {
+        heroDetailGearListRoot = CreateRuntimePanel(heroDetailRoot, "Hero Detail Gear List", new Vector2(0, -525), new Vector2(730, 390), new Color(0.045f, 0.028f, 0.02f, 0.98f));
+        heroDetailGearListRoot.SetAsLastSibling();
+        var listImage = heroDetailGearListRoot.GetComponent<Image>();
+        if (listImage != null)
+        {
+            listImage.raycastTarget = true;
+        }
+
+        CreateRuntimePanel(heroDetailGearListRoot, "Divider", new Vector2(0, -62), new Vector2(660, 3), new Color(0.86f, 0.58f, 0.27f, 0.88f));
+        heroDetailGearListTitleText = CreateRuntimeText(heroDetailGearListRoot, "Title", string.Empty, 27, new Vector2(0, -20), new Vector2(610, 40));
+        heroDetailGearListTitleText.fontStyle = FontStyles.Bold;
+        heroDetailGearListTitleText.color = new Color(1f, 0.88f, 0.58f);
+        heroDetailGearListTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        heroDetailGearListCloseButton = CreateRuntimeButton(heroDetailGearListRoot, "Close", "X", 326, -18, 46, 46);
+        heroDetailGearOptionButtons = new Button[AccessoryRarityCount];
+        heroDetailGearOptionTexts = new TMP_Text[AccessoryRarityCount];
+        for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
+        {
+            var option = CreateRuntimeButton(heroDetailGearListRoot, $"Gear Option {rarity + 1}", string.Empty, 0, -92 - rarity * 56, 640, 48);
+            var image = option.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = GetAccessoryRarityColor(rarity);
+            }
+
+            var label = option.GetComponentInChildren<TMP_Text>(includeInactive: true);
+            if (label != null)
+            {
+                label.fontSize = 18;
+                label.fontSizeMin = 11;
+                label.fontSizeMax = 18;
+                label.enableAutoSizing = true;
+                label.textWrappingMode = TextWrappingModes.Normal;
+                label.alignment = TextAlignmentOptions.Center;
+            }
+
+            heroDetailGearOptionButtons[rarity] = option;
+            heroDetailGearOptionTexts[rarity] = label;
+        }
+
+        heroDetailGearListRoot.gameObject.SetActive(false);
     }
 
     private void EnsureRuntimeBottomNavbarArt()
@@ -7386,6 +10667,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void LayoutBattleScreen()
     {
         SetComponentActive(upgradeButton, false);
+        SetComponentActive(damageText, false);
+        SetComponentActive(autoAttackText, false);
+        SetComponentActive(enemyText, false);
+        SetComponentActive(enemyHpText, false);
+        SetComponentActive(fightButton, false);
+        SetComponentActive(dungeonResultText, false);
 
         MoveUiElement(damageText, battlePanel, new Vector2(0, -130), new Vector2(760, 34));
         MoveUiElement(autoAttackText, battlePanel, new Vector2(0, -166), new Vector2(760, 28));
@@ -7393,6 +10680,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         MoveUiElement(enemyHpText, battlePanel, new Vector2(0, -270), new Vector2(760, 32));
         MoveUiElement(fightButton, battlePanel, new Vector2(0, -690), new Vector2(420, 76));
         MoveUiElement(dungeonResultText, battlePanel, new Vector2(0, -782), new Vector2(760, 72));
+
+        if (formationRoot != null)
+        {
+            formationRoot.SetAsLastSibling();
+        }
+
+        if (fightRoot != null)
+        {
+            fightRoot.SetAsLastSibling();
+        }
     }
 
     private void LayoutDungeonsScreen()
@@ -7615,6 +10912,406 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void ShowHeroDetail(int index)
+    {
+        EnsureRuntimeHeroDetailWindow();
+        if (heroDetailRoot == null)
+        {
+            return;
+        }
+
+        selectedHeroIndex = Mathf.Clamp(index, 0, HeroCount - 1);
+        heroDetailRoot.SetAsLastSibling();
+        heroDetailRoot.gameObject.SetActive(true);
+        RefreshHeroDetailUi();
+    }
+
+    private void HideHeroDetail()
+    {
+        HideHeroDetailGearList();
+        if (heroDetailRoot != null)
+        {
+            heroDetailRoot.gameObject.SetActive(false);
+        }
+    }
+
+    private void ShowPreviousHeroDetail()
+    {
+        SelectHero((selectedHeroIndex + HeroCount - 1) % HeroCount);
+    }
+
+    private void ShowNextHeroDetail()
+    {
+        SelectHero((selectedHeroIndex + 1) % HeroCount);
+    }
+
+    private void RefreshHeroDetailUi()
+    {
+        if (heroDetailRoot == null)
+        {
+            return;
+        }
+
+        EnsureHeroLevels();
+        EnsureHeroShards();
+        EnsureHeroAscensions();
+        EnsureAccessories();
+
+        var heroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+        var hero = GetHeroDefinition(heroIndex);
+        var level = heroLevels[heroIndex];
+        var ascension = heroAscensions[heroIndex];
+        var levelCap = GetHeroLevelCap(heroIndex);
+        var ascensionCap = GetHeroAscensionCap(heroIndex);
+        var upgradeCost = GetHeroUpgradeCost(heroIndex);
+        var ascensionCost = GetHeroAscensionCost(heroIndex);
+        var heroColor = GetHeroRarityColor(hero.rarityId);
+
+        if (heroDetailPortrait != null)
+        {
+            heroDetailPortrait.texture = LoadCombatTexture(GetHeroTextureName(heroIndex), "idle", 0, GetHeroTextureName(heroIndex));
+            heroDetailPortrait.rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
+            heroDetailPortrait.color = Color.white;
+        }
+
+        if (heroDetailRarityText != null)
+        {
+            heroDetailRarityText.text = hero.rarityName;
+            heroDetailRarityText.color = heroColor;
+        }
+
+        if (heroDetailTitleText != null)
+        {
+            heroDetailTitleText.text = GetHeroDetailTitle(hero);
+        }
+
+        if (heroDetailNameText != null)
+        {
+            heroDetailNameText.text = hero.name;
+            heroDetailNameText.color = heroColor;
+        }
+
+        if (heroDetailPowerText != null)
+        {
+            heroDetailPowerText.text = $"Power {GetHeroPower(heroIndex)}";
+        }
+
+        if (heroDetailStatsText != null)
+        {
+            heroDetailStatsText.text = $"Lvl {FormatCappedValue(level, levelCap)}   Asc {FormatCappedValue(ascension, ascensionCap)}   {hero.roleName}\nHP {GetHeroCombatMaxHealth(heroIndex)}   ATK {GetHeroEffectiveAttack(heroIndex)}   DEF {GetHeroDefense(heroIndex)}\nCrit {GetHeroCritChancePercent(heroIndex)}%   Acc {GetHeroAccuracyPercent(heroIndex)}%";
+        }
+
+        if (heroDetailResourceText != null)
+        {
+            heroDetailResourceText.text = $"Essence {mythEssence}/{upgradeCost}   Shards {heroShards[heroIndex]}/{ascensionCost}";
+        }
+
+        RefreshHeroDetailGearSlots();
+        RefreshHeroDetailGearList();
+
+        SetButtonLabel(heroDetailLevelButton, IsHeroLevelMax(heroIndex) ? "Max Level" : "Level Up");
+        SetButtonLabel(heroDetailEquipGearButton, "Equip Gear");
+        SetButtonLabel(heroDetailRemoveGearButton, "Remove Gear");
+        SetButtonInteractable(heroDetailLevelButton, !IsHeroLevelMax(heroIndex) && mythEssence >= upgradeCost);
+        SetButtonInteractable(heroDetailEquipGearButton, true);
+        SetButtonInteractable(heroDetailRemoveGearButton, true);
+    }
+
+    private void RefreshHeroDetailGearSlots()
+    {
+        if (heroDetailGearSlotTexts == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < heroDetailGearSlotTexts.Length; i++)
+        {
+            if (heroDetailGearSlotTexts[i] != null)
+            {
+                heroDetailGearSlotTexts[i].text = GetHeroDetailGearSlotText(i);
+            }
+
+            if (heroDetailGearSlotFrames != null && i < heroDetailGearSlotFrames.Length && heroDetailGearSlotFrames[i] != null)
+            {
+                var color = GetHeroDetailGearSlotColor(i);
+                if (i == selectedHeroDetailGearSlotIndex && heroDetailGearListRoot != null && heroDetailGearListRoot.gameObject.activeSelf)
+                {
+                    color = Color.Lerp(color, new Color(1f, 0.88f, 0.32f, 1f), 0.58f);
+                }
+
+                heroDetailGearSlotFrames[i].color = color;
+            }
+        }
+    }
+
+    private void ShowHeroDetailGearSlot0() => ShowHeroDetailGearSlot(0);
+    private void ShowHeroDetailGearSlot1() => ShowHeroDetailGearSlot(1);
+    private void ShowHeroDetailGearSlot2() => ShowHeroDetailGearSlot(2);
+    private void ShowHeroDetailGearSlot3() => ShowHeroDetailGearSlot(3);
+    private void ShowHeroDetailGearSlot4() => ShowHeroDetailGearSlot(4);
+    private void ShowHeroDetailGearSlot5() => ShowHeroDetailGearSlot(5);
+
+    private void ShowHeroDetailGearSlot(int slotIndex)
+    {
+        if (heroDetailGearListRoot == null)
+        {
+            return;
+        }
+
+        selectedHeroDetailGearSlotIndex = Mathf.Clamp(slotIndex, 0, heroDetailGearSlotTexts == null ? 5 : heroDetailGearSlotTexts.Length - 1);
+        heroDetailGearListRoot.gameObject.SetActive(true);
+        heroDetailGearListRoot.SetAsLastSibling();
+        RefreshHeroDetailGearSlots();
+        RefreshHeroDetailGearList();
+    }
+
+    private void HideHeroDetailGearList()
+    {
+        selectedHeroDetailGearSlotIndex = -1;
+        if (heroDetailGearListRoot != null)
+        {
+            heroDetailGearListRoot.gameObject.SetActive(false);
+        }
+
+        RefreshHeroDetailGearSlots();
+    }
+
+    private void RefreshHeroDetailGearList()
+    {
+        if (heroDetailGearListRoot == null || !heroDetailGearListRoot.gameObject.activeSelf)
+        {
+            return;
+        }
+
+        if (selectedHeroDetailGearSlotIndex < 0)
+        {
+            heroDetailGearListRoot.gameObject.SetActive(false);
+            return;
+        }
+
+        EnsureAccessories();
+        if (selectedHeroDetailGearSlotIndex < 2)
+        {
+            RefreshHeroDetailEquipmentTrackList(selectedHeroDetailGearSlotIndex == 0 ? WeaponTrack : ArmorTrack, selectedHeroDetailGearSlotIndex == 0 ? weaponLevel : armorLevel);
+            return;
+        }
+
+        var accessorySlot = selectedHeroDetailGearSlotIndex - 2;
+        if (accessorySlot < 0 || accessorySlot >= AccessorySlotCount)
+        {
+            return;
+        }
+
+        if (heroDetailGearListTitleText != null)
+        {
+            heroDetailGearListTitleText.text = $"{AccessorySlots[accessorySlot].name} Gear";
+        }
+
+        var canInteract = !backendRequestInProgress && !backendLifecycleFlushInProgress && !campaignFightInProgress;
+        for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
+        {
+            var optionButton = heroDetailGearOptionButtons != null && rarity < heroDetailGearOptionButtons.Length ? heroDetailGearOptionButtons[rarity] : null;
+            var optionText = heroDetailGearOptionTexts != null && rarity < heroDetailGearOptionTexts.Length ? heroDetailGearOptionTexts[rarity] : null;
+            if (optionButton == null)
+            {
+                continue;
+            }
+
+            optionButton.gameObject.SetActive(true);
+            var copies = GetAccessoryInventoryCount(accessorySlot, rarity);
+            var equipped = equippedAccessoryRarities[accessorySlot] == rarity;
+            var levelText = equipped ? $"  Equipped Lv {equippedAccessoryLevels[accessorySlot]}" : string.Empty;
+            var actionText = equipped ? "Equipped" : copies > 0 ? "Tap to equip" : "No copy";
+            if (optionText != null)
+            {
+                optionText.text = $"{GetAccessoryRarityName(rarity)} {AccessorySlots[accessorySlot].name}   Copies {copies}{levelText}\n{actionText}";
+            }
+
+            var image = optionButton.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = equipped
+                    ? new Color(1f, 0.76f, 0.25f, 0.98f)
+                    : copies > 0
+                        ? GetAccessoryRarityColor(rarity)
+                        : new Color(0.16f, 0.11f, 0.09f, 0.84f);
+            }
+
+            optionButton.interactable = canInteract && copies > 0 && !equipped;
+        }
+    }
+
+    private void RefreshHeroDetailEquipmentTrackList(EquipmentTrackDefinition track, int level)
+    {
+        if (heroDetailGearListTitleText != null)
+        {
+            heroDetailGearListTitleText.text = $"{track.name} Gear";
+        }
+
+        for (var i = 0; i < AccessoryRarityCount; i++)
+        {
+            var optionButton = heroDetailGearOptionButtons != null && i < heroDetailGearOptionButtons.Length ? heroDetailGearOptionButtons[i] : null;
+            var optionText = heroDetailGearOptionTexts != null && i < heroDetailGearOptionTexts.Length ? heroDetailGearOptionTexts[i] : null;
+            if (optionButton == null)
+            {
+                continue;
+            }
+
+            optionButton.gameObject.SetActive(i < 2);
+            optionButton.interactable = i == 1;
+            var image = optionButton.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = i == 1 ? new Color(0.38f, 0.2f, 0.08f, 0.96f) : new Color(0.18f, 0.11f, 0.07f, 0.9f);
+            }
+
+            if (optionText != null)
+            {
+                optionText.text = i == 0
+                    ? $"{track.name} Lv {GetEquipmentDisplayLevel(track, level)}   +{GetEquipmentBonus(track, level)} {track.statLabel}\nGlobal equipment track"
+                    : "Open Gear screen";
+            }
+        }
+    }
+
+    private void EquipHeroDetailGearOption0() => EquipHeroDetailGearOption(0);
+    private void EquipHeroDetailGearOption1() => EquipHeroDetailGearOption(1);
+    private void EquipHeroDetailGearOption2() => EquipHeroDetailGearOption(2);
+    private void EquipHeroDetailGearOption3() => EquipHeroDetailGearOption(3);
+    private void EquipHeroDetailGearOption4() => EquipHeroDetailGearOption(4);
+
+    private void EquipHeroDetailGearOption(int rarity)
+    {
+        if (selectedHeroDetailGearSlotIndex < 0)
+        {
+            return;
+        }
+
+        if (selectedHeroDetailGearSlotIndex < 2)
+        {
+            ShowGear();
+            return;
+        }
+
+        var accessorySlot = selectedHeroDetailGearSlotIndex - 2;
+        if (accessorySlot < 0 || accessorySlot >= AccessorySlotCount)
+        {
+            return;
+        }
+
+        selectedAccessorySlot = accessorySlot;
+        selectedAccessoryRarity = Mathf.Clamp(rarity, 0, AccessoryRarityCount - 1);
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: equipping accessory..."))
+            {
+                StartCoroutine(backendClient.EquipAccessory(GetAccessoryDefinition(selectedAccessorySlot, selectedAccessoryRarity).accessoryId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
+        var result = EquipAccessory(GetAccessoryDefinition(selectedAccessorySlot, selectedAccessoryRarity).accessoryId);
+        SetDungeonResult(result.message);
+        ShowHeroDetailGearSlot(selectedHeroDetailGearSlotIndex);
+    }
+
+    private string GetHeroDetailGearSlotText(int slotIndex)
+    {
+        if (slotIndex == 0)
+        {
+            return $"{WeaponTrack.name}\nLv {GetEquipmentDisplayLevel(WeaponTrack, weaponLevel)}";
+        }
+
+        if (slotIndex == 1)
+        {
+            return $"{ArmorTrack.name}\nLv {GetEquipmentDisplayLevel(ArmorTrack, armorLevel)}";
+        }
+
+        var accessorySlot = slotIndex - 2;
+        if (accessorySlot < 0 || accessorySlot >= AccessorySlotCount)
+        {
+            return "Locked";
+        }
+
+        var rarity = equippedAccessoryRarities[accessorySlot];
+        if (rarity < 0)
+        {
+            return $"{AccessorySlots[accessorySlot].name}\nEmpty";
+        }
+
+        return $"{AccessorySlots[accessorySlot].name}\n{GetAccessoryRarityName(rarity)} Lv {equippedAccessoryLevels[accessorySlot]}";
+    }
+
+    private Color GetHeroDetailGearSlotColor(int slotIndex)
+    {
+        if (slotIndex < 2)
+        {
+            return new Color(0.72f, 0.47f, 0.22f, 0.96f);
+        }
+
+        var accessorySlot = slotIndex - 2;
+        if (accessorySlot < 0 || accessorySlot >= AccessorySlotCount)
+        {
+            return new Color(0.18f, 0.13f, 0.1f, 0.78f);
+        }
+
+        var rarity = equippedAccessoryRarities[accessorySlot];
+        return rarity >= 0 ? GetAccessoryRarityColor(rarity) : new Color(0.36f, 0.22f, 0.13f, 0.9f);
+    }
+
+    private static string GetHeroDetailTitle(HeroDefinition hero)
+    {
+        switch (hero.heroId)
+        {
+            case "hero_astra":
+                return "The Frost Vanguard";
+            case "hero_borin":
+                return "The Iron Sentinel";
+            case "hero_cyra":
+                return "The Burning Light";
+            case "hero_dante":
+                return "The Rift Marksman";
+            case "hero_elowen":
+                return "The Grove Oracle";
+            default:
+                return $"The {hero.roleName}";
+        }
+    }
+
+    private static Color GetHeroRarityColor(string rarityId)
+    {
+        if (rarityId == LegendaryRarityId)
+        {
+            return new Color(0.35f, 1f, 0.92f);
+        }
+
+        if (rarityId == EpicRarityId)
+        {
+            return new Color(0.86f, 0.58f, 1f);
+        }
+
+        return new Color(0.55f, 0.9f, 1f);
+    }
+
+    private static Color GetAccessoryRarityColor(int rarity)
+    {
+        var tier = Mathf.Clamp(rarity, 0, AccessoryRarityCount - 1);
+        switch (tier)
+        {
+            case 4:
+                return new Color(1f, 0.72f, 0.24f, 0.96f);
+            case 3:
+                return new Color(0.86f, 0.55f, 1f, 0.96f);
+            case 2:
+                return new Color(0.35f, 0.75f, 1f, 0.96f);
+            case 1:
+                return new Color(0.35f, 0.9f, 0.48f, 0.96f);
+            default:
+                return new Color(0.72f, 0.72f, 0.72f, 0.92f);
+        }
+    }
+
     private void RefreshTopBarUi()
     {
         if (topBarRoot == null)
@@ -7711,6 +11408,387 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetHomeShortcutsExpanded(homeShortcutsExpanded);
         RefreshFastRewardsPopupUi();
 
+    }
+
+    private void RefreshCampaignMapUi()
+    {
+        if (homeCampaignMapRoot == null || campaignStageButtons == null)
+        {
+            return;
+        }
+
+        if (selectedCampaignStage <= 0)
+        {
+            selectedCampaignStage = Mathf.Max(1, enemyLevel);
+        }
+
+        var startStage = GetCampaignMapStartStage();
+        for (var i = 0; i < campaignStageButtons.Length; i++)
+        {
+            var stageNumber = startStage + i;
+            var isCleared = stageNumber < enemyLevel;
+            var isCurrent = stageNumber == enemyLevel;
+            var isLocked = stageNumber > enemyLevel;
+            var isSelected = stageNumber == selectedCampaignStage;
+
+            if (campaignStageButtonTexts != null && i < campaignStageButtonTexts.Length && campaignStageButtonTexts[i] != null)
+            {
+                campaignStageButtonTexts[i].text = $"{(stageNumber - 1) / 10 + 1}-{(stageNumber - 1) % 10 + 1}";
+                campaignStageButtonTexts[i].color = isLocked ? new Color(0.56f, 0.6f, 0.68f) : Color.white;
+            }
+
+            if (campaignStageButtonFrames != null && i < campaignStageButtonFrames.Length && campaignStageButtonFrames[i] != null)
+            {
+                campaignStageButtonFrames[i].color = isSelected
+                    ? new Color(1f, 0.78f, 0.24f, 1f)
+                    : isCurrent
+                        ? new Color(0.54f, 0.23f, 0.75f, 0.98f)
+                        : isCleared
+                            ? new Color(0.22f, 0.48f, 0.42f, 0.95f)
+                            : new Color(0.12f, 0.13f, 0.17f, 0.82f);
+            }
+
+            if (campaignStageButtonIcons != null && i < campaignStageButtonIcons.Length && campaignStageButtonIcons[i] != null)
+            {
+                campaignStageButtonIcons[i].texture = isCleared
+                    ? LoadRuntimeTexture("dungeon_portal")
+                    : LoadCombatTexture(GetCampaignEnemyTextureName(stageNumber, 0), "idle", 0, "enemy_campaign");
+                campaignStageButtonIcons[i].color = isLocked ? new Color(0.32f, 0.34f, 0.4f, 0.72f) : Color.white;
+            }
+
+            campaignStageButtons[i].interactable = !campaignFightInProgress && !backendRequestInProgress && !backendLifecycleFlushInProgress;
+        }
+
+        RefreshCampaignStagePreview();
+    }
+
+    private void RefreshCampaignStagePreview()
+    {
+        if (campaignStagePreviewText == null)
+        {
+            return;
+        }
+
+        var stageNumber = Mathf.Max(1, selectedCampaignStage);
+        var stage = GetStageDefinition(stageNumber);
+        var status = stageNumber < enemyLevel ? "Cleared" : stageNumber == enemyLevel ? "Current Target" : "Locked";
+        var requiredPower = GetStageRecommendedPower(stageNumber);
+        var fightLine = stageNumber == enemyLevel
+            ? "Battle opens formation."
+            : stageNumber < enemyLevel
+                ? "Replay selection comes later."
+                : "Clear the current stage first.";
+        campaignStagePreviewText.text =
+            $"Stage {stageNumber}: {stage.enemyName}  |  {status}\n" +
+            $"Power {FormatCompactNumber(GetTeamPower())}/{FormatCompactNumber(requiredPower)}  Reward +{stage.essenceReward} Essence\n" +
+            fightLine;
+    }
+
+    private void EnsureFormationOrder()
+    {
+        if (formationSlotHeroIndices == null || formationSlotHeroIndices.Length != HeroCount)
+        {
+            formationSlotHeroIndices = new int[HeroCount];
+            for (var i = 0; i < HeroCount; i++)
+            {
+                formationSlotHeroIndices[i] = i;
+            }
+
+            selectedFormationSlotIndex = -1;
+            return;
+        }
+
+        var usedHeroes = new bool[HeroCount];
+        for (var slotIndex = 0; slotIndex < formationSlotHeroIndices.Length; slotIndex++)
+        {
+            var heroIndex = formationSlotHeroIndices[slotIndex];
+            if (heroIndex < 0 || heroIndex >= HeroCount || usedHeroes[heroIndex])
+            {
+                formationSlotHeroIndices[slotIndex] = -1;
+                continue;
+            }
+
+            usedHeroes[heroIndex] = true;
+        }
+
+        var nextMissingHero = 0;
+        for (var slotIndex = 0; slotIndex < formationSlotHeroIndices.Length; slotIndex++)
+        {
+            if (formationSlotHeroIndices[slotIndex] >= 0)
+            {
+                continue;
+            }
+
+            while (nextMissingHero < HeroCount && usedHeroes[nextMissingHero])
+            {
+                nextMissingHero++;
+            }
+
+            formationSlotHeroIndices[slotIndex] = nextMissingHero < HeroCount ? nextMissingHero : slotIndex;
+            if (nextMissingHero < HeroCount)
+            {
+                usedHeroes[nextMissingHero] = true;
+            }
+        }
+
+        if (selectedFormationSlotIndex < 0 || selectedFormationSlotIndex >= HeroCount)
+        {
+            selectedFormationSlotIndex = -1;
+        }
+    }
+
+    private void SelectFormationSlot(int slotIndex)
+    {
+        if (campaignFightInProgress || backendRequestInProgress || backendLifecycleFlushInProgress)
+        {
+            return;
+        }
+
+        EnsureFormationOrder();
+        slotIndex = Mathf.Clamp(slotIndex, 0, HeroCount - 1);
+        if (selectedFormationSlotIndex < 0)
+        {
+            selectedFormationSlotIndex = slotIndex;
+        }
+        else if (selectedFormationSlotIndex == slotIndex)
+        {
+            selectedFormationSlotIndex = -1;
+        }
+        else
+        {
+            var heroIndex = formationSlotHeroIndices[selectedFormationSlotIndex];
+            formationSlotHeroIndices[selectedFormationSlotIndex] = formationSlotHeroIndices[slotIndex];
+            formationSlotHeroIndices[slotIndex] = heroIndex;
+            selectedFormationSlotIndex = -1;
+            SaveProgress();
+        }
+
+        RefreshFormationUi();
+        RefreshGameplayInteractivity();
+    }
+
+    private Vector2[] GetCurrentFightHeroPositions()
+    {
+        EnsureFormationOrder();
+
+        var slotPositions = GetFightHeroPositions();
+        var heroPositions = new Vector2[HeroCount];
+        var assignedHeroes = new bool[HeroCount];
+        for (var slotIndex = 0; slotIndex < HeroCount && slotIndex < slotPositions.Length; slotIndex++)
+        {
+            var heroIndex = formationSlotHeroIndices[slotIndex];
+            if (heroIndex < 0 || heroIndex >= HeroCount)
+            {
+                continue;
+            }
+
+            heroPositions[heroIndex] = slotPositions[slotIndex];
+            assignedHeroes[heroIndex] = true;
+        }
+
+        for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
+        {
+            if (!assignedHeroes[heroIndex])
+            {
+                heroPositions[heroIndex] = slotPositions[Mathf.Min(heroIndex, slotPositions.Length - 1)];
+            }
+        }
+
+        return heroPositions;
+    }
+
+    private void RefreshFormationSlotHighlights()
+    {
+        if (formationSlotFrames == null)
+        {
+            return;
+        }
+
+        var canInteract = !backendRequestInProgress && !backendLifecycleFlushInProgress && !campaignFightInProgress;
+        for (var slotIndex = 0; slotIndex < formationSlotFrames.Length; slotIndex++)
+        {
+            var isSelected = selectedFormationSlotIndex == slotIndex;
+            var isSwapTarget = selectedFormationSlotIndex >= 0 && selectedFormationSlotIndex != slotIndex;
+            if (formationSlotFrames[slotIndex] != null)
+            {
+                formationSlotFrames[slotIndex].color = isSelected
+                    ? new Color(1f, 0.74f, 0.18f, 0.95f)
+                    : isSwapTarget
+                        ? new Color(0.22f, 0.72f, 1f, 0.82f)
+                        : new Color(0.1f, 0.13f, 0.2f, 0.62f);
+            }
+
+            if (formationSlotButtons != null && slotIndex < formationSlotButtons.Length)
+            {
+                SetButtonInteractable(formationSlotButtons[slotIndex], canInteract);
+            }
+        }
+    }
+
+    private void RefreshFormationUi()
+    {
+        if (formationRoot == null)
+        {
+            return;
+        }
+
+        EnsureFormationOrder();
+
+        var isDungeon = battleTargetMode == BattleTargetMode.Dungeon;
+        var stageNumber = Mathf.Max(1, selectedCampaignStage == enemyLevel ? selectedCampaignStage : enemyLevel);
+        var stage = GetStageDefinition(stageNumber);
+        var dungeon = ResolveDungeonDefinition(selectedDungeonId);
+        var dungeonFloor = GetDungeonFloor(dungeon.dungeonId);
+
+        if (formationHeaderText != null)
+        {
+            formationHeaderText.text = isDungeon
+                ? $"{dungeon.displayName} F{dungeonFloor} Formation"
+                : $"Stage {stageNumber} Formation";
+        }
+
+        if (formationTeamText != null)
+        {
+            formationTeamText.text = $"Power {FormatCompactNumber(GetTeamPower())}   ATK {FormatCompactNumber(GetTeamDamage())}   HP {FormatCompactNumber(GetTeamHealth())}   Crit {GetTeamCritChancePercent()}%   Acc {GetTeamAccuracyPercent()}%   DEF {GetTeamDefense()}";
+        }
+
+        if (formationEnemyText != null)
+        {
+            formationEnemyText.text = isDungeon
+                ? $"{GetDungeonBossName(dungeon.dungeonId)}\n" +
+                  $"Recommended {FormatCompactNumber(GetDungeonRecommendedPower(dungeon, dungeonFloor))}   Boss HP {FormatCompactNumber(GetDungeonEnemyHp(dungeon, dungeonFloor))}   Damage {FormatCompactNumber(GetDungeonEnemyDamage(dungeon, dungeonFloor))}\n" +
+                  FormatDungeonFormationRewardLine(dungeon, dungeonFloor)
+                : $"{stage.enemyName}\n" +
+                  $"Recommended {FormatCompactNumber(GetStageRecommendedPower(stageNumber))}   HP {FormatCompactNumber(stage.maxHp)}   Damage {FormatCompactNumber(GetCampaignEnemyDamage(stageNumber))}";
+        }
+
+        if (formationEnemyImage != null)
+        {
+            var enemyTextureName = isDungeon ? GetDungeonBossTextureName(dungeon.dungeonId) : GetCampaignEnemyTextureName(stageNumber, 0);
+            formationEnemyImage.texture = LoadCombatTexture(enemyTextureName, "idle", 0, "enemy_campaign");
+            formationEnemyImage.rectTransform.sizeDelta = isDungeon ? new Vector2(176, 176) : new Vector2(150, 150);
+            formationEnemyImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale(enemyTextureName), 1f, 1f);
+        }
+
+        if (formationHeroImages != null)
+        {
+            for (var slotIndex = 0; slotIndex < formationHeroImages.Length; slotIndex++)
+            {
+                var heroIndex = formationSlotHeroIndices[Mathf.Clamp(slotIndex, 0, formationSlotHeroIndices.Length - 1)];
+                if (formationHeroImages[slotIndex] != null)
+                {
+                    formationHeroImages[slotIndex].texture = LoadCombatTexture(GetHeroTextureName(heroIndex), "idle", 0, GetHeroTextureName(heroIndex));
+                    formationHeroImages[slotIndex].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
+                }
+
+                if (formationHeroTexts != null && slotIndex < formationHeroTexts.Length && formationHeroTexts[slotIndex] != null)
+                {
+                    var hero = GetHeroDefinition(heroIndex);
+                    formationHeroTexts[slotIndex].text = $"{hero.name} Lv {heroLevels[heroIndex]}";
+                }
+            }
+        }
+
+        RefreshFormationSlotHighlights();
+        RefreshFormationAutoContinueToggle();
+
+        if (formationHintText != null)
+        {
+            if (selectedFormationSlotIndex >= 0)
+            {
+                formationHintText.text = "Tippe eine leuchtende Position, um die Helden zu tauschen.";
+            }
+            else
+            {
+                formationHintText.text = backendGameplayEnabled
+                    ? "Server Mode resolves rewards, then plays the visible fight."
+                    : isDungeon
+                        ? "Confirm starts a single-boss dungeon fight."
+                        : "Confirm starts a visible 30s combat sim.";
+            }
+        }
+    }
+
+    private void SelectVisibleCampaignStage(int nodeIndex)
+    {
+        selectedCampaignStage = Mathf.Max(1, GetCampaignMapStartStage() + Mathf.Clamp(nodeIndex, 0, 9));
+        RefreshCampaignMapUi();
+        RefreshGameplayInteractivity();
+    }
+
+    private int GetCampaignMapStartStage()
+    {
+        if (enemyLevel <= 7)
+        {
+            return 1;
+        }
+
+        return Mathf.Max(1, enemyLevel - 4);
+    }
+
+    private static Vector2[] GetCampaignMapNodePositions()
+    {
+        return new[]
+        {
+            new Vector2(-320, -490),
+            new Vector2(-220, -410),
+            new Vector2(-92, -465),
+            new Vector2(42, -382),
+            new Vector2(178, -432),
+            new Vector2(300, -332),
+            new Vector2(238, -230),
+            new Vector2(82, -258),
+            new Vector2(-76, -190),
+            new Vector2(-252, -238)
+        };
+    }
+
+    private static Vector2[] GetFormationHeroPositions()
+    {
+        return new[]
+        {
+            new Vector2(-298, -238),
+            new Vector2(-198, -128),
+            new Vector2(-92, -248),
+            new Vector2(12, -136),
+            new Vector2(116, -252)
+        };
+    }
+
+    private static Vector2[] GetFightHeroPositions()
+    {
+        return new[]
+        {
+            new Vector2(-320, -650),
+            new Vector2(-210, -515),
+            new Vector2(-92, -708),
+            new Vector2(-48, -455),
+            new Vector2(-300, -365)
+        };
+    }
+
+    private static Vector2[] GetFightEnemyPositions()
+    {
+        return new[]
+        {
+            new Vector2(285, -405),
+            new Vector2(168, -545),
+            new Vector2(330, -632),
+            new Vector2(90, -728),
+            new Vector2(300, -805)
+        };
+    }
+
+    private static Vector2[] GetFightBossEnemyPositions()
+    {
+        return new[]
+        {
+            new Vector2(250, -545),
+            new Vector2(250, -545),
+            new Vector2(250, -545),
+            new Vector2(250, -545),
+            new Vector2(250, -545)
+        };
     }
 
     private void SetInventoryPopupVisible(bool isVisible)
@@ -7958,7 +12036,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             debugEssenceButton,
             debugGemsButton,
             debugAccessoryButton,
-            homeBeginButton);
+            fightEndButton,
+            homeBeginButton,
+            heroDetailCloseButton,
+            heroDetailPreviousButton,
+            heroDetailNextButton,
+            heroDetailLevelButton,
+            heroDetailEquipGearButton,
+            heroDetailRemoveGearButton);
         runtimeArt.ApplyButtonStyle(heroSelectButtons);
         runtimeArt.ApplyButtonStyle(dailyMissionButtons);
         runtimeArt.ApplyButtonStyle(battlePassRewardButtons);
@@ -8075,6 +12160,71 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return rectTransform;
     }
 
+    private static void CreateLayeredRuntimeBackground(Transform parent, Vector2 size, float alpha)
+    {
+        var sky = CreateRuntimeRawImage(parent, "Runtime Sky Layer", LoadRuntimeTexture("bg_sky"), new Vector2(0, -8), new Vector2(size.x, size.y * 0.72f), new Vector2(0.5f, 1f));
+        sky.color = new Color(0.62f, 0.82f, 1f, alpha);
+
+        var clouds = CreateRuntimeRawImage(parent, "Runtime Cloud Layer", LoadRuntimeTexture("bg_clouds"), new Vector2(0, -95), new Vector2(size.x * 0.88f, size.y * 0.14f), new Vector2(0.5f, 1f));
+        clouds.color = new Color(1f, 1f, 1f, alpha * 0.62f);
+
+        var mountains = CreateRuntimeRawImage(parent, "Runtime Mountain Layer", LoadRuntimeTexture("bg_mountains"), new Vector2(0, -size.y * 0.28f), new Vector2(size.x * 0.94f, size.y * 0.24f), new Vector2(0.5f, 1f));
+        mountains.color = new Color(0.68f, 0.75f, 0.98f, alpha * 0.92f);
+
+        var hills = CreateRuntimeRawImage(parent, "Runtime Hill Layer", LoadRuntimeTexture("bg_hills"), new Vector2(0, -size.y * 0.48f), new Vector2(size.x * 0.96f, size.y * 0.24f), new Vector2(0.5f, 1f));
+        hills.color = new Color(0.56f, 0.72f, 0.62f, alpha * 0.95f);
+
+        var castle = CreateRuntimeRawImage(parent, "Runtime Castle Accent", LoadRuntimeTexture("bg_castle"), new Vector2(size.x * 0.32f, -size.y * 0.42f), new Vector2(size.x * 0.13f, size.x * 0.13f), new Vector2(0.5f, 1f));
+        castle.color = new Color(1f, 1f, 1f, alpha);
+
+        var tree = CreateRuntimeRawImage(parent, "Runtime Tree Accent", LoadRuntimeTexture("bg_tree"), new Vector2(-size.x * 0.36f, -size.y * 0.52f), new Vector2(size.x * 0.11f, size.x * 0.14f), new Vector2(0.5f, 1f));
+        tree.color = new Color(1f, 1f, 1f, alpha);
+    }
+
+    private static Image CreateRuntimeHealthFill(Transform parent, string name, Vector2 anchoredPosition, float width, Color fillColor)
+    {
+        var back = CreateRuntimePanel(parent, name, anchoredPosition, new Vector2(width, 15), new Color(0.025f, 0.025f, 0.035f, 0.92f));
+
+        var fillObject = new GameObject("Fill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        fillObject.transform.SetParent(back, false);
+        var fillRect = fillObject.GetComponent<RectTransform>();
+        fillRect.anchorMin = Vector2.zero;
+        fillRect.anchorMax = Vector2.one;
+        fillRect.offsetMin = Vector2.zero;
+        fillRect.offsetMax = Vector2.zero;
+
+        var fill = fillObject.GetComponent<Image>();
+        fill.color = fillColor;
+        fill.raycastTarget = false;
+        return fill;
+    }
+
+    private static Image CreateRuntimeProjectile(Transform parent, string name, Color color, out RectTransform rect)
+    {
+        var projectileObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        projectileObject.transform.SetParent(parent, false);
+        rect = projectileObject.GetComponent<RectTransform>();
+        SetRuntimeRect(rect, new Vector2(0, -520), new Vector2(38, 10), new Vector2(0.5f, 1f));
+
+        var image = projectileObject.GetComponent<Image>();
+        image.color = color;
+        image.raycastTarget = false;
+        projectileObject.SetActive(false);
+        return image;
+    }
+
+    private static void SetRuntimeFillPercent(Image fill, float percent)
+    {
+        if (fill == null)
+        {
+            return;
+        }
+
+        var rect = fill.GetComponent<RectTransform>();
+        rect.anchorMax = new Vector2(Mathf.Clamp01(percent), 1f);
+        rect.offsetMax = Vector2.zero;
+    }
+
     private static RawImage CreateRuntimeRawImage(Transform parent, string name, string textureName, Vector2 anchoredPosition, Vector2 rectSize)
     {
         return CreateRuntimeRawImage(parent, name, LoadRuntimeTexture(textureName), anchoredPosition, rectSize, new Vector2(0.5f, 1f));
@@ -8162,6 +12312,56 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         sprite.texture.filterMode = FilterMode.Point;
         return sprite.texture;
+    }
+
+    private static Texture2D[] LoadCombatAnimationFrames(string textureName, string clipName, string fallbackTextureName)
+    {
+        const int maxFrameCount = 16;
+
+        var frames = new Texture2D[maxFrameCount];
+        var frameCount = 0;
+        for (var i = 0; i < maxFrameCount; i++)
+        {
+            var texture = LoadCombatTexture(textureName, clipName, i, null);
+            if (texture == null)
+            {
+                continue;
+            }
+
+            frames[frameCount++] = texture;
+        }
+
+        if (frameCount == 0)
+        {
+            var fallback = LoadRuntimeTexture(fallbackTextureName);
+            return fallback == null ? Array.Empty<Texture2D>() : new[] { fallback };
+        }
+
+        Array.Resize(ref frames, frameCount);
+        return frames;
+    }
+
+    private static Texture2D LoadCombatTexture(string textureName, string clipName, int frameIndex, string fallbackTextureName)
+    {
+        if (!string.IsNullOrWhiteSpace(textureName) && !string.IsNullOrWhiteSpace(clipName))
+        {
+            var resourcePath = $"Mythwake/Art/CombatAnimated/{textureName}_{clipName}_{frameIndex:00}";
+            var texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture != null)
+            {
+                texture.filterMode = FilterMode.Bilinear;
+                return texture;
+            }
+
+            var sprite = Resources.Load<Sprite>(resourcePath);
+            if (sprite != null)
+            {
+                sprite.texture.filterMode = FilterMode.Bilinear;
+                return sprite.texture;
+            }
+        }
+
+        return LoadRuntimeTexture(fallbackTextureName);
     }
 
     private Texture2D GetHomeNavbarTexture(string textureName)
