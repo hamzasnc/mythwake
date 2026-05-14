@@ -326,8 +326,6 @@ func heroCritChancePercent(heroID string, ascension int) int {
 		base = 8
 	case "hero_ravik":
 		base = 17
-	case "hero_liora":
-		base = 14
 	}
 	return clampInt(base+ascension/2, 0, 75)
 }
@@ -347,8 +345,6 @@ func heroAccuracyPercent(heroID string, ascension int) int {
 		base = 90
 	case "hero_ravik":
 		base = 91
-	case "hero_liora":
-		base = 93
 	}
 	return clampInt(base+ascension/3, 50, 100)
 }
@@ -368,8 +364,6 @@ func heroDefense(heroID string, level int, ascension int) int {
 		base = 14
 	case "hero_ravik":
 		base = 7
-	case "hero_liora":
-		base = 11
 	}
 	return max(0, base+level/2+ascension*3)
 }
@@ -441,8 +435,6 @@ func heroMaxMana(heroID string) int {
 		return 30
 	case "hero_ravik":
 		return 27
-	case "hero_liora":
-		return 26
 	default:
 		return 28
 	}
@@ -464,8 +456,6 @@ func heroAttackIntervalMS(heroID string) int {
 		return 1700
 	case "hero_ravik":
 		return 1160
-	case "hero_liora":
-		return 1080
 	default:
 		return 1120
 	}
@@ -481,8 +471,6 @@ func heroUltimateCooldownMS(heroID string) int {
 		return 5600
 	case "hero_ravik":
 		return 4400
-	case "hero_liora":
-		return 4300
 	default:
 		return 4500
 	}
@@ -532,8 +520,6 @@ func heroUltimateName(heroID string) string {
 		return "Wild Bloom"
 	case "hero_ravik":
 		return "Dragonflame Nova"
-	case "hero_liora":
-		return "Crescent Nova"
 	default:
 		return "Ultimate"
 	}
@@ -551,8 +537,6 @@ func heroUltimateEffect(heroID string, attack int, teamMaxHP int) (int, int) {
 		return attack * 3, max(1, teamMaxHP/4)
 	case "hero_ravik":
 		return attack * 8, 0
-	case "hero_liora":
-		return attack * 7, 0
 	default:
 		return attack * 4, 0
 	}

@@ -34,8 +34,7 @@ public sealed class MythwakeRuntimeArtPresenter
         "hero_cyra",
         "hero_dante",
         "hero_elowen",
-        "hero_ravik",
-        "hero_liora"
+        "hero_ravik"
     };
 
     private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();

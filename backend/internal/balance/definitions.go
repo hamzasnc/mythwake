@@ -202,7 +202,6 @@ var heroDefinitions = []HeroDefinition{
 	{ID: "hero_dante", DisplayName: "Dante", SortOrder: 40, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 20, AttackPerLevel: 6, AttackPerAscension: 8, BaseHealth: 125, HealthPerLevel: 23, HealthPerAscension: 55},
 	{ID: "hero_elowen", DisplayName: "Elowen", SortOrder: 50, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 12, AttackPerLevel: 4, AttackPerAscension: 14, BaseHealth: 165, HealthPerLevel: 34, HealthPerAscension: 90},
 	{ID: "hero_ravik", DisplayName: "Ravik", SortOrder: 60, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 24, AttackPerLevel: 7, AttackPerAscension: 12, BaseHealth: 118, HealthPerLevel: 22, HealthPerAscension: 70},
-	{ID: "hero_liora", DisplayName: "Liora", SortOrder: 70, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 21, AttackPerLevel: 6, AttackPerAscension: 13, BaseHealth: 142, HealthPerLevel: 27, HealthPerAscension: 82},
 }
 
 var equipmentDefinitions = []EquipmentDefinition{
@@ -380,7 +379,6 @@ var heroShardStandardPool = []SummonShardDrop{
 	{HeroID: "hero_dante", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
 	{HeroID: "hero_elowen", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
 	{HeroID: "hero_ravik", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
-	{HeroID: "hero_liora", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
 }
 
 var progressionCostDefinitions = []ProgressionCostDefinition{
