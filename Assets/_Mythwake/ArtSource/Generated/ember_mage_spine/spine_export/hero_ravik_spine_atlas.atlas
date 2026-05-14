@@ -1,0 +1,159 @@
+hero_ravik_spine_atlas.png
+size: 1024,2048
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+shadow_fire_ring
+  rotate: false
+  xy: 4, 4
+  size: 250, 91
+  orig: 250, 91
+  offset: 0, 0
+  index: -1
+cloak_left
+  rotate: false
+  xy: 258, 4
+  size: 250, 339
+  orig: 250, 339
+  offset: 0, 0
+  index: -1
+cloak_mid
+  rotate: false
+  xy: 512, 4
+  size: 237, 334
+  orig: 237, 334
+  offset: 0, 0
+  index: -1
+cloak_right
+  rotate: false
+  xy: 4, 347
+  size: 338, 390
+  orig: 338, 390
+  offset: 0, 0
+  index: -1
+leg_left_boot
+  rotate: false
+  xy: 346, 347
+  size: 122, 204
+  orig: 122, 204
+  offset: 0, 0
+  index: -1
+leg_right_boot
+  rotate: false
+  xy: 472, 347
+  size: 124, 218
+  orig: 124, 218
+  offset: 0, 0
+  index: -1
+leg_left_lower
+  rotate: false
+  xy: 600, 347
+  size: 110, 193
+  orig: 110, 193
+  offset: 0, 0
+  index: -1
+leg_right_lower
+  rotate: false
+  xy: 714, 347
+  size: 112, 194
+  orig: 112, 194
+  offset: 0, 0
+  index: -1
+torso
+  rotate: false
+  xy: 830, 347
+  size: 186, 225
+  orig: 186, 225
+  offset: 0, 0
+  index: -1
+belt_vials
+  rotate: false
+  xy: 4, 741
+  size: 252, 142
+  orig: 252, 142
+  offset: 0, 0
+  index: -1
+arm_left_bent
+  rotate: false
+  xy: 260, 741
+  size: 87, 164
+  orig: 87, 164
+  offset: 0, 0
+  index: -1
+arm_right_open
+  rotate: false
+  xy: 351, 741
+  size: 101, 206
+  orig: 101, 206
+  offset: 0, 0
+  index: -1
+hand_left_flame
+  rotate: false
+  xy: 456, 741
+  size: 110, 184
+  orig: 110, 184
+  offset: 0, 0
+  index: -1
+hand_right_flame
+  rotate: false
+  xy: 570, 741
+  size: 128, 192
+  orig: 128, 192
+  offset: 0, 0
+  index: -1
+hair_back
+  rotate: false
+  xy: 702, 741
+  size: 221, 220
+  orig: 221, 220
+  offset: 0, 0
+  index: -1
+head_smirk
+  rotate: false
+  xy: 4, 965
+  size: 248, 230
+  orig: 248, 230
+  offset: 0, 0
+  index: -1
+head_neutral
+  rotate: false
+  xy: 256, 965
+  size: 241, 227
+  orig: 241, 227
+  offset: 0, 0
+  index: -1
+head_shout
+  rotate: false
+  xy: 501, 965
+  size: 231, 207
+  orig: 231, 207
+  offset: 0, 0
+  index: -1
+hair_front
+  rotate: false
+  xy: 736, 965
+  size: 236, 208
+  orig: 236, 208
+  offset: 0, 0
+  index: -1
+collar
+  rotate: false
+  xy: 4, 1199
+  size: 187, 97
+  orig: 187, 97
+  offset: 0, 0
+  index: -1
+projectile_fireball
+  rotate: false
+  xy: 195, 1199
+  size: 211, 162
+  orig: 211, 162
+  offset: 0, 0
+  index: -1
+fx_flame_burst
+  rotate: false
+  xy: 410, 1199
+  size: 334, 328
+  orig: 334, 328
+  offset: 0, 0
+  index: -1

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.73";
+    public const string PrototypeVersion = "0.2.74";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -559,7 +559,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const string RareRarityId = "rare";
     private const string EpicRarityId = "epic";
     private const string LegendaryRarityId = "legendary";
-    private const int HeroCount = 5;
+    private const int HeroCount = 7;
     private const int DailyMissionCount = 3;
     private const int BattlePassRewardCount = 5;
     private const int AccessorySlotCount = 5;
@@ -638,7 +638,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         new HeroDefinition("hero_borin", "Borin", TankRoleId, "Tank", RareRarityId, "Rare", 10, 3, 230, 42, 10, 20, 15, 8, 55, 5, 88, 24),
         new HeroDefinition("hero_cyra", "Cyra", MageRoleId, "Mage", EpicRarityId, "Epic", 22, 7, 110, 20, 7, 25, 15, 11, 70, 15, 90, 6),
         new HeroDefinition("hero_dante", "Dante", RangerRoleId, "Ranger", RareRarityId, "Rare", 20, 6, 125, 23, 10, 20, 15, 8, 55, 18, 95, 8),
-        new HeroDefinition("hero_elowen", "Elowen", SupportRoleId, "Support", LegendaryRarityId, "Legendary", 12, 4, 165, 34, 5, 30, 15, 14, 90, 8, 90, 14)
+        new HeroDefinition("hero_elowen", "Elowen", SupportRoleId, "Support", LegendaryRarityId, "Legendary", 12, 4, 165, 34, 5, 30, 15, 14, 90, 8, 90, 14),
+        new HeroDefinition("hero_ravik", "Ravik", MageRoleId, "Mage", EpicRarityId, "Epic", 24, 7, 118, 22, 1, 25, 15, 12, 70, 17, 91, 7),
+        new HeroDefinition("hero_liora", "Liora", WarriorRoleId, "Warrior", LegendaryRarityId, "Legendary", 21, 6, 142, 27, 5, 30, 15, 13, 82, 14, 93, 11)
     };
 
     private static readonly string[] CampaignEnemyCombatTextureNames =
@@ -701,11 +703,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         "First x10 pack has a 10% discount",
         GemsCurrencyId,
         SummonCost,
-        new[] { 3, 4, 2 },
+        new[] { 6, 4, 2 },
         new[]
         {
-            new SummonRateDefinition(LegendaryRarityId, 10, new[] { 4 }),
-            new SummonRateDefinition(EpicRarityId, 45, new[] { 0, 2 }),
+            new SummonRateDefinition(LegendaryRarityId, 10, new[] { 4, 6 }),
+            new SummonRateDefinition(EpicRarityId, 45, new[] { 0, 2, 5 }),
             new SummonRateDefinition(RareRarityId, 100, new[] { 1, 3 })
         });
 
@@ -721,7 +723,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             new[] { 0, 3, 1 },
             new[]
             {
-                new SummonRateDefinition(LegendaryRarityId, 6, new[] { 4 }),
+                new SummonRateDefinition(LegendaryRarityId, 6, new[] { 4, 6 }),
                 new SummonRateDefinition(EpicRarityId, 58, new[] { 0 }),
                 new SummonRateDefinition(RareRarityId, 100, new[] { 1, 3 })
             }),
@@ -731,11 +733,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             "Better Legendary odds for support and mages",
             GemsCurrencyId,
             SummonCost,
-            new[] { 4, 2, 0 },
+            new[] { 6, 4, 2 },
             new[]
             {
-                new SummonRateDefinition(LegendaryRarityId, 15, new[] { 4 }),
-                new SummonRateDefinition(EpicRarityId, 50, new[] { 2, 0 }),
+                new SummonRateDefinition(LegendaryRarityId, 15, new[] { 4, 6 }),
+                new SummonRateDefinition(EpicRarityId, 50, new[] { 2, 0, 5 }),
                 new SummonRateDefinition(RareRarityId, 100, new[] { 1, 3 })
             })
     };
@@ -1131,6 +1133,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button[] formationSlotButtons;
     private Image[] formationSlotFrames;
     private RawImage[] formationHeroImages;
+    private RavikSkeletalCombatView[] formationHeroSkeletalViews;
+    private MythwakeSpineHeroCombatView[] formationHeroSpineViews;
     private TMP_Text[] formationHeroTexts;
     private Button formationAutoContinueButton;
     private Image formationAutoContinueBox;
@@ -1147,6 +1151,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text fightStatusText;
     private RawImage[] fightHeroImages;
     private RawImage[] fightEnemyImages;
+    private RavikSkeletalCombatView[] fightHeroSkeletalViews;
+    private MythwakeSpineHeroCombatView[] fightHeroSpineViews;
     private RectTransform[] fightHeroRects;
     private RectTransform[] fightEnemyRects;
     private Image[] fightHeroHpFills;
@@ -1157,6 +1163,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Texture2D[][] fightHeroIdleFrames;
     private Texture2D[][] fightHeroRunFrames;
     private Texture2D[][] fightHeroAttackFrames;
+    private Texture2D[][] fightHeroUltimateFrames;
+    private Texture2D[][] fightHeroAttackFxFrames;
+    private Texture2D[][] fightHeroUltimateFxFrames;
     private Texture2D[][] fightEnemyIdleFrames;
     private Texture2D[][] fightEnemyRunFrames;
     private Texture2D[][] fightEnemyAttackFrames;
@@ -1165,6 +1174,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Image[] fightEnemyProjectileImages;
     private RectTransform[] fightHeroProjectileRects;
     private RectTransform[] fightEnemyProjectileRects;
+    private RawImage[] fightHeroFxImages;
+    private RectTransform[] fightHeroFxRects;
     private Button[] fightSkillButtons;
     private Image[] fightSkillBackplates;
     private Image[] fightSkillHpFills;
@@ -1852,6 +1863,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SetProjectilesVisible(fightHeroProjectileImages, false);
         SetProjectilesVisible(fightEnemyProjectileImages, false);
+        SetRawImagesVisible(fightHeroFxImages, false);
+        HideRavikSkeletalViews(fightHeroSkeletalViews);
+        HideSpineHeroViews(fightHeroSpineViews);
         RefreshFormationAutoContinueToggle();
         RefreshFightAutoSkillButton();
         SaveProgress();
@@ -5361,6 +5375,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             SetProjectilesVisible(fightHeroProjectileImages, false);
             SetProjectilesVisible(fightEnemyProjectileImages, false);
+            SetRawImagesVisible(fightHeroFxImages, false);
+            HideRavikSkeletalViews(fightHeroSkeletalViews);
+            HideSpineHeroViews(fightHeroSpineViews);
             if (fightTimerText != null)
             {
                 fightTimerText.text = "Ended";
@@ -5382,6 +5399,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshFightBossHpUi(singleBoss, enemyHpPercents);
         SetProjectilesVisible(fightHeroProjectileImages, false);
         SetProjectilesVisible(fightEnemyProjectileImages, false);
+        SetRawImagesVisible(fightHeroFxImages, false);
+        HideRavikSkeletalViews(fightHeroSkeletalViews);
+        HideSpineHeroViews(fightHeroSpineViews);
         RefreshFightSkillHealthUi(heroHpPercents);
         RefreshFightSkillUi(animationTimer);
         if (fightTimerText != null)
@@ -5588,6 +5608,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 ShowFightFloatingText(floatingIndex++, "+Heal", targetPosition + new Vector2(0, -128), new Color(0.45f, 1f, 0.58f));
             }
         }
+
+        if (heroId == "hero_ravik" && UnityEngine.Random.value <= 0.22f)
+        {
+            GainFightHeroMana(heroIndex, 2);
+            ShowFightFloatingText(floatingIndex++, "Cinder", targetPosition + new Vector2(0, -128), new Color(1f, 0.48f, 0.18f));
+        }
     }
 
     private int ResolveFightHeroUltimates(
@@ -5664,6 +5690,70 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (heroId == "hero_borin")
             {
                 HealCombatHealth(heroHpPercents, HeroCount, 0.06f);
+            }
+
+            if (heroId == "hero_ravik")
+            {
+                var mainDamage = ApplyTargetDamageTowardAverage(
+                    enemyHpPercents,
+                    state.targetIndex,
+                    activeEnemyCount,
+                    enemyEndPercent,
+                    heroDamageUnit * GetFightVisualDamageWeight(true, i) * GetHeroUltimateDamageMultiplier(i));
+
+                for (var enemyIndex = 0; enemyIndex < activeEnemyCount; enemyIndex++)
+                {
+                    if (enemyIndex == state.targetIndex || !IsFightTargetAlive(enemyIndex, enemyHpPercents, activeEnemyCount))
+                    {
+                        continue;
+                    }
+
+                    ApplyTargetDamageTowardAverage(
+                        enemyHpPercents,
+                        enemyIndex,
+                        activeEnemyCount,
+                        enemyEndPercent,
+                        heroDamageUnit * GetFightVisualDamageWeight(true, i) * GetHeroUltimateDamageMultiplier(i) * 0.38f);
+                }
+
+                if (mainDamage > 0.001f)
+                {
+                    ShowFightFloatingText(floatingIndex++, "Dragonflame", targetPosition + new Vector2(0, -118), new Color(1f, 0.42f, 0.14f));
+                }
+
+                return i;
+            }
+
+            if (heroId == "hero_liora")
+            {
+                var mainDamage = ApplyTargetDamageTowardAverage(
+                    enemyHpPercents,
+                    state.targetIndex,
+                    activeEnemyCount,
+                    enemyEndPercent,
+                    heroDamageUnit * GetFightVisualDamageWeight(true, i) * GetHeroUltimateDamageMultiplier(i));
+
+                for (var enemyIndex = 0; enemyIndex < activeEnemyCount; enemyIndex++)
+                {
+                    if (enemyIndex == state.targetIndex || !IsFightTargetAlive(enemyIndex, enemyHpPercents, activeEnemyCount))
+                    {
+                        continue;
+                    }
+
+                    ApplyTargetDamageTowardAverage(
+                        enemyHpPercents,
+                        enemyIndex,
+                        activeEnemyCount,
+                        enemyEndPercent,
+                        heroDamageUnit * GetFightVisualDamageWeight(true, i) * GetHeroUltimateDamageMultiplier(i) * 0.24f);
+                }
+
+                if (mainDamage > 0.001f)
+                {
+                    ShowFightFloatingText(floatingIndex++, "Crescent Nova", targetPosition + new Vector2(0, -118), new Color(0.56f, 0.94f, 1f));
+                }
+
+                return i;
             }
 
             var damage = ApplyTargetDamageTowardAverage(
@@ -6398,6 +6488,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return 230f;
         }
 
+        if (heroId == "hero_ravik")
+        {
+            return 300f;
+        }
+
+        if (heroId == "hero_liora")
+        {
+            return 315f;
+        }
+
         return 285f;
     }
 
@@ -6439,6 +6539,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (heroId == "hero_elowen")
             {
                 return 1.7f;
+            }
+
+            if (heroId == "hero_ravik")
+            {
+                return 1.16f;
+            }
+
+            if (heroId == "hero_liora")
+            {
+                return 1.08f;
             }
 
             return 1.12f;
@@ -6539,6 +6649,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return 30;
         }
 
+        if (heroId == "hero_ravik")
+        {
+            return 27;
+        }
+
+        if (heroId == "hero_liora")
+        {
+            return 26;
+        }
+
         return 28;
     }
 
@@ -6568,6 +6688,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (heroId == "hero_elowen")
         {
             return 3.4f;
+        }
+
+        if (heroId == "hero_ravik")
+        {
+            return 7.9f;
+        }
+
+        if (heroId == "hero_liora")
+        {
+            return 7.2f;
         }
 
         return 4.8f;
@@ -6601,6 +6731,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         fightHeroIdleFrames = new Texture2D[HeroCount][];
         fightHeroRunFrames = new Texture2D[HeroCount][];
         fightHeroAttackFrames = new Texture2D[HeroCount][];
+        fightHeroUltimateFrames = new Texture2D[HeroCount][];
+        fightHeroAttackFxFrames = new Texture2D[HeroCount][];
+        fightHeroUltimateFxFrames = new Texture2D[HeroCount][];
         fightEnemyIdleFrames = new Texture2D[HeroCount][];
         fightEnemyRunFrames = new Texture2D[HeroCount][];
         fightEnemyAttackFrames = new Texture2D[HeroCount][];
@@ -6612,10 +6745,40 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             fightHeroIdleFrames[i] = LoadCombatAnimationFrames(heroTextureName, "idle", heroTextureName);
             fightHeroRunFrames[i] = LoadCombatAnimationFrames(heroTextureName, "run", heroTextureName);
             fightHeroAttackFrames[i] = LoadCombatAnimationFrames(heroTextureName, "attack", heroTextureName);
+            fightHeroUltimateFrames[i] = LoadCombatAnimationFrames(heroTextureName, "ultimate", heroTextureName);
+            fightHeroAttackFxFrames[i] = LoadCombatAnimationFrames(heroTextureName, "fx_attack", null);
+            fightHeroUltimateFxFrames[i] = LoadCombatAnimationFrames(heroTextureName, "fx_ultimate", null);
             SetRawImageTexture(fightHeroImages, i, GetFirstTexture(fightHeroIdleFrames[i]));
             if (fightHeroImages != null && i < fightHeroImages.Length && fightHeroImages[i] != null)
             {
+                var useRavikRig = IsRavikHero(i) && HasRavikSkeletalView(fightHeroSkeletalViews, i);
+                var useSpineRig = IsSpineHero(i) && HasSpineHeroView(fightHeroSpineViews, i);
+                fightHeroImages[i].gameObject.SetActive(!useRavikRig && !useSpineRig);
                 fightHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
+            }
+
+            if (fightHeroSkeletalViews != null && i < fightHeroSkeletalViews.Length && fightHeroSkeletalViews[i] != null)
+            {
+                if (IsRavikHero(i))
+                {
+                    fightHeroSkeletalViews[i].ShowPreview(GetFightHeroPositions()[Mathf.Min(i, GetFightHeroPositions().Length - 1)], GetHeroFacingScale(i), 1f);
+                }
+                else
+                {
+                    fightHeroSkeletalViews[i].Hide();
+                }
+            }
+
+            if (fightHeroSpineViews != null && i < fightHeroSpineViews.Length && fightHeroSpineViews[i] != null)
+            {
+                if (IsSpineHero(i))
+                {
+                    fightHeroSpineViews[i].ShowPreview(GetFightHeroPositions()[Mathf.Min(i, GetFightHeroPositions().Length - 1)], GetHeroFacingScale(i), 1f);
+                }
+                else
+                {
+                    fightHeroSpineViews[i].Hide();
+                }
             }
 
             var enemyTextureName = singleBoss
@@ -6725,6 +6888,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         SetProjectilesVisible(fightHeroProjectileImages, false);
         SetProjectilesVisible(fightEnemyProjectileImages, false);
+        SetRawImagesVisible(fightHeroFxImages, false);
+        HideRavikSkeletalViews(fightHeroSkeletalViews);
+        HideSpineHeroViews(fightHeroSpineViews);
         var ultimateCinematicActive = ultimateCinematicHeroIndex >= 0 && ultimateCinematicRemaining > 0f;
         var ultimateProgress = ultimateCinematicActive ? Mathf.Clamp01(1f - (ultimateCinematicRemaining / FightUltimateCinematicSeconds)) : 0f;
         var ultimatePulse = ultimateCinematicActive ? Mathf.Sin(ultimateProgress * Mathf.PI) : 0f;
@@ -6733,21 +6899,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var state = heroStates != null && i < heroStates.Length ? heroStates[i] : default;
             var unitAnimationTimer = ultimateCinematicActive && i != ultimateCinematicHeroIndex ? slowedWorldAnimationTimer : animationTimer;
-            var position = state.position + new Vector2(0f, Mathf.Sin(unitAnimationTimer * 5.4f + i) * 4.5f);
+            var isRavik = IsRavikHero(i);
+            var isSpineHero = IsSpineHero(i);
+            var usesRuntimeRig = isRavik || isSpineHero;
+            var position = state.position + new Vector2(0f, usesRuntimeRig ? 0f : Mathf.Sin(unitAnimationTimer * 5.4f + i) * 4.5f);
             var alive = heroHpPercents != null && i < heroHpPercents.Length && heroHpPercents[i] > 0.001f;
             var frames = GetFightFrameSet(fightHeroIdleFrames, i);
             var frameSpeed = 6.8f;
             var actionAge = unitAnimationTimer - state.attackStartedAt;
             var tint = Color.white;
             var scaleMultiplier = 1f;
+            var ravikClip = RavikSkeletalCombatView.Clip.Idle;
+            var spineClip = MythwakeSpineHeroCombatView.Clip.Idle;
+            var ravikHasTarget = false;
+            var ravikTargetPosition = Vector2.zero;
 
             if (ultimateCinematicActive && alive)
             {
                 if (i == ultimateCinematicHeroIndex)
                 {
                     tint = Color.Lerp(Color.white, new Color(1f, 0.88f, 0.28f, 1f), 0.35f + ultimatePulse * 0.45f);
-                    scaleMultiplier = 1f + ultimatePulse * 0.18f;
-                    position += new Vector2(0f, -18f * ultimatePulse);
+                    if (!usesRuntimeRig)
+                    {
+                        scaleMultiplier = 1f + ultimatePulse * 0.18f;
+                        position += new Vector2(0f, -18f * ultimatePulse);
+                    }
                 }
                 else
                 {
@@ -6759,6 +6935,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 frames = GetFightFrameSet(fightHeroRunFrames, i, fightHeroIdleFrames);
                 frameSpeed = 10.5f;
+                ravikClip = RavikSkeletalCombatView.Clip.Run;
+                spineClip = MythwakeSpineHeroCombatView.Clip.Run;
             }
 
             if (alive && IsFightActionActive(actionAge))
@@ -6768,17 +6946,76 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 {
                     frames = GetFightFrameSet(fightHeroAttackFrames, i, fightHeroIdleFrames);
                     frameSpeed = 10.5f;
-                    position += new Vector2(Mathf.Sin(phase * Mathf.PI * 2f) * 5f, Mathf.Sin(phase * Mathf.PI) * 7f);
+                    ravikClip = RavikSkeletalCombatView.Clip.Attack;
+                    spineClip = MythwakeSpineHeroCombatView.Clip.Attack;
+                    if (!usesRuntimeRig)
+                    {
+                        position += new Vector2(Mathf.Sin(phase * Mathf.PI * 2f) * 5f, Mathf.Sin(phase * Mathf.PI) * 7f);
+                    }
                     if (enemyStates != null && state.targetIndex >= 0 && state.targetIndex < enemyStates.Length)
                     {
-                        AnimateProjectile(GetProjectileImage(fightHeroProjectileImages, i), GetProjectileRect(fightHeroProjectileRects, i), state.position + new Vector2(58f, -64f), enemyStates[state.targetIndex].position + new Vector2(-54f, -70f), phase);
+                        ravikHasTarget = true;
+                        ravikTargetPosition = enemyStates[state.targetIndex].position + new Vector2(-54f, -70f);
+                        if (!usesRuntimeRig)
+                        {
+                            AnimateProjectile(GetProjectileImage(fightHeroProjectileImages, i), GetProjectileRect(fightHeroProjectileRects, i), state.position + new Vector2(58f, -64f), ravikTargetPosition, phase);
+                        }
+                    }
+
+                    if (isRavik && !HasRavikSkeletalView(fightHeroSkeletalViews, i))
+                    {
+                        AnimateHeroCastFx(i, fightHeroAttackFxFrames, position + new Vector2(82f, -74f), new Vector2(190f, 95f), actionAge, 8.5f, 0.95f);
                     }
                 }
                 else
                 {
                     frames = GetFightFrameSet(fightHeroAttackFrames, i, fightHeroIdleFrames);
                     frameSpeed = 12f;
+                    ravikClip = RavikSkeletalCombatView.Clip.Attack;
+                    spineClip = MythwakeSpineHeroCombatView.Clip.Attack;
                 }
+            }
+
+            if (ultimateCinematicActive && alive && i == ultimateCinematicHeroIndex)
+            {
+                frames = GetFightFrameSet(fightHeroUltimateFrames, i, fightHeroAttackFrames);
+                frameSpeed = 9.5f;
+                ravikClip = RavikSkeletalCombatView.Clip.Ultimate;
+                spineClip = MythwakeSpineHeroCombatView.Clip.Skill;
+                if (isRavik)
+                {
+                    var fxPosition = position + new Vector2(142f, -88f);
+                    if (enemyStates != null && state.targetIndex >= 0 && state.targetIndex < enemyStates.Length)
+                    {
+                        fxPosition = Vector2.Lerp(state.position, enemyStates[state.targetIndex].position, 0.55f) + new Vector2(0f, -92f);
+                    }
+
+                    ravikHasTarget = true;
+                    ravikTargetPosition = fxPosition;
+                    if (!HasRavikSkeletalView(fightHeroSkeletalViews, i))
+                    {
+                        var ultimateElapsed = FightUltimateCinematicSeconds - ultimateCinematicRemaining;
+                        AnimateHeroCastFx(i, fightHeroUltimateFxFrames, fxPosition, new Vector2(380f, 190f), ultimateElapsed, 6.6f, 1f);
+                    }
+                }
+            }
+
+            if (!alive)
+            {
+                ravikClip = RavikSkeletalCombatView.Clip.Death;
+                spineClip = MythwakeSpineHeroCombatView.Clip.Death;
+            }
+
+            if (TryApplyRavikSkeletalFightPose(i, ravikClip, position, unitAnimationTimer, actionAge, GetHeroFacingScale(i), scaleMultiplier, tint, alive || isRavik, ravikHasTarget, ravikTargetPosition, ultimateProgress))
+            {
+                SetHealthFillVisible(GetHealthFill(fightHeroHpFills, i), false);
+                continue;
+            }
+
+            if (TryApplySpineHeroFightPose(i, spineClip, position, unitAnimationTimer, actionAge, GetHeroFacingScale(i), scaleMultiplier, tint, alive || isSpineHero))
+            {
+                SetHealthFillVisible(GetHealthFill(fightHeroHpFills, i), false);
+                continue;
             }
 
             ApplyFightUnitAnimationFrame(fightHeroImages, i, frames, frameSpeed, i * 1.3f, unitAnimationTimer);
@@ -6941,6 +7178,126 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private static void SetRawImagesVisible(RawImage[] images, bool isVisible)
+    {
+        if (images == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < images.Length; i++)
+        {
+            if (images[i] != null)
+            {
+                images[i].gameObject.SetActive(isVisible);
+            }
+        }
+    }
+
+    private static void HideRavikSkeletalViews(RavikSkeletalCombatView[] views)
+    {
+        if (views == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < views.Length; i++)
+        {
+            if (views[i] != null)
+            {
+                views[i].HideTransientEffects();
+            }
+        }
+    }
+
+    private static void HideSpineHeroViews(MythwakeSpineHeroCombatView[] views)
+    {
+        if (views == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < views.Length; i++)
+        {
+            if (views[i] != null)
+            {
+                views[i].HideTransientEffects();
+            }
+        }
+    }
+
+    private bool TryApplyRavikSkeletalFightPose(
+        int heroIndex,
+        RavikSkeletalCombatView.Clip clip,
+        Vector2 position,
+        float animationTimer,
+        float actionAge,
+        float facingScale,
+        float scaleMultiplier,
+        Color tint,
+        bool visible,
+        bool hasTarget,
+        Vector2 targetPosition,
+        float ultimateProgress)
+    {
+        if (!IsRavikHero(heroIndex) || !HasRavikSkeletalView(fightHeroSkeletalViews, heroIndex))
+        {
+            return false;
+        }
+
+        if (fightHeroImages != null && heroIndex >= 0 && heroIndex < fightHeroImages.Length && fightHeroImages[heroIndex] != null)
+        {
+            fightHeroImages[heroIndex].gameObject.SetActive(false);
+        }
+
+        fightHeroSkeletalViews[heroIndex].ApplyCombatPose(
+            clip,
+            position,
+            animationTimer,
+            actionAge,
+            facingScale,
+            scaleMultiplier,
+            tint,
+            visible,
+            hasTarget,
+            targetPosition,
+            ultimateProgress);
+        return true;
+    }
+
+    private bool TryApplySpineHeroFightPose(
+        int heroIndex,
+        MythwakeSpineHeroCombatView.Clip clip,
+        Vector2 position,
+        float animationTimer,
+        float actionAge,
+        float facingScale,
+        float scaleMultiplier,
+        Color tint,
+        bool visible)
+    {
+        if (!IsSpineHero(heroIndex) || !HasSpineHeroView(fightHeroSpineViews, heroIndex))
+        {
+            return false;
+        }
+
+        if (fightHeroImages != null && heroIndex >= 0 && heroIndex < fightHeroImages.Length && fightHeroImages[heroIndex] != null)
+        {
+            fightHeroImages[heroIndex].gameObject.SetActive(false);
+        }
+
+        fightHeroSpineViews[heroIndex].ApplyCombatPose(
+            clip,
+            position,
+            animationTimer,
+            actionAge,
+            facingScale,
+            scaleMultiplier,
+            tint,
+            visible);
+        return true;
+    }
+
     private static Image GetProjectileImage(Image[] images, int index)
     {
         return images != null && index >= 0 && index < images.Length ? images[index] : null;
@@ -6973,6 +7330,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var color = image.color;
         color.a = Mathf.Clamp01(Mathf.Sin(t * Mathf.PI) * 0.95f);
         image.color = color;
+        image.gameObject.SetActive(true);
+    }
+
+    private void AnimateHeroCastFx(int index, Texture2D[][] frameSets, Vector2 position, Vector2 size, float animationTimer, float speed, float alpha)
+    {
+        if (fightHeroFxImages == null || fightHeroFxRects == null || index < 0 || index >= fightHeroFxImages.Length || index >= fightHeroFxRects.Length)
+        {
+            return;
+        }
+
+        var image = fightHeroFxImages[index];
+        var rect = fightHeroFxRects[index];
+        var frames = GetFightFrameSet(frameSets, index);
+        if (image == null || rect == null || !HasFrames(frames))
+        {
+            return;
+        }
+
+        var frameIndex = Mathf.Abs(Mathf.FloorToInt(animationTimer * Mathf.Max(1f, speed))) % frames.Length;
+        image.texture = frames[frameIndex];
+        image.color = new Color(1f, 1f, 1f, Mathf.Clamp01(alpha));
+        rect.anchoredPosition = position;
+        rect.sizeDelta = size;
+        rect.localRotation = Quaternion.identity;
+        rect.localScale = Vector3.one;
         image.gameObject.SetActive(true);
     }
 
@@ -7355,6 +7737,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void RegisterHeroButtons()
     {
+        EnsureRuntimeHeroSelectButtons();
         if (heroSelectButtons == null || heroSelectButtons.Length == 0)
         {
             RegisterHeroScreenControls();
@@ -7366,6 +7749,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (heroSelectButtons.Length > 2 && heroSelectButtons[2] != null) heroSelectButtons[2].onClick.AddListener(SelectHeroCard2);
         if (heroSelectButtons.Length > 3 && heroSelectButtons[3] != null) heroSelectButtons[3].onClick.AddListener(SelectHeroCard3);
         if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.AddListener(SelectHeroCard4);
+        if (heroSelectButtons.Length > 5 && heroSelectButtons[5] != null) heroSelectButtons[5].onClick.AddListener(SelectHeroCard5);
+        if (heroSelectButtons.Length > 6 && heroSelectButtons[6] != null) heroSelectButtons[6].onClick.AddListener(SelectHeroCard6);
 
         RegisterHeroScreenControls();
         RegisterHeroDragTriggers();
@@ -7384,6 +7769,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (heroSelectButtons.Length > 2 && heroSelectButtons[2] != null) heroSelectButtons[2].onClick.RemoveListener(SelectHeroCard2);
         if (heroSelectButtons.Length > 3 && heroSelectButtons[3] != null) heroSelectButtons[3].onClick.RemoveListener(SelectHeroCard3);
         if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.RemoveListener(SelectHeroCard4);
+        if (heroSelectButtons.Length > 5 && heroSelectButtons[5] != null) heroSelectButtons[5].onClick.RemoveListener(SelectHeroCard5);
+        if (heroSelectButtons.Length > 6 && heroSelectButtons[6] != null) heroSelectButtons[6].onClick.RemoveListener(SelectHeroCard6);
 
         UnregisterHeroScreenControls();
     }
@@ -7568,6 +7955,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void SelectHeroCard2() => SelectHeroCard(2);
     private void SelectHeroCard3() => SelectHeroCard(3);
     private void SelectHeroCard4() => SelectHeroCard(4);
+    private void SelectHeroCard5() => SelectHeroCard(5);
+    private void SelectHeroCard6() => SelectHeroCard(6);
 
     private void SelectHeroCard(int cardIndex)
     {
@@ -7693,6 +8082,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SetProjectilesVisible(fightHeroProjectileImages, false);
         SetProjectilesVisible(fightEnemyProjectileImages, false);
+        SetRawImagesVisible(fightHeroFxImages, false);
+        HideRavikSkeletalViews(fightHeroSkeletalViews);
+        HideSpineHeroViews(fightHeroSpineViews);
         SetBattleFlowMode(BattleFlowMode.Formation);
         SetDungeonResult("Fight cancelled because the team formation changed.");
         RefreshFormationAutoContinueToggle();
@@ -9465,6 +9857,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static float GetHeroFacingScale(int heroIndex)
     {
         return GetHeroTextureName(heroIndex) == "hero_dante" ? -1f : 1f;
+    }
+
+    private static bool IsRavikHero(int heroIndex)
+    {
+        return GetHeroTextureName(heroIndex) == "hero_ravik";
+    }
+
+    private static bool IsSpineHero(int heroIndex)
+    {
+        return MythwakeSpineHeroCombatView.SupportsHero(GetHeroTextureName(heroIndex));
+    }
+
+    private static bool HasRavikSkeletalView(RavikSkeletalCombatView[] views, int index)
+    {
+        return views != null && index >= 0 && index < views.Length && views[index] != null;
+    }
+
+    private static bool HasSpineHeroView(MythwakeSpineHeroCombatView[] views, int index)
+    {
+        return views != null && index >= 0 && index < views.Length && views[index] != null;
     }
 
     private static float GetEnemyFacingScale(string enemyTextureName)
@@ -12485,6 +12897,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         formationSlotButtons = new Button[HeroCount];
         formationSlotFrames = new Image[HeroCount];
         formationHeroImages = new RawImage[HeroCount];
+        formationHeroSkeletalViews = new RavikSkeletalCombatView[HeroCount];
+        formationHeroSpineViews = new MythwakeSpineHeroCombatView[HeroCount];
         formationHeroTexts = new TMP_Text[HeroCount];
         var heroPositions = GetFormationHeroPositions();
         for (var i = 0; i < HeroCount; i++)
@@ -12506,6 +12920,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             formationHeroImages[i] = CreateRuntimeRawImage(arena, $"Formation Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(124, 124), new Vector2(0.5f, 1f));
             formationHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
             formationHeroImages[i].raycastTarget = false;
+            formationHeroSkeletalViews[i] = RavikSkeletalCombatView.Create(arena, $"Formation Ravik Skeletal View {i + 1}", heroPositions[i], 0.54f);
+            formationHeroSpineViews[i] = MythwakeSpineHeroCombatView.Create(arena, $"Formation Spine Hero View {i + 1}", heroPositions[i], 0.54f);
             formationHeroTexts[i] = CreateRuntimeText(arena, $"Formation Hero Label {i + 1}", string.Empty, 16, heroPositions[i] + new Vector2(0, -112), new Vector2(126, 26));
             formationHeroTexts[i].fontStyle = FontStyles.Bold;
             formationHeroTexts[i].enableAutoSizing = true;
@@ -12582,6 +12998,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         fightHeroImages = new RawImage[HeroCount];
         fightEnemyImages = new RawImage[HeroCount];
+        fightHeroSkeletalViews = new RavikSkeletalCombatView[HeroCount];
+        fightHeroSpineViews = new MythwakeSpineHeroCombatView[HeroCount];
         fightHeroRects = new RectTransform[HeroCount];
         fightEnemyRects = new RectTransform[HeroCount];
         fightHeroHpFills = new Image[HeroCount];
@@ -12595,6 +13013,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             fightHeroImages[i] = CreateRuntimeRawImage(fightRoot, $"Fight Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(132, 132), new Vector2(0.5f, 1f));
             fightHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
             fightHeroRects[i] = fightHeroImages[i].GetComponent<RectTransform>();
+            fightHeroSkeletalViews[i] = RavikSkeletalCombatView.Create(fightRoot, $"Fight Ravik Skeletal View {i + 1}", heroPositions[i], 0.65f);
+            fightHeroSpineViews[i] = MythwakeSpineHeroCombatView.Create(fightRoot, $"Fight Spine Hero View {i + 1}", heroPositions[i], 0.65f);
             fightHeroHpFills[i] = CreateRuntimeHealthFill(fightRoot, $"Fight Hero HP {i + 1}", heroPositions[i] + new Vector2(0, -128), 118, new Color(0.16f, 0.78f, 0.33f));
             SetHealthFillVisible(fightHeroHpFills[i], false);
 
@@ -12612,10 +13032,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         fightEnemyProjectileImages = new Image[HeroCount];
         fightHeroProjectileRects = new RectTransform[HeroCount];
         fightEnemyProjectileRects = new RectTransform[HeroCount];
+        fightHeroFxImages = new RawImage[HeroCount];
+        fightHeroFxRects = new RectTransform[HeroCount];
         for (var i = 0; i < HeroCount; i++)
         {
             fightHeroProjectileImages[i] = CreateRuntimeProjectile(fightRoot, $"Hero Projectile {i + 1}", new Color(0.38f, 0.94f, 1f, 0.92f), out fightHeroProjectileRects[i]);
             fightEnemyProjectileImages[i] = CreateRuntimeProjectile(fightRoot, $"Enemy Projectile {i + 1}", new Color(1f, 0.36f, 0.24f, 0.92f), out fightEnemyProjectileRects[i]);
+            fightHeroFxImages[i] = CreateRuntimeRawImage(fightRoot, $"Hero Cast FX {i + 1}", null, new Vector2(0, -520), new Vector2(220, 120), new Vector2(0.5f, 1f));
+            fightHeroFxRects[i] = fightHeroFxImages[i].rectTransform;
+            fightHeroFxImages[i].gameObject.SetActive(false);
         }
 
         CreateFightSkillBar();
@@ -12649,8 +13074,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         fightSkillNameTexts = new TMP_Text[HeroCount];
         fightSkillManaTexts = new TMP_Text[HeroCount];
 
-        const float spacing = 154f;
-        var startX = -308f;
+        const float spacing = 136f;
+        var startX = -((HeroCount - 1) * spacing * 0.5f);
         for (var i = 0; i < HeroCount; i++)
         {
             var cardObject = new GameObject($"Fight Skill Card {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
@@ -12774,7 +13199,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void EnsureRuntimeHeroCardArt()
     {
-        if (heroSelectButtons == null || (heroCardPortraits != null && heroCardShardFills != null))
+        EnsureRuntimeHeroSelectButtons();
+        if (heroSelectButtons == null || (heroCardPortraits != null && heroCardPortraits.Length == heroSelectButtons.Length && heroCardShardFills != null && heroCardShardFills.Length == heroSelectButtons.Length))
         {
             return;
         }
@@ -12847,6 +13273,58 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroCardShardTexts[i].fontStyle = FontStyles.Bold;
             heroCardShardTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
             heroCardShardTexts[i].raycastTarget = false;
+        }
+    }
+
+    private void EnsureRuntimeHeroSelectButtons()
+    {
+        if (heroesPanel == null)
+        {
+            return;
+        }
+
+        var existingButtonCount = heroSelectButtons == null ? 0 : heroSelectButtons.Length;
+        if (existingButtonCount >= HeroCount && heroCardTexts != null && heroCardTexts.Length >= HeroCount)
+        {
+            return;
+        }
+
+        var nextButtons = new Button[HeroCount];
+        var nextTexts = heroCardTexts != null || existingButtonCount > 0 ? new TMP_Text[HeroCount] : null;
+        for (var i = 0; i < HeroCount; i++)
+        {
+            if (heroSelectButtons != null && i < heroSelectButtons.Length)
+            {
+                nextButtons[i] = heroSelectButtons[i];
+            }
+
+            if (nextTexts != null && heroCardTexts != null && i < heroCardTexts.Length)
+            {
+                nextTexts[i] = heroCardTexts[i];
+            }
+        }
+
+        for (var i = existingButtonCount; i < HeroCount; i++)
+        {
+            var button = CreateRuntimeButton(heroesPanel.transform, $"Runtime Hero Select Button {i + 1}", string.Empty, 0, 0, 154, 226);
+            var label = button.GetComponentInChildren<TMP_Text>(includeInactive: true);
+            if (label != null)
+            {
+                label.text = string.Empty;
+                label.gameObject.SetActive(false);
+            }
+
+            nextButtons[i] = button;
+            if (nextTexts != null)
+            {
+                nextTexts[i] = label;
+            }
+        }
+
+        heroSelectButtons = nextButtons;
+        if (nextTexts != null)
+        {
+            heroCardTexts = nextTexts;
         }
     }
 
@@ -12932,13 +13410,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroTeamSlotTexts = new TMP_Text[HeroCount];
         heroTeamSlotFrames = new Image[HeroCount];
         heroTeamSlotButtons = new Button[HeroCount];
-        const float spacing = 154f;
-        var startX = -308f;
+        const float spacing = 126f;
+        var startX = -((HeroCount - 1) * spacing * 0.5f);
         for (var i = 0; i < HeroCount; i++)
         {
             var slotObject = new GameObject($"Hero Team Slot {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
             slotObject.transform.SetParent(heroTeamRoot, false);
-            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), new Vector2(startX + spacing * i, -82), new Vector2(136, 190), new Vector2(0.5f, 1f));
+            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), new Vector2(startX + spacing * i, -82), new Vector2(118, 186), new Vector2(0.5f, 1f));
 
             var frame = slotObject.GetComponent<Image>();
             frame.color = new Color(0.1f, 0.14f, 0.19f, 0.82f);
@@ -12948,9 +13426,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             button.targetGraphic = frame;
             heroTeamSlotButtons[i] = button;
 
-            heroTeamSlotPortraits[i] = CreateRuntimeRawImage(slotObject.transform, "Portrait", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -12), new Vector2(108, 116), new Vector2(0.5f, 1f));
+            heroTeamSlotPortraits[i] = CreateRuntimeRawImage(slotObject.transform, "Portrait", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -12), new Vector2(96, 108), new Vector2(0.5f, 1f));
             heroTeamSlotPortraits[i].raycastTarget = false;
-            heroTeamSlotTexts[i] = CreateRuntimeText(slotObject.transform, "Label", string.Empty, 15, new Vector2(0, -132), new Vector2(122, 44));
+            heroTeamSlotTexts[i] = CreateRuntimeText(slotObject.transform, "Label", string.Empty, 15, new Vector2(0, -128), new Vector2(108, 44));
             heroTeamSlotTexts[i].fontStyle = FontStyles.Bold;
             heroTeamSlotTexts[i].enableAutoSizing = true;
             heroTeamSlotTexts[i].fontSizeMin = 10;
@@ -13995,6 +14473,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 return "The Rift Marksman";
             case "hero_elowen":
                 return "The Grove Oracle";
+            case "hero_ravik":
+                return "The Cinder Prodigy";
+            case "hero_liora":
+                return "The Crescent Lightblade";
             default:
                 return $"The {hero.roleName}";
         }
@@ -14413,8 +14895,35 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 var heroIndex = formationSlotHeroIndices[Mathf.Clamp(slotIndex, 0, formationSlotHeroIndices.Length - 1)];
                 if (formationHeroImages[slotIndex] != null)
                 {
+                    var useRavikRig = IsRavikHero(heroIndex) && HasRavikSkeletalView(formationHeroSkeletalViews, slotIndex);
+                    var useSpineRig = IsSpineHero(heroIndex) && HasSpineHeroView(formationHeroSpineViews, slotIndex);
+                    formationHeroImages[slotIndex].gameObject.SetActive(!useRavikRig && !useSpineRig);
                     formationHeroImages[slotIndex].texture = LoadCombatTexture(GetHeroTextureName(heroIndex), "idle", 0, GetHeroTextureName(heroIndex));
                     formationHeroImages[slotIndex].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
+                    if (useRavikRig)
+                    {
+                        formationHeroSkeletalViews[slotIndex].ShowPreview(formationHeroImages[slotIndex].rectTransform.anchoredPosition, GetHeroFacingScale(heroIndex), 1f);
+                    }
+                    if (useSpineRig)
+                    {
+                        formationHeroSpineViews[slotIndex].ShowPreview(formationHeroImages[slotIndex].rectTransform.anchoredPosition, GetHeroFacingScale(heroIndex), 1f);
+                    }
+                }
+
+                if (formationHeroSkeletalViews != null
+                    && slotIndex < formationHeroSkeletalViews.Length
+                    && formationHeroSkeletalViews[slotIndex] != null
+                    && !IsRavikHero(heroIndex))
+                {
+                    formationHeroSkeletalViews[slotIndex].Hide();
+                }
+
+                if (formationHeroSpineViews != null
+                    && slotIndex < formationHeroSpineViews.Length
+                    && formationHeroSpineViews[slotIndex] != null
+                    && !IsSpineHero(heroIndex))
+                {
+                    formationHeroSpineViews[slotIndex].Hide();
                 }
 
                 if (formationHeroTexts != null && slotIndex < formationHeroTexts.Length && formationHeroTexts[slotIndex] != null)
@@ -14483,11 +14992,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(-298, -238),
-            new Vector2(-198, -128),
-            new Vector2(-92, -248),
-            new Vector2(12, -136),
-            new Vector2(116, -252)
+            new Vector2(-330, -250),
+            new Vector2(-230, -132),
+            new Vector2(-128, -260),
+            new Vector2(-22, -142),
+            new Vector2(86, -258),
+            new Vector2(190, -154),
+            new Vector2(300, -244)
         };
     }
 
@@ -14495,11 +15006,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(-320, -650),
-            new Vector2(-210, -515),
-            new Vector2(-92, -708),
-            new Vector2(-48, -455),
-            new Vector2(-300, -365)
+            new Vector2(-342, -650),
+            new Vector2(-238, -520),
+            new Vector2(-130, -708),
+            new Vector2(-50, -455),
+            new Vector2(-326, -365),
+            new Vector2(-170, -362),
+            new Vector2(-18, -610)
         };
     }
 
@@ -14507,11 +15020,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(285, -405),
-            new Vector2(168, -545),
-            new Vector2(330, -632),
-            new Vector2(90, -728),
-            new Vector2(300, -805)
+            new Vector2(310, -405),
+            new Vector2(194, -545),
+            new Vector2(350, -632),
+            new Vector2(118, -728),
+            new Vector2(324, -805),
+            new Vector2(138, -362),
+            new Vector2(248, -702)
         };
     }
 
@@ -14519,6 +15034,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
+            new Vector2(250, -545),
+            new Vector2(250, -545),
             new Vector2(250, -545),
             new Vector2(250, -545),
             new Vector2(250, -545),

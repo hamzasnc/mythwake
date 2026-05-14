@@ -1,0 +1,426 @@
+{
+  "hero_id": "hero_ravik",
+  "display_name": "Ravik",
+  "source": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\hero_ravik_spine_cutout_alpha.png",
+  "image_size": [
+    1536,
+    1024
+  ],
+  "coordinate_note": "pivot is normalized from top-left of each trimmed PNG: [0,0]=top-left, [1,1]=bottom-right.",
+  "parts": [
+    {
+      "name": "head_smirk",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\head_smirk.png",
+      "recommended_bone": "head",
+      "pivot": [
+        0.5,
+        0.58
+      ],
+      "source_bbox": [
+        24,
+        6,
+        272,
+        236
+      ],
+      "width": 248,
+      "height": 230,
+      "note": "main face/head attachment"
+    },
+    {
+      "name": "head_neutral",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\head_neutral.png",
+      "recommended_bone": "head",
+      "pivot": [
+        0.5,
+        0.58
+      ],
+      "source_bbox": [
+        271,
+        10,
+        512,
+        237
+      ],
+      "width": 241,
+      "height": 227,
+      "note": "alternate calm face"
+    },
+    {
+      "name": "hair_front",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\hair_front.png",
+      "recommended_bone": "head",
+      "pivot": [
+        0.5,
+        0.74
+      ],
+      "source_bbox": [
+        515,
+        8,
+        751,
+        216
+      ],
+      "width": 236,
+      "height": 208,
+      "note": "front hair overlay"
+    },
+    {
+      "name": "hair_back",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\hair_back.png",
+      "recommended_bone": "head",
+      "pivot": [
+        0.5,
+        0.72
+      ],
+      "source_bbox": [
+        765,
+        19,
+        986,
+        239
+      ],
+      "width": 221,
+      "height": 220,
+      "note": "back hair behind head"
+    },
+    {
+      "name": "torso",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\torso.png",
+      "recommended_bone": "chest",
+      "pivot": [
+        0.5,
+        0.45
+      ],
+      "source_bbox": [
+        1026,
+        139,
+        1212,
+        364
+      ],
+      "width": 186,
+      "height": 225,
+      "note": "upper body and shoulder pads"
+    },
+    {
+      "name": "projectile_fireball",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\projectile_fireball.png",
+      "recommended_bone": "fx_projectile",
+      "pivot": [
+        0.28,
+        0.48
+      ],
+      "source_bbox": [
+        1292,
+        230,
+        1503,
+        392
+      ],
+      "width": 211,
+      "height": 162,
+      "note": "separate ember bolt projectile"
+    },
+    {
+      "name": "head_shout",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\head_shout.png",
+      "recommended_bone": "head",
+      "pivot": [
+        0.5,
+        0.58
+      ],
+      "source_bbox": [
+        43,
+        238,
+        274,
+        445
+      ],
+      "width": 231,
+      "height": 207,
+      "note": "attack/cast expression"
+    },
+    {
+      "name": "head_bald_base",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\head_bald_base.png",
+      "recommended_bone": "head",
+      "pivot": [
+        0.5,
+        0.58
+      ],
+      "source_bbox": [
+        304,
+        262,
+        460,
+        426
+      ],
+      "width": 156,
+      "height": 164,
+      "note": "paint-over base if separating expressions"
+    },
+    {
+      "name": "arm_left_bent",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\arm_left_bent.png",
+      "recommended_bone": "upper_arm_l",
+      "pivot": [
+        0.72,
+        0.18
+      ],
+      "source_bbox": [
+        512,
+        278,
+        599,
+        442
+      ],
+      "width": 87,
+      "height": 164,
+      "note": "left bent arm"
+    },
+    {
+      "name": "hand_left_flame",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\hand_left_flame.png",
+      "recommended_bone": "hand_l",
+      "pivot": [
+        0.5,
+        0.72
+      ],
+      "source_bbox": [
+        613,
+        250,
+        723,
+        434
+      ],
+      "width": 110,
+      "height": 184,
+      "note": "left ember gauntlet and flame"
+    },
+    {
+      "name": "hand_right_flame",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\hand_right_flame.png",
+      "recommended_bone": "hand_r",
+      "pivot": [
+        0.5,
+        0.72
+      ],
+      "source_bbox": [
+        747,
+        242,
+        875,
+        434
+      ],
+      "width": 128,
+      "height": 192,
+      "note": "right ember gauntlet and flame"
+    },
+    {
+      "name": "arm_right_open",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\arm_right_open.png",
+      "recommended_bone": "upper_arm_r",
+      "pivot": [
+        0.35,
+        0.18
+      ],
+      "source_bbox": [
+        885,
+        256,
+        986,
+        462
+      ],
+      "width": 101,
+      "height": 206,
+      "note": "right extended arm"
+    },
+    {
+      "name": "collar",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\collar.png",
+      "recommended_bone": "neck",
+      "pivot": [
+        0.5,
+        0.38
+      ],
+      "source_bbox": [
+        1004,
+        378,
+        1191,
+        475
+      ],
+      "width": 187,
+      "height": 97,
+      "note": "wide red-gold collar"
+    },
+    {
+      "name": "fx_flame_burst",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\fx_flame_burst.png",
+      "recommended_bone": "fx_ground",
+      "pivot": [
+        0.5,
+        0.78
+      ],
+      "source_bbox": [
+        1190,
+        430,
+        1524,
+        758
+      ],
+      "width": 334,
+      "height": 328,
+      "note": "ultimate ground fire burst"
+    },
+    {
+      "name": "leg_left_boot",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\leg_left_boot.png",
+      "recommended_bone": "leg_l",
+      "pivot": [
+        0.54,
+        0.12
+      ],
+      "source_bbox": [
+        127,
+        462,
+        249,
+        666
+      ],
+      "width": 122,
+      "height": 204,
+      "note": "left boot/thigh piece"
+    },
+    {
+      "name": "leg_right_boot",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\leg_right_boot.png",
+      "recommended_bone": "leg_r",
+      "pivot": [
+        0.45,
+        0.12
+      ],
+      "source_bbox": [
+        346,
+        471,
+        470,
+        689
+      ],
+      "width": 124,
+      "height": 218,
+      "note": "right boot/thigh piece"
+    },
+    {
+      "name": "leg_left_lower",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\leg_left_lower.png",
+      "recommended_bone": "leg_l",
+      "pivot": [
+        0.5,
+        0.2
+      ],
+      "source_bbox": [
+        545,
+        468,
+        655,
+        661
+      ],
+      "width": 110,
+      "height": 193,
+      "note": "left lower leg"
+    },
+    {
+      "name": "leg_right_lower",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\leg_right_lower.png",
+      "recommended_bone": "leg_r",
+      "pivot": [
+        0.5,
+        0.2
+      ],
+      "source_bbox": [
+        772,
+        469,
+        884,
+        663
+      ],
+      "width": 112,
+      "height": 194,
+      "note": "right lower leg with vials"
+    },
+    {
+      "name": "cloak_left",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\cloak_left.png",
+      "recommended_bone": "cloak_l",
+      "pivot": [
+        0.72,
+        0.84
+      ],
+      "source_bbox": [
+        35,
+        654,
+        285,
+        993
+      ],
+      "width": 250,
+      "height": 339,
+      "note": "left cloak flap"
+    },
+    {
+      "name": "cloak_mid",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\cloak_mid.png",
+      "recommended_bone": "cloak_mid",
+      "pivot": [
+        0.62,
+        0.78
+      ],
+      "source_bbox": [
+        368,
+        669,
+        605,
+        1003
+      ],
+      "width": 237,
+      "height": 334,
+      "note": "middle cloak flap"
+    },
+    {
+      "name": "belt_vials",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\belt_vials.png",
+      "recommended_bone": "hips",
+      "pivot": [
+        0.5,
+        0.48
+      ],
+      "source_bbox": [
+        611,
+        687,
+        863,
+        829
+      ],
+      "width": 252,
+      "height": 142,
+      "note": "belt, gold trim, potion vials"
+    },
+    {
+      "name": "cloak_right",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\cloak_right.png",
+      "recommended_bone": "cloak_r",
+      "pivot": [
+        0.36,
+        0.84
+      ],
+      "source_bbox": [
+        852,
+        619,
+        1190,
+        1009
+      ],
+      "width": 338,
+      "height": 390,
+      "note": "right cloak flap"
+    },
+    {
+      "name": "shadow_fire_ring",
+      "file": "C:\\Users\\Hamza\\Desktop\\Idle Game\\Mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\ember_mage_spine\\parts\\shadow_fire_ring.png",
+      "recommended_bone": "root",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "source_bbox": [
+        1245,
+        869,
+        1495,
+        960
+      ],
+      "width": 250,
+      "height": 91,
+      "note": "separate combat foot shadow"
+    }
+  ]
+}

@@ -16,6 +16,8 @@ The curated frame sequences under `Assets/_Mythwake/Resources/Mythwake/Art/Comba
 - `Knight, Princess and Dragon 2` by akylrum: CC0 hero and dragon idle/run/attack frame sequences.
 - `Adventurer and Slime game Sprites` by Segel/Segel2D: CC0 adventurer and slime idle/run/attack frame sequences.
 - `Enemy Galore I` by Admurin: CC-BY 4.0 enemy idle/run/attack frame sequences. Required attribution: `https://admurin.itch.io/ - Admurin`.
+- `Ravik` fire mage: generated Mythwake placeholder character with transparent runtime portrait, bottom-center anchored body frames, and separate attack/ultimate VFX layers. Source, manifest, and preview sheet live under `Assets/_Mythwake/ArtSource/Generated/ember_mage/`.
+- `Liora` crescent lightblade: original generated chibi Spine character with runtime portrait and Spine JSON/atlas under `Assets/_Mythwake/Resources/Mythwake/Art/Spine/Liora/`. Source handoff lives under `Assets/_Mythwake/ArtSource/Generated/liora_spine/`.
 
 ## Source Links
 

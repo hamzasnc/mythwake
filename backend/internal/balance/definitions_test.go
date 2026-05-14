@@ -61,6 +61,14 @@ func TestHeroDefinitions(t *testing.T) {
 	if hero.BaseHealth != 150 || hero.HealthPerLevel != 28 || hero.HealthPerAscension != 70 {
 		t.Fatalf("unexpected hero_astra health progression: %#v", hero)
 	}
+	ravik, ok := HeroDefinitionByID("hero_ravik")
+	if !ok || !ravik.StarterOwned || ravik.SortOrder != 60 || ravik.BaseAttack != 24 || ravik.AttackPerLevel != 7 || ravik.HealthPerLevel != 22 {
+		t.Fatalf("unexpected hero_ravik definition: %#v ok=%v", ravik, ok)
+	}
+	liora, ok := HeroDefinitionByID("hero_liora")
+	if !ok || !liora.StarterOwned || liora.SortOrder != 70 || liora.BaseAttack != 21 || liora.AttackPerLevel != 6 || liora.HealthPerLevel != 27 {
+		t.Fatalf("unexpected hero_liora definition: %#v ok=%v", liora, ok)
+	}
 	if _, ok := HeroDefinitionByID("hero_fake"); ok {
 		t.Fatal("unknown hero should not exist")
 	}

@@ -14,11 +14,13 @@ func TestCombatReplayIncludesHeroManaAndUltimateEvents(t *testing.T) {
 		maxSeconds:  30,
 	})
 
-	if len(combat.Heroes) != 5 {
-		t.Fatalf("expected 5 combat heroes, got %d", len(combat.Heroes))
+	if len(combat.Heroes) != 7 {
+		t.Fatalf("expected 7 combat heroes, got %d", len(combat.Heroes))
 	}
 
 	danteFound := false
+	ravikFound := false
+	lioraFound := false
 	for _, hero := range combat.Heroes {
 		if hero.HeroID == "hero_dante" {
 			danteFound = true
@@ -26,9 +28,27 @@ func TestCombatReplayIncludesHeroManaAndUltimateEvents(t *testing.T) {
 				t.Fatalf("unexpected Dante mana/passive data: %#v", hero)
 			}
 		}
+		if hero.HeroID == "hero_ravik" {
+			ravikFound = true
+			if hero.MaxMana != 27 || hero.AutoAttackManaGain != 2 || hero.PassiveID != "passive_cinder_hunger" || hero.UltimateName != "Dragonflame Nova" {
+				t.Fatalf("unexpected Ravik mana/passive data: %#v", hero)
+			}
+		}
+		if hero.HeroID == "hero_liora" {
+			lioraFound = true
+			if hero.MaxMana != 26 || hero.AutoAttackManaGain != 2 || hero.UltimateName != "Crescent Nova" {
+				t.Fatalf("unexpected Liora mana/skill data: %#v", hero)
+			}
+		}
 	}
 	if !danteFound {
 		t.Fatal("expected Dante in combat hero states")
+	}
+	if !ravikFound {
+		t.Fatal("expected Ravik in combat hero states")
+	}
+	if !lioraFound {
+		t.Fatal("expected Liora in combat hero states")
 	}
 
 	hasAutoAttack := false

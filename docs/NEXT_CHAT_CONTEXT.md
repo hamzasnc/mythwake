@@ -28,7 +28,7 @@ Important Git rule:
 - Pushes/commits should use account/author `hamzasnc`, not `devasperity`.
 
 Latest known pushed commit at time of this file:
-- `d71f0a5 Refine home HUD layout and shortcuts`
+- `cf249d8 Expand combat and summon prototype systems`
 
 ## User Preferences And Product Intent
 
@@ -73,7 +73,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.73`
+- Prototype `0.2.74`
 - Save version `2`
 
 Important Unity scripts:
@@ -113,6 +113,7 @@ Latest local gameplay/UI batch:
 - Summoning now opens a result popup that groups all drawn heroes and shows how many times each appeared. Local and backend summon pools now grant 1 shard per duplicate pull. The result popup has bottom `x10` and `x300` buttons, disabled when gems are insufficient, plus an `Auto-Summon` checkbox that keeps pulling in x10 chunks up to 300 total pulls.
 - Campaign/Village fights can now keep running while the player leaves through the bottom nav to edit heroes/gear, then pressing Village/Battle resumes the active fight/result. Team formation changes during such a fight abort the current fight without granting rewards. Dungeon fights/formations hide the top resource bar and bottom navbar for a focused boss-fight view.
 - Visible fight end conditions now stop immediately once the winning side has killed/disappeared all enemies, instead of waiting out the remaining visual duration while the displayed damage total keeps climbing.
+- Ravik is now added as a playable Epic fire mage. His generated transparent portrait and combat frames live under `Assets/_Mythwake/Resources/Mythwake/Art/Runtime/hero_ravik.png` and `Assets/_Mythwake/Resources/Mythwake/Art/CombatAnimated/hero_ravik_*`. The source sheet/manifest live under `Assets/_Mythwake/ArtSource/Generated/ember_mage/`. The current Ravik pass uses a production-style split: stable bottom-center body frames plus separate attack/ultimate VFX layers, so large fire effects no longer change his body frame size or root position.
 - Melee engagement is stabilized: units lock a fixed melee position when acquiring a target, instead of recalculating from a moving target every frame. Fight positions are also clamped to the arena bounds.
 - Victory/defeat result screens wait for the visible HP bars to reach their intended end state, with a short cleanup extension if the backend result finished before the visual target deaths did.
 - Dante and Iron Hound were flipped to face the correct direction.

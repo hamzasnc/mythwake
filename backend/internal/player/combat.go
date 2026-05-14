@@ -161,6 +161,21 @@ func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
 				})
 			}
 
+			if hero.id == "hero_ravik" && combatPercentCheck(timeMS+91, hero.index, hero.autoAttackCount, 22) {
+				hero.mana = min(hero.maxMana, hero.mana+2)
+				result.Events = appendCombatEvent(result.Events, api.CombatEvent{
+					TimeMS:           timeMS,
+					EventType:        "passive_mana",
+					ActorID:          hero.id,
+					ActorIndex:       hero.index,
+					SkillID:          "passive_cinder_hunger",
+					Amount:           2,
+					ManaAfter:        hero.mana,
+					TeamHPRemaining:  teamHP,
+					EnemyHPRemaining: enemyHP,
+				})
+			}
+
 			if enemyHP <= 0 {
 				result.Won = true
 				break
@@ -309,6 +324,10 @@ func heroCritChancePercent(heroID string, ascension int) int {
 		base = 18
 	case "hero_elowen":
 		base = 8
+	case "hero_ravik":
+		base = 17
+	case "hero_liora":
+		base = 14
 	}
 	return clampInt(base+ascension/2, 0, 75)
 }
@@ -326,6 +345,10 @@ func heroAccuracyPercent(heroID string, ascension int) int {
 		base = 95
 	case "hero_elowen":
 		base = 90
+	case "hero_ravik":
+		base = 91
+	case "hero_liora":
+		base = 93
 	}
 	return clampInt(base+ascension/3, 50, 100)
 }
@@ -343,6 +366,10 @@ func heroDefense(heroID string, level int, ascension int) int {
 		base = 8
 	case "hero_elowen":
 		base = 14
+	case "hero_ravik":
+		base = 7
+	case "hero_liora":
+		base = 11
 	}
 	return max(0, base+level/2+ascension*3)
 }
@@ -412,6 +439,10 @@ func heroMaxMana(heroID string) int {
 		return 28
 	case "hero_borin":
 		return 30
+	case "hero_ravik":
+		return 27
+	case "hero_liora":
+		return 26
 	default:
 		return 28
 	}
@@ -431,6 +462,10 @@ func heroAttackIntervalMS(heroID string) int {
 		return 1250
 	case "hero_elowen":
 		return 1700
+	case "hero_ravik":
+		return 1160
+	case "hero_liora":
+		return 1080
 	default:
 		return 1120
 	}
@@ -444,6 +479,10 @@ func heroUltimateCooldownMS(heroID string) int {
 		return 5200
 	case "hero_elowen":
 		return 5600
+	case "hero_ravik":
+		return 4400
+	case "hero_liora":
+		return 4300
 	default:
 		return 4500
 	}
@@ -455,6 +494,8 @@ func heroPassiveID(heroID string) string {
 		return "passive_momentum"
 	case "hero_elowen":
 		return "passive_grove_mending"
+	case "hero_ravik":
+		return "passive_cinder_hunger"
 	default:
 		return "passive_none"
 	}
@@ -466,6 +507,8 @@ func heroPassiveName(heroID string) string {
 		return "Momentum: +2 mana on successful hits"
 	case "hero_elowen":
 		return "Grove Mending: 25% attacks heal the team"
+	case "hero_ravik":
+		return "Cinder Hunger: 22% attacks grant +2 extra mana"
 	default:
 		return "Passive"
 	}
@@ -487,6 +530,10 @@ func heroUltimateName(heroID string) string {
 		return "Marked Execute"
 	case "hero_elowen":
 		return "Wild Bloom"
+	case "hero_ravik":
+		return "Dragonflame Nova"
+	case "hero_liora":
+		return "Crescent Nova"
 	default:
 		return "Ultimate"
 	}
@@ -502,6 +549,10 @@ func heroUltimateEffect(heroID string, attack int, teamMaxHP int) (int, int) {
 		return attack * 5, 0
 	case "hero_elowen":
 		return attack * 3, max(1, teamMaxHP/4)
+	case "hero_ravik":
+		return attack * 8, 0
+	case "hero_liora":
+		return attack * 7, 0
 	default:
 		return attack * 4, 0
 	}
