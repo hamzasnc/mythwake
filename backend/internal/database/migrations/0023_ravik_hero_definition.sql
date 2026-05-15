@@ -17,7 +17,7 @@ SET
 	health_per_ascension = 70
 WHERE id = 'hero_ravik';
 
-INSERT INTO common.summon_shard_drops (
+INSERT INTO common.summon_pool_definitions (
 	banner_id,
 	hero_id,
 	shard_amount,

@@ -1128,6 +1128,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text formationEnemyText;
     private TMP_Text formationTeamText;
     private TMP_Text formationHintText;
+    private RawImage formationArenaBackgroundImage;
     private RawImage formationEnemyImage;
     private Button[] formationSlotButtons;
     private Image[] formationSlotFrames;
@@ -1144,6 +1145,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private int selectedFormationSlotIndex = -1;
     private bool autoContinueFightsEnabled;
     private Coroutine autoContinueFightCoroutine;
+    private RawImage fightArenaBackgroundImage;
     private TMP_Text fightVsText;
     private TMP_Text fightTimerText;
     private TMP_Text fightStatusText;
@@ -5248,6 +5250,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetBattleFlowMode(BattleFlowMode.Fight);
         ApplyBattleFlowVisibility();
         HideFightFloatingTexts();
+        RefreshFightArenaBackground(singleBoss);
         PrepareFightAnimationTextures(stageNumber, singleBoss, bossTextureName);
         ConfigureFightEnemyPresentation(singleBoss);
 
@@ -6643,6 +6646,78 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return 4.8f;
+    }
+
+    private void RefreshFightArenaBackground(bool useDungeonBattleMap)
+    {
+        if (fightArenaBackgroundImage == null)
+        {
+            return;
+        }
+
+        if (!useDungeonBattleMap)
+        {
+            fightArenaBackgroundImage.texture = null;
+            fightArenaBackgroundImage.gameObject.SetActive(false);
+            return;
+        }
+
+        var texture = LoadRuntimeTexture(GetDungeonBattleMapTextureName(selectedDungeonId));
+        fightArenaBackgroundImage.texture = texture;
+        fightArenaBackgroundImage.gameObject.SetActive(texture != null);
+        if (texture == null)
+        {
+            return;
+        }
+
+        texture.filterMode = FilterMode.Bilinear;
+        texture.wrapMode = TextureWrapMode.Clamp;
+
+        var rect = fightArenaBackgroundImage.rectTransform;
+        const float targetWidth = 960f;
+        const float targetHeight = 1190f;
+        var textureAspect = texture.width / (float)Mathf.Max(1, texture.height);
+        var targetAspect = targetWidth / targetHeight;
+        rect.sizeDelta = textureAspect >= targetAspect
+            ? new Vector2(targetHeight * textureAspect, targetHeight)
+            : new Vector2(targetWidth, targetWidth / Mathf.Max(0.01f, textureAspect));
+        rect.anchoredPosition = Vector2.zero;
+    }
+
+    private void RefreshFormationArenaBackground(bool useDungeonBattleMap)
+    {
+        if (formationArenaBackgroundImage == null)
+        {
+            return;
+        }
+
+        if (!useDungeonBattleMap)
+        {
+            formationArenaBackgroundImage.texture = null;
+            formationArenaBackgroundImage.uvRect = new Rect(0f, 0f, 1f, 1f);
+            formationArenaBackgroundImage.gameObject.SetActive(false);
+            return;
+        }
+
+        var texture = LoadRuntimeTexture(GetDungeonBattleMapTextureName(selectedDungeonId));
+        formationArenaBackgroundImage.texture = texture;
+        formationArenaBackgroundImage.gameObject.SetActive(texture != null);
+        if (texture == null)
+        {
+            return;
+        }
+
+        texture.filterMode = FilterMode.Bilinear;
+        texture.wrapMode = TextureWrapMode.Clamp;
+        var rect = formationArenaBackgroundImage.rectTransform;
+        rect.sizeDelta = new Vector2(820f, 410f);
+        rect.anchoredPosition = Vector2.zero;
+
+        var textureAspect = texture.width / (float)Mathf.Max(1, texture.height);
+        const float previewAspect = 820f / 410f;
+        var cropHeight = Mathf.Clamp01(textureAspect / previewAspect);
+        var cropY = Mathf.Clamp(0.36f, 0f, 1f - cropHeight);
+        formationArenaBackgroundImage.uvRect = new Rect(0f, cropY, 1f, cropHeight);
     }
 
     private float GetExpectedHeroVisualAttackWeight(float visualDuration)
@@ -9700,6 +9775,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return "enemy_golem";
     }
 
+    private static string GetDungeonBattleMapTextureName(string dungeonId)
+    {
+        if (dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return "essence_dungeon_battle_map";
+        }
+
+        if (dungeonId == GearDungeonDefinition.dungeonId)
+        {
+            return "equipment_dungeon_battle_map";
+        }
+
+        return "gold_dungeon_battle_map";
+    }
+
     private static string GetDungeonBossName(string dungeonId)
     {
         if (dungeonId == EssenceDungeonDefinition.dungeonId)
@@ -12743,6 +12833,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var arena = CreateRuntimePanel(formationRoot, "Formation Arena Preview", new Vector2(0, -235), new Vector2(820, 410), new Color(0.03f, 0.045f, 0.07f, 0.88f));
         CreateLayeredRuntimeBackground(arena, new Vector2(820, 410), 0.62f);
+        formationArenaBackgroundImage = CreateRuntimeRawImage(arena, "Formation Dungeon Battle Map", null, Vector2.zero, new Vector2(820, 410), new Vector2(0.5f, 1f));
+        formationArenaBackgroundImage.color = new Color(1f, 1f, 1f, 0.82f);
+        formationArenaBackgroundImage.gameObject.SetActive(false);
 
         EnsureFormationOrder();
         formationSlotButtons = new Button[HeroCount];
@@ -12821,6 +12914,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var backdrop = CreateRuntimePanel(fightRoot, "Fight Arena Backdrop", new Vector2(0, -110), new Vector2(960, 1190), new Color(0.045f, 0.055f, 0.07f, 0.98f));
         CreateLayeredRuntimeBackground(backdrop, new Vector2(960, 1190), 0.76f);
+        fightArenaBackgroundImage = CreateRuntimeRawImage(backdrop, "Fight Arena Battle Map", null, Vector2.zero, new Vector2(960, 1190), new Vector2(0.5f, 1f));
+        fightArenaBackgroundImage.color = new Color(1f, 1f, 1f, 0.94f);
+        fightArenaBackgroundImage.gameObject.SetActive(false);
 
         fightVsText = CreateRuntimeText(fightRoot, "Fight VS Text", "VS", 38, new Vector2(0, -130), new Vector2(820, 52));
         fightVsText.fontStyle = FontStyles.Bold;
@@ -14702,6 +14798,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var stage = GetStageDefinition(stageNumber);
         var dungeon = ResolveDungeonDefinition(selectedDungeonId);
         var dungeonFloor = GetDungeonFloor(dungeon.dungeonId);
+        RefreshFormationArenaBackground(isDungeon);
 
         if (formationHeaderText != null)
         {
