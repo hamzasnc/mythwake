@@ -694,6 +694,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static readonly DungeonDefinition GoldDungeonDefinition = new DungeonDefinition("gold_dungeon", "Gold Dungeon", GoldCurrencyId, 200, 100f, 1.2f, 22, 9f, 1.12f, 115, 50f, 1.18f, 95, 34f, 1.14f);
     private static readonly DungeonDefinition EssenceDungeonDefinition = new DungeonDefinition("essence_dungeon", "Essence Dungeon", MythEssenceCurrencyId, 210, 104f, 1.2f, 22, 9.5f, 1.12f, 118, 51f, 1.18f, 110, 40f, 1.13f);
     private static readonly DungeonDefinition GearDungeonDefinition = new DungeonDefinition("gear_dungeon", "Gear Dungeon", string.Empty, 235, 120f, 1.21f, 24, 10f, 1.14f, 130, 56f, 1.18f, 0, 0f, 1f);
+    private static readonly string[] GoldDungeonBattleMapTextureNames = { "gold_dungeon_battle_01", "gold_dungeon_battle_02" };
+    private static readonly string[] EssenceDungeonBattleMapTextureNames = { "essence_dungeon_battle_01", "essence_dungeon_battle_02" };
+    private static readonly string[] GearDungeonBattleMapTextureNames = { "equipment_dungeon_battle_01", "equipment_dungeon_battle_02" };
     private static readonly CampaignBalanceDefinition CampaignBalance = new CampaignBalanceDefinition(90, 46f, 1.17f, 10, 5.8f, 1.16f, 12, 1.6f, 25, 1.23f, 1.15f);
 
     private static readonly SummonBannerDefinition HeroShardBanner = new SummonBannerDefinition(
@@ -960,6 +963,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private BattleFlowMode battleFlowMode = BattleFlowMode.Formation;
     private BattleTargetMode battleTargetMode = BattleTargetMode.Campaign;
     private string selectedDungeonId = GoldDungeonDefinition.dungeonId;
+    private string selectedDungeonBattleMapTextureName;
     private string backendStatus = "Backend: local prototype mode";
     private long backendStateRevision;
     private MythwakeDefinitionSnapshotDto backendDefinitions;
@@ -1804,6 +1808,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         selectedDungeonId = ResolveDungeonDefinition(dungeonId).dungeonId;
+        SelectRandomDungeonBattleMap(selectedDungeonId);
         battleTargetMode = BattleTargetMode.Dungeon;
         selectedFormationSlotIndex = -1;
         SetBattleFlowMode(BattleFlowMode.Formation);
@@ -1943,6 +1948,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void StartDungeonFightFromFormation()
     {
         selectedDungeonId = ResolveDungeonDefinition(selectedDungeonId).dungeonId;
+        EnsureSelectedDungeonBattleMap();
         selectedFormationSlotIndex = -1;
         fightAutoSkillsEnabled = autoContinueFightsEnabled;
         if (backendGameplayEnabled)
@@ -4317,6 +4323,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var combat = result.combat;
         battleTargetMode = BattleTargetMode.Dungeon;
         selectedDungeonId = string.IsNullOrWhiteSpace(combat.targetId) ? selectedDungeonId : combat.targetId;
+        EnsureSelectedDungeonBattleMap();
         yield return PlayCampaignFightVisualRoutine(
             combat.won,
             combat.targetLevel,
@@ -5471,6 +5478,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (battleTargetMode == BattleTargetMode.Dungeon)
         {
+            SelectRandomDungeonBattleMap(selectedDungeonId);
             StartDungeonFightFromFormation();
         }
         else
@@ -6658,11 +6666,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (!useDungeonBattleMap)
         {
             fightArenaBackgroundImage.texture = null;
+            fightArenaBackgroundImage.uvRect = new Rect(0f, 0f, 1f, 1f);
             fightArenaBackgroundImage.gameObject.SetActive(false);
             return;
         }
 
-        var texture = LoadRuntimeTexture(GetDungeonBattleMapTextureName(selectedDungeonId));
+        var texture = LoadRuntimeTexture(GetSelectedDungeonBattleMapTextureName());
         fightArenaBackgroundImage.texture = texture;
         fightArenaBackgroundImage.gameObject.SetActive(texture != null);
         if (texture == null)
@@ -6676,12 +6685,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var rect = fightArenaBackgroundImage.rectTransform;
         const float targetWidth = 960f;
         const float targetHeight = 1190f;
+        rect.sizeDelta = new Vector2(targetWidth, targetHeight);
+        rect.anchoredPosition = Vector2.zero;
+
         var textureAspect = texture.width / (float)Mathf.Max(1, texture.height);
         var targetAspect = targetWidth / targetHeight;
-        rect.sizeDelta = textureAspect >= targetAspect
-            ? new Vector2(targetHeight * textureAspect, targetHeight)
-            : new Vector2(targetWidth, targetWidth / Mathf.Max(0.01f, textureAspect));
-        rect.anchoredPosition = Vector2.zero;
+        var cropHeight = Mathf.Clamp01(textureAspect / targetAspect);
+        var cropY = Mathf.Clamp(0.16f, 0f, 1f - cropHeight);
+        fightArenaBackgroundImage.uvRect = new Rect(0f, cropY, 1f, cropHeight);
     }
 
     private void RefreshFormationArenaBackground(bool useDungeonBattleMap)
@@ -6699,7 +6710,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        var texture = LoadRuntimeTexture(GetDungeonBattleMapTextureName(selectedDungeonId));
+        var texture = LoadRuntimeTexture(GetSelectedDungeonBattleMapTextureName());
         formationArenaBackgroundImage.texture = texture;
         formationArenaBackgroundImage.gameObject.SetActive(texture != null);
         if (texture == null)
@@ -6718,6 +6729,60 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var cropHeight = Mathf.Clamp01(textureAspect / previewAspect);
         var cropY = Mathf.Clamp(0.36f, 0f, 1f - cropHeight);
         formationArenaBackgroundImage.uvRect = new Rect(0f, cropY, 1f, cropHeight);
+    }
+
+    private void SelectRandomDungeonBattleMap(string dungeonId)
+    {
+        var maps = GetDungeonBattleMapTextureNames(dungeonId);
+        selectedDungeonBattleMapTextureName = maps[UnityEngine.Random.Range(0, maps.Length)];
+    }
+
+    private void EnsureSelectedDungeonBattleMap()
+    {
+        if (!IsDungeonBattleMapTextureNameForDungeon(selectedDungeonId, selectedDungeonBattleMapTextureName))
+        {
+            SelectRandomDungeonBattleMap(selectedDungeonId);
+        }
+    }
+
+    private string GetSelectedDungeonBattleMapTextureName()
+    {
+        EnsureSelectedDungeonBattleMap();
+        return selectedDungeonBattleMapTextureName;
+    }
+
+    private static bool IsDungeonBattleMapTextureNameForDungeon(string dungeonId, string textureName)
+    {
+        if (string.IsNullOrWhiteSpace(textureName))
+        {
+            return false;
+        }
+
+        var maps = GetDungeonBattleMapTextureNames(dungeonId);
+        for (var i = 0; i < maps.Length; i++)
+        {
+            if (maps[i] == textureName)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string[] GetDungeonBattleMapTextureNames(string dungeonId)
+    {
+        if (dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return EssenceDungeonBattleMapTextureNames;
+        }
+
+        if (dungeonId == GearDungeonDefinition.dungeonId)
+        {
+            return GearDungeonBattleMapTextureNames;
+        }
+
+        return GoldDungeonBattleMapTextureNames;
     }
 
     private float GetExpectedHeroVisualAttackWeight(float visualDuration)
@@ -9773,21 +9838,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return "enemy_golem";
-    }
-
-    private static string GetDungeonBattleMapTextureName(string dungeonId)
-    {
-        if (dungeonId == EssenceDungeonDefinition.dungeonId)
-        {
-            return "essence_dungeon_battle_map";
-        }
-
-        if (dungeonId == GearDungeonDefinition.dungeonId)
-        {
-            return "equipment_dungeon_battle_map";
-        }
-
-        return "gold_dungeon_battle_map";
     }
 
     private static string GetDungeonBossName(string dungeonId)
