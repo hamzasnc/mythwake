@@ -12900,7 +12900,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             plusImage.color = new Color(0.55f, 0.32f, 0.15f, 0.96f);
         }
 
-        topManagementMenuButton = CreateRuntimeButton(topBarObject.transform, "Top Management Menu Button", string.Empty, 456, -20, 64, 64);
+        topManagementMenuButton = CreateRuntimeButton(topBarObject.transform, "Top Management Menu Button", string.Empty, 494, -16, 76, 76);
         ConfigureTopManagementMenuHitArea(topManagementMenuButton);
         EnsureRuntimeManagementPopup(topBarObject.transform);
 
