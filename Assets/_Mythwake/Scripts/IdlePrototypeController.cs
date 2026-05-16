@@ -589,6 +589,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int StarterEquipmentLevel = 1;
     private const int CampaignMilestoneInterval = 5;
     private const int DungeonBonusInterval = 5;
+    private const int DungeonSetProgressGoal = 9;
     private const float DungeonBossHpMultiplier = 1.8f;
     private const int AccessoryFuseCost = 3;
     private const int DebugGoldAmount = 500;
@@ -971,6 +972,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private MythwakeRuntimeArtPresenter runtimeArt;
     private TMP_Text dungeonsHeaderText;
     private TMP_Text runtimeDungeonResultText;
+    private RawImage goldDungeonBannerImage;
+    private RawImage essenceDungeonBannerImage;
+    private RawImage gearDungeonBannerImage;
+    private RawImage goldDungeonBossImage;
+    private RawImage essenceDungeonBossImage;
+    private RawImage gearDungeonBossImage;
+    private TMP_Text goldDungeonTitleText;
+    private TMP_Text essenceDungeonTitleText;
+    private TMP_Text gearDungeonTitleText;
+    private TMP_Text goldDungeonProgressText;
+    private TMP_Text essenceDungeonProgressText;
+    private TMP_Text gearDungeonProgressText;
     private RectTransform topBarRoot;
     private RectTransform bottomNavRoot;
     private TMP_Text topGemAmountText;
@@ -11585,25 +11598,79 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void RefreshDungeonUi()
     {
-        if (goldDungeonText != null)
-        {
-            goldDungeonText.text = FormatDungeonPreview(GoldDungeonDefinition, goldDungeonFloor);
-        }
-
-        if (essenceDungeonText != null)
-        {
-            essenceDungeonText.text = FormatDungeonPreview(EssenceDungeonDefinition, essenceDungeonFloor);
-        }
-
-        if (gearDungeonText != null)
-        {
-            gearDungeonText.text = FormatDungeonPreview(GearDungeonDefinition, gearDungeonFloor);
-        }
+        RefreshDungeonCardUi(GoldDungeonDefinition, goldDungeonFloor, goldDungeonTitleText, goldDungeonProgressText, goldDungeonText);
+        RefreshDungeonCardUi(EssenceDungeonDefinition, essenceDungeonFloor, essenceDungeonTitleText, essenceDungeonProgressText, essenceDungeonText);
+        RefreshDungeonCardUi(GearDungeonDefinition, gearDungeonFloor, gearDungeonTitleText, gearDungeonProgressText, gearDungeonText);
 
         if (dungeonResultText != null && string.IsNullOrWhiteSpace(dungeonResultText.text))
         {
             dungeonResultText.text = "Dungeons are the active resource source.";
         }
+    }
+
+    private void RefreshDungeonCardUi(DungeonDefinition dungeon, int floor, TMP_Text titleText, TMP_Text progressText, TMP_Text detailText)
+    {
+        floor = Mathf.Max(1, floor);
+        if (titleText != null)
+        {
+            titleText.text = GetDungeonSetTitle(dungeon.dungeonId);
+        }
+
+        if (progressText != null)
+        {
+            var setProgress = Mathf.Max(0, floor - 1) % DungeonSetProgressGoal;
+            progressText.text = $"Progress: <color=#F8E85A>{setProgress}/{DungeonSetProgressGoal}</color>   Floor {floor}";
+        }
+
+        if (detailText != null)
+        {
+            detailText.text = FormatDungeonCardMeta(dungeon, floor);
+        }
+    }
+
+    private string FormatDungeonCardMeta(DungeonDefinition localDefinition, int floor)
+    {
+        var bossName = GetDungeonBossName(localDefinition.dungeonId);
+        if (UseBackendDefinitionView() && TryGetBackendDungeonDefinition(localDefinition.dungeonId, out var backendDefinition))
+        {
+            var requiredPower = FormatCompactNumber(GetBackendDungeonRequiredPower(backendDefinition, floor));
+            if (string.IsNullOrWhiteSpace(backendDefinition.rewardCurrencyId))
+            {
+                return $"{bossName}  |  Rec {requiredPower}  |  Accessory drop";
+            }
+
+            var rewardAmount = FormatCompactNumber(GetBackendDungeonRewardAmount(backendDefinition, floor));
+            var currencyName = GetCurrencyDefinition(backendDefinition.rewardCurrencyId).displayName;
+            return $"{bossName}  |  Rec {requiredPower}  |  +{rewardAmount} {currencyName}";
+        }
+
+        var localRequiredPower = FormatCompactNumber(GetDungeonRecommendedPower(localDefinition, floor));
+        if (localDefinition.dungeonId == GoldDungeonDefinition.dungeonId)
+        {
+            return $"{bossName}  |  Rec {localRequiredPower}  |  +{FormatCompactNumber(GetGoldDungeonReward(floor))} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
+        }
+
+        if (localDefinition.dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return $"{bossName}  |  Rec {localRequiredPower}  |  +{FormatCompactNumber(GetEssenceDungeonReward(floor))} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
+        }
+
+        return $"{bossName}  |  Rec {localRequiredPower}  |  Accessory drop";
+    }
+
+    private static string GetDungeonSetTitle(string dungeonId)
+    {
+        if (dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return "Rift Essence Set";
+        }
+
+        if (dungeonId == GearDungeonDefinition.dungeonId)
+        {
+            return "Iron Armory Set";
+        }
+
+        return "Gold Treasury Set";
     }
 
     private string FormatDungeonPreview(DungeonDefinition localDefinition, int floor)
@@ -13608,40 +13675,276 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void EnsureRuntimeDungeonsPanel()
     {
-        if (dungeonsPanel != null)
+        if (dungeonsPanel == null)
+        {
+            var parent = battlePanel != null && battlePanel.transform.parent != null ? battlePanel.transform.parent : transform;
+            dungeonsPanel = new GameObject("Dungeons Panel", typeof(RectTransform));
+            dungeonsPanel.transform.SetParent(parent, false);
+
+            var dungeonsRect = dungeonsPanel.GetComponent<RectTransform>();
+            var sourceRect = battlePanel != null ? battlePanel.GetComponent<RectTransform>() : null;
+            if (sourceRect != null)
+            {
+                dungeonsRect.anchorMin = sourceRect.anchorMin;
+                dungeonsRect.anchorMax = sourceRect.anchorMax;
+                dungeonsRect.pivot = sourceRect.pivot;
+                dungeonsRect.anchoredPosition = sourceRect.anchoredPosition;
+                dungeonsRect.sizeDelta = sourceRect.sizeDelta;
+                dungeonsRect.offsetMin = sourceRect.offsetMin;
+                dungeonsRect.offsetMax = sourceRect.offsetMax;
+            }
+            else
+            {
+                StretchRuntime(dungeonsRect, Vector2.zero);
+            }
+        }
+
+        if (dungeonsHeaderText == null)
+        {
+            dungeonsHeaderText = CreateRuntimeText(dungeonsPanel.transform, "Dungeons Header", "Dungeons", 36, new Vector2(0, -132), new Vector2(860, 54));
+            dungeonsHeaderText.fontStyle = FontStyles.Bold;
+            dungeonsHeaderText.color = new Color(1f, 0.9f, 0.68f);
+        }
+
+        EnsureRuntimeDungeonCard(
+            ref goldDungeonButton,
+            ref goldDungeonBannerImage,
+            ref goldDungeonBossImage,
+            ref goldDungeonTitleText,
+            ref goldDungeonProgressText,
+            ref goldDungeonText,
+            "Gold Dungeon Card",
+            "gold_dungeon_set_banner",
+            GoldDungeonDefinition.dungeonId);
+        EnsureRuntimeDungeonCard(
+            ref essenceDungeonButton,
+            ref essenceDungeonBannerImage,
+            ref essenceDungeonBossImage,
+            ref essenceDungeonTitleText,
+            ref essenceDungeonProgressText,
+            ref essenceDungeonText,
+            "Essence Dungeon Card",
+            "essence_dungeon_set_banner",
+            EssenceDungeonDefinition.dungeonId);
+        EnsureRuntimeDungeonCard(
+            ref gearDungeonButton,
+            ref gearDungeonBannerImage,
+            ref gearDungeonBossImage,
+            ref gearDungeonTitleText,
+            ref gearDungeonProgressText,
+            ref gearDungeonText,
+            "Gear Dungeon Card",
+            "gear_dungeon_set_banner",
+            GearDungeonDefinition.dungeonId);
+
+        if (runtimeDungeonResultText == null)
+        {
+            runtimeDungeonResultText = CreateRuntimeText(dungeonsPanel.transform, "Dungeon Result Text", "Dungeons are the active resource source.", 22, new Vector2(0, -1018), new Vector2(760, 52));
+        }
+
+        runtimeDungeonResultText.color = new Color(0.78f, 0.9f, 1f);
+        runtimeDungeonResultText.enableAutoSizing = true;
+        runtimeDungeonResultText.fontSizeMin = 16;
+        runtimeDungeonResultText.fontSizeMax = 22;
+        runtimeDungeonResultText.fontStyle = FontStyles.Bold;
+    }
+
+    private void EnsureRuntimeDungeonCard(
+        ref Button button,
+        ref RawImage bannerImage,
+        ref RawImage bossImage,
+        ref TMP_Text titleText,
+        ref TMP_Text progressText,
+        ref TMP_Text detailText,
+        string cardName,
+        string bannerTextureName,
+        string dungeonId)
+    {
+        if (dungeonsPanel == null)
         {
             return;
         }
 
-        var parent = battlePanel != null && battlePanel.transform.parent != null ? battlePanel.transform.parent : transform;
-        dungeonsPanel = new GameObject("Dungeons Panel", typeof(RectTransform));
-        dungeonsPanel.transform.SetParent(parent, false);
-
-        var dungeonsRect = dungeonsPanel.GetComponent<RectTransform>();
-        var sourceRect = battlePanel != null ? battlePanel.GetComponent<RectTransform>() : null;
-        if (sourceRect != null)
+        if (button == null)
         {
-            dungeonsRect.anchorMin = sourceRect.anchorMin;
-            dungeonsRect.anchorMax = sourceRect.anchorMax;
-            dungeonsRect.pivot = sourceRect.pivot;
-            dungeonsRect.anchoredPosition = sourceRect.anchoredPosition;
-            dungeonsRect.sizeDelta = sourceRect.sizeDelta;
-            dungeonsRect.offsetMin = sourceRect.offsetMin;
-            dungeonsRect.offsetMax = sourceRect.offsetMax;
+            button = CreateRuntimeButton(dungeonsPanel.transform, cardName, string.Empty, 0f, 0f, 850f, 220f);
         }
         else
         {
-            StretchRuntime(dungeonsRect, Vector2.zero);
+            button.transform.SetParent(dungeonsPanel.transform, false);
         }
 
-        dungeonsHeaderText = CreateRuntimeText(dungeonsPanel.transform, "Dungeons Header", "Dungeons", 36, new Vector2(0, -132), new Vector2(860, 54));
-        dungeonsHeaderText.fontStyle = FontStyles.Bold;
+        ApplyDungeonCardButtonSkin(button);
+        if (bannerImage == null)
+        {
+            var bannerTexture = LoadRuntimeTexture(bannerTextureName);
+            if (bannerTexture != null)
+            {
+                bannerTexture.filterMode = FilterMode.Bilinear;
+            }
 
-        runtimeDungeonResultText = CreateRuntimeText(dungeonsPanel.transform, "Dungeon Result Text", "Dungeons are the active resource source.", 22, new Vector2(0, -475), new Vector2(760, 52));
-        runtimeDungeonResultText.color = new Color(0.72f, 0.86f, 1f);
-        runtimeDungeonResultText.enableAutoSizing = true;
-        runtimeDungeonResultText.fontSizeMin = 16;
-        runtimeDungeonResultText.fontSizeMax = 22;
+            bannerImage = CreateRuntimeRawImage(button.transform, "Dungeon Banner Art", bannerTexture, Vector2.zero, new Vector2(850f, 220f), new Vector2(0.5f, 0.5f));
+            bannerImage.SetNativeSize();
+            SetRuntimeRect(bannerImage.rectTransform, Vector2.zero, new Vector2(850f, 220f), new Vector2(0.5f, 0.5f));
+            bannerImage.transform.SetAsFirstSibling();
+
+            var topShade = CreateRuntimePanel(button.transform, "Dungeon Banner Top Shade", new Vector2(0f, -34f), new Vector2(830f, 68f), new Color(0.08f, 0.035f, 0.02f, 0.68f));
+            topShade.SetAsLastSibling();
+            var bottomShade = CreateRuntimePanel(button.transform, "Dungeon Banner Progress Shade", new Vector2(0f, -182f), new Vector2(830f, 64f), new Color(0.035f, 0.025f, 0.02f, 0.74f));
+            bottomShade.SetAsLastSibling();
+
+            CreateDungeonCardFrame(button.transform);
+        }
+
+        if (bossImage == null)
+        {
+            var bossTextureName = GetDungeonBossTextureName(dungeonId);
+            bossImage = CreateRuntimeRawImage(button.transform, "Dungeon Boss Accent", LoadCombatTexture(bossTextureName, "idle", 0, bossTextureName), new Vector2(312f, -125f), new Vector2(116f, 116f), new Vector2(0.5f, 1f));
+            bossImage.color = new Color(1f, 1f, 1f, 0.92f);
+            bossImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale(bossTextureName), 1f, 1f);
+        }
+
+        if (titleText == null)
+        {
+            titleText = CreateRuntimeText(button.transform, "Dungeon Set Title", string.Empty, 32, new Vector2(0f, -23f), new Vector2(760f, 48));
+        }
+
+        titleText.transform.SetParent(button.transform, false);
+        StyleDungeonCardTitle(titleText);
+
+        if (progressText == null)
+        {
+            progressText = CreateRuntimeText(button.transform, "Dungeon Set Progress", string.Empty, 25, new Vector2(-104f, -176f), new Vector2(512f, 38));
+        }
+
+        progressText.transform.SetParent(button.transform, false);
+        StyleDungeonCardProgress(progressText);
+
+        if (detailText == null)
+        {
+            detailText = CreateRuntimeText(button.transform, "Dungeon Set Detail", string.Empty, 17, new Vector2(-110f, -202f), new Vector2(560f, 26));
+        }
+
+        detailText.transform.SetParent(button.transform, false);
+        StyleDungeonCardDetail(detailText);
+    }
+
+    private void ApplyDungeonCardsButtonSkin()
+    {
+        ApplyDungeonCardButtonSkin(goldDungeonButton);
+        ApplyDungeonCardButtonSkin(essenceDungeonButton);
+        ApplyDungeonCardButtonSkin(gearDungeonButton);
+    }
+
+    private static void ApplyDungeonCardButtonSkin(Button button)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        var image = button.GetComponent<Image>();
+        if (image == null)
+        {
+            return;
+        }
+
+        image.sprite = null;
+        image.type = Image.Type.Simple;
+        image.color = new Color(0f, 0f, 0f, 0.01f);
+        image.raycastTarget = true;
+        button.targetGraphic = image;
+    }
+
+    private static void CreateDungeonCardFrame(Transform parent)
+    {
+        var outer = new Color(0.73f, 0.42f, 0.16f, 1f);
+        var inner = new Color(1f, 0.78f, 0.36f, 0.92f);
+        var corner = new Color(0.75f, 0.07f, 0.05f, 1f);
+
+        CreateRuntimePanel(parent, "Dungeon Frame Top", new Vector2(0f, -4f), new Vector2(850f, 8f), outer).SetAsLastSibling();
+        CreateRuntimePanel(parent, "Dungeon Frame Bottom", new Vector2(0f, -216f), new Vector2(850f, 8f), outer).SetAsLastSibling();
+        CreateRuntimePanel(parent, "Dungeon Frame Left", new Vector2(-421f, -110f), new Vector2(8f, 220f), outer).SetAsLastSibling();
+        CreateRuntimePanel(parent, "Dungeon Frame Right", new Vector2(421f, -110f), new Vector2(8f, 220f), outer).SetAsLastSibling();
+        CreateRuntimePanel(parent, "Dungeon Frame Inner Top", new Vector2(0f, -13f), new Vector2(826f, 3f), inner).SetAsLastSibling();
+        CreateRuntimePanel(parent, "Dungeon Frame Inner Bottom", new Vector2(0f, -207f), new Vector2(826f, 3f), inner).SetAsLastSibling();
+        CreateRuntimePanel(parent, "Dungeon Corner Top Left", new Vector2(-408f, -18f), new Vector2(22f, 22f), corner).SetAsLastSibling();
+        CreateRuntimePanel(parent, "Dungeon Corner Top Right", new Vector2(408f, -18f), new Vector2(22f, 22f), corner).SetAsLastSibling();
+        CreateRuntimePanel(parent, "Dungeon Corner Bottom Left", new Vector2(-408f, -202f), new Vector2(22f, 22f), corner).SetAsLastSibling();
+        CreateRuntimePanel(parent, "Dungeon Corner Bottom Right", new Vector2(408f, -202f), new Vector2(22f, 22f), corner).SetAsLastSibling();
+    }
+
+    private static void StyleDungeonCardTitle(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        SetRuntimeRect(text.rectTransform, new Vector2(0f, -23f), new Vector2(760f, 48f), new Vector2(0.5f, 1f));
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(1f, 0.9f, 0.68f);
+        text.fontSize = 32;
+        text.fontSizeMin = 24;
+        text.fontSizeMax = 32;
+        text.enableAutoSizing = true;
+        text.fontStyle = FontStyles.Bold;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.outlineColor = new Color(0.1f, 0.04f, 0.01f, 0.95f);
+        text.outlineWidth = 0.22f;
+        text.transform.SetAsLastSibling();
+    }
+
+    private static void StyleDungeonCardProgress(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        SetRuntimeRect(text.rectTransform, new Vector2(-104f, -176f), new Vector2(512f, 38f), new Vector2(0.5f, 1f));
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(1f, 0.9f, 0.68f);
+        text.fontSize = 25;
+        text.fontSizeMin = 18;
+        text.fontSizeMax = 25;
+        text.enableAutoSizing = true;
+        text.fontStyle = FontStyles.Bold;
+        text.richText = true;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.outlineColor = new Color(0.1f, 0.04f, 0.01f, 0.95f);
+        text.outlineWidth = 0.18f;
+        text.transform.SetAsLastSibling();
+    }
+
+    private static void StyleDungeonCardDetail(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        SetRuntimeRect(text.rectTransform, new Vector2(-110f, -202f), new Vector2(560f, 26f), new Vector2(0.5f, 1f));
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(0.84f, 0.93f, 1f);
+        text.fontSize = 17;
+        text.fontSizeMin = 12;
+        text.fontSizeMax = 17;
+        text.enableAutoSizing = true;
+        text.fontStyle = FontStyles.Bold;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.outlineColor = new Color(0.04f, 0.03f, 0.02f, 0.95f);
+        text.outlineWidth = 0.12f;
+        text.transform.SetAsLastSibling();
+    }
+
+    private void HideLegacyRuntimeDungeonTower()
+    {
+        var oldDungeonTower = dungeonsPanel != null ? dungeonsPanel.transform.Find("Runtime Art Dungeon Tower") : null;
+        if (oldDungeonTower != null)
+        {
+            oldDungeonTower.gameObject.SetActive(false);
+        }
     }
 
     private void EnsureRuntimeDungeonsTab()
@@ -13785,9 +14088,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        MoveUiElement(goldDungeonButton, dungeonsPanel, new Vector2(0, -560), new Vector2(660, 76));
-        MoveUiElement(essenceDungeonButton, dungeonsPanel, new Vector2(0, -653), new Vector2(660, 76));
-        MoveUiElement(gearDungeonButton, dungeonsPanel, new Vector2(0, -746), new Vector2(660, 76));
+        MoveUiElement(dungeonsHeaderText, dungeonsPanel, new Vector2(0, -132), new Vector2(860, 54));
+        MoveUiElement(goldDungeonButton, dungeonsPanel, new Vector2(0, -198), new Vector2(850, 220));
+        MoveUiElement(essenceDungeonButton, dungeonsPanel, new Vector2(0, -446), new Vector2(850, 220));
+        MoveUiElement(gearDungeonButton, dungeonsPanel, new Vector2(0, -694), new Vector2(850, 220));
+        MoveUiElement(runtimeDungeonResultText, dungeonsPanel, new Vector2(0, -954), new Vector2(760, 52));
+        ApplyDungeonCardsButtonSkin();
     }
 
     private void LayoutHeroesScreen()
@@ -15233,6 +15539,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         runtimeArt.Ensure(homePanel, battlePanel, dungeonsPanel, heroesPanel, gearPanel, summonPanel, shopPanel);
+        HideLegacyRuntimeDungeonTower();
         runtimeArt.ApplyButtonStyle(
             fightButton,
             goldDungeonButton,
@@ -15291,6 +15598,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         runtimeArt.ApplyButtonStyle(dailyMissionButtons);
         runtimeArt.ApplyButtonStyle(battlePassRewardButtons);
         runtimeArt.ApplyButtonStyle("ui_button_blue", fightButton, homeBeginButton);
+        ApplyDungeonCardsButtonSkin();
     }
 
     private void EnsureRuntimeDebugUi()
