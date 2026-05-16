@@ -12901,7 +12901,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         topManagementMenuButton = CreateRuntimeButton(topBarObject.transform, "Top Management Menu Button", string.Empty, 456, -20, 64, 64);
-        StyleTopManagementMenuButton(topManagementMenuButton);
+        ConfigureTopManagementMenuHitArea(topManagementMenuButton);
         EnsureRuntimeManagementPopup(topBarObject.transform);
 
         SetComponentActive(titleText, false);
@@ -12919,7 +12919,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureParchmentBackdrop(shopPanel, "Shop Parchment Backdrop");
     }
 
-    private void StyleTopManagementMenuButton(Button button)
+    private void ConfigureTopManagementMenuHitArea(Button button)
     {
         if (button == null)
         {
@@ -12935,12 +12935,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var image = button.GetComponent<Image>();
         if (image != null)
         {
-            image.color = new Color(0.05f, 0.55f, 0.62f, 0.98f);
+            image.color = Color.clear;
+            image.raycastTarget = true;
         }
-
-        CreateRuntimePanel(button.transform, "Menu Line Top", new Vector2(0, -18), new Vector2(32, 5), new Color(1f, 0.9f, 0.58f, 0.96f));
-        CreateRuntimePanel(button.transform, "Menu Line Middle", new Vector2(0, -30), new Vector2(32, 5), new Color(1f, 0.9f, 0.58f, 0.96f));
-        CreateRuntimePanel(button.transform, "Menu Line Bottom", new Vector2(0, -42), new Vector2(32, 5), new Color(1f, 0.9f, 0.58f, 0.96f));
     }
 
     private void EnsureRuntimeManagementPopup(Transform parent)
