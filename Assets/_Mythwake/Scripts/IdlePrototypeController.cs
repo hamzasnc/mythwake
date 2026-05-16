@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.74";
+    public const string PrototypeVersion = "0.2.75";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -577,6 +577,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const string BattlePassXpKey = "Mythwake.Prototype.BattlePass.Xp";
     private const string BattlePassClaimedKeyPrefix = "Mythwake.Prototype.BattlePass.Claimed.";
     private const string BackendGameplayEnabledKey = "Mythwake.Backend.GameplayEnabled";
+    private const string LanguagePreferenceKey = "Mythwake.Prototype.Language";
     private const string GoldCurrencyId = "gold";
     private const string GemsCurrencyId = "gems";
     private const string MythEssenceCurrencyId = "myth_essence";
@@ -832,6 +833,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private bool[] battlePassRewardsClaimed = new bool[BattlePassRewardCount];
     [SerializeField] private string lastSeenUtcTicks = string.Empty;
 
+    [Header("Localization")]
+    [SerializeField] private MythwakeLanguage language = MythwakeLanguage.English;
+
     [Header("Campaign")]
     [SerializeField]
     private StageDefinition[] stages =
@@ -1060,6 +1064,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RectTransform fastRewardsPopupRoot;
     private RectTransform inventoryGridRoot;
     private RectTransform inventoryDetailRoot;
+    private TMP_Text inventoryTitleText;
     private TMP_Text inventoryPopupText;
     private TMP_Text inventoryDetailTitleText;
     private TMP_Text inventoryDetailDescriptionText;
@@ -1082,6 +1087,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text[] inventorySlotNameTexts;
     private TMP_Text[] inventorySlotDetailTexts;
     private TMP_Text menuHeaderText;
+    private Button languageToggleButton;
+    private TMP_Text languageToggleText;
     private HeroesTabMode heroesTabMode = HeroesTabMode.Hero;
     private HeroSortDirection heroSortDirection = HeroSortDirection.Descending;
     private HeroAttackTypeFilter heroAttackTypeFilter = HeroAttackTypeFilter.All;
@@ -1272,6 +1279,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void Awake()
     {
+        LoadLanguagePreference();
         LoadProgress();
         autoAttackEnabled = false;
         selectedCampaignStage = Mathf.Max(1, enemyLevel);
@@ -2213,8 +2221,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (!result.won)
         {
-            var failMessage = $"Gear Dungeon Floor {floor} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
-            PlayCombatVisual(GearDungeonDefinition.dungeonId, $"Gear Dungeon F{floor}", result, enemyHp);
+            var failMessage = $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {floor} failed after {result.elapsedSeconds}s\n{Tr("ui.common.enemy_hp")} {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
+            PlayCombatVisual(GearDungeonDefinition.dungeonId, $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} F{floor}", result, enemyHp);
             SetDungeonResult(failMessage);
             return CreateActionResult(false, "gear_dungeon_run", "combat_lost", failMessage);
         }
@@ -2223,8 +2231,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         AddAccessoryInventory(accessory.slotIndex, accessory.rarityIndex, 1);
         gearDungeonFloor++;
 
-        var message = $"Gear Dungeon Floor {floor} cleared in {result.elapsedSeconds}s\nDrop: {GetAccessoryRarityName(accessory.rarityIndex)} {AccessorySlots[accessory.slotIndex].name}  HP {result.teamHpRemaining}/{GetTeamHealth()}";
-        PlayCombatVisual(GearDungeonDefinition.dungeonId, $"Gear Dungeon F{floor}", result, enemyHp);
+        var message = $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {floor} cleared in {result.elapsedSeconds}s\nDrop: {GetLocalizedAccessoryName(accessory.slotIndex, accessory.rarityIndex)}  HP {result.teamHpRemaining}/{GetTeamHealth()}";
+        PlayCombatVisual(GearDungeonDefinition.dungeonId, $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} F{floor}", result, enemyHp);
         SetDungeonResult(message);
         return CreateActionResult(true, "gear_dungeon_run", string.Empty, message);
     }
@@ -2303,7 +2311,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         selectedHeroIndex = heroIndex;
         if (IsHeroLevelMax(heroIndex))
         {
-            var maxResult = CreateActionResult(false, "hero_level", "max_level", $"{GetHeroDefinition(heroIndex).name} is already max level.");
+            var maxResult = CreateActionResult(false, "hero_level", "max_level", $"{GetLocalizedHeroName(heroIndex)} is already max level.");
             RefreshUi();
             return maxResult;
         }
@@ -2311,7 +2319,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
         if (!TrySpendCurrency(MythEssenceCurrencyId, upgradeCost))
         {
-            var failMessage = $"Need {upgradeCost} Essence to level {GetHeroDefinition(heroIndex).name}.";
+            var failMessage = $"Need {upgradeCost} {GetLocalizedCurrencyName(MythEssenceCurrencyId)} to level {GetLocalizedHeroName(heroIndex)}.";
             RefreshUi();
             return CreateActionResult(false, "hero_level", "insufficient_currency", failMessage);
         }
@@ -2322,7 +2330,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "hero_level", string.Empty, $"{GetHeroDefinition(heroIndex).name} reached Lv. {heroLevels[heroIndex]}.");
+        return CreateActionResult(true, "hero_level", string.Empty, $"{GetLocalizedHeroName(heroIndex)} reached {Tr("ui.common.level_short")}. {heroLevels[heroIndex]}.");
     }
 
     public MythwakeActionResultDto AscendHero(string heroId)
@@ -2339,7 +2347,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroAscensions();
         if (IsHeroAscensionMax(heroIndex))
         {
-            var maxResult = CreateActionResult(false, "hero_ascend", "max_ascension", $"{GetHeroDefinition(heroIndex).name} is already max ascension.");
+            var maxResult = CreateActionResult(false, "hero_ascend", "max_ascension", $"{GetLocalizedHeroName(heroIndex)} is already max ascension.");
             RefreshUi();
             return maxResult;
         }
@@ -2347,7 +2355,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var ascendCost = GetHeroAscensionCost(selectedHeroIndex);
         if (heroShards[selectedHeroIndex] < ascendCost)
         {
-            var failMessage = $"Need {ascendCost} shards to ascend {GetHeroDefinition(heroIndex).name}.";
+            var failMessage = $"Need {ascendCost} shards to ascend {GetLocalizedHeroName(heroIndex)}.";
             RefreshUi();
             return CreateActionResult(false, "hero_ascend", "insufficient_shards", failMessage);
         }
@@ -2358,7 +2366,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "hero_ascend", string.Empty, $"{GetHeroDefinition(heroIndex).name} ascended to +{heroAscensions[heroIndex]}.");
+        return CreateActionResult(true, "hero_ascend", string.Empty, $"{GetLocalizedHeroName(heroIndex)} ascended to +{heroAscensions[heroIndex]}.");
     }
 
     public MythwakeActionResultDto LevelEquipment(string equipmentId)
@@ -2385,7 +2393,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         currentLevel = Mathf.Max(StarterEquipmentLevel, currentLevel);
         if (IsEquipmentLevelMax(track, currentLevel))
         {
-            var maxResult = CreateActionResult(false, "equipment_level", "max_level", $"{GetHeroDefinition(heroIndex).name}'s {track.name} is already max level.");
+            var maxResult = CreateActionResult(false, "equipment_level", "max_level", $"{GetLocalizedHeroName(heroIndex)} {GetLocalizedEquipmentName(track)} is already max level.");
             RefreshUi();
             return maxResult;
         }
@@ -2394,7 +2402,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (!TrySpendCurrency(GoldCurrencyId, cost))
         {
-            var failMessage = $"Need {cost} Gold to level {GetHeroDefinition(heroIndex).name}'s {track.name}.";
+            var failMessage = $"Need {cost} {GetLocalizedCurrencyName(GoldCurrencyId)} to level {GetLocalizedHeroName(heroIndex)} {GetLocalizedEquipmentName(track)}.";
             RefreshUi();
             return CreateActionResult(false, "equipment_level", "insufficient_currency", failMessage);
         }
@@ -2405,7 +2413,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SaveProgress();
         RefreshUi();
         var newLevel = GetHeroEquipmentLevel(heroIndex, isWeapon);
-        return CreateActionResult(true, "equipment_level", string.Empty, $"{GetHeroDefinition(heroIndex).name}'s {track.name} reached Lv. {newLevel}.");
+        return CreateActionResult(true, "equipment_level", string.Empty, $"{GetLocalizedHeroName(heroIndex)} {GetLocalizedEquipmentName(track)} reached {Tr("ui.common.level_short")}. {newLevel}.");
     }
 
     public void PreviousAccessorySlot()
@@ -2470,13 +2478,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (GetAccessoryInventoryCount(slot, rarity) <= 0)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_equip", "missing_item", $"No {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} copy to equip.");
+            return CreateActionResult(false, "accessory_equip", "missing_item", $"No {GetLocalizedAccessoryName(slot, rarity)} copy to equip.");
         }
 
         if (GetHeroEquippedAccessoryRarity(heroIndex, slot) == rarity)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_equip", "already_equipped", $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is already equipped on {GetHeroDefinition(heroIndex).name}.");
+            return CreateActionResult(false, "accessory_equip", "already_equipped", $"{GetLocalizedAccessoryName(slot, rarity)} is already equipped on {GetLocalizedHeroName(heroIndex)}.");
         }
 
         var previousRarity = GetHeroEquippedAccessoryRarity(heroIndex, slot);
@@ -2490,7 +2498,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "accessory_equip", string.Empty, $"Equipped {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} on {GetHeroDefinition(heroIndex).name}.");
+        return CreateActionResult(true, "accessory_equip", string.Empty, $"Equipped {GetLocalizedAccessoryName(slot, rarity)} on {GetLocalizedHeroName(heroIndex)}.");
     }
 
     public void LevelSelectedAccessory()
@@ -2529,7 +2537,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (GetHeroEquippedAccessoryRarity(heroIndex, slot) != rarity)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_level", "not_equipped", $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is not equipped on {GetHeroDefinition(heroIndex).name}.");
+            return CreateActionResult(false, "accessory_level", "not_equipped", $"{GetLocalizedAccessoryName(slot, rarity)} is not equipped on {GetLocalizedHeroName(heroIndex)}.");
         }
 
         var maxLevel = GetAccessoryMaxLevel(rarity);
@@ -2537,14 +2545,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (currentLevel >= maxLevel)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_level", "max_level", $"{GetHeroDefinition(heroIndex).name}'s {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} is already max level.");
+            return CreateActionResult(false, "accessory_level", "max_level", $"{GetLocalizedHeroName(heroIndex)} {GetLocalizedAccessoryName(slot, rarity)} is already max level.");
         }
 
         var cost = GetAccessoryLevelCost(slot);
         if (!TrySpendCurrency(GoldCurrencyId, cost))
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_level", "insufficient_currency", $"Need {cost} Gold to level {AccessorySlots[slot].name}.");
+            return CreateActionResult(false, "accessory_level", "insufficient_currency", $"Need {cost} {GetLocalizedCurrencyName(GoldCurrencyId)} to level {GetLocalizedAccessorySlotName(slot)}.");
         }
 
         SetHeroEquippedAccessory(heroIndex, slot, rarity, currentLevel + 1);
@@ -2552,7 +2560,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "accessory_level", string.Empty, $"Leveled {GetHeroDefinition(heroIndex).name}'s {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} to Lv. {GetHeroEquippedAccessoryLevel(heroIndex, slot)}.");
+        return CreateActionResult(true, "accessory_level", string.Empty, $"Leveled {GetLocalizedHeroName(heroIndex)} {GetLocalizedAccessoryName(slot, rarity)} to {Tr("ui.common.level_short")}. {GetHeroEquippedAccessoryLevel(heroIndex, slot)}.");
     }
 
     public void FuseSelectedAccessory()
@@ -2590,7 +2598,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (string.IsNullOrEmpty(accessory.fuseTargetAccessoryId) || GetAccessoryInventoryCount(slot, rarity) < fuseCost)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_fuse", "missing_items", $"Need {fuseCost}x {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} to fuse.");
+            return CreateActionResult(false, "accessory_fuse", "missing_items", $"Need {fuseCost}x {GetLocalizedAccessoryName(slot, rarity)} to fuse.");
         }
 
         var fuseTarget = GetAccessoryDefinitionById(accessory.fuseTargetAccessoryId);
@@ -2600,7 +2608,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "accessory_fuse", string.Empty, $"Fused into {GetAccessoryRarityName(fuseTarget.rarityIndex)} {AccessorySlots[fuseTarget.slotIndex].name}.");
+        return CreateActionResult(true, "accessory_fuse", string.Empty, $"Fused into {GetLocalizedAccessoryName(fuseTarget.slotIndex, fuseTarget.rarityIndex)}.");
     }
 
     public void SummonOnce()
@@ -2735,8 +2743,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (!TrySpendCurrency(GemsCurrencyId, summonCost))
         {
             var failMessage = count == 1
-                ? $"Need {summonCost} Gems for a summon."
-                : $"Need {summonCost} Gems for Summon x{count}.";
+                ? $"Need {summonCost} {GetLocalizedCurrencyName(GemsCurrencyId)} for a summon."
+                : $"Need {summonCost} {GetLocalizedCurrencyName(GemsCurrencyId)} for Summon x{count}.";
             SetSummonResult(failMessage);
             RefreshUi();
             return CreateActionResult(false, "summon_pull", "insufficient_currency", failMessage);
@@ -2767,9 +2775,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var hero = GetHeroDefinition(lastHeroIndex);
 
         var message = count == 1
-            ? $"{hero.rarityName} pull: {hero.name}\n+{shardTotals[lastHeroIndex]} shards"
+            ? $"{GetLocalizedHeroRarityName(hero.rarityId)} pull: {GetLocalizedHeroName(hero)}\n+{shardTotals[lastHeroIndex]} shards"
             : BuildSummonPackResultMessage(count, totalShards, shardTotals);
-        PlaySummonVisual(lastHeroIndex, count == 1 ? $"{hero.rarityName} {hero.name}" : $"Summon x{count}");
+        PlaySummonVisual(lastHeroIndex, count == 1 ? $"{GetLocalizedHeroRarityName(hero.rarityId)} {GetLocalizedHeroName(hero)}" : $"Summon x{count}");
         SetSummonResult(message);
         if (showResultPopup)
         {
@@ -3969,29 +3977,29 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (combat.mode == "campaign")
         {
-            return $"Campaign Stage {combat.targetLevel}";
+            return $"{Tr("ui.common.campaign")} {Tr("ui.common.stage")} {combat.targetLevel}";
         }
 
         if (combat.mode == "dungeon")
         {
             if (UseBackendDefinitionView() && TryGetBackendDungeonDefinition(combat.targetId, out var definition))
             {
-                return $"{definition.displayName} F{combat.targetLevel}";
+                return $"{GetLocalizedDungeonName(definition.dungeonId)} F{combat.targetLevel}";
             }
 
             if (combat.targetId == GoldDungeonDefinition.dungeonId)
             {
-                return $"{GoldDungeonDefinition.displayName} F{combat.targetLevel}";
+                return $"{GetLocalizedDungeonName(GoldDungeonDefinition.dungeonId)} F{combat.targetLevel}";
             }
 
             if (combat.targetId == EssenceDungeonDefinition.dungeonId)
             {
-                return $"{EssenceDungeonDefinition.displayName} F{combat.targetLevel}";
+                return $"{GetLocalizedDungeonName(EssenceDungeonDefinition.dungeonId)} F{combat.targetLevel}";
             }
 
             if (combat.targetId == GearDungeonDefinition.dungeonId)
             {
-                return $"{GearDungeonDefinition.displayName} F{combat.targetLevel}";
+                return $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} F{combat.targetLevel}";
             }
         }
 
@@ -4372,7 +4380,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         yield return PlayCampaignFightVisualRoutine(
             result.won,
             floor,
-            $"{dungeon.displayName} F{floor}  VS  {GetDungeonBossName(dungeon.dungeonId)}",
+            $"{GetLocalizedDungeonName(dungeon.dungeonId)} F{floor}  VS  {GetLocalizedDungeonBossName(dungeon.dungeonId)}",
             result.elapsedSeconds,
             GetTeamHealth(),
             result.teamHpRemaining,
@@ -4427,7 +4435,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         yield return PlayCampaignFightVisualRoutine(
             combat.won,
             combat.targetLevel,
-            $"{GetServerCombatLabel(combat)}  VS  {GetDungeonBossName(selectedDungeonId)}",
+            $"{GetServerCombatLabel(combat)}  VS  {GetLocalizedDungeonBossName(selectedDungeonId)}",
             combat.elapsedSeconds,
             combat.teamMaxHp,
             combat.teamHpRemaining,
@@ -4982,10 +4990,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private MythwakeActionResultDto ApplyResourceDungeonResult(bool isGoldDungeon, int floor, CombatResult result, int enemyHp)
     {
         var dungeon = isGoldDungeon ? GoldDungeonDefinition : EssenceDungeonDefinition;
+        var dungeonName = GetLocalizedDungeonName(dungeon.dungeonId);
         if (!result.won)
         {
-            var failMessage = $"{dungeon.displayName} Floor {floor} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
-            PlayCombatVisual(dungeon.dungeonId, $"{dungeon.displayName} F{floor}", result, enemyHp);
+            var failMessage = $"{dungeonName} Floor {floor} failed after {result.elapsedSeconds}s\n{Tr("ui.common.enemy_hp")} {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
+            PlayCombatVisual(dungeon.dungeonId, $"{dungeonName} F{floor}", result, enemyHp);
             SetDungeonResult(failMessage);
             return CreateActionResult(false, $"{dungeon.dungeonId}_run", "combat_lost", failMessage);
         }
@@ -5001,17 +5010,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             GrantCurrency(GoldCurrencyId, reward);
             goldDungeonFloor++;
             rewardDto = new MythwakeRewardDto { rewardId = $"reward_{dungeon.dungeonId}_floor_{floor}", gold = reward + bonusReward.gold };
-            message = $"{dungeon.displayName} Floor {floor} cleared in {result.elapsedSeconds}s (+{reward} Gold)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
+            message = $"{dungeonName} Floor {floor} cleared in {result.elapsedSeconds}s (+{reward} {GetLocalizedCurrencyName(GoldCurrencyId)})\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
         }
         else
         {
             GrantCurrency(MythEssenceCurrencyId, reward);
             essenceDungeonFloor++;
             rewardDto = new MythwakeRewardDto { rewardId = $"reward_{dungeon.dungeonId}_floor_{floor}", mythEssence = reward + bonusReward.mythEssence };
-            message = $"{dungeon.displayName} Floor {floor} cleared in {result.elapsedSeconds}s (+{reward} Essence)\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
+            message = $"{dungeonName} Floor {floor} cleared in {result.elapsedSeconds}s (+{reward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)})\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
         }
 
-        PlayCombatVisual(dungeon.dungeonId, $"{dungeon.displayName} F{floor}", result, enemyHp);
+        PlayCombatVisual(dungeon.dungeonId, $"{dungeonName} F{floor}", result, enemyHp);
         SetDungeonResult(message);
         return CreateActionResult(true, $"{dungeon.dungeonId}_run", string.Empty, message, rewardDto);
     }
@@ -5294,12 +5303,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (reward.gold > 0)
         {
-            return $"  Bonus +{reward.gold} Gold";
+            return $"  Bonus +{reward.gold} {GetLocalizedCurrencyName(GoldCurrencyId)}";
         }
 
         if (reward.mythEssence > 0)
         {
-            return $"  Bonus +{reward.mythEssence} Essence";
+            return $"  Bonus +{reward.mythEssence} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}";
         }
 
         return string.Empty;
@@ -5427,7 +5436,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (fightStatusText != null)
             {
                 fightStatusText.text = ultimateCinematicActive
-                    ? $"{GetHeroDefinition(ultimateCinematicHeroIndex).name} unleashes Ultimate"
+                    ? $"{GetLocalizedHeroName(ultimateCinematicHeroIndex)}: {GetLocalizedHeroAbilityName(ultimateCinematicHeroIndex)}"
                     : $"Dealt {FormatCompactNumber(Mathf.RoundToInt(damageDealt * smooth))}   Took {FormatCompactNumber(Mathf.RoundToInt(damageTaken * smooth))}";
             }
 
@@ -5893,6 +5902,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (fightSkillNameTexts != null && i < fightSkillNameTexts.Length && fightSkillNameTexts[i] != null)
             {
+                fightSkillNameTexts[i].text = GetLocalizedHeroName(i);
                 fightSkillNameTexts[i].color = !alive
                     ? new Color(0.72f, 0.72f, 0.76f)
                     : ready ? new Color(1f, 0.86f, 0.3f) : Color.white;
@@ -7526,6 +7536,135 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private string Tr(string key)
+    {
+        return MythwakeLocalization.Text(language, key);
+    }
+
+    private string TrFormat(string key, params object[] args)
+    {
+        return MythwakeLocalization.Format(language, key, args);
+    }
+
+    private void LoadLanguagePreference()
+    {
+        var saved = PlayerPrefs.GetString(LanguagePreferenceKey, language.ToString());
+        if (Enum.TryParse(saved, out MythwakeLanguage parsedLanguage))
+        {
+            language = parsedLanguage;
+        }
+    }
+
+    private void SaveLanguagePreference()
+    {
+        PlayerPrefs.SetString(LanguagePreferenceKey, language.ToString());
+        PlayerPrefs.Save();
+    }
+
+    private void ToggleLanguage()
+    {
+        language = language == MythwakeLanguage.English ? MythwakeLanguage.German : MythwakeLanguage.English;
+        SaveLanguagePreference();
+        RefreshUi();
+    }
+
+    private string GetLocalizedCurrencyName(string currencyId)
+    {
+        var key = $"currency.{currencyId}.name";
+        var localized = Tr(key);
+        return localized == key ? GetCurrencyDefinition(currencyId).displayName : localized;
+    }
+
+    private string GetLocalizedHeroName(HeroDefinition hero)
+    {
+        var key = $"hero.{hero.heroId}.name";
+        var localized = Tr(key);
+        return localized == key ? hero.name : localized;
+    }
+
+    private string GetLocalizedHeroName(int heroIndex)
+    {
+        return GetLocalizedHeroName(GetHeroDefinition(heroIndex));
+    }
+
+    private string GetLocalizedHeroRoleName(HeroDefinition hero)
+    {
+        var key = $"role.{hero.roleId}.name";
+        var localized = Tr(key);
+        return localized == key ? hero.roleName : localized;
+    }
+
+    private string GetLocalizedHeroRarityName(string rarityId)
+    {
+        var key = $"rarity.{rarityId}.name";
+        var localized = Tr(key);
+        return localized == key ? GetHeroRarityName(rarityId) : localized;
+    }
+
+    private string GetLocalizedHeroAbilityName(int heroIndex)
+    {
+        var hero = GetHeroDefinition(heroIndex);
+        var key = $"hero.{hero.heroId}.ability.name";
+        var localized = Tr(key);
+        return localized == key ? "Ultimate" : localized;
+    }
+
+    private string GetLocalizedEquipmentName(EquipmentTrackDefinition track)
+    {
+        var key = $"equipment.{track.equipmentId}.name";
+        var localized = Tr(key);
+        return localized == key ? track.name : localized;
+    }
+
+    private string GetLocalizedAccessorySlotName(int slot)
+    {
+        slot = Mathf.Clamp(slot, 0, AccessorySlotCount - 1);
+        var key = $"accessory.{AccessorySlots[slot].itemSlotId}.name";
+        var localized = Tr(key);
+        return localized == key ? AccessorySlots[slot].name : localized;
+    }
+
+    private string GetLocalizedAccessoryName(int slot, int rarity)
+    {
+        return $"{GetAccessoryRarityName(rarity)} {GetLocalizedAccessorySlotName(slot)}";
+    }
+
+    private string GetLocalizedDungeonName(string dungeonId)
+    {
+        var dungeon = ResolveDungeonDefinition(dungeonId);
+        var key = $"dungeon.{dungeon.dungeonId}.name";
+        var localized = Tr(key);
+        return localized == key ? dungeon.displayName : localized;
+    }
+
+    private string GetLocalizedDungeonSetTitle(string dungeonId)
+    {
+        var key = $"dungeon.{ResolveDungeonDefinition(dungeonId).dungeonId}.set";
+        var localized = Tr(key);
+        return localized == key ? GetDungeonSetTitle(dungeonId) : localized;
+    }
+
+    private string GetLocalizedDungeonBossName(string dungeonId)
+    {
+        var key = $"dungeon.{ResolveDungeonDefinition(dungeonId).dungeonId}.boss";
+        var localized = Tr(key);
+        return localized == key ? GetDungeonBossName(dungeonId) : localized;
+    }
+
+    private string GetLocalizedSummonBannerName(SummonBannerDefinition banner)
+    {
+        var key = $"summon.banner.{banner.bannerId}.name";
+        var localized = Tr(key);
+        return localized == key ? banner.displayName : localized;
+    }
+
+    private string GetLocalizedSummonBannerPromo(SummonBannerDefinition banner)
+    {
+        var key = $"summon.banner.{banner.bannerId}.promo";
+        var localized = Tr(key);
+        return localized == key ? banner.promoText : localized;
+    }
+
     private void RefreshUi()
     {
         EnsureHeroLevels();
@@ -7544,37 +7683,47 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             versionText.text = GetVersionLabel();
         }
 
+        if (menuHeaderText != null)
+        {
+            menuHeaderText.text = Tr("ui.menu.header");
+        }
+
+        if (languageToggleText != null)
+        {
+            languageToggleText.text = Tr("language.button");
+        }
+
         if (goldText != null)
         {
-            var resourceText = $"Gold {gold}   Gems {gems}   Essence {mythEssence}";
+            var resourceText = $"{GetLocalizedCurrencyName(GoldCurrencyId)} {gold}   {GetLocalizedCurrencyName(GemsCurrencyId)} {gems}   {GetLocalizedCurrencyName(MythEssenceCurrencyId)} {mythEssence}";
             goldText.fontSize = versionText == null ? 30 : 36;
             goldText.text = versionText == null ? $"{resourceText}\n{GetVersionLabel()}" : resourceText;
         }
 
         if (homeGoldText != null)
         {
-            homeGoldText.text = $"{gold} Gold";
+            homeGoldText.text = $"{gold} {GetLocalizedCurrencyName(GoldCurrencyId)}";
         }
 
         if (gemsText != null)
         {
-            gemsText.text = $"{gems} Gems";
+            gemsText.text = $"{gems} {GetLocalizedCurrencyName(GemsCurrencyId)}";
         }
 
         if (mythEssenceText != null)
         {
-            mythEssenceText.text = $"{mythEssence} Myth Essence";
+            mythEssenceText.text = $"{mythEssence} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}";
         }
 
         if (homeStageText != null)
         {
             var stage = GetStageDefinition(enemyLevel);
-            homeStageText.text = $"Campaign {enemyLevel}\n{stage.enemyName}";
+            homeStageText.text = $"{Tr("ui.common.campaign")} {enemyLevel}\n{stage.enemyName}";
         }
 
         if (homePowerText != null)
         {
-            homePowerText.text = $"Team Power {GetTeamPower()}";
+            homePowerText.text = $"{Tr("ui.common.team_power")} {GetTeamPower()}";
         }
 
         RefreshNextGoalUi();
@@ -7591,12 +7740,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             if (UseBackendDefinitionView() && TryGetBackendCampaignStageDefinition(enemyLevel, out var backendStage))
             {
-                enemyText.text = $"Stage {enemyLevel}: {backendStage.displayName}\nRecommended Power {backendStage.requiredPower}";
+                enemyText.text = $"{Tr("ui.common.stage")} {enemyLevel}: {backendStage.displayName}\n{Tr("ui.common.recommended_power")} {backendStage.requiredPower}";
             }
             else
             {
                 var stage = GetStageDefinition(enemyLevel);
-                enemyText.text = $"Stage {enemyLevel}: {stage.enemyName}\nRecommended Power {GetStageRecommendedPower(enemyLevel)}";
+                enemyText.text = $"{Tr("ui.common.stage")} {enemyLevel}: {stage.enemyName}\n{Tr("ui.common.recommended_power")} {GetStageRecommendedPower(enemyLevel)}";
             }
         }
 
@@ -7604,11 +7753,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             if (UseBackendDefinitionView() && TryGetBackendCampaignStageDefinition(enemyLevel, out var backendStage))
             {
-                enemyHpText.text = $"Enemy HP: {backendStage.enemyMaxHp}   Enemy Damage: {backendStage.enemyDamage}";
+                enemyHpText.text = $"{Tr("ui.common.enemy_hp")}: {backendStage.enemyMaxHp}   {Tr("ui.common.enemy_damage")}: {backendStage.enemyDamage}";
             }
             else
             {
-                enemyHpText.text = $"Enemy HP: {enemyMaxHp}   Enemy Damage: {GetCampaignEnemyDamage(enemyLevel)}";
+                enemyHpText.text = $"{Tr("ui.common.enemy_hp")}: {enemyMaxHp}   {Tr("ui.common.enemy_damage")}: {GetCampaignEnemyDamage(enemyLevel)}";
             }
         }
 
@@ -7634,22 +7783,22 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (upgradeCostText != null)
         {
             upgradeCostText.text = heroLevelMax
-                ? $"{GetHeroDefinition(selectedHeroIndex).name} Max Lv. {GetHeroLevelCap(selectedHeroIndex)}"
-                : $"Upgrade {GetHeroDefinition(selectedHeroIndex).name} ({upgradeCost} Essence)";
+                ? $"{GetLocalizedHeroName(selectedHeroIndex)} {Tr("ui.common.max_level")} {GetHeroLevelCap(selectedHeroIndex)}"
+                : $"Upgrade {GetLocalizedHeroName(selectedHeroIndex)} ({upgradeCost} {GetLocalizedCurrencyName(MythEssenceCurrencyId)})";
         }
 
         if (heroUpgradeCostText != null)
         {
             heroUpgradeCostText.text = heroLevelMax
-                ? $"{GetHeroDefinition(selectedHeroIndex).name} Max Lv. {GetHeroLevelCap(selectedHeroIndex)}"
-                : $"Upgrade {GetHeroDefinition(selectedHeroIndex).name} ({upgradeCost} Essence)";
+                ? $"{GetLocalizedHeroName(selectedHeroIndex)} {Tr("ui.common.max_level")} {GetHeroLevelCap(selectedHeroIndex)}"
+                : $"Upgrade {GetLocalizedHeroName(selectedHeroIndex)} ({upgradeCost} {GetLocalizedCurrencyName(MythEssenceCurrencyId)})";
         }
 
         if (heroAscendCostText != null)
         {
             heroAscendCostText.text = heroAscensionMax
-                ? $"{GetHeroDefinition(selectedHeroIndex).name} Max Asc. {GetHeroAscensionCap(selectedHeroIndex)}"
-                : $"Ascend {GetHeroDefinition(selectedHeroIndex).name} ({GetHeroAscensionCost(selectedHeroIndex)} Shards)";
+                ? $"{GetLocalizedHeroName(selectedHeroIndex)} Max Asc. {GetHeroAscensionCap(selectedHeroIndex)}"
+                : $"Ascend {GetLocalizedHeroName(selectedHeroIndex)} ({GetHeroAscensionCost(selectedHeroIndex)} Shards)";
         }
 
         if (upgradeButton != null)
@@ -8503,6 +8652,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             inventoryAllTabButton.onClick.AddListener(ShowInventoryAllTab);
         }
 
+        if (languageToggleButton != null)
+        {
+            languageToggleButton.onClick.AddListener(ToggleLanguage);
+        }
+
         if (fastRewardsCloseButton != null)
         {
             fastRewardsCloseButton.onClick.AddListener(HideFastRewardsPopup);
@@ -8679,6 +8833,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (inventoryAllTabButton != null)
         {
             inventoryAllTabButton.onClick.RemoveListener(ShowInventoryAllTab);
+        }
+
+        if (languageToggleButton != null)
+        {
+            languageToggleButton.onClick.RemoveListener(ToggleLanguage);
         }
 
         if (fastRewardsCloseButton != null)
@@ -8926,7 +9085,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 if (teamSlotTexts[i] != null)
                 {
-                    teamSlotTexts[i].text = $"{GetHeroDefinition(i).name}\nATK {GetHeroAttack(i)}\nHP {GetHeroHealth(i)}";
+                    teamSlotTexts[i].text = $"{GetLocalizedHeroName(i)}\nATK {GetHeroAttack(i)}\nHP {GetHeroHealth(i)}";
                 }
             }
         }
@@ -8934,7 +9093,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (selectedHeroText != null)
         {
             var hero = GetHeroDefinition(selectedHeroIndex);
-            selectedHeroText.text = $"{hero.name}  Lv. {FormatCappedValue(heroLevels[selectedHeroIndex], GetHeroLevelCap(selectedHeroIndex))}  Asc. {FormatCappedValue(heroAscensions[selectedHeroIndex], GetHeroAscensionCap(selectedHeroIndex))}\n{hero.rarityName} {GetHeroAttackTypeLabel(selectedHeroIndex)}  Power {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroEffectiveAttack(selectedHeroIndex)}  HP {GetHeroCombatMaxHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
+            selectedHeroText.text = $"{GetLocalizedHeroName(hero)}  {Tr("ui.common.level_short")}. {FormatCappedValue(heroLevels[selectedHeroIndex], GetHeroLevelCap(selectedHeroIndex))}  Asc. {FormatCappedValue(heroAscensions[selectedHeroIndex], GetHeroAscensionCap(selectedHeroIndex))}\n{GetLocalizedHeroRarityName(hero.rarityId)} {GetHeroAttackTypeLabel(selectedHeroIndex)}  {Tr("ui.common.power")} {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroEffectiveAttack(selectedHeroIndex)}  HP {GetHeroCombatMaxHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
         }
 
         if (heroCardTexts != null)
@@ -9122,7 +9281,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (heroTeamSlotTexts != null && slotIndex < heroTeamSlotTexts.Length && heroTeamSlotTexts[slotIndex] != null)
             {
-                heroTeamSlotTexts[slotIndex].text = $"{slotIndex + 1}. {hero.name}\nPower {GetHeroPower(heroIndex)}";
+                heroTeamSlotTexts[slotIndex].text = $"{slotIndex + 1}. {GetLocalizedHeroName(hero)}\n{Tr("ui.common.power")} {GetHeroPower(heroIndex)}";
             }
 
             if (heroTeamSlotFrames != null && slotIndex < heroTeamSlotFrames.Length && heroTeamSlotFrames[slotIndex] != null)
@@ -9370,21 +9529,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (equipmentSummaryText != null)
         {
-            equipmentSummaryText.text = $"{hero.name} Equipment\n{WeaponTrack.name} Lv. {FormatCappedValue(displayedWeaponLevel, GetEquipmentLevelCap(WeaponTrack))}  +{GetHeroEquipmentAttackBonus(heroIndex)} {WeaponTrack.statLabel}\n{ArmorTrack.name} Lv. {FormatCappedValue(displayedArmorLevel, GetEquipmentLevelCap(ArmorTrack))}  +{GetHeroEquipmentHealthBonus(heroIndex)} {ArmorTrack.statLabel}";
+            equipmentSummaryText.text = $"{GetLocalizedHeroName(hero)} {GetInventoryTabLabel(InventoryTabMode.Gear)}\n{GetLocalizedEquipmentName(WeaponTrack)} {Tr("ui.common.level_short")}. {FormatCappedValue(displayedWeaponLevel, GetEquipmentLevelCap(WeaponTrack))}  +{GetHeroEquipmentAttackBonus(heroIndex)} {WeaponTrack.statLabel}\n{GetLocalizedEquipmentName(ArmorTrack)} {Tr("ui.common.level_short")}. {FormatCappedValue(displayedArmorLevel, GetEquipmentLevelCap(ArmorTrack))}  +{GetHeroEquipmentHealthBonus(heroIndex)} {ArmorTrack.statLabel}";
         }
 
         if (weaponUpgradeCostText != null)
         {
             weaponUpgradeCostText.text = IsEquipmentLevelMax(WeaponTrack, heroWeaponLevel)
-                ? $"{WeaponTrack.name}\nMax Lv. {GetEquipmentLevelCap(WeaponTrack)}"
-                : $"{WeaponTrack.name} +1\n{GetWeaponUpgradeCost()} Gold";
+                ? $"{GetLocalizedEquipmentName(WeaponTrack)}\n{Tr("ui.common.max_level")} {GetEquipmentLevelCap(WeaponTrack)}"
+                : $"{GetLocalizedEquipmentName(WeaponTrack)} +1\n{GetWeaponUpgradeCost()} {GetLocalizedCurrencyName(GoldCurrencyId)}";
         }
 
         if (armorUpgradeCostText != null)
         {
             armorUpgradeCostText.text = IsEquipmentLevelMax(ArmorTrack, heroArmorLevel)
-                ? $"{ArmorTrack.name}\nMax Lv. {GetEquipmentLevelCap(ArmorTrack)}"
-                : $"{ArmorTrack.name} +1\n{GetArmorUpgradeCost()} Gold";
+                ? $"{GetLocalizedEquipmentName(ArmorTrack)}\n{Tr("ui.common.max_level")} {GetEquipmentLevelCap(ArmorTrack)}"
+                : $"{GetLocalizedEquipmentName(ArmorTrack)} +1\n{GetArmorUpgradeCost()} {GetLocalizedCurrencyName(GoldCurrencyId)}";
         }
     }
 
@@ -9397,13 +9556,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (accessorySummaryText != null)
         {
-            accessorySummaryText.text = $"{GetHeroDefinition(heroIndex).name} Accessories\nATK +{GetHeroAccessoryAttackBonus(heroIndex)}  HP +{GetHeroAccessoryHealthBonus(heroIndex)}\nGear Dungeon Floor {gearDungeonFloor}";
+            accessorySummaryText.text = $"{GetLocalizedHeroName(heroIndex)} {GetInventoryTabLabel(InventoryTabMode.Gear)}\nATK +{GetHeroAccessoryAttackBonus(heroIndex)}  HP +{GetHeroAccessoryHealthBonus(heroIndex)}\n{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {gearDungeonFloor}";
         }
 
         if (accessorySelectedText != null)
         {
             var equippedText = GetEquippedAccessoryText(slot);
-            accessorySelectedText.text = $"{AccessorySlots[slot].name}\nEquipped: {equippedText}\nSelected Fuse Tier: {GetAccessoryRarityName(rarity)}";
+            accessorySelectedText.text = $"{GetLocalizedAccessorySlotName(slot)}\n{Tr("ui.common.equipped")}: {equippedText}\nSelected Fuse Tier: {GetAccessoryRarityName(rarity)}";
         }
 
         if (accessoryInventoryText != null)
@@ -9413,7 +9572,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (accessoryEquipText != null)
         {
-            accessoryEquipText.text = $"Equip {GetAccessoryRarityName(rarity)}\nCopies {GetAccessoryInventoryCount(slot, rarity)}";
+            accessoryEquipText.text = $"Equip {GetAccessoryRarityName(rarity)}\n{Tr("ui.common.copies")} {GetAccessoryInventoryCount(slot, rarity)}";
         }
 
         if (accessoryLevelText != null)
@@ -9421,7 +9580,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             var equippedRarity = GetHeroEquippedAccessoryRarity(heroIndex, slot);
             accessoryLevelText.text = equippedRarity < 0
                 ? "Level Equipped\nNo item"
-                : $"Level Equipped\n{GetAccessoryLevelCost(slot)} Gold";
+                : $"Level Equipped\n{GetAccessoryLevelCost(slot)} {GetLocalizedCurrencyName(GoldCurrencyId)}";
         }
 
         if (accessoryFuseText != null)
@@ -9467,16 +9626,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var rarity = GetHeroEquippedAccessoryRarity(heroIndex, slot);
         if (rarity < 0)
         {
-            return "None";
+            return Tr("ui.common.empty");
         }
 
         var level = GetHeroEquippedAccessoryLevel(heroIndex, slot);
-        return $"{GetAccessoryRarityName(rarity)} Lv. {level}/{GetAccessoryMaxLevel(rarity)} (+{GetAccessoryAttackFor(slot, rarity, level)} ATK, +{GetAccessoryHealthFor(slot, rarity, level)} HP)";
+        return $"{GetAccessoryRarityName(rarity)} {Tr("ui.common.level_short")}. {level}/{GetAccessoryMaxLevel(rarity)} (+{GetAccessoryAttackFor(slot, rarity, level)} ATK, +{GetAccessoryHealthFor(slot, rarity, level)} HP)";
     }
 
     private string GetAccessoryInventoryText(int slot)
     {
-        var text = "Inventory Copies";
+        var text = $"{Tr("ui.inventory.title")} {Tr("ui.common.copies")}";
         for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
         {
             text += $"\n{GetAccessoryRarityName(rarity)}: {GetAccessoryInventoryCount(slot, rarity)}";
@@ -10287,10 +10446,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var banner = GetActiveSummonBanner();
         if (TryGetBackendSummonBannerDefinition(banner.bannerId, out var backendBanner) && !string.IsNullOrWhiteSpace(backendBanner.displayName))
         {
-            return backendBanner.displayName;
+            var localized = GetLocalizedSummonBannerName(banner);
+            return localized == banner.displayName ? backendBanner.displayName : localized;
         }
 
-        return banner.displayName;
+        return GetLocalizedSummonBannerName(banner);
+    }
+
+    private string GetSummonBannerPromoText(SummonBannerDefinition banner)
+    {
+        return GetLocalizedSummonBannerPromo(banner);
     }
 
     private int GetSummonPackCost(int count)
@@ -10310,7 +10475,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return singleCost * count;
     }
 
-    private static string BuildSummonPackResultMessage(int count, int totalShards, int[] shardTotals)
+    private string BuildSummonPackResultMessage(int count, int totalShards, int[] shardTotals)
     {
         var message = $"Summon x{count} complete\n+{totalShards} total shards";
         if (shardTotals == null)
@@ -10327,7 +10492,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
 
             message += shown == 0 ? "\n" : "  ";
-            message += $"{GetHeroDefinition(i).name} +{shardTotals[i]}";
+            message += $"{GetLocalizedHeroName(i)} +{shardTotals[i]}";
             shown++;
         }
 
@@ -10339,7 +10504,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var banner = GetActiveSummonBanner();
         if (TryGetBackendSummonBannerDefinition(banner.bannerId, out var backendBanner))
         {
-            var serverText = $"{backendBanner.displayName}\nCost {backendBanner.costAmount} {GetCurrencyDefinition(backendBanner.costCurrencyId).displayName}";
+            var serverText = $"{GetSummonBannerDisplayName()}\n{Tr("ui.common.cost")} {backendBanner.costAmount} {GetLocalizedCurrencyName(backendBanner.costCurrencyId)}";
             if (backendBanner.shardDrops == null || backendBanner.shardDrops.Length == 0)
             {
                 return serverText;
@@ -10352,7 +10517,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 var heroName = backendBanner.shardDrops[i].heroId;
                 if (TryGetHeroIndexById(backendBanner.shardDrops[i].heroId, out var heroIndex))
                 {
-                    heroName = GetHeroDefinition(heroIndex).name;
+                    heroName = GetLocalizedHeroName(heroIndex);
                 }
 
                 serverText += $"{heroName} x{backendBanner.shardDrops[i].shards}";
@@ -10373,7 +10538,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             var lowerBound = i > 0 ? banner.rates[i - 1].cumulativeChance : 0;
             var chance = Mathf.Max(0, banner.rates[i].cumulativeChance - lowerBound);
             text += i == banner.rates.Length - 1 ? "\n" : "  ";
-            text += $"{GetHeroRarityName(banner.rates[i].rarityId)} {chance}%";
+            text += $"{GetLocalizedHeroRarityName(banner.rates[i].rarityId)} {chance}%";
         }
 
         return text;
@@ -11732,7 +11897,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (dungeonResultText != null && string.IsNullOrWhiteSpace(dungeonResultText.text))
         {
-            dungeonResultText.text = "Dungeons are the active resource source.";
+            dungeonResultText.text = Tr("dungeon.default_result");
         }
     }
 
@@ -11741,13 +11906,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         floor = Mathf.Max(1, floor);
         if (titleText != null)
         {
-            titleText.text = GetDungeonSetTitle(dungeon.dungeonId);
+            titleText.text = GetLocalizedDungeonSetTitle(dungeon.dungeonId);
         }
 
         if (progressText != null)
         {
             var setProgress = Mathf.Max(0, floor - 1) % DungeonSetProgressGoal;
-            progressText.text = $"Progress: <color=#F8E85A>{setProgress}/{DungeonSetProgressGoal}</color>   Floor {floor}";
+            progressText.text = TrFormat("dungeon.progress_line", setProgress, DungeonSetProgressGoal, floor);
         }
 
         if (detailText != null)
@@ -11758,32 +11923,32 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private string FormatDungeonCardMeta(DungeonDefinition localDefinition, int floor)
     {
-        var bossName = GetDungeonBossName(localDefinition.dungeonId);
+        var bossName = GetLocalizedDungeonBossName(localDefinition.dungeonId);
         if (UseBackendDefinitionView() && TryGetBackendDungeonDefinition(localDefinition.dungeonId, out var backendDefinition))
         {
             var requiredPower = FormatCompactNumber(GetBackendDungeonRequiredPower(backendDefinition, floor));
             if (string.IsNullOrWhiteSpace(backendDefinition.rewardCurrencyId))
             {
-                return $"{bossName}  |  Rec {requiredPower}  |  Accessory drop";
+                return TrFormat("dungeon.meta.drop", bossName, requiredPower);
             }
 
             var rewardAmount = FormatCompactNumber(GetBackendDungeonRewardAmount(backendDefinition, floor));
-            var currencyName = GetCurrencyDefinition(backendDefinition.rewardCurrencyId).displayName;
-            return $"{bossName}  |  Rec {requiredPower}  |  +{rewardAmount} {currencyName}";
+            var currencyName = GetLocalizedCurrencyName(backendDefinition.rewardCurrencyId);
+            return TrFormat("dungeon.meta.reward", bossName, requiredPower, rewardAmount, currencyName);
         }
 
         var localRequiredPower = FormatCompactNumber(GetDungeonRecommendedPower(localDefinition, floor));
         if (localDefinition.dungeonId == GoldDungeonDefinition.dungeonId)
         {
-            return $"{bossName}  |  Rec {localRequiredPower}  |  +{FormatCompactNumber(GetGoldDungeonReward(floor))} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
+            return TrFormat("dungeon.meta.reward", bossName, localRequiredPower, FormatCompactNumber(GetGoldDungeonReward(floor)), GetLocalizedCurrencyName(localDefinition.rewardCurrencyId));
         }
 
         if (localDefinition.dungeonId == EssenceDungeonDefinition.dungeonId)
         {
-            return $"{bossName}  |  Rec {localRequiredPower}  |  +{FormatCompactNumber(GetEssenceDungeonReward(floor))} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
+            return TrFormat("dungeon.meta.reward", bossName, localRequiredPower, FormatCompactNumber(GetEssenceDungeonReward(floor)), GetLocalizedCurrencyName(localDefinition.rewardCurrencyId));
         }
 
-        return $"{bossName}  |  Rec {localRequiredPower}  |  Accessory drop";
+        return TrFormat("dungeon.meta.drop", bossName, localRequiredPower);
     }
 
     private static string GetDungeonSetTitle(string dungeonId)
@@ -11808,27 +11973,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             var requiredPower = GetBackendDungeonRequiredPower(backendDefinition, floor);
             var enemyHp = GetBackendDungeonEnemyHp(backendDefinition, floor);
             var enemyDamage = GetBackendDungeonEnemyDamage(backendDefinition, floor);
+            var dungeonName = GetLocalizedDungeonName(localDefinition.dungeonId);
             if (string.IsNullOrWhiteSpace(backendDefinition.rewardCurrencyId))
             {
-                return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\n{GetDungeonBossName(localDefinition.dungeonId)} HP {enemyHp}  DMG {enemyDamage}  Formation";
+                return $"{dungeonName} F{floor}  Rec {requiredPower}\n{GetLocalizedDungeonBossName(localDefinition.dungeonId)} HP {enemyHp}  DMG {enemyDamage}  {Tr("ui.common.formation")}";
             }
 
             var rewardAmount = GetBackendDungeonRewardAmount(backendDefinition, floor);
-            var currencyName = GetCurrencyDefinition(backendDefinition.rewardCurrencyId).displayName;
-            return $"{backendDefinition.displayName} F{floor}  Rec {requiredPower}\n{GetDungeonBossName(localDefinition.dungeonId)} HP {enemyHp}  +{rewardAmount} {currencyName}";
+            var currencyName = GetLocalizedCurrencyName(backendDefinition.rewardCurrencyId);
+            return $"{dungeonName} F{floor}  Rec {requiredPower}\n{GetLocalizedDungeonBossName(localDefinition.dungeonId)} HP {enemyHp}  +{rewardAmount} {currencyName}";
         }
 
         if (localDefinition.dungeonId == GoldDungeonDefinition.dungeonId)
         {
-            return $"{localDefinition.displayName} F{floor}  Rec {GetDungeonRecommendedPower(floor)}\nBoss HP {FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor))}  +{GetGoldDungeonReward(floor)} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
+            return TrFormat("dungeon.preview.reward", GetLocalizedDungeonName(localDefinition.dungeonId), floor, GetDungeonRecommendedPower(floor), FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor)), GetGoldDungeonReward(floor), GetLocalizedCurrencyName(localDefinition.rewardCurrencyId));
         }
 
         if (localDefinition.dungeonId == EssenceDungeonDefinition.dungeonId)
         {
-            return $"{localDefinition.displayName} F{floor}  Rec {GetDungeonRecommendedPower(floor)}\nBoss HP {FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor))}  +{GetEssenceDungeonReward(floor)} {GetCurrencyDefinition(localDefinition.rewardCurrencyId).displayName}";
+            return TrFormat("dungeon.preview.reward", GetLocalizedDungeonName(localDefinition.dungeonId), floor, GetDungeonRecommendedPower(floor), FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor)), GetEssenceDungeonReward(floor), GetLocalizedCurrencyName(localDefinition.rewardCurrencyId));
         }
 
-        return $"{localDefinition.displayName} F{floor}  Rec {GetGearDungeonRecommendedPower(floor)}\nBoss HP {FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor))}  Accessory drop";
+        return TrFormat("dungeon.preview.drop", GetLocalizedDungeonName(localDefinition.dungeonId), floor, GetGearDungeonRecommendedPower(floor), FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor)));
     }
 
     private string FormatDungeonFormationRewardLine(DungeonDefinition dungeon, int floor)
@@ -11837,23 +12003,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             if (string.IsNullOrWhiteSpace(backendDefinition.rewardCurrencyId))
             {
-                return "Reward: random accessory drop";
+                return Tr("dungeon.reward.drop");
             }
 
-            return $"Reward: +{GetBackendDungeonRewardAmount(backendDefinition, floor)} {GetCurrencyDefinition(backendDefinition.rewardCurrencyId).displayName}";
+            return TrFormat("dungeon.reward.currency", GetBackendDungeonRewardAmount(backendDefinition, floor), GetLocalizedCurrencyName(backendDefinition.rewardCurrencyId));
         }
 
         if (dungeon.dungeonId == GoldDungeonDefinition.dungeonId)
         {
-            return $"Reward: +{GetGoldDungeonReward(floor)} {GetCurrencyDefinition(dungeon.rewardCurrencyId).displayName}";
+            return TrFormat("dungeon.reward.currency", GetGoldDungeonReward(floor), GetLocalizedCurrencyName(dungeon.rewardCurrencyId));
         }
 
         if (dungeon.dungeonId == EssenceDungeonDefinition.dungeonId)
         {
-            return $"Reward: +{GetEssenceDungeonReward(floor)} {GetCurrencyDefinition(dungeon.rewardCurrencyId).displayName}";
+            return TrFormat("dungeon.reward.currency", GetEssenceDungeonReward(floor), GetLocalizedCurrencyName(dungeon.rewardCurrencyId));
         }
 
-        return "Reward: random accessory drop";
+        return Tr("dungeon.reward.drop");
     }
 
     private void RefreshOfflineRewardUi()
@@ -11966,9 +12132,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (summonOfferPromoText != null)
         {
-            summonOfferPromoText.text = string.IsNullOrWhiteSpace(activeBanner.promoText)
+            var promoText = GetSummonBannerPromoText(activeBanner);
+            summonOfferPromoText.text = string.IsNullOrWhiteSpace(promoText)
                 ? "Featured hero shard rotation"
-                : activeBanner.promoText;
+                : promoText;
         }
 
         RefreshSummonOfferHeroes(activeBanner);
@@ -12050,7 +12217,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (summonCarouselTitleTexts != null && cardIndex < summonCarouselTitleTexts.Length && summonCarouselTitleTexts[cardIndex] != null)
             {
-                summonCarouselTitleTexts[cardIndex].text = banner.displayName;
+                summonCarouselTitleTexts[cardIndex].text = GetLocalizedSummonBannerName(banner);
                 summonCarouselTitleTexts[cardIndex].color = isSelected ? new Color(1f, 0.93f, 0.58f) : new Color(0.88f, 0.78f, 0.62f);
             }
 
@@ -12081,7 +12248,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
-    private static string GetSummonBannerLeadRateText(SummonBannerDefinition banner)
+    private string GetSummonBannerLeadRateText(SummonBannerDefinition banner)
     {
         if (banner.rates == null || banner.rates.Length == 0)
         {
@@ -12100,7 +12267,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var lowerBound = bestRateIndex > 0 ? banner.rates[bestRateIndex - 1].cumulativeChance : 0;
         var chance = Mathf.Max(0, banner.rates[bestRateIndex].cumulativeChance - lowerBound);
-        return $"{GetHeroRarityName(banner.rates[bestRateIndex].rarityId)} {chance}%";
+        return $"{GetLocalizedHeroRarityName(banner.rates[bestRateIndex].rarityId)} {chance}%";
     }
 
     private void RefreshDailyMissionUi()
@@ -12226,7 +12393,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         summonResultPopupRoot.SetAsLastSibling();
         if (summonResultPopupTitleText != null)
         {
-            summonResultPopupTitleText.text = pullCount <= 1 ? "Summon Result" : $"Summon x{pullCount} Result";
+            summonResultPopupTitleText.text = pullCount <= 1 ? Tr("summon.result.title") : $"Summon x{pullCount} Result";
         }
 
         var slotIndex = 0;
@@ -12254,7 +12421,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (summonResultHeroNameTexts != null && slotIndex < summonResultHeroNameTexts.Length && summonResultHeroNameTexts[slotIndex] != null)
             {
-                summonResultHeroNameTexts[slotIndex].text = hero.name;
+                summonResultHeroNameTexts[slotIndex].text = GetLocalizedHeroName(hero);
                 summonResultHeroNameTexts[slotIndex].color = new Color(1f, 0.95f, 0.78f);
             }
 
@@ -12377,20 +12544,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (goldReward > 0)
         {
-            reward = $"{goldReward} Gold";
+            reward = $"{goldReward} {GetLocalizedCurrencyName(GoldCurrencyId)}";
         }
 
         if (gemReward > 0)
         {
-            reward = string.IsNullOrEmpty(reward) ? $"{gemReward} Gems" : $"{reward}, {gemReward} Gems";
+            reward = string.IsNullOrEmpty(reward) ? $"{gemReward} {GetLocalizedCurrencyName(GemsCurrencyId)}" : $"{reward}, {gemReward} {GetLocalizedCurrencyName(GemsCurrencyId)}";
         }
 
         if (essenceReward > 0)
         {
-            reward = string.IsNullOrEmpty(reward) ? $"{essenceReward} Essence" : $"{reward}, {essenceReward} Essence";
+            reward = string.IsNullOrEmpty(reward) ? $"{essenceReward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}" : $"{reward}, {essenceReward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}";
         }
 
-        return string.IsNullOrEmpty(reward) ? "None" : reward;
+        return string.IsNullOrEmpty(reward) ? Tr("ui.common.empty") : reward;
     }
 
     private string FormatReward(RewardDefinition reward)
@@ -12720,7 +12887,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         summonResultPopupRoot.SetAsLastSibling();
         CreateRuntimePanel(summonResultPopupRoot, "Result Parchment", new Vector2(0, -455), new Vector2(820, 740), new Color(0.15f, 0.09f, 0.055f, 0.98f));
         CreateRuntimePanel(summonResultPopupRoot, "Result Header Glow", new Vector2(0, -70), new Vector2(640, 12), new Color(1f, 0.75f, 0.23f, 0.95f));
-        summonResultPopupTitleText = CreateRuntimeText(summonResultPopupRoot, "Result Title", "Summon Results", 34, new Vector2(0, -36), new Vector2(760, 58));
+        summonResultPopupTitleText = CreateRuntimeText(summonResultPopupRoot, "Result Title", Tr("summon.result.title"), 34, new Vector2(0, -36), new Vector2(760, 58));
         summonResultPopupTitleText.fontStyle = FontStyles.Bold;
         summonResultPopupTitleText.color = new Color(1f, 0.86f, 0.28f);
 
@@ -13355,12 +13522,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         CreateRuntimePanel(inventoryPopupRoot, "Inventory Header Glow", new Vector2(0, -88), new Vector2(600, 8), new Color(0.88f, 0.56f, 0.24f, 0.86f));
         CreateRuntimePanel(inventoryPopupRoot, "Inventory Bottom Rail", new Vector2(0, -958), new Vector2(884, 44), new Color(0.19f, 0.1f, 0.045f, 0.96f));
 
-        var title = CreateRuntimeText(inventoryPopupRoot, "Inventory Title", "Bag", 36, new Vector2(0, -38), new Vector2(360, 56));
-        title.fontStyle = FontStyles.Bold;
-        title.color = new Color(1f, 0.88f, 0.62f);
-        title.textWrappingMode = TextWrappingModes.NoWrap;
-        title.outlineColor = new Color(0.09f, 0.035f, 0.01f, 0.96f);
-        title.outlineWidth = 0.16f;
+        inventoryTitleText = CreateRuntimeText(inventoryPopupRoot, "Inventory Title", Tr("ui.inventory.title"), 36, new Vector2(0, -38), new Vector2(360, 56));
+        inventoryTitleText.fontStyle = FontStyles.Bold;
+        inventoryTitleText.color = new Color(1f, 0.88f, 0.62f);
+        inventoryTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+        inventoryTitleText.outlineColor = new Color(0.09f, 0.035f, 0.01f, 0.96f);
+        inventoryTitleText.outlineWidth = 0.16f;
 
         inventoryPopupText = CreateRuntimeText(inventoryPopupRoot, "Inventory Summary", string.Empty, 20, new Vector2(0, -118), new Vector2(760, 42));
         inventoryPopupText.enableAutoSizing = true;
@@ -13532,6 +13699,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var items = BuildInventoryItems();
         var visibleCount = Mathf.Min(items.Count, InventoryGridSlotCount);
 
+        if (inventoryTitleText != null)
+        {
+            inventoryTitleText.text = Tr("ui.inventory.title");
+        }
+
         for (var i = 0; i < inventorySlotRoots.Length; i++)
         {
             var visible = i < visibleCount;
@@ -13586,20 +13758,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (items.Count <= 0)
             {
                 inventoryPopupText.text = selectedInventoryTab == InventoryTabMode.Misc
-                    ? "No misc items yet. Currencies and heroes stay in their own screens."
-                    : "No gear items in the bag yet. Gear Dungeon drops will appear here.";
+                    ? Tr("ui.inventory.empty.misc")
+                    : Tr("ui.inventory.empty.gear");
             }
             else if (items.Count > InventoryGridSlotCount)
             {
-                inventoryPopupText.text = $"{GetInventoryTabLabel(selectedInventoryTab)}  |  Showing {InventoryGridSlotCount}/{items.Count} items";
+                inventoryPopupText.text = TrFormat("ui.inventory.showing", GetInventoryTabLabel(selectedInventoryTab), InventoryGridSlotCount, items.Count);
             }
             else
             {
-                inventoryPopupText.text = $"{GetInventoryTabLabel(selectedInventoryTab)}  |  {items.Count} item{(items.Count == 1 ? string.Empty : "s")}";
+                inventoryPopupText.text = TrFormat(items.Count == 1 ? "ui.inventory.count.one" : "ui.inventory.count.many", GetInventoryTabLabel(selectedInventoryTab), items.Count);
             }
         }
 
         RefreshInventoryDetailPanel(items);
+        SetButtonLabel(inventoryMiscTabButton, GetInventoryTabLabel(InventoryTabMode.Misc));
+        SetButtonLabel(inventoryGearTabButton, GetInventoryTabLabel(InventoryTabMode.Gear));
+        SetButtonLabel(inventoryAllTabButton, GetInventoryTabLabel(InventoryTabMode.All));
         StyleInventoryTab(inventoryMiscTabButton, selectedInventoryTab == InventoryTabMode.Misc);
         StyleInventoryTab(inventoryGearTabButton, selectedInventoryTab == InventoryTabMode.Gear);
         StyleInventoryTab(inventoryAllTabButton, selectedInventoryTab == InventoryTabMode.All);
@@ -13670,10 +13845,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (battlePassXp > 0)
         {
             items.Add(new InventoryItemViewData(
-                "Mission XP",
-                "Mission Track",
-                "Progress earned from daily missions. It advances the Mission Track and unlocks claimable reward steps.",
-                $"Stored XP: {FormatCompactNumber(battlePassXp)}\nVisible in: Quests & Systems\nSources: daily mission claims",
+                Tr("item.mission_xp.name"),
+                Tr("item.mission_xp.detail"),
+                Tr("item.mission_xp.description"),
+                TrFormat("item.mission_xp.stats", FormatCompactNumber(battlePassXp), Tr("ui.menu.header")),
                 FormatCompactNumber(battlePassXp),
                 "vfx_summon",
                 new Color(0.48f, 0.32f, 0.78f, 0.96f)));
@@ -13686,25 +13861,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroEquipment();
 
         var heroIndex = GetSelectedHeroIndex();
-        var heroName = GetHeroDefinition(heroIndex).name;
+        var heroName = GetLocalizedHeroName(heroIndex);
         var displayedWeaponLevel = GetEquipmentDisplayLevel(WeaponTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: true));
         var displayedArmorLevel = GetEquipmentDisplayLevel(ArmorTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: false));
 
         items.Add(new InventoryItemViewData(
-            WeaponTrack.name,
+            GetLocalizedEquipmentName(WeaponTrack),
             $"{heroName} +{GetHeroEquipmentAttackBonus(heroIndex)} {WeaponTrack.statLabel}",
-            $"The active weapon track for {heroName}. Upgrade it from the Gear screen to raise this hero's attack.",
-            $"Level {FormatCappedValue(displayedWeaponLevel, GetEquipmentLevelCap(WeaponTrack))}\nATK +{GetHeroEquipmentAttackBonus(heroIndex)}\nNext upgrade: {GetWeaponUpgradeCost()} Gold",
-            $"Lv {displayedWeaponLevel}",
+            TrFormat("equipment.equipment_weapon.description", heroName),
+            $"{Tr("ui.common.level")} {FormatCappedValue(displayedWeaponLevel, GetEquipmentLevelCap(WeaponTrack))}\nATK +{GetHeroEquipmentAttackBonus(heroIndex)}\n{Tr("ui.common.next_upgrade")}: {GetWeaponUpgradeCost()} {GetLocalizedCurrencyName(GoldCurrencyId)}",
+            $"{Tr("ui.common.level_short")} {displayedWeaponLevel}",
             "icon_weapon",
             new Color(0.58f, 0.36f, 0.18f, 0.96f)));
 
         items.Add(new InventoryItemViewData(
-            ArmorTrack.name,
+            GetLocalizedEquipmentName(ArmorTrack),
             $"{heroName} +{GetHeroEquipmentHealthBonus(heroIndex)} {ArmorTrack.statLabel}",
-            $"The active armor track for {heroName}. Upgrade it from the Gear screen to improve survivability.",
-            $"Level {FormatCappedValue(displayedArmorLevel, GetEquipmentLevelCap(ArmorTrack))}\nHP +{GetHeroEquipmentHealthBonus(heroIndex)}\nNext upgrade: {GetArmorUpgradeCost()} Gold",
-            $"Lv {displayedArmorLevel}",
+            TrFormat("equipment.equipment_armor.description", heroName),
+            $"{Tr("ui.common.level")} {FormatCappedValue(displayedArmorLevel, GetEquipmentLevelCap(ArmorTrack))}\nHP +{GetHeroEquipmentHealthBonus(heroIndex)}\n{Tr("ui.common.next_upgrade")}: {GetArmorUpgradeCost()} {GetLocalizedCurrencyName(GoldCurrencyId)}",
+            $"{Tr("ui.common.level_short")} {displayedArmorLevel}",
             "icon_armor",
             new Color(0.36f, 0.38f, 0.42f, 0.96f)));
 
@@ -13721,12 +13896,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 }
 
                 var detail = equipped > 0
-                    ? $"Bag {copies}  Equip {equipped}"
-                    : $"Bag {copies}";
+                    ? $"{Tr("ui.common.bag")} {copies}  {Tr("ui.common.equipped")} {equipped}"
+                    : $"{Tr("ui.common.bag")} {copies}";
                 items.Add(new InventoryItemViewData(
-                    $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name}",
+                    GetLocalizedAccessoryName(slot, rarity),
                     detail,
-                    "Accessory loot from Gear Dungeon. Copies can be equipped on heroes or fused upward from the Hero gear panel.",
+                    Tr("accessory.description"),
                     GetAccessoryInventoryStatsText(slot, rarity, copies, equipped),
                     total.ToString(),
                     GetInventoryAccessoryIconTextureName(slot),
@@ -13759,13 +13934,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var healthAtMax = GetAccessoryHealthFor(slot, rarity, maxLevel);
         var fuseCost = GetAccessoryFuseCost(rarity);
         var fuseLine = rarity >= AccessoryRarityCount - 1
-            ? "Fuse: max rarity"
-            : $"Fuse: {fuseCost} copies -> {GetAccessoryRarityName(rarity + 1)}";
+            ? Tr("accessory.fuse.max")
+            : TrFormat("accessory.fuse.next", fuseCost, GetAccessoryRarityName(rarity + 1));
 
-        return $"Owned {copies + equipped}  |  Bag {copies}  |  Equipped {equipped}\n" +
-               $"Lv 1: +{attackAtLevelOne} ATK, +{healthAtLevelOne} HP\n" +
-               $"Max Lv {maxLevel}: +{attackAtMax} ATK, +{healthAtMax} HP\n" +
-               fuseLine;
+        return TrFormat(
+            "accessory.stats",
+            copies + equipped,
+            copies,
+            equipped,
+            attackAtLevelOne,
+            healthAtLevelOne,
+            maxLevel,
+            attackAtMax,
+            healthAtMax,
+            fuseLine);
     }
 
     private static string GetInventoryAccessoryIconTextureName(int slot)
@@ -13785,16 +13967,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
-    private static string GetInventoryTabLabel(InventoryTabMode tab)
+    private string GetInventoryTabLabel(InventoryTabMode tab)
     {
         switch (tab)
         {
             case InventoryTabMode.Misc:
-                return "Misc";
+                return Tr("ui.inventory.tab.misc");
             case InventoryTabMode.Gear:
-                return "Gear";
+                return Tr("ui.inventory.tab.gear");
             default:
-                return "All";
+                return Tr("ui.inventory.tab.all");
         }
     }
 
@@ -13828,14 +14010,38 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void EnsureRuntimeMenuHeader()
     {
-        if (shopPanel == null || menuHeaderText != null)
+        if (shopPanel == null)
         {
             return;
         }
 
-        menuHeaderText = CreateRuntimeText(shopPanel.transform, "Menu Header", "Quests & Systems", 34, new Vector2(0, -145), new Vector2(790, 48));
-        menuHeaderText.fontStyle = FontStyles.Bold;
-        menuHeaderText.color = new Color(0.28f, 0.14f, 0.055f);
+        if (menuHeaderText == null)
+        {
+            menuHeaderText = CreateRuntimeText(shopPanel.transform, "Menu Header", Tr("ui.menu.header"), 34, new Vector2(0, -145), new Vector2(790, 48));
+            menuHeaderText.fontStyle = FontStyles.Bold;
+            menuHeaderText.color = new Color(0.28f, 0.14f, 0.055f);
+        }
+
+        if (languageToggleButton == null)
+        {
+            languageToggleButton = CreateRuntimeButton(shopPanel.transform, "Language Toggle Button", Tr("language.button"), 318, -146, 178, 46);
+            languageToggleText = languageToggleButton.GetComponentInChildren<TMP_Text>(includeInactive: true);
+            var image = languageToggleButton.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = new Color(0.38f, 0.2f, 0.08f, 0.96f);
+            }
+
+            if (languageToggleText != null)
+            {
+                languageToggleText.fontStyle = FontStyles.Bold;
+                languageToggleText.fontSizeMin = 13;
+                languageToggleText.fontSizeMax = 20;
+                languageToggleText.enableAutoSizing = true;
+                languageToggleText.textWrappingMode = TextWrappingModes.NoWrap;
+                languageToggleText.color = new Color(1f, 0.86f, 0.42f);
+            }
+        }
     }
 
     private void EnsureRuntimeHeroCardArt()
@@ -14808,6 +15014,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void LayoutShopScreen()
     {
         MoveUiElement(menuHeaderText, shopPanel, new Vector2(0, -145), new Vector2(790, 48));
+        MoveUiElement(languageToggleButton, shopPanel, new Vector2(318, -146), new Vector2(178, 46));
 
         if (dailyMissionButtons != null)
         {
@@ -15048,7 +15255,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroDetailRarityText != null)
         {
-            heroDetailRarityText.text = hero.rarityName;
+            heroDetailRarityText.text = GetLocalizedHeroRarityName(hero.rarityId);
             heroDetailRarityText.color = heroColor;
         }
 
@@ -15059,23 +15266,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroDetailNameText != null)
         {
-            heroDetailNameText.text = hero.name;
+            heroDetailNameText.text = GetLocalizedHeroName(hero);
             heroDetailNameText.color = heroColor;
         }
 
         if (heroDetailPowerText != null)
         {
-            heroDetailPowerText.text = $"Power {GetHeroPower(heroIndex)}";
+            heroDetailPowerText.text = $"{Tr("ui.common.power")} {GetHeroPower(heroIndex)}";
         }
 
         if (heroDetailStatsText != null)
         {
-            heroDetailStatsText.text = $"Lvl {FormatCappedValue(level, levelCap)}   Asc {FormatCappedValue(ascension, ascensionCap)}   {hero.roleName}\nHP {GetHeroCombatMaxHealth(heroIndex)}   ATK {GetHeroEffectiveAttack(heroIndex)}   DEF {GetHeroDefense(heroIndex)}\nCrit {GetHeroCritChancePercent(heroIndex)}%   Acc {GetHeroAccuracyPercent(heroIndex)}%";
+            heroDetailStatsText.text = $"{Tr("ui.common.level_short")} {FormatCappedValue(level, levelCap)}   Asc {FormatCappedValue(ascension, ascensionCap)}   {GetLocalizedHeroRoleName(hero)}\nHP {GetHeroCombatMaxHealth(heroIndex)}   ATK {GetHeroEffectiveAttack(heroIndex)}   DEF {GetHeroDefense(heroIndex)}\nCrit {GetHeroCritChancePercent(heroIndex)}%   Acc {GetHeroAccuracyPercent(heroIndex)}%";
         }
 
         if (heroDetailResourceText != null)
         {
-            heroDetailResourceText.text = $"Essence {mythEssence}/{upgradeCost}   Shards {heroShards[heroIndex]}/{ascensionCost}";
+            heroDetailResourceText.text = $"{GetLocalizedCurrencyName(MythEssenceCurrencyId)} {mythEssence}/{upgradeCost}   Shards {heroShards[heroIndex]}/{ascensionCost}";
         }
 
         RefreshHeroDetailGearSlots();
@@ -15180,7 +15387,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroDetailGearListTitleText != null)
         {
-            heroDetailGearListTitleText.text = $"{AccessorySlots[accessorySlot].name} Gear";
+            heroDetailGearListTitleText.text = $"{GetLocalizedAccessorySlotName(accessorySlot)} {GetInventoryTabLabel(InventoryTabMode.Gear)}";
         }
 
         var canInteract = !backendRequestInProgress && !backendLifecycleFlushInProgress && !campaignFightInProgress;
@@ -15196,11 +15403,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             optionButton.gameObject.SetActive(true);
             var copies = GetAccessoryInventoryCount(accessorySlot, rarity);
             var equipped = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot) == rarity;
-            var levelText = equipped ? $"  Equipped Lv {GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot)}" : string.Empty;
-            var actionText = equipped ? "Equipped" : copies > 0 ? "Tap to equip" : "No copy";
+            var levelText = equipped ? $"  {Tr("ui.common.equipped")} {Tr("ui.common.level_short")} {GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot)}" : string.Empty;
+            var actionText = equipped ? Tr("ui.common.equipped") : copies > 0 ? Tr("ui.common.tap_to_equip") : Tr("ui.common.no_copy");
             if (optionText != null)
             {
-                optionText.text = $"{GetAccessoryRarityName(rarity)} {AccessorySlots[accessorySlot].name}   Copies {copies}{levelText}\n{actionText}";
+                optionText.text = $"{GetLocalizedAccessoryName(accessorySlot, rarity)}   {Tr("ui.common.copies")} {copies}{levelText}\n{actionText}";
             }
 
             var image = optionButton.GetComponent<Image>();
@@ -15222,7 +15429,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var hero = GetHeroDefinition(heroIndex);
         if (heroDetailGearListTitleText != null)
         {
-            heroDetailGearListTitleText.text = $"{hero.name} {track.name}";
+            heroDetailGearListTitleText.text = $"{GetLocalizedHeroName(hero)} {GetLocalizedEquipmentName(track)}";
         }
 
         for (var i = 0; i < AccessoryRarityCount; i++)
@@ -15246,8 +15453,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 var bonus = track.equipmentId == WeaponTrack.equipmentId ? GetHeroEquipmentAttackBonus(heroIndex) : GetHeroEquipmentHealthBonus(heroIndex);
                 optionText.text = i == 0
-                    ? $"{track.name} Lv {GetEquipmentDisplayLevel(track, level)}   +{bonus} {track.statLabel}\nEquipped on {hero.name}"
-                    : $"Open Gear screen for {hero.name}";
+                    ? $"{GetLocalizedEquipmentName(track)} {Tr("ui.common.level_short")} {GetEquipmentDisplayLevel(track, level)}   +{bonus} {track.statLabel}\n{Tr("ui.common.equipped")} {GetLocalizedHeroName(hero)}"
+                    : TrFormat("ui.common.open_gear", GetLocalizedHeroName(hero));
             }
         }
     }
@@ -15299,27 +15506,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var heroIndex = GetSelectedHeroIndex();
         if (slotIndex == 0)
         {
-            return $"{WeaponTrack.name}\nLv {GetEquipmentDisplayLevel(WeaponTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: true))}";
+            return $"{GetLocalizedEquipmentName(WeaponTrack)}\n{Tr("ui.common.level_short")} {GetEquipmentDisplayLevel(WeaponTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: true))}";
         }
 
         if (slotIndex == 1)
         {
-            return $"{ArmorTrack.name}\nLv {GetEquipmentDisplayLevel(ArmorTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: false))}";
+            return $"{GetLocalizedEquipmentName(ArmorTrack)}\n{Tr("ui.common.level_short")} {GetEquipmentDisplayLevel(ArmorTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: false))}";
         }
 
         var accessorySlot = slotIndex - 2;
         if (accessorySlot < 0 || accessorySlot >= AccessorySlotCount)
         {
-            return "Locked";
+            return Tr("ui.common.locked");
         }
 
         var rarity = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot);
         if (rarity < 0)
         {
-            return $"{AccessorySlots[accessorySlot].name}\nEmpty";
+            return $"{GetLocalizedAccessorySlotName(accessorySlot)}\n{Tr("ui.common.empty")}";
         }
 
-        return $"{AccessorySlots[accessorySlot].name}\n{GetAccessoryRarityName(rarity)} Lv {GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot)}";
+        return $"{GetLocalizedAccessorySlotName(accessorySlot)}\n{GetAccessoryRarityName(rarity)} {Tr("ui.common.level_short")} {GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot)}";
     }
 
     private Color GetHeroDetailGearSlotColor(int slotIndex)
@@ -15339,25 +15546,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return rarity >= 0 ? GetAccessoryRarityColor(rarity) : new Color(0.36f, 0.22f, 0.13f, 0.9f);
     }
 
-    private static string GetHeroDetailTitle(HeroDefinition hero)
+    private string GetHeroDetailTitle(HeroDefinition hero)
     {
-        switch (hero.heroId)
-        {
-            case "hero_astra":
-                return "The Frost Vanguard";
-            case "hero_borin":
-                return "The Iron Sentinel";
-            case "hero_cyra":
-                return "The Burning Light";
-            case "hero_dante":
-                return "The Rift Marksman";
-            case "hero_elowen":
-                return "The Grove Oracle";
-            case "hero_ravik":
-                return "The Cinder Prodigy";
-            default:
-                return $"The {hero.roleName}";
-        }
+        var key = $"hero.{hero.heroId}.title";
+        var localized = Tr(key);
+        return localized == key ? $"The {GetLocalizedHeroRoleName(hero)}" : localized;
     }
 
     private static Color GetHeroRarityColor(string rarityId)
@@ -15455,7 +15648,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroEssenceAmountText != null)
         {
-            heroEssenceAmountText.text = $"Essence {FormatCompactNumber(mythEssence)}";
+            heroEssenceAmountText.text = $"{GetLocalizedCurrencyName(MythEssenceCurrencyId)} {FormatCompactNumber(mythEssence)}";
         }
 
         if (heroEssenceIconImage != null)
@@ -15560,8 +15753,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 ? "Replay selection comes later."
                 : "Clear the current stage first.";
         campaignStagePreviewText.text =
-            $"Stage {stageNumber}: {stage.enemyName}  |  {status}\n" +
-            $"Power {FormatCompactNumber(GetTeamPower())}/{FormatCompactNumber(requiredPower)}  Reward +{stage.essenceReward} Essence\n" +
+            $"{Tr("ui.common.stage")} {stageNumber}: {stage.enemyName}  |  {status}\n" +
+            $"{Tr("ui.common.power")} {FormatCompactNumber(GetTeamPower())}/{FormatCompactNumber(requiredPower)}  {Tr("ui.common.reward")} +{stage.essenceReward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}\n" +
             fightLine;
     }
 
@@ -15740,23 +15933,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (formationHeaderText != null)
         {
             formationHeaderText.text = isDungeon
-                ? $"{dungeon.displayName} F{dungeonFloor} Formation"
-                : $"Stage {stageNumber} Formation";
+                ? $"{GetLocalizedDungeonName(dungeon.dungeonId)} F{dungeonFloor} {Tr("ui.common.formation")}"
+                : $"{Tr("ui.common.stage")} {stageNumber} {Tr("ui.common.formation")}";
         }
 
         if (formationTeamText != null)
         {
-            formationTeamText.text = $"Power {FormatCompactNumber(GetTeamPower())}   ATK {FormatCompactNumber(GetTeamDamage())}   HP {FormatCompactNumber(GetTeamHealth())}   Crit {GetTeamCritChancePercent()}%   Acc {GetTeamAccuracyPercent()}%   DEF {GetTeamDefense()}";
+            formationTeamText.text = $"{Tr("ui.common.power")} {FormatCompactNumber(GetTeamPower())}   ATK {FormatCompactNumber(GetTeamDamage())}   HP {FormatCompactNumber(GetTeamHealth())}   Crit {GetTeamCritChancePercent()}%   Acc {GetTeamAccuracyPercent()}%   DEF {GetTeamDefense()}";
         }
 
         if (formationEnemyText != null)
         {
             formationEnemyText.text = isDungeon
-                ? $"{GetDungeonBossName(dungeon.dungeonId)}\n" +
-                  $"Recommended {FormatCompactNumber(GetDungeonRecommendedPower(dungeon, dungeonFloor))}   Boss HP {FormatCompactNumber(GetDungeonEnemyHp(dungeon, dungeonFloor))}   Damage {FormatCompactNumber(GetDungeonEnemyDamage(dungeon, dungeonFloor))}\n" +
+                ? $"{GetLocalizedDungeonBossName(dungeon.dungeonId)}\n" +
+                  $"{Tr("ui.common.recommended_power")} {FormatCompactNumber(GetDungeonRecommendedPower(dungeon, dungeonFloor))}   {Tr("ui.common.boss_hp")} {FormatCompactNumber(GetDungeonEnemyHp(dungeon, dungeonFloor))}   Damage {FormatCompactNumber(GetDungeonEnemyDamage(dungeon, dungeonFloor))}\n" +
                   FormatDungeonFormationRewardLine(dungeon, dungeonFloor)
                 : $"{stage.enemyName}\n" +
-                  $"Recommended {FormatCompactNumber(GetStageRecommendedPower(stageNumber))}   HP {FormatCompactNumber(stage.maxHp)}   Damage {FormatCompactNumber(GetCampaignEnemyDamage(stageNumber))}";
+                  $"{Tr("ui.common.recommended_power")} {FormatCompactNumber(GetStageRecommendedPower(stageNumber))}   HP {FormatCompactNumber(stage.maxHp)}   Damage {FormatCompactNumber(GetCampaignEnemyDamage(stageNumber))}";
         }
 
         if (formationEnemyImage != null)
@@ -15794,8 +15987,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
                 if (formationHeroTexts != null && slotIndex < formationHeroTexts.Length && formationHeroTexts[slotIndex] != null)
                 {
-                    var hero = GetHeroDefinition(heroIndex);
-                    formationHeroTexts[slotIndex].text = $"{hero.name} Lv {heroLevels[heroIndex]}";
+                    formationHeroTexts[slotIndex].text = $"{GetLocalizedHeroName(heroIndex)} {Tr("ui.common.level_short")} {heroLevels[heroIndex]}";
                 }
             }
         }
