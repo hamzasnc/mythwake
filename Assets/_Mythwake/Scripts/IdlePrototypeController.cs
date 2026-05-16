@@ -427,14 +427,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         public string displayName;
         public string detail;
+        public string description;
+        public string statsText;
         public string countText;
         public string iconTextureName;
         public Color frameColor;
 
-        public InventoryItemViewData(string displayName, string detail, string countText, string iconTextureName, Color frameColor)
+        public InventoryItemViewData(string displayName, string detail, string description, string statsText, string countText, string iconTextureName, Color frameColor)
         {
             this.displayName = displayName;
             this.detail = detail;
+            this.description = description;
+            this.statsText = statsText;
             this.countText = countText;
             this.iconTextureName = iconTextureName;
             this.frameColor = frameColor;
@@ -991,6 +995,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private BattleFlowMode battleFlowMode = BattleFlowMode.Formation;
     private BattleTargetMode battleTargetMode = BattleTargetMode.Campaign;
     private InventoryTabMode selectedInventoryTab = InventoryTabMode.All;
+    private int selectedInventoryItemIndex = -1;
     private string selectedDungeonId = GoldDungeonDefinition.dungeonId;
     private string selectedDungeonBattleMapTextureName;
     private string backendStatus = "Backend: local prototype mode";
@@ -1054,17 +1059,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RectTransform inventoryPopupRoot;
     private RectTransform fastRewardsPopupRoot;
     private RectTransform inventoryGridRoot;
+    private RectTransform inventoryDetailRoot;
     private TMP_Text inventoryPopupText;
+    private TMP_Text inventoryDetailTitleText;
+    private TMP_Text inventoryDetailDescriptionText;
+    private TMP_Text inventoryDetailStatsText;
     private TMP_Text fastRewardsPopupText;
     private Button inventoryCloseButton;
+    private Button inventoryDetailCloseButton;
     private Button inventoryMiscTabButton;
     private Button inventoryGearTabButton;
     private Button inventoryAllTabButton;
     private Button fastRewardsCloseButton;
     private Button fastRewardsRedeemButton;
     private RectTransform[] inventorySlotRoots;
+    private Button[] inventorySlotButtons;
     private Image[] inventorySlotFrames;
     private RawImage[] inventorySlotIcons;
+    private RawImage inventoryDetailIcon;
+    private Image inventoryDetailFrame;
     private TMP_Text[] inventorySlotCountTexts;
     private TMP_Text[] inventorySlotNameTexts;
     private TMP_Text[] inventorySlotDetailTexts;
@@ -1830,6 +1843,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void SelectInventoryTab(InventoryTabMode tab)
     {
         selectedInventoryTab = tab;
+        selectedInventoryItemIndex = -1;
+        SetComponentActive(inventoryDetailRoot, false);
+        RefreshInventoryPopupUi();
+    }
+
+    private void SelectInventoryItem(int itemIndex)
+    {
+        selectedInventoryItemIndex = Mathf.Max(0, itemIndex);
+        RefreshInventoryPopupUi();
+    }
+
+    private void HideInventoryItemDetails()
+    {
+        selectedInventoryItemIndex = -1;
+        SetComponentActive(inventoryDetailRoot, false);
         RefreshInventoryPopupUi();
     }
 
@@ -8455,6 +8483,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             inventoryCloseButton.onClick.AddListener(HideInventoryPopup);
         }
 
+        if (inventoryDetailCloseButton != null)
+        {
+            inventoryDetailCloseButton.onClick.AddListener(HideInventoryItemDetails);
+        }
+
         if (inventoryMiscTabButton != null)
         {
             inventoryMiscTabButton.onClick.AddListener(ShowInventoryMiscTab);
@@ -8626,6 +8659,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (inventoryCloseButton != null)
         {
             inventoryCloseButton.onClick.RemoveListener(HideInventoryPopup);
+        }
+
+        if (inventoryDetailCloseButton != null)
+        {
+            inventoryDetailCloseButton.onClick.RemoveListener(HideInventoryItemDetails);
         }
 
         if (inventoryMiscTabButton != null)
@@ -13335,6 +13373,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         inventoryGridRoot = CreateRuntimePanel(inventoryPopupRoot, "Inventory Grid", new Vector2(0, -180), new Vector2(830, 740), new Color(1f, 0.88f, 0.62f, 0.18f));
         inventoryGridRoot.GetComponent<Image>().raycastTarget = false;
         CreateInventoryGridSlots();
+        CreateInventoryDetailPanel();
 
         inventoryMiscTabButton = CreateRuntimeButton(inventoryPopupRoot, "Inventory Misc Tab", "Misc", -260, -1000, 200, 64);
         inventoryGearTabButton = CreateRuntimeButton(inventoryPopupRoot, "Inventory Gear Tab", "Gear", 0, -1000, 200, 64);
@@ -13372,6 +13411,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         inventorySlotRoots = new RectTransform[InventoryGridSlotCount];
+        inventorySlotButtons = new Button[InventoryGridSlotCount];
         inventorySlotFrames = new Image[InventoryGridSlotCount];
         inventorySlotIcons = new RawImage[InventoryGridSlotCount];
         inventorySlotCountTexts = new TMP_Text[InventoryGridSlotCount];
@@ -13396,6 +13436,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 new Color(0.18f, 0.13f, 0.1f, 0.86f));
             inventorySlotRoots[i] = slotRoot;
             inventorySlotFrames[i] = slotRoot.GetComponent<Image>();
+            inventorySlotFrames[i].raycastTarget = true;
+
+            var slotButton = slotRoot.gameObject.AddComponent<Button>();
+            var capturedSlot = i;
+            slotButton.targetGraphic = inventorySlotFrames[i];
+            slotButton.onClick.AddListener(() => SelectInventoryItem(capturedSlot));
+            inventorySlotButtons[i] = slotButton;
 
             var inner = CreateRuntimePanel(slotRoot, "Inner", new Vector2(0, -8), new Vector2(96, 82), new Color(0.9f, 0.82f, 0.7f, 0.62f));
             inner.SetAsFirstSibling();
@@ -13431,6 +13478,50 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void CreateInventoryDetailPanel()
+    {
+        if (inventoryPopupRoot == null || inventoryDetailRoot != null)
+        {
+            return;
+        }
+
+        inventoryDetailRoot = CreateRuntimePanel(inventoryPopupRoot, "Inventory Detail Panel", new Vector2(0, -362), new Vector2(760, 324), new Color(0.09f, 0.045f, 0.025f, 0.98f));
+        inventoryDetailRoot.GetComponent<Image>().raycastTarget = true;
+        CreateRuntimePanel(inventoryDetailRoot, "Detail Inner", new Vector2(0, -34), new Vector2(716, 268), new Color(0.96f, 0.78f, 0.46f, 0.94f));
+        inventoryDetailFrame = CreateRuntimePanel(inventoryDetailRoot, "Detail Icon Frame", new Vector2(-272, -96), new Vector2(128, 128), new Color(0.38f, 0.24f, 0.13f, 0.96f)).GetComponent<Image>();
+        inventoryDetailIcon = CreateRuntimeRawImage(inventoryDetailFrame.transform, "Icon", null, new Vector2(0, -18), new Vector2(88, 88), new Vector2(0.5f, 1f));
+        inventoryDetailIcon.raycastTarget = false;
+
+        inventoryDetailTitleText = CreateRuntimeText(inventoryDetailRoot, "Detail Title", string.Empty, 28, new Vector2(72, -38), new Vector2(490, 42));
+        inventoryDetailTitleText.alignment = TextAlignmentOptions.Left;
+        inventoryDetailTitleText.fontStyle = FontStyles.Bold;
+        inventoryDetailTitleText.color = new Color(1f, 0.9f, 0.62f);
+        inventoryDetailTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+        inventoryDetailTitleText.enableAutoSizing = true;
+        inventoryDetailTitleText.fontSizeMin = 18;
+        inventoryDetailTitleText.fontSizeMax = 28;
+
+        inventoryDetailDescriptionText = CreateRuntimeText(inventoryDetailRoot, "Detail Description", string.Empty, 20, new Vector2(110, -94), new Vector2(420, 94));
+        inventoryDetailDescriptionText.alignment = TextAlignmentOptions.TopLeft;
+        inventoryDetailDescriptionText.color = new Color(0.24f, 0.12f, 0.04f);
+        inventoryDetailDescriptionText.textWrappingMode = TextWrappingModes.Normal;
+        inventoryDetailDescriptionText.enableAutoSizing = true;
+        inventoryDetailDescriptionText.fontSizeMin = 14;
+        inventoryDetailDescriptionText.fontSizeMax = 20;
+
+        inventoryDetailStatsText = CreateRuntimeText(inventoryDetailRoot, "Detail Stats", string.Empty, 20, new Vector2(90, -204), new Vector2(560, 74));
+        inventoryDetailStatsText.alignment = TextAlignmentOptions.TopLeft;
+        inventoryDetailStatsText.fontStyle = FontStyles.Bold;
+        inventoryDetailStatsText.color = new Color(0.13f, 0.07f, 0.03f);
+        inventoryDetailStatsText.textWrappingMode = TextWrappingModes.Normal;
+        inventoryDetailStatsText.enableAutoSizing = true;
+        inventoryDetailStatsText.fontSizeMin = 13;
+        inventoryDetailStatsText.fontSizeMax = 20;
+
+        inventoryDetailCloseButton = CreateRuntimeButton(inventoryDetailRoot, "Detail Close Button", "X", 340, -28, 48, 48);
+        inventoryDetailRoot.gameObject.SetActive(false);
+    }
+
     private void RefreshInventoryPopupUi()
     {
         if (inventoryPopupRoot == null || inventorySlotRoots == null)
@@ -13458,7 +13549,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             var item = items[i];
             if (inventorySlotFrames != null && inventorySlotFrames[i] != null)
             {
-                inventorySlotFrames[i].color = item.frameColor;
+                inventorySlotFrames[i].color = selectedInventoryItemIndex == i
+                    ? Color.Lerp(item.frameColor, new Color(1f, 0.92f, 0.52f, 1f), 0.48f)
+                    : item.frameColor;
             }
 
             if (inventorySlotIcons != null && inventorySlotIcons[i] != null)
@@ -13483,6 +13576,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
         }
 
+        if (selectedInventoryItemIndex >= items.Count)
+        {
+            selectedInventoryItemIndex = -1;
+        }
+
         if (inventoryPopupText != null)
         {
             if (items.Count <= 0)
@@ -13501,9 +13599,54 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
         }
 
+        RefreshInventoryDetailPanel(items);
         StyleInventoryTab(inventoryMiscTabButton, selectedInventoryTab == InventoryTabMode.Misc);
         StyleInventoryTab(inventoryGearTabButton, selectedInventoryTab == InventoryTabMode.Gear);
         StyleInventoryTab(inventoryAllTabButton, selectedInventoryTab == InventoryTabMode.All);
+    }
+
+    private void RefreshInventoryDetailPanel(List<InventoryItemViewData> items)
+    {
+        if (inventoryDetailRoot == null)
+        {
+            return;
+        }
+
+        var hasSelection = selectedInventoryItemIndex >= 0 && selectedInventoryItemIndex < items.Count;
+        inventoryDetailRoot.gameObject.SetActive(hasSelection);
+        if (!hasSelection)
+        {
+            return;
+        }
+
+        var item = items[selectedInventoryItemIndex];
+        inventoryDetailRoot.SetAsLastSibling();
+
+        if (inventoryDetailFrame != null)
+        {
+            inventoryDetailFrame.color = item.frameColor;
+        }
+
+        if (inventoryDetailIcon != null)
+        {
+            inventoryDetailIcon.texture = LoadRuntimeTexture(item.iconTextureName);
+            inventoryDetailIcon.color = Color.white;
+        }
+
+        if (inventoryDetailTitleText != null)
+        {
+            inventoryDetailTitleText.text = item.displayName;
+        }
+
+        if (inventoryDetailDescriptionText != null)
+        {
+            inventoryDetailDescriptionText.text = item.description;
+        }
+
+        if (inventoryDetailStatsText != null)
+        {
+            inventoryDetailStatsText.text = item.statsText;
+        }
     }
 
     private List<InventoryItemViewData> BuildInventoryItems()
@@ -13529,6 +13672,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             items.Add(new InventoryItemViewData(
                 "Mission XP",
                 "Mission Track",
+                "Progress earned from daily missions. It advances the Mission Track and unlocks claimable reward steps.",
+                $"Stored XP: {FormatCompactNumber(battlePassXp)}\nVisible in: Quests & Systems\nSources: daily mission claims",
                 FormatCompactNumber(battlePassXp),
                 "vfx_summon",
                 new Color(0.48f, 0.32f, 0.78f, 0.96f)));
@@ -13548,6 +13693,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         items.Add(new InventoryItemViewData(
             WeaponTrack.name,
             $"{heroName} +{GetHeroEquipmentAttackBonus(heroIndex)} {WeaponTrack.statLabel}",
+            $"The active weapon track for {heroName}. Upgrade it from the Gear screen to raise this hero's attack.",
+            $"Level {FormatCappedValue(displayedWeaponLevel, GetEquipmentLevelCap(WeaponTrack))}\nATK +{GetHeroEquipmentAttackBonus(heroIndex)}\nNext upgrade: {GetWeaponUpgradeCost()} Gold",
             $"Lv {displayedWeaponLevel}",
             "icon_weapon",
             new Color(0.58f, 0.36f, 0.18f, 0.96f)));
@@ -13555,6 +13702,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         items.Add(new InventoryItemViewData(
             ArmorTrack.name,
             $"{heroName} +{GetHeroEquipmentHealthBonus(heroIndex)} {ArmorTrack.statLabel}",
+            $"The active armor track for {heroName}. Upgrade it from the Gear screen to improve survivability.",
+            $"Level {FormatCappedValue(displayedArmorLevel, GetEquipmentLevelCap(ArmorTrack))}\nHP +{GetHeroEquipmentHealthBonus(heroIndex)}\nNext upgrade: {GetArmorUpgradeCost()} Gold",
             $"Lv {displayedArmorLevel}",
             "icon_armor",
             new Color(0.36f, 0.38f, 0.42f, 0.96f)));
@@ -13577,6 +13726,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 items.Add(new InventoryItemViewData(
                     $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name}",
                     detail,
+                    "Accessory loot from Gear Dungeon. Copies can be equipped on heroes or fused upward from the Hero gear panel.",
+                    GetAccessoryInventoryStatsText(slot, rarity, copies, equipped),
                     total.ToString(),
                     GetInventoryAccessoryIconTextureName(slot),
                     GetAccessoryRarityColor(rarity)));
@@ -13597,6 +13748,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return count;
+    }
+
+    private string GetAccessoryInventoryStatsText(int slot, int rarity, int copies, int equipped)
+    {
+        var maxLevel = GetAccessoryMaxLevel(rarity);
+        var attackAtLevelOne = GetAccessoryAttackFor(slot, rarity, 1);
+        var healthAtLevelOne = GetAccessoryHealthFor(slot, rarity, 1);
+        var attackAtMax = GetAccessoryAttackFor(slot, rarity, maxLevel);
+        var healthAtMax = GetAccessoryHealthFor(slot, rarity, maxLevel);
+        var fuseCost = GetAccessoryFuseCost(rarity);
+        var fuseLine = rarity >= AccessoryRarityCount - 1
+            ? "Fuse: max rarity"
+            : $"Fuse: {fuseCost} copies -> {GetAccessoryRarityName(rarity + 1)}";
+
+        return $"Owned {copies + equipped}  |  Bag {copies}  |  Equipped {equipped}\n" +
+               $"Lv 1: +{attackAtLevelOne} ATK, +{healthAtLevelOne} HP\n" +
+               $"Max Lv {maxLevel}: +{attackAtMax} ATK, +{healthAtMax} HP\n" +
+               fuseLine;
     }
 
     private static string GetInventoryAccessoryIconTextureName(int slot)
@@ -15749,6 +15918,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         inventoryPopupRoot.gameObject.SetActive(isVisible);
+        if (!isVisible)
+        {
+            selectedInventoryItemIndex = -1;
+            SetComponentActive(inventoryDetailRoot, false);
+            return;
+        }
+
         if (isVisible)
         {
             if (fastRewardsPopupRoot != null)
