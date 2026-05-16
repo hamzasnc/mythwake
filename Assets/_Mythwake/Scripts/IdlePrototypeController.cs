@@ -476,6 +476,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         All
     }
 
+    private enum ManagementMenuMode
+    {
+        Profile,
+        Options,
+        Account,
+        Support,
+        About
+    }
+
     private enum HeroesTabMode
     {
         Hero,
@@ -1033,6 +1042,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RawImage topPowerIconImage;
     private RawImage heroEssenceIconImage;
     private RawImage topbarFrameImage;
+    private Button topManagementMenuButton;
+    private RectTransform managementPopupRoot;
+    private Button managementCloseButton;
+    private Button managementProfileButton;
+    private Button managementOptionsButton;
+    private Button managementAccountButton;
+    private Button managementSupportButton;
+    private Button managementAboutButton;
+    private Button managementLanguageToggleButton;
+    private TMP_Text managementTitleText;
+    private TMP_Text managementDetailTitleText;
+    private TMP_Text managementDetailBodyText;
+    private ManagementMenuMode selectedManagementMenuMode = ManagementMenuMode.Profile;
     private RectTransform homeActionRoot;
     private TMP_Text homeStageLevelBadgeText;
     private TMP_Text homeStageModeBadgeText;
@@ -1887,6 +1909,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void HideChatPopup()
     {
         SetChatPopupVisible(false);
+    }
+
+    private void ShowManagementPopup()
+    {
+        SetManagementPopupVisible(true);
+    }
+
+    private void HideManagementPopup()
+    {
+        SetManagementPopupVisible(false);
+    }
+
+    private void SelectManagementProfile() => SelectManagementMenuMode(ManagementMenuMode.Profile);
+    private void SelectManagementOptions() => SelectManagementMenuMode(ManagementMenuMode.Options);
+    private void SelectManagementAccount() => SelectManagementMenuMode(ManagementMenuMode.Account);
+    private void SelectManagementSupport() => SelectManagementMenuMode(ManagementMenuMode.Support);
+    private void SelectManagementAbout() => SelectManagementMenuMode(ManagementMenuMode.About);
+
+    private void SelectManagementMenuMode(ManagementMenuMode mode)
+    {
+        selectedManagementMenuMode = mode;
+        RefreshManagementPopupUi();
     }
 
     private void ShowFormationScreen()
@@ -8617,6 +8661,46 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             topGemPlusButton.onClick.AddListener(ShowShop);
         }
 
+        if (topManagementMenuButton != null)
+        {
+            topManagementMenuButton.onClick.AddListener(ShowManagementPopup);
+        }
+
+        if (managementCloseButton != null)
+        {
+            managementCloseButton.onClick.AddListener(HideManagementPopup);
+        }
+
+        if (managementProfileButton != null)
+        {
+            managementProfileButton.onClick.AddListener(SelectManagementProfile);
+        }
+
+        if (managementOptionsButton != null)
+        {
+            managementOptionsButton.onClick.AddListener(SelectManagementOptions);
+        }
+
+        if (managementAccountButton != null)
+        {
+            managementAccountButton.onClick.AddListener(SelectManagementAccount);
+        }
+
+        if (managementSupportButton != null)
+        {
+            managementSupportButton.onClick.AddListener(SelectManagementSupport);
+        }
+
+        if (managementAboutButton != null)
+        {
+            managementAboutButton.onClick.AddListener(SelectManagementAbout);
+        }
+
+        if (managementLanguageToggleButton != null)
+        {
+            managementLanguageToggleButton.onClick.AddListener(ToggleLanguage);
+        }
+
         if (homeShortcutToggleButton != null)
         {
             homeShortcutToggleButton.onClick.AddListener(ToggleHomeShortcuts);
@@ -8798,6 +8882,46 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (topGemPlusButton != null)
         {
             topGemPlusButton.onClick.RemoveListener(ShowShop);
+        }
+
+        if (topManagementMenuButton != null)
+        {
+            topManagementMenuButton.onClick.RemoveListener(ShowManagementPopup);
+        }
+
+        if (managementCloseButton != null)
+        {
+            managementCloseButton.onClick.RemoveListener(HideManagementPopup);
+        }
+
+        if (managementProfileButton != null)
+        {
+            managementProfileButton.onClick.RemoveListener(SelectManagementProfile);
+        }
+
+        if (managementOptionsButton != null)
+        {
+            managementOptionsButton.onClick.RemoveListener(SelectManagementOptions);
+        }
+
+        if (managementAccountButton != null)
+        {
+            managementAccountButton.onClick.RemoveListener(SelectManagementAccount);
+        }
+
+        if (managementSupportButton != null)
+        {
+            managementSupportButton.onClick.RemoveListener(SelectManagementSupport);
+        }
+
+        if (managementAboutButton != null)
+        {
+            managementAboutButton.onClick.RemoveListener(SelectManagementAbout);
+        }
+
+        if (managementLanguageToggleButton != null)
+        {
+            managementLanguageToggleButton.onClick.RemoveListener(ToggleLanguage);
         }
 
         if (homeShortcutToggleButton != null)
@@ -12776,6 +12900,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             plusImage.color = new Color(0.55f, 0.32f, 0.15f, 0.96f);
         }
 
+        topManagementMenuButton = CreateRuntimeButton(topBarObject.transform, "Top Management Menu Button", string.Empty, 456, -20, 64, 64);
+        StyleTopManagementMenuButton(topManagementMenuButton);
+        EnsureRuntimeManagementPopup(topBarObject.transform);
+
         SetComponentActive(titleText, false);
         SetComponentActive(versionText, false);
         SetComponentActive(goldText, false);
@@ -12789,6 +12917,92 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureParchmentBackdrop(gearPanel, "Gear Parchment Backdrop");
         EnsureParchmentBackdrop(summonPanel, "Summon Parchment Backdrop");
         EnsureParchmentBackdrop(shopPanel, "Shop Parchment Backdrop");
+    }
+
+    private void StyleTopManagementMenuButton(Button button)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        var label = button.transform.Find("Label");
+        if (label != null)
+        {
+            label.gameObject.SetActive(false);
+        }
+
+        var image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = new Color(0.05f, 0.55f, 0.62f, 0.98f);
+        }
+
+        CreateRuntimePanel(button.transform, "Menu Line Top", new Vector2(0, -18), new Vector2(32, 5), new Color(1f, 0.9f, 0.58f, 0.96f));
+        CreateRuntimePanel(button.transform, "Menu Line Middle", new Vector2(0, -30), new Vector2(32, 5), new Color(1f, 0.9f, 0.58f, 0.96f));
+        CreateRuntimePanel(button.transform, "Menu Line Bottom", new Vector2(0, -42), new Vector2(32, 5), new Color(1f, 0.9f, 0.58f, 0.96f));
+    }
+
+    private void EnsureRuntimeManagementPopup(Transform parent)
+    {
+        if (parent == null || managementPopupRoot != null)
+        {
+            return;
+        }
+
+        managementPopupRoot = CreateRuntimePanel(parent, "Management Popup", new Vector2(138, -102), new Vector2(760, 600), new Color(0.055f, 0.03f, 0.018f, 0.98f));
+        var popupImage = managementPopupRoot.GetComponent<Image>();
+        if (popupImage != null)
+        {
+            popupImage.raycastTarget = true;
+        }
+
+        CreateLayeredRuntimeBackground(managementPopupRoot, new Vector2(720, 510), 0.16f);
+        CreateRuntimePanel(managementPopupRoot, "Management Header Shade", new Vector2(0, -16), new Vector2(720, 82), new Color(0.18f, 0.085f, 0.035f, 0.92f));
+        CreateRuntimePanel(managementPopupRoot, "Management Divider", new Vector2(0, -91), new Vector2(690, 4), new Color(0.82f, 0.55f, 0.24f, 0.92f));
+
+        managementTitleText = CreateRuntimeText(managementPopupRoot, "Management Title", Tr("management.title"), 32, new Vector2(-24, -35), new Vector2(560, 46));
+        managementTitleText.fontStyle = FontStyles.Bold;
+        managementTitleText.color = new Color(1f, 0.9f, 0.64f);
+        managementTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        managementCloseButton = CreateRuntimeButton(managementPopupRoot, "Management Close", "X", 332, -28, 52, 52);
+        managementProfileButton = CreateManagementMenuButton("Management Profile Button", ManagementMenuMode.Profile, -245, -126);
+        managementOptionsButton = CreateManagementMenuButton("Management Options Button", ManagementMenuMode.Options, -245, -198);
+        managementAccountButton = CreateManagementMenuButton("Management Account Button", ManagementMenuMode.Account, -245, -270);
+        managementSupportButton = CreateManagementMenuButton("Management Support Button", ManagementMenuMode.Support, -245, -342);
+        managementAboutButton = CreateManagementMenuButton("Management About Button", ManagementMenuMode.About, -245, -414);
+
+        var detailPanel = CreateRuntimePanel(managementPopupRoot, "Management Detail Panel", new Vector2(140, -126), new Vector2(410, 406), new Color(0.09f, 0.045f, 0.026f, 0.94f));
+        CreateRuntimePanel(detailPanel, "Management Detail Top Line", new Vector2(0, -8), new Vector2(374, 4), new Color(0.3f, 0.95f, 0.9f, 0.7f));
+        managementDetailTitleText = CreateRuntimeText(detailPanel, "Detail Title", string.Empty, 27, new Vector2(0, -34), new Vector2(360, 42));
+        managementDetailTitleText.fontStyle = FontStyles.Bold;
+        managementDetailTitleText.color = new Color(1f, 0.88f, 0.58f);
+        managementDetailTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        managementDetailBodyText = CreateRuntimeText(detailPanel, "Detail Body", string.Empty, 21, new Vector2(0, -98), new Vector2(348, 210));
+        managementDetailBodyText.alignment = TextAlignmentOptions.TopLeft;
+        managementDetailBodyText.enableAutoSizing = true;
+        managementDetailBodyText.fontSizeMin = 15;
+        managementDetailBodyText.fontSizeMax = 21;
+        managementDetailBodyText.color = new Color(0.82f, 0.9f, 1f);
+
+        managementLanguageToggleButton = CreateRuntimeButton(detailPanel, "Management Language Toggle", string.Empty, 0, -338, 290, 58);
+        managementPopupRoot.gameObject.SetActive(false);
+    }
+
+    private Button CreateManagementMenuButton(string name, ManagementMenuMode mode, float x, float y)
+    {
+        var button = CreateRuntimeButton(managementPopupRoot, name, GetManagementButtonLabel(mode), x, y, 230, 58);
+        var text = button.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (text != null)
+        {
+            text.fontSizeMin = 14;
+            text.fontSizeMax = 21;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+
+        return button;
     }
 
     private void EnsureRuntimeSummonOffer()
@@ -15646,6 +15860,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             topGemPlusButton.gameObject.SetActive(true);
         }
 
+        if (topManagementMenuButton != null)
+        {
+            topManagementMenuButton.transform.SetAsLastSibling();
+            topManagementMenuButton.gameObject.SetActive(true);
+        }
+
+        RefreshManagementPopupUi();
+
         if (heroEssenceAmountText != null)
         {
             heroEssenceAmountText.text = $"{GetLocalizedCurrencyName(MythEssenceCurrencyId)} {FormatCompactNumber(mythEssence)}";
@@ -16129,6 +16351,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 chatPopupRoot.gameObject.SetActive(false);
             }
 
+            if (managementPopupRoot != null)
+            {
+                managementPopupRoot.gameObject.SetActive(false);
+            }
+
             inventoryPopupRoot.SetAsLastSibling();
             RefreshInventoryPopupUi();
         }
@@ -16152,6 +16379,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (chatPopupRoot != null)
             {
                 chatPopupRoot.gameObject.SetActive(false);
+            }
+
+            if (managementPopupRoot != null)
+            {
+                managementPopupRoot.gameObject.SetActive(false);
             }
 
             fastRewardsPopupRoot.SetAsLastSibling();
@@ -16179,8 +16411,50 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 fastRewardsPopupRoot.gameObject.SetActive(false);
             }
 
+            if (managementPopupRoot != null)
+            {
+                managementPopupRoot.gameObject.SetActive(false);
+            }
+
             chatPopupRoot.SetAsLastSibling();
         }
+    }
+
+    private void SetManagementPopupVisible(bool isVisible)
+    {
+        if (managementPopupRoot == null)
+        {
+            return;
+        }
+
+        managementPopupRoot.gameObject.SetActive(isVisible);
+        if (!isVisible)
+        {
+            return;
+        }
+
+        if (inventoryPopupRoot != null)
+        {
+            inventoryPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (fastRewardsPopupRoot != null)
+        {
+            fastRewardsPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (chatPopupRoot != null)
+        {
+            chatPopupRoot.gameObject.SetActive(false);
+        }
+
+        managementPopupRoot.SetAsLastSibling();
+        if (topManagementMenuButton != null)
+        {
+            topManagementMenuButton.transform.SetAsLastSibling();
+        }
+
+        RefreshManagementPopupUi();
     }
 
     private void ToggleHomeShortcuts()
@@ -16230,6 +16504,127 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             homeLeftShortcutToggleText.text = isExpanded ? "^" : "v";
         }
+    }
+
+    private void RefreshManagementPopupUi()
+    {
+        if (managementPopupRoot == null)
+        {
+            return;
+        }
+
+        if (managementTitleText != null)
+        {
+            managementTitleText.text = Tr("management.title");
+        }
+
+        RefreshManagementButton(managementProfileButton, ManagementMenuMode.Profile);
+        RefreshManagementButton(managementOptionsButton, ManagementMenuMode.Options);
+        RefreshManagementButton(managementAccountButton, ManagementMenuMode.Account);
+        RefreshManagementButton(managementSupportButton, ManagementMenuMode.Support);
+        RefreshManagementButton(managementAboutButton, ManagementMenuMode.About);
+
+        if (managementDetailTitleText != null)
+        {
+            managementDetailTitleText.text = GetManagementDetailTitle(selectedManagementMenuMode);
+        }
+
+        if (managementDetailBodyText != null)
+        {
+            managementDetailBodyText.text = GetManagementDetailBody(selectedManagementMenuMode);
+        }
+
+        if (managementLanguageToggleButton != null)
+        {
+            var showLanguageAction = selectedManagementMenuMode == ManagementMenuMode.Options;
+            managementLanguageToggleButton.gameObject.SetActive(showLanguageAction);
+            if (showLanguageAction)
+            {
+                SetButtonLabel(managementLanguageToggleButton, Tr("management.language.switch"));
+            }
+        }
+    }
+
+    private void RefreshManagementButton(Button button, ManagementMenuMode mode)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        SetButtonLabel(button, GetManagementButtonLabel(mode));
+        var image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = selectedManagementMenuMode == mode
+                ? new Color(0.72f, 0.42f, 0.16f, 0.98f)
+                : new Color(0.18f, 0.1f, 0.055f, 0.94f);
+        }
+    }
+
+    private string GetManagementButtonLabel(ManagementMenuMode mode)
+    {
+        switch (mode)
+        {
+            case ManagementMenuMode.Options:
+                return Tr("management.options");
+            case ManagementMenuMode.Account:
+                return Tr("management.account");
+            case ManagementMenuMode.Support:
+                return Tr("management.support");
+            case ManagementMenuMode.About:
+                return Tr("management.about");
+            default:
+                return Tr("management.profile");
+        }
+    }
+
+    private string GetManagementDetailTitle(ManagementMenuMode mode)
+    {
+        switch (mode)
+        {
+            case ManagementMenuMode.Options:
+                return Tr("management.options.title");
+            case ManagementMenuMode.Account:
+                return Tr("management.account.title");
+            case ManagementMenuMode.Support:
+                return Tr("management.support.title");
+            case ManagementMenuMode.About:
+                return Tr("management.about.title");
+            default:
+                return Tr("management.profile.title");
+        }
+    }
+
+    private string GetManagementDetailBody(ManagementMenuMode mode)
+    {
+        switch (mode)
+        {
+            case ManagementMenuMode.Options:
+                return TrFormat(
+                    "management.options.body",
+                    GetCurrentLanguageLabel(),
+                    backendGameplayEnabled ? Tr("management.backend.server") : Tr("management.backend.local"));
+            case ManagementMenuMode.Account:
+                return TrFormat("management.account.body", "local-player", saveVersion, GetDailyDateKey());
+            case ManagementMenuMode.Support:
+                return Tr("management.support.body");
+            case ManagementMenuMode.About:
+                return TrFormat("management.about.body", PrototypeVersion, CurrentSaveVersion);
+            default:
+                return TrFormat(
+                    "management.profile.body",
+                    GetPlayerDisplayName(),
+                    FormatCompactNumber(GetTeamPower()),
+                    enemyLevel,
+                    FormatCompactNumber(gold),
+                    FormatCompactNumber(gems));
+        }
+    }
+
+    private string GetCurrentLanguageLabel()
+    {
+        return language == MythwakeLanguage.German ? Tr("language.german") : Tr("language.english");
     }
 
     private void RefreshFastRewardsPopupUi()
