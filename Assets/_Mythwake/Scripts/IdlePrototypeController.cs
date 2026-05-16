@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -422,6 +423,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private struct InventoryItemViewData
+    {
+        public string displayName;
+        public string detail;
+        public string countText;
+        public string iconTextureName;
+        public Color frameColor;
+
+        public InventoryItemViewData(string displayName, string detail, string countText, string iconTextureName, Color frameColor)
+        {
+            this.displayName = displayName;
+            this.detail = detail;
+            this.countText = countText;
+            this.iconTextureName = iconTextureName;
+            this.frameColor = frameColor;
+        }
+    }
+
     private enum AppScreen
     {
         Home,
@@ -444,6 +463,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         Campaign,
         Dungeon
+    }
+
+    private enum InventoryTabMode
+    {
+        Misc,
+        Gear,
+        All
     }
 
     private enum HeroesTabMode
@@ -567,6 +593,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int SummonCarouselCardCount = 3;
     private const int SummonFeaturedHeroCount = 3;
     private const int SummonCarouselHeroSlotsPerCard = 2;
+    private const int InventoryGridSlotCount = 30;
     private const int MaxSummonPullCount = 300;
     private const int SummonAutoStepCount = 10;
     private const int BattlePassXpPerDailyClaim = 40;
@@ -963,6 +990,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private int selectedCampaignStage = 1;
     private BattleFlowMode battleFlowMode = BattleFlowMode.Formation;
     private BattleTargetMode battleTargetMode = BattleTargetMode.Campaign;
+    private InventoryTabMode selectedInventoryTab = InventoryTabMode.All;
     private string selectedDungeonId = GoldDungeonDefinition.dungeonId;
     private string selectedDungeonBattleMapTextureName;
     private string backendStatus = "Backend: local prototype mode";
@@ -1025,11 +1053,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private bool homeShortcutsExpanded;
     private RectTransform inventoryPopupRoot;
     private RectTransform fastRewardsPopupRoot;
+    private RectTransform inventoryGridRoot;
     private TMP_Text inventoryPopupText;
     private TMP_Text fastRewardsPopupText;
     private Button inventoryCloseButton;
+    private Button inventoryMiscTabButton;
+    private Button inventoryGearTabButton;
+    private Button inventoryAllTabButton;
     private Button fastRewardsCloseButton;
     private Button fastRewardsRedeemButton;
+    private RectTransform[] inventorySlotRoots;
+    private Image[] inventorySlotFrames;
+    private RawImage[] inventorySlotIcons;
+    private TMP_Text[] inventorySlotCountTexts;
+    private TMP_Text[] inventorySlotNameTexts;
+    private TMP_Text[] inventorySlotDetailTexts;
     private TMP_Text menuHeaderText;
     private HeroesTabMode heroesTabMode = HeroesTabMode.Hero;
     private HeroSortDirection heroSortDirection = HeroSortDirection.Descending;
@@ -1772,6 +1810,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void HideInventoryPopup()
     {
         SetInventoryPopupVisible(false);
+    }
+
+    private void ShowInventoryMiscTab()
+    {
+        SelectInventoryTab(InventoryTabMode.Misc);
+    }
+
+    private void ShowInventoryGearTab()
+    {
+        SelectInventoryTab(InventoryTabMode.Gear);
+    }
+
+    private void ShowInventoryAllTab()
+    {
+        SelectInventoryTab(InventoryTabMode.All);
+    }
+
+    private void SelectInventoryTab(InventoryTabMode tab)
+    {
+        selectedInventoryTab = tab;
+        RefreshInventoryPopupUi();
     }
 
     private void ShowFastRewardsPopup()
@@ -7530,6 +7589,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshHeroUi();
         RefreshEquipmentUi();
         RefreshAccessoryUi();
+        RefreshInventoryPopupUi();
         RefreshSummonUi();
         RefreshDailyMissionUi();
         RefreshBattlePassUi();
@@ -8395,6 +8455,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             inventoryCloseButton.onClick.AddListener(HideInventoryPopup);
         }
 
+        if (inventoryMiscTabButton != null)
+        {
+            inventoryMiscTabButton.onClick.AddListener(ShowInventoryMiscTab);
+        }
+
+        if (inventoryGearTabButton != null)
+        {
+            inventoryGearTabButton.onClick.AddListener(ShowInventoryGearTab);
+        }
+
+        if (inventoryAllTabButton != null)
+        {
+            inventoryAllTabButton.onClick.AddListener(ShowInventoryAllTab);
+        }
+
         if (fastRewardsCloseButton != null)
         {
             fastRewardsCloseButton.onClick.AddListener(HideFastRewardsPopup);
@@ -8551,6 +8626,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (inventoryCloseButton != null)
         {
             inventoryCloseButton.onClick.RemoveListener(HideInventoryPopup);
+        }
+
+        if (inventoryMiscTabButton != null)
+        {
+            inventoryMiscTabButton.onClick.RemoveListener(ShowInventoryMiscTab);
+        }
+
+        if (inventoryGearTabButton != null)
+        {
+            inventoryGearTabButton.onClick.RemoveListener(ShowInventoryGearTab);
+        }
+
+        if (inventoryAllTabButton != null)
+        {
+            inventoryAllTabButton.onClick.RemoveListener(ShowInventoryAllTab);
         }
 
         if (fastRewardsCloseButton != null)
@@ -13215,14 +13305,43 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        inventoryPopupRoot = CreateRuntimePopup(homeActionRoot, "Inventory Popup", new Vector2(0, -365), new Vector2(720, 300), "Inventory");
-        inventoryPopupText = CreateRuntimeText(inventoryPopupRoot, "Inventory Body", "Inventory kommt hier rein.\nItem use kommt spaeter, Button ist schon ready.", 24, new Vector2(0, -102), new Vector2(620, 118));
+        inventoryPopupRoot = CreateRuntimePanel(homeActionRoot, "Inventory Popup", new Vector2(0, -96), new Vector2(920, 1110), new Color(0.72f, 0.53f, 0.29f, 0.98f));
+        var inventoryImage = inventoryPopupRoot.GetComponent<Image>();
+        if (inventoryImage != null)
+        {
+            inventoryImage.raycastTarget = true;
+        }
+
+        CreateRuntimePanel(inventoryPopupRoot, "Inventory Inner Parchment", new Vector2(0, -162), new Vector2(860, 860), new Color(0.97f, 0.82f, 0.52f, 0.96f));
+        CreateRuntimePanel(inventoryPopupRoot, "Inventory Header Plaque", new Vector2(0, -26), new Vector2(470, 106), new Color(0.19f, 0.1f, 0.045f, 0.96f));
+        CreateRuntimePanel(inventoryPopupRoot, "Inventory Header Glow", new Vector2(0, -88), new Vector2(600, 8), new Color(0.88f, 0.56f, 0.24f, 0.86f));
+        CreateRuntimePanel(inventoryPopupRoot, "Inventory Bottom Rail", new Vector2(0, -958), new Vector2(884, 44), new Color(0.19f, 0.1f, 0.045f, 0.96f));
+
+        var title = CreateRuntimeText(inventoryPopupRoot, "Inventory Title", "Bag", 36, new Vector2(0, -38), new Vector2(360, 56));
+        title.fontStyle = FontStyles.Bold;
+        title.color = new Color(1f, 0.88f, 0.62f);
+        title.textWrappingMode = TextWrappingModes.NoWrap;
+        title.outlineColor = new Color(0.09f, 0.035f, 0.01f, 0.96f);
+        title.outlineWidth = 0.16f;
+
+        inventoryPopupText = CreateRuntimeText(inventoryPopupRoot, "Inventory Summary", string.Empty, 20, new Vector2(0, -118), new Vector2(760, 42));
         inventoryPopupText.enableAutoSizing = true;
-        inventoryPopupText.fontSizeMin = 18;
-        inventoryPopupText.fontSizeMax = 24;
-        inventoryPopupText.textWrappingMode = TextWrappingModes.Normal;
-        inventoryCloseButton = CreateRuntimeButton(inventoryPopupRoot, "Inventory Close Button", "Close", 0, -230, 180, 54);
+        inventoryPopupText.fontSizeMin = 14;
+        inventoryPopupText.fontSizeMax = 20;
+        inventoryPopupText.fontStyle = FontStyles.Bold;
+        inventoryPopupText.color = new Color(0.29f, 0.15f, 0.055f);
+        inventoryPopupText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        inventoryGridRoot = CreateRuntimePanel(inventoryPopupRoot, "Inventory Grid", new Vector2(0, -180), new Vector2(830, 740), new Color(1f, 0.88f, 0.62f, 0.18f));
+        inventoryGridRoot.GetComponent<Image>().raycastTarget = false;
+        CreateInventoryGridSlots();
+
+        inventoryMiscTabButton = CreateRuntimeButton(inventoryPopupRoot, "Inventory Misc Tab", "Misc", -260, -1000, 200, 64);
+        inventoryGearTabButton = CreateRuntimeButton(inventoryPopupRoot, "Inventory Gear Tab", "Gear", 0, -1000, 200, 64);
+        inventoryAllTabButton = CreateRuntimeButton(inventoryPopupRoot, "Inventory All Tab", "All", 260, -1000, 200, 64);
+        inventoryCloseButton = CreateRuntimeButton(inventoryPopupRoot, "Inventory Close Button", "X", 398, -32, 58, 58);
         inventoryPopupRoot.gameObject.SetActive(false);
+        RefreshInventoryPopupUi();
 
         fastRewardsPopupRoot = CreateRuntimePopup(homeActionRoot, "Fast Rewards Popup", new Vector2(0, -380), new Vector2(760, 370), "Fast Rewards");
         fastRewardsPopupText = CreateRuntimeText(fastRewardsPopupRoot, "Fast Rewards Body", string.Empty, 24, new Vector2(0, -95), new Vector2(660, 165));
@@ -13243,6 +13362,299 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         chatBodyText.textWrappingMode = TextWrappingModes.Normal;
         chatCloseButton = CreateRuntimeButton(chatPopupRoot, "Chat Close Button", "Close", 0, -184, 170, 52);
         chatPopupRoot.gameObject.SetActive(false);
+    }
+
+    private void CreateInventoryGridSlots()
+    {
+        if (inventoryGridRoot == null)
+        {
+            return;
+        }
+
+        inventorySlotRoots = new RectTransform[InventoryGridSlotCount];
+        inventorySlotFrames = new Image[InventoryGridSlotCount];
+        inventorySlotIcons = new RawImage[InventoryGridSlotCount];
+        inventorySlotCountTexts = new TMP_Text[InventoryGridSlotCount];
+        inventorySlotNameTexts = new TMP_Text[InventoryGridSlotCount];
+        inventorySlotDetailTexts = new TMP_Text[InventoryGridSlotCount];
+
+        const int columns = 6;
+        const float startX = -360f;
+        const float startY = -12f;
+        const float spacingX = 144f;
+        const float spacingY = 138f;
+
+        for (var i = 0; i < InventoryGridSlotCount; i++)
+        {
+            var column = i % columns;
+            var row = i / columns;
+            var slotRoot = CreateRuntimePanel(
+                inventoryGridRoot,
+                $"Inventory Slot {i + 1}",
+                new Vector2(startX + (column * spacingX), startY - (row * spacingY)),
+                new Vector2(116, 128),
+                new Color(0.18f, 0.13f, 0.1f, 0.86f));
+            inventorySlotRoots[i] = slotRoot;
+            inventorySlotFrames[i] = slotRoot.GetComponent<Image>();
+
+            var inner = CreateRuntimePanel(slotRoot, "Inner", new Vector2(0, -8), new Vector2(96, 82), new Color(0.9f, 0.82f, 0.7f, 0.62f));
+            inner.SetAsFirstSibling();
+
+            inventorySlotIcons[i] = CreateRuntimeRawImage(slotRoot, "Icon", null, new Vector2(0, -15), new Vector2(70, 70), new Vector2(0.5f, 1f));
+            inventorySlotIcons[i].raycastTarget = false;
+
+            var countBack = CreateRuntimePanel(slotRoot, "Count Back", new Vector2(36, -68), new Vector2(52, 26), new Color(0.03f, 0.025f, 0.02f, 0.88f));
+            inventorySlotCountTexts[i] = CreateRuntimeText(countBack, "Count", string.Empty, 17, Vector2.zero, new Vector2(48, 24));
+            inventorySlotCountTexts[i].fontStyle = FontStyles.Bold;
+            inventorySlotCountTexts[i].enableAutoSizing = true;
+            inventorySlotCountTexts[i].fontSizeMin = 10;
+            inventorySlotCountTexts[i].fontSizeMax = 17;
+            inventorySlotCountTexts[i].color = new Color(1f, 0.9f, 0.54f);
+            inventorySlotCountTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
+
+            inventorySlotNameTexts[i] = CreateRuntimeText(slotRoot, "Name", string.Empty, 14, new Vector2(0, -92), new Vector2(104, 22));
+            inventorySlotNameTexts[i].fontStyle = FontStyles.Bold;
+            inventorySlotNameTexts[i].enableAutoSizing = true;
+            inventorySlotNameTexts[i].fontSizeMin = 9;
+            inventorySlotNameTexts[i].fontSizeMax = 14;
+            inventorySlotNameTexts[i].color = new Color(0.16f, 0.08f, 0.025f);
+            inventorySlotNameTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
+
+            inventorySlotDetailTexts[i] = CreateRuntimeText(slotRoot, "Detail", string.Empty, 11, new Vector2(0, -112), new Vector2(106, 18));
+            inventorySlotDetailTexts[i].enableAutoSizing = true;
+            inventorySlotDetailTexts[i].fontSizeMin = 8;
+            inventorySlotDetailTexts[i].fontSizeMax = 11;
+            inventorySlotDetailTexts[i].color = new Color(0.28f, 0.17f, 0.07f);
+            inventorySlotDetailTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
+
+            slotRoot.gameObject.SetActive(false);
+        }
+    }
+
+    private void RefreshInventoryPopupUi()
+    {
+        if (inventoryPopupRoot == null || inventorySlotRoots == null)
+        {
+            return;
+        }
+
+        var items = BuildInventoryItems();
+        var visibleCount = Mathf.Min(items.Count, InventoryGridSlotCount);
+
+        for (var i = 0; i < inventorySlotRoots.Length; i++)
+        {
+            var visible = i < visibleCount;
+            if (inventorySlotRoots[i] == null)
+            {
+                continue;
+            }
+
+            inventorySlotRoots[i].gameObject.SetActive(visible);
+            if (!visible)
+            {
+                continue;
+            }
+
+            var item = items[i];
+            if (inventorySlotFrames != null && inventorySlotFrames[i] != null)
+            {
+                inventorySlotFrames[i].color = item.frameColor;
+            }
+
+            if (inventorySlotIcons != null && inventorySlotIcons[i] != null)
+            {
+                inventorySlotIcons[i].texture = LoadRuntimeTexture(item.iconTextureName);
+                inventorySlotIcons[i].color = Color.white;
+            }
+
+            if (inventorySlotCountTexts != null && inventorySlotCountTexts[i] != null)
+            {
+                inventorySlotCountTexts[i].text = item.countText;
+            }
+
+            if (inventorySlotNameTexts != null && inventorySlotNameTexts[i] != null)
+            {
+                inventorySlotNameTexts[i].text = item.displayName;
+            }
+
+            if (inventorySlotDetailTexts != null && inventorySlotDetailTexts[i] != null)
+            {
+                inventorySlotDetailTexts[i].text = item.detail;
+            }
+        }
+
+        if (inventoryPopupText != null)
+        {
+            if (items.Count <= 0)
+            {
+                inventoryPopupText.text = selectedInventoryTab == InventoryTabMode.Misc
+                    ? "No misc items yet. Currencies and heroes stay in their own screens."
+                    : "No gear items in the bag yet. Gear Dungeon drops will appear here.";
+            }
+            else if (items.Count > InventoryGridSlotCount)
+            {
+                inventoryPopupText.text = $"{GetInventoryTabLabel(selectedInventoryTab)}  |  Showing {InventoryGridSlotCount}/{items.Count} items";
+            }
+            else
+            {
+                inventoryPopupText.text = $"{GetInventoryTabLabel(selectedInventoryTab)}  |  {items.Count} item{(items.Count == 1 ? string.Empty : "s")}";
+            }
+        }
+
+        StyleInventoryTab(inventoryMiscTabButton, selectedInventoryTab == InventoryTabMode.Misc);
+        StyleInventoryTab(inventoryGearTabButton, selectedInventoryTab == InventoryTabMode.Gear);
+        StyleInventoryTab(inventoryAllTabButton, selectedInventoryTab == InventoryTabMode.All);
+    }
+
+    private List<InventoryItemViewData> BuildInventoryItems()
+    {
+        var items = new List<InventoryItemViewData>();
+        if (selectedInventoryTab != InventoryTabMode.Gear)
+        {
+            AddMiscInventoryItems(items);
+        }
+
+        if (selectedInventoryTab != InventoryTabMode.Misc)
+        {
+            AddGearInventoryItems(items);
+        }
+
+        return items;
+    }
+
+    private void AddMiscInventoryItems(List<InventoryItemViewData> items)
+    {
+        if (battlePassXp > 0)
+        {
+            items.Add(new InventoryItemViewData(
+                "Mission XP",
+                "Mission Track",
+                FormatCompactNumber(battlePassXp),
+                "vfx_summon",
+                new Color(0.48f, 0.32f, 0.78f, 0.96f)));
+        }
+    }
+
+    private void AddGearInventoryItems(List<InventoryItemViewData> items)
+    {
+        EnsureAccessories();
+        EnsureHeroEquipment();
+
+        var heroIndex = GetSelectedHeroIndex();
+        var heroName = GetHeroDefinition(heroIndex).name;
+        var displayedWeaponLevel = GetEquipmentDisplayLevel(WeaponTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: true));
+        var displayedArmorLevel = GetEquipmentDisplayLevel(ArmorTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: false));
+
+        items.Add(new InventoryItemViewData(
+            WeaponTrack.name,
+            $"{heroName} +{GetHeroEquipmentAttackBonus(heroIndex)} {WeaponTrack.statLabel}",
+            $"Lv {displayedWeaponLevel}",
+            "icon_weapon",
+            new Color(0.58f, 0.36f, 0.18f, 0.96f)));
+
+        items.Add(new InventoryItemViewData(
+            ArmorTrack.name,
+            $"{heroName} +{GetHeroEquipmentHealthBonus(heroIndex)} {ArmorTrack.statLabel}",
+            $"Lv {displayedArmorLevel}",
+            "icon_armor",
+            new Color(0.36f, 0.38f, 0.42f, 0.96f)));
+
+        for (var rarity = AccessoryRarityCount - 1; rarity >= 0; rarity--)
+        {
+            for (var slot = 0; slot < AccessorySlotCount; slot++)
+            {
+                var copies = GetAccessoryInventoryCount(slot, rarity);
+                var equipped = CountEquippedAccessoryCopies(slot, rarity);
+                var total = copies + equipped;
+                if (total <= 0)
+                {
+                    continue;
+                }
+
+                var detail = equipped > 0
+                    ? $"Bag {copies}  Equip {equipped}"
+                    : $"Bag {copies}";
+                items.Add(new InventoryItemViewData(
+                    $"{GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name}",
+                    detail,
+                    total.ToString(),
+                    GetInventoryAccessoryIconTextureName(slot),
+                    GetAccessoryRarityColor(rarity)));
+            }
+        }
+    }
+
+    private int CountEquippedAccessoryCopies(int slot, int rarity)
+    {
+        EnsureAccessories();
+        var count = 0;
+        for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
+        {
+            if (GetHeroEquippedAccessoryRarity(heroIndex, slot) == rarity)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static string GetInventoryAccessoryIconTextureName(int slot)
+    {
+        switch (Mathf.Clamp(slot, 0, AccessorySlotCount - 1))
+        {
+            case 0:
+                return "dungeon_essence";
+            case 1:
+                return "dungeon_portal";
+            case 2:
+                return "icon_armor";
+            case 3:
+                return "icon_weapon";
+            default:
+                return "dungeon_fire";
+        }
+    }
+
+    private static string GetInventoryTabLabel(InventoryTabMode tab)
+    {
+        switch (tab)
+        {
+            case InventoryTabMode.Misc:
+                return "Misc";
+            case InventoryTabMode.Gear:
+                return "Gear";
+            default:
+                return "All";
+        }
+    }
+
+    private static void StyleInventoryTab(Button button, bool active)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        var image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = active
+                ? new Color(0.79f, 0.42f, 0.14f, 0.98f)
+                : new Color(0.2f, 0.11f, 0.055f, 0.95f);
+        }
+
+        var text = button.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (text != null)
+        {
+            text.fontSize = active ? 25 : 22;
+            text.fontSizeMin = 14;
+            text.fontSizeMax = active ? 25 : 22;
+            text.enableAutoSizing = true;
+            text.fontStyle = FontStyles.Bold;
+            text.color = active ? new Color(1f, 0.9f, 0.62f) : new Color(0.86f, 0.72f, 0.52f);
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+        }
     }
 
     private void EnsureRuntimeMenuHeader()
@@ -15350,6 +15762,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
 
             inventoryPopupRoot.SetAsLastSibling();
+            RefreshInventoryPopupUi();
         }
     }
 
