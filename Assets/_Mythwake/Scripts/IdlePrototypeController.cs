@@ -632,6 +632,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int DungeonBonusInterval = 5;
     private const int DungeonSetProgressGoal = 9;
     private const float DungeonBossHpMultiplier = 1.8f;
+    private static readonly Vector2 DungeonMapViewportPosition = new Vector2(0f, -166f);
+    private static readonly Vector2 DungeonMapViewportSize = new Vector2(1000f, 970f);
+    private static readonly Vector2 DungeonWorldMapSize = new Vector2(1760f, 1320f);
+    private static readonly Vector2 GoldDungeonMapPosition = new Vector2(292f, -692f);
+    private static readonly Vector2 EssenceDungeonMapPosition = new Vector2(196f, -168f);
+    private static readonly Vector2 GearDungeonMapPosition = new Vector2(-20f, -935f);
+    private const float DungeonMapMinZoom = 0.8f;
+    private const float DungeonMapMaxZoom = 1.8f;
+    private const float DungeonMapZoomStep = 0.14f;
     private const int AccessoryFuseCost = 3;
     private const int DebugGoldAmount = 500;
     private const int DebugGemAmount = 30;
@@ -1030,6 +1039,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text goldDungeonProgressText;
     private TMP_Text essenceDungeonProgressText;
     private TMP_Text gearDungeonProgressText;
+    private RectTransform dungeonMapViewportRoot;
+    private RectTransform dungeonWorldMapRoot;
+    private Vector2 dungeonMapPointerStartPosition;
+    private Vector2 dungeonMapContentStartPosition;
+    private Button dungeonMapZoomInButton;
+    private Button dungeonMapZoomOutButton;
+    private float dungeonMapZoom = 1f;
     private RectTransform topBarRoot;
     private RectTransform bottomNavRoot;
     private TMP_Text topGemAmountText;
@@ -1338,6 +1354,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             gearDungeonButton.onClick.AddListener(RunGearDungeon);
         }
 
+        if (dungeonMapZoomInButton != null)
+        {
+            dungeonMapZoomInButton.onClick.AddListener(ZoomDungeonMapIn);
+        }
+
+        if (dungeonMapZoomOutButton != null)
+        {
+            dungeonMapZoomOutButton.onClick.AddListener(ZoomDungeonMapOut);
+        }
+
         if (upgradeButton != null)
         {
             upgradeButton.onClick.AddListener(UpgradeDamage);
@@ -1570,6 +1596,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (gearDungeonButton != null)
         {
             gearDungeonButton.onClick.RemoveListener(RunGearDungeon);
+        }
+
+        if (dungeonMapZoomInButton != null)
+        {
+            dungeonMapZoomInButton.onClick.RemoveListener(ZoomDungeonMapIn);
+        }
+
+        if (dungeonMapZoomOutButton != null)
+        {
+            dungeonMapZoomOutButton.onClick.RemoveListener(ZoomDungeonMapOut);
         }
 
         if (upgradeButton != null)
@@ -14704,47 +14740,419 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             dungeonsHeaderText.color = new Color(1f, 0.9f, 0.68f);
         }
 
-        EnsureRuntimeDungeonCard(
+        EnsureRuntimeDungeonWorldMap();
+        EnsureRuntimeDungeonMapMarker(
             ref goldDungeonButton,
-            ref goldDungeonBannerImage,
-            ref goldDungeonBossImage,
             ref goldDungeonTitleText,
             ref goldDungeonProgressText,
             ref goldDungeonText,
-            "Gold Dungeon Card",
-            "gold_dungeon_set_banner",
-            GoldDungeonDefinition.dungeonId);
-        EnsureRuntimeDungeonCard(
+            "Gold Dungeon Map Marker",
+            "dungeon_portal",
+            GoldDungeonDefinition.dungeonId,
+            GoldDungeonMapPosition,
+            new Color(0.96f, 0.68f, 0.22f, 0.96f));
+        EnsureRuntimeDungeonMapMarker(
             ref essenceDungeonButton,
-            ref essenceDungeonBannerImage,
-            ref essenceDungeonBossImage,
             ref essenceDungeonTitleText,
             ref essenceDungeonProgressText,
             ref essenceDungeonText,
-            "Essence Dungeon Card",
-            "essence_dungeon_set_banner",
-            EssenceDungeonDefinition.dungeonId);
-        EnsureRuntimeDungeonCard(
+            "Essence Dungeon Map Marker",
+            "dungeon_essence",
+            EssenceDungeonDefinition.dungeonId,
+            EssenceDungeonMapPosition,
+            new Color(0.53f, 0.36f, 1f, 0.96f));
+        EnsureRuntimeDungeonMapMarker(
             ref gearDungeonButton,
-            ref gearDungeonBannerImage,
-            ref gearDungeonBossImage,
             ref gearDungeonTitleText,
             ref gearDungeonProgressText,
             ref gearDungeonText,
-            "Gear Dungeon Card",
-            "gear_dungeon_set_banner",
-            GearDungeonDefinition.dungeonId);
+            "Gear Dungeon Map Marker",
+            "dungeon_fire",
+            GearDungeonDefinition.dungeonId,
+            GearDungeonMapPosition,
+            new Color(0.18f, 0.86f, 0.95f, 0.96f));
 
         if (runtimeDungeonResultText == null)
         {
             runtimeDungeonResultText = CreateRuntimeText(dungeonsPanel.transform, "Dungeon Result Text", "Dungeons are the active resource source.", 22, new Vector2(0, -1018), new Vector2(760, 52));
         }
 
+        runtimeDungeonResultText.alignment = TextAlignmentOptions.Center;
         runtimeDungeonResultText.color = new Color(0.78f, 0.9f, 1f);
         runtimeDungeonResultText.enableAutoSizing = true;
         runtimeDungeonResultText.fontSizeMin = 16;
         runtimeDungeonResultText.fontSizeMax = 22;
         runtimeDungeonResultText.fontStyle = FontStyles.Bold;
+        runtimeDungeonResultText.outlineColor = new Color(0.02f, 0.018f, 0.014f, 1f);
+        runtimeDungeonResultText.outlineWidth = 0.16f;
+    }
+
+    private void EnsureRuntimeDungeonWorldMap()
+    {
+        if (dungeonsPanel == null)
+        {
+            return;
+        }
+
+        if (dungeonMapViewportRoot == null)
+        {
+            var viewportObject = new GameObject("Dungeon World Map Viewport", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(RectMask2D), typeof(EventTrigger));
+            viewportObject.transform.SetParent(dungeonsPanel.transform, false);
+            dungeonMapViewportRoot = viewportObject.GetComponent<RectTransform>();
+            SetRuntimeRect(dungeonMapViewportRoot, DungeonMapViewportPosition, DungeonMapViewportSize, new Vector2(0.5f, 1f));
+
+            var viewportImage = viewportObject.GetComponent<Image>();
+            viewportImage.color = new Color(0.02f, 0.04f, 0.07f, 0.98f);
+            viewportImage.raycastTarget = true;
+        }
+
+        RegisterDungeonMapDragHandlers();
+
+        if (dungeonWorldMapRoot == null)
+        {
+            var mapObject = new GameObject("Dungeon World Map Content", typeof(RectTransform));
+            mapObject.transform.SetParent(dungeonMapViewportRoot, false);
+            dungeonWorldMapRoot = mapObject.GetComponent<RectTransform>();
+            SetRuntimeRect(dungeonWorldMapRoot, Vector2.zero, DungeonWorldMapSize, new Vector2(0.5f, 1f));
+
+            CreateDungeonWorldMapArt(dungeonWorldMapRoot);
+        }
+
+        EnsureDungeonMapZoomControls();
+        SetDungeonMapZoom(dungeonMapZoom);
+        SetDungeonMapPosition(dungeonWorldMapRoot.anchoredPosition);
+    }
+
+    private void CreateDungeonWorldMapArt(Transform parent)
+    {
+        var mapBack = CreateRuntimePanel(parent, "Dungeon Map Backplate", Vector2.zero, DungeonWorldMapSize, new Color(0.07f, 0.15f, 0.19f, 1f));
+        mapBack.SetAsFirstSibling();
+
+        var mapTexture = LoadRuntimeTexture("mythwake_map");
+        if (mapTexture != null)
+        {
+            mapTexture.filterMode = FilterMode.Bilinear;
+            mapTexture.wrapMode = TextureWrapMode.Clamp;
+            var mapImage = CreateRuntimeRawImage(parent, "Mythwake World Map Image", mapTexture, Vector2.zero, DungeonWorldMapSize, new Vector2(0.5f, 1f));
+            mapImage.transform.SetAsLastSibling();
+            return;
+        }
+
+        CreateLayeredRuntimeBackground(mapBack, DungeonWorldMapSize, 0.94f);
+
+        CreateDungeonMapPatch(mapBack, "Western Sea", new Vector2(-450f, -545f), new Vector2(520f, 1080f), new Color(0.07f, 0.46f, 0.62f, 0.58f), 8f);
+        CreateDungeonMapPatch(mapBack, "Eastern Sea", new Vector2(520f, -708f), new Vector2(390f, 900f), new Color(0.04f, 0.42f, 0.56f, 0.54f), -10f);
+        CreateDungeonMapPatch(mapBack, "North Highlands", new Vector2(125f, -320f), new Vector2(840f, 420f), new Color(0.46f, 0.67f, 0.38f, 0.72f), -7f);
+        CreateDungeonMapPatch(mapBack, "Amber Fields", new Vector2(-110f, -720f), new Vector2(930f, 520f), new Color(0.63f, 0.55f, 0.31f, 0.7f), 9f);
+        CreateDungeonMapPatch(mapBack, "Crystal Marsh", new Vector2(255f, -1040f), new Vector2(760f, 430f), new Color(0.27f, 0.62f, 0.52f, 0.68f), -4f);
+        CreateDungeonMapPatch(mapBack, "Void Bloom", new Vector2(-290f, -690f), new Vector2(420f, 330f), new Color(0.47f, 0.28f, 0.75f, 0.62f), 14f);
+        CreateDungeonMapPatch(mapBack, "Forge Coast", new Vector2(275f, -1030f), new Vector2(390f, 300f), new Color(0.25f, 0.7f, 0.83f, 0.54f), -12f);
+
+        CreateDungeonMapRoad(parent, new Vector2(275f, -352f), new Vector2(-290f, -724f));
+        CreateDungeonMapRoad(parent, new Vector2(-290f, -724f), new Vector2(238f, -1092f));
+        CreateDungeonMapRoad(parent, new Vector2(275f, -352f), new Vector2(238f, -1092f));
+
+        var castle = CreateRuntimeRawImage(parent, "Dungeon Map Citadel", LoadRuntimeTexture("bg_castle"), new Vector2(230f, -376f), new Vector2(170f, 170f), new Vector2(0.5f, 1f));
+        castle.color = new Color(1f, 0.92f, 0.72f, 0.88f);
+
+        var tree = CreateRuntimeRawImage(parent, "Dungeon Map Ancient Tree", LoadRuntimeTexture("bg_tree"), new Vector2(-390f, -766f), new Vector2(170f, 210f), new Vector2(0.5f, 1f));
+        tree.color = new Color(0.86f, 1f, 0.9f, 0.86f);
+    }
+
+    private void EnsureDungeonMapZoomControls()
+    {
+        if (dungeonsPanel == null)
+        {
+            return;
+        }
+
+        if (dungeonMapZoomInButton == null)
+        {
+            dungeonMapZoomInButton = CreateRuntimeButton(dungeonsPanel.transform, "Dungeon Map Zoom In", "+", 434f, -228f, 62f, 62f);
+            StyleDungeonMapZoomButton(dungeonMapZoomInButton);
+        }
+
+        if (dungeonMapZoomOutButton == null)
+        {
+            dungeonMapZoomOutButton = CreateRuntimeButton(dungeonsPanel.transform, "Dungeon Map Zoom Out", "-", 434f, -300f, 62f, 62f);
+            StyleDungeonMapZoomButton(dungeonMapZoomOutButton);
+        }
+    }
+
+    private static void StyleDungeonMapZoomButton(Button button)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        var image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = new Color(0.04f, 0.36f, 0.42f, 0.94f);
+        }
+
+        var label = button.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (label != null)
+        {
+            label.fontSize = 34;
+            label.fontSizeMin = 24;
+            label.fontSizeMax = 34;
+            label.enableAutoSizing = true;
+            label.fontStyle = FontStyles.Bold;
+            label.color = new Color(1f, 0.92f, 0.62f);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+    }
+
+    private static void CreateDungeonMapPatch(Transform parent, string name, Vector2 anchoredPosition, Vector2 size, Color color, float rotation)
+    {
+        var patch = CreateRuntimePanel(parent, name, anchoredPosition, size, color);
+        patch.localRotation = Quaternion.Euler(0f, 0f, rotation);
+    }
+
+    private static void CreateDungeonMapRoad(Transform parent, Vector2 start, Vector2 end)
+    {
+        var midpoint = (start + end) * 0.5f;
+        var delta = end - start;
+        var length = Mathf.Max(1f, delta.magnitude);
+        var shadow = CreateRuntimePanel(parent, "Dungeon Map Road Shadow", midpoint + new Vector2(0f, -5f), new Vector2(length + 34f, 20f), new Color(0.05f, 0.035f, 0.02f, 0.42f));
+        shadow.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+        var road = CreateRuntimePanel(parent, "Dungeon Map Road", midpoint, new Vector2(length + 24f, 12f), new Color(0.86f, 0.72f, 0.48f, 0.7f));
+        road.localRotation = shadow.localRotation;
+    }
+
+    private void EnsureRuntimeDungeonMapMarker(
+        ref Button button,
+        ref TMP_Text titleText,
+        ref TMP_Text progressText,
+        ref TMP_Text detailText,
+        string markerName,
+        string iconTextureName,
+        string dungeonId,
+        Vector2 position,
+        Color accentColor)
+    {
+        if (dungeonWorldMapRoot == null)
+        {
+            return;
+        }
+
+        if (button == null)
+        {
+            button = CreateRuntimeButton(dungeonWorldMapRoot, markerName, string.Empty, position.x, position.y, 360f, 230f);
+        }
+        else
+        {
+            button.transform.SetParent(dungeonWorldMapRoot, false);
+            button.name = markerName;
+        }
+
+        SetRuntimeRect(button.GetComponent<RectTransform>(), position, new Vector2(360f, 230f), new Vector2(0.5f, 1f));
+        ApplyDungeonCardButtonSkin(button);
+        HideChildObjects(button.transform);
+
+        var pulse = EnsureRuntimePanel(button.transform, "Dungeon Map Pulse", new Vector2(0f, -66f), new Vector2(132f, 96f), new Color(accentColor.r, accentColor.g, accentColor.b, 0.26f));
+        pulse.localRotation = Quaternion.Euler(0f, 0f, -8f);
+        var pin = EnsureRuntimePanel(button.transform, "Dungeon Map Pin", new Vector2(0f, -48f), new Vector2(104f, 104f), new Color(0.06f, 0.035f, 0.025f, 0.9f));
+        pin.localRotation = Quaternion.Euler(0f, 0f, 45f);
+        EnsureRuntimePanel(button.transform, "Dungeon Map Pin Inner", new Vector2(0f, -48f), new Vector2(78f, 78f), accentColor).localRotation = Quaternion.Euler(0f, 0f, 45f);
+
+        var icon = button.transform.Find("Dungeon Map Icon")?.GetComponent<RawImage>();
+        if (icon == null)
+        {
+            icon = CreateRuntimeRawImage(button.transform, "Dungeon Map Icon", LoadRuntimeTexture(iconTextureName), new Vector2(0f, -20f), new Vector2(76f, 76f), new Vector2(0.5f, 1f));
+        }
+
+        icon.gameObject.SetActive(true);
+        icon.texture = LoadRuntimeTexture(iconTextureName);
+        icon.color = Color.white;
+        icon.rectTransform.SetAsLastSibling();
+
+        EnsureRuntimePanel(button.transform, "Dungeon Map Label Shadow", new Vector2(12f, -134f), new Vector2(326f, 96f), new Color(0f, 0f, 0f, 0.36f));
+        EnsureRuntimePanel(button.transform, "Dungeon Map Label Plate", new Vector2(0f, -126f), new Vector2(326f, 94f), new Color(0.035f, 0.028f, 0.022f, 0.88f));
+        EnsureRuntimePanel(button.transform, "Dungeon Map Label Trim", new Vector2(0f, -126f), new Vector2(326f, 5f), new Color(1f, 0.74f, 0.32f, 0.9f));
+
+        if (titleText == null)
+        {
+            titleText = CreateRuntimeText(button.transform, "Dungeon Set Title", GetLocalizedDungeonName(dungeonId), 27, new Vector2(0f, -111f), new Vector2(292f, 34f));
+        }
+        else
+        {
+            titleText.transform.SetParent(button.transform, false);
+        }
+
+        StyleDungeonMapMarkerTitle(titleText);
+
+        if (progressText == null)
+        {
+            progressText = CreateRuntimeText(button.transform, "Dungeon Set Progress", string.Empty, 20, new Vector2(0f, -144f), new Vector2(292f, 28f));
+        }
+        else
+        {
+            progressText.transform.SetParent(button.transform, false);
+        }
+
+        StyleDungeonMapMarkerProgress(progressText);
+
+        if (detailText == null)
+        {
+            detailText = CreateRuntimeText(button.transform, "Dungeon Set Detail", string.Empty, 15, new Vector2(0f, -171f), new Vector2(292f, 24f));
+        }
+        else
+        {
+            detailText.transform.SetParent(button.transform, false);
+        }
+
+        StyleDungeonMapMarkerDetail(detailText);
+    }
+
+    private static RectTransform EnsureRuntimePanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 rectSize, Color color)
+    {
+        var existing = parent.Find(name) as RectTransform;
+        if (existing == null)
+        {
+            return CreateRuntimePanel(parent, name, anchoredPosition, rectSize, color);
+        }
+
+        existing.gameObject.SetActive(true);
+        SetRuntimeRect(existing, anchoredPosition, rectSize, new Vector2(0.5f, 1f));
+        var image = existing.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = color;
+            image.raycastTarget = false;
+        }
+
+        return existing;
+    }
+
+    private static void HideChildObjects(Transform parent)
+    {
+        if (parent == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < parent.childCount; i++)
+        {
+            parent.GetChild(i).gameObject.SetActive(false);
+        }
+    }
+
+    private void RegisterDungeonMapDragHandlers()
+    {
+        if (dungeonMapViewportRoot == null)
+        {
+            return;
+        }
+
+        var trigger = dungeonMapViewportRoot.GetComponent<EventTrigger>();
+        if (trigger == null)
+        {
+            trigger = dungeonMapViewportRoot.gameObject.AddComponent<EventTrigger>();
+        }
+
+        trigger.triggers.Clear();
+
+        var pointerDown = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
+        pointerDown.callback.AddListener(OnDungeonMapPointerDown);
+        trigger.triggers.Add(pointerDown);
+
+        var drag = new EventTrigger.Entry { eventID = EventTriggerType.Drag };
+        drag.callback.AddListener(OnDungeonMapDrag);
+        trigger.triggers.Add(drag);
+
+        var scroll = new EventTrigger.Entry { eventID = EventTriggerType.Scroll };
+        scroll.callback.AddListener(OnDungeonMapScroll);
+        trigger.triggers.Add(scroll);
+    }
+
+    private void OnDungeonMapPointerDown(BaseEventData eventData)
+    {
+        var pointerData = eventData as PointerEventData;
+        if (pointerData == null || dungeonWorldMapRoot == null)
+        {
+            return;
+        }
+
+        dungeonMapPointerStartPosition = pointerData.position;
+        dungeonMapContentStartPosition = dungeonWorldMapRoot.anchoredPosition;
+    }
+
+    private void OnDungeonMapDrag(BaseEventData eventData)
+    {
+        var pointerData = eventData as PointerEventData;
+        if (pointerData == null || dungeonWorldMapRoot == null)
+        {
+            return;
+        }
+
+        var canvas = dungeonWorldMapRoot.GetComponentInParent<Canvas>();
+        var scaleFactor = canvas != null && canvas.scaleFactor > 0f ? canvas.scaleFactor : 1f;
+        var delta = (pointerData.position - dungeonMapPointerStartPosition) / scaleFactor;
+        SetDungeonMapPosition(dungeonMapContentStartPosition + delta);
+    }
+
+    private void OnDungeonMapScroll(BaseEventData eventData)
+    {
+        var pointerData = eventData as PointerEventData;
+        if (pointerData == null)
+        {
+            return;
+        }
+
+        if (Mathf.Abs(pointerData.scrollDelta.y) < 0.01f)
+        {
+            return;
+        }
+
+        ZoomDungeonMap(pointerData.scrollDelta.y > 0f ? DungeonMapZoomStep : -DungeonMapZoomStep);
+    }
+
+    private void ZoomDungeonMapIn()
+    {
+        ZoomDungeonMap(DungeonMapZoomStep);
+    }
+
+    private void ZoomDungeonMapOut()
+    {
+        ZoomDungeonMap(-DungeonMapZoomStep);
+    }
+
+    private void ZoomDungeonMap(float delta)
+    {
+        SetDungeonMapZoom(dungeonMapZoom + delta);
+    }
+
+    private void SetDungeonMapZoom(float zoom)
+    {
+        if (dungeonWorldMapRoot == null)
+        {
+            return;
+        }
+
+        var previousZoom = Mathf.Max(0.01f, dungeonMapZoom);
+        dungeonMapZoom = Mathf.Clamp(zoom, DungeonMapMinZoom, DungeonMapMaxZoom);
+        dungeonWorldMapRoot.localScale = new Vector3(dungeonMapZoom, dungeonMapZoom, 1f);
+
+        var zoomRatio = Mathf.Approximately(previousZoom, 0f) ? 1f : dungeonMapZoom / previousZoom;
+        SetDungeonMapPosition(dungeonWorldMapRoot.anchoredPosition * zoomRatio);
+    }
+
+    private void SetDungeonMapPosition(Vector2 position)
+    {
+        if (dungeonMapViewportRoot == null || dungeonWorldMapRoot == null)
+        {
+            return;
+        }
+
+        var scaledMapSize = DungeonWorldMapSize * dungeonMapZoom;
+        var horizontalRange = Mathf.Max(0f, (scaledMapSize.x - DungeonMapViewportSize.x) * 0.5f);
+        var verticalRange = Mathf.Max(0f, scaledMapSize.y - DungeonMapViewportSize.y);
+        position.x = Mathf.Clamp(position.x, -horizontalRange, horizontalRange);
+        position.y = Mathf.Clamp(position.y, -verticalRange, 0f);
+        dungeonWorldMapRoot.anchoredPosition = position;
     }
 
     private void EnsureRuntimeDungeonCard(
@@ -14936,6 +15344,73 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         text.transform.SetAsLastSibling();
     }
 
+    private static void StyleDungeonMapMarkerTitle(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        SetRuntimeRect(text.rectTransform, new Vector2(0f, -108f), new Vector2(292f, 34f), new Vector2(0.5f, 1f));
+        text.gameObject.SetActive(true);
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(1f, 0.91f, 0.68f);
+        text.fontSize = 27;
+        text.fontSizeMin = 17;
+        text.fontSizeMax = 27;
+        text.enableAutoSizing = true;
+        text.fontStyle = FontStyles.Bold;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.outlineColor = new Color(0.07f, 0.035f, 0.015f, 1f);
+        text.outlineWidth = 0.18f;
+        text.transform.SetAsLastSibling();
+    }
+
+    private static void StyleDungeonMapMarkerProgress(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        SetRuntimeRect(text.rectTransform, new Vector2(0f, -142f), new Vector2(292f, 28f), new Vector2(0.5f, 1f));
+        text.gameObject.SetActive(true);
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(0.94f, 0.86f, 1f);
+        text.fontSize = 20;
+        text.fontSizeMin = 13;
+        text.fontSizeMax = 20;
+        text.enableAutoSizing = true;
+        text.fontStyle = FontStyles.Bold;
+        text.richText = true;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.outlineColor = new Color(0.04f, 0.03f, 0.025f, 1f);
+        text.outlineWidth = 0.13f;
+        text.transform.SetAsLastSibling();
+    }
+
+    private static void StyleDungeonMapMarkerDetail(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        SetRuntimeRect(text.rectTransform, new Vector2(0f, -170f), new Vector2(292f, 24f), new Vector2(0.5f, 1f));
+        text.gameObject.SetActive(true);
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(0.78f, 0.92f, 1f);
+        text.fontSize = 15;
+        text.fontSizeMin = 10;
+        text.fontSizeMax = 15;
+        text.enableAutoSizing = true;
+        text.fontStyle = FontStyles.Bold;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.outlineColor = new Color(0.04f, 0.03f, 0.025f, 1f);
+        text.outlineWidth = 0.1f;
+        text.transform.SetAsLastSibling();
+    }
+
     private void HideLegacyRuntimeDungeonTower()
     {
         var oldDungeonTower = dungeonsPanel != null ? dungeonsPanel.transform.Find("Runtime Art Dungeon Tower") : null;
@@ -15087,11 +15562,45 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         MoveUiElement(dungeonsHeaderText, dungeonsPanel, new Vector2(0, -132), new Vector2(860, 54));
-        MoveUiElement(goldDungeonButton, dungeonsPanel, new Vector2(0, -198), new Vector2(850, 220));
-        MoveUiElement(essenceDungeonButton, dungeonsPanel, new Vector2(0, -446), new Vector2(850, 220));
-        MoveUiElement(gearDungeonButton, dungeonsPanel, new Vector2(0, -694), new Vector2(850, 220));
-        MoveUiElement(runtimeDungeonResultText, dungeonsPanel, new Vector2(0, -954), new Vector2(760, 52));
+        MoveUiElement(dungeonMapViewportRoot, dungeonsPanel, DungeonMapViewportPosition, DungeonMapViewportSize);
+        if (dungeonMapViewportRoot != null)
+        {
+            dungeonMapViewportRoot.SetAsFirstSibling();
+        }
+
+        if (dungeonWorldMapRoot != null)
+        {
+            dungeonWorldMapRoot.SetParent(dungeonMapViewportRoot, false);
+            SetRuntimeRect(dungeonWorldMapRoot, dungeonWorldMapRoot.anchoredPosition, DungeonWorldMapSize, new Vector2(0.5f, 1f));
+            SetDungeonMapPosition(dungeonWorldMapRoot.anchoredPosition);
+        }
+
+        MoveUiElement(goldDungeonButton, dungeonWorldMapRoot != null ? dungeonWorldMapRoot.gameObject : dungeonsPanel, GoldDungeonMapPosition, new Vector2(360, 230));
+        MoveUiElement(essenceDungeonButton, dungeonWorldMapRoot != null ? dungeonWorldMapRoot.gameObject : dungeonsPanel, EssenceDungeonMapPosition, new Vector2(360, 230));
+        MoveUiElement(gearDungeonButton, dungeonWorldMapRoot != null ? dungeonWorldMapRoot.gameObject : dungeonsPanel, GearDungeonMapPosition, new Vector2(360, 230));
+        MoveUiElement(dungeonMapZoomInButton, dungeonsPanel, new Vector2(434f, -228f), new Vector2(62f, 62f));
+        MoveUiElement(dungeonMapZoomOutButton, dungeonsPanel, new Vector2(434f, -300f), new Vector2(62f, 62f));
+        MoveUiElement(runtimeDungeonResultText, dungeonsPanel, new Vector2(0, -1092), new Vector2(820, 62));
         ApplyDungeonCardsButtonSkin();
+        if (dungeonsHeaderText != null)
+        {
+            dungeonsHeaderText.transform.SetAsLastSibling();
+        }
+
+        if (dungeonMapZoomInButton != null)
+        {
+            dungeonMapZoomInButton.transform.SetAsLastSibling();
+        }
+
+        if (dungeonMapZoomOutButton != null)
+        {
+            dungeonMapZoomOutButton.transform.SetAsLastSibling();
+        }
+
+        if (runtimeDungeonResultText != null)
+        {
+            runtimeDungeonResultText.transform.SetAsLastSibling();
+        }
     }
 
     private void LayoutHeroesScreen()
