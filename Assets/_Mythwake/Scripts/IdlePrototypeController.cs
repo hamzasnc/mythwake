@@ -545,6 +545,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int[] equippedAccessoryRarities;
         public int[] equippedAccessoryLevels;
         public int[] accessoryInventory;
+        public bool[] villagePlotBuiltStates;
+        public int[] villagePlotBuildingSelections;
         public bool[] dailyMissionClaimed;
         public bool[] battlePassRewardsClaimed;
     }
@@ -648,6 +650,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static readonly Vector2 VillageMapSize = new Vector2(1000f, 1778f);
     private static readonly Vector2 VillageMapFrameSize = new Vector2(1000f, 1320f);
     private const float VillagePlotScale = 1.22f;
+    private const float VillageBuildingImageScale = 1.68f;
+    private const float VillageBuildingImageYOffsetRate = 0.12f;
+    private const int VillageBuildingOptionCount = 3;
     private static readonly string[] VillagePlotNames =
     {
         "Rathaus",
@@ -662,6 +667,51 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         "Alchemie",
         "Farm",
         "Freier Platz"
+    };
+    private static readonly int[] VillagePlotBuildCosts =
+    {
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+    };
+    private static readonly string[,] VillageBuildingOptionNames =
+    {
+        { "Rathaus", "Gildenhalle", "Ratssitz" },
+        { "Heldenkaserne", "Trainingsdojo", "Heldenhaus" },
+        { "Arkanportal", "Runentor", "Kristallobelisk" },
+        { "Schmiede", "Waffenkammer", "Schmelzwerk" },
+        { "Magierturm", "Observatorium", "Zauberbibliothek" },
+        { "Marktstaende", "Handelsposten", "Basarzelt" },
+        { "Lagerhaus", "Kornspeicher", "Vorratslager" },
+        { "Zimmererhof", "Bauwerkstatt", "Artefaktladen" },
+        { "Taverne", "Gasthaus", "Festhalle" },
+        { "Alchemielabor", "Kraeuterhuette", "Trankladen" },
+        { "Feldhof", "Tiergatter", "Obsthain" },
+        { "Schrein", "Wachturm", "Gartenhain" }
+    };
+    private static readonly string[,] VillageBuildingTextureNames =
+    {
+        { "VillageBuildings/village_building_01_option_01_town_hall", "VillageBuildings/village_building_01_option_02_guild_hall", "VillageBuildings/village_building_01_option_03_council_keep" },
+        { "VillageBuildings/village_building_02_option_01_hero_barracks", "VillageBuildings/village_building_02_option_02_training_dojo", "VillageBuildings/village_building_02_option_03_hero_lodge" },
+        { "VillageBuildings/village_building_03_option_01_arcane_portal", "VillageBuildings/village_building_03_option_02_rune_gate", "VillageBuildings/village_building_03_option_03_crystal_obelisk" },
+        { "VillageBuildings/village_building_04_option_01_blacksmith", "VillageBuildings/village_building_04_option_02_armory", "VillageBuildings/village_building_04_option_03_furnace_workshop" },
+        { "VillageBuildings/village_building_05_option_01_mage_tower", "VillageBuildings/village_building_05_option_02_observatory", "VillageBuildings/village_building_05_option_03_spell_library" },
+        { "VillageBuildings/village_building_06_option_01_market_stalls", "VillageBuildings/village_building_06_option_02_trade_post", "VillageBuildings/village_building_06_option_03_bazaar_tent" },
+        { "VillageBuildings/village_building_07_option_01_warehouse", "VillageBuildings/village_building_07_option_02_granary", "VillageBuildings/village_building_07_option_03_supply_depot" },
+        { "VillageBuildings/village_building_08_option_01_carpenter_yard", "VillageBuildings/village_building_08_option_02_builder_workshop", "VillageBuildings/village_building_08_option_03_artificer_shop" },
+        { "VillageBuildings/village_building_09_option_01_tavern", "VillageBuildings/village_building_09_option_02_inn", "VillageBuildings/village_building_09_option_03_feast_hall" },
+        { "VillageBuildings/village_building_10_option_01_alchemy_lab", "VillageBuildings/village_building_10_option_02_herbalist_hut", "VillageBuildings/village_building_10_option_03_potion_shop" },
+        { "VillageBuildings/village_building_11_option_01_crop_farm", "VillageBuildings/village_building_11_option_02_animal_pen", "VillageBuildings/village_building_11_option_03_orchard" },
+        { "VillageBuildings/village_building_12_option_01_shrine", "VillageBuildings/village_building_12_option_02_watchtower", "VillageBuildings/village_building_12_option_03_garden_grove" }
     };
     private static readonly Vector2[] VillagePlotPositions =
     {
@@ -1156,13 +1206,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button[] villagePlotButtons;
     private Image[] villagePlotFrames;
     private TMP_Text[] villagePlotTexts;
+    private RawImage[] villageBuildingImages;
     private bool[] villagePlotBuiltStates;
+    private int[] villagePlotBuildingSelections;
     private int selectedVillagePlotIndex = -1;
+    private int selectedVillageBuildingOptionIndex;
+    private string villageBuildFeedbackMessage = string.Empty;
     private RectTransform villageBuildPanelRoot;
     private TMP_Text villageBuildPanelTitleText;
     private TMP_Text villageBuildPanelBodyText;
     private Button villageBuildButton;
     private Button villageBuildCloseButton;
+    private Button[] villageBuildOptionButtons;
+    private Image[] villageBuildOptionFrames;
+    private RawImage[] villageBuildOptionImages;
+    private TMP_Text[] villageBuildOptionTexts;
     private RectTransform chatPopupRoot;
     private Button chatCloseButton;
     private RectTransform homeLeftShortcutShadow;
@@ -4853,6 +4911,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             equippedAccessoryRarities = CopyIntArray(equippedAccessoryRarities, AccessorySlotCount, -1),
             equippedAccessoryLevels = CopyIntArray(equippedAccessoryLevels, AccessorySlotCount, 0),
             accessoryInventory = CopyIntArray(accessoryInventory, AccessorySlotCount * AccessoryRarityCount, 0),
+            villagePlotBuiltStates = CopyBoolArray(villagePlotBuiltStates, VillagePlotCount),
+            villagePlotBuildingSelections = CopyIntArray(villagePlotBuildingSelections, VillagePlotCount, -1),
             dailyMissionClaimed = CopyBoolArray(dailyMissionClaimed, DailyMissionCount),
             battlePassRewardsClaimed = CopyBoolArray(battlePassRewardsClaimed, BattlePassRewardCount)
         };
@@ -4896,6 +4956,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         equippedAccessoryRarities = CopyIntArray(data.equippedAccessoryRarities, AccessorySlotCount, -1);
         equippedAccessoryLevels = CopyIntArray(data.equippedAccessoryLevels, AccessorySlotCount, 0);
         accessoryInventory = CopyIntArray(data.accessoryInventory, AccessorySlotCount * AccessoryRarityCount, 0);
+        villagePlotBuiltStates = CopyBoolArray(data.villagePlotBuiltStates, VillagePlotCount);
+        villagePlotBuildingSelections = CopyIntArray(data.villagePlotBuildingSelections, VillagePlotCount, -1);
         dailyMissionClaimed = CopyBoolArray(data.dailyMissionClaimed, DailyMissionCount);
         battlePassRewardsClaimed = CopyBoolArray(data.battlePassRewardsClaimed, BattlePassRewardCount);
 
@@ -4925,6 +4987,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureDailyMissionClaims();
         EnsureBattlePassRewardClaims();
         EnsureFormationOrder();
+        EnsureVillageState();
 
         gold = Mathf.Max(0, gold);
         gems = Mathf.Max(0, gems);
@@ -8110,13 +8173,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         GateButtons(battlePassRewardButtons, canInteract);
         SetButtonsInteractable(villagePlotButtons, canInteract);
 
-        var canBuildVillagePlot = canInteract
-            && selectedVillagePlotIndex >= 0
-            && selectedVillagePlotIndex < VillagePlotCount
-            && villagePlotBuiltStates != null
-            && !villagePlotBuiltStates[selectedVillagePlotIndex];
-        SetButtonInteractable(villageBuildButton, canBuildVillagePlot);
-        SetButtonInteractable(villageBuildCloseButton, true);
+        RefreshVillageBuildInteractivity(canInteract);
         RefreshHeroDetailGearList();
     }
 
@@ -14863,10 +14920,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
         }
 
-        if (villagePlotBuiltStates == null || villagePlotBuiltStates.Length != VillagePlotCount)
-        {
-            villagePlotBuiltStates = new bool[VillagePlotCount];
-        }
+        EnsureVillageState();
 
         if (villageHeaderText == null)
         {
@@ -14925,10 +14979,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             villagePlotButtons = new Button[VillagePlotCount];
             villagePlotFrames = new Image[VillagePlotCount];
             villagePlotTexts = new TMP_Text[VillagePlotCount];
+            villageBuildingImages = new RawImage[VillagePlotCount];
             for (var i = 0; i < VillagePlotCount; i++)
             {
                 villagePlotButtons[i] = CreateVillagePlotButton(villageMapRoot, i);
             }
+        }
+
+        if (villageBuildingImages == null || villageBuildingImages.Length != VillagePlotCount)
+        {
+            villageBuildingImages = new RawImage[VillagePlotCount];
         }
 
         if (villageMapScrollRect == null && villageMapViewportRoot != null)
@@ -14943,15 +15003,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (villageBuildPanelRoot == null)
         {
-            villageBuildPanelRoot = CreateRuntimePopup(villagePanel.transform, "Village Build Panel", new Vector2(0f, -982f), new Vector2(780f, 250f), "Bauplatz");
+            villageBuildPanelRoot = CreateRuntimePopup(villagePanel.transform, "Village Build Panel", new Vector2(0f, -840f), new Vector2(780f, 420f), "Bauplatz");
             villageBuildPanelTitleText = villageBuildPanelRoot.Find("Title")?.GetComponent<TMP_Text>();
-            villageBuildPanelBodyText = CreateRuntimeText(villageBuildPanelRoot, "Village Build Body", string.Empty, 22, new Vector2(0f, -104f), new Vector2(690f, 74f));
+            villageBuildPanelBodyText = CreateRuntimeText(villageBuildPanelRoot, "Village Build Body", string.Empty, 20, new Vector2(0f, -102f), new Vector2(690f, 52f));
             villageBuildPanelBodyText.enableAutoSizing = true;
             villageBuildPanelBodyText.fontSizeMin = 16;
-            villageBuildPanelBodyText.fontSizeMax = 22;
+            villageBuildPanelBodyText.fontSizeMax = 20;
             villageBuildPanelBodyText.color = new Color(0.86f, 0.92f, 1f);
-            villageBuildButton = CreateRuntimeButton(villageBuildPanelRoot, "Village Build Button", "Bauen", -110f, -194f, 220f, 58f);
-            villageBuildCloseButton = CreateRuntimeButton(villageBuildPanelRoot, "Village Build Close", "Schliessen", 170f, -194f, 220f, 58f);
+            villageBuildOptionButtons = new Button[VillageBuildingOptionCount];
+            villageBuildOptionFrames = new Image[VillageBuildingOptionCount];
+            villageBuildOptionImages = new RawImage[VillageBuildingOptionCount];
+            villageBuildOptionTexts = new TMP_Text[VillageBuildingOptionCount];
+            for (var i = 0; i < VillageBuildingOptionCount; i++)
+            {
+                villageBuildOptionButtons[i] = CreateVillageBuildOptionButton(villageBuildPanelRoot, i);
+            }
+
+            villageBuildButton = CreateRuntimeButton(villageBuildPanelRoot, "Village Build Button", "Bauen", -110f, -344f, 220f, 58f);
+            villageBuildCloseButton = CreateRuntimeButton(villageBuildPanelRoot, "Village Build Close", "Schliessen", 170f, -344f, 220f, 58f);
             villageBuildPanelRoot.gameObject.SetActive(false);
         }
 
@@ -14974,6 +15043,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var capturedPlotIndex = plotIndex;
         button.onClick.AddListener(() => SelectVillagePlot(capturedPlotIndex));
 
+        var buildingImage = CreateRuntimeRawImage(
+            buttonObject.transform,
+            "Building",
+            LoadVillageBuildingTexture(plotIndex, 0),
+            GetVillageBuildingImagePosition(plotIndex),
+            GetVillageBuildingImageSize(plotIndex),
+            new Vector2(0.5f, 0.5f));
+        buildingImage.gameObject.SetActive(false);
+        villageBuildingImages[plotIndex] = buildingImage;
+
         var mark = CreateRuntimeText(buttonObject.transform, "Build Mark", "+", 34, new Vector2(0f, -size.y * 0.5f + 18f), new Vector2(64f, 44f));
         mark.fontStyle = FontStyles.Bold;
         mark.color = new Color(1f, 0.92f, 0.55f, 0.92f);
@@ -14985,9 +15064,66 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return button;
     }
 
+    private Button CreateVillageBuildOptionButton(Transform parent, int optionIndex)
+    {
+        const float optionWidth = 214f;
+        const float optionHeight = 154f;
+        const float spacing = 238f;
+        var buttonObject = new GameObject($"Village Build Option {optionIndex + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        buttonObject.transform.SetParent(parent, false);
+        SetRuntimeRect(buttonObject.GetComponent<RectTransform>(), new Vector2((optionIndex - 1) * spacing, -168f), new Vector2(optionWidth, optionHeight), new Vector2(0.5f, 1f));
+
+        var frame = buttonObject.GetComponent<Image>();
+        frame.color = new Color(0.16f, 0.095f, 0.045f, 0.92f);
+        villageBuildOptionFrames[optionIndex] = frame;
+
+        var button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = frame;
+        var capturedOptionIndex = optionIndex;
+        button.onClick.AddListener(() => SelectVillageBuildOption(capturedOptionIndex));
+
+        var optionImage = CreateRuntimeRawImage(buttonObject.transform, "Icon", null, new Vector2(0f, -10f), new Vector2(108f, 108f), new Vector2(0.5f, 1f));
+        villageBuildOptionImages[optionIndex] = optionImage;
+
+        var optionText = CreateRuntimeText(buttonObject.transform, "Label", string.Empty, 16, new Vector2(0f, -120f), new Vector2(196f, 32f));
+        optionText.enableAutoSizing = true;
+        optionText.fontSizeMin = 11;
+        optionText.fontSizeMax = 16;
+        optionText.fontStyle = FontStyles.Bold;
+        optionText.textWrappingMode = TextWrappingModes.NoWrap;
+        optionText.color = new Color(1f, 0.92f, 0.66f);
+        optionText.raycastTarget = false;
+        villageBuildOptionTexts[optionIndex] = optionText;
+
+        return button;
+    }
+
     private void SelectVillagePlot(int plotIndex)
     {
-        selectedVillagePlotIndex = Mathf.Clamp(plotIndex, 0, VillagePlotCount - 1);
+        var clampedPlotIndex = Mathf.Clamp(plotIndex, 0, VillagePlotCount - 1);
+        EnsureVillageState();
+        if (villagePlotBuiltStates[clampedPlotIndex])
+        {
+            selectedVillagePlotIndex = -1;
+            selectedVillageBuildingOptionIndex = 0;
+            villageBuildFeedbackMessage = string.Empty;
+            if (villageBuildPanelRoot != null)
+            {
+                villageBuildPanelRoot.gameObject.SetActive(false);
+            }
+
+            RefreshVillageUi();
+            RefreshVillageBuildInteractivity(CanInteractWithVillage());
+            return;
+        }
+
+        if (selectedVillagePlotIndex != clampedPlotIndex)
+        {
+            villageBuildFeedbackMessage = string.Empty;
+        }
+
+        selectedVillagePlotIndex = clampedPlotIndex;
+        selectedVillageBuildingOptionIndex = GetVillageSelectedOptionIndex(selectedVillagePlotIndex);
         if (villageBuildPanelRoot != null)
         {
             villageBuildPanelRoot.gameObject.SetActive(true);
@@ -14995,6 +15131,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshVillageUi();
+        RefreshVillageBuildInteractivity(CanInteractWithVillage());
+    }
+
+    private void SelectVillageBuildOption(int optionIndex)
+    {
+        selectedVillageBuildingOptionIndex = Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1);
+        villageBuildFeedbackMessage = string.Empty;
+        RefreshVillageUi();
+        RefreshVillageBuildInteractivity(CanInteractWithVillage());
     }
 
     private void BuildSelectedVillagePlot()
@@ -15004,32 +15149,54 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        if (villagePlotBuiltStates == null || villagePlotBuiltStates.Length != VillagePlotCount)
+        EnsureVillageState();
+
+        if (villagePlotBuiltStates[selectedVillagePlotIndex])
         {
-            villagePlotBuiltStates = new bool[VillagePlotCount];
+            RefreshVillageUi();
+            return;
+        }
+
+        selectedVillageBuildingOptionIndex = Mathf.Clamp(selectedVillageBuildingOptionIndex, 0, VillageBuildingOptionCount - 1);
+        var buildCost = GetVillagePlotBuildCost(selectedVillagePlotIndex, selectedVillageBuildingOptionIndex);
+        if (!TrySpendCurrency(MythEssenceCurrencyId, buildCost))
+        {
+            villageBuildFeedbackMessage = $"Nicht genug {GetLocalizedCurrencyName(MythEssenceCurrencyId)}. Kosten: {buildCost}, vorhanden: {mythEssence}.";
+            RefreshVillageUi();
+            return;
         }
 
         villagePlotBuiltStates[selectedVillagePlotIndex] = true;
-        RefreshVillageUi();
+        villagePlotBuildingSelections[selectedVillagePlotIndex] = selectedVillageBuildingOptionIndex;
+        villageBuildFeedbackMessage = $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, selectedVillageBuildingOptionIndex)} gebaut.";
+        selectedVillagePlotIndex = -1;
+        selectedVillageBuildingOptionIndex = 0;
+        if (villageBuildPanelRoot != null)
+        {
+            villageBuildPanelRoot.gameObject.SetActive(false);
+        }
+
+        SaveProgress();
+        RefreshUi();
     }
 
     private void HideVillageBuildPanel()
     {
         selectedVillagePlotIndex = -1;
+        selectedVillageBuildingOptionIndex = 0;
+        villageBuildFeedbackMessage = string.Empty;
         if (villageBuildPanelRoot != null)
         {
             villageBuildPanelRoot.gameObject.SetActive(false);
         }
 
         RefreshVillageUi();
+        RefreshVillageBuildInteractivity(CanInteractWithVillage());
     }
 
     private void RefreshVillageUi()
     {
-        if (villagePlotBuiltStates == null || villagePlotBuiltStates.Length != VillagePlotCount)
-        {
-            villagePlotBuiltStates = new bool[VillagePlotCount];
-        }
+        EnsureVillageState();
 
         if (villageMapImage != null)
         {
@@ -15055,20 +15222,29 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (villagePlotFrames != null && i < villagePlotFrames.Length && villagePlotFrames[i] != null)
             {
                 villagePlotFrames[i].color = built
-                    ? new Color(0.18f, 0.78f, 0.54f, 0.32f)
+                    ? selected
+                        ? new Color(1f, 0.74f, 0.22f, 0.22f)
+                        : new Color(0.06f, 0.04f, 0.02f, 0.02f)
                     : selected
                         ? new Color(1f, 0.74f, 0.22f, 0.34f)
                         : new Color(0.06f, 0.04f, 0.02f, 0.08f);
             }
 
+            if (villageBuildingImages != null && i < villageBuildingImages.Length && villageBuildingImages[i] != null)
+            {
+                var buildingTexture = LoadVillageBuildingTexture(i, GetVillageBuiltOptionIndex(i));
+                villageBuildingImages[i].texture = buildingTexture;
+                villageBuildingImages[i].color = Color.white;
+                villageBuildingImages[i].gameObject.SetActive(built && buildingTexture != null);
+            }
+
             if (villagePlotTexts != null && i < villagePlotTexts.Length && villagePlotTexts[i] != null)
             {
-                villagePlotTexts[i].text = built ? "OK" : "+";
-                villagePlotTexts[i].color = built
-                    ? new Color(0.64f, 1f, 0.78f, 0.95f)
-                    : selected
-                        ? new Color(1f, 0.96f, 0.58f, 1f)
-                        : new Color(1f, 0.92f, 0.55f, 0.82f);
+                villagePlotTexts[i].gameObject.SetActive(!built);
+                villagePlotTexts[i].text = "+";
+                villagePlotTexts[i].color = selected
+                    ? new Color(1f, 0.96f, 0.58f, 1f)
+                    : new Color(1f, 0.92f, 0.55f, 0.82f);
             }
         }
 
@@ -15081,13 +15257,73 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (villageBuildPanelBodyText != null)
         {
             villageBuildPanelBodyText.text = hasSelection
-                ? villagePlotBuiltStates[selectedVillagePlotIndex]
-                    ? "Dieser Platz ist fuer den Prototyp bereits markiert."
-                    : "Hier kann ein Gebaeude gebaut werden. Die leere Karte bleibt als Bauplan sichtbar."
+                ? !string.IsNullOrEmpty(villageBuildFeedbackMessage)
+                    ? villageBuildFeedbackMessage
+                    : villagePlotBuiltStates[selectedVillagePlotIndex]
+                        ? $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))} steht bereits auf diesem Bauplatz."
+                        : $"Waehle ein Gebaeude fuer {GetVillagePlotName(selectedVillagePlotIndex)}.\nVorhanden: {mythEssence} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}"
                 : "Waehle einen freien Bauplatz auf der Karte.";
         }
 
-        SetButtonLabel(villageBuildButton, hasSelection && villagePlotBuiltStates[selectedVillagePlotIndex] ? "Gebaut" : "Bauen");
+        RefreshVillageBuildOptions(hasSelection);
+        SetButtonLabel(villageBuildButton, hasSelection && villagePlotBuiltStates[selectedVillagePlotIndex] ? "Gebaut" : hasSelection ? $"Bauen ({GetVillagePlotBuildCost(selectedVillagePlotIndex, selectedVillageBuildingOptionIndex)})" : "Bauen");
+        RefreshVillageBuildInteractivity(CanInteractWithVillage());
+    }
+
+    private void RefreshVillageBuildOptions(bool hasSelection)
+    {
+        var builtSelection = hasSelection && villagePlotBuiltStates[selectedVillagePlotIndex];
+        for (var i = 0; i < VillageBuildingOptionCount; i++)
+        {
+            var optionSelected = hasSelection && i == selectedVillageBuildingOptionIndex;
+            var optionCost = hasSelection ? GetVillagePlotBuildCost(selectedVillagePlotIndex, i) : 0;
+            if (villageBuildOptionFrames != null && i < villageBuildOptionFrames.Length && villageBuildOptionFrames[i] != null)
+            {
+                villageBuildOptionFrames[i].color = optionSelected
+                    ? new Color(0.72f, 0.42f, 0.14f, 0.98f)
+                    : new Color(0.16f, 0.095f, 0.045f, builtSelection ? 0.62f : 0.92f);
+            }
+
+            if (villageBuildOptionImages != null && i < villageBuildOptionImages.Length && villageBuildOptionImages[i] != null)
+            {
+                villageBuildOptionImages[i].texture = hasSelection ? LoadVillageBuildingTexture(selectedVillagePlotIndex, i) : null;
+                villageBuildOptionImages[i].color = hasSelection
+                    ? builtSelection && !optionSelected ? new Color(1f, 1f, 1f, 0.42f) : Color.white
+                    : new Color(1f, 1f, 1f, 0f);
+            }
+
+            if (villageBuildOptionTexts != null && i < villageBuildOptionTexts.Length && villageBuildOptionTexts[i] != null)
+            {
+                villageBuildOptionTexts[i].text = hasSelection
+                    ? $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, i)}  {optionCost}"
+                    : string.Empty;
+                villageBuildOptionTexts[i].color = optionSelected
+                    ? new Color(1f, 0.98f, 0.66f)
+                    : new Color(1f, 0.88f, 0.62f, builtSelection ? 0.58f : 0.92f);
+            }
+        }
+    }
+
+    private void RefreshVillageBuildInteractivity(bool canInteract)
+    {
+        EnsureVillageState();
+        var hasSelection = selectedVillagePlotIndex >= 0 && selectedVillagePlotIndex < VillagePlotCount;
+        var selectedPlotIsBuilt = hasSelection && villagePlotBuiltStates[selectedVillagePlotIndex];
+        var canChooseBuilding = canInteract && hasSelection && !selectedPlotIsBuilt;
+        var canBuildVillagePlot = canChooseBuilding
+            && selectedVillageBuildingOptionIndex >= 0
+            && selectedVillageBuildingOptionIndex < VillageBuildingOptionCount;
+        SetButtonInteractable(villageBuildButton, canBuildVillagePlot);
+        SetButtonInteractable(villageBuildCloseButton, true);
+        for (var i = 0; i < VillageBuildingOptionCount; i++)
+        {
+            SetButtonInteractable(villageBuildOptionButtons != null && i < villageBuildOptionButtons.Length ? villageBuildOptionButtons[i] : null, canChooseBuilding);
+        }
+    }
+
+    private bool CanInteractWithVillage()
+    {
+        return !backendRequestInProgress && !backendLifecycleFlushInProgress && !campaignFightInProgress;
     }
 
     private static string GetVillagePlotName(int plotIndex)
@@ -15098,13 +15334,100 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static Vector2 GetVillagePlotPosition(int plotIndex)
     {
         var index = Mathf.Clamp(plotIndex, 0, VillagePlotPositions.Length - 1);
-        return VillagePlotPositions[index] * VillagePlotScale;
+        var plotSize = GetVillagePlotSize(index);
+        return VillagePlotPositions[index] * VillagePlotScale + new Vector2(0f, plotSize.y * 0.5f);
     }
 
     private static Vector2 GetVillagePlotSize(int plotIndex)
     {
         var index = Mathf.Clamp(plotIndex, 0, VillagePlotSizes.Length - 1);
         return VillagePlotSizes[index] * VillagePlotScale;
+    }
+
+    private static int GetVillagePlotBuildCost(int plotIndex, int optionIndex)
+    {
+        var baseCost = plotIndex >= 0 && plotIndex < VillagePlotBuildCosts.Length ? VillagePlotBuildCosts[plotIndex] : VillagePlotBuildCosts[0];
+        return baseCost + Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1) * 2;
+    }
+
+    private static string GetVillageBuildingOptionName(int plotIndex, int optionIndex)
+    {
+        if (plotIndex < 0 || plotIndex >= VillagePlotCount)
+        {
+            return "Gebaeude";
+        }
+
+        return VillageBuildingOptionNames[plotIndex, Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1)];
+    }
+
+    private static string GetVillageBuildingTextureName(int plotIndex, int optionIndex)
+    {
+        if (plotIndex < 0 || plotIndex >= VillagePlotCount)
+        {
+            return string.Empty;
+        }
+
+        return VillageBuildingTextureNames[plotIndex, Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1)];
+    }
+
+    private int GetVillageSelectedOptionIndex(int plotIndex)
+    {
+        if (villagePlotBuiltStates != null && plotIndex >= 0 && plotIndex < villagePlotBuiltStates.Length && villagePlotBuiltStates[plotIndex])
+        {
+            return GetVillageBuiltOptionIndex(plotIndex);
+        }
+
+        return 0;
+    }
+
+    private int GetVillageBuiltOptionIndex(int plotIndex)
+    {
+        if (villagePlotBuildingSelections == null || plotIndex < 0 || plotIndex >= villagePlotBuildingSelections.Length)
+        {
+            return 0;
+        }
+
+        return Mathf.Clamp(villagePlotBuildingSelections[plotIndex], 0, VillageBuildingOptionCount - 1);
+    }
+
+    private static Texture2D LoadVillageBuildingTexture(int plotIndex, int optionIndex)
+    {
+        var texture = LoadRuntimeTexture(GetVillageBuildingTextureName(plotIndex, optionIndex));
+        if (texture != null)
+        {
+            texture.filterMode = FilterMode.Bilinear;
+        }
+
+        return texture;
+    }
+
+    private static Vector2 GetVillageBuildingImageSize(int plotIndex)
+    {
+        var plotSize = GetVillagePlotSize(plotIndex);
+        var imageEdge = Mathf.Max(plotSize.x, plotSize.y) * VillageBuildingImageScale;
+        return new Vector2(imageEdge, imageEdge);
+    }
+
+    private static Vector2 GetVillageBuildingImagePosition(int plotIndex)
+    {
+        return new Vector2(0f, GetVillagePlotSize(plotIndex).y * VillageBuildingImageYOffsetRate);
+    }
+
+    private void EnsureVillageState()
+    {
+        villagePlotBuiltStates = CopyBoolArray(villagePlotBuiltStates, VillagePlotCount);
+        villagePlotBuildingSelections = CopyIntArray(villagePlotBuildingSelections, VillagePlotCount, -1);
+        for (var i = 0; i < VillagePlotCount; i++)
+        {
+            if (villagePlotBuiltStates[i])
+            {
+                villagePlotBuildingSelections[i] = Mathf.Clamp(villagePlotBuildingSelections[i], 0, VillageBuildingOptionCount - 1);
+            }
+            else
+            {
+                villagePlotBuildingSelections[i] = -1;
+            }
+        }
     }
 
     private void EnsureRuntimeDungeonsPanel()
@@ -15964,6 +16287,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 }
 
                 SetRuntimeRect(button.GetComponent<RectTransform>(), GetVillagePlotPosition(i), GetVillagePlotSize(i), new Vector2(0.5f, 1f));
+                if (villageBuildingImages != null && i < villageBuildingImages.Length && villageBuildingImages[i] != null)
+                {
+                    SetRuntimeRect(villageBuildingImages[i].rectTransform, GetVillageBuildingImagePosition(i), GetVillageBuildingImageSize(i), new Vector2(0.5f, 0.5f));
+                }
             }
         }
 
@@ -15972,11 +16299,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             villageBottomBlendRoot.gameObject.SetActive(false);
         }
 
-        MoveUiElement(villageBuildPanelRoot, villagePanel, new Vector2(0f, -982f), new Vector2(780f, 250f));
+        MoveUiElement(villageBuildPanelRoot, villagePanel, new Vector2(0f, -840f), new Vector2(780f, 420f));
         if (villageBuildPanelRoot != null)
         {
             villageBuildPanelRoot.SetAsLastSibling();
         }
+
+        if (villageBuildOptionButtons != null)
+        {
+            for (var i = 0; i < villageBuildOptionButtons.Length; i++)
+            {
+                if (villageBuildOptionButtons[i] != null)
+                {
+                    SetRuntimeRect(villageBuildOptionButtons[i].GetComponent<RectTransform>(), new Vector2((i - 1) * 238f, -168f), new Vector2(214f, 154f), new Vector2(0.5f, 1f));
+                }
+            }
+        }
+
+        MoveUiElement(villageBuildButton, villageBuildPanelRoot != null ? villageBuildPanelRoot.gameObject : villagePanel, new Vector2(-110f, -344f), new Vector2(220f, 58f));
+        MoveUiElement(villageBuildCloseButton, villageBuildPanelRoot != null ? villageBuildPanelRoot.gameObject : villagePanel, new Vector2(170f, -344f), new Vector2(220f, 58f));
 
         if (villageHeaderText != null)
         {
