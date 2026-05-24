@@ -1221,6 +1221,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Image[] villageBuildOptionFrames;
     private RawImage[] villageBuildOptionImages;
     private TMP_Text[] villageBuildOptionTexts;
+    private RectTransform villageDemolishPanelRoot;
+    private TMP_Text villageDemolishPanelTitleText;
+    private TMP_Text villageDemolishPanelBodyText;
+    private Button villageDemolishButton;
+    private Button villageDemolishCloseButton;
     private RectTransform chatPopupRoot;
     private Button chatCloseButton;
     private RectTransform homeLeftShortcutShadow;
@@ -9029,6 +9034,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             villageBuildCloseButton.onClick.AddListener(HideVillageBuildPanel);
         }
+
+        if (villageDemolishButton != null)
+        {
+            villageDemolishButton.onClick.AddListener(DemolishSelectedVillagePlot);
+        }
+
+        if (villageDemolishCloseButton != null)
+        {
+            villageDemolishCloseButton.onClick.AddListener(HideVillageDemolishPanel);
+        }
     }
 
     private void UnregisterNavigation()
@@ -9261,6 +9276,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (villageBuildCloseButton != null)
         {
             villageBuildCloseButton.onClick.RemoveListener(HideVillageBuildPanel);
+        }
+
+        if (villageDemolishButton != null)
+        {
+            villageDemolishButton.onClick.RemoveListener(DemolishSelectedVillagePlot);
+        }
+
+        if (villageDemolishCloseButton != null)
+        {
+            villageDemolishCloseButton.onClick.RemoveListener(HideVillageDemolishPanel);
         }
     }
 
@@ -15024,6 +15049,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             villageBuildPanelRoot.gameObject.SetActive(false);
         }
 
+        if (villageDemolishPanelRoot == null)
+        {
+            villageDemolishPanelRoot = CreateRuntimePopup(villagePanel.transform, "Village Demolish Debug Panel", new Vector2(0f, -900f), new Vector2(640f, 240f), "Debug Gebaeude");
+            villageDemolishPanelTitleText = villageDemolishPanelRoot.Find("Title")?.GetComponent<TMP_Text>();
+            villageDemolishPanelBodyText = CreateRuntimeText(villageDemolishPanelRoot, "Village Demolish Body", string.Empty, 20, new Vector2(0f, -112f), new Vector2(560f, 54f));
+            villageDemolishPanelBodyText.enableAutoSizing = true;
+            villageDemolishPanelBodyText.fontSizeMin = 15;
+            villageDemolishPanelBodyText.fontSizeMax = 20;
+            villageDemolishPanelBodyText.color = new Color(0.86f, 0.92f, 1f);
+            villageDemolishButton = CreateRuntimeButton(villageDemolishPanelRoot, "Village Demolish Button", "Abreissen", -110f, -184f, 220f, 52f);
+            villageDemolishCloseButton = CreateRuntimeButton(villageDemolishPanelRoot, "Village Demolish Close", "Schliessen", 160f, -184f, 220f, 52f);
+            villageDemolishPanelRoot.gameObject.SetActive(false);
+        }
+
         RefreshVillageUi();
     }
 
@@ -15104,12 +15143,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureVillageState();
         if (villagePlotBuiltStates[clampedPlotIndex])
         {
-            selectedVillagePlotIndex = -1;
-            selectedVillageBuildingOptionIndex = 0;
+            selectedVillagePlotIndex = clampedPlotIndex;
+            selectedVillageBuildingOptionIndex = GetVillageBuiltOptionIndex(clampedPlotIndex);
             villageBuildFeedbackMessage = string.Empty;
             if (villageBuildPanelRoot != null)
             {
                 villageBuildPanelRoot.gameObject.SetActive(false);
+            }
+
+            if (villageDemolishPanelRoot != null)
+            {
+                villageDemolishPanelRoot.gameObject.SetActive(true);
+                villageDemolishPanelRoot.SetAsLastSibling();
             }
 
             RefreshVillageUi();
@@ -15128,6 +15173,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             villageBuildPanelRoot.gameObject.SetActive(true);
             villageBuildPanelRoot.SetAsLastSibling();
+        }
+
+        if (villageDemolishPanelRoot != null)
+        {
+            villageDemolishPanelRoot.gameObject.SetActive(false);
         }
 
         RefreshVillageUi();
@@ -15176,6 +15226,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             villageBuildPanelRoot.gameObject.SetActive(false);
         }
 
+        if (villageDemolishPanelRoot != null)
+        {
+            villageDemolishPanelRoot.gameObject.SetActive(false);
+        }
+
         SaveProgress();
         RefreshUi();
     }
@@ -15188,6 +15243,54 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (villageBuildPanelRoot != null)
         {
             villageBuildPanelRoot.gameObject.SetActive(false);
+        }
+
+        RefreshVillageUi();
+        RefreshVillageBuildInteractivity(CanInteractWithVillage());
+    }
+
+    private void DemolishSelectedVillagePlot()
+    {
+        if (selectedVillagePlotIndex < 0 || selectedVillagePlotIndex >= VillagePlotCount)
+        {
+            HideVillageDemolishPanel();
+            return;
+        }
+
+        EnsureVillageState();
+        if (!villagePlotBuiltStates[selectedVillagePlotIndex])
+        {
+            HideVillageDemolishPanel();
+            return;
+        }
+
+        villagePlotBuiltStates[selectedVillagePlotIndex] = false;
+        villagePlotBuildingSelections[selectedVillagePlotIndex] = -1;
+        selectedVillagePlotIndex = -1;
+        selectedVillageBuildingOptionIndex = 0;
+        villageBuildFeedbackMessage = string.Empty;
+        if (villageDemolishPanelRoot != null)
+        {
+            villageDemolishPanelRoot.gameObject.SetActive(false);
+        }
+
+        if (villageBuildPanelRoot != null)
+        {
+            villageBuildPanelRoot.gameObject.SetActive(false);
+        }
+
+        SaveProgress();
+        RefreshUi();
+    }
+
+    private void HideVillageDemolishPanel()
+    {
+        selectedVillagePlotIndex = -1;
+        selectedVillageBuildingOptionIndex = 0;
+        villageBuildFeedbackMessage = string.Empty;
+        if (villageDemolishPanelRoot != null)
+        {
+            villageDemolishPanelRoot.gameObject.SetActive(false);
         }
 
         RefreshVillageUi();
@@ -15265,6 +15368,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 : "Waehle einen freien Bauplatz auf der Karte.";
         }
 
+        var selectedBuilt = hasSelection && villagePlotBuiltStates[selectedVillagePlotIndex];
+        if (villageDemolishPanelTitleText != null)
+        {
+            villageDemolishPanelTitleText.text = selectedBuilt ? GetVillagePlotName(selectedVillagePlotIndex) : "Debug Gebaeude";
+        }
+
+        if (villageDemolishPanelBodyText != null)
+        {
+            villageDemolishPanelBodyText.text = selectedBuilt
+                ? $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))}\nDebug: Abreissen gibt den Bauplatz wieder frei."
+                : "Waehle ein gebautes Gebaeude.";
+        }
+
         RefreshVillageBuildOptions(hasSelection);
         SetButtonLabel(villageBuildButton, hasSelection && villagePlotBuiltStates[selectedVillagePlotIndex] ? "Gebaut" : hasSelection ? $"Bauen ({GetVillagePlotBuildCost(selectedVillagePlotIndex, selectedVillageBuildingOptionIndex)})" : "Bauen");
         RefreshVillageBuildInteractivity(CanInteractWithVillage());
@@ -15315,6 +15431,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             && selectedVillageBuildingOptionIndex < VillageBuildingOptionCount;
         SetButtonInteractable(villageBuildButton, canBuildVillagePlot);
         SetButtonInteractable(villageBuildCloseButton, true);
+        SetButtonInteractable(villageDemolishButton, canInteract && selectedPlotIsBuilt);
+        SetButtonInteractable(villageDemolishCloseButton, true);
         for (var i = 0; i < VillageBuildingOptionCount; i++)
         {
             SetButtonInteractable(villageBuildOptionButtons != null && i < villageBuildOptionButtons.Length ? villageBuildOptionButtons[i] : null, canChooseBuilding);
@@ -16318,6 +16436,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         MoveUiElement(villageBuildButton, villageBuildPanelRoot != null ? villageBuildPanelRoot.gameObject : villagePanel, new Vector2(-110f, -344f), new Vector2(220f, 58f));
         MoveUiElement(villageBuildCloseButton, villageBuildPanelRoot != null ? villageBuildPanelRoot.gameObject : villagePanel, new Vector2(170f, -344f), new Vector2(220f, 58f));
+
+        MoveUiElement(villageDemolishPanelRoot, villagePanel, new Vector2(0f, -900f), new Vector2(640f, 240f));
+        if (villageDemolishPanelRoot != null)
+        {
+            villageDemolishPanelRoot.SetAsLastSibling();
+        }
+
+        MoveUiElement(villageDemolishButton, villageDemolishPanelRoot != null ? villageDemolishPanelRoot.gameObject : villagePanel, new Vector2(-110f, -184f), new Vector2(220f, 52f));
+        MoveUiElement(villageDemolishCloseButton, villageDemolishPanelRoot != null ? villageDemolishPanelRoot.gameObject : villagePanel, new Vector2(160f, -184f), new Vector2(220f, 52f));
 
         if (villageHeaderText != null)
         {
