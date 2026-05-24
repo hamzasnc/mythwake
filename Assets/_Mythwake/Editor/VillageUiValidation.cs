@@ -90,7 +90,7 @@ public static class VillageUiValidation
         }
 
         var detailBody = RequireObject("Village Building Detail Body", true).GetComponent<TMP_Text>();
-        if (detailBody == null || !detailBody.text.Contains("Lv. 1") || !detailBody.text.Contains("Upgrade auf Lv. 2"))
+        if (detailBody == null || !detailBody.text.Contains("Lv. 1") || !detailBody.text.Contains("Bonus:") || !detailBody.text.Contains("Upgrade auf Lv. 2"))
         {
             throw new InvalidOperationException($"Village building detail body missing level/upgrade copy: '{(detailBody == null ? "<missing>" : detailBody.text)}'");
         }

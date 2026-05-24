@@ -91,6 +91,7 @@ Latest local gameplay/UI batch:
 - Village now has a dedicated scrollable map screen opened from the bottom Village nav item, with 12 build plots and imported building art.
 - Village free plots open a build panel. Built plots open a building detail panel with level, next upgrade cost, available Myth Essence, `Aufwerten`, `Abreissen`, and `Schliessen`.
 - Village building upgrades spend Myth Essence locally and route through the existing backend Village upgrade action in Server Mode.
+- Village building details show placeholder bonuses. In local mode, built building type and level apply small Team ATK/HP or Fast Rewards Gold/Essence rate boosts. Server Mode remains backend-authoritative and does not add these local stat bonuses on top of backend snapshot stats.
 - A Unity editor validator now checks the Village map/build/detail/upgrade/demolish control structure. Batchmode execution is currently blocked while the project is already open in another Unity instance.
 - Local Fast Rewards and backend AFK definitions now both use a 24h stored reward cap.
 - Paladin combat assets, combat preview, and Spine handoff validation are present.
@@ -232,7 +233,8 @@ Dungeons:
 Village:
 - Village has a first-pass dedicated scrollable map with 12 plots.
 - Buildings can be placed, viewed, upgraded, and demolished.
-- Building upgrades currently increase saved level and cost Myth Essence, but building effects/bonuses still need to be designed.
+- Building upgrades increase saved level, cost Myth Essence, and show/apply small placeholder bonuses in local mode.
+- Next Village design decision: move bonuses into backend-owned definitions or keep them local-only until the Village balance pass.
 
 Gear/accessories:
 - Accessory slots:
@@ -553,9 +555,9 @@ The next chat should continue in this order unless the user redirects:
    - Then visually verify Village map, build panel, building detail, upgrade, demolish, and spacing on editor/device.
 
 2. Finish the Village building test slice.
-   - Add visible placeholder effects/bonuses for Village building levels.
-   - Show those bonuses in the building detail panel.
-   - Keep local and Server Mode state in sync.
+   - Decide whether the new placeholder bonuses should become backend-owned definitions.
+   - Keep local and Server Mode state display in sync.
+   - Tune bonus values only after a visual/emulator pass.
 
 3. Refresh remaining docs only when the code changes again.
    - `README.md`, `docs/NEXT_CHAT_CONTEXT.md`, and `docs/CURRENT_STATUS.md` are now the main handoff notes.

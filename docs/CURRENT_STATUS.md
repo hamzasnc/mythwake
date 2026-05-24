@@ -25,6 +25,7 @@ Last updated: 2026-05-25
 - Added a Village building upgrade button in the Unity client.
 - Wired the button to local Myth Essence spending and to the existing backend `/village/upgrade` action in Server Mode.
 - Added an editor validation entry point for the Village UI so map, build panel, building detail, upgrade, demolish, and close controls can be checked in Unity.
+- Added visible placeholder Village bonuses; local mode applies small Team ATK/HP or Fast Rewards rate boosts from built building type and level.
 - Added backend tests for service-level and HTTP-level Village upgrades.
 - Added migration `0026_afk_reward_24h_cap.sql` so existing PostgreSQL dev databases pick up the 24h AFK cap.
 - Refreshed `README.md` and `docs/NEXT_CHAT_CONTEXT.md` so the main handoff notes match the current pass.
@@ -33,7 +34,7 @@ Last updated: 2026-05-25
 ## Next Small Steps
 
 1. Close the extra Unity project instance or run the new `Mythwake/Validate Village UI` menu item in the open editor, then visually verify Village map, building detail, upgrade, demolish, and panel spacing in Unity/emulator.
-2. Give Village buildings real effects or at least visible placeholder bonuses before adding more build options.
+2. Decide whether Village bonuses should become backend-owned definitions next, or stay local-only until the Village balance pass.
 3. Polish Fast Rewards popup copy and server/local display parity.
 4. Continue Paladin integration checks: roster, formation, fight pose, summon pool, backend definitions, and Spine validation.
 5. Move remaining upgrade clutter into the proper Hero/Gear/Village screens.

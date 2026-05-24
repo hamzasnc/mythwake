@@ -657,6 +657,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int VillageBuildingOptionCount = 3;
     private const int VillageBuildingMaxLevel = 20;
     private const int VillageBuildingUpgradeCostPerLevel = 5;
+    private const int VillageAttackBonusBasePerLevel = 2;
+    private const int VillageHealthBonusBasePerLevel = 18;
+    private const float VillageGoldRateBonusBasePerLevel = 0.08f;
+    private const float VillageEssenceRateBonusBasePerLevel = 0.04f;
     private const string VillageUpgradeActionId = "village_upgrade";
     private static readonly string[] VillagePlotNames =
     {
@@ -5171,12 +5175,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private float GetAfkEssencePerSecond()
     {
-        return Mathf.Max(0.05f, GetStageReward(enemyLevel) / (float)DefaultCombatDurationSeconds);
+        return Mathf.Max(0.05f, GetBaseAfkEssencePerSecond() + GetVillageAfkEssenceRateBonus());
     }
 
     private float GetAfkGoldPerSecond()
     {
-        return Mathf.Max(0.05f, GetAfkEssencePerSecond() * OfflineGoldRewardRate);
+        return Mathf.Max(0.05f, GetBaseAfkEssencePerSecond() * OfflineGoldRewardRate + GetVillageAfkGoldRateBonus());
+    }
+
+    private float GetBaseAfkEssencePerSecond()
+    {
+        return Mathf.Max(0.05f, GetStageReward(enemyLevel) / (float)DefaultCombatDurationSeconds);
     }
 
     private int CalculateAfkEssenceReward(float rewardSeconds)
@@ -11857,7 +11866,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             power += GetHeroPower(i);
         }
 
-        return Mathf.Max(1, power);
+        return Mathf.Max(1, power + GetVillageTeamPowerBonus());
     }
 
     private int GetTeamDamage()
@@ -11873,7 +11882,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             damageTotal += GetHeroEffectiveAttack(i);
         }
 
-        return Mathf.Max(1, damageTotal);
+        return Mathf.Max(1, damageTotal + GetVillageTeamAttackBonus());
     }
 
     private int GetTeamHealth()
@@ -11890,7 +11899,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             health += GetHeroCombatMaxHealth(i);
         }
 
-        return Mathf.Max(1, health);
+        return Mathf.Max(1, health + GetVillageTeamHealthBonus());
     }
 
     private int GetTeamBaseAttack()
@@ -15297,7 +15306,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             villageDemolishPanelRoot = CreateRuntimePopup(villagePanel.transform, "Village Building Detail Panel", new Vector2(0f, -880f), new Vector2(720f, 310f), "Gebaeude");
             villageDemolishPanelTitleText = villageDemolishPanelRoot.Find("Title")?.GetComponent<TMP_Text>();
-            villageDemolishPanelBodyText = CreateRuntimeText(villageDemolishPanelRoot, "Village Building Detail Body", string.Empty, 20, new Vector2(0f, -124f), new Vector2(620f, 96f));
+            villageDemolishPanelBodyText = CreateRuntimeText(villageDemolishPanelRoot, "Village Building Detail Body", string.Empty, 20, new Vector2(0f, -118f), new Vector2(620f, 112f));
             villageDemolishPanelBodyText.enableAutoSizing = true;
             villageDemolishPanelBodyText.fontSizeMin = 15;
             villageDemolishPanelBodyText.fontSizeMax = 20;
@@ -15713,9 +15722,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 var nextUpgradeText = buildingLevel >= VillageBuildingMaxLevel
                     ? "Max Level erreicht."
                     : $"Upgrade auf Lv. {buildingLevel + 1}: {GetVillageBuildingUpgradeCost(buildingLevel)} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}";
+                var bonusText = GetVillageBuildingBonusText(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex), buildingLevel);
                 villageDemolishPanelBodyText.text = !string.IsNullOrEmpty(villageBuildFeedbackMessage)
                     ? villageBuildFeedbackMessage
-                    : $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))} Lv. {buildingLevel}\n{nextUpgradeText}\nVorhanden: {mythEssence} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}";
+                    : $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))} Lv. {buildingLevel}\n{bonusText}\n{nextUpgradeText}\nVorhanden: {mythEssence} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}";
             }
             else
             {
@@ -15818,6 +15828,167 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static int GetVillageBuildingUpgradeCost(int currentLevel)
     {
         return Mathf.Max(1, currentLevel) * VillageBuildingUpgradeCostPerLevel;
+    }
+
+    private int GetVillageTeamPowerBonus()
+    {
+        if (backendGameplayEnabled)
+        {
+            return 0;
+        }
+
+        return GetVillageTeamAttackBonus()
+            + Mathf.FloorToInt(GetVillageTeamHealthBonus() / 8f)
+            + Mathf.RoundToInt((GetVillageAfkGoldRateBonus() + GetVillageAfkEssenceRateBonus()) * 60f);
+    }
+
+    private int GetVillageTeamAttackBonus()
+    {
+        if (backendGameplayEnabled)
+        {
+            return 0;
+        }
+
+        EnsureVillageState();
+        var bonus = 0;
+        for (var i = 0; i < VillagePlotCount; i++)
+        {
+            if (villagePlotBuiltStates[i])
+            {
+                bonus += GetVillageBuildingAttackBonus(i, GetVillageBuiltOptionIndex(i), GetVillageBuildingLevel(i));
+            }
+        }
+
+        return bonus;
+    }
+
+    private int GetVillageTeamHealthBonus()
+    {
+        if (backendGameplayEnabled)
+        {
+            return 0;
+        }
+
+        EnsureVillageState();
+        var bonus = 0;
+        for (var i = 0; i < VillagePlotCount; i++)
+        {
+            if (villagePlotBuiltStates[i])
+            {
+                bonus += GetVillageBuildingHealthBonus(i, GetVillageBuiltOptionIndex(i), GetVillageBuildingLevel(i));
+            }
+        }
+
+        return bonus;
+    }
+
+    private float GetVillageAfkGoldRateBonus()
+    {
+        if (backendGameplayEnabled)
+        {
+            return 0f;
+        }
+
+        EnsureVillageState();
+        var bonus = 0f;
+        for (var i = 0; i < VillagePlotCount; i++)
+        {
+            if (villagePlotBuiltStates[i])
+            {
+                bonus += GetVillageBuildingGoldRateBonus(i, GetVillageBuiltOptionIndex(i), GetVillageBuildingLevel(i));
+            }
+        }
+
+        return bonus;
+    }
+
+    private float GetVillageAfkEssenceRateBonus()
+    {
+        if (backendGameplayEnabled)
+        {
+            return 0f;
+        }
+
+        EnsureVillageState();
+        var bonus = 0f;
+        for (var i = 0; i < VillagePlotCount; i++)
+        {
+            if (villagePlotBuiltStates[i])
+            {
+                bonus += GetVillageBuildingEssenceRateBonus(i, GetVillageBuiltOptionIndex(i), GetVillageBuildingLevel(i));
+            }
+        }
+
+        return bonus;
+    }
+
+    private static string GetVillageBuildingBonusText(int plotIndex, int optionIndex, int level)
+    {
+        var attackBonus = GetVillageBuildingAttackBonus(plotIndex, optionIndex, level);
+        if (attackBonus > 0)
+        {
+            return $"Bonus: +{attackBonus} Team ATK";
+        }
+
+        var healthBonus = GetVillageBuildingHealthBonus(plotIndex, optionIndex, level);
+        if (healthBonus > 0)
+        {
+            return $"Bonus: +{healthBonus} Team HP";
+        }
+
+        var goldRateBonus = GetVillageBuildingGoldRateBonus(plotIndex, optionIndex, level);
+        if (goldRateBonus > 0f)
+        {
+            return $"Bonus: +{FormatRate(goldRateBonus)} Gold/s Fast Rewards";
+        }
+
+        var essenceRateBonus = GetVillageBuildingEssenceRateBonus(plotIndex, optionIndex, level);
+        if (essenceRateBonus > 0f)
+        {
+            return $"Bonus: +{FormatRate(essenceRateBonus)} Essence/s Fast Rewards";
+        }
+
+        return "Bonus: in Vorbereitung";
+    }
+
+    private static int GetVillageBuildingAttackBonus(int plotIndex, int optionIndex, int level)
+    {
+        if (plotIndex != 1 && plotIndex != 3 && plotIndex != 11)
+        {
+            return 0;
+        }
+
+        return Mathf.Max(1, level) * (VillageAttackBonusBasePerLevel + Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1));
+    }
+
+    private static int GetVillageBuildingHealthBonus(int plotIndex, int optionIndex, int level)
+    {
+        if (plotIndex != 0 && plotIndex != 7 && plotIndex != 8)
+        {
+            return 0;
+        }
+
+        return Mathf.Max(1, level) * (VillageHealthBonusBasePerLevel + Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1) * 4);
+    }
+
+    private static float GetVillageBuildingGoldRateBonus(int plotIndex, int optionIndex, int level)
+    {
+        if (plotIndex != 5 && plotIndex != 6 && plotIndex != 10)
+        {
+            return 0f;
+        }
+
+        return Mathf.Max(1, level) * (VillageGoldRateBonusBasePerLevel + Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1) * 0.03f);
+    }
+
+    private static float GetVillageBuildingEssenceRateBonus(int plotIndex, int optionIndex, int level)
+    {
+        if (plotIndex != 2 && plotIndex != 4 && plotIndex != 9)
+        {
+            return 0f;
+        }
+
+        return Mathf.Max(1, level) * (VillageEssenceRateBonusBasePerLevel + Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1) * 0.02f);
     }
 
     private static string GetVillageBuildingOptionName(int plotIndex, int optionIndex)
@@ -16819,6 +16990,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             villageDemolishPanelRoot.SetAsLastSibling();
         }
 
+        MoveUiElement(villageDemolishPanelBodyText, villageDemolishPanelRoot != null ? villageDemolishPanelRoot.gameObject : villagePanel, new Vector2(0f, -118f), new Vector2(620f, 112f));
         MoveUiElement(villageUpgradeButton, villageDemolishPanelRoot != null ? villageDemolishPanelRoot.gameObject : villagePanel, new Vector2(-220f, -248f), new Vector2(200f, 52f));
         MoveUiElement(villageDemolishButton, villageDemolishPanelRoot != null ? villageDemolishPanelRoot.gameObject : villagePanel, new Vector2(0f, -248f), new Vector2(200f, 52f));
         MoveUiElement(villageDemolishCloseButton, villageDemolishPanelRoot != null ? villageDemolishPanelRoot.gameObject : villagePanel, new Vector2(220f, -248f), new Vector2(200f, 52f));
