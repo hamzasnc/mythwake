@@ -1,6 +1,6 @@
 # Mythwake Next Chat Context
 
-Last updated: 2026-05-14
+Last updated: 2026-05-25
 
 This file is meant to be pasted/read first in a new Codex chat so the project can continue without re-explaining everything.
 
@@ -27,8 +27,15 @@ Remote:
 Important Git rule:
 - Pushes/commits should use account/author `hamzasnc`, not `devasperity`.
 
-Latest known pushed commit at time of this file:
-- `cf249d8 Expand combat and summon prototype systems`
+Latest known local commit before the current uncommitted pass:
+- `73878bc Clean up paladin spine handoff`
+
+Current uncommitted pass:
+- Village building detail/upgrade UI in Unity.
+- Backend Village upgrade tests.
+- Backend AFK cap aligned to the local 24h cap.
+- Current status summary in `docs/CURRENT_STATUS.md`.
+- Editor validation helper for Village UI in `Assets/_Mythwake/Editor/VillageUiValidation.cs`.
 
 ## User Preferences And Product Intent
 
@@ -64,7 +71,7 @@ Do not deepen these yet:
 ## Current Client State
 
 Unity project path:
-- `C:\Users\Hamza\Desktop\Idle Game\Mythwake`
+- `D:\Github\mythwake`
 
 Key Unity scene:
 - `Assets/Scenes/SampleScene.unity`
@@ -73,13 +80,20 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.74`
+- Prototype `0.2.75`
 - Save version `2`
 
 Important Unity scripts:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Latest local gameplay/UI batch:
+- Dungeons now have a dedicated map screen opened from the bottom Dungeons nav item, with Gold, Essence, and Gear dungeon cards.
+- Village now has a dedicated scrollable map screen opened from the bottom Village nav item, with 12 build plots and imported building art.
+- Village free plots open a build panel. Built plots open a building detail panel with level, next upgrade cost, available Myth Essence, `Aufwerten`, `Abreissen`, and `Schliessen`.
+- Village building upgrades spend Myth Essence locally and route through the existing backend Village upgrade action in Server Mode.
+- A Unity editor validator now checks the Village map/build/detail/upgrade/demolish control structure. Batchmode execution is currently blocked while the project is already open in another Unity instance.
+- Local Fast Rewards and backend AFK definitions now both use a 24h stored reward cap.
+- Paladin combat assets, combat preview, and Spine handoff validation are present.
 - Home now has a runtime campaign map with clickable stage nodes and a stage preview.
 - Battle no longer starts immediately from the main button. Flow is now map/stage selection -> Battle -> Formation -> Confirm -> visible fight.
 - Dungeons now use the same Formation -> Confirm -> visible fight flow.
@@ -127,13 +141,13 @@ Latest backend combat direction:
 - This is still request/response replay, not a live combat command stream. True manual server-authoritative ultimate clicks still need a follow-up endpoint or websocket-style command path.
 
 Latest verification notes:
-- `go test ./internal/balance ./internal/player ./internal/http` passes from `backend/`.
-- `dotnet msbuild Assembly-CSharp.csproj /p:FrameworkPathOverride="C:\Users\Hamza\.nuget\packages\microsoft.netframework.referenceassemblies.net471\1.0.3\build\.NETFramework\v4.7.1" /v:minimal` passes with existing Unity serialized-field warnings.
+- `go test ./internal/balance ./internal/definitions ./internal/player ./internal/http` passes from `backend/`.
+- `dotnet msbuild Assembly-CSharp.csproj /p:FrameworkPathOverride="C:\Program Files\Unity\Hub\Editor\6000.4.5f1\Editor\Data\MonoBleedingEdge\lib\mono\xbuild-frameworks\.NETFramework\v4.7.1" /p:LangVersion=latest /v:minimal` passes.
+- `dotnet msbuild Assembly-CSharp-Editor.csproj /p:FrameworkPathOverride="C:\Program Files\Unity\Hub\Editor\6000.4.5f1\Editor\Data\MonoBleedingEdge\lib\mono\xbuild-frameworks\.NETFramework\v4.7.1" /p:LangVersion=latest /v:minimal` passes, with existing Paladin JSON field warnings.
 - `git diff --check` passes for touched client/backend/docs files, with existing LF->CRLF warnings on some backend/docs files.
 - Direct `dotnet build` fails on this machine because .NET Framework 4.7.1 reference assemblies are not installed globally.
-- MSBuild can compile Unity csproj files when passed a temp ReferenceAssemblies path from `Microsoft.NETFramework.ReferenceAssemblies.net471`.
-- `Assembly-CSharp.csproj` compiled successfully this way after the combat changes.
-- `Assembly-CSharp-Editor.csproj` compiled successfully this way, with existing Unity package/reference warnings.
+- Plain MSBuild without `/p:LangVersion=latest` can fail because the generated Unity csproj still says C# 7.3 while current code uses newer syntax.
+- Unity batchmode validation command is prepared, but currently blocked because another Unity instance has this project open.
   - Main local gameplay, UI runtime construction, backend mode switching, save/load, action handlers.
   - It is currently large/monolithic. Be careful with surgical edits.
 - `Assets/_Mythwake/Scripts/MythwakeBackendClient.cs`
@@ -145,6 +159,8 @@ Latest verification notes:
 - `Assets/_Mythwake/Editor/MythwakePrototypeBuilder.cs`
   - Editor menu helpers.
   - Menus include `Tools/Mythwake/Build Prototype UI` and `Tools/Mythwake/Bind Home Navbar Assets`.
+- `Assets/_Mythwake/Editor/VillageUiValidation.cs`
+  - Editor menu `Mythwake/Validate Village UI` checks Village map/build/detail/upgrade/demolish controls.
 
 Unity builder caution:
 - `Build Prototype UI` recreates the scene UI and can reset layout/object references.
@@ -211,7 +227,12 @@ Dungeons:
 - Gold Dungeon: endless tower, increasing floor difficulty/rewards.
 - Essence Dungeon: endless tower, increasing floor difficulty/rewards.
 - Gear Dungeon: endless tower, drops accessories.
-- Dungeons should later live in their own menu/tab, not clutter battle.
+- Dungeons have a first-pass dedicated screen/tab and still need visual/layout polish.
+
+Village:
+- Village has a first-pass dedicated scrollable map with 12 plots.
+- Buildings can be placed, viewed, upgraded, and demolished.
+- Building upgrades currently increase saved level and cost Myth Essence, but building effects/bonuses still need to be designed.
 
 Gear/accessories:
 - Accessory slots:
@@ -288,9 +309,9 @@ Current home behavior:
 - Extra badge below mode.
 - Bottom navbar routes:
   - Heroes -> Heroes
-  - Village -> Home
+  - Village -> Village
   - Center/Campaign -> Home
-  - Dungeons -> Battle/Dungeons area for now
+  - Dungeons -> Dungeons
   - Summon -> Summon
 - Chest button opens inventory popup placeholder.
 - Fast Rewards button opens AFK popup and can redeem.
@@ -312,11 +333,13 @@ Recent specific UI feedback already addressed before this file:
 - Side shortcuts default collapsed, while still showing first icon.
 
 Potential next UI fixes:
+- Run or visually inspect the new Village UI validator once Unity is not blocking batchmode.
+- Polish the Village building detail panel spacing on device/emulator.
 - Verify collapsed shortcut layout in Unity/emulator visually.
 - Make side shortcut expand/collapse polished with proper arrow art instead of text.
 - Add real background map/campaign art to the empty main field.
 - Replace placeholder popups with proper parchment/fantasy panels.
-- Move Dungeons into its own clean screen/tab.
+- Polish the dedicated Dungeons screen/cards now that the split exists.
 - Move hero upgrade UI into Heroes/detail, not Battle.
 - Move equipment/accessory upgrades into Gear/detail, not Heroes or Battle.
 
@@ -405,7 +428,7 @@ Important tests/smoke:
 Repo root:
 
 ```powershell
-cd "C:\Users\Hamza\Desktop\Idle Game\Mythwake"
+cd "D:\Github\mythwake"
 ```
 
 Start backend with local PostgreSQL:
@@ -435,7 +458,7 @@ PostgreSQL E2E smoke:
 Manual Go run with DB:
 
 ```powershell
-cd "C:\Users\Hamza\Desktop\Idle Game\Mythwake\backend"
+cd "D:\Github\mythwake\backend"
 $env:MYTHWAKE_DATABASE_URL='postgres://mythwake:mythwake@localhost:5432/mythwake?sslmode=disable'
 go run ./cmd/api
 ```
@@ -513,7 +536,8 @@ Still rough:
 - Campaign map and battle scene exist, but they are still runtime-composed and need proper background art/layout polish.
 - Popups are placeholders.
 - Hero/enemy visuals use free starter animated assets, not final Mythwake art direction.
-- Dungeons have formation and single-boss fights, but not yet a polished separate screen.
+- Dungeons have a first-pass separate screen and single-boss fights, but the screen still needs polish.
+- Village has a first-pass map/building loop, but building effects/bonuses are still placeholders/not designed.
 - Gear/Hero/Summon screens need real mobile layouts.
 - No production auth providers yet.
 - No purchase/monetization.
@@ -524,40 +548,36 @@ Still rough:
 
 The next chat should continue in this order unless the user redirects:
 
-1. Verify the latest Home HUD visually in Unity/emulator.
-   - Confirm collapsed side shortcuts show only first icon.
-   - Confirm name/power/resources positions are acceptable.
-   - Confirm no main screen overlap.
-   - Confirm campaign map, stage preview, formation, and visible fights fit the mobile viewport.
+1. Run or manually trigger the Village UI validation.
+   - Close the extra Unity project instance, or use `Mythwake/Validate Village UI` in the open editor.
+   - Then visually verify Village map, build panel, building detail, upgrade, demolish, and spacing on editor/device.
 
-2. Polish the new combat/map visuals.
-   - Replace runtime-painted campaign/fight backdrops with better fantasy art.
-   - Inspect melee pathing, HP bar positions, and projectile timing.
-   - Add more varied melee/ranged enemy animations if suitable free packs are found.
-   - Keep Dante and Iron Hound facing verified.
+2. Finish the Village building test slice.
+   - Add visible placeholder effects/bonuses for Village building levels.
+   - Show those bonuses in the building detail panel.
+   - Keep local and Server Mode state in sync.
 
-3. Split Dungeons into a real screen.
-   - Bottom navbar Dungeons should open Dungeons screen.
-   - Show Gold, Essence, Gear dungeon cards/floors/reward preview.
-   - Keep run buttons and result text there.
+3. Refresh remaining docs only when the code changes again.
+   - `README.md`, `docs/NEXT_CHAT_CONTEXT.md`, and `docs/CURRENT_STATUS.md` are now the main handoff notes.
 
-4. Move upgrades into proper screens.
+4. Polish Fast Rewards.
+   - Continuous accumulation display and copy.
+   - Rate per second based on stage.
+   - 24h cap is already aligned locally/backend.
+   - Claim updates Gold and Myth Essence.
+   - Keep Server Mode display behavior clear.
+
+5. Continue Paladin integration checks.
+   - Roster/detail screen.
+   - Formation.
+   - Fight pose/preview.
+   - Summon/backend definitions.
+   - Spine validation.
+
+6. Move remaining upgrade clutter into proper screens.
    - Hero level-up belongs in Heroes or hero detail.
    - Weapon/Armor/accessory upgrades belong in Gear.
    - Battle screen should not contain upgrade clutter.
-
-5. Deepen visible battle mechanics.
-   - Preserve nearest-target single-hit behavior for normal attacks.
-   - Add explicit AoE skill flags later, only when skills exist.
-   - Add cast/hit timing so damage numbers land at impact, not just action start.
-   - Start separating visual combat state from aggregate backend combat results.
-
-6. Make Fast Rewards real enough for testing.
-   - Continuous accumulation display.
-   - Rate per second based on stage.
-   - Cap at 24h.
-   - Claim updates Gold and Myth Essence.
-   - In Server Mode, route to server claim behavior where possible.
 
 7. Keep backend tests green after client-facing changes.
    - Run Go tests if backend touched.

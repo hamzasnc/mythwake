@@ -720,6 +720,41 @@ func TestOfflineClaimEndpoint(t *testing.T) {
 	}
 }
 
+func TestVillageUpgradeEndpoint(t *testing.T) {
+	handler := newTestHandler()
+	login := loginGuest(t, handler)
+
+	buildResponse := httptest.NewRecorder()
+	buildRequest := httptest.NewRequest(http.MethodPost, "/village/build", strings.NewReader(`{"slotIndex":2,"buildingOptionIndex":0}`))
+	addAuth(buildRequest, login.SessionToken)
+	addIdempotencyKey(buildRequest, "village-build-001")
+	handler.ServeHTTP(buildResponse, buildRequest)
+	if buildResponse.Code != http.StatusOK {
+		t.Fatalf("expected village build status 200, got %d", buildResponse.Code)
+	}
+
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/village/upgrade", strings.NewReader(`{"slotIndex":2}`))
+	addAuth(request, login.SessionToken)
+	addIdempotencyKey(request, "village-upgrade-001")
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected village upgrade status 200, got %d", response.Code)
+	}
+
+	var body api.ActionResult
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if !body.Success || body.ActionID != gameplay.ActionVillageUpgrade {
+		t.Fatalf("expected successful village upgrade, got %#v", body)
+	}
+	if len(body.PlayerSnapshot.VillageBuildings) != 1 || body.PlayerSnapshot.VillageBuildings[0].Level != 2 {
+		t.Fatalf("expected upgraded village building in snapshot, got %#v", body.PlayerSnapshot.VillageBuildings)
+	}
+}
+
 func TestMutatingActionRequiresIdempotencyHeader(t *testing.T) {
 	handler := newTestHandler()
 	login := loginGuest(t, handler)

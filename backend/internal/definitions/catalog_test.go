@@ -44,7 +44,7 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if len(snapshot.AFKRewards) != 1 {
 		t.Fatalf("expected 1 AFK reward definition, got %#v", snapshot.AFKRewards)
 	}
-	if snapshot.AFKRewards[0].RewardID != "reward_afk_claim" || snapshot.AFKRewards[0].MaxClaimSeconds != 21600 {
+	if snapshot.AFKRewards[0].RewardID != "reward_afk_claim" || snapshot.AFKRewards[0].MaxClaimSeconds != 86400 {
 		t.Fatalf("unexpected AFK reward definition: %#v", snapshot.AFKRewards[0])
 	}
 	if len(snapshot.Campaigns) != 1 {

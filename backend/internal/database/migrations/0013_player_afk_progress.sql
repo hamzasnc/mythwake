@@ -9,7 +9,7 @@ SELECT
 	p.player_id,
 	p.last_claimed_at,
 	GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (now() - p.last_claimed_at))))::integer AS unclaimed_seconds,
-	LEAST(21600, GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (now() - p.last_claimed_at)))))::integer AS claimable_seconds_capped,
+	LEAST(86400, GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (now() - p.last_claimed_at)))))::integer AS claimable_seconds_capped,
 	p.updated_at
 FROM player.player_afk_progress p;
 

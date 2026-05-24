@@ -195,7 +195,7 @@ Database behavior:
 - Queued materialized state flushes every `MYTHWAKE_STATE_FLUSH_INTERVAL` and once more during graceful shutdown.
 - Loaded in-memory player contexts are flushed during API shutdown before the cache is closed.
 - `POST /player/state/flush` is the app-pause/disconnect hook used by the Unity prototype.
-- AFK reward claims are capped at 6 hours, require at least 60 seconds, and persist `last_claimed_at` in PostgreSQL plus the action-result snapshot for crash-safe replay.
+- AFK reward claims are capped at 24 hours, require at least 60 seconds, and persist `last_claimed_at` in PostgreSQL plus the action-result snapshot for crash-safe replay.
 - AFK claim windows and reward-per-tick values are loaded from `common.afk_reward_definitions` when PostgreSQL-backed definitions are enabled.
 - Daily progress is keyed by UTC date in `player.player_daily_progress`; a new server day clears daily mission counters and daily claims before the next snapshot/action.
 - New player seed state still writes immediately so first login/startup is durable.

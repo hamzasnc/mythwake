@@ -38,7 +38,7 @@ INSERT INTO common.afk_reward_definitions (
 	'reward_afk_claim',
 	'AFK Gold and Myth Essence',
 	60,
-	21600,
+	86400,
 	60,
 	3,
 	1,

@@ -24,7 +24,7 @@ const (
 	StarterGearDropAccessoryID = "accessory_earrings_r0"
 
 	AFKMinClaimSeconds   = 60
-	AFKMaxClaimSeconds   = 6 * 60 * 60
+	AFKMaxClaimSeconds   = 24 * 60 * 60
 	AFKRewardTickSeconds = 60
 
 	DefaultCombatDurationSeconds = 30

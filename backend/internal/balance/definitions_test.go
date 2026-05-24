@@ -90,7 +90,7 @@ func TestEquipmentDefinitions(t *testing.T) {
 
 func TestAFKRewardDefinitions(t *testing.T) {
 	definition, ok := AFKRewardDefinitionByID("afk_default")
-	if !ok || definition.RewardID != RewardAFKClaim || definition.MinClaimSeconds != 60 || definition.MaxClaimSeconds != 21600 || definition.TickSeconds != 60 {
+	if !ok || definition.RewardID != RewardAFKClaim || definition.MinClaimSeconds != 60 || definition.MaxClaimSeconds != 86400 || definition.TickSeconds != 60 {
 		t.Fatalf("unexpected afk_default definition: %#v ok=%v", definition, ok)
 	}
 

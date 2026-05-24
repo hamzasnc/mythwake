@@ -2,12 +2,13 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.32
+Prototype version: 0.2.75
 Local save version: 2
 
 Current prototype:
 - Android build profile
 - Simple portrait UI
+- Mobile app shell with Home, Village, Dungeons, Battle, Heroes, Gear, Summon, and Shop screens
 - First core loop: fight enemies, earn Myth Essence, upgrade heroes
 - Auto attack while the app is open
 - Local save data via a versioned JSON blob stored in PlayerPrefs
@@ -22,6 +23,7 @@ Current prototype:
 - Server Mode uses backend definitions for summon, progression cost, daily mission, and Mission Track preview values
 - Server Mode uses backend hero, equipment, accessory, and snapshot team stats for authoritative stat previews
 - Server Mode upgrade buttons now respect backend max-level/max-ascension caps and AFK timing definitions
+- Local and backend AFK reward caps are aligned at 24 hours
 - Server Mode preference persists across Unity restarts and reboots through `/client/bootstrap`
 - Server Mode blocks local debug grants/reset so PostgreSQL remains the authoritative test source
 - Gameplay buttons are gated while backend requests are in flight to avoid accidental double actions
@@ -32,7 +34,6 @@ Current prototype:
 - Accessory equip, level, and fuse actions now return local action-result DTOs
 - Hero leveling, hero ascension, equipment leveling, daily claims, and mission track claims now return local action-result DTOs
 - Basic offline Gold and Myth Essence calculation when reopening the app
-- Mobile app shell with Home, Battle, Heroes, Gear, Summon, and Shop tabs
 - Visible prototype/save version text for quick test builds
 - Debug resource buttons for adding small Gold, Gems, Myth Essence, and accessory test amounts
 - Starter hero collection with 5 heroes
@@ -60,6 +61,9 @@ Current prototype:
 - Gold Dungeon and Essence Dungeon are endless tower prototypes
 - Dungeon bonus floors pay extra resources every 5 floors
 - Dungeon floors scale up in enemy HP, enemy damage, and rewards
+- Dungeons have a dedicated map screen with Gold, Essence, and Gear dungeon cards
+- Village has a dedicated scrollable map with 12 build plots, building placement art, and built-building detail controls
+- Village buildings can be built, upgraded, and demolished locally and through Server Mode backend actions
 - Campaign and dungeon fights now simulate win/loss with team HP and enemy damage
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
 - Hero shards add minor Attack and HP immediately
@@ -68,6 +72,7 @@ Current prototype:
 - Daily mission claims reward Gold, Gems, Myth Essence, and reset by UTC day
 - Mission Track XP is earned from daily mission claims
 - Mission Track rewards can be claimed in the Shop tab
+- Ravik and Paladin art/combat preview hooks exist, including Paladin Spine handoff validation tooling
 
 Backend:
 - Go API skeleton in `backend/`
@@ -88,6 +93,7 @@ Backend:
 - Gear/accessory inventory, accessory levels, and equipped accessories persist in PostgreSQL
 - Starter Weapon and Armor training levels persist in PostgreSQL and affect team power
 - Summon count, daily mission claims, and Battle Pass claims persist in PostgreSQL
+- Village building state and levels persist in PostgreSQL and are exposed through player snapshots
 - Claim and summon debug views are available for Navicat
 - PostgreSQL writes now sit behind a durable state cache wrapper
 - Critical server actions now use ledger write-behind by default, so the action/result is durable before success while materialized state can flush in batches
@@ -129,6 +135,7 @@ Backend:
 - Navicat-friendly account/persistence debug views expose auth providers, active sessions, latest action result, and snapshot freshness
 - Server-owned auth provider, currency, hero, starter equipment, reward, campaign, dungeon, accessory, cost, summon, mission, Mission Track, and action definitions are exposed through cacheable `GET /definitions` responses with content hashes and ETags
 - Server-owned AFK reward definitions are exposed through `/definitions` so offline reward balance can move through PostgreSQL/admin tooling
+- Server-owned Village build/demolish/upgrade actions keep Village state authoritative in Server Mode
 - Unity can load `/definitions` with ETag revalidation, cache the latest snapshot locally, and show Server Mode dungeon previews from the server definition snapshot
 - Unity Server Mode activation now uses `/client/bootstrap` to sync clock, definitions, and player state through one authenticated startup contract
 - Unity can sync `/time`, keep an approximate in-memory server clock, and show daily/weekly reset timing from the backend
@@ -157,6 +164,14 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.75: Added Village building detail/upgrade UI, wired local and Server Mode upgrade actions, added backend Village upgrade tests, aligned backend AFK cap to 24h, and added a Unity editor Village UI validator.
+- Prototype 0.2.74: Added Paladin combat preview and cleaned up the Paladin Spine handoff.
+- Prototype 0.2.73: Added Paladin combat assets.
+- Prototype 0.2.72: Added multiplayer/backend Village building state.
+- Prototype 0.2.71: Added first Village demolish controls.
+- Prototype 0.2.70: Added Village building placement.
+- Prototype 0.2.69: Added the Village map screen.
+- Prototype 0.2.68: Added the Dungeons map screen.
 - Backend 0.2.56: Disabled gameplay mutation rate limiting by default so normal run/fight spam does not surface HTTP 429s; auth rate limiting remains enabled and gameplay limits can still be configured as a high-threshold abuse guard.
 - Prototype 0.2.32: Unity backend requests now carry request IDs, structured backend error bodies are formatted into readable client diagnostics, action-result errors are humanized, Backend-panel Smoke now covers accessory equip/level/fuse candidates plus Daily Summon and Mission Track claims, PostgreSQL E2E verifies structured error/request-id contracts, and AFK edge tests cover future timestamp recovery.
 - Prototype 0.2.31: Unity Server Mode now persists across restarts, auto-bootstraps through the backend, blocks local debug/reset mutations while server-authoritative, gates gameplay during backend requests, shows expanded backend health/cache diagnostics, and adds a Backend-panel Smoke action for compact server-flow testing.

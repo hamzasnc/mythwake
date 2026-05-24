@@ -230,6 +230,35 @@ func TestVillageDemolishFreesSlot(t *testing.T) {
 	}
 }
 
+func TestVillageUpgradeSpendsEssenceAndPersistsLevel(t *testing.T) {
+	store := &fakeStateStore{}
+	service := NewService()
+	service.state.MythEssence = 20
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	if result := service.BuildVillageBuilding(3, 0); !result.Success {
+		t.Fatalf("expected village build to succeed, got %#v", result)
+	}
+
+	beforeEssence := service.state.MythEssence
+	result := service.UpgradeVillageBuilding(3)
+	if !result.Success {
+		t.Fatalf("expected village upgrade to succeed, got %#v", result)
+	}
+	if service.state.MythEssence != beforeEssence-villageUpgradeCost(1) {
+		t.Fatalf("expected upgrade cost to be spent, before=%d after=%d", beforeEssence, service.state.MythEssence)
+	}
+	if store.saved.VillageBuildings[3].Level != 2 {
+		t.Fatalf("expected saved village building level 2, got %#v", store.saved.VillageBuildings[3])
+	}
+	if result.PlayerSnapshot.VillageBuildings[0].Level != 2 {
+		t.Fatalf("expected snapshot to include upgraded level, got %#v", result.PlayerSnapshot.VillageBuildings)
+	}
+}
+
 func TestMissionClaimsPersist(t *testing.T) {
 	store := &fakeStateStore{}
 	service := NewService()
