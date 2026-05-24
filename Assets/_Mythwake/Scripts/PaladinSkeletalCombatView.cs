@@ -138,9 +138,9 @@ public sealed class PaladinSkeletalCombatView : MonoBehaviour
         AddPart("leg_right", new Vector2(17f, 43f), 3f, 1f);
         AddPart("torso_armor", new Vector2(0f, 106f), 0f, 1f);
         AddPart("belt_gem", new Vector2(1f, 73f), 0f, 1f);
-        AddPart("arm_sword", new Vector2(-18f, 96f), -8f, 0.96f);
-        AddPart("sword", new Vector2(58f, 128f), -26f, 0.9f);
-        AddPart("shield", new Vector2(64f, 78f), 4f, 1f);
+        AddPart("arm_sword", new Vector2(-14f, 88f), -12f, 0.94f);
+        AddPart("sword", new Vector2(78f, 98f), -44f, 0.86f);
+        AddPart("shield", new Vector2(68f, 76f), 5f, 1f);
         AddPart("head_helmet", new Vector2(4f, 157f), 0f, 1f);
         AddPart("fx_sword_slash", new Vector2(96f, 103f), -20f, 0.82f);
         AddPart("fx_shield_flash", new Vector2(78f, 96f), 0f, 0.8f);
@@ -253,9 +253,9 @@ public sealed class PaladinSkeletalCombatView : MonoBehaviour
         Offset("torso_armor", new Vector2(0f, breath * 1.9f), slow * 0.9f, 1f);
         Offset("belt_gem", new Vector2(0f, breath * 1.2f), slow * 0.7f, 1f);
         Offset("head_helmet", new Vector2(slow * 0.8f, -breath * 1.4f), -slow * 1.1f, 1f);
-        Offset("arm_sword", new Vector2(-slow * 1.4f, breath * 1.2f), slow * 2.2f, 1f);
-        Offset("sword", new Vector2(-slow * 1.8f, breath * 1.2f), slow * 3f, 1f);
-        Offset("shield", new Vector2(slow * 1.6f, breath * 0.8f), -slow * 2.2f, 1f);
+        Offset("arm_sword", new Vector2(-slow * 1.1f, breath * 0.9f), slow * 1.7f, 1f);
+        Offset("sword", new Vector2(-slow * 1f, breath * 0.7f), slow * 1.8f, 1f);
+        Offset("shield", new Vector2(slow * 1.2f, breath * 0.7f), -slow * 1.8f, 1f);
         Offset("cape_back", new Vector2(-slow * 2.2f, -breath * 0.8f), -slow * 2.8f, 1f);
         Offset("shadow_holy_ring", Vector2.zero, 0f, 1f + Mathf.Sin(timer * 3.2f) * 0.02f);
     }
@@ -265,8 +265,8 @@ public sealed class PaladinSkeletalCombatView : MonoBehaviour
         ApplyIdle(timer);
         var pulse = Mathf.Clamp01(Mathf.Sin(timer * 1.35f) * 0.5f + 0.5f);
         var guard = SmoothStep(pulse);
-        Offset("shield", new Vector2(guard * 5f, guard * 5f), -5f - guard * 4f, 1f + guard * 0.03f);
-        Offset("sword", new Vector2(-guard * 4f, guard * 3f), -15f + guard * 5f, 1f);
+        Offset("shield", new Vector2(guard * 5f, guard * 4f), -4f - guard * 3.5f, 1f + guard * 0.025f);
+        Offset("sword", new Vector2(-guard * 2f, guard * 1f), -8f + guard * 3f, 1f);
         Offset("head_helmet", new Vector2(guard * 1.8f, 0f), -guard * 2.2f, 1f);
         Offset("fx_shield_flash", new Vector2(78f, 96f), 0f, 0.52f + guard * 0.14f);
         SetPartAlpha("fx_shield_flash", Mathf.Clamp01((pulse - 0.72f) * 3.2f) * 0.25f);
@@ -280,13 +280,13 @@ public sealed class PaladinSkeletalCombatView : MonoBehaviour
         var counter = Mathf.Sin(timer * 8.6f + Mathf.PI);
         var lift = Mathf.Abs(stride);
         var counterLift = Mathf.Abs(counter);
-        Offset("leg_left", new Vector2(stride * 4f, lift * 2.5f), stride * 7f, 1f);
-        Offset("leg_right", new Vector2(counter * 4f, counterLift * 2.5f), counter * 7f, 1f);
-        Offset("torso_armor", new Vector2(0f, Mathf.Sin(timer * 17.2f) * 1.4f), -stride * 1.8f, 1f);
-        Offset("belt_gem", new Vector2(0f, Mathf.Sin(timer * 17.2f) * 1.2f), -stride * 1.6f, 1f);
-        Offset("cape_back", new Vector2(-7f + stride * 1.2f, 1f), -8f + stride * 2.5f, 1f);
-        Offset("shield", new Vector2(3f, 2f), -4f + stride * 2f, 1f);
-        Offset("sword", new Vector2(-3f, 2f), -16f + stride * 2.5f, 1f);
+        Offset("leg_left", new Vector2(stride * 3.3f, lift * 1.8f), stride * 5.5f, 1f);
+        Offset("leg_right", new Vector2(counter * 3.3f, counterLift * 1.8f), counter * 5.5f, 1f);
+        Offset("torso_armor", new Vector2(0f, Mathf.Sin(timer * 17.2f) * 1f), -stride * 1.4f, 1f);
+        Offset("belt_gem", new Vector2(0f, Mathf.Sin(timer * 17.2f) * 0.9f), -stride * 1.2f, 1f);
+        Offset("cape_back", new Vector2(-6f + stride * 1f, 1f), -6f + stride * 2f, 1f);
+        Offset("shield", new Vector2(2.5f, 1.6f), -3.2f + stride * 1.6f, 1f);
+        Offset("sword", new Vector2(-1f, 1f), -6f + stride * 1.6f, 1f);
     }
 
     private void ApplyRun(float timer)
@@ -294,15 +294,15 @@ public sealed class PaladinSkeletalCombatView : MonoBehaviour
         ApplyIdle(timer);
         var stride = Mathf.Sin(timer * 14.4f);
         var counter = Mathf.Sin(timer * 14.4f + Mathf.PI);
-        Offset("leg_left", new Vector2(stride * 8f, Mathf.Abs(stride) * 5.5f), stride * 12f, 1f);
-        Offset("leg_right", new Vector2(counter * 8f, Mathf.Abs(counter) * 5.5f), counter * 12f, 1f);
-        Offset("torso_armor", new Vector2(3f, Mathf.Abs(stride) * 4f), -6f, 1f);
-        Offset("belt_gem", new Vector2(3f, Mathf.Abs(stride) * 3.5f), -5f, 1f);
-        Offset("head_helmet", new Vector2(2f, Mathf.Abs(stride) * 3f), 5f, 1f);
-        Offset("cape_back", new Vector2(-15f + stride * 1.8f, 5f), -15f + stride * 3f, 1f);
-        Offset("arm_sword", new Vector2(-6f, 3f), 8f + stride * 2f, 1f);
-        Offset("sword", new Vector2(-9f, 5f), -24f + stride * 3f, 1f);
-        Offset("shield", new Vector2(8f, 5f), -10f + stride * 2f, 1f);
+        Offset("leg_left", new Vector2(stride * 6f, Mathf.Abs(stride) * 3.8f), stride * 10f, 1f);
+        Offset("leg_right", new Vector2(counter * 6f, Mathf.Abs(counter) * 3.8f), counter * 10f, 1f);
+        Offset("torso_armor", new Vector2(2f, Mathf.Abs(stride) * 2.8f), -4.5f, 1f);
+        Offset("belt_gem", new Vector2(2f, Mathf.Abs(stride) * 2.3f), -3.8f, 1f);
+        Offset("head_helmet", new Vector2(1.5f, Mathf.Abs(stride) * 2f), 3.6f, 1f);
+        Offset("cape_back", new Vector2(-12f + stride * 1.5f, 4f), -12f + stride * 2.4f, 1f);
+        Offset("arm_sword", new Vector2(-4f, 1.5f), 5f + stride * 1.5f, 1f);
+        Offset("sword", new Vector2(-3f, 1.5f), -8f + stride * 1.6f, 1f);
+        Offset("shield", new Vector2(7f, 4f), -8f + stride * 1.6f, 1f);
     }
 
     private void ApplyAttack1(float phase, bool hasTarget, Vector2 targetPosition, float scaleMultiplier)
@@ -314,8 +314,8 @@ public sealed class PaladinSkeletalCombatView : MonoBehaviour
         Offset("torso_armor", new Vector2(-7f * windup + 13f * slashWeight + 5f * follow, 2f * slashWeight), -6f * windup + 10f * slashWeight + 4f * follow, 1f);
         Offset("belt_gem", new Vector2(-6f * windup + 11f * slashWeight + 4f * follow, 1.6f * slashWeight), -5f * windup + 8f * slashWeight + 3f * follow, 1f);
         Offset("head_helmet", new Vector2(-3f * windup + 4f * slashWeight + 2f * follow, 1f * slashWeight), -2.5f * windup + 2.8f * slashWeight, 1f);
-        Offset("arm_sword", new Vector2(-14f * windup + 24f * slashWeight + 10f * follow, -4f * windup + 4f * slashWeight), -18f * windup + 34f * slashWeight + 10f * follow, 1f);
-        Offset("sword", new Vector2(-28f * windup + 54f * slashWeight + 16f * follow, 10f * windup - 8f * slashWeight - 3f * follow), -42f * windup + 88f * slashWeight + 26f * follow, 1f);
+        Offset("arm_sword", new Vector2(-10f * windup + 22f * slashWeight + 8f * follow, -5f * windup + 2f * slashWeight), -17f * windup + 31f * slashWeight + 8f * follow, 1f);
+        Offset("sword", new Vector2(-16f * windup + 44f * slashWeight + 10f * follow, 2f * windup - 8f * slashWeight - 3f * follow), -26f * windup + 66f * slashWeight + 18f * follow, 1f);
         Offset("shield", new Vector2(-3f * windup + 6f * slashWeight, 1f * slashWeight), -4f * windup - 4f * slashWeight, 1f);
         Offset("cape_back", new Vector2(-9f * slashWeight - 4f * follow, -1f * slashWeight), -8f * slashWeight - 3f * follow, 1f);
 
@@ -325,7 +325,7 @@ public sealed class PaladinSkeletalCombatView : MonoBehaviour
             var targetLocal = hasTarget ? ToLocal(targetPosition, scaleMultiplier) : new Vector2(145f, 74f);
             var t = EaseInOut(Mathf.InverseLerp(0.28f, 0.7f, phase));
             var alpha = Mathf.Sin(t * Mathf.PI);
-            slashPart.rect.anchoredPosition = Vector2.Lerp(new Vector2(74f, 116f), targetLocal, 0.56f + t * 0.22f);
+            slashPart.rect.anchoredPosition = Vector2.Lerp(new Vector2(82f, 96f), targetLocal, 0.56f + t * 0.22f);
             slashPart.rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(-35f, 22f, t));
             slashPart.rect.localScale = Vector3.one * slashPart.setupScale * (0.56f + alpha * 0.34f);
             slashPart.image.color = new Color(1f, 1f, 1f, Mathf.Clamp01(alpha * 1.08f));
@@ -345,9 +345,9 @@ public sealed class PaladinSkeletalCombatView : MonoBehaviour
         Offset("head_helmet", new Vector2(-3f * brace + 3f * bash, 2f * glow), -2.5f * brace + 2.5f * bash, 1f);
         Offset("leg_left", new Vector2(-4f * brace + 2f * settle, 0f), -6f * brace + 3f * settle, 1f);
         Offset("leg_right", new Vector2(5f * brace - 2f * settle, 1f * bash), 6f * brace - 2f * settle, 1f);
-        Offset("shield", new Vector2(-7f * brace + 28f * bash + 8f * settle, 8f * brace + 4f * bash), -16f * brace + 34f * bash + 6f * settle, 1f + glow * 0.04f);
-        Offset("arm_sword", new Vector2(-8f * brace + 6f * bash, -2f * brace + 2f * bash), -12f * brace + 10f * bash, 1f);
-        Offset("sword", new Vector2(-16f * brace + 12f * bash, 6f * brace - 4f * bash), -30f * brace + 24f * bash, 1f);
+        Offset("shield", new Vector2(-4f * brace + 32f * bash + 8f * settle, 7f * brace + 4f * bash), -14f * brace + 32f * bash + 5f * settle, 1f + glow * 0.04f);
+        Offset("arm_sword", new Vector2(-5f * brace + 7f * bash, -3f * brace + 1f * bash), -10f * brace + 9f * bash, 1f);
+        Offset("sword", new Vector2(-7f * brace + 11f * bash, 1f * brace - 4f * bash), -18f * brace + 18f * bash, 1f);
         Offset("cape_back", new Vector2(-13f * glow - 4f * settle, 3f * glow), -13f * glow - 4f * settle, 1f + glow * 0.025f);
 
         var flash = Get("fx_shield_flash");
@@ -369,6 +369,19 @@ public sealed class PaladinSkeletalCombatView : MonoBehaviour
             barrier.rect.localScale = Vector3.one * barrier.setupScale * (0.74f + glow * 0.28f);
             barrier.image.color = new Color(1f, 1f, 1f, Mathf.Clamp01(glow * 0.7f));
             barrier.image.gameObject.SetActive(phase > 0.05f && phase < 0.9f);
+        }
+
+        var swordSlash = Get("fx_sword_slash");
+        if (swordSlash != null)
+        {
+            var targetLocal = hasTarget ? ToLocal(targetPosition, scaleMultiplier) : new Vector2(138f, 72f);
+            var t = EaseInOut(Mathf.InverseLerp(0.42f, 0.82f, phase));
+            var alpha = Mathf.Sin(t * Mathf.PI);
+            swordSlash.rect.anchoredPosition = Vector2.Lerp(new Vector2(76f, 88f), targetLocal, 0.44f + t * 0.2f);
+            swordSlash.rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(-8f, 28f, t));
+            swordSlash.rect.localScale = Vector3.one * swordSlash.setupScale * (0.48f + alpha * 0.28f);
+            swordSlash.image.color = new Color(1f, 1f, 1f, Mathf.Clamp01(alpha * 0.85f));
+            swordSlash.image.gameObject.SetActive(phase >= 0.42f && phase <= 0.86f);
         }
     }
 

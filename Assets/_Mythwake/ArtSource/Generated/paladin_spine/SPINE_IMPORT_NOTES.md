@@ -26,18 +26,24 @@ Goal: turn the existing Paladin combat art into a Spine-ready cutout rig that fo
 
 ## Animation Pass
 
-The Spine JSON now contains the requested clips: `idle`, `wait`, `walk`, `run`, `attack1`, and `attack2`.
+The Spine JSON now contains the requested clips: `idle`, `wait`, `walk`, `run`, `attack1`, and `attack2`. The current v3 pass is focused on animation weight and readability: the sword arm setup sits lower and farther forward, locomotion has less bounce, and both attacks have longer recovery tails instead of snapping straight back to guard.
 
 - `idle`: short breathing loop, small shield/sword counter-sway.
 - `wait`: longer alert loop with a subtle head check and heavier armor settle.
 - `walk`: slower two-step locomotion loop with restrained tank weight.
 - `run`: faster bounce, stronger leg swing, cape drag, and steadier shield silhouette.
-- `attack1`: quick horizontal sword slash with `fx_sword_slash`.
-- `attack2`: heavier shield-forward smite with `fx_shield_flash`, `fx_holy_barrier`, and a late sword slash.
+- `attack1`: quick horizontal sword slash with `fx_sword_slash`, held through follow-through before recovery.
+- `attack2`: heavier shield-forward smite with `fx_shield_flash`, `fx_holy_barrier`, and a lower late sword slash.
 
 ## Transition Pass
 
-The locomotion clips begin and end on matching guard poses, and both attacks recover to the same neutral guard silhouette. For runtime blending, use `hero_paladin_spine_transition_mixes.json`; the key mixes are short into attacks (`0.05`-`0.06s`), slightly longer out of attacks (`0.10`-`0.14s`), and gentle idle/wait/walk blends (`0.16`-`0.18s`).
+The locomotion clips begin and end on matching guard poses, and both attacks recover to the same neutral guard silhouette. For runtime blending, use `hero_paladin_spine_transition_mixes.json`; the key mixes are short into attacks (`0.05`-`0.06s`), slightly longer out of attacks (`0.10`-`0.14s`), bidirectional attack chaining (`0.08`-`0.09s`), and gentle idle/wait/walk blends (`0.16`-`0.18s`).
+
+The generated `spine_export/hero_paladin_spine_SkeletonData.asset` now carries the same custom mix table for spine-unity, with a `0.12s` default fallback for unlisted transitions.
+
+## Validation
+
+Use `Mythwake/Validate Paladin Spine Handoff` in the Unity editor to load the generated `SkeletonDataAsset` through spine-unity and verify that all Paladin clips, key bones, and serialized custom mixes match this handoff. The same check can be run from batchmode with `-executeMethod PaladinSpineValidation.RunPaladinSpineValidation` when no other Unity instance has the project open.
 
 ## Notes
 

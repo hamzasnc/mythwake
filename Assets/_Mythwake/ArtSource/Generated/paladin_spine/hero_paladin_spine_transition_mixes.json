@@ -11,8 +11,9 @@
   "principles": [
     "Idle, wait, walk, and run loop back to their first frame for smooth cyclic blending.",
     "Attack clips start and end on the neutral guard silhouette so they can return to idle, walk, or run without a pop.",
-    "Use short attack mix-in and a slightly longer attack recovery mix-out; let attack2 override attack1 when chained."
+    "Use short attack mix-in and a slightly longer attack recovery mix-out; allow attack1 and attack2 to chain in either order."
   ],
+  "spine_unity_default_mix_seconds": 0.12,
   "recommended_spine_mixes_seconds": [
     {
       "from": "idle",
@@ -88,6 +89,11 @@
       "from": "attack1",
       "to": "attack2",
       "duration": 0.08
+    },
+    {
+      "from": "attack2",
+      "to": "attack1",
+      "duration": 0.09
     },
     {
       "from": "idle",
