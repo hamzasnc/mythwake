@@ -1135,6 +1135,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private string selectedDungeonBattleMapTextureName;
     private string backendStatus = "Backend: local prototype mode";
     private long backendStateRevision;
+    private string backendLastAfkClaimUtc = string.Empty;
     private MythwakeDefinitionSnapshotDto backendDefinitions;
     private bool hasBackendDefinitions;
     private MythwakeRuntimeArtPresenter runtimeArt;
@@ -4343,6 +4344,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendTeamPower = Mathf.Max(0, state.teamPower);
         backendTeamAttack = Mathf.Max(0, state.teamAttack);
         backendTeamHealth = Mathf.Max(0, state.teamHealth);
+        backendLastAfkClaimUtc = snapshot.lastAfkClaimUtc ?? string.Empty;
 
         ApplyBackendHeroes(snapshot.heroes, snapshot.heroShards);
         ApplyBackendEquipment(snapshot.equipment);
@@ -14257,15 +14259,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         inventoryPopupRoot.gameObject.SetActive(false);
         RefreshInventoryPopupUi();
 
-        fastRewardsPopupRoot = CreateRuntimePopup(homeActionRoot, "Fast Rewards Popup", new Vector2(0, -380), new Vector2(760, 370), "Fast Rewards");
-        fastRewardsPopupText = CreateRuntimeText(fastRewardsPopupRoot, "Fast Rewards Body", string.Empty, 24, new Vector2(0, -95), new Vector2(660, 165));
+        fastRewardsPopupRoot = CreateRuntimePopup(homeActionRoot, "Fast Rewards Popup", new Vector2(0, -380), new Vector2(760, 460), "Fast Rewards");
+        fastRewardsPopupText = CreateRuntimeText(fastRewardsPopupRoot, "Fast Rewards Body", string.Empty, 22, new Vector2(0, -96), new Vector2(660, 250));
         fastRewardsPopupText.alignment = TextAlignmentOptions.Center;
         fastRewardsPopupText.enableAutoSizing = true;
-        fastRewardsPopupText.fontSizeMin = 18;
-        fastRewardsPopupText.fontSizeMax = 24;
+        fastRewardsPopupText.fontSizeMin = 16;
+        fastRewardsPopupText.fontSizeMax = 22;
         fastRewardsPopupText.textWrappingMode = TextWrappingModes.Normal;
-        fastRewardsRedeemButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Redeem Button", "Redeem", -120, -290, 210, 58);
-        fastRewardsCloseButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Close Button", "Close", 145, -290, 160, 58);
+        fastRewardsRedeemButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Redeem Button", "Redeem", -120, -385, 210, 58);
+        fastRewardsCloseButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Close Button", "Close", 145, -385, 160, 58);
         fastRewardsPopupRoot.gameObject.SetActive(false);
 
         chatPopupRoot = CreateRuntimePopup(homeActionRoot, "Chat Popup", new Vector2(-210, -590), new Vector2(560, 240), "Chat");
@@ -18633,18 +18635,133 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
+        if (backendGameplayEnabled)
+        {
+            RefreshServerFastRewardsPopupUi();
+            return;
+        }
+
         var storedSeconds = Mathf.FloorToInt(afkRewardStoredSeconds);
         var pendingGold = CalculateAfkGoldReward(afkRewardStoredSeconds);
         var pendingEssence = CalculateAfkEssenceReward(afkRewardStoredSeconds);
         fastRewardsPopupText.text =
+            "Local Mode: continuous stored rewards\n" +
             $"Stored: {FormatDuration(storedSeconds)} / {FormatDuration(GetAfkRewardMaxSeconds())}\n" +
             $"Rate: +{FormatRate(GetAfkGoldPerSecond())} Gold/s   +{FormatRate(GetAfkEssencePerSecond())} Essence/s\n" +
+            $"{FormatLocalFastRewardsBonusLine()}\n" +
             $"Ready: +{FormatCompactNumber(pendingGold)} Gold   +{FormatCompactNumber(pendingEssence)} Essence";
 
         if (fastRewardsRedeemButton != null)
         {
             fastRewardsRedeemButton.interactable = pendingGold > 0 || pendingEssence > 0;
+            SetButtonLabel(fastRewardsRedeemButton, "Redeem");
         }
+    }
+
+    private void RefreshServerFastRewardsPopupUi()
+    {
+        SetButtonLabel(fastRewardsRedeemButton, "Claim");
+
+        if (!TryGetBackendAfkRewardDefinition(out var definition))
+        {
+            fastRewardsPopupText.text =
+                "Server Mode: backend-authoritative rewards\n" +
+                "Definitions not loaded yet.\n" +
+                "Use Server Mode bootstrap or Sync first.\n" +
+                "Local stored rewards are paused in Server Mode.";
+
+            if (fastRewardsRedeemButton != null)
+            {
+                fastRewardsRedeemButton.interactable = backendClient != null && backendClient.HasSession && !backendRequestInProgress;
+            }
+
+            return;
+        }
+
+        var elapsedKnown = TryGetBackendAfkElapsedSeconds(out var elapsedSeconds);
+        var claimSeconds = Mathf.Clamp(elapsedSeconds, 0, Mathf.Max(definition.maxClaimSeconds, definition.minClaimSeconds));
+        CalculateBackendAfkReward(definition, elapsedSeconds, enemyLevel, out var pendingGold, out var pendingEssence);
+        var elapsedText = elapsedKnown ? FormatDuration(claimSeconds) : "unknown";
+        fastRewardsPopupText.text =
+            "Server Mode: backend-authoritative rewards\n" +
+            $"Timer: {elapsedText} / {FormatDuration(definition.maxClaimSeconds)}  Min {FormatDuration(definition.minClaimSeconds)}\n" +
+            $"Rate: +{FormatRate(GetBackendAfkGoldPerSecond(definition, enemyLevel))} Gold/s   +{FormatRate(GetBackendAfkEssencePerSecond(definition, enemyLevel))} Essence/s\n" +
+            "Village local bonuses do not modify server rewards yet.\n" +
+            $"Ready estimate: +{FormatCompactNumber(pendingGold)} Gold   +{FormatCompactNumber(pendingEssence)} Essence";
+
+        if (fastRewardsRedeemButton != null)
+        {
+            fastRewardsRedeemButton.interactable = backendClient != null && backendClient.HasSession && !backendRequestInProgress;
+        }
+    }
+
+    private string FormatLocalFastRewardsBonusLine()
+    {
+        var goldRateBonus = GetVillageAfkGoldRateBonus();
+        var essenceRateBonus = GetVillageAfkEssenceRateBonus();
+        if (goldRateBonus <= 0f && essenceRateBonus <= 0f)
+        {
+            return "Village bonus: none yet";
+        }
+
+        return $"Village bonus: +{FormatRate(goldRateBonus)} Gold/s   +{FormatRate(essenceRateBonus)} Essence/s";
+    }
+
+    private bool TryGetBackendAfkElapsedSeconds(out int elapsedSeconds)
+    {
+        elapsedSeconds = 0;
+        if (string.IsNullOrWhiteSpace(backendLastAfkClaimUtc))
+        {
+            return false;
+        }
+
+        if (!DateTime.TryParse(backendLastAfkClaimUtc, null, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var parsed))
+        {
+            return false;
+        }
+
+        elapsedSeconds = Mathf.Max(0, Mathf.FloorToInt((float)(DateTime.UtcNow - parsed.ToUniversalTime()).TotalSeconds));
+        return true;
+    }
+
+    private static void CalculateBackendAfkReward(MythwakeAfkRewardDefinitionDto definition, int elapsedSeconds, int stage, out int gold, out int mythEssence)
+    {
+        gold = 0;
+        mythEssence = 0;
+        var minClaimSeconds = Mathf.Max(0, definition.minClaimSeconds);
+        var maxClaimSeconds = Mathf.Max(minClaimSeconds, definition.maxClaimSeconds);
+        var claimSeconds = Mathf.Clamp(elapsedSeconds, 0, maxClaimSeconds);
+        if (claimSeconds < minClaimSeconds)
+        {
+            return;
+        }
+
+        var tickSeconds = Mathf.Max(1, definition.tickSeconds);
+        var ticks = claimSeconds / tickSeconds;
+        var essencePerTick = GetBackendAfkEssencePerTick(definition, stage);
+        var goldPerTick = GetBackendAfkGoldPerTick(definition, essencePerTick);
+        gold = Mathf.Max(0, ticks * goldPerTick);
+        mythEssence = Mathf.Max(0, ticks * essencePerTick);
+    }
+
+    private static float GetBackendAfkEssencePerSecond(MythwakeAfkRewardDefinitionDto definition, int stage)
+    {
+        return GetBackendAfkEssencePerTick(definition, stage) / (float)Mathf.Max(1, definition.tickSeconds);
+    }
+
+    private static float GetBackendAfkGoldPerSecond(MythwakeAfkRewardDefinitionDto definition, int stage)
+    {
+        return GetBackendAfkGoldPerTick(definition, GetBackendAfkEssencePerTick(definition, stage)) / (float)Mathf.Max(1, definition.tickSeconds);
+    }
+
+    private static int GetBackendAfkEssencePerTick(MythwakeAfkRewardDefinitionDto definition, int stage)
+    {
+        return Mathf.Max(0, definition.baseMythEssencePerTick + Mathf.Max(1, stage) * definition.mythEssencePerStage);
+    }
+
+    private static int GetBackendAfkGoldPerTick(MythwakeAfkRewardDefinitionDto definition, int essencePerTick)
+    {
+        return Mathf.Max(1, essencePerTick / Mathf.Max(1, definition.goldPerMythEssenceDivisor));
     }
 
     private static string FormatCompactNumber(int value)

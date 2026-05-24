@@ -24,6 +24,7 @@ Current prototype:
 - Server Mode uses backend hero, equipment, accessory, and snapshot team stats for authoritative stat previews
 - Server Mode upgrade buttons now respect backend max-level/max-ascension caps and AFK timing definitions
 - Local and backend AFK reward caps are aligned at 24 hours
+- Fast Rewards popup separates local stored rewards from Server Mode backend-authoritative AFK claim timing
 - Server Mode preference persists across Unity restarts and reboots through `/client/bootstrap`
 - Server Mode blocks local debug grants/reset so PostgreSQL remains the authoritative test source
 - Gameplay buttons are gated while backend requests are in flight to avoid accidental double actions
@@ -64,7 +65,7 @@ Current prototype:
 - Dungeons have a dedicated map screen with Gold, Essence, and Gear dungeon cards
 - Village has a dedicated scrollable map with 12 build plots, building placement art, and built-building detail controls
 - Village buildings can be built, upgraded, and demolished locally and through Server Mode backend actions
-- Village building detail now shows placeholder bonuses; local mode applies small Team ATK/HP or Fast Rewards rate boosts by building type and level
+- Village building detail now shows placeholder bonuses; local mode applies small Team ATK/HP or Fast Rewards rate boosts by building type and level while Server Mode stays backend-authoritative
 - Campaign and dungeon fights now simulate win/loss with team HP and enemy damage
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
 - Hero shards add minor Attack and HP immediately
@@ -165,7 +166,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
-- Prototype 0.2.75: Added Village building detail/upgrade UI, visible placeholder building bonuses, local and Server Mode upgrade actions, backend Village upgrade tests, backend AFK 24h cap alignment, and a Unity editor Village UI validator.
+- Prototype 0.2.75: Added Village building detail/upgrade UI, visible local-only placeholder building bonuses, local and Server Mode upgrade actions, backend Village upgrade tests, backend AFK 24h cap alignment, Fast Rewards server/local display polish, and a Unity editor Village UI validator.
 - Prototype 0.2.74: Added Paladin combat preview and cleaned up the Paladin Spine handoff.
 - Prototype 0.2.73: Added Paladin combat assets.
 - Prototype 0.2.72: Added multiplayer/backend Village building state.
