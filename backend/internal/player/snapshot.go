@@ -21,6 +21,7 @@ func (service *Service) snapshot() api.PlayerSnapshot {
 		Equipment:         equipmentStates(service.equipmentLevels),
 		Accessories:       accessoryStates(service.accessoryInventory, service.accessoryLevels),
 		EquippedAccessory: equippedAccessoryStates(service.equippedAccessory),
+		VillageBuildings:  villageBuildingStates(service.villageBuildings),
 		DailyClaims:       claimStates(service.claimedDaily),
 		BattlePassClaims:  claimStates(service.claimedBattlePass),
 		SummonCount:       service.summonCount,
@@ -119,6 +120,17 @@ func equippedAccessoryStates(equipped map[string]string) []api.EquippedAccessory
 	return states
 }
 
+func villageBuildingStates(buildings map[int]api.VillageBuilding) []api.VillageBuilding {
+	slotIndexes := sortedIntKeys(buildings)
+	states := make([]api.VillageBuilding, 0, len(slotIndexes))
+	for _, slotIndex := range slotIndexes {
+		if building, ok := normalizeVillageBuildingState(slotIndex, buildings[slotIndex]); ok {
+			states = append(states, building)
+		}
+	}
+	return states
+}
+
 func claimStates(claims map[string]bool) []api.ClaimState {
 	claimIDs := sortedKeys(claims)
 	states := make([]api.ClaimState, 0, len(claimIDs))
@@ -146,5 +158,14 @@ func sortedBoolKeys(values map[string]bool) []string {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
+	return keys
+}
+
+func sortedIntKeys[T any](values map[int]T) []int {
+	keys := make([]int, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Ints(keys)
 	return keys
 }

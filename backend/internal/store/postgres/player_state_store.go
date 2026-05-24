@@ -76,6 +76,9 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	if err := store.saveAccessoryState(ctx, tx, playerID, state); err != nil {
 		return err
 	}
+	if err := store.saveVillageState(ctx, tx, playerID, state); err != nil {
+		return err
+	}
 	if err := store.saveMetaState(ctx, tx, playerID, state, source); err != nil {
 		return err
 	}
@@ -174,6 +177,7 @@ func (store *PlayerStateStore) ResetState(ctx context.Context, playerID string) 
 		`DELETE FROM player.player_daily_progress WHERE player_id = $1`,
 		`DELETE FROM player.player_battle_pass_claims WHERE player_id = $1`,
 		`DELETE FROM player.player_summon_state WHERE player_id = $1`,
+		`DELETE FROM player.player_village_buildings WHERE player_id = $1`,
 		`DELETE FROM player.player_equipped_accessories WHERE player_id = $1`,
 		`DELETE FROM player.player_accessory_inventory WHERE player_id = $1`,
 		`DELETE FROM player.player_equipment_training WHERE player_id = $1`,
@@ -347,6 +351,7 @@ func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentS
 		AccessoryInventory: map[string]int{},
 		AccessoryLevels:    map[string]int{},
 		EquippedAccessory:  map[string]string{},
+		VillageBuildings:   map[int]api.VillageBuilding{},
 		ClaimedDaily:       map[string]bool{},
 		ClaimedBattlePass:  map[string]bool{},
 		SummonCount:        snapshot.SummonCount,
@@ -370,6 +375,12 @@ func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentS
 	}
 	for _, equipped := range snapshot.EquippedAccessory {
 		state.EquippedAccessory[equipped.SlotID] = equipped.AccessoryID
+	}
+	for _, building := range snapshot.VillageBuildings {
+		if building.SlotIndex < 0 {
+			continue
+		}
+		state.VillageBuildings[building.SlotIndex] = building
 	}
 	for _, claim := range snapshot.DailyClaims {
 		state.ClaimedDaily[claim.ClaimID] = claim.Claimed
@@ -495,6 +506,10 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
+	villageBuildings, err := store.loadVillageBuildings(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
 	dailyDate, dailyFightCount, dailyStageClears, dailySummonCount, err := store.loadDailyProgress(ctx, playerID)
 	if err != nil {
 		return player.PersistentState{}, false, err
@@ -531,6 +546,7 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 		AccessoryInventory: accessoryInventory,
 		AccessoryLevels:    accessoryLevels,
 		EquippedAccessory:  equippedAccessory,
+		VillageBuildings:   villageBuildings,
 		ClaimedDaily:       claimedDaily,
 		ClaimedBattlePass:  claimedBattlePass,
 		SummonCount:        summonCount,
@@ -789,6 +805,33 @@ func (store *PlayerStateStore) saveEquipmentState(ctx context.Context, tx *sql.T
 				level = EXCLUDED.level,
 				updated_at = now()
 		`, playerID, equipmentID, level); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (store *PlayerStateStore) saveVillageState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
+	if _, err := tx.ExecContext(ctx, `
+		DELETE FROM player.player_village_buildings
+		WHERE player_id = $1
+	`, playerID); err != nil {
+		return err
+	}
+
+	for slotIndex, building := range state.VillageBuildings {
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO player.player_village_buildings (
+				player_id,
+				slot_index,
+				building_id,
+				building_option_index,
+				level,
+				updated_at
+			)
+			VALUES ($1, $2, $3, $4, $5, now())
+		`, playerID, slotIndex, building.BuildingID, building.BuildingOptionIndex, building.Level); err != nil {
 			return err
 		}
 	}
@@ -1098,6 +1141,29 @@ func (store *PlayerStateStore) loadEquippedAccessories(ctx context.Context, play
 	}
 
 	return equipped, rows.Err()
+}
+
+func (store *PlayerStateStore) loadVillageBuildings(ctx context.Context, playerID string) (map[int]api.VillageBuilding, error) {
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT slot_index, building_id, building_option_index, level
+		FROM player.player_village_buildings
+		WHERE player_id = $1
+	`, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	buildings := map[int]api.VillageBuilding{}
+	for rows.Next() {
+		var building api.VillageBuilding
+		if err := rows.Scan(&building.SlotIndex, &building.BuildingID, &building.BuildingOptionIndex, &building.Level); err != nil {
+			return nil, err
+		}
+		buildings[building.SlotIndex] = building
+	}
+
+	return buildings, rows.Err()
 }
 
 func accessoryIsEquipped(equipped map[string]string, accessoryID string) bool {

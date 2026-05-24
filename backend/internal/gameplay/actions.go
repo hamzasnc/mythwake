@@ -18,6 +18,9 @@ const (
 	ActionAccessoryLevel    = "accessory_level"
 	ActionAccessoryFuse     = "accessory_fuse"
 	ActionSummonPull        = "summon_pull"
+	ActionVillageBuild      = "village_build"
+	ActionVillageDemolish   = "village_demolish"
+	ActionVillageUpgrade    = "village_upgrade"
 	ActionDailyMissionClaim = "daily_mission_claim"
 	ActionBattlePassClaim   = "battle_pass_claim"
 )
@@ -44,6 +47,9 @@ func ActionCatalog() []ActionDefinition {
 		{ID: ActionAccessoryLevel, Domain: "inventory", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionAccessoryFuse, Domain: "inventory", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionSummonPull, Domain: "summon", RequiresIdempotency: true, MaterializedByFlush: true},
+		{ID: ActionVillageBuild, Domain: "village", RequiresIdempotency: true, MaterializedByFlush: true},
+		{ID: ActionVillageDemolish, Domain: "village", RequiresIdempotency: true, MaterializedByFlush: true},
+		{ID: ActionVillageUpgrade, Domain: "village", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionDailyMissionClaim, Domain: "mission", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionBattlePassClaim, Domain: "battle_pass", RequiresIdempotency: true, MaterializedByFlush: true},
 	}

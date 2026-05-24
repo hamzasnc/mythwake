@@ -547,6 +547,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int[] accessoryInventory;
         public bool[] villagePlotBuiltStates;
         public int[] villagePlotBuildingSelections;
+        public int[] villagePlotBuildingLevels;
         public bool[] dailyMissionClaimed;
         public bool[] battlePassRewardsClaimed;
     }
@@ -1209,6 +1210,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RawImage[] villageBuildingImages;
     private bool[] villagePlotBuiltStates;
     private int[] villagePlotBuildingSelections;
+    private int[] villagePlotBuildingLevels;
     private int selectedVillagePlotIndex = -1;
     private int selectedVillageBuildingOptionIndex;
     private string villageBuildFeedbackMessage = string.Empty;
@@ -4041,6 +4043,37 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         CompleteBackendOfflineClaim(success, error, result, "Server AFK");
     }
 
+    private void OnBackendVillageAction(bool success, string error, MythwakeActionResultDto result)
+    {
+        if (!success)
+        {
+            villageBuildFeedbackMessage = $"Server request failed: {error}";
+            RefreshUi();
+            FinishBackendRequest($"Server request failed: {error}");
+            return;
+        }
+
+        ApplyBackendSnapshot(result.playerSnapshot);
+        villageBuildFeedbackMessage = string.IsNullOrWhiteSpace(result.message) ? FormatBackendActionOutcome(result) : result.message;
+        if (result.success)
+        {
+            selectedVillagePlotIndex = -1;
+            selectedVillageBuildingOptionIndex = 0;
+            if (villageBuildPanelRoot != null)
+            {
+                villageBuildPanelRoot.gameObject.SetActive(false);
+            }
+
+            if (villageDemolishPanelRoot != null)
+            {
+                villageDemolishPanelRoot.gameObject.SetActive(false);
+            }
+        }
+
+        RefreshUi();
+        FinishBackendRequest($"Server action: {FormatBackendActionOutcome(result)}  {result.actionId}{FormatBackendRevisionSuffix(result)}");
+    }
+
     private void CompleteBackendOfflineClaim(bool success, string error, MythwakeActionResultDto result, string source)
     {
         if (!success)
@@ -4301,6 +4334,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         ApplyBackendHeroes(snapshot.heroes, snapshot.heroShards);
         ApplyBackendEquipment(snapshot.equipment);
         ApplyBackendAccessories(snapshot.accessories, snapshot.equippedAccessories);
+        ApplyBackendVillageBuildings(snapshot.villageBuildings);
         ApplyBackendDailyProgress(snapshot.dailyProgress);
         ApplyBackendClaims(snapshot.dailyClaims, snapshot.battlePassClaims);
 
@@ -4492,6 +4526,36 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return 1;
+    }
+
+    private void ApplyBackendVillageBuildings(MythwakeVillageBuildingStateDto[] villageBuildings)
+    {
+        EnsureVillageState();
+        for (var i = 0; i < VillagePlotCount; i++)
+        {
+            villagePlotBuiltStates[i] = false;
+            villagePlotBuildingSelections[i] = -1;
+            villagePlotBuildingLevels[i] = 0;
+        }
+
+        if (villageBuildings == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < villageBuildings.Length; i++)
+        {
+            var slotIndex = villageBuildings[i].slotIndex;
+            if (slotIndex < 0 || slotIndex >= VillagePlotCount)
+            {
+                continue;
+            }
+
+            var optionIndex = Mathf.Clamp(villageBuildings[i].buildingOptionIndex, 0, VillageBuildingOptionCount - 1);
+            villagePlotBuiltStates[slotIndex] = true;
+            villagePlotBuildingSelections[slotIndex] = optionIndex;
+            villagePlotBuildingLevels[slotIndex] = Mathf.Max(1, villageBuildings[i].level);
+        }
     }
 
     private static bool GetClaimed(MythwakeClaimStateDto[] claims, string claimId)
@@ -4918,6 +4982,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             accessoryInventory = CopyIntArray(accessoryInventory, AccessorySlotCount * AccessoryRarityCount, 0),
             villagePlotBuiltStates = CopyBoolArray(villagePlotBuiltStates, VillagePlotCount),
             villagePlotBuildingSelections = CopyIntArray(villagePlotBuildingSelections, VillagePlotCount, -1),
+            villagePlotBuildingLevels = CopyIntArray(villagePlotBuildingLevels, VillagePlotCount, 0),
             dailyMissionClaimed = CopyBoolArray(dailyMissionClaimed, DailyMissionCount),
             battlePassRewardsClaimed = CopyBoolArray(battlePassRewardsClaimed, BattlePassRewardCount)
         };
@@ -4963,6 +5028,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         accessoryInventory = CopyIntArray(data.accessoryInventory, AccessorySlotCount * AccessoryRarityCount, 0);
         villagePlotBuiltStates = CopyBoolArray(data.villagePlotBuiltStates, VillagePlotCount);
         villagePlotBuildingSelections = CopyIntArray(data.villagePlotBuildingSelections, VillagePlotCount, -1);
+        villagePlotBuildingLevels = CopyIntArray(data.villagePlotBuildingLevels, VillagePlotCount, 0);
         dailyMissionClaimed = CopyBoolArray(data.dailyMissionClaimed, DailyMissionCount);
         battlePassRewardsClaimed = CopyBoolArray(data.battlePassRewardsClaimed, BattlePassRewardCount);
 
@@ -11070,6 +11136,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             equipment = CreateEquipmentSnapshot(),
             accessories = CreateAccessorySnapshot(),
             equippedAccessories = CreateEquippedAccessorySnapshot(),
+            villageBuildings = CreateVillageBuildingSnapshot(),
             dailyClaims = CreateDailyClaimSnapshot(),
             battlePassClaims = CreateBattlePassClaimSnapshot(),
             summonCount = summonCount
@@ -11525,6 +11592,41 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 slotId = AccessorySlots[slot].itemSlotId,
                 accessoryId = GetAccessoryDefinition(slot, rarity).accessoryId
+            };
+            index++;
+        }
+
+        return snapshot;
+    }
+
+    private MythwakeVillageBuildingStateDto[] CreateVillageBuildingSnapshot()
+    {
+        EnsureVillageState();
+        var builtCount = 0;
+        for (var i = 0; i < VillagePlotCount; i++)
+        {
+            if (villagePlotBuiltStates[i])
+            {
+                builtCount++;
+            }
+        }
+
+        var snapshot = new MythwakeVillageBuildingStateDto[builtCount];
+        var index = 0;
+        for (var i = 0; i < VillagePlotCount; i++)
+        {
+            if (!villagePlotBuiltStates[i])
+            {
+                continue;
+            }
+
+            var optionIndex = GetVillageBuiltOptionIndex(i);
+            snapshot[index] = new MythwakeVillageBuildingStateDto
+            {
+                slotIndex = i,
+                buildingId = GetVillageBuildingId(i, optionIndex),
+                buildingOptionIndex = optionIndex,
+                level = GetVillageBuildingLevel(i)
             };
             index++;
         }
@@ -15208,6 +15310,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         selectedVillageBuildingOptionIndex = Mathf.Clamp(selectedVillageBuildingOptionIndex, 0, VillageBuildingOptionCount - 1);
+        if (backendGameplayEnabled)
+        {
+            EnsureRuntimeBackendClient();
+            if (backendClient != null && TryStartBackendRequest("Server: building village..."))
+            {
+                StartCoroutine(backendClient.BuildVillageBuilding(selectedVillagePlotIndex, selectedVillageBuildingOptionIndex, OnBackendVillageAction));
+            }
+            else if (backendClient == null)
+            {
+                villageBuildFeedbackMessage = "Backend ist nicht bereit.";
+                RefreshVillageUi();
+            }
+            return;
+        }
+
         var buildCost = GetVillagePlotBuildCost(selectedVillagePlotIndex, selectedVillageBuildingOptionIndex);
         if (!TrySpendCurrency(MythEssenceCurrencyId, buildCost))
         {
@@ -15218,6 +15335,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         villagePlotBuiltStates[selectedVillagePlotIndex] = true;
         villagePlotBuildingSelections[selectedVillagePlotIndex] = selectedVillageBuildingOptionIndex;
+        villagePlotBuildingLevels[selectedVillagePlotIndex] = 1;
         villageBuildFeedbackMessage = $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, selectedVillageBuildingOptionIndex)} gebaut.";
         selectedVillagePlotIndex = -1;
         selectedVillageBuildingOptionIndex = 0;
@@ -15264,8 +15382,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
+        if (backendGameplayEnabled)
+        {
+            EnsureRuntimeBackendClient();
+            if (backendClient != null && TryStartBackendRequest("Server: demolishing village..."))
+            {
+                StartCoroutine(backendClient.DemolishVillageBuilding(selectedVillagePlotIndex, OnBackendVillageAction));
+            }
+            else if (backendClient == null)
+            {
+                villageBuildFeedbackMessage = "Backend ist nicht bereit.";
+                RefreshVillageUi();
+            }
+            return;
+        }
+
         villagePlotBuiltStates[selectedVillagePlotIndex] = false;
         villagePlotBuildingSelections[selectedVillagePlotIndex] = -1;
+        villagePlotBuildingLevels[selectedVillagePlotIndex] = 0;
         selectedVillagePlotIndex = -1;
         selectedVillageBuildingOptionIndex = 0;
         villageBuildFeedbackMessage = string.Empty;
@@ -15363,7 +15497,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 ? !string.IsNullOrEmpty(villageBuildFeedbackMessage)
                     ? villageBuildFeedbackMessage
                     : villagePlotBuiltStates[selectedVillagePlotIndex]
-                        ? $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))} steht bereits auf diesem Bauplatz."
+                        ? $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))} Lv. {GetVillageBuildingLevel(selectedVillagePlotIndex)} steht bereits auf diesem Bauplatz."
                         : $"Waehle ein Gebaeude fuer {GetVillagePlotName(selectedVillagePlotIndex)}.\nVorhanden: {mythEssence} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}"
                 : "Waehle einen freien Bauplatz auf der Karte.";
         }
@@ -15377,7 +15511,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (villageDemolishPanelBodyText != null)
         {
             villageDemolishPanelBodyText.text = selectedBuilt
-                ? $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))}\nDebug: Abreissen gibt den Bauplatz wieder frei."
+                ? $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))} Lv. {GetVillageBuildingLevel(selectedVillagePlotIndex)}\nDebug: Abreissen gibt den Bauplatz wieder frei."
                 : "Waehle ein gebautes Gebaeude.";
         }
 
@@ -15488,6 +15622,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return VillageBuildingTextureNames[plotIndex, Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1)];
     }
 
+    private static string GetVillageBuildingId(int plotIndex, int optionIndex)
+    {
+        plotIndex = Mathf.Clamp(plotIndex, 0, VillagePlotCount - 1);
+        optionIndex = Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1);
+        return $"village_building_{plotIndex + 1:D2}_option_{optionIndex + 1:D2}";
+    }
+
     private int GetVillageSelectedOptionIndex(int plotIndex)
     {
         if (villagePlotBuiltStates != null && plotIndex >= 0 && plotIndex < villagePlotBuiltStates.Length && villagePlotBuiltStates[plotIndex])
@@ -15506,6 +15647,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return Mathf.Clamp(villagePlotBuildingSelections[plotIndex], 0, VillageBuildingOptionCount - 1);
+    }
+
+    private int GetVillageBuildingLevel(int plotIndex)
+    {
+        if (villagePlotBuildingLevels == null || plotIndex < 0 || plotIndex >= villagePlotBuildingLevels.Length)
+        {
+            return 0;
+        }
+
+        return villagePlotBuiltStates != null
+            && plotIndex < villagePlotBuiltStates.Length
+            && villagePlotBuiltStates[plotIndex]
+            ? Mathf.Max(1, villagePlotBuildingLevels[plotIndex])
+            : 0;
     }
 
     private static Texture2D LoadVillageBuildingTexture(int plotIndex, int optionIndex)
@@ -15535,15 +15690,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         villagePlotBuiltStates = CopyBoolArray(villagePlotBuiltStates, VillagePlotCount);
         villagePlotBuildingSelections = CopyIntArray(villagePlotBuildingSelections, VillagePlotCount, -1);
+        villagePlotBuildingLevels = CopyIntArray(villagePlotBuildingLevels, VillagePlotCount, 0);
         for (var i = 0; i < VillagePlotCount; i++)
         {
             if (villagePlotBuiltStates[i])
             {
                 villagePlotBuildingSelections[i] = Mathf.Clamp(villagePlotBuildingSelections[i], 0, VillageBuildingOptionCount - 1);
+                villagePlotBuildingLevels[i] = Mathf.Max(1, villagePlotBuildingLevels[i]);
             }
             else
             {
                 villagePlotBuildingSelections[i] = -1;
+                villagePlotBuildingLevels[i] = 0;
             }
         }
     }

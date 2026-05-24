@@ -170,6 +170,66 @@ func TestSummonCountPersistsAfterPull(t *testing.T) {
 	}
 }
 
+func TestVillageBuildPersistsBuildingSlotAndLevel(t *testing.T) {
+	store := &fakeStateStore{}
+	service := NewService()
+	service.state.MythEssence = 20
+
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	result := service.BuildVillageBuilding(2, 1)
+	if !result.Success {
+		t.Fatalf("expected village build to succeed, got %#v", result)
+	}
+
+	building, ok := store.saved.VillageBuildings[2]
+	if !ok {
+		t.Fatalf("expected saved village building in slot 2, got %#v", store.saved.VillageBuildings)
+	}
+	if building.BuildingID != "village_building_03_option_02" || building.BuildingOptionIndex != 1 || building.Level != 1 {
+		t.Fatalf("unexpected saved village building: %#v", building)
+	}
+	if result.PlayerSnapshot.VillageBuildings[0].Level != 1 {
+		t.Fatalf("expected snapshot to include village building level 1, got %#v", result.PlayerSnapshot.VillageBuildings)
+	}
+}
+
+func TestVillageBuildRejectsOccupiedSlot(t *testing.T) {
+	service := NewService()
+	service.state.MythEssence = 20
+
+	if result := service.BuildVillageBuilding(0, 0); !result.Success {
+		t.Fatalf("expected initial village build to succeed, got %#v", result)
+	}
+
+	beforeEssence := service.state.MythEssence
+	result := service.BuildVillageBuilding(0, 1)
+	if result.Success || result.ErrorCode != "village_slot_occupied" {
+		t.Fatalf("expected occupied slot rejection, got %#v", result)
+	}
+	if service.state.MythEssence != beforeEssence {
+		t.Fatalf("occupied slot should not spend essence, before=%d after=%d", beforeEssence, service.state.MythEssence)
+	}
+}
+
+func TestVillageDemolishFreesSlot(t *testing.T) {
+	service := NewService()
+	service.state.MythEssence = 20
+
+	if result := service.BuildVillageBuilding(1, 2); !result.Success {
+		t.Fatalf("expected village build to succeed, got %#v", result)
+	}
+	result := service.DemolishVillageBuilding(1)
+	if !result.Success {
+		t.Fatalf("expected village demolish to succeed, got %#v", result)
+	}
+	if _, ok := service.villageBuildings[1]; ok {
+		t.Fatalf("expected village slot 1 to be empty, got %#v", service.villageBuildings)
+	}
+}
+
 func TestMissionClaimsPersist(t *testing.T) {
 	store := &fakeStateStore{}
 	service := NewService()

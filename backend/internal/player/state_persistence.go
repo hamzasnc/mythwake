@@ -38,6 +38,7 @@ func (service *Service) persistentState() PersistentState {
 		AccessoryInventory: service.accessoryInventory,
 		AccessoryLevels:    service.accessoryLevels,
 		EquippedAccessory:  service.equippedAccessory,
+		VillageBuildings:   service.villageBuildings,
 		ClaimedDaily:       service.claimedDaily,
 		ClaimedBattlePass:  service.claimedBattlePass,
 		SummonCount:        service.summonCount,
@@ -66,6 +67,7 @@ func (service *Service) applyPersistentState(state PersistentState) {
 	service.accessoryInventory = mergeIntMaps(service.accessoryInventory, state.AccessoryInventory)
 	service.accessoryLevels = mergeIntMaps(service.accessoryLevels, state.AccessoryLevels)
 	service.equippedAccessory = mergeStringMaps(service.equippedAccessory, state.EquippedAccessory)
+	service.villageBuildings = cloneVillageBuildingMap(state.VillageBuildings)
 	service.claimedDaily = mergeBoolMaps(service.claimedDaily, state.ClaimedDaily)
 	service.claimedBattlePass = mergeBoolMaps(service.claimedBattlePass, state.ClaimedBattlePass)
 	service.summonCount = state.SummonCount
@@ -111,6 +113,16 @@ func mergeStringMaps(defaults map[string]string, persisted map[string]string) ma
 		merged[key] = value
 	}
 	return merged
+}
+
+func cloneVillageBuildingMap(values map[int]api.VillageBuilding) map[int]api.VillageBuilding {
+	cloned := make(map[int]api.VillageBuilding, len(values))
+	for slotIndex, building := range values {
+		if normalized, ok := normalizeVillageBuildingState(slotIndex, building); ok {
+			cloned[normalized.SlotIndex] = normalized
+		}
+	}
+	return cloned
 }
 
 func cloneBoolMap(values map[string]bool) map[string]bool {

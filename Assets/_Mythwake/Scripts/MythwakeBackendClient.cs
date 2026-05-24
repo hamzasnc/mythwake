@@ -272,6 +272,34 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         return SendAuthenticatedActionJson($"summon_pull:{bannerId}:{count}", () => Post($"/summons/{EscapePath(bannerId)}/pull{countQuery}"), completed);
     }
 
+    public IEnumerator BuildVillageBuilding(int slotIndex, int buildingOptionIndex, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        slotIndex = Mathf.Max(0, slotIndex);
+        buildingOptionIndex = Mathf.Max(0, buildingOptionIndex);
+        return SendAuthenticatedActionJson(
+            $"village_build:{slotIndex}:{buildingOptionIndex}",
+            () => PostVillageBuild("/village/build", slotIndex, buildingOptionIndex),
+            completed);
+    }
+
+    public IEnumerator DemolishVillageBuilding(int slotIndex, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        slotIndex = Mathf.Max(0, slotIndex);
+        return SendAuthenticatedActionJson(
+            $"village_demolish:{slotIndex}",
+            () => PostVillageSlot("/village/demolish", slotIndex),
+            completed);
+    }
+
+    public IEnumerator UpgradeVillageBuilding(int slotIndex, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        slotIndex = Mathf.Max(0, slotIndex);
+        return SendAuthenticatedActionJson(
+            $"village_upgrade:{slotIndex}",
+            () => PostVillageSlot("/village/upgrade", slotIndex),
+            completed);
+    }
+
     public IEnumerator ClaimDailyMission(string missionId, Action<bool, string, MythwakeActionResultDto> completed)
     {
         return SendAuthenticatedActionJson($"daily_mission_claim:{missionId}", () => Post($"/missions/{EscapePath(missionId)}/claim"), completed);
@@ -297,6 +325,22 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     private UnityWebRequest PostAccessory(string path, string accessoryId)
     {
         var payload = JsonUtility.ToJson(new AccessoryRequestDto { accessoryId = accessoryId });
+        return PostJson(path, payload);
+    }
+
+    private UnityWebRequest PostVillageBuild(string path, int slotIndex, int buildingOptionIndex)
+    {
+        var payload = JsonUtility.ToJson(new VillageBuildRequestDto
+        {
+            slotIndex = slotIndex,
+            buildingOptionIndex = buildingOptionIndex
+        });
+        return PostJson(path, payload);
+    }
+
+    private UnityWebRequest PostVillageSlot(string path, int slotIndex)
+    {
+        var payload = JsonUtility.ToJson(new VillageSlotRequestDto { slotIndex = slotIndex });
         return PostJson(path, payload);
     }
 
@@ -657,6 +701,14 @@ public sealed class MythwakeBackendClient : MonoBehaviour
                 return "Invalid JSON";
             case "missing_accessory_id":
                 return "Missing accessory id";
+            case "invalid_village_slot":
+                return "Invalid village slot";
+            case "invalid_village_building":
+                return "Invalid village building";
+            case "village_slot_occupied":
+                return "Village slot occupied";
+            case "village_slot_empty":
+                return "Village slot empty";
             case "internal_error":
                 return "Internal server error";
             default:
@@ -745,6 +797,19 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     private struct AccessoryRequestDto
     {
         public string accessoryId;
+    }
+
+    [Serializable]
+    private struct VillageBuildRequestDto
+    {
+        public int slotIndex;
+        public int buildingOptionIndex;
+    }
+
+    [Serializable]
+    private struct VillageSlotRequestDto
+    {
+        public int slotIndex;
     }
 
     [Serializable]

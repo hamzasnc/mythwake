@@ -131,6 +131,9 @@ func (router *Router) routes() {
 	router.mux.HandleFunc("POST /gear/accessories/level-up", router.handleAccessoryLevel)
 	router.mux.HandleFunc("POST /gear/accessories/fuse", router.handleAccessoryFuse)
 	router.mux.HandleFunc("POST /summons/{banner_id}/pull", router.handleSummonPull)
+	router.mux.HandleFunc("POST /village/build", router.handleVillageBuild)
+	router.mux.HandleFunc("POST /village/demolish", router.handleVillageDemolish)
+	router.mux.HandleFunc("POST /village/upgrade", router.handleVillageUpgrade)
 	router.mux.HandleFunc("POST /missions/{mission_id}/claim", router.handleDailyMissionClaim)
 	router.mux.HandleFunc("POST /battle-pass/{reward_id}/claim", router.handleBattlePassClaim)
 	if router.config.DevToolsEnabled {
@@ -482,6 +485,39 @@ func summonPullCount(response http.ResponseWriter, request *http.Request) (int, 
 	return count, true
 }
 
+func (router *Router) handleVillageBuild(response http.ResponseWriter, request *http.Request) {
+	villageRequest, rawBody, ok := decodeVillageBuildRequest(response, request)
+	if !ok {
+		return
+	}
+
+	router.writeGameplayAction(response, request, rawBody, func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.BuildVillageBuildingWithRequest(request.Context(), action, villageRequest.SlotIndex, villageRequest.BuildingOptionIndex)
+	})
+}
+
+func (router *Router) handleVillageDemolish(response http.ResponseWriter, request *http.Request) {
+	villageRequest, rawBody, ok := decodeVillageSlotRequest(response, request)
+	if !ok {
+		return
+	}
+
+	router.writeGameplayAction(response, request, rawBody, func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.DemolishVillageBuildingWithRequest(request.Context(), action, villageRequest.SlotIndex)
+	})
+}
+
+func (router *Router) handleVillageUpgrade(response http.ResponseWriter, request *http.Request) {
+	villageRequest, rawBody, ok := decodeVillageSlotRequest(response, request)
+	if !ok {
+		return
+	}
+
+	router.writeGameplayAction(response, request, rawBody, func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.UpgradeVillageBuildingWithRequest(request.Context(), action, villageRequest.SlotIndex)
+	})
+}
+
 func (router *Router) handleDailyMissionClaim(response http.ResponseWriter, request *http.Request) {
 	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
 		return playerService.ClaimDailyMissionWithRequest(request.Context(), action, request.PathValue("mission_id"))
@@ -743,4 +779,36 @@ func decodeAccessoryRequest(response http.ResponseWriter, request *http.Request)
 	}
 
 	return accessoryRequest, string(rawBody), true
+}
+
+func decodeVillageBuildRequest(response http.ResponseWriter, request *http.Request) (api.VillageBuildRequest, string, bool) {
+	rawBody, err := io.ReadAll(request.Body)
+	if err != nil {
+		writeError(response, request, http.StatusBadRequest, "invalid_body", "Could not read request body.")
+		return api.VillageBuildRequest{}, "", false
+	}
+
+	var villageRequest api.VillageBuildRequest
+	if err := json.Unmarshal(rawBody, &villageRequest); err != nil {
+		writeError(response, request, http.StatusBadRequest, "invalid_json", "Expected JSON body with slotIndex and buildingOptionIndex.")
+		return api.VillageBuildRequest{}, string(rawBody), false
+	}
+
+	return villageRequest, string(rawBody), true
+}
+
+func decodeVillageSlotRequest(response http.ResponseWriter, request *http.Request) (api.VillageSlotRequest, string, bool) {
+	rawBody, err := io.ReadAll(request.Body)
+	if err != nil {
+		writeError(response, request, http.StatusBadRequest, "invalid_body", "Could not read request body.")
+		return api.VillageSlotRequest{}, "", false
+	}
+
+	var villageRequest api.VillageSlotRequest
+	if err := json.Unmarshal(rawBody, &villageRequest); err != nil {
+		writeError(response, request, http.StatusBadRequest, "invalid_json", "Expected JSON body with slotIndex.")
+		return api.VillageSlotRequest{}, string(rawBody), false
+	}
+
+	return villageRequest, string(rawBody), true
 }

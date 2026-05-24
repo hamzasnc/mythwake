@@ -32,6 +32,7 @@ public struct MythwakePlayerSnapshotDto
     public MythwakeEquipmentStateDto[] equipment;
     public MythwakeAccessoryStateDto[] accessories;
     public MythwakeEquippedAccessoryDto[] equippedAccessories;
+    public MythwakeVillageBuildingStateDto[] villageBuildings;
     public MythwakeClaimStateDto[] dailyClaims;
     public MythwakeClaimStateDto[] battlePassClaims;
     public int summonCount;
@@ -72,6 +73,15 @@ public struct MythwakeEquippedAccessoryDto
 {
     public string slotId;
     public string accessoryId;
+}
+
+[Serializable]
+public struct MythwakeVillageBuildingStateDto
+{
+    public int slotIndex;
+    public string buildingId;
+    public int buildingOptionIndex;
+    public int level;
 }
 
 [Serializable]

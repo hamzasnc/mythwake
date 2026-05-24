@@ -28,6 +28,7 @@ type PlayerSnapshot struct {
 	Equipment         []EquipmentState    `json:"equipment"`
 	Accessories       []AccessoryState    `json:"accessories"`
 	EquippedAccessory []EquippedAccessory `json:"equippedAccessories"`
+	VillageBuildings  []VillageBuilding   `json:"villageBuildings"`
 	DailyClaims       []ClaimState        `json:"dailyClaims"`
 	BattlePassClaims  []ClaimState        `json:"battlePassClaims"`
 	SummonCount       int                 `json:"summonCount"`
@@ -58,6 +59,13 @@ type AccessoryState struct {
 type EquippedAccessory struct {
 	SlotID      string `json:"slotId"`
 	AccessoryID string `json:"accessoryId"`
+}
+
+type VillageBuilding struct {
+	SlotIndex           int    `json:"slotIndex"`
+	BuildingID          string `json:"buildingId"`
+	BuildingOptionIndex int    `json:"buildingOptionIndex"`
+	Level               int    `json:"level"`
 }
 
 type ClaimState struct {
@@ -175,6 +183,15 @@ type ClientBootstrapResponse struct {
 
 type AccessoryRequest struct {
 	AccessoryID string `json:"accessoryId"`
+}
+
+type VillageBuildRequest struct {
+	SlotIndex           int `json:"slotIndex"`
+	BuildingOptionIndex int `json:"buildingOptionIndex"`
+}
+
+type VillageSlotRequest struct {
+	SlotIndex int `json:"slotIndex"`
 }
 
 type DefinitionSnapshot struct {

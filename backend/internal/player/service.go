@@ -56,6 +56,7 @@ type PersistentState struct {
 	AccessoryInventory map[string]int
 	AccessoryLevels    map[string]int
 	EquippedAccessory  map[string]string
+	VillageBuildings   map[int]api.VillageBuilding
 	ClaimedDaily       map[string]bool
 	ClaimedBattlePass  map[string]bool
 	SummonCount        int
@@ -113,6 +114,7 @@ func ClonePersistentState(state PersistentState) PersistentState {
 		AccessoryInventory: cloneIntMap(state.AccessoryInventory),
 		AccessoryLevels:    cloneIntMap(state.AccessoryLevels),
 		EquippedAccessory:  cloneStringMap(state.EquippedAccessory),
+		VillageBuildings:   cloneVillageBuildingMap(state.VillageBuildings),
 		ClaimedDaily:       cloneBoolMap(state.ClaimedDaily),
 		ClaimedBattlePass:  cloneBoolMap(state.ClaimedBattlePass),
 		SummonCount:        state.SummonCount,
@@ -136,6 +138,7 @@ type Service struct {
 	equipmentActions   equipmentActions
 	accessoryActions   accessoryActions
 	summonActions      summonActions
+	villageActions     villageActions
 	missionActions     missionActions
 	afkActions         afkActions
 	state              api.PlayerState
@@ -146,6 +149,7 @@ type Service struct {
 	accessoryInventory map[string]int
 	accessoryLevels    map[string]int
 	equippedAccessory  map[string]string
+	villageBuildings   map[int]api.VillageBuilding
 	claimedDaily       map[string]bool
 	claimedBattlePass  map[string]bool
 	summonCount        int
@@ -205,6 +209,7 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 		accessoryInventory: map[string]int{},
 		accessoryLevels:    map[string]int{},
 		equippedAccessory:  map[string]string{},
+		villageBuildings:   map[int]api.VillageBuilding{},
 		claimedDaily:       map[string]bool{},
 		claimedBattlePass:  map[string]bool{},
 		revision:           1,
