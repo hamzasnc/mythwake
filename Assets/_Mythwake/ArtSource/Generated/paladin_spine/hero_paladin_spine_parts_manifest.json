@@ -1,0 +1,396 @@
+{
+  "hero_id": "hero_paladin",
+  "display_name": "Paladin",
+  "source": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\hero_paladin_spine_source_pose.png",
+  "head_reference": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\hero_paladin_spine_head_reference.png",
+  "source_sheet": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\CombatAnimated\\hero_paladin_sheet_alpha.png",
+  "abilities_sheet": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\CombatAnimated\\hero_paladin_abilities_sheet_alpha.png",
+  "image_size": [
+    222,
+    296
+  ],
+  "root": {
+    "x": 111,
+    "ground_y": 240
+  },
+  "coordinate_note": "pivot is normalized from top-left of each trimmed PNG: [0,0]=top-left, [1,1]=bottom-right.",
+  "parts": [
+    {
+      "name": "cape_back",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\cape_back.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\cape_back.png",
+      "recommended_bone": "cape_back",
+      "pivot": [
+        0.6364,
+        0.0909
+      ],
+      "pivot_abs": [
+        65,
+        123
+      ],
+      "source_bbox": [
+        30,
+        112,
+        85,
+        233
+      ],
+      "width": 55,
+      "height": 121,
+      "spine_attachment": {
+        "x": -7.5,
+        "y": -49.5,
+        "width": 55,
+        "height": 121
+      },
+      "note": "white-gold back cape behind the armor"
+    },
+    {
+      "name": "leg_left",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\leg_left.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\leg_left.png",
+      "recommended_bone": "leg_left",
+      "pivot": [
+        0.4912,
+        0.0875
+      ],
+      "pivot_abs": [
+        83,
+        164
+      ],
+      "source_bbox": [
+        55,
+        157,
+        112,
+        237
+      ],
+      "width": 57,
+      "height": 80,
+      "spine_attachment": {
+        "x": 0.5,
+        "y": -33.0,
+        "width": 57,
+        "height": 80
+      },
+      "note": "front armored leg and boot"
+    },
+    {
+      "name": "leg_right",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\leg_right.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\leg_right.png",
+      "recommended_bone": "leg_right",
+      "pivot": [
+        0.3818,
+        0.0875
+      ],
+      "pivot_abs": [
+        119,
+        164
+      ],
+      "source_bbox": [
+        98,
+        157,
+        153,
+        237
+      ],
+      "width": 55,
+      "height": 80,
+      "spine_attachment": {
+        "x": 6.5,
+        "y": -33.0,
+        "width": 55,
+        "height": 80
+      },
+      "note": "rear armored leg and boot"
+    },
+    {
+      "name": "torso_armor",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\torso_armor.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\torso_armor.png",
+      "recommended_bone": "chest",
+      "pivot": [
+        0.505,
+        0.2574
+      ],
+      "pivot_abs": [
+        110,
+        112
+      ],
+      "source_bbox": [
+        59,
+        86,
+        160,
+        187
+      ],
+      "width": 101,
+      "height": 101,
+      "spine_attachment": {
+        "x": -0.5,
+        "y": -24.5,
+        "width": 101,
+        "height": 101
+      },
+      "note": "main torso, pauldrons and upper armor mass"
+    },
+    {
+      "name": "belt_gem",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\belt_gem.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\belt_gem.png",
+      "recommended_bone": "hips",
+      "pivot": [
+        0.4691,
+        0.1778
+      ],
+      "pivot_abs": [
+        110,
+        153
+      ],
+      "source_bbox": [
+        72,
+        145,
+        153,
+        190
+      ],
+      "width": 81,
+      "height": 45,
+      "spine_attachment": {
+        "x": 2.5,
+        "y": -14.5,
+        "width": 81,
+        "height": 45
+      },
+      "note": "separate belt, blue gem and skirt plates"
+    },
+    {
+      "name": "arm_sword",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\arm_sword.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\arm_sword.png",
+      "recommended_bone": "arm_sword",
+      "pivot": [
+        0.1375,
+        0.16
+      ],
+      "pivot_abs": [
+        74,
+        112
+      ],
+      "source_bbox": [
+        63,
+        100,
+        143,
+        175
+      ],
+      "width": 80,
+      "height": 75,
+      "spine_attachment": {
+        "x": 29.0,
+        "y": -25.5,
+        "width": 80,
+        "height": 75
+      },
+      "note": "sword-side arm, forearm and hand cluster"
+    },
+    {
+      "name": "sword",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\sword.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\sword.png",
+      "recommended_bone": "sword",
+      "pivot": [
+        0.2105,
+        0.8455
+      ],
+      "pivot_abs": [
+        132,
+        104
+      ],
+      "source_bbox": [
+        116,
+        0,
+        192,
+        123
+      ],
+      "width": 76,
+      "height": 123,
+      "spine_attachment": {
+        "x": 22.0,
+        "y": 42.5,
+        "width": 76,
+        "height": 123
+      },
+      "note": "raised sword, hilt and blue-white blade"
+    },
+    {
+      "name": "shield",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\shield.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\shield.png",
+      "recommended_bone": "shield",
+      "pivot": [
+        0.2273,
+        0.2627
+      ],
+      "pivot_abs": [
+        154,
+        142
+      ],
+      "source_bbox": [
+        134,
+        111,
+        222,
+        229
+      ],
+      "width": 88,
+      "height": 118,
+      "spine_attachment": {
+        "x": 24.0,
+        "y": -28.0,
+        "width": 88,
+        "height": 118
+      },
+      "note": "front shield separated for guard, bash and barrier poses"
+    },
+    {
+      "name": "head_helmet",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\head_helmet.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\head_helmet.png",
+      "recommended_bone": "head",
+      "pivot": [
+        0.422,
+        0.5169
+      ],
+      "pivot_abs": [
+        106,
+        92
+      ],
+      "source_bbox": [
+        60,
+        31,
+        169,
+        149
+      ],
+      "width": 109,
+      "height": 118,
+      "spine_attachment": {
+        "x": 8.5,
+        "y": 2.0,
+        "width": 109,
+        "height": 118
+      },
+      "note": "clean helmet and winged crown from idle frame, no vertical sword overlap"
+    },
+    {
+      "name": "shadow_holy_ring",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\shadow_holy_ring.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\shadow_holy_ring.png",
+      "recommended_bone": "shadow",
+      "pivot": [
+        0.5072,
+        0.8889
+      ],
+      "pivot_abs": [
+        111,
+        235
+      ],
+      "source_bbox": [
+        41,
+        219,
+        179,
+        237
+      ],
+      "width": 138,
+      "height": 18,
+      "spine_attachment": {
+        "x": -1.0,
+        "y": 7.0,
+        "width": 138,
+        "height": 18
+      },
+      "note": "bottom-center contact glow / ground shadow anchor"
+    },
+    {
+      "name": "fx_sword_slash",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\fx_sword_slash.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\fx_sword_slash.png",
+      "recommended_bone": "fx_sword_slash",
+      "pivot": [
+        0.22,
+        0.62
+      ],
+      "pivot_abs": [
+        165,
+        170
+      ],
+      "source_bbox": [
+        0,
+        0,
+        113,
+        140
+      ],
+      "width": 113,
+      "height": 140,
+      "spine_attachment": {
+        "x": 0,
+        "y": 0,
+        "width": 113,
+        "height": 140
+      },
+      "note": "color-isolated crescent slash from attack sheet"
+    },
+    {
+      "name": "fx_shield_flash",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\fx_shield_flash.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\fx_shield_flash.png",
+      "recommended_bone": "fx_shield_flash",
+      "pivot": [
+        0.35,
+        0.5
+      ],
+      "pivot_abs": [
+        170,
+        150
+      ],
+      "source_bbox": [
+        0,
+        0,
+        95,
+        119
+      ],
+      "width": 95,
+      "height": 119,
+      "spine_attachment": {
+        "x": 0,
+        "y": 0,
+        "width": 95,
+        "height": 119
+      },
+      "note": "color-isolated shield flash from ability sheet"
+    },
+    {
+      "name": "fx_holy_barrier",
+      "file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\ArtSource\\Generated\\paladin_spine\\parts\\fx_holy_barrier.png",
+      "runtime_file": "D:\\Github\\mythwake\\Assets\\_Mythwake\\Resources\\Mythwake\\Art\\Skeletal\\Paladin\\parts\\fx_holy_barrier.png",
+      "recommended_bone": "fx_holy_barrier",
+      "pivot": [
+        0.5,
+        0.68
+      ],
+      "pivot_abs": [
+        111,
+        145
+      ],
+      "source_bbox": [
+        0,
+        0,
+        240,
+        190
+      ],
+      "width": 240,
+      "height": 190,
+      "spine_attachment": {
+        "x": 0,
+        "y": 0,
+        "width": 240,
+        "height": 190
+      },
+      "note": "separate transparent holy barrier overlay"
+    }
+  ]
+}
