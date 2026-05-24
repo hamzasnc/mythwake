@@ -448,6 +448,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private enum AppScreen
     {
         Home,
+        Village,
         Battle,
         Dungeons,
         Heroes,
@@ -641,6 +642,57 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const float DungeonMapMinZoom = 0.8f;
     private const float DungeonMapMaxZoom = 1.8f;
     private const float DungeonMapZoomStep = 0.14f;
+    private const string VillageMapTextureName = "area_map_player_village_empty";
+    private const int VillagePlotCount = 12;
+    private static readonly Vector2 VillageMapPosition = new Vector2(0f, -176f);
+    private static readonly Vector2 VillageMapSize = new Vector2(1000f, 1778f);
+    private static readonly Vector2 VillageMapFrameSize = new Vector2(1000f, 1320f);
+    private const float VillagePlotScale = 1.22f;
+    private static readonly string[] VillagePlotNames =
+    {
+        "Rathaus",
+        "Heldenhaus",
+        "Portalplatz",
+        "Schmiede",
+        "Magieturm",
+        "Markt",
+        "Lager",
+        "Werkstatt",
+        "Gasthaus",
+        "Alchemie",
+        "Farm",
+        "Freier Platz"
+    };
+    private static readonly Vector2[] VillagePlotPositions =
+    {
+        new Vector2(0f, -160f),
+        new Vector2(-230f, -300f),
+        new Vector2(218f, -312f),
+        new Vector2(-222f, -584f),
+        new Vector2(192f, -612f),
+        new Vector2(-194f, -842f),
+        new Vector2(202f, -852f),
+        new Vector2(28f, -1070f),
+        new Vector2(-242f, -1164f),
+        new Vector2(244f, -1110f),
+        new Vector2(-218f, -1342f),
+        new Vector2(214f, -1348f)
+    };
+    private static readonly Vector2[] VillagePlotSizes =
+    {
+        new Vector2(180f, 118f),
+        new Vector2(214f, 138f),
+        new Vector2(182f, 126f),
+        new Vector2(210f, 138f),
+        new Vector2(178f, 122f),
+        new Vector2(210f, 128f),
+        new Vector2(190f, 120f),
+        new Vector2(214f, 134f),
+        new Vector2(178f, 112f),
+        new Vector2(170f, 108f),
+        new Vector2(178f, 110f),
+        new Vector2(178f, 110f)
+    };
     private const int AccessoryFuseCost = 3;
     private const int DebugGoldAmount = 500;
     private const int DebugGemAmount = 30;
@@ -960,6 +1012,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     [Header("Navigation")]
     [SerializeField] private GameObject homePanel;
+    [SerializeField] private GameObject villagePanel;
     [SerializeField] private GameObject battlePanel;
     [SerializeField] private GameObject dungeonsPanel;
     [SerializeField] private GameObject heroesPanel;
@@ -1093,6 +1146,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text[] campaignStageButtonTexts;
     private RawImage[] campaignStageButtonIcons;
     private Image[] campaignStageButtonFrames;
+    private RectTransform villageMapRoot;
+    private RectTransform villageMapViewportRoot;
+    private ScrollRect villageMapScrollRect;
+    private RawImage villageMapImage;
+    private RectTransform villageBottomBlendRoot;
+    private TMP_Text villageHeaderText;
+    private TMP_Text villageHintText;
+    private Button[] villagePlotButtons;
+    private Image[] villagePlotFrames;
+    private TMP_Text[] villagePlotTexts;
+    private bool[] villagePlotBuiltStates;
+    private int selectedVillagePlotIndex = -1;
+    private RectTransform villageBuildPanelRoot;
+    private TMP_Text villageBuildPanelTitleText;
+    private TMP_Text villageBuildPanelBodyText;
+    private Button villageBuildButton;
+    private Button villageBuildCloseButton;
     private RectTransform chatPopupRoot;
     private Button chatCloseButton;
     private RectTransform homeLeftShortcutShadow;
@@ -1798,6 +1868,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         ShowScreen(AppScreen.Home);
+    }
+
+    public void ShowVillage()
+    {
+        if (ShouldResumeCampaignFightFromVillage() || IsDungeonBattleFocusLocked())
+        {
+            ShowScreen(AppScreen.Battle);
+            return;
+        }
+
+        ShowScreen(AppScreen.Village);
     }
 
     public void ShowBattle()
@@ -7854,6 +7935,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshRuntimeArtUi();
         RefreshTopBarUi();
         RefreshHomeGeneratedUi();
+        RefreshVillageUi();
         RefreshCampaignMapUi();
         RefreshFormationUi();
 
@@ -8026,6 +8108,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonsInteractable(heroSelectButtons, canManageHeroes);
         GateButtons(dailyMissionButtons, canInteract);
         GateButtons(battlePassRewardButtons, canInteract);
+        SetButtonsInteractable(villagePlotButtons, canInteract);
+
+        var canBuildVillagePlot = canInteract
+            && selectedVillagePlotIndex >= 0
+            && selectedVillagePlotIndex < VillagePlotCount
+            && villagePlotBuiltStates != null
+            && !villagePlotBuiltStates[selectedVillagePlotIndex];
+        SetButtonInteractable(villageBuildButton, canBuildVillagePlot);
+        SetButtonInteractable(villageBuildCloseButton, true);
         RefreshHeroDetailGearList();
     }
 
@@ -8819,7 +8910,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (villageNavButton != null)
         {
-            villageNavButton.onClick.AddListener(ShowHome);
+            villageNavButton.onClick.AddListener(ShowVillage);
         }
 
         if (campaignNavButton != null)
@@ -8870,6 +8961,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (shopTabButton != null)
         {
             shopTabButton.onClick.AddListener(ShowShop);
+        }
+
+        if (villageBuildButton != null)
+        {
+            villageBuildButton.onClick.AddListener(BuildSelectedVillagePlot);
+        }
+
+        if (villageBuildCloseButton != null)
+        {
+            villageBuildCloseButton.onClick.AddListener(HideVillageBuildPanel);
         }
     }
 
@@ -9042,7 +9143,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (villageNavButton != null)
         {
-            villageNavButton.onClick.RemoveListener(ShowHome);
+            villageNavButton.onClick.RemoveListener(ShowVillage);
         }
 
         if (campaignNavButton != null)
@@ -9094,6 +9195,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             shopTabButton.onClick.RemoveListener(ShowShop);
         }
+
+        if (villageBuildButton != null)
+        {
+            villageBuildButton.onClick.RemoveListener(BuildSelectedVillagePlot);
+        }
+
+        if (villageBuildCloseButton != null)
+        {
+            villageBuildCloseButton.onClick.RemoveListener(HideVillageBuildPanel);
+        }
     }
 
     private void ShowScreen(AppScreen screen)
@@ -9101,6 +9212,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         activeScreen = screen;
 
         SetPanel(homePanel, screen == AppScreen.Home);
+        SetPanel(villagePanel, screen == AppScreen.Village);
         SetPanel(battlePanel, screen == AppScreen.Battle);
         SetPanel(dungeonsPanel, screen == AppScreen.Dungeons);
         SetPanel(heroesPanel, screen == AppScreen.Heroes);
@@ -9116,7 +9228,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetTabState(summonTabButton, screen == AppScreen.Summon);
         SetTabState(shopTabButton, screen == AppScreen.Shop);
 
-        SetArtNavState(villageNavImage, villageNavButton, screen == AppScreen.Home);
+        SetArtNavState(villageNavImage, villageNavButton, screen == AppScreen.Village);
         SetArtNavState(heroesNavImage, heroesNavButton, screen == AppScreen.Heroes);
         SetArtNavState(dungeonsNavImage, dungeonsNavButton, screen == AppScreen.Dungeons);
         SetArtNavState(summonNavImage, summonNavButton, screen == AppScreen.Summon);
@@ -9177,16 +9289,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (topBarRoot != null)
         {
             topBarRoot.gameObject.SetActive(!hideChrome);
+            if (!hideChrome)
+            {
+                topBarRoot.SetAsLastSibling();
+            }
         }
 
         if (bottomNavRoot != null)
         {
             bottomNavRoot.gameObject.SetActive(!hideChrome);
+            if (!hideChrome)
+            {
+                bottomNavRoot.SetAsLastSibling();
+            }
         }
 
         if (artBottomNavRoot != null)
         {
             artBottomNavRoot.gameObject.SetActive(!hideChrome);
+            if (!hideChrome)
+            {
+                artBottomNavRoot.SetAsLastSibling();
+            }
         }
     }
 
@@ -12855,6 +12979,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         EnsureRuntimeTopBar();
         EnsureRuntimeDungeonsPanel();
+        EnsureRuntimeVillagePanel();
         EnsureRuntimeDungeonsTab();
         EnsureRuntimeScreenBackdrops();
         EnsureRuntimeSummonOffer();
@@ -12870,6 +12995,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureRuntimeBottomNavbarArt();
         LayoutBottomNavigation();
         LayoutHomeScreen();
+        LayoutVillageScreen();
         LayoutBattleScreen();
         LayoutDungeonsScreen();
         LayoutHeroesScreen();
@@ -14707,6 +14833,280 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         summonNavButton = CreateNavbarButton(artBottomNavRoot, "Summon Navbar Button", GetHomeNavbarTexture("summon"), new Vector2(398, 18), new Vector2(183, 194), out summonNavImage);
     }
 
+    private void EnsureRuntimeVillagePanel()
+    {
+        if (villagePanel == null)
+        {
+            var parent = homePanel != null && homePanel.transform.parent != null
+                ? homePanel.transform.parent
+                : battlePanel != null && battlePanel.transform.parent != null
+                    ? battlePanel.transform.parent
+                    : transform;
+            villagePanel = new GameObject("Village Panel", typeof(RectTransform));
+            villagePanel.transform.SetParent(parent, false);
+
+            var villageRect = villagePanel.GetComponent<RectTransform>();
+            var sourceRect = homePanel != null ? homePanel.GetComponent<RectTransform>() : null;
+            if (sourceRect != null)
+            {
+                villageRect.anchorMin = sourceRect.anchorMin;
+                villageRect.anchorMax = sourceRect.anchorMax;
+                villageRect.pivot = sourceRect.pivot;
+                villageRect.anchoredPosition = sourceRect.anchoredPosition;
+                villageRect.sizeDelta = sourceRect.sizeDelta;
+                villageRect.offsetMin = sourceRect.offsetMin;
+                villageRect.offsetMax = sourceRect.offsetMax;
+            }
+            else
+            {
+                StretchRuntime(villageRect, Vector2.zero);
+            }
+        }
+
+        if (villagePlotBuiltStates == null || villagePlotBuiltStates.Length != VillagePlotCount)
+        {
+            villagePlotBuiltStates = new bool[VillagePlotCount];
+        }
+
+        if (villageHeaderText == null)
+        {
+            villageHeaderText = CreateRuntimeText(villagePanel.transform, "Village Header", "Village", 38, new Vector2(0f, -112f), new Vector2(760f, 54f));
+            villageHeaderText.fontStyle = FontStyles.Bold;
+            villageHeaderText.color = new Color(1f, 0.9f, 0.64f);
+            villageHeaderText.outlineColor = new Color(0.05f, 0.03f, 0.018f, 1f);
+            villageHeaderText.outlineWidth = 0.14f;
+        }
+
+        if (villageHintText == null)
+        {
+            villageHintText = CreateRuntimeText(villagePanel.transform, "Village Hint", "Waehle einen Bauplatz.", 21, new Vector2(0f, -154f), new Vector2(760f, 34f));
+            villageHintText.color = new Color(0.75f, 0.9f, 1f);
+            villageHintText.fontStyle = FontStyles.Bold;
+            villageHintText.enableAutoSizing = true;
+            villageHintText.fontSizeMin = 15;
+            villageHintText.fontSizeMax = 21;
+            villageHintText.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+
+        if (villageMapRoot == null)
+        {
+            villageMapViewportRoot = CreateRuntimePanel(villagePanel.transform, "Village Map Viewport", VillageMapPosition, VillageMapFrameSize, Color.clear);
+            villageMapViewportRoot.SetAsFirstSibling();
+            var viewportImage = villageMapViewportRoot.GetComponent<Image>();
+            if (viewportImage != null)
+            {
+                viewportImage.color = Color.clear;
+                viewportImage.raycastTarget = true;
+            }
+
+            villageMapViewportRoot.gameObject.AddComponent<RectMask2D>();
+            villageMapScrollRect = villageMapViewportRoot.gameObject.AddComponent<ScrollRect>();
+            villageMapScrollRect.horizontal = false;
+            villageMapScrollRect.vertical = true;
+            villageMapScrollRect.movementType = ScrollRect.MovementType.Clamped;
+            villageMapScrollRect.inertia = true;
+            villageMapScrollRect.scrollSensitivity = 42f;
+            villageMapScrollRect.viewport = villageMapViewportRoot;
+
+            villageMapRoot = CreateRuntimePanel(villageMapViewportRoot, "Village Map Content", Vector2.zero, VillageMapSize, Color.clear);
+            var mapRootImage = villageMapRoot.GetComponent<Image>();
+            if (mapRootImage != null)
+            {
+                mapRootImage.color = Color.clear;
+                mapRootImage.raycastTarget = false;
+            }
+
+            villageMapScrollRect.content = villageMapRoot;
+            villageMapScrollRect.verticalNormalizedPosition = 1f;
+
+            villageMapImage = CreateRuntimeRawImage(villageMapRoot, "Village Empty Map", LoadRuntimeTexture(VillageMapTextureName), Vector2.zero, VillageMapSize, new Vector2(0.5f, 1f));
+            villageMapImage.color = Color.white;
+
+            villagePlotButtons = new Button[VillagePlotCount];
+            villagePlotFrames = new Image[VillagePlotCount];
+            villagePlotTexts = new TMP_Text[VillagePlotCount];
+            for (var i = 0; i < VillagePlotCount; i++)
+            {
+                villagePlotButtons[i] = CreateVillagePlotButton(villageMapRoot, i);
+            }
+        }
+
+        if (villageMapScrollRect == null && villageMapViewportRoot != null)
+        {
+            villageMapScrollRect = villageMapViewportRoot.GetComponent<ScrollRect>();
+        }
+
+        if (villageBottomBlendRoot != null)
+        {
+            villageBottomBlendRoot.gameObject.SetActive(false);
+        }
+
+        if (villageBuildPanelRoot == null)
+        {
+            villageBuildPanelRoot = CreateRuntimePopup(villagePanel.transform, "Village Build Panel", new Vector2(0f, -982f), new Vector2(780f, 250f), "Bauplatz");
+            villageBuildPanelTitleText = villageBuildPanelRoot.Find("Title")?.GetComponent<TMP_Text>();
+            villageBuildPanelBodyText = CreateRuntimeText(villageBuildPanelRoot, "Village Build Body", string.Empty, 22, new Vector2(0f, -104f), new Vector2(690f, 74f));
+            villageBuildPanelBodyText.enableAutoSizing = true;
+            villageBuildPanelBodyText.fontSizeMin = 16;
+            villageBuildPanelBodyText.fontSizeMax = 22;
+            villageBuildPanelBodyText.color = new Color(0.86f, 0.92f, 1f);
+            villageBuildButton = CreateRuntimeButton(villageBuildPanelRoot, "Village Build Button", "Bauen", -110f, -194f, 220f, 58f);
+            villageBuildCloseButton = CreateRuntimeButton(villageBuildPanelRoot, "Village Build Close", "Schliessen", 170f, -194f, 220f, 58f);
+            villageBuildPanelRoot.gameObject.SetActive(false);
+        }
+
+        RefreshVillageUi();
+    }
+
+    private Button CreateVillagePlotButton(Transform parent, int plotIndex)
+    {
+        var size = GetVillagePlotSize(plotIndex);
+        var buttonObject = new GameObject($"Village Build Plot {plotIndex + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        buttonObject.transform.SetParent(parent, false);
+        SetRuntimeRect(buttonObject.GetComponent<RectTransform>(), GetVillagePlotPosition(plotIndex), size, new Vector2(0.5f, 1f));
+
+        var frame = buttonObject.GetComponent<Image>();
+        frame.color = new Color(0.05f, 0.035f, 0.02f, 0.08f);
+        villagePlotFrames[plotIndex] = frame;
+
+        var button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = frame;
+        var capturedPlotIndex = plotIndex;
+        button.onClick.AddListener(() => SelectVillagePlot(capturedPlotIndex));
+
+        var mark = CreateRuntimeText(buttonObject.transform, "Build Mark", "+", 34, new Vector2(0f, -size.y * 0.5f + 18f), new Vector2(64f, 44f));
+        mark.fontStyle = FontStyles.Bold;
+        mark.color = new Color(1f, 0.92f, 0.55f, 0.92f);
+        mark.outlineColor = new Color(0.04f, 0.025f, 0.01f, 0.95f);
+        mark.outlineWidth = 0.16f;
+        mark.raycastTarget = false;
+        villagePlotTexts[plotIndex] = mark;
+
+        return button;
+    }
+
+    private void SelectVillagePlot(int plotIndex)
+    {
+        selectedVillagePlotIndex = Mathf.Clamp(plotIndex, 0, VillagePlotCount - 1);
+        if (villageBuildPanelRoot != null)
+        {
+            villageBuildPanelRoot.gameObject.SetActive(true);
+            villageBuildPanelRoot.SetAsLastSibling();
+        }
+
+        RefreshVillageUi();
+    }
+
+    private void BuildSelectedVillagePlot()
+    {
+        if (selectedVillagePlotIndex < 0 || selectedVillagePlotIndex >= VillagePlotCount)
+        {
+            return;
+        }
+
+        if (villagePlotBuiltStates == null || villagePlotBuiltStates.Length != VillagePlotCount)
+        {
+            villagePlotBuiltStates = new bool[VillagePlotCount];
+        }
+
+        villagePlotBuiltStates[selectedVillagePlotIndex] = true;
+        RefreshVillageUi();
+    }
+
+    private void HideVillageBuildPanel()
+    {
+        selectedVillagePlotIndex = -1;
+        if (villageBuildPanelRoot != null)
+        {
+            villageBuildPanelRoot.gameObject.SetActive(false);
+        }
+
+        RefreshVillageUi();
+    }
+
+    private void RefreshVillageUi()
+    {
+        if (villagePlotBuiltStates == null || villagePlotBuiltStates.Length != VillagePlotCount)
+        {
+            villagePlotBuiltStates = new bool[VillagePlotCount];
+        }
+
+        if (villageMapImage != null)
+        {
+            villageMapImage.texture = LoadRuntimeTexture(VillageMapTextureName);
+        }
+
+        if (villageHeaderText != null)
+        {
+            villageHeaderText.text = "Village";
+        }
+
+        if (villageHintText != null)
+        {
+            villageHintText.text = selectedVillagePlotIndex >= 0
+                ? $"{GetVillagePlotName(selectedVillagePlotIndex)} ausgewaehlt"
+                : "Waehle einen Bauplatz.";
+        }
+
+        for (var i = 0; i < VillagePlotCount; i++)
+        {
+            var selected = i == selectedVillagePlotIndex;
+            var built = villagePlotBuiltStates[i];
+            if (villagePlotFrames != null && i < villagePlotFrames.Length && villagePlotFrames[i] != null)
+            {
+                villagePlotFrames[i].color = built
+                    ? new Color(0.18f, 0.78f, 0.54f, 0.32f)
+                    : selected
+                        ? new Color(1f, 0.74f, 0.22f, 0.34f)
+                        : new Color(0.06f, 0.04f, 0.02f, 0.08f);
+            }
+
+            if (villagePlotTexts != null && i < villagePlotTexts.Length && villagePlotTexts[i] != null)
+            {
+                villagePlotTexts[i].text = built ? "OK" : "+";
+                villagePlotTexts[i].color = built
+                    ? new Color(0.64f, 1f, 0.78f, 0.95f)
+                    : selected
+                        ? new Color(1f, 0.96f, 0.58f, 1f)
+                        : new Color(1f, 0.92f, 0.55f, 0.82f);
+            }
+        }
+
+        var hasSelection = selectedVillagePlotIndex >= 0 && selectedVillagePlotIndex < VillagePlotCount;
+        if (villageBuildPanelTitleText != null)
+        {
+            villageBuildPanelTitleText.text = hasSelection ? GetVillagePlotName(selectedVillagePlotIndex) : "Bauplatz";
+        }
+
+        if (villageBuildPanelBodyText != null)
+        {
+            villageBuildPanelBodyText.text = hasSelection
+                ? villagePlotBuiltStates[selectedVillagePlotIndex]
+                    ? "Dieser Platz ist fuer den Prototyp bereits markiert."
+                    : "Hier kann ein Gebaeude gebaut werden. Die leere Karte bleibt als Bauplan sichtbar."
+                : "Waehle einen freien Bauplatz auf der Karte.";
+        }
+
+        SetButtonLabel(villageBuildButton, hasSelection && villagePlotBuiltStates[selectedVillagePlotIndex] ? "Gebaut" : "Bauen");
+    }
+
+    private static string GetVillagePlotName(int plotIndex)
+    {
+        return plotIndex >= 0 && plotIndex < VillagePlotNames.Length ? VillagePlotNames[plotIndex] : "Bauplatz";
+    }
+
+    private static Vector2 GetVillagePlotPosition(int plotIndex)
+    {
+        var index = Mathf.Clamp(plotIndex, 0, VillagePlotPositions.Length - 1);
+        return VillagePlotPositions[index] * VillagePlotScale;
+    }
+
+    private static Vector2 GetVillagePlotSize(int plotIndex)
+    {
+        var index = Mathf.Clamp(plotIndex, 0, VillagePlotSizes.Length - 1);
+        return VillagePlotSizes[index] * VillagePlotScale;
+    }
+
     private void EnsureRuntimeDungeonsPanel()
     {
         if (dungeonsPanel == null)
@@ -15523,6 +15923,69 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (homeActionRoot != null)
         {
             homeActionRoot.SetAsLastSibling();
+        }
+    }
+
+    private void LayoutVillageScreen()
+    {
+        if (villagePanel == null)
+        {
+            return;
+        }
+
+        MoveUiElement(villageHeaderText, villagePanel, new Vector2(0f, -112f), new Vector2(760f, 54f));
+        MoveUiElement(villageHintText, villagePanel, new Vector2(0f, -154f), new Vector2(760f, 34f));
+        MoveUiElement(villageMapViewportRoot, villagePanel, VillageMapPosition, VillageMapFrameSize);
+        if (villageMapRoot != null && villageMapViewportRoot != null)
+        {
+            villageMapRoot.SetParent(villageMapViewportRoot, false);
+            SetRuntimeRect(villageMapRoot, villageMapRoot.anchoredPosition, VillageMapSize, new Vector2(0.5f, 1f));
+        }
+
+        if (villageMapScrollRect != null)
+        {
+            villageMapScrollRect.viewport = villageMapViewportRoot;
+            villageMapScrollRect.content = villageMapRoot;
+        }
+
+        if (villageMapImage != null)
+        {
+            SetRuntimeRect(villageMapImage.rectTransform, Vector2.zero, VillageMapSize, new Vector2(0.5f, 1f));
+        }
+
+        if (villagePlotButtons != null)
+        {
+            for (var i = 0; i < villagePlotButtons.Length && i < VillagePlotPositions.Length && i < VillagePlotSizes.Length; i++)
+            {
+                var button = villagePlotButtons[i];
+                if (button == null)
+                {
+                    continue;
+                }
+
+                SetRuntimeRect(button.GetComponent<RectTransform>(), GetVillagePlotPosition(i), GetVillagePlotSize(i), new Vector2(0.5f, 1f));
+            }
+        }
+
+        if (villageBottomBlendRoot != null)
+        {
+            villageBottomBlendRoot.gameObject.SetActive(false);
+        }
+
+        MoveUiElement(villageBuildPanelRoot, villagePanel, new Vector2(0f, -982f), new Vector2(780f, 250f));
+        if (villageBuildPanelRoot != null)
+        {
+            villageBuildPanelRoot.SetAsLastSibling();
+        }
+
+        if (villageHeaderText != null)
+        {
+            villageHeaderText.transform.SetAsLastSibling();
+        }
+
+        if (villageHintText != null)
+        {
+            villageHintText.transform.SetAsLastSibling();
         }
     }
 
