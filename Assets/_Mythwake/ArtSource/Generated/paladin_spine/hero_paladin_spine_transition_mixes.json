@@ -1,0 +1,123 @@
+{
+  "hero_id": "hero_paladin",
+  "animation_set": [
+    "idle",
+    "wait",
+    "walk",
+    "run",
+    "attack1",
+    "attack2"
+  ],
+  "principles": [
+    "Idle, wait, walk, and run loop back to their first frame for smooth cyclic blending.",
+    "Attack clips start and end on the neutral guard silhouette so they can return to idle, walk, or run without a pop.",
+    "Use short attack mix-in and a slightly longer attack recovery mix-out; let attack2 override attack1 when chained."
+  ],
+  "recommended_spine_mixes_seconds": [
+    {
+      "from": "idle",
+      "to": "wait",
+      "duration": 0.18
+    },
+    {
+      "from": "wait",
+      "to": "idle",
+      "duration": 0.18
+    },
+    {
+      "from": "idle",
+      "to": "walk",
+      "duration": 0.16
+    },
+    {
+      "from": "walk",
+      "to": "idle",
+      "duration": 0.16
+    },
+    {
+      "from": "walk",
+      "to": "run",
+      "duration": 0.1
+    },
+    {
+      "from": "run",
+      "to": "walk",
+      "duration": 0.12
+    },
+    {
+      "from": "idle",
+      "to": "run",
+      "duration": 0.14
+    },
+    {
+      "from": "run",
+      "to": "idle",
+      "duration": 0.18
+    },
+    {
+      "from": "idle",
+      "to": "attack1",
+      "duration": 0.06
+    },
+    {
+      "from": "walk",
+      "to": "attack1",
+      "duration": 0.06
+    },
+    {
+      "from": "run",
+      "to": "attack1",
+      "duration": 0.05
+    },
+    {
+      "from": "attack1",
+      "to": "idle",
+      "duration": 0.12
+    },
+    {
+      "from": "attack1",
+      "to": "walk",
+      "duration": 0.12
+    },
+    {
+      "from": "attack1",
+      "to": "run",
+      "duration": 0.1
+    },
+    {
+      "from": "attack1",
+      "to": "attack2",
+      "duration": 0.08
+    },
+    {
+      "from": "idle",
+      "to": "attack2",
+      "duration": 0.06
+    },
+    {
+      "from": "walk",
+      "to": "attack2",
+      "duration": 0.06
+    },
+    {
+      "from": "run",
+      "to": "attack2",
+      "duration": 0.05
+    },
+    {
+      "from": "attack2",
+      "to": "idle",
+      "duration": 0.14
+    },
+    {
+      "from": "attack2",
+      "to": "walk",
+      "duration": 0.12
+    },
+    {
+      "from": "attack2",
+      "to": "run",
+      "duration": 0.1
+    }
+  ]
+}

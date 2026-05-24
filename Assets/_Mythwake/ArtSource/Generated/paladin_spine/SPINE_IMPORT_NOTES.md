@@ -26,11 +26,18 @@ Goal: turn the existing Paladin combat art into a Spine-ready cutout rig that fo
 
 ## Animation Pass
 
-- Idle: small chest bob, shield settle, sword counter-sway, cape lag.
-- Run: alternate leg rotation and cape drag; keep shield steady for a tank silhouette.
-- Attack: sword windup and slash, briefly show `fx_sword_slash`.
-- Block Guard: shield snap-forward, show `fx_shield_flash` and `fx_holy_barrier`.
-- Ultimate Smite: sword lift into a bright slash with barrier pulse.
+The Spine JSON now contains the requested clips: `idle`, `wait`, `walk`, `run`, `attack1`, and `attack2`.
+
+- `idle`: short breathing loop, small shield/sword counter-sway.
+- `wait`: longer alert loop with a subtle head check and heavier armor settle.
+- `walk`: slower two-step locomotion loop with restrained tank weight.
+- `run`: faster bounce, stronger leg swing, cape drag, and steadier shield silhouette.
+- `attack1`: quick horizontal sword slash with `fx_sword_slash`.
+- `attack2`: heavier shield-forward smite with `fx_shield_flash`, `fx_holy_barrier`, and a late sword slash.
+
+## Transition Pass
+
+The locomotion clips begin and end on matching guard poses, and both attacks recover to the same neutral guard silhouette. For runtime blending, use `hero_paladin_spine_transition_mixes.json`; the key mixes are short into attacks (`0.05`-`0.06s`), slightly longer out of attacks (`0.10`-`0.14s`), and gentle idle/wait/walk blends (`0.16`-`0.18s`).
 
 ## Notes
 

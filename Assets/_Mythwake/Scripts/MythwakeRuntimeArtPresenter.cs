@@ -34,6 +34,7 @@ public sealed class MythwakeRuntimeArtPresenter
         "hero_cyra",
         "hero_dante",
         "hero_elowen",
+        "hero_paladin",
         "hero_ravik"
     };
 

@@ -14,17 +14,24 @@ func TestCombatReplayIncludesHeroManaAndUltimateEvents(t *testing.T) {
 		maxSeconds:  30,
 	})
 
-	if len(combat.Heroes) != 6 {
-		t.Fatalf("expected 6 combat heroes, got %d", len(combat.Heroes))
+	if len(combat.Heroes) != 7 {
+		t.Fatalf("expected 7 combat heroes, got %d", len(combat.Heroes))
 	}
 
 	danteFound := false
+	paladinFound := false
 	ravikFound := false
 	for _, hero := range combat.Heroes {
 		if hero.HeroID == "hero_dante" {
 			danteFound = true
 			if hero.MaxMana != 25 || hero.AutoAttackManaGain != 2 || hero.PassiveID != "passive_momentum" {
 				t.Fatalf("unexpected Dante mana/passive data: %#v", hero)
+			}
+		}
+		if hero.HeroID == "hero_paladin" {
+			paladinFound = true
+			if hero.MaxMana != 30 || hero.AutoAttackManaGain != 2 || hero.UltimateName != "Radiant Aegis" {
+				t.Fatalf("unexpected Paladin mana/ultimate data: %#v", hero)
 			}
 		}
 		if hero.HeroID == "hero_ravik" {
@@ -36,6 +43,9 @@ func TestCombatReplayIncludesHeroManaAndUltimateEvents(t *testing.T) {
 	}
 	if !danteFound {
 		t.Fatal("expected Dante in combat hero states")
+	}
+	if !paladinFound {
+		t.Fatal("expected Paladin in combat hero states")
 	}
 	if !ravikFound {
 		t.Fatal("expected Ravik in combat hero states")

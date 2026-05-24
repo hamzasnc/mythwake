@@ -61,8 +61,12 @@ func TestHeroDefinitions(t *testing.T) {
 	if hero.BaseHealth != 150 || hero.HealthPerLevel != 28 || hero.HealthPerAscension != 70 {
 		t.Fatalf("unexpected hero_astra health progression: %#v", hero)
 	}
+	paladin, ok := HeroDefinitionByID("hero_paladin")
+	if !ok || !paladin.StarterOwned || paladin.SortOrder != 60 || paladin.BaseAttack != 17 || paladin.AttackPerLevel != 5 || paladin.HealthPerLevel != 38 {
+		t.Fatalf("unexpected hero_paladin definition: %#v ok=%v", paladin, ok)
+	}
 	ravik, ok := HeroDefinitionByID("hero_ravik")
-	if !ok || !ravik.StarterOwned || ravik.SortOrder != 60 || ravik.BaseAttack != 24 || ravik.AttackPerLevel != 7 || ravik.HealthPerLevel != 22 {
+	if !ok || !ravik.StarterOwned || ravik.SortOrder != 70 || ravik.BaseAttack != 24 || ravik.AttackPerLevel != 7 || ravik.HealthPerLevel != 22 {
 		t.Fatalf("unexpected hero_ravik definition: %#v ok=%v", ravik, ok)
 	}
 	if _, ok := HeroDefinitionByID("hero_fake"); ok {

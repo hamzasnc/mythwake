@@ -1,6 +1,6 @@
 {
   "skeleton": {
-    "hash": "paladin_mythwake_cutout_v1",
+    "hash": "paladin_mythwake_cutout_animset_v2",
     "spine": "4.2.00",
     "x": -111,
     "y": 0,
@@ -331,6 +331,25 @@
   "animations": {
     "idle": {
       "bones": {
+        "hips": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.6,
+              "x": 0,
+              "y": 1.2
+            },
+            {
+              "time": 1.2,
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
         "chest": {
           "translate": [
             {
@@ -339,14 +358,28 @@
               "y": 0
             },
             {
-              "time": 0.55,
+              "time": 0.6,
               "x": 0,
-              "y": 2.5
+              "y": 2.4
             },
             {
-              "time": 1.1,
+              "time": 1.2,
               "x": 0,
               "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -0.5
+            },
+            {
+              "time": 0.6,
+              "angle": 0.8
+            },
+            {
+              "time": 1.2,
+              "angle": -0.5
             }
           ]
         },
@@ -358,12 +391,12 @@
               "y": 0
             },
             {
-              "time": 0.55,
+              "time": 0.6,
               "x": 0,
-              "y": -1.8
+              "y": -1.6
             },
             {
-              "time": 1.1,
+              "time": 1.2,
               "x": 0,
               "y": 0
             }
@@ -371,15 +404,15 @@
           "rotate": [
             {
               "time": 0,
-              "angle": -1
+              "angle": -0.8
             },
             {
-              "time": 0.55,
-              "angle": 1.5
+              "time": 0.6,
+              "angle": 1.1
             },
             {
-              "time": 1.1,
-              "angle": -1
+              "time": 1.2,
+              "angle": -0.8
             }
           ]
         },
@@ -387,15 +420,15 @@
           "rotate": [
             {
               "time": 0,
-              "angle": -3
+              "angle": -2.5
             },
             {
-              "time": 0.55,
-              "angle": 2
+              "time": 0.6,
+              "angle": 1.5
             },
             {
-              "time": 1.1,
-              "angle": -3
+              "time": 1.2,
+              "angle": -2.5
             }
           ]
         },
@@ -403,15 +436,15 @@
           "rotate": [
             {
               "time": 0,
-              "angle": -2
+              "angle": -1.5
             },
             {
-              "time": 0.55,
-              "angle": 2
+              "time": 0.6,
+              "angle": 1.2
             },
             {
-              "time": 1.1,
-              "angle": -2
+              "time": 1.2,
+              "angle": -1.5
             }
           ]
         },
@@ -419,15 +452,15 @@
           "rotate": [
             {
               "time": 0,
-              "angle": 1
+              "angle": 0.8
             },
             {
-              "time": 0.55,
-              "angle": -1
+              "time": 0.6,
+              "angle": -0.8
             },
             {
-              "time": 1.1,
-              "angle": 1
+              "time": 1.2,
+              "angle": 0.8
             }
           ]
         },
@@ -439,12 +472,587 @@
               "y": 1
             },
             {
-              "time": 0.55,
-              "x": 1.04,
+              "time": 0.6,
+              "x": 1.035,
+              "y": 0.965
+            },
+            {
+              "time": 1.2,
+              "x": 1,
+              "y": 1
+            }
+          ]
+        }
+      },
+      "slots": {
+        "fx_sword_slash": {
+          "attachment": [
+            {
+              "time": 0,
+              "name": null
+            }
+          ]
+        },
+        "fx_shield_flash": {
+          "attachment": [
+            {
+              "time": 0,
+              "name": null
+            }
+          ]
+        },
+        "fx_holy_barrier": {
+          "attachment": [
+            {
+              "time": 0,
+              "name": null
+            }
+          ]
+        }
+      }
+    },
+    "wait": {
+      "bones": {
+        "hips": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.75,
+              "x": 0,
+              "y": 0.8
+            },
+            {
+              "time": 1.5,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 2.25,
+              "x": 0,
+              "y": 1.1
+            },
+            {
+              "time": 3.0,
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        "chest": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.75,
+              "x": 0,
+              "y": 1.4
+            },
+            {
+              "time": 1.5,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 2.25,
+              "x": -0.8,
+              "y": 2.0
+            },
+            {
+              "time": 3.0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.75,
+              "angle": 0.8
+            },
+            {
+              "time": 1.5,
+              "angle": -0.4
+            },
+            {
+              "time": 2.25,
+              "angle": -1.6
+            },
+            {
+              "time": 3.0,
+              "angle": 0
+            }
+          ]
+        },
+        "head": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.75,
+              "x": 0.4,
+              "y": -0.8
+            },
+            {
+              "time": 1.5,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 2.25,
+              "x": -1.4,
+              "y": -1.2
+            },
+            {
+              "time": 3.0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.75,
+              "angle": 1.5
+            },
+            {
+              "time": 1.5,
+              "angle": 0
+            },
+            {
+              "time": 2.25,
+              "angle": -4.0
+            },
+            {
+              "time": 3.0,
+              "angle": 0
+            }
+          ]
+        },
+        "cape_back": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -1
+            },
+            {
+              "time": 1.5,
+              "angle": 2.5
+            },
+            {
+              "time": 3.0,
+              "angle": -1
+            }
+          ]
+        },
+        "arm_sword": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 1.5,
+              "angle": -2.5
+            },
+            {
+              "time": 2.25,
+              "angle": 1.5
+            },
+            {
+              "time": 3.0,
+              "angle": 0
+            }
+          ]
+        },
+        "sword": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 1.5,
+              "angle": -3.5
+            },
+            {
+              "time": 2.25,
+              "angle": 2.0
+            },
+            {
+              "time": 3.0,
+              "angle": 0
+            }
+          ]
+        },
+        "shield": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 1.5,
+              "x": -1.2,
+              "y": 1.4
+            },
+            {
+              "time": 3.0,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 1.5,
+              "angle": -2.5
+            },
+            {
+              "time": 3.0,
+              "angle": 0
+            }
+          ]
+        },
+        "shadow": {
+          "scale": [
+            {
+              "time": 0,
+              "x": 1,
+              "y": 1
+            },
+            {
+              "time": 1.5,
+              "x": 1.02,
+              "y": 0.98
+            },
+            {
+              "time": 3.0,
+              "x": 1,
+              "y": 1
+            }
+          ]
+        }
+      },
+      "slots": {
+        "fx_sword_slash": {
+          "attachment": [
+            {
+              "time": 0,
+              "name": null
+            }
+          ]
+        },
+        "fx_shield_flash": {
+          "attachment": [
+            {
+              "time": 0,
+              "name": null
+            }
+          ]
+        },
+        "fx_holy_barrier": {
+          "attachment": [
+            {
+              "time": 0,
+              "name": null
+            }
+          ]
+        }
+      }
+    },
+    "walk": {
+      "bones": {
+        "root": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.32,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.64,
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        "hips": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.16,
+              "x": 0,
+              "y": 2.0
+            },
+            {
+              "time": 0.32,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.48,
+              "x": 0,
+              "y": 2.0
+            },
+            {
+              "time": 0.64,
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        "chest": {
+          "translate": [
+            {
+              "time": 0,
+              "x": -0.6,
+              "y": 0
+            },
+            {
+              "time": 0.32,
+              "x": 0.8,
+              "y": 1.3
+            },
+            {
+              "time": 0.64,
+              "x": -0.6,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -2.0
+            },
+            {
+              "time": 0.32,
+              "angle": 2.0
+            },
+            {
+              "time": 0.64,
+              "angle": -2.0
+            }
+          ]
+        },
+        "head": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 1.2
+            },
+            {
+              "time": 0.32,
+              "angle": -1.4
+            },
+            {
+              "time": 0.64,
+              "angle": 1.2
+            }
+          ]
+        },
+        "leg_left": {
+          "translate": [
+            {
+              "time": 0,
+              "x": -1.5,
+              "y": 0
+            },
+            {
+              "time": 0.16,
+              "x": 1.2,
+              "y": 2.5
+            },
+            {
+              "time": 0.32,
+              "x": 2.5,
+              "y": 0
+            },
+            {
+              "time": 0.48,
+              "x": -0.8,
+              "y": 1.4
+            },
+            {
+              "time": 0.64,
+              "x": -1.5,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -7
+            },
+            {
+              "time": 0.32,
+              "angle": 8
+            },
+            {
+              "time": 0.64,
+              "angle": -7
+            }
+          ]
+        },
+        "leg_right": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 2.0,
+              "y": 0
+            },
+            {
+              "time": 0.16,
+              "x": -0.8,
+              "y": 1.4
+            },
+            {
+              "time": 0.32,
+              "x": -1.6,
+              "y": 0
+            },
+            {
+              "time": 0.48,
+              "x": 1.2,
+              "y": 2.5
+            },
+            {
+              "time": 0.64,
+              "x": 2.0,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 8
+            },
+            {
+              "time": 0.32,
+              "angle": -7
+            },
+            {
+              "time": 0.64,
+              "angle": 8
+            }
+          ]
+        },
+        "cape_back": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -8
+            },
+            {
+              "time": 0.32,
+              "angle": -3
+            },
+            {
+              "time": 0.64,
+              "angle": -8
+            }
+          ]
+        },
+        "arm_sword": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 3
+            },
+            {
+              "time": 0.32,
+              "angle": -4
+            },
+            {
+              "time": 0.64,
+              "angle": 3
+            }
+          ]
+        },
+        "sword": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 4
+            },
+            {
+              "time": 0.32,
+              "angle": -3
+            },
+            {
+              "time": 0.64,
+              "angle": 4
+            }
+          ]
+        },
+        "shield": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -2
+            },
+            {
+              "time": 0.32,
+              "angle": 2
+            },
+            {
+              "time": 0.64,
+              "angle": -2
+            }
+          ]
+        },
+        "shadow": {
+          "scale": [
+            {
+              "time": 0,
+              "x": 1,
+              "y": 1
+            },
+            {
+              "time": 0.16,
+              "x": 1.05,
               "y": 0.96
             },
             {
-              "time": 1.1,
+              "time": 0.32,
+              "x": 1,
+              "y": 1
+            },
+            {
+              "time": 0.48,
+              "x": 1.05,
+              "y": 0.96
+            },
+            {
+              "time": 0.64,
               "x": 1,
               "y": 1
             }
@@ -480,6 +1088,25 @@
     },
     "run": {
       "bones": {
+        "root": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.22,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.44,
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
         "hips": {
           "translate": [
             {
@@ -488,56 +1115,519 @@
               "y": 0
             },
             {
-              "time": 0.18,
+              "time": 0.11,
               "x": 0,
-              "y": 4
+              "y": 4.2
             },
             {
-              "time": 0.36,
+              "time": 0.22,
               "x": 0,
               "y": 0
             },
             {
-              "time": 0.54,
+              "time": 0.33,
               "x": 0,
-              "y": 4
+              "y": 4.2
             },
             {
-              "time": 0.72,
+              "time": 0.44,
               "x": 0,
               "y": 0
+            }
+          ]
+        },
+        "chest": {
+          "translate": [
+            {
+              "time": 0,
+              "x": -1.2,
+              "y": 0
+            },
+            {
+              "time": 0.22,
+              "x": 1.4,
+              "y": 2.2
+            },
+            {
+              "time": 0.44,
+              "x": -1.2,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -5.5
+            },
+            {
+              "time": 0.22,
+              "angle": 5.5
+            },
+            {
+              "time": 0.44,
+              "angle": -5.5
+            }
+          ]
+        },
+        "head": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.22,
+              "x": 0,
+              "y": -2.0
+            },
+            {
+              "time": 0.44,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 3
+            },
+            {
+              "time": 0.22,
+              "angle": -3
+            },
+            {
+              "time": 0.44,
+              "angle": 3
             }
           ]
         },
         "leg_left": {
+          "translate": [
+            {
+              "time": 0,
+              "x": -3,
+              "y": 0
+            },
+            {
+              "time": 0.11,
+              "x": 1.8,
+              "y": 5
+            },
+            {
+              "time": 0.22,
+              "x": 4,
+              "y": 0
+            },
+            {
+              "time": 0.33,
+              "x": -1.5,
+              "y": 2.5
+            },
+            {
+              "time": 0.44,
+              "x": -3,
+              "y": 0
+            }
+          ],
           "rotate": [
             {
               "time": 0,
-              "angle": -11
+              "angle": -15
             },
             {
-              "time": 0.36,
-              "angle": 12
+              "time": 0.22,
+              "angle": 16
             },
             {
-              "time": 0.72,
-              "angle": -11
+              "time": 0.44,
+              "angle": -15
             }
           ]
         },
         "leg_right": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 4,
+              "y": 0
+            },
+            {
+              "time": 0.11,
+              "x": -1.5,
+              "y": 2.5
+            },
+            {
+              "time": 0.22,
+              "x": -3,
+              "y": 0
+            },
+            {
+              "time": 0.33,
+              "x": 1.8,
+              "y": 5
+            },
+            {
+              "time": 0.44,
+              "x": 4,
+              "y": 0
+            }
+          ],
           "rotate": [
             {
               "time": 0,
-              "angle": 12
+              "angle": 16
             },
             {
-              "time": 0.36,
-              "angle": -11
+              "time": 0.22,
+              "angle": -15
             },
             {
-              "time": 0.72,
-              "angle": 12
+              "time": 0.44,
+              "angle": 16
+            }
+          ]
+        },
+        "cape_back": {
+          "translate": [
+            {
+              "time": 0,
+              "x": -3,
+              "y": 1
+            },
+            {
+              "time": 0.22,
+              "x": -8,
+              "y": 3
+            },
+            {
+              "time": 0.44,
+              "x": -3,
+              "y": 1
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -18
+            },
+            {
+              "time": 0.22,
+              "angle": -9
+            },
+            {
+              "time": 0.44,
+              "angle": -18
+            }
+          ]
+        },
+        "arm_sword": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 7
+            },
+            {
+              "time": 0.22,
+              "angle": -8
+            },
+            {
+              "time": 0.44,
+              "angle": 7
+            }
+          ]
+        },
+        "sword": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 8
+            },
+            {
+              "time": 0.22,
+              "angle": -7
+            },
+            {
+              "time": 0.44,
+              "angle": 8
+            }
+          ]
+        },
+        "shield": {
+          "translate": [
+            {
+              "time": 0,
+              "x": -1,
+              "y": 1
+            },
+            {
+              "time": 0.22,
+              "x": 1,
+              "y": -1
+            },
+            {
+              "time": 0.44,
+              "x": -1,
+              "y": 1
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -4
+            },
+            {
+              "time": 0.22,
+              "angle": 4
+            },
+            {
+              "time": 0.44,
+              "angle": -4
+            }
+          ]
+        },
+        "shadow": {
+          "scale": [
+            {
+              "time": 0,
+              "x": 1.06,
+              "y": 0.96
+            },
+            {
+              "time": 0.11,
+              "x": 1.16,
+              "y": 0.9
+            },
+            {
+              "time": 0.22,
+              "x": 1.06,
+              "y": 0.96
+            },
+            {
+              "time": 0.33,
+              "x": 1.16,
+              "y": 0.9
+            },
+            {
+              "time": 0.44,
+              "x": 1.06,
+              "y": 0.96
+            }
+          ]
+        }
+      },
+      "slots": {
+        "fx_sword_slash": {
+          "attachment": [
+            {
+              "time": 0,
+              "name": null
+            }
+          ]
+        },
+        "fx_shield_flash": {
+          "attachment": [
+            {
+              "time": 0,
+              "name": null
+            }
+          ]
+        },
+        "fx_holy_barrier": {
+          "attachment": [
+            {
+              "time": 0,
+              "name": null
+            }
+          ]
+        }
+      }
+    },
+    "attack1": {
+      "bones": {
+        "hips": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.14,
+              "x": -2,
+              "y": 0
+            },
+            {
+              "time": 0.3,
+              "x": 5,
+              "y": 1
+            },
+            {
+              "time": 0.58,
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        "chest": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.14,
+              "x": -7,
+              "y": 2
+            },
+            {
+              "time": 0.3,
+              "x": 12,
+              "y": 3
+            },
+            {
+              "time": 0.58,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.14,
+              "angle": -10
+            },
+            {
+              "time": 0.3,
+              "angle": 10
+            },
+            {
+              "time": 0.58,
+              "angle": 0
+            }
+          ]
+        },
+        "head": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.14,
+              "angle": -4
+            },
+            {
+              "time": 0.3,
+              "angle": 5
+            },
+            {
+              "time": 0.58,
+              "angle": 0
+            }
+          ]
+        },
+        "arm_sword": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.14,
+              "angle": -26
+            },
+            {
+              "time": 0.3,
+              "angle": 24
+            },
+            {
+              "time": 0.58,
+              "angle": 0
+            }
+          ]
+        },
+        "sword": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.14,
+              "x": -8,
+              "y": 10
+            },
+            {
+              "time": 0.3,
+              "x": 20,
+              "y": -9
+            },
+            {
+              "time": 0.58,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.14,
+              "angle": -38
+            },
+            {
+              "time": 0.3,
+              "angle": 48
+            },
+            {
+              "time": 0.58,
+              "angle": 0
+            }
+          ]
+        },
+        "shield": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.14,
+              "x": -2,
+              "y": 2
+            },
+            {
+              "time": 0.3,
+              "x": 2,
+              "y": -2
+            },
+            {
+              "time": 0.58,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.3,
+              "angle": -7
+            },
+            {
+              "time": 0.58,
+              "angle": 0
             }
           ]
         },
@@ -545,490 +1635,19 @@
           "rotate": [
             {
               "time": 0,
-              "angle": -15
-            },
-            {
-              "time": 0.36,
-              "angle": -7
-            },
-            {
-              "time": 0.72,
-              "angle": -15
-            }
-          ]
-        },
-        "chest": {
-          "rotate": [
-            {
-              "time": 0,
-              "angle": -4
-            },
-            {
-              "time": 0.36,
-              "angle": 4
-            },
-            {
-              "time": 0.72,
-              "angle": -4
-            }
-          ]
-        },
-        "sword": {
-          "rotate": [
-            {
-              "time": 0,
-              "angle": -7
-            },
-            {
-              "time": 0.36,
-              "angle": 5
-            },
-            {
-              "time": 0.72,
-              "angle": -7
-            }
-          ]
-        }
-      },
-      "slots": {
-        "fx_sword_slash": {
-          "attachment": [
-            {
-              "time": 0,
-              "name": null
-            }
-          ]
-        },
-        "fx_shield_flash": {
-          "attachment": [
-            {
-              "time": 0,
-              "name": null
-            }
-          ]
-        },
-        "fx_holy_barrier": {
-          "attachment": [
-            {
-              "time": 0,
-              "name": null
-            }
-          ]
-        }
-      }
-    },
-    "attack": {
-      "bones": {
-        "chest": {
-          "translate": [
-            {
-              "time": 0,
-              "x": -4,
-              "y": 0
-            },
-            {
-              "time": 0.18,
-              "x": -8,
-              "y": 2
-            },
-            {
-              "time": 0.34,
-              "x": 10,
-              "y": 3
-            },
-            {
-              "time": 0.62,
-              "x": 0,
-              "y": 0
-            }
-          ],
-          "rotate": [
-            {
-              "time": 0,
-              "angle": -4
-            },
-            {
-              "time": 0.18,
-              "angle": -9
-            },
-            {
-              "time": 0.34,
-              "angle": 8
-            },
-            {
-              "time": 0.62,
-              "angle": 0
-            }
-          ]
-        },
-        "arm_sword": {
-          "rotate": [
-            {
-              "time": 0,
-              "angle": -9
-            },
-            {
-              "time": 0.18,
-              "angle": -24
-            },
-            {
-              "time": 0.34,
-              "angle": 20
-            },
-            {
-              "time": 0.62,
-              "angle": 0
-            }
-          ]
-        },
-        "sword": {
-          "translate": [
-            {
-              "time": 0,
-              "x": 0,
-              "y": 0
-            },
-            {
-              "time": 0.18,
-              "x": -7,
-              "y": 9
-            },
-            {
-              "time": 0.34,
-              "x": 18,
-              "y": -8
-            },
-            {
-              "time": 0.62,
-              "x": 0,
-              "y": 0
-            }
-          ],
-          "rotate": [
-            {
-              "time": 0,
-              "angle": -8
-            },
-            {
-              "time": 0.18,
-              "angle": -32
-            },
-            {
-              "time": 0.34,
-              "angle": 42
-            },
-            {
-              "time": 0.62,
-              "angle": 0
-            }
-          ]
-        },
-        "shield": {
-          "rotate": [
-            {
-              "time": 0,
-              "angle": 2
-            },
-            {
-              "time": 0.34,
-              "angle": -6
-            },
-            {
-              "time": 0.62,
-              "angle": 0
-            }
-          ]
-        }
-      },
-      "slots": {
-        "fx_sword_slash": {
-          "attachment": [
-            {
-              "time": 0,
-              "name": null
-            },
-            {
-              "time": 0.25,
-              "name": "fx_sword_slash"
-            },
-            {
-              "time": 0.5,
-              "name": null
-            }
-          ]
-        },
-        "fx_shield_flash": {
-          "attachment": [
-            {
-              "time": 0,
-              "name": null
-            }
-          ]
-        },
-        "fx_holy_barrier": {
-          "attachment": [
-            {
-              "time": 0,
-              "name": null
-            }
-          ]
-        }
-      }
-    },
-    "block_guard": {
-      "bones": {
-        "chest": {
-          "translate": [
-            {
-              "time": 0,
-              "x": 0,
-              "y": 0
-            },
-            {
-              "time": 0.18,
-              "x": -4,
-              "y": 2
-            },
-            {
-              "time": 0.52,
-              "x": 0,
-              "y": 0
-            }
-          ]
-        },
-        "shield": {
-          "translate": [
-            {
-              "time": 0,
-              "x": 0,
-              "y": 0
-            },
-            {
-              "time": 0.18,
-              "x": -10,
-              "y": 10
-            },
-            {
-              "time": 0.52,
-              "x": 0,
-              "y": 0
-            }
-          ],
-          "rotate": [
-            {
-              "time": 0,
               "angle": 0
             },
             {
-              "time": 0.18,
-              "angle": -8
+              "time": 0.14,
+              "angle": 7
             },
             {
-              "time": 0.52,
+              "time": 0.3,
+              "angle": -13
+            },
+            {
+              "time": 0.58,
               "angle": 0
-            }
-          ],
-          "scale": [
-            {
-              "time": 0,
-              "x": 1,
-              "y": 1
-            },
-            {
-              "time": 0.18,
-              "x": 1.08,
-              "y": 1.08
-            },
-            {
-              "time": 0.52,
-              "x": 1,
-              "y": 1
-            }
-          ]
-        },
-        "sword": {
-          "rotate": [
-            {
-              "time": 0,
-              "angle": 0
-            },
-            {
-              "time": 0.18,
-              "angle": 12
-            },
-            {
-              "time": 0.52,
-              "angle": 0
-            }
-          ]
-        }
-      },
-      "slots": {
-        "fx_sword_slash": {
-          "attachment": [
-            {
-              "time": 0,
-              "name": null
-            }
-          ]
-        },
-        "fx_shield_flash": {
-          "attachment": [
-            {
-              "time": 0,
-              "name": null
-            },
-            {
-              "time": 0.12,
-              "name": "fx_shield_flash"
-            },
-            {
-              "time": 0.36,
-              "name": null
-            }
-          ]
-        },
-        "fx_holy_barrier": {
-          "attachment": [
-            {
-              "time": 0,
-              "name": null
-            },
-            {
-              "time": 0.12,
-              "name": "fx_holy_barrier"
-            },
-            {
-              "time": 0.54,
-              "name": null
-            }
-          ]
-        }
-      }
-    },
-    "ultimate_smite": {
-      "bones": {
-        "root": {
-          "scale": [
-            {
-              "time": 0,
-              "x": 1,
-              "y": 1
-            },
-            {
-              "time": 0.45,
-              "x": 1.08,
-              "y": 1.08
-            },
-            {
-              "time": 1.1,
-              "x": 1,
-              "y": 1
-            }
-          ]
-        },
-        "chest": {
-          "translate": [
-            {
-              "time": 0,
-              "x": 0,
-              "y": 0
-            },
-            {
-              "time": 0.28,
-              "x": 0,
-              "y": 8
-            },
-            {
-              "time": 0.72,
-              "x": 5,
-              "y": -2
-            },
-            {
-              "time": 1.1,
-              "x": 0,
-              "y": 0
-            }
-          ]
-        },
-        "arm_sword": {
-          "rotate": [
-            {
-              "time": 0,
-              "angle": 0
-            },
-            {
-              "time": 0.28,
-              "angle": -38
-            },
-            {
-              "time": 0.72,
-              "angle": 48
-            },
-            {
-              "time": 1.1,
-              "angle": 0
-            }
-          ]
-        },
-        "sword": {
-          "translate": [
-            {
-              "time": 0,
-              "x": 0,
-              "y": 0
-            },
-            {
-              "time": 0.28,
-              "x": -8,
-              "y": 16
-            },
-            {
-              "time": 0.72,
-              "x": 26,
-              "y": -12
-            },
-            {
-              "time": 1.1,
-              "x": 0,
-              "y": 0
-            }
-          ],
-          "rotate": [
-            {
-              "time": 0,
-              "angle": 0
-            },
-            {
-              "time": 0.28,
-              "angle": -45
-            },
-            {
-              "time": 0.72,
-              "angle": 62
-            },
-            {
-              "time": 1.1,
-              "angle": 0
-            }
-          ]
-        },
-        "fx_holy_barrier": {
-          "scale": [
-            {
-              "time": 0,
-              "x": 0.65,
-              "y": 0.65
-            },
-            {
-              "time": 0.45,
-              "x": 1.15,
-              "y": 1.15
-            },
-            {
-              "time": 1.1,
-              "x": 0.9,
-              "y": 0.9
             }
           ]
         },
@@ -1040,12 +1659,12 @@
               "y": 1
             },
             {
-              "time": 0.45,
-              "x": 1.2,
-              "y": 1.05
+              "time": 0.3,
+              "x": 1.12,
+              "y": 0.94
             },
             {
-              "time": 1.1,
+              "time": 0.58,
               "x": 1,
               "y": 1
             }
@@ -1060,11 +1679,11 @@
               "name": null
             },
             {
-              "time": 0.62,
+              "time": 0.24,
               "name": "fx_sword_slash"
             },
             {
-              "time": 0.92,
+              "time": 0.44,
               "name": null
             }
           ]
@@ -1082,32 +1701,14 @@
             {
               "time": 0,
               "name": null
-            },
-            {
-              "time": 0.12,
-              "name": "fx_holy_barrier"
-            },
-            {
-              "time": 1.1,
-              "name": null
             }
           ]
         }
       }
     },
-    "death": {
+    "attack2": {
       "bones": {
-        "root": {
-          "rotate": [
-            {
-              "time": 0,
-              "angle": 0
-            },
-            {
-              "time": 0.45,
-              "angle": -70
-            }
-          ],
+        "hips": {
           "translate": [
             {
               "time": 0,
@@ -1115,33 +1716,312 @@
               "y": 0
             },
             {
-              "time": 0.45,
-              "x": 28,
-              "y": -48
+              "time": 0.16,
+              "x": 1,
+              "y": 1
+            },
+            {
+              "time": 0.36,
+              "x": 7,
+              "y": 0
+            },
+            {
+              "time": 0.68,
+              "x": 0,
+              "y": 0
             }
           ]
         },
-        "shield": {
+        "chest": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.16,
+              "x": 4,
+              "y": 5
+            },
+            {
+              "time": 0.36,
+              "x": 14,
+              "y": -1
+            },
+            {
+              "time": 0.68,
+              "x": 0,
+              "y": 0
+            }
+          ],
           "rotate": [
             {
               "time": 0,
               "angle": 0
             },
             {
-              "time": 0.45,
-              "angle": 42
+              "time": 0.16,
+              "angle": 9
+            },
+            {
+              "time": 0.36,
+              "angle": -14
+            },
+            {
+              "time": 0.68,
+              "angle": 0
+            }
+          ]
+        },
+        "head": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.16,
+              "x": 0,
+              "y": 1
+            },
+            {
+              "time": 0.36,
+              "x": 2,
+              "y": -1
+            },
+            {
+              "time": 0.68,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.16,
+              "angle": 5
+            },
+            {
+              "time": 0.36,
+              "angle": -6
+            },
+            {
+              "time": 0.68,
+              "angle": 0
+            }
+          ]
+        },
+        "arm_sword": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.16,
+              "angle": 34
+            },
+            {
+              "time": 0.36,
+              "angle": -42
+            },
+            {
+              "time": 0.68,
+              "angle": 0
             }
           ]
         },
         "sword": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.16,
+              "x": 4,
+              "y": 20
+            },
+            {
+              "time": 0.36,
+              "x": 28,
+              "y": -18
+            },
+            {
+              "time": 0.68,
+              "x": 0,
+              "y": 0
+            }
+          ],
           "rotate": [
             {
               "time": 0,
               "angle": 0
             },
             {
-              "time": 0.45,
-              "angle": -55
+              "time": 0.16,
+              "angle": 58
+            },
+            {
+              "time": 0.36,
+              "angle": -70
+            },
+            {
+              "time": 0.68,
+              "angle": 0
+            }
+          ],
+          "scale": [
+            {
+              "time": 0,
+              "x": 1,
+              "y": 1
+            },
+            {
+              "time": 0.36,
+              "x": 1.04,
+              "y": 0.96
+            },
+            {
+              "time": 0.68,
+              "x": 1,
+              "y": 1
+            }
+          ]
+        },
+        "shield": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.16,
+              "x": -9,
+              "y": 9
+            },
+            {
+              "time": 0.36,
+              "x": -14,
+              "y": 10
+            },
+            {
+              "time": 0.68,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.16,
+              "angle": -10
+            },
+            {
+              "time": 0.36,
+              "angle": -15
+            },
+            {
+              "time": 0.68,
+              "angle": 0
+            }
+          ],
+          "scale": [
+            {
+              "time": 0,
+              "x": 1,
+              "y": 1
+            },
+            {
+              "time": 0.24,
+              "x": 1.08,
+              "y": 1.08
+            },
+            {
+              "time": 0.68,
+              "x": 1,
+              "y": 1
+            }
+          ]
+        },
+        "cape_back": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.36,
+              "x": -9,
+              "y": 4
+            },
+            {
+              "time": 0.68,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.36,
+              "angle": -20
+            },
+            {
+              "time": 0.68,
+              "angle": 0
+            }
+          ]
+        },
+        "fx_holy_barrier": {
+          "scale": [
+            {
+              "time": 0,
+              "x": 0.7,
+              "y": 0.7
+            },
+            {
+              "time": 0.28,
+              "x": 1.05,
+              "y": 1.05
+            },
+            {
+              "time": 0.54,
+              "x": 0.82,
+              "y": 0.82
+            }
+          ]
+        },
+        "shadow": {
+          "scale": [
+            {
+              "time": 0,
+              "x": 1,
+              "y": 1
+            },
+            {
+              "time": 0.36,
+              "x": 1.22,
+              "y": 0.9
+            },
+            {
+              "time": 0.68,
+              "x": 1,
+              "y": 1
             }
           ]
         }
@@ -1152,6 +2032,14 @@
             {
               "time": 0,
               "name": null
+            },
+            {
+              "time": 0.32,
+              "name": "fx_sword_slash"
+            },
+            {
+              "time": 0.55,
+              "name": null
             }
           ]
         },
@@ -1160,6 +2048,14 @@
             {
               "time": 0,
               "name": null
+            },
+            {
+              "time": 0.18,
+              "name": "fx_shield_flash"
+            },
+            {
+              "time": 0.42,
+              "name": null
             }
           ]
         },
@@ -1167,6 +2063,14 @@
           "attachment": [
             {
               "time": 0,
+              "name": null
+            },
+            {
+              "time": 0.1,
+              "name": "fx_holy_barrier"
+            },
+            {
+              "time": 0.56,
               "name": null
             }
           ]
