@@ -28,6 +28,7 @@ Last updated: 2026-05-25
 - Added visible placeholder Village bonuses; local mode applies small Team ATK/HP or Fast Rewards rate boosts from built building type and level.
 - Kept Village bonuses local-only until a proper Village balance/definition pass, so Server Mode remains backend-authoritative.
 - Polished the Fast Rewards popup so local mode shows stored time, rate, Village bonus, and ready rewards, while Server Mode shows backend min/cap/rate/ready estimate.
+- Added Paladin to the local `Vanguard Oath` summon banner so the frontline banner actually features and rolls the Paladin.
 - Added backend tests for service-level and HTTP-level Village upgrades.
 - Added migration `0026_afk_reward_24h_cap.sql` so existing PostgreSQL dev databases pick up the 24h AFK cap.
 - Refreshed `README.md` and `docs/NEXT_CHAT_CONTEXT.md` so the main handoff notes match the current pass.
@@ -37,5 +38,5 @@ Last updated: 2026-05-25
 
 1. Close the extra Unity project instance or run the new `Mythwake/Validate Village UI` menu item in the open editor, then visually verify Village map, building detail, upgrade, demolish, and panel spacing in Unity/emulator.
 2. Visually verify Fast Rewards popup text and button spacing in Unity/emulator.
-3. Continue Paladin integration checks: roster, formation, fight pose, summon pool, backend definitions, and Spine validation.
+3. Continue Paladin integration checks: roster, formation, fight pose, backend definitions, and Spine validation.
 4. Move remaining upgrade clutter into the proper Hero/Gear/Village screens.

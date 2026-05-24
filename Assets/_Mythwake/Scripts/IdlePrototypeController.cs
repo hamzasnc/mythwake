@@ -885,11 +885,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             "Higher Epic chance for frontline teams",
             GemsCurrencyId,
             SummonCost,
-            new[] { 0, 3, 1 },
+            new[] { 5, 0, 1 },
             new[]
             {
                 new SummonRateDefinition(LegendaryRarityId, 6, new[] { 4 }),
-                new SummonRateDefinition(EpicRarityId, 58, new[] { 0 }),
+                new SummonRateDefinition(EpicRarityId, 58, new[] { 5, 0 }),
                 new SummonRateDefinition(RareRarityId, 100, new[] { 1, 3 })
             }),
         new SummonBannerDefinition(

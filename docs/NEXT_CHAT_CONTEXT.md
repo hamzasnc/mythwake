@@ -97,6 +97,7 @@ Latest local gameplay/UI batch:
 - A Unity editor validator now checks the Village map/build/detail/upgrade/demolish control structure. Batchmode execution is currently blocked while the project is already open in another Unity instance.
 - Local Fast Rewards and backend AFK definitions now both use a 24h stored reward cap.
 - Paladin combat assets, combat preview, and Spine handoff validation are present.
+- Paladin is now also featured in the local `Vanguard Oath` summon banner and included in that banner's Epic pool.
 - Home now has a runtime campaign map with clickable stage nodes and a stage preview.
 - Battle no longer starts immediately from the main button. Flow is now map/stage selection -> Battle -> Formation -> Confirm -> visible fight.
 - Dungeons now use the same Formation -> Confirm -> visible fight flow.
@@ -575,7 +576,7 @@ The next chat should continue in this order unless the user redirects:
    - Roster/detail screen.
    - Formation.
    - Fight pose/preview.
-   - Summon/backend definitions.
+   - Backend definitions.
    - Spine validation.
 
 6. Move remaining upgrade clutter into proper screens.
