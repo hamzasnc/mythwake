@@ -634,12 +634,12 @@ public static class UpgradeClutterValidation
             }
 
             var accessorySlot = i - 2;
-            var shouldShowIcon = i < 2 || (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, accessorySlot) >= 0;
+            var shouldShowIcon = accessorySlot >= 0 && (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, accessorySlot) >= 0;
             if (!shouldShowIcon)
             {
                 if (IsRawImageVisible(icon))
                 {
-                    throw new InvalidOperationException($"Hero detail empty gear slot {i + 1} should not render icon art before gear is equipped.");
+                    throw new InvalidOperationException($"Hero detail gear slot {i + 1} should not render item icon art unless gear is actually equipped.");
                 }
 
                 continue;
