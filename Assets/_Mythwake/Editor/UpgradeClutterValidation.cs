@@ -151,8 +151,37 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException("Hero detail Remove Gear should stay available in Server Mode when a backend-equipped accessory is selected.");
         }
 
+        ValidateHeroDetailLanguageRefresh(controller, equipGearButton, removeGearButton);
+
         SetPrivateField(controller, "backendGameplayEnabled", false);
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, -1, 0);
+    }
+
+    private static void ValidateHeroDetailLanguageRefresh(IdlePrototypeController controller, Button equipGearButton, Button removeGearButton)
+    {
+        var originalLanguage = RequireField<MythwakeLanguage>(controller, "language");
+        try
+        {
+            SetPrivateField(controller, "language", MythwakeLanguage.German);
+            InvokePrivate(controller, "RefreshHeroDetailUi");
+            InvokePrivate(controller, "ShowHeroDetailGearSlot", 0);
+            Canvas.ForceUpdateCanvases();
+
+            AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.open_gear_short"), "Hero detail equipment action should refresh when language changes.");
+            AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.remove_gear"), "Hero detail remove action should refresh when language changes.");
+
+            InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
+            Canvas.ForceUpdateCanvases();
+
+            AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.equip_gear"), "Hero detail accessory action should refresh when language changes.");
+            AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.remove_gear"), "Hero detail remove action should stay localized after slot changes.");
+        }
+        finally
+        {
+            SetPrivateField(controller, "language", originalLanguage);
+            InvokePrivate(controller, "RefreshHeroDetailUi");
+            Canvas.ForceUpdateCanvases();
+        }
     }
 
     private static void ValidateHeroDetailEquipmentGearList(IdlePrototypeController controller, RectTransform heroDetailRoot, RectTransform gearListRoot, Button equipGearButton, Button[] gearOptionButtons)

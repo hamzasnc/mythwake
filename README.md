@@ -75,7 +75,7 @@ Current prototype:
 - Mission Track XP is earned from daily mission claims
 - Mission Track rewards can be claimed in the Shop tab
 - Ravik and Paladin art/combat preview hooks exist, including Paladin Spine handoff validation tooling
-- Unity editor validation covers the current gameplay/UI slice, including Village, Fast Rewards, Summon, Upgrade Clutter, Hero Detail gear spacing, and Paladin handoff checks
+- Unity editor validation covers the current gameplay/UI slice, including Village, Fast Rewards, Summon, Upgrade Clutter, Hero Detail gear spacing/localization, and Paladin handoff checks
 - Hero Detail shows all equipment/accessory slots, uses localized contextual gear action labels, opens an inline list for the selected gear slot, and supports accessory removal locally and in Server Mode
 
 Backend:
