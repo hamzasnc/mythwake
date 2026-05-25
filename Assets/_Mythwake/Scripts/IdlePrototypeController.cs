@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.81";
+    public const string PrototypeVersion = "0.2.82";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -33,13 +33,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private struct HomeProgressMapDefinition
     {
         public string textureName;
-        public string displayName;
         public int startStage;
 
-        public HomeProgressMapDefinition(string textureName, string displayName, int startStage)
+        public HomeProgressMapDefinition(string textureName, int startStage)
         {
             this.textureName = textureName;
-            this.displayName = displayName;
             this.startStage = startStage;
         }
     }
@@ -664,14 +662,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static readonly Vector2 HomeCampaignMapContentSize = new Vector2(1040f, 1900f);
     private static readonly HomeProgressMapDefinition[] HomeProgressMaps =
     {
-        new HomeProgressMapDefinition("area_map_scorched_plains", "Verbrannte Ebenen", 1),
-        new HomeProgressMapDefinition("area_map_atheris_wilds_forest", "Atheris-Wald", 11),
-        new HomeProgressMapDefinition("area_map_eldoria_kingdom_countryside", "Eldoria", 21),
-        new HomeProgressMapDefinition("area_map_valoria_snow_kingdom", "Valoria", 31),
-        new HomeProgressMapDefinition("area_map_thalassia_island_chain", "Thalassia", 41),
-        new HomeProgressMapDefinition("area_map_xyphos_coastal_empire", "Xyphos-Kueste", 51),
-        new HomeProgressMapDefinition("area_map_great_craters_forgotten", "Grosse Krater", 61),
-        new HomeProgressMapDefinition("area_map_hollow_spire_obsidian_vault", "Obsidian-Turm", 71)
+        new HomeProgressMapDefinition("area_map_scorched_plains", 1),
+        new HomeProgressMapDefinition("area_map_atheris_wilds_forest", 11),
+        new HomeProgressMapDefinition("area_map_eldoria_kingdom_countryside", 21),
+        new HomeProgressMapDefinition("area_map_valoria_snow_kingdom", 31),
+        new HomeProgressMapDefinition("area_map_thalassia_island_chain", 41),
+        new HomeProgressMapDefinition("area_map_xyphos_coastal_empire", 51),
+        new HomeProgressMapDefinition("area_map_great_craters_forgotten", 61),
+        new HomeProgressMapDefinition("area_map_hollow_spire_obsidian_vault", 71)
     };
     private static readonly Vector2 GoldDungeonMapPosition = new Vector2(292f, -692f);
     private static readonly Vector2 EssenceDungeonMapPosition = new Vector2(196f, -168f);
@@ -1199,8 +1197,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private bool backendLifecycleFlushInProgress;
     private bool campaignFightInProgress;
     private int selectedCampaignStage = 1;
-    private int selectedHomeProgressMapIndex = -1;
-    private bool homeProgressMapWasManuallySelected;
     private BattleFlowMode battleFlowMode = BattleFlowMode.Formation;
     private BattleTargetMode battleTargetMode = BattleTargetMode.Campaign;
     private InventoryTabMode selectedInventoryTab = InventoryTabMode.All;
@@ -1278,22 +1274,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RectTransform homeCampaignMapContentRoot;
     private ScrollRect homeCampaignMapScrollRect;
     private RawImage homeCampaignMapImage;
-    private RectTransform homeIdleProgressCardsRoot;
-    private RectTransform homeIdleProgressCardsContentRoot;
-    private ScrollRect homeIdleProgressCardsScrollRect;
     private RectTransform homeIdleCombatRoot;
+    private RawImage homeIdleCombatMapImage;
     private RectTransform campaignStagePreviewRoot;
     private TMP_Text campaignStagePreviewText;
     private Button[] campaignStageButtons;
     private TMP_Text[] campaignStageButtonTexts;
     private RawImage[] campaignStageButtonIcons;
     private Image[] campaignStageButtonFrames;
-    private Button[] homeIdleProgressCardButtons;
-    private RawImage[] homeIdleProgressCardImages;
-    private TMP_Text[] homeIdleProgressCardTitleTexts;
-    private TMP_Text[] homeIdleProgressCardProgressTexts;
-    private Image[] homeIdleProgressCardFrames;
-    private Image[] homeIdleProgressCardFills;
     private RawImage[] homeIdleHeroImages;
     private RawImage[] homeIdleEnemyImages;
     private TMP_Text homeIdleCombatText;
@@ -13547,7 +13535,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureRuntimeSummonOffer();
         EnsureRuntimeHomeActions();
         EnsureRuntimeCampaignMap();
-        EnsureRuntimeHomeProgressCards();
         EnsureRuntimeHomeIdleCombat();
         EnsureRuntimeHomePopups();
         EnsureRuntimeBattleFlowUi();
@@ -14133,105 +14120,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         campaignStagePreviewText.raycastTarget = false;
     }
 
-    private void EnsureRuntimeHomeProgressCards()
-    {
-        if (homeActionRoot == null || homeIdleProgressCardsRoot != null)
-        {
-            return;
-        }
-
-        const float cardWidth = 166f;
-        const float cardHeight = 78f;
-        const float cardGap = 10f;
-        var cardCount = HomeProgressMaps.Length;
-        var contentWidth = Mathf.Max(560f, cardCount * cardWidth + Mathf.Max(0, cardCount - 1) * cardGap + 16f);
-
-        homeIdleProgressCardsRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Progress Cards Root", new Vector2(0, -956), new Vector2(560, 90), new Color(0.015f, 0.018f, 0.027f, 0.64f));
-        homeIdleProgressCardsRoot.gameObject.AddComponent<RectMask2D>();
-        var rootImage = homeIdleProgressCardsRoot.GetComponent<Image>();
-        if (rootImage != null)
-        {
-            rootImage.raycastTarget = true;
-        }
-
-        homeIdleProgressCardsScrollRect = homeIdleProgressCardsRoot.gameObject.AddComponent<ScrollRect>();
-        homeIdleProgressCardsScrollRect.horizontal = true;
-        homeIdleProgressCardsScrollRect.vertical = false;
-        homeIdleProgressCardsScrollRect.movementType = ScrollRect.MovementType.Clamped;
-        homeIdleProgressCardsScrollRect.inertia = true;
-        homeIdleProgressCardsScrollRect.scrollSensitivity = 32f;
-        homeIdleProgressCardsScrollRect.viewport = homeIdleProgressCardsRoot;
-
-        homeIdleProgressCardsContentRoot = CreateRuntimePanel(homeIdleProgressCardsRoot, "Home Idle Progress Cards Content", new Vector2(8, -6), new Vector2(contentWidth, cardHeight), Color.clear);
-        SetRuntimeRect(homeIdleProgressCardsContentRoot, new Vector2(8, -6), new Vector2(contentWidth, cardHeight), new Vector2(0f, 1f));
-        var contentImage = homeIdleProgressCardsContentRoot.GetComponent<Image>();
-        if (contentImage != null)
-        {
-            contentImage.color = Color.clear;
-            contentImage.raycastTarget = false;
-        }
-
-        homeIdleProgressCardsScrollRect.content = homeIdleProgressCardsContentRoot;
-
-        homeIdleProgressCardButtons = new Button[cardCount];
-        homeIdleProgressCardImages = new RawImage[cardCount];
-        homeIdleProgressCardTitleTexts = new TMP_Text[cardCount];
-        homeIdleProgressCardProgressTexts = new TMP_Text[cardCount];
-        homeIdleProgressCardFrames = new Image[cardCount];
-        homeIdleProgressCardFills = new Image[cardCount];
-
-        for (var i = 0; i < cardCount; i++)
-        {
-            CreateHomeProgressMapCard(i, new Vector2(i * (cardWidth + cardGap), 0), new Vector2(cardWidth, cardHeight));
-        }
-    }
-
-    private void CreateHomeProgressMapCard(int cardIndex, Vector2 anchoredPosition, Vector2 size)
-    {
-        var cardObject = new GameObject($"Home Idle Progress Map Card {cardIndex + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-        cardObject.transform.SetParent(homeIdleProgressCardsContentRoot, false);
-        SetRuntimeRect(cardObject.GetComponent<RectTransform>(), anchoredPosition, size, new Vector2(0f, 1f));
-
-        var frame = cardObject.GetComponent<Image>();
-        frame.color = new Color(0.09f, 0.13f, 0.18f, 0.95f);
-        frame.raycastTarget = true;
-        homeIdleProgressCardFrames[cardIndex] = frame;
-
-        var button = cardObject.GetComponent<Button>();
-        button.targetGraphic = frame;
-        var capturedIndex = cardIndex;
-        button.onClick.AddListener(() => SelectHomeProgressMapCard(capturedIndex));
-        homeIdleProgressCardButtons[cardIndex] = button;
-
-        homeIdleProgressCardImages[cardIndex] = CreateRuntimeRawImage(cardObject.transform, "Map Thumbnail", LoadRuntimeTexture(HomeProgressMaps[cardIndex].textureName), new Vector2(0, -4), new Vector2(size.x - 12f, 45f), new Vector2(0.5f, 1f));
-        homeIdleProgressCardImages[cardIndex].uvRect = new Rect(0.04f, 0.36f, 0.92f, 0.34f);
-
-        CreateRuntimePanel(cardObject.transform, "Map Thumbnail Shade", new Vector2(0, -32), new Vector2(size.x - 12f, 18f), new Color(0.01f, 0.012f, 0.02f, 0.5f));
-
-        homeIdleProgressCardTitleTexts[cardIndex] = CreateRuntimeText(cardObject.transform, "Map Title", string.Empty, 13, new Vector2(0, -7), new Vector2(size.x - 16f, 20f));
-        homeIdleProgressCardTitleTexts[cardIndex].fontStyle = FontStyles.Bold;
-        homeIdleProgressCardTitleTexts[cardIndex].enableAutoSizing = true;
-        homeIdleProgressCardTitleTexts[cardIndex].fontSizeMin = 10;
-        homeIdleProgressCardTitleTexts[cardIndex].fontSizeMax = 13;
-        homeIdleProgressCardTitleTexts[cardIndex].textWrappingMode = TextWrappingModes.NoWrap;
-        homeIdleProgressCardTitleTexts[cardIndex].raycastTarget = false;
-
-        homeIdleProgressCardProgressTexts[cardIndex] = CreateRuntimeText(cardObject.transform, "Map Progress", string.Empty, 12, new Vector2(0, -52), new Vector2(size.x - 14f, 18f));
-        homeIdleProgressCardProgressTexts[cardIndex].fontStyle = FontStyles.Bold;
-        homeIdleProgressCardProgressTexts[cardIndex].enableAutoSizing = true;
-        homeIdleProgressCardProgressTexts[cardIndex].fontSizeMin = 9;
-        homeIdleProgressCardProgressTexts[cardIndex].fontSizeMax = 12;
-        homeIdleProgressCardProgressTexts[cardIndex].textWrappingMode = TextWrappingModes.NoWrap;
-        homeIdleProgressCardProgressTexts[cardIndex].raycastTarget = false;
-
-        homeIdleProgressCardFills[cardIndex] = CreateRuntimeHealthFill(cardObject.transform, "Map Progress Fill", new Vector2(0, -70), size.x - 20f, new Color(0.35f, 0.92f, 0.78f, 0.94f));
-        var fillBack = homeIdleProgressCardFills[cardIndex].transform.parent.GetComponent<RectTransform>();
-        if (fillBack != null)
-        {
-            fillBack.sizeDelta = new Vector2(size.x - 20f, 8f);
-        }
-    }
-
     private void EnsureRuntimeHomeIdleCombat()
     {
         if (homeActionRoot == null || homeIdleCombatRoot != null)
@@ -14239,9 +14127,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -1240), new Vector2(720, 182), new Color(0.02f, 0.025f, 0.035f, 0.2f));
+        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -1240), new Vector2(780, 188), new Color(0.02f, 0.025f, 0.035f, 0.78f));
         homeIdleCombatRoot.SetAsLastSibling();
+        homeIdleCombatRoot.gameObject.AddComponent<RectMask2D>();
 
+        homeIdleCombatMapImage = CreateRuntimeRawImage(homeIdleCombatRoot, "Home Idle Mini Map Background", LoadRuntimeTexture(GetSelectedHomeProgressMapTextureName()), new Vector2(0, -2), new Vector2(780, 188), new Vector2(0.5f, 1f));
+        homeIdleCombatMapImage.uvRect = new Rect(0.04f, 0.38f, 0.92f, 0.28f);
+        homeIdleCombatMapImage.color = new Color(1f, 1f, 1f, 0.74f);
+        homeIdleCombatMapImage.raycastTarget = false;
+        homeIdleCombatMapImage.transform.SetAsFirstSibling();
+
+        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Map Dim", new Vector2(0, -2), new Vector2(780, 188), new Color(0.01f, 0.014f, 0.024f, 0.35f));
         CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Top Shade", new Vector2(0, -8), new Vector2(680, 30), new Color(0.015f, 0.018f, 0.026f, 0.32f));
         CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Ground", new Vector2(0, -138), new Vector2(650, 38), new Color(0.33f, 0.24f, 0.16f, 0.38f));
         var clashGlow = CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Clash Glow", new Vector2(0, -90), new Vector2(72, 72), new Color(1f, 0.73f, 0.26f, 0.22f));
@@ -18601,109 +18497,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshCampaignStagePreview();
-        RefreshHomeProgressCardsUi();
+        RefreshHomeProgressMapUi();
         CenterCampaignMapOnSelectedStageIfNeeded();
     }
 
-    private void RefreshHomeProgressCardsUi()
+    private void RefreshHomeProgressMapUi()
     {
-        if (homeIdleProgressCardFrames == null || homeIdleProgressCardTitleTexts == null || homeIdleProgressCardProgressTexts == null)
-        {
-            return;
-        }
-
-        var selectedMapIndex = GetSelectedHomeProgressMapIndex();
-        SetHomeCampaignMapTexture(GetSelectedHomeProgressMapTextureName());
-
-        for (var i = 0; i < HomeProgressMaps.Length; i++)
-        {
-            var definition = HomeProgressMaps[i];
-            var endStage = definition.startStage + HomeProgressMapStagesPerCard - 1;
-            var completed = enemyLevel > endStage;
-            var locked = enemyLevel < definition.startStage;
-            var active = !completed && !locked;
-            var selected = i == selectedMapIndex;
-            var progressStageCount = Mathf.Clamp(enemyLevel - definition.startStage + 1, 0, HomeProgressMapStagesPerCard);
-            var progressPercent = completed ? 1f : progressStageCount / (float)HomeProgressMapStagesPerCard;
-
-            if (homeIdleProgressCardFrames[i] != null)
-            {
-                homeIdleProgressCardFrames[i].color = selected
-                    ? new Color(0.95f, 0.68f, 0.22f, 0.98f)
-                    : active
-                        ? new Color(0.35f, 0.22f, 0.52f, 0.95f)
-                        : completed
-                            ? new Color(0.16f, 0.38f, 0.34f, 0.92f)
-                            : new Color(0.08f, 0.1f, 0.13f, 0.84f);
-            }
-
-            if (homeIdleProgressCardImages != null && i < homeIdleProgressCardImages.Length && homeIdleProgressCardImages[i] != null)
-            {
-                homeIdleProgressCardImages[i].color = locked
-                    ? new Color(0.34f, 0.36f, 0.42f, 0.76f)
-                    : Color.white;
-            }
-
-            if (homeIdleProgressCardTitleTexts[i] != null)
-            {
-                homeIdleProgressCardTitleTexts[i].text = definition.displayName;
-                homeIdleProgressCardTitleTexts[i].color = locked
-                    ? new Color(0.68f, 0.72f, 0.8f)
-                    : Color.white;
-            }
-
-            if (homeIdleProgressCardProgressTexts[i] != null)
-            {
-                homeIdleProgressCardProgressTexts[i].text = locked
-                    ? $"Ab {GetCampaignStageLabel(definition.startStage)}"
-                    : completed
-                        ? "Fertig 10/10"
-                        : $"Idle {progressStageCount}/10";
-                homeIdleProgressCardProgressTexts[i].color = selected
-                    ? new Color(1f, 0.94f, 0.72f)
-                    : locked
-                        ? new Color(0.58f, 0.64f, 0.74f)
-                        : new Color(0.82f, 0.98f, 0.94f);
-            }
-
-            if (homeIdleProgressCardFills != null && i < homeIdleProgressCardFills.Length && homeIdleProgressCardFills[i] != null)
-            {
-                homeIdleProgressCardFills[i].color = locked
-                    ? new Color(0.35f, 0.38f, 0.45f, 0.84f)
-                    : selected
-                        ? new Color(1f, 0.78f, 0.28f, 0.96f)
-                        : new Color(0.35f, 0.92f, 0.78f, 0.94f);
-                SetRuntimeFillPercent(homeIdleProgressCardFills[i], progressPercent);
-            }
-        }
-    }
-
-    private void SelectHomeProgressMapCard(int mapIndex)
-    {
-        if (HomeProgressMaps.Length == 0)
-        {
-            return;
-        }
-
-        selectedHomeProgressMapIndex = Mathf.Clamp(mapIndex, 0, HomeProgressMaps.Length - 1);
-        homeProgressMapWasManuallySelected = true;
-        SetHomeCampaignMapTexture(GetSelectedHomeProgressMapTextureName());
-        RefreshHomeProgressCardsUi();
-    }
-
-    private int GetSelectedHomeProgressMapIndex()
-    {
-        if (HomeProgressMaps.Length == 0)
-        {
-            return 0;
-        }
-
-        if (!homeProgressMapWasManuallySelected || selectedHomeProgressMapIndex < 0)
-        {
-            selectedHomeProgressMapIndex = GetCurrentHomeProgressMapIndex();
-        }
-
-        return Mathf.Clamp(selectedHomeProgressMapIndex, 0, HomeProgressMaps.Length - 1);
+        var textureName = GetSelectedHomeProgressMapTextureName();
+        SetHomeCampaignMapTexture(textureName);
+        SetHomeIdleCombatMapTexture(textureName);
     }
 
     private int GetCurrentHomeProgressMapIndex()
@@ -18728,7 +18530,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return HomeCampaignMapTextureName;
         }
 
-        return HomeProgressMaps[GetSelectedHomeProgressMapIndex()].textureName;
+        return HomeProgressMaps[GetCurrentHomeProgressMapIndex()].textureName;
     }
 
     private void SetHomeCampaignMapTexture(string textureName)
@@ -18740,6 +18542,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var texture = LoadRuntimeTexture(textureName);
         homeCampaignMapImage.texture = texture != null ? texture : LoadRuntimeTexture(HomeCampaignMapTextureName);
+    }
+
+    private void SetHomeIdleCombatMapTexture(string textureName)
+    {
+        if (homeIdleCombatMapImage == null)
+        {
+            return;
+        }
+
+        var texture = LoadRuntimeTexture(textureName);
+        homeIdleCombatMapImage.texture = texture != null ? texture : LoadRuntimeTexture(HomeCampaignMapTextureName);
     }
 
     private void RefreshCampaignStagePreview()
