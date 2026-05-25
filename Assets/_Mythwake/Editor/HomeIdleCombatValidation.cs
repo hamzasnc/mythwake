@@ -353,10 +353,11 @@ public static class HomeIdleCombatValidation
 
             SetPrivateField(controller, "backendGameplayEnabled", true);
             SetPrivateField(controller, "homeIdleRewardTimer", 9.8f);
-            SetPrivateField(controller, "homeIdleLootPopupTimer", 0f);
+            SetPrivateField(controller, "homeIdleLootPopupTimer", 1f);
             SetPrivateField(controller, "homeIdleLastRewardGold", 0);
             SetPrivateField(controller, "homeIdleLastRewardEssence", 0);
-            lootPopupText.text = string.Empty;
+            lootPopupText.text = "+1 Gold  +1 Essence";
+            lootPopupText.gameObject.SetActive(true);
 
             InvokePrivate(controller, "TickHomeIdleCombat", 10.5f);
             Canvas.ForceUpdateCanvases();
@@ -366,14 +367,31 @@ public static class HomeIdleCombatValidation
                 throw new InvalidOperationException("Home idle combat should not grant local rewards while Server Mode is active.");
             }
 
+            AssertApproximately(rewardFill.rectTransform.anchorMax.x, 0f, 0.01f, "Home idle reward fill server state");
+
             if (lootPopupText.gameObject.activeSelf)
             {
                 throw new InvalidOperationException("Home idle loot popup should stay hidden while Server Mode blocks local reward ticks.");
             }
 
+            if (!string.IsNullOrWhiteSpace(lootPopupText.text))
+            {
+                throw new InvalidOperationException($"Home idle loot popup copy should be cleared in Server Mode, got '{lootPopupText.text}'.");
+            }
+
             RequireCopy(rewardText.text, "Server Mode");
             RequireCopy(rewardText.text, "serverseitig");
             AssertTextFits(rewardText, "Home Idle Reward Text server state");
+
+            InvokePrivate(controller, "ShowHomeIdleInfoPopup");
+            Canvas.ForceUpdateCanvases();
+            var infoPopup = RequireObject("Home Idle Info Popup", true);
+            var infoBody = RequireText(infoPopup, "Home Idle Info Body");
+            RequireCopy(infoBody.text, "Server Mode");
+            RequireCopy(infoBody.text, "serverseitig");
+            AssertTextFits(infoBody, "Home Idle Info Body server state");
+            RequireButton("Home Idle Info Close Button").onClick.Invoke();
+            Canvas.ForceUpdateCanvases();
         }
         finally
         {

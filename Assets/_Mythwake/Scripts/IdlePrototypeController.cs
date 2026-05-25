@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.96";
+    public const string PrototypeVersion = "0.2.97";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -18900,7 +18900,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (homeIdleRewardFill != null)
         {
-            SetRuntimeFillPercent(homeIdleRewardFill, homeIdleRewardTimer / HomeIdleRewardIntervalSeconds);
+            var rewardProgress = backendGameplayEnabled ? 0f : homeIdleRewardTimer / HomeIdleRewardIntervalSeconds;
+            SetRuntimeFillPercent(homeIdleRewardFill, rewardProgress);
+        }
+
+        if (backendGameplayEnabled && homeIdleLootPopupText != null && homeIdleLootPopupText.gameObject.activeSelf)
+        {
+            homeIdleLootPopupTimer = 0f;
+            homeIdleLootPopupText.text = string.Empty;
+            homeIdleLootPopupText.gameObject.SetActive(false);
         }
 
         if (homeIdleRewardText != null)

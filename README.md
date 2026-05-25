@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.96
+Prototype version: 0.2.97
 Local save version: 2
 
 Current prototype:
@@ -177,6 +177,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.97: Cleaned up Home idle Server Mode presentation so the local reward progress bar and old loot popups are hidden while rewards are server-side, with validator coverage.
 - Prototype 0.2.96: Extended Home idle combat validation for progress-map region sync across main/detail/idle maps, reward progress fill behavior, and Server Mode local-reward blocking.
 - Prototype 0.2.95: Added a reusable Unity C# MSBuild check script and standardized Windows helper wrappers so backend, PostgreSQL, Unity C#, and current-slice checks propagate failure exit codes.
 - Prototype 0.2.94: Fixed the Unity current-slice `.cmd` wrapper so PowerShell validation failures propagate as non-zero exit codes for local/CI-style checks.
