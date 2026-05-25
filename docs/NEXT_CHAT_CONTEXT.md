@@ -1,6 +1,6 @@
 # Mythwake Next Chat Context
 
-Last updated: 2026-05-25
+Last updated: 2026-05-26
 
 This file is meant to be pasted/read first in a new Codex chat so the project can continue without re-explaining everything.
 
@@ -28,7 +28,7 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `f318013 Guard connected home idle map layout`
+- `7fa1b07 Propagate Unity validation wrapper failures`
 
 Current continuation:
 - Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, runtime rig part loading, and Formation/Fight runtime rig visibility.
@@ -82,7 +82,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.94`
+- Prototype `0.2.95`
 - Save version `2`
 
 Important Unity scripts:
@@ -172,12 +172,11 @@ Latest backend combat direction:
 
 Latest verification notes:
 - `go test ./internal/balance ./internal/definitions ./internal/player ./internal/http` passes from `backend/`.
-- `dotnet msbuild Assembly-CSharp.csproj /p:FrameworkPathOverride="C:\Program Files\Unity\Hub\Editor\6000.4.5f1\Editor\Data\MonoBleedingEdge\lib\mono\xbuild-frameworks\.NETFramework\v4.7.1" /p:LangVersion=latest /v:minimal` passes.
-- `dotnet msbuild Assembly-CSharp-Editor.csproj /p:FrameworkPathOverride="C:\Program Files\Unity\Hub\Editor\6000.4.5f1\Editor\Data\MonoBleedingEdge\lib\mono\xbuild-frameworks\.NETFramework\v4.7.1" /p:LangVersion=latest /v:minimal` passes, with existing Paladin JSON field warnings.
+- `scripts/check-unity-csharp.cmd` passes runtime/editor C# MSBuild checks through Unity's bundled .NET Framework references, with existing Unity serialization/Paladin JSON field warnings.
 - `git diff --check` passes for touched client/backend/docs files, with existing LF->CRLF warnings on some backend/docs files.
 - Direct `dotnet build` fails on this machine because .NET Framework 4.7.1 reference assemblies are not installed globally.
 - Plain MSBuild without `/p:LangVersion=latest` can fail because the generated Unity csproj still says C# 7.3 while current code uses newer syntax.
-- Unity batchmode validation command is prepared, and the `.cmd` wrapper now propagates PowerShell failures correctly; full execution is currently blocked because another Unity instance has this project open.
+- Unity batchmode validation command is prepared, and the `.cmd` wrapper now propagates PowerShell failures correctly; full current-slice execution is currently blocked because another Unity instance has this project open.
   - Main local gameplay, UI runtime construction, backend mode switching, save/load, action handlers.
   - It is currently large/monolithic. Be careful with surgical edits.
 - `Assets/_Mythwake/Scripts/MythwakeBackendClient.cs`
@@ -453,6 +452,9 @@ Important tests/smoke:
 - PostgreSQL E2E:
   - `scripts/check-postgres-e2e.ps1`
   - `scripts/check-postgres-e2e.cmd`
+- Unity C# build validation:
+  - `scripts/check-unity-csharp.ps1`
+  - `scripts/check-unity-csharp.cmd`
 - Unity current slice validation:
   - `scripts/check-unity-current-slice.ps1`
   - `scripts/check-unity-current-slice.cmd`
@@ -487,6 +489,12 @@ PostgreSQL E2E smoke:
 
 ```powershell
 .\scripts\check-postgres-e2e.cmd
+```
+
+Unity C# validation:
+
+```powershell
+.\scripts\check-unity-csharp.cmd
 ```
 
 Unity current slice validation:
