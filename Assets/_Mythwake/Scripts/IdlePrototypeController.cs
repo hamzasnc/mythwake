@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.109";
+    public const string PrototypeVersion = "0.2.110";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -18914,6 +18914,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var isCurrent = stageNumber == enemyLevel;
         var isCleared = stageNumber < enemyLevel;
         var status = isCleared ? "Abgeschlossen" : isCurrent ? "Aktuelles Ziel" : "Gesperrt";
+        var stageType = GetCampaignStageTypeLabel(stageNumber);
+        var specialNote = GetCampaignStagePreviewSpecialNote(stageNumber);
         var requiredPower = GetStageRecommendedPower(stageNumber);
         var enemyDamage = GetCampaignEnemyDamage(stageNumber);
 
@@ -18931,14 +18933,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (campaignStageDetailBodyText != null)
         {
             var actionLine = isCurrent
-                ? "Battle startet die Formation fuer diesen Abschnitt."
+                ? "Battle -> Formation."
                 : isCleared
-                    ? "Replay-Auswahl kommt spaeter; Progress bleibt auf dem aktuellen Ziel."
-                    : "Schliesse zuerst den aktuellen Abschnitt ab.";
+                    ? "Replay spaeter; Progress bleibt beim Ziel."
+                    : "Erst aktuellen Abschnitt abschliessen.";
             campaignStageDetailBodyText.text =
-                $"{stage.enemyName}  |  {status}\n" +
+                $"{stage.enemyName}  |  {stageType}  |  {status}\n" +
                 $"{Tr("ui.common.recommended_power")} {FormatCompactNumber(requiredPower)}   HP {FormatCompactNumber(stage.maxHp)}   Damage {FormatCompactNumber(enemyDamage)}\n" +
-                actionLine;
+                $"{specialNote} {actionLine}";
         }
 
         if (campaignStageDetailEnemyImages != null)

@@ -76,6 +76,7 @@ public static class HomeIdleCombatValidation
         var detailRewardText = RequireText(detailPopup, "Stage Detail Reward Text 1");
         RequireCopy(detailTitle.text, "Abschnitt");
         RequireCopy(detailBody.text, "Damage");
+        RequireCopy(detailBody.text, "Normal");
         RequireCopy(detailEnemyHeader.text, "Feindliche Formation");
         RequireCopy(detailRewardHeader.text, "Belohnungen bei Abschluss");
         RequireCopy(detailRewardText.text, "Essence");
@@ -103,6 +104,7 @@ public static class HomeIdleCombatValidation
         ValidateCampaignBossNodeBadges(controller);
         ValidateCampaignMilestoneNodeBadges(controller);
         ValidateCampaignStagePreviewTags(controller);
+        ValidateCampaignStageDetailTags(controller);
 
         var idleRoot = RequireObject("Home Idle Combat Root", true);
         AssertInsideParent(RequireObject("Home Generated Art Root", true), idleRoot);
@@ -592,6 +594,54 @@ public static class HomeIdleCombatValidation
             SetPrivateField(controller, "enemyLevel", enemyLevelBefore);
             SetPrivateField(controller, "selectedCampaignStage", selectedStageBefore);
             SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void ValidateCampaignStageDetailTags(IdlePrototypeController controller)
+    {
+        var enemyLevelBefore = GetPrivateField<int>(controller, "enemyLevel");
+        var selectedStageBefore = GetPrivateField<int>(controller, "selectedCampaignStage");
+        var centerBefore = GetPrivateField<bool>(controller, "homeCampaignMapNeedsCenter");
+
+        try
+        {
+            SetPrivateField(controller, "enemyLevel", 6);
+            SetPrivateField(controller, "selectedCampaignStage", 4);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", true);
+            InvokePrivate(controller, "SetCampaignStageDetailPopupVisible", true);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+
+            var detailPopup = RequireObject("Campaign Stage Detail Popup", true);
+            var detailBody = RequireText(detailPopup, "Stage Detail Body");
+            RequireCopy(detailBody.text, "Normal");
+            RequireCopy(detailBody.text, "Bonus alle 5");
+            AssertTextFits(detailBody, "Normal campaign stage detail body");
+
+            SetPrivateField(controller, "selectedCampaignStage", 5);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+            RequireCopy(detailBody.text, "Bonus");
+            RequireCopy(detailBody.text, "Gems");
+            RequireCopy(detailBody.text, "Pass XP");
+            AssertTextFits(detailBody, "Bonus campaign stage detail body");
+
+            SetPrivateField(controller, "enemyLevel", 11);
+            SetPrivateField(controller, "selectedCampaignStage", 10);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+            RequireCopy(detailBody.text, "Boss");
+            RequireCopy(detailBody.text, "Boss-Knoten");
+            AssertTextFits(detailBody, "Boss campaign stage detail body");
+        }
+        finally
+        {
+            SetPrivateField(controller, "enemyLevel", enemyLevelBefore);
+            SetPrivateField(controller, "selectedCampaignStage", selectedStageBefore);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
+            InvokePrivate(controller, "SetCampaignStageDetailPopupVisible", false);
             InvokePrivate(controller, "RefreshCampaignMapUi");
             Canvas.ForceUpdateCanvases();
         }
