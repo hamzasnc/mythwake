@@ -16,7 +16,7 @@ public static class HomeIdleCombatValidation
         try
         {
             ValidateHomeIdleCombatUi();
-            Debug.Log("Home Idle Combat validated: campaign map, region texture/UV sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
+            Debug.Log("Home Idle Combat validated: campaign map, current-stage marker, region texture/UV sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
         }
         catch (Exception ex)
         {
@@ -98,6 +98,7 @@ public static class HomeIdleCombatValidation
 
         ValidateLockedStageDetailBattleGuard(controller);
         ValidateCurrentStageDetailBattleFlow(controller);
+        ValidateCurrentStageNodeMarker(controller);
 
         var idleRoot = RequireObject("Home Idle Combat Root", true);
         AssertInsideParent(RequireObject("Home Generated Art Root", true), idleRoot);
@@ -352,6 +353,37 @@ public static class HomeIdleCombatValidation
         }
     }
 
+    private static void ValidateCurrentStageNodeMarker(IdlePrototypeController controller)
+    {
+        var currentStage = GetPrivateField<int>(controller, "enemyLevel");
+        var startStage = (int)InvokePrivate(controller, "GetCampaignMapStartStage");
+        var currentNodeIndex = Mathf.Clamp(currentStage - startStage, 0, 9);
+        var currentNode = RequireButton($"Campaign Stage Node {currentNodeIndex + 1}");
+        var currentHalo = RequireChildObject(currentNode.gameObject, "Stage Current Halo");
+        var haloImage = currentHalo.GetComponent<Image>();
+        if (!currentHalo.activeInHierarchy || haloImage == null || haloImage.color.a < 0.2f)
+        {
+            throw new InvalidOperationException("Current campaign stage node should show a visible current-stage halo.");
+        }
+
+        var haloRect = currentHalo.GetComponent<RectTransform>();
+        var nodeRect = currentNode.GetComponent<RectTransform>();
+        if (haloRect == null || nodeRect == null || haloRect.rect.width <= nodeRect.rect.width || haloRect.rect.height <= nodeRect.rect.height)
+        {
+            throw new InvalidOperationException("Current campaign stage halo should be larger than the stage node frame.");
+        }
+
+        if (currentNodeIndex < 9)
+        {
+            var lockedNode = RequireButton($"Campaign Stage Node {currentNodeIndex + 2}");
+            var lockedHalo = RequireChildObject(lockedNode.gameObject, "Stage Current Halo");
+            if (lockedHalo.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Locked campaign stage node should not show the current-stage halo.");
+            }
+        }
+    }
+
     private static void ValidateHomeIdleRewardProgressAndServerMode(IdlePrototypeController controller, Image rewardFill, TMP_Text rewardText, TMP_Text lootPopupText)
     {
         if (rewardFill == null)
@@ -580,6 +612,17 @@ public static class HomeIdleCombatValidation
         }
 
         return text;
+    }
+
+    private static GameObject RequireChildObject(GameObject parent, string name)
+    {
+        var transform = parent.transform.Find(name);
+        if (transform == null)
+        {
+            throw new InvalidOperationException($"{parent.name} is missing child object {name}.");
+        }
+
+        return transform.gameObject;
     }
 
     private static RawImage RequireRawImageWithTexture(string name)

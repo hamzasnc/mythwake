@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.104`, save version `2`.
+- Unity client code is at Prototype `0.2.105`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -40,6 +40,7 @@ Last updated: 2026-05-26
 - Added a `Mythwake/Validate Current Slice` editor validation entry point that runs Village UI, Dungeons UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Added a first Home idle combat slice: the campaign map stays in the background, stage nodes still open a compact info preview, and a foreground patrol fight animates three formation heroes against current-stage monsters for small active local Gold/Myth Essence ticks without changing `enemyLevel`.
 - Added `Mythwake/Validate Home Idle Combat` and included it in `Mythwake/Validate Current Slice`; it checks map art, clickable preview info, visible patrol units, one active reward tick, and that idle combat does not auto-clear campaign stages.
+- Home campaign nodes now show a visible halo only on the actual current unlocked stage, and the Home idle validator checks that locked nodes do not inherit that marker.
 - Moved Home idle patrol combat below the map so it no longer covers checkpoint interaction, switched the campaign map to `area_map_scorched_plains`, enlarged it into a vertical scroll viewport, and anchored stage checkpoints to the scrollable map content.
 - Lowered the Home idle patrol farther into the bottom free lane below the Battle button and extended the visible campaign-map viewport downward so the current-stage map occupies more of the screen.
 - Expanded the Home campaign map viewport to fill the full marked play area behind side controls and the Battle button, leaving only the idle patrol in the lower lane.
