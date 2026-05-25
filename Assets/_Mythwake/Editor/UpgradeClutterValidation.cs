@@ -677,6 +677,31 @@ public static class UpgradeClutterValidation
             RequireInsidePanel(gearRoot, gearImage);
             ValidateRuntimeArtImage(gearImage, gearImageMaxSizes[i].x, gearImageMaxSizes[i].y, "Gear screen runtime art");
         }
+
+        ValidateGearShowcaseSlotLabel(gearRoot);
+    }
+
+    private static void ValidateGearShowcaseSlotLabel(GameObject gearRoot)
+    {
+        var slotLabel = RequireSceneObject("Gear Visual Power");
+        RequireInsidePanel(gearRoot, slotLabel);
+
+        var label = slotLabel.GetComponent<TMP_Text>();
+        if (label == null)
+        {
+            throw new InvalidOperationException("Gear screen runtime art should keep a visible slot label.");
+        }
+
+        var requiredWords = new[] { "Weapon", "Armor", "Headgear", "Gloves", "Boots", "Accessory" };
+        for (var i = 0; i < requiredWords.Length; i++)
+        {
+            if (!label.text.Contains(requiredWords[i]))
+            {
+                throw new InvalidOperationException($"Gear screen runtime art slot label should name {requiredWords[i]}. Got '{label.text}'.");
+            }
+        }
+
+        AssertTextFits(label, slotLabel.name, "Gear screen runtime art slot label");
     }
 
     private static void ValidateRuntimeArtImage(GameObject gameObject, float maxWidth, float maxHeight, string context)
