@@ -32,7 +32,8 @@ Last updated: 2026-05-25
 - Added Paladin to the local `Vanguard Oath` summon banner so the frontline banner actually features and rolls the Paladin.
 - Added a Paladin integration editor validator that checks the client hero definition, local summon banners, formation/fight hook anchors, backend definition/migration anchors, EN/DE localization keys, runtime portrait, combat sheets, skeletal part textures, and Paladin runtime rig part loading.
 - Added an editor validation entry point for the Summon UI so the Vanguard Oath banner, Paladin feature art, rates, carousel center card, and Paladin result popup can be checked in Unity.
-- Added a `Mythwake/Validate Current Slice` editor validation entry point that runs Village UI, Fast Rewards UI, Summon UI, Paladin integration, and Paladin Spine handoff checks in one pass.
+- Added an editor validation entry point for upgrade clutter so legacy Battle/Hero upgrade buttons stay hidden, Gear upgrade controls stay on Gear, and debug shortcuts stay in Shop/tools.
+- Added a `Mythwake/Validate Current Slice` editor validation entry point that runs Village UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Added `scripts/check-unity-current-slice.cmd` / `.ps1` so the current slice validator can be run from PowerShell or CI-style local checks once this Unity project is not already open.
 - Added backend tests for service-level and HTTP-level Village upgrades.
 - Added migration `0026_afk_reward_24h_cap.sql` so existing PostgreSQL dev databases pick up the 24h AFK cap.
@@ -43,4 +44,4 @@ Last updated: 2026-05-25
 
 1. Close the extra Unity project instance and run `.\scripts\check-unity-current-slice.cmd`, or run `Mythwake/Validate Current Slice` in the open editor, then fix any validator failures before continuing.
 2. Visually verify Village, Fast Rewards, Vanguard Oath/Summon result, and Paladin formation/fight presentation in Unity/emulator.
-3. Move remaining upgrade clutter into the proper Hero/Gear/Village screens.
+3. Use `Mythwake/Validate Upgrade Clutter` as the guard while continuing the visible Hero/Gear polish pass.

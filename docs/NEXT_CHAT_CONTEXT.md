@@ -27,14 +27,15 @@ Remote:
 Important Git rule:
 - Pushes/commits should use account/author `hamzasnc`, not `devasperity`.
 
-Latest known pushed commit before the current uncommitted pass:
-- `b6d93ad Feature paladin in vanguard summon banner`
+Latest known pushed commit before the current continuation:
+- `26bd80b Add Unity current slice check script`
 
-Current uncommitted pass:
+Current continuation:
 - Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, and runtime rig part loading.
 - Fast Rewards UI validator in `Assets/_Mythwake/Editor/FastRewardsUiValidation.cs`.
 - Summon UI validator in `Assets/_Mythwake/Editor/SummonUiValidation.cs`.
-- Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Fast Rewards UI, Summon UI, Paladin integration, and Paladin Spine handoff checks in one pass.
+- Upgrade clutter validator in `Assets/_Mythwake/Editor/UpgradeClutterValidation.cs` checks that old Battle/Hero upgrade controls stay hidden, Gear upgrade controls live on Gear, and debug shortcuts live in Shop/tools.
+- Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Current status summary in `docs/CURRENT_STATUS.md` and this handoff note.
 
 ## User Preferences And Product Intent
@@ -95,7 +96,7 @@ Latest local gameplay/UI batch:
 - Village bonuses are intentionally local-only until the Village balance/definition pass.
 - Fast Rewards popup now separates local and Server Mode: local shows stored time, rate, Village bonus, and ready rewards; Server Mode shows backend min/cap/rate/ready estimate and notes that Village local bonuses do not modify server rewards yet.
 - A Unity editor validator now checks Fast Rewards popup controls, local copy, Server Mode fallback copy, redeem/claim labels, and button bounds through `Mythwake/Validate Fast Rewards UI`.
-- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Fast Rewards, Summon/Vanguard Oath, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode. Batchmode execution is currently blocked while the project is already open in another Unity instance.
+- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode. Batchmode execution is currently blocked while the project is already open in another Unity instance.
 - Local Fast Rewards and backend AFK definitions now both use a 24h stored reward cap.
 - Paladin combat assets, combat preview, and Spine handoff validation are present.
 - Paladin is now also featured in the local `Vanguard Oath` summon banner and included in that banner's Epic pool.
@@ -588,7 +589,8 @@ The next chat should continue in this order unless the user redirects:
    - Run `Mythwake/Validate Paladin Spine Handoff`.
    - Visually verify roster/detail screen, formation, fight pose/preview, and summon result display.
 
-6. Move remaining upgrade clutter into proper screens.
+6. Continue the Hero/Gear polish pass behind the new upgrade-clutter guard.
+   - Run `Mythwake/Validate Upgrade Clutter` after layout changes.
    - Hero level-up belongs in Heroes or hero detail.
    - Weapon/Armor/accessory upgrades belong in Gear.
    - Battle screen should not contain upgrade clutter.
