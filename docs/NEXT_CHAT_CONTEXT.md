@@ -34,7 +34,7 @@ Current uncommitted pass:
 - Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, and runtime rig part loading.
 - Fast Rewards UI validator in `Assets/_Mythwake/Editor/FastRewardsUiValidation.cs`.
 - Summon UI validator in `Assets/_Mythwake/Editor/SummonUiValidation.cs`.
-- Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` to run Village UI, Fast Rewards UI, Summon UI, Paladin integration, and Paladin Spine handoff checks in one pass.
+- Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Fast Rewards UI, Summon UI, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Current status summary in `docs/CURRENT_STATUS.md` and this handoff note.
 
 ## User Preferences And Product Intent
@@ -95,7 +95,7 @@ Latest local gameplay/UI batch:
 - Village bonuses are intentionally local-only until the Village balance/definition pass.
 - Fast Rewards popup now separates local and Server Mode: local shows stored time, rate, Village bonus, and ready rewards; Server Mode shows backend min/cap/rate/ready estimate and notes that Village local bonuses do not modify server rewards yet.
 - A Unity editor validator now checks Fast Rewards popup controls, local copy, Server Mode fallback copy, redeem/claim labels, and button bounds through `Mythwake/Validate Fast Rewards UI`.
-- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Fast Rewards, Summon/Vanguard Oath, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together. Batchmode execution is currently blocked while the project is already open in another Unity instance.
+- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Fast Rewards, Summon/Vanguard Oath, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode. Batchmode execution is currently blocked while the project is already open in another Unity instance.
 - Local Fast Rewards and backend AFK definitions now both use a 24h stored reward cap.
 - Paladin combat assets, combat preview, and Spine handoff validation are present.
 - Paladin is now also featured in the local `Vanguard Oath` summon banner and included in that banner's Epic pool.
@@ -430,6 +430,9 @@ Important tests/smoke:
 - PostgreSQL E2E:
   - `scripts/check-postgres-e2e.ps1`
   - `scripts/check-postgres-e2e.cmd`
+- Unity current slice validation:
+  - `scripts/check-unity-current-slice.ps1`
+  - `scripts/check-unity-current-slice.cmd`
 
 ## Local Development Commands
 
@@ -461,6 +464,12 @@ PostgreSQL E2E smoke:
 
 ```powershell
 .\scripts\check-postgres-e2e.cmd
+```
+
+Unity current slice validation:
+
+```powershell
+.\scripts\check-unity-current-slice.cmd
 ```
 
 Manual Go run with DB:
@@ -557,7 +566,7 @@ Still rough:
 The next chat should continue in this order unless the user redirects:
 
 1. Run or manually trigger the current slice validation.
-   - Close the extra Unity project instance, or use `Mythwake/Validate Current Slice` in the open editor.
+   - Close the extra Unity project instance and run `.\scripts\check-unity-current-slice.cmd`, or use `Mythwake/Validate Current Slice` in the open editor.
    - Then visually verify Village, Fast Rewards, Vanguard Oath/Summon result, Paladin formation/fight pose, and spacing on editor/device.
 
 2. Finish the Village building test slice.

@@ -161,12 +161,13 @@ Backend:
   - `scripts/start-backend.cmd`
   - `scripts/check-backend.cmd`
   - `scripts/check-postgres-e2e.cmd`
+  - `scripts/check-unity-current-slice.cmd`
 - Test planning docs:
   - `docs/ROADMAP.md`
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
-- Prototype 0.2.75: Added Village building detail/upgrade UI, visible local-only placeholder building bonuses, local and Server Mode upgrade actions, backend Village upgrade tests, backend AFK 24h cap alignment, Fast Rewards server/local display polish, and a Unity editor Village UI validator.
+- Prototype 0.2.75: Added Village building detail/upgrade UI, visible local-only placeholder building bonuses, local and Server Mode upgrade actions, backend Village upgrade tests, backend AFK 24h cap alignment, Fast Rewards server/local display polish, Paladin/Summon validation helpers, and a current-slice Unity validation script.
 - Prototype 0.2.74: Added Paladin combat preview and cleaned up the Paladin Spine handoff.
 - Prototype 0.2.73: Added Paladin combat assets.
 - Prototype 0.2.72: Added multiplayer/backend Village building state.
