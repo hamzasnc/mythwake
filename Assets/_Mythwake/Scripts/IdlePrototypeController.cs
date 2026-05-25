@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.112";
+    public const string PrototypeVersion = "0.2.113";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1304,6 +1304,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text[] campaignStageButtonBossBadgeTexts;
     private Image[] campaignStageButtonMilestoneBadges;
     private TMP_Text[] campaignStageButtonMilestoneBadgeTexts;
+    private Image[] campaignStageButtonClearedBadges;
+    private TMP_Text[] campaignStageButtonClearedBadgeTexts;
     private Image[] campaignPathSegmentImages;
     private RawImage[] homeIdleHeroImages;
     private RawImage[] homeIdleEnemyImages;
@@ -14205,6 +14207,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         campaignStageButtonBossBadgeTexts = new TMP_Text[nodePositions.Length];
         campaignStageButtonMilestoneBadges = new Image[nodePositions.Length];
         campaignStageButtonMilestoneBadgeTexts = new TMP_Text[nodePositions.Length];
+        campaignStageButtonClearedBadges = new Image[nodePositions.Length];
+        campaignStageButtonClearedBadgeTexts = new TMP_Text[nodePositions.Length];
 
         for (var i = 0; i < nodePositions.Length; i++)
         {
@@ -14362,6 +14366,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         milestoneText.color = new Color(1f, 0.94f, 0.58f);
         milestoneText.raycastTarget = false;
 
+        var clearedBadge = CreateRuntimePanel(buttonObject.transform, "Stage Cleared Badge", new Vector2(34, -50), new Vector2(48, 26), new Color(0.1f, 0.48f, 0.32f, 0.94f));
+        clearedBadge.gameObject.SetActive(false);
+        var clearedText = CreateRuntimeText(clearedBadge, "Label", "OK", 14, new Vector2(0, -2), new Vector2(42, 22));
+        clearedText.fontStyle = FontStyles.Bold;
+        clearedText.enableAutoSizing = true;
+        clearedText.fontSizeMin = 10;
+        clearedText.fontSizeMax = 14;
+        clearedText.textWrappingMode = TextWrappingModes.NoWrap;
+        clearedText.color = new Color(0.78f, 1f, 0.72f);
+        clearedText.raycastTarget = false;
+
         campaignStageButtonFrames[nodeIndex] = frame;
         campaignStageButtonSelectedHalos[nodeIndex] = selectedHalo.GetComponent<Image>();
         campaignStageButtonCurrentHalos[nodeIndex] = currentHalo.GetComponent<Image>();
@@ -14369,6 +14384,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         campaignStageButtonBossBadgeTexts[nodeIndex] = bossText;
         campaignStageButtonMilestoneBadges[nodeIndex] = milestoneBadge.GetComponent<Image>();
         campaignStageButtonMilestoneBadgeTexts[nodeIndex] = milestoneText;
+        campaignStageButtonClearedBadges[nodeIndex] = clearedBadge.GetComponent<Image>();
+        campaignStageButtonClearedBadgeTexts[nodeIndex] = clearedText;
         campaignStageButtonIcons[nodeIndex] = icon;
         campaignStageButtonTexts[nodeIndex] = text;
 
@@ -18771,6 +18788,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 campaignStageButtonMilestoneBadgeTexts[i].color = isLocked
                     ? new Color(0.72f, 0.69f, 0.6f)
                     : new Color(1f, 0.94f, 0.58f);
+            }
+
+            if (campaignStageButtonClearedBadges != null && i < campaignStageButtonClearedBadges.Length && campaignStageButtonClearedBadges[i] != null)
+            {
+                campaignStageButtonClearedBadges[i].gameObject.SetActive(isCleared);
+                campaignStageButtonClearedBadges[i].color = new Color(0.1f, 0.48f, 0.32f, 0.94f);
+            }
+
+            if (campaignStageButtonClearedBadgeTexts != null && i < campaignStageButtonClearedBadgeTexts.Length && campaignStageButtonClearedBadgeTexts[i] != null)
+            {
+                campaignStageButtonClearedBadgeTexts[i].text = "OK";
+                campaignStageButtonClearedBadgeTexts[i].color = new Color(0.78f, 1f, 0.72f);
             }
 
             campaignStageButtons[i].interactable = !campaignFightInProgress && !backendRequestInProgress && !backendLifecycleFlushInProgress;

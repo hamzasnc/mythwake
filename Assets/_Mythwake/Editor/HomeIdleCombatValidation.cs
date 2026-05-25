@@ -107,6 +107,7 @@ public static class HomeIdleCombatValidation
         ValidateCurrentStageDetailBattleFlow(controller);
         ValidateCurrentStageNodeMarker(controller);
         ValidateSelectedStageNodeMarker(controller);
+        ValidateCampaignClearedNodeBadges(controller);
         ValidateCampaignPathProgress(controller);
         ValidateCampaignBossNodeBadges(controller);
         ValidateCampaignMilestoneNodeBadges(controller);
@@ -444,6 +445,62 @@ public static class HomeIdleCombatValidation
             if (selectedHaloImage.raycastTarget)
             {
                 throw new InvalidOperationException("Selected campaign stage halo should not intercept node input.");
+            }
+        }
+        finally
+        {
+            SetPrivateField(controller, "enemyLevel", enemyLevelBefore);
+            SetPrivateField(controller, "selectedCampaignStage", selectedStageBefore);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
+            InvokePrivate(controller, "SetCampaignStageDetailPopupVisible", false);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void ValidateCampaignClearedNodeBadges(IdlePrototypeController controller)
+    {
+        var enemyLevelBefore = GetPrivateField<int>(controller, "enemyLevel");
+        var selectedStageBefore = GetPrivateField<int>(controller, "selectedCampaignStage");
+        var centerBefore = GetPrivateField<bool>(controller, "homeCampaignMapNeedsCenter");
+
+        try
+        {
+            const int currentStage = 6;
+            SetPrivateField(controller, "enemyLevel", currentStage);
+            SetPrivateField(controller, "selectedCampaignStage", currentStage);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", true);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+
+            var clearedNode = RequireButton("Campaign Stage Node 4");
+            var clearedBadge = RequireChildObject(clearedNode.gameObject, "Stage Cleared Badge");
+            var clearedBadgeImage = clearedBadge.GetComponent<Image>();
+            var clearedBadgeText = RequireText(clearedBadge, "Label");
+            if (!clearedBadge.activeInHierarchy || clearedBadgeImage == null || clearedBadgeImage.color.a < 0.5f)
+            {
+                throw new InvalidOperationException("Cleared campaign stage node should show a visible clear badge.");
+            }
+
+            RequireCopy(clearedBadgeText.text, "OK");
+            AssertTextFits(clearedBadgeText, "Campaign cleared badge label");
+            if (clearedBadgeImage.raycastTarget || clearedBadgeText.raycastTarget)
+            {
+                throw new InvalidOperationException("Cleared campaign stage badge should not intercept node input.");
+            }
+
+            var currentNode = RequireButton("Campaign Stage Node 6");
+            var currentBadge = RequireChildObject(currentNode.gameObject, "Stage Cleared Badge");
+            if (currentBadge.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Current campaign stage node should not show the cleared badge.");
+            }
+
+            var lockedNode = RequireButton("Campaign Stage Node 7");
+            var lockedBadge = RequireChildObject(lockedNode.gameObject, "Stage Cleared Badge");
+            if (lockedBadge.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Locked campaign stage node should not show the cleared badge.");
             }
         }
         finally
