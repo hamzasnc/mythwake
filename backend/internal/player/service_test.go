@@ -117,6 +117,40 @@ func TestAccessoryEquipUsesDefinitionSlot(t *testing.T) {
 	}
 }
 
+func TestAccessoryUnequipReturnsCopyAndRecalculatesPower(t *testing.T) {
+	service := NewService()
+	service.accessoryInventory["accessory_necklace_r0"] = 1
+
+	equipResult := service.EquipAccessory("accessory_necklace_r0")
+	if !equipResult.Success {
+		t.Fatalf("expected accessory equip to succeed, got %#v", equipResult)
+	}
+	attackWithAccessory := service.state.TeamAttack
+
+	result := service.UnequipAccessory("accessory_necklace_r0")
+	if !result.Success {
+		t.Fatalf("expected accessory unequip to succeed, got %#v", result)
+	}
+	if service.equippedAccessory["necklace"] != "" {
+		t.Fatalf("expected necklace slot to be empty, got %#v", service.equippedAccessory)
+	}
+	if service.accessoryInventory["accessory_necklace_r0"] != 1 {
+		t.Fatalf("expected unequipped copy to return to inventory, got %#v", service.accessoryInventory)
+	}
+	if service.state.TeamAttack >= attackWithAccessory {
+		t.Fatalf("expected unequip to reduce team attack, with=%d after=%d", attackWithAccessory, service.state.TeamAttack)
+	}
+}
+
+func TestAccessoryUnequipRequiresEquippedItem(t *testing.T) {
+	service := NewService()
+
+	result := service.UnequipAccessory("accessory_necklace_r0")
+	if result.Success || result.ErrorCode != "not_equipped" {
+		t.Fatalf("expected not_equipped, got %#v", result)
+	}
+}
+
 func TestAccessoryFuseUsesDefinitionTargetAndCopyCost(t *testing.T) {
 	service := NewService()
 	service.accessoryInventory["accessory_earrings_r0"] = 3

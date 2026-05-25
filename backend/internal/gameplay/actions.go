@@ -15,6 +15,7 @@ const (
 	ActionHeroAscend        = "hero_ascend"
 	ActionEquipmentLevel    = "equipment_level"
 	ActionAccessoryEquip    = "accessory_equip"
+	ActionAccessoryUnequip  = "accessory_unequip"
 	ActionAccessoryLevel    = "accessory_level"
 	ActionAccessoryFuse     = "accessory_fuse"
 	ActionSummonPull        = "summon_pull"
@@ -44,6 +45,7 @@ func ActionCatalog() []ActionDefinition {
 		{ID: ActionHeroAscend, Domain: "hero", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionEquipmentLevel, Domain: "equipment", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionAccessoryEquip, Domain: "inventory", RequiresIdempotency: true, MaterializedByFlush: true},
+		{ID: ActionAccessoryUnequip, Domain: "inventory", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionAccessoryLevel, Domain: "inventory", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionAccessoryFuse, Domain: "inventory", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionSummonPull, Domain: "summon", RequiresIdempotency: true, MaterializedByFlush: true},

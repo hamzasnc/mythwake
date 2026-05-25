@@ -133,9 +133,9 @@ public static class UpgradeClutterValidation
         }
 
         SetPrivateField(controller, "backendGameplayEnabled", true);
-        if ((bool)InvokePrivate(controller, "CanRemoveSelectedHeroDetailAccessory"))
+        if (!(bool)InvokePrivate(controller, "CanRemoveSelectedHeroDetailAccessory"))
         {
-            throw new InvalidOperationException("Hero detail Remove Gear should stay disabled in Server Mode until a backend unequip action exists.");
+            throw new InvalidOperationException("Hero detail Remove Gear should stay available in Server Mode when a backend-equipped accessory is selected.");
         }
 
         SetPrivateField(controller, "backendGameplayEnabled", false);

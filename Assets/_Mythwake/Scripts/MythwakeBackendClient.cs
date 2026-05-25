@@ -250,6 +250,11 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         return SendAuthenticatedActionJson($"accessory_equip:{accessoryId}", () => PostAccessory("/gear/accessories/equip", accessoryId), completed);
     }
 
+    public IEnumerator UnequipAccessory(string accessoryId, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        return SendAuthenticatedActionJson($"accessory_unequip:{accessoryId}", () => PostAccessory("/gear/accessories/unequip", accessoryId), completed);
+    }
+
     public IEnumerator LevelAccessory(string accessoryId, Action<bool, string, MythwakeActionResultDto> completed)
     {
         return SendAuthenticatedActionJson($"accessory_level:{accessoryId}", () => PostAccessory("/gear/accessories/level-up", accessoryId), completed);

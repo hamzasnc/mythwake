@@ -1043,14 +1043,17 @@ func TestAccessoryBodyValidation(t *testing.T) {
 	handler := newTestHandler()
 	login := loginGuest(t, handler)
 	response := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodPost, "/gear/accessories/equip", strings.NewReader(`{}`))
-	addAuth(request, login.SessionToken)
-	addIdempotencyKey(request, "accessory-equip-001")
+	for _, path := range []string{"/gear/accessories/equip", "/gear/accessories/unequip"} {
+		request := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{}`))
+		addAuth(request, login.SessionToken)
+		addIdempotencyKey(request, "accessory-body-"+strings.ReplaceAll(path, "/", "-"))
 
-	handler.ServeHTTP(response, request)
+		handler.ServeHTTP(response, request)
 
-	if response.Code != http.StatusBadRequest {
-		t.Fatalf("expected status 400, got %d", response.Code)
+		if response.Code != http.StatusBadRequest {
+			t.Fatalf("expected status 400 for %s, got %d", path, response.Code)
+		}
+		response = httptest.NewRecorder()
 	}
 }
 

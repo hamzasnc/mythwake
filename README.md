@@ -76,7 +76,7 @@ Current prototype:
 - Mission Track rewards can be claimed in the Shop tab
 - Ravik and Paladin art/combat preview hooks exist, including Paladin Spine handoff validation tooling
 - Unity editor validation covers the current gameplay/UI slice, including Village, Fast Rewards, Summon, Upgrade Clutter, and Paladin handoff checks
-- Hero Detail shows all equipment/accessory slots and supports local accessory removal from the detail view
+- Hero Detail shows all equipment/accessory slots and supports accessory removal locally and in Server Mode
 
 Backend:
 - Go API skeleton in `backend/`
@@ -114,6 +114,7 @@ Backend:
 - Backend hero definitions now include server-owned stat scaling and level/ascension caps, and team ATK/HP/Power are derived from those definitions
 - Backend starter equipment definitions now include server-owned stat scaling and max-level caps, and equipment training validates against those definitions
 - Backend Accessory equip, level, and fuse actions now validate against server-owned accessory and rarity definitions instead of deriving slot/fuse behavior from ID strings
+- Backend Accessory unequip returns the equipped copy to inventory and refreshes authoritative team stats
 - Equipped Accessories now contribute definition-based ATK/HP to backend team stats
 - PostgreSQL now seeds DB-ready hero, campaign, reward, progression cost, summon, mission, and Mission Track definition tables
 - `/definitions` now loads the common definition catalog from PostgreSQL when the database is enabled, with the static Go catalog used only for no-DB local mode
@@ -169,7 +170,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
-- Prototype 0.2.75: Added Village building detail/upgrade UI, visible local-only placeholder building bonuses, local and Server Mode upgrade actions, backend Village upgrade tests, backend AFK 24h cap alignment, Fast Rewards server/local display polish, Hero Detail gear polish, Paladin/Summon/Upgrade Clutter validation helpers, and a current-slice Unity validation script.
+- Prototype 0.2.75: Added Village building detail/upgrade UI, visible local-only placeholder building bonuses, local and Server Mode upgrade actions, backend Village upgrade tests, backend AFK 24h cap alignment, Fast Rewards server/local display polish, Hero Detail gear polish with backend accessory unequip, Paladin/Summon/Upgrade Clutter validation helpers, and a current-slice Unity validation script.
 - Prototype 0.2.74: Added Paladin combat preview and cleaned up the Paladin Spine handoff.
 - Prototype 0.2.73: Added Paladin combat assets.
 - Prototype 0.2.72: Added multiplayer/backend Village building state.

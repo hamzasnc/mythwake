@@ -128,6 +128,7 @@ func (router *Router) routes() {
 	router.mux.HandleFunc("POST /heroes/{hero_id}/ascend", router.handleHeroAscend)
 	router.mux.HandleFunc("POST /equipment/{equipment_id}/level-up", router.handleEquipmentLevel)
 	router.mux.HandleFunc("POST /gear/accessories/equip", router.handleAccessoryEquip)
+	router.mux.HandleFunc("POST /gear/accessories/unequip", router.handleAccessoryUnequip)
 	router.mux.HandleFunc("POST /gear/accessories/level-up", router.handleAccessoryLevel)
 	router.mux.HandleFunc("POST /gear/accessories/fuse", router.handleAccessoryFuse)
 	router.mux.HandleFunc("POST /summons/{banner_id}/pull", router.handleSummonPull)
@@ -445,6 +446,17 @@ func (router *Router) handleAccessoryLevel(response http.ResponseWriter, request
 
 	router.writeGameplayAction(response, request, rawBody, func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
 		return playerService.LevelAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID)
+	})
+}
+
+func (router *Router) handleAccessoryUnequip(response http.ResponseWriter, request *http.Request) {
+	accessoryRequest, rawBody, ok := decodeAccessoryRequest(response, request)
+	if !ok {
+		return
+	}
+
+	router.writeGameplayAction(response, request, rawBody, func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.UnequipAccessoryWithRequest(request.Context(), action, accessoryRequest.AccessoryID)
 	})
 }
 

@@ -2741,6 +2741,35 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return CreateActionResult(true, "accessory_equip", string.Empty, $"Equipped {GetLocalizedAccessoryName(slot, rarity)} on {GetLocalizedHeroName(heroIndex)}.");
     }
 
+    public MythwakeActionResultDto UnequipAccessory(string accessoryId)
+    {
+        EnsureAccessories();
+        if (!TryGetAccessoryDefinitionById(accessoryId, out var accessory))
+        {
+            var invalidResult = CreateActionResult(false, "accessory_unequip", "invalid_accessory", $"Unknown accessory: {accessoryId}");
+            RefreshUi();
+            return invalidResult;
+        }
+
+        var slot = accessory.slotIndex;
+        var rarity = accessory.rarityIndex;
+        var heroIndex = GetSelectedHeroIndex();
+
+        if (GetHeroEquippedAccessoryRarity(heroIndex, slot) != rarity)
+        {
+            RefreshUi();
+            return CreateActionResult(false, "accessory_unequip", "not_equipped", $"{GetLocalizedAccessoryName(slot, rarity)} is not equipped on {GetLocalizedHeroName(heroIndex)}.");
+        }
+
+        AddAccessoryInventory(slot, rarity, 1);
+        SetHeroEquippedAccessory(heroIndex, slot, -1, 0);
+        damage = GetTeamDamage();
+
+        SaveProgress();
+        RefreshUi();
+        return CreateActionResult(true, "accessory_unequip", string.Empty, $"Removed {GetLocalizedAccessoryName(slot, rarity)} from {GetLocalizedHeroName(heroIndex)}.");
+    }
+
     public void LevelSelectedAccessory()
     {
         EnsureAccessories();
@@ -4444,6 +4473,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             equippedAccessoryLevels[slot] = 0;
         }
 
+        for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
+        {
+            for (var slot = 0; slot < AccessorySlotCount; slot++)
+            {
+                SetHeroEquippedAccessory(heroIndex, slot, -1, 0);
+            }
+        }
+
         if (accessories != null)
         {
             for (var i = 0; i < accessories.Length; i++)
@@ -4471,6 +4508,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             equippedAccessoryRarities[definition.slotIndex] = definition.rarityIndex;
             equippedAccessoryLevels[definition.slotIndex] = Mathf.Clamp(GetBackendAccessoryLevel(accessories, equipped[i].accessoryId), 1, GetAccessoryMaxLevel(definition.rarityIndex));
+            for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
+            {
+                SetHeroEquippedAccessory(heroIndex, definition.slotIndex, definition.rarityIndex, equippedAccessoryLevels[definition.slotIndex]);
+            }
         }
     }
 
@@ -17733,13 +17774,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var heroIndex = GetSelectedHeroIndex();
         var accessorySlot = selectedHeroDetailGearSlotIndex - 2;
         var rarity = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot);
+        var accessoryId = GetAccessoryDefinition(accessorySlot, rarity).accessoryId;
 
-        AddAccessoryInventory(accessorySlot, rarity, 1);
-        SetHeroEquippedAccessory(heroIndex, accessorySlot, -1, 0);
-        damage = GetTeamDamage();
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: removing accessory..."))
+            {
+                StartCoroutine(backendClient.UnequipAccessory(accessoryId, OnBackendGameplayAction));
+            }
 
-        SaveProgress();
-        RefreshUi();
+            return;
+        }
+
+        var result = UnequipAccessory(accessoryId);
+        SetDungeonResult(result.message);
         ShowHeroDetailGearSlot(selectedHeroDetailGearSlotIndex);
     }
 
@@ -17769,7 +17817,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private bool CanRemoveSelectedHeroDetailAccessory()
     {
-        if (backendGameplayEnabled || selectedHeroDetailGearSlotIndex < 2)
+        if (selectedHeroDetailGearSlotIndex < 2)
         {
             return false;
         }

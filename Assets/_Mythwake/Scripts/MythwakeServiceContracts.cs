@@ -541,6 +541,7 @@ public interface IMythwakeSummonService
 public interface IMythwakeInventoryService
 {
     MythwakeActionResultDto EquipAccessory(string accessoryId);
+    MythwakeActionResultDto UnequipAccessory(string accessoryId);
     MythwakeActionResultDto LevelAccessory(string accessoryId);
     MythwakeActionResultDto FuseAccessory(string accessoryId);
 }

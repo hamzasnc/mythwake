@@ -46,6 +46,36 @@ func (actions accessoryActions) EquipAccessory(ctx context.Context, request Acti
 	})
 }
 
+func (service *Service) UnequipAccessory(accessoryID string) api.ActionResult {
+	return service.UnequipAccessoryWithRequest(context.Background(), ActionRequest{}, accessoryID)
+}
+
+func (service *Service) UnequipAccessoryWithRequest(ctx context.Context, request ActionRequest, accessoryID string) api.ActionResult {
+	return service.accessoryActions.UnequipAccessory(ctx, request, accessoryID)
+}
+
+func (actions accessoryActions) UnequipAccessory(ctx context.Context, request ActionRequest, accessoryID string) api.ActionResult {
+	service := actions.service
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	return service.executeAction(ctx, request, gameplay.ActionAccessoryUnequip, func() actionOutcome {
+		definition, ok := service.balanceCatalog.AccessoryDefinitionByID(accessoryID)
+		if !ok || definition.SlotID == "" {
+			return actionFailure("invalid_accessory", fmt.Sprintf("Unknown accessory: %s.", accessoryID))
+		}
+
+		if service.equippedAccessory[definition.SlotID] != accessoryID {
+			return actionFailure("not_equipped", fmt.Sprintf("%s is not equipped.", accessoryID))
+		}
+
+		delete(service.equippedAccessory, definition.SlotID)
+		service.accessoryInventory[accessoryID]++
+		service.recalculatePower()
+		return actionSuccess(fmt.Sprintf("Unequipped %s.", accessoryID), api.Reward{})
+	})
+}
+
 func (service *Service) LevelAccessory(accessoryID string) api.ActionResult {
 	return service.LevelAccessoryWithRequest(context.Background(), ActionRequest{}, accessoryID)
 }
