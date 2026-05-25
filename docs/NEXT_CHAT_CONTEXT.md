@@ -31,7 +31,7 @@ Latest known pushed commit before the current continuation:
 - `9ef0afe Polish gear screen copy layout`
 
 Current continuation:
-- Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, and runtime rig part loading.
+- Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, runtime rig part loading, and Formation/Fight runtime rig visibility.
 - Fast Rewards UI validator in `Assets/_Mythwake/Editor/FastRewardsUiValidation.cs`.
 - Summon UI validator in `Assets/_Mythwake/Editor/SummonUiValidation.cs`.
 - Upgrade clutter validator in `Assets/_Mythwake/Editor/UpgradeClutterValidation.cs` checks that old Battle/Hero upgrade controls stay hidden, Gear upgrade controls live on Gear, Gear navigation uses compact arrow labels, Gear builder defaults do not recreate stale placeholder copy, Gear showcase art loads/fits without intercepting input, the Gear showcase label names all visible equipment slots, fits, and does not overlap the icon rows, Hero Detail gear slots do not overlap the portrait/stats/actions, Hero Detail gear lists stay inside their popup, equipment/accessory list rows switch correctly, localized/contextual Hero Detail action labels and gear-list rows are correct after a German language refresh and do not overflow, and debug shortcuts live in Shop/tools.
@@ -108,7 +108,7 @@ Latest local gameplay/UI batch:
 - Local Fast Rewards and backend AFK definitions now both use a 24h stored reward cap.
 - Paladin combat assets, combat preview, and Spine handoff validation are present.
 - Paladin is now also featured in the local `Vanguard Oath` summon banner and included in that banner's Epic pool.
-- A Unity editor validator now checks Paladin client definition, local summon banners, formation/fight hook anchors, backend definition/migration anchors, EN/DE localization, runtime portrait, combat sheets, skeletal part textures, and Paladin runtime rig part loading through `Mythwake/Validate Paladin Integration`.
+- A Unity editor validator now checks Paladin client definition, local summon banners, formation/fight hook anchors, backend definition/migration anchors, EN/DE localization, runtime portrait, combat sheets, skeletal part textures, Paladin runtime rig part loading, and Formation/Fight runtime rig visibility through `Mythwake/Validate Paladin Integration`.
 - Home now has a runtime campaign map with clickable stage nodes and a stage preview.
 - Battle no longer starts immediately from the main button. Flow is now map/stage selection -> Battle -> Formation -> Confirm -> visible fight.
 - Dungeons now use the same Formation -> Confirm -> visible fight flow.

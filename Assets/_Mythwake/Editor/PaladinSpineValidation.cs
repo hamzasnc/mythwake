@@ -5,11 +5,15 @@ using System.IO;
 using System.Reflection;
 using Spine;
 using Spine.Unity;
+using TMPro;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 
 public static class PaladinSpineValidation
 {
+    private const string ScenePath = "Assets/Scenes/SampleScene.unity";
     private const string SkeletonDataAssetPath = "Assets/_Mythwake/ArtSource/Generated/paladin_spine/spine_export/hero_paladin_spine_SkeletonData.asset";
     private const string TransitionMixPath = "Assets/_Mythwake/ArtSource/Generated/paladin_spine/hero_paladin_spine_transition_mixes.json";
     private const string PaladinHeroId = "hero_paladin";
@@ -113,8 +117,9 @@ public static class PaladinSpineValidation
         ValidateTextureAssets(RequiredPaladinTexturePaths);
         ValidateTextureAssets(RequiredPaladinSkeletalPartPaths);
         ValidatePaladinSkeletalRuntimeView();
+        ValidatePaladinFormationFightRuntimeState(paladinHeroIndex);
 
-        Debug.Log("Paladin integration validated: client definition, local summon banners, formation/fight hooks, backend definition anchors, localization, and runtime assets.");
+        Debug.Log("Paladin integration validated: client definition, local summon banners, formation/fight hooks and runtime rig state, backend definition anchors, localization, and runtime assets.");
     }
 
     private static int ValidateClientHeroDefinition()
@@ -291,6 +296,114 @@ public static class PaladinSpineValidation
         }
     }
 
+    private static void ValidatePaladinFormationFightRuntimeState(int paladinHeroIndex)
+    {
+        EditorSceneManager.OpenScene(ScenePath);
+
+        var controller = FindSceneComponent<IdlePrototypeController>();
+        if (controller == null)
+        {
+            throw new InvalidOperationException("Missing IdlePrototypeController in SampleScene.");
+        }
+
+        InvokePrivate(controller, "EnsureRuntimeScreenLayout");
+        InvokePrivate(controller, "RegisterNavigation");
+        SetPrivateField(controller, "backendGameplayEnabled", false);
+        SetPrivateField(controller, "formationSlotHeroIndices", CreateFormationOrderWithPaladinFirst(paladinHeroIndex));
+
+        InvokePrivate(controller, "ShowFormationScreen");
+        Canvas.ForceUpdateCanvases();
+
+        var formationRoot = GetInstanceField<RectTransform>(controller, "formationRoot");
+        if (formationRoot == null || !formationRoot.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Paladin formation validation expected the Formation UI to be active.");
+        }
+
+        var formationHeroImages = GetInstanceField<RawImage[]>(controller, "formationHeroImages");
+        var formationPaladinViews = GetInstanceField<PaladinSkeletalCombatView[]>(controller, "formationHeroPaladinViews");
+        var formationHeroTexts = GetInstanceField<TMP_Text[]>(controller, "formationHeroTexts");
+        AssertPaladinRigVisible(formationHeroImages, formationPaladinViews, 0, "Paladin formation preview");
+        AssertPaladinRigHidden(formationPaladinViews, 1, "Non-Paladin formation slot");
+        if (formationHeroTexts == null || formationHeroTexts.Length == 0 || formationHeroTexts[0] == null || !formationHeroTexts[0].text.Contains("Paladin"))
+        {
+            throw new InvalidOperationException($"Paladin formation label should name Paladin, got '{(formationHeroTexts == null || formationHeroTexts.Length == 0 || formationHeroTexts[0] == null ? "<missing>" : formationHeroTexts[0].text)}'.");
+        }
+
+        SetPrivateEnumField(controller, "battleFlowMode", "Fight");
+        InvokePrivate(controller, "ApplyBattleFlowVisibility");
+        InvokePrivate(controller, "PrepareFightAnimationTextures", 1, false, null);
+        Canvas.ForceUpdateCanvases();
+
+        var fightRoot = GetInstanceField<RectTransform>(controller, "fightRoot");
+        if (fightRoot == null || !fightRoot.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Paladin fight validation expected the Fight UI to be active.");
+        }
+
+        var fightHeroImages = GetInstanceField<RawImage[]>(controller, "fightHeroImages");
+        var fightPaladinViews = GetInstanceField<PaladinSkeletalCombatView[]>(controller, "fightHeroPaladinViews");
+        AssertPaladinRigVisible(fightHeroImages, fightPaladinViews, paladinHeroIndex, "Paladin fight preview");
+        AssertPaladinRigHidden(fightPaladinViews, 0, "Non-Paladin fight slot");
+    }
+
+    private static int[] CreateFormationOrderWithPaladinFirst(int paladinHeroIndex)
+    {
+        var heroCount = GetStaticArray(typeof(IdlePrototypeController), "HeroDefinitions").Length;
+        var order = new int[heroCount];
+        order[0] = paladinHeroIndex;
+        var index = 1;
+        for (var heroIndex = 0; heroIndex < heroCount && index < order.Length; heroIndex++)
+        {
+            if (heroIndex == paladinHeroIndex)
+            {
+                continue;
+            }
+
+            order[index] = heroIndex;
+            index++;
+        }
+
+        return order;
+    }
+
+    private static void AssertPaladinRigVisible(RawImage[] fallbackImages, PaladinSkeletalCombatView[] paladinViews, int index, string context)
+    {
+        if (paladinViews == null || index < 0 || index >= paladinViews.Length || paladinViews[index] == null)
+        {
+            throw new InvalidOperationException($"{context}: Paladin skeletal view is missing.");
+        }
+
+        if (!paladinViews[index].gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException($"{context}: Paladin skeletal view should be visible.");
+        }
+
+        if (fallbackImages != null && index >= 0 && index < fallbackImages.Length && fallbackImages[index] != null && fallbackImages[index].gameObject.activeSelf)
+        {
+            throw new InvalidOperationException($"{context}: fallback RawImage should be hidden while Paladin skeletal rig is visible.");
+        }
+
+        var parts = GetInstanceField<object>(paladinViews[index], "parts");
+        if (!DictionaryContainsKey(parts, "shield") || !DictionaryContainsKey(parts, "sword"))
+        {
+            throw new InvalidOperationException($"{context}: Paladin skeletal view should keep shield and sword parts loaded.");
+        }
+    }
+
+    private static void AssertPaladinRigHidden(PaladinSkeletalCombatView[] paladinViews, int index, string context)
+    {
+        if (paladinViews == null || index < 0 || index >= paladinViews.Length || paladinViews[index] == null)
+        {
+            return;
+        }
+
+        if (paladinViews[index].gameObject.activeSelf)
+        {
+            throw new InvalidOperationException($"{context}: Paladin skeletal view should stay hidden for non-Paladin heroes.");
+        }
+    }
+
     private static PaladinTransitionMixFile LoadMixFile()
     {
         var mixAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(TransitionMixPath);
@@ -439,6 +552,54 @@ public static class PaladinSpineValidation
         }
 
         throw new InvalidOperationException($"{type.Name}.{fieldName} has unexpected type {field.FieldType.Name}.");
+    }
+
+    private static void SetPrivateField(object target, string fieldName, object value)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException($"Missing private field: {fieldName}");
+        }
+
+        field.SetValue(target, value);
+    }
+
+    private static void SetPrivateEnumField(object target, string fieldName, string enumValueName)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException($"Missing private enum field: {fieldName}");
+        }
+
+        field.SetValue(target, Enum.Parse(field.FieldType, enumValueName));
+    }
+
+    private static object InvokePrivate(object target, string methodName, params object[] args)
+    {
+        var method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        if (method == null)
+        {
+            throw new InvalidOperationException($"Missing private method: {methodName}");
+        }
+
+        return method.Invoke(target, args);
+    }
+
+    private static T FindSceneComponent<T>() where T : Component
+    {
+        var components = Resources.FindObjectsOfTypeAll<T>();
+        for (var i = 0; i < components.Length; i++)
+        {
+            var component = components[i];
+            if (component != null && component.gameObject.scene.IsValid())
+            {
+                return component;
+            }
+        }
+
+        return null;
     }
 
     private static void ValidateEqual(string label, string expected, string actual)
