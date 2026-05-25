@@ -97,6 +97,7 @@ Latest local gameplay/UI batch:
 - Fast Rewards popup now separates local and Server Mode: local shows stored time, rate, Village bonus, and ready rewards; Server Mode shows backend min/cap/rate/ready estimate and notes that Village local bonuses do not modify server rewards yet.
 - A Unity editor validator now checks Fast Rewards popup controls, local copy, Server Mode fallback copy, redeem/claim labels, and button bounds through `Mythwake/Validate Fast Rewards UI`.
 - Unity editor validators now cover Village map/build/detail/upgrade/demolish, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode. Batchmode execution is currently blocked while the project is already open in another Unity instance.
+- Hero Detail now exposes all 2 equipment tracks plus all 5 accessory slots. `Equip Gear` opens the selected slot list instead of just leaving for Gear, and local-only `Remove Gear` returns an equipped accessory copy to inventory while staying disabled in Server Mode until there is a backend unequip action.
 - Local Fast Rewards and backend AFK definitions now both use a 24h stored reward cap.
 - Paladin combat assets, combat preview, and Spine handoff validation are present.
 - Paladin is now also featured in the local `Vanguard Oath` summon banner and included in that banner's Epic pool.
@@ -591,6 +592,7 @@ The next chat should continue in this order unless the user redirects:
 
 6. Continue the Hero/Gear polish pass behind the new upgrade-clutter guard.
    - Run `Mythwake/Validate Upgrade Clutter` after layout changes.
+   - Visually verify the 7-slot Hero Detail gear layout in Unity/emulator.
    - Hero level-up belongs in Heroes or hero detail.
    - Weapon/Armor/accessory upgrades belong in Gear.
    - Battle screen should not contain upgrade clutter.

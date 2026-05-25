@@ -1549,12 +1549,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroDetailEquipGearButton != null)
         {
-            heroDetailEquipGearButton.onClick.AddListener(ShowGear);
+            heroDetailEquipGearButton.onClick.AddListener(OpenSelectedHeroDetailGearOptions);
         }
 
         if (heroDetailRemoveGearButton != null)
         {
-            heroDetailRemoveGearButton.onClick.AddListener(ShowGear);
+            heroDetailRemoveGearButton.onClick.AddListener(RemoveSelectedHeroDetailGear);
         }
 
         RegisterHeroDetailGearButtons();
@@ -1793,12 +1793,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroDetailEquipGearButton != null)
         {
-            heroDetailEquipGearButton.onClick.RemoveListener(ShowGear);
+            heroDetailEquipGearButton.onClick.RemoveListener(OpenSelectedHeroDetailGearOptions);
         }
 
         if (heroDetailRemoveGearButton != null)
         {
-            heroDetailRemoveGearButton.onClick.RemoveListener(ShowGear);
+            heroDetailRemoveGearButton.onClick.RemoveListener(RemoveSelectedHeroDetailGear);
         }
 
         UnregisterHeroDetailGearButtons();
@@ -8345,8 +8345,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonInteractable(heroAutoSetTeamButton, canChangeTeam);
         SetButtonsInteractable(heroTeamSlotButtons, canChangeTeam);
         GateButton(heroDetailLevelButton, canManageHeroes);
-        SetButtonInteractable(heroDetailEquipGearButton, canManageHeroes);
-        SetButtonInteractable(heroDetailRemoveGearButton, canManageHeroes);
+        RefreshHeroDetailGearActionButtons(canManageHeroes);
         GateButton(weaponUpgradeButton, canManageHeroes);
         GateButton(armorUpgradeButton, canManageHeroes);
         SetButtonInteractable(accessoryPreviousSlotButton, canManageHeroes);
@@ -8535,6 +8534,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (heroDetailGearSlotButtons.Length > 3 && heroDetailGearSlotButtons[3] != null) heroDetailGearSlotButtons[3].onClick.AddListener(ShowHeroDetailGearSlot3);
             if (heroDetailGearSlotButtons.Length > 4 && heroDetailGearSlotButtons[4] != null) heroDetailGearSlotButtons[4].onClick.AddListener(ShowHeroDetailGearSlot4);
             if (heroDetailGearSlotButtons.Length > 5 && heroDetailGearSlotButtons[5] != null) heroDetailGearSlotButtons[5].onClick.AddListener(ShowHeroDetailGearSlot5);
+            if (heroDetailGearSlotButtons.Length > 6 && heroDetailGearSlotButtons[6] != null) heroDetailGearSlotButtons[6].onClick.AddListener(ShowHeroDetailGearSlot6);
         }
 
         if (heroDetailGearOptionButtons != null && heroDetailGearOptionButtons.Length > 0)
@@ -8562,6 +8562,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (heroDetailGearSlotButtons.Length > 3 && heroDetailGearSlotButtons[3] != null) heroDetailGearSlotButtons[3].onClick.RemoveListener(ShowHeroDetailGearSlot3);
             if (heroDetailGearSlotButtons.Length > 4 && heroDetailGearSlotButtons[4] != null) heroDetailGearSlotButtons[4].onClick.RemoveListener(ShowHeroDetailGearSlot4);
             if (heroDetailGearSlotButtons.Length > 5 && heroDetailGearSlotButtons[5] != null) heroDetailGearSlotButtons[5].onClick.RemoveListener(ShowHeroDetailGearSlot5);
+            if (heroDetailGearSlotButtons.Length > 6 && heroDetailGearSlotButtons[6] != null) heroDetailGearSlotButtons[6].onClick.RemoveListener(ShowHeroDetailGearSlot6);
         }
 
         if (heroDetailGearOptionButtons != null && heroDetailGearOptionButtons.Length > 0)
@@ -15033,14 +15034,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         heroDetailPortrait = CreateRuntimeRawImage(heroDetailRoot, "Hero Detail Portrait", LoadCombatTexture(GetHeroTextureName(selectedHeroIndex), "idle", 0, GetHeroTextureName(selectedHeroIndex)), new Vector2(0, -265), new Vector2(315, 315), new Vector2(0.5f, 1f));
 
-        heroDetailGearSlotTexts = new TMP_Text[6];
-        heroDetailGearSlotFrames = new Image[6];
-        heroDetailGearSlotButtons = new Button[6];
+        heroDetailGearSlotTexts = new TMP_Text[2 + AccessorySlotCount];
+        heroDetailGearSlotFrames = new Image[heroDetailGearSlotTexts.Length];
+        heroDetailGearSlotButtons = new Button[heroDetailGearSlotTexts.Length];
         for (var i = 0; i < heroDetailGearSlotTexts.Length; i++)
         {
-            var side = i < 3 ? -1f : 1f;
-            var row = i % 3;
-            var slotRoot = CreateRuntimePanel(heroDetailRoot, $"Hero Detail Gear Slot {i + 1}", new Vector2(side * 340f, -205f - row * 145f), new Vector2(114, 114), new Color(0.07f, 0.035f, 0.025f, 0.92f));
+            var leftSide = i < 4;
+            var row = leftSide ? i : i - 4;
+            var slotRoot = CreateRuntimePanel(heroDetailRoot, $"Hero Detail Gear Slot {i + 1}", new Vector2((leftSide ? -1f : 1f) * 340f, -178f - row * 122f), new Vector2(106, 106), new Color(0.07f, 0.035f, 0.025f, 0.92f));
             heroDetailGearSlotFrames[i] = slotRoot.GetComponent<Image>();
             heroDetailGearSlotFrames[i].raycastTarget = true;
             heroDetailGearSlotButtons[i] = slotRoot.gameObject.AddComponent<Button>();
@@ -17494,8 +17495,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonLabel(heroDetailEquipGearButton, "Equip Gear");
         SetButtonLabel(heroDetailRemoveGearButton, "Remove Gear");
         SetButtonInteractable(heroDetailLevelButton, !IsHeroLevelMax(heroIndex) && mythEssence >= upgradeCost);
-        SetButtonInteractable(heroDetailEquipGearButton, true);
-        SetButtonInteractable(heroDetailRemoveGearButton, true);
+        RefreshHeroDetailGearActionButtons(true);
     }
 
     private void RefreshHeroDetailGearSlots()
@@ -17531,6 +17531,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void ShowHeroDetailGearSlot3() => ShowHeroDetailGearSlot(3);
     private void ShowHeroDetailGearSlot4() => ShowHeroDetailGearSlot(4);
     private void ShowHeroDetailGearSlot5() => ShowHeroDetailGearSlot(5);
+    private void ShowHeroDetailGearSlot6() => ShowHeroDetailGearSlot(6);
 
     private void ShowHeroDetailGearSlot(int slotIndex)
     {
@@ -17544,6 +17545,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroDetailGearListRoot.SetAsLastSibling();
         RefreshHeroDetailGearSlots();
         RefreshHeroDetailGearList();
+        RefreshHeroDetailGearActionButtons(!backendRequestInProgress && !IsDungeonBattleFocusLocked());
     }
 
     private void HideHeroDetailGearList()
@@ -17555,6 +17557,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshHeroDetailGearSlots();
+        RefreshHeroDetailGearActionButtons(!backendRequestInProgress && !IsDungeonBattleFocusLocked());
     }
 
     private void RefreshHeroDetailGearList()
@@ -17701,6 +17704,80 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var result = EquipAccessory(GetAccessoryDefinition(selectedAccessorySlot, selectedAccessoryRarity).accessoryId);
         SetDungeonResult(result.message);
         ShowHeroDetailGearSlot(selectedHeroDetailGearSlotIndex);
+    }
+
+    private void OpenSelectedHeroDetailGearOptions()
+    {
+        if (selectedHeroDetailGearSlotIndex < 0)
+        {
+            selectedHeroDetailGearSlotIndex = FindFirstHeroDetailAccessorySlotWithCopy();
+        }
+
+        if (selectedHeroDetailGearSlotIndex < 2)
+        {
+            ShowGear();
+            return;
+        }
+
+        ShowHeroDetailGearSlot(selectedHeroDetailGearSlotIndex);
+    }
+
+    private void RemoveSelectedHeroDetailGear()
+    {
+        if (!CanRemoveSelectedHeroDetailAccessory())
+        {
+            RefreshHeroDetailGearActionButtons(!backendRequestInProgress && !IsDungeonBattleFocusLocked());
+            return;
+        }
+
+        var heroIndex = GetSelectedHeroIndex();
+        var accessorySlot = selectedHeroDetailGearSlotIndex - 2;
+        var rarity = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot);
+
+        AddAccessoryInventory(accessorySlot, rarity, 1);
+        SetHeroEquippedAccessory(heroIndex, accessorySlot, -1, 0);
+        damage = GetTeamDamage();
+
+        SaveProgress();
+        RefreshUi();
+        ShowHeroDetailGearSlot(selectedHeroDetailGearSlotIndex);
+    }
+
+    private int FindFirstHeroDetailAccessorySlotWithCopy()
+    {
+        EnsureAccessories();
+        var heroIndex = GetSelectedHeroIndex();
+        for (var slot = 0; slot < AccessorySlotCount; slot++)
+        {
+            for (var rarity = AccessoryRarityCount - 1; rarity >= 0; rarity--)
+            {
+                if (GetAccessoryInventoryCount(slot, rarity) > 0 && GetHeroEquippedAccessoryRarity(heroIndex, slot) != rarity)
+                {
+                    return slot + 2;
+                }
+            }
+        }
+
+        return Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1) + 2;
+    }
+
+    private void RefreshHeroDetailGearActionButtons(bool canManageHeroes)
+    {
+        SetButtonInteractable(heroDetailEquipGearButton, canManageHeroes);
+        SetButtonInteractable(heroDetailRemoveGearButton, canManageHeroes && CanRemoveSelectedHeroDetailAccessory());
+    }
+
+    private bool CanRemoveSelectedHeroDetailAccessory()
+    {
+        if (backendGameplayEnabled || selectedHeroDetailGearSlotIndex < 2)
+        {
+            return false;
+        }
+
+        var accessorySlot = selectedHeroDetailGearSlotIndex - 2;
+        return accessorySlot >= 0
+            && accessorySlot < AccessorySlotCount
+            && GetHeroEquippedAccessoryRarity(GetSelectedHeroIndex(), accessorySlot) >= 0;
     }
 
     private string GetHeroDetailGearSlotText(int slotIndex)

@@ -95,15 +95,17 @@ public static class UpgradeClutterValidation
 
         RequireInsidePanel(heroDetailRoot.gameObject, RequireButtonField(controller, "heroDetailLevelButton").gameObject);
         RequireInsidePanel(heroDetailRoot.gameObject, RequireButtonField(controller, "heroDetailEquipGearButton").gameObject);
-        RequireInsidePanel(heroDetailRoot.gameObject, RequireButtonField(controller, "heroDetailRemoveGearButton").gameObject);
+        var removeGearButton = RequireButtonField(controller, "heroDetailRemoveGearButton");
+        RequireInsidePanel(heroDetailRoot.gameObject, removeGearButton.gameObject);
 
         var gearSlots = RequireField<Button[]>(controller, "heroDetailGearSlotButtons");
-        if (gearSlots.Length < 6)
+        var expectedGearSlotCount = 2 + GetStaticArray(typeof(IdlePrototypeController), "AccessorySlots").Length;
+        if (gearSlots.Length < expectedGearSlotCount)
         {
-            throw new InvalidOperationException("Hero detail should expose six clickable gear slots.");
+            throw new InvalidOperationException($"Hero detail should expose {expectedGearSlotCount} clickable gear slots.");
         }
 
-        for (var i = 0; i < 6; i++)
+        for (var i = 0; i < expectedGearSlotCount; i++)
         {
             if (gearSlots[i] == null)
             {
@@ -112,6 +114,32 @@ public static class UpgradeClutterValidation
 
             RequireInsidePanel(heroDetailRoot.gameObject, gearSlots[i].gameObject);
         }
+
+        InvokePrivate(controller, "OpenSelectedHeroDetailGearOptions");
+        Canvas.ForceUpdateCanvases();
+        var gearListRoot = RequireObjectField<RectTransform>(controller, "heroDetailGearListRoot");
+        if (!gearListRoot.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Hero detail Equip Gear should open the selected gear list instead of leaving the Heroes screen.");
+        }
+
+        SetPrivateField(controller, "backendGameplayEnabled", false);
+        InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, 0, 1);
+        InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
+        Canvas.ForceUpdateCanvases();
+        if (!(bool)InvokePrivate(controller, "CanRemoveSelectedHeroDetailAccessory") || !removeGearButton.interactable)
+        {
+            throw new InvalidOperationException("Hero detail Remove Gear should be available for a locally equipped accessory slot.");
+        }
+
+        SetPrivateField(controller, "backendGameplayEnabled", true);
+        if ((bool)InvokePrivate(controller, "CanRemoveSelectedHeroDetailAccessory"))
+        {
+            throw new InvalidOperationException("Hero detail Remove Gear should stay disabled in Server Mode until a backend unequip action exists.");
+        }
+
+        SetPrivateField(controller, "backendGameplayEnabled", false);
+        InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, -1, 0);
     }
 
     private static void ValidateGearScreen(IdlePrototypeController controller)
@@ -293,5 +321,33 @@ public static class UpgradeClutterValidation
         }
 
         return (T)field.GetValue(target);
+    }
+
+    private static void SetPrivateField(object target, string fieldName, object value)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException($"Missing private field: {fieldName}");
+        }
+
+        field.SetValue(target, value);
+    }
+
+    private static Array GetStaticArray(Type type, string fieldName)
+    {
+        var field = type.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+        if (field == null)
+        {
+            throw new InvalidOperationException($"{type.Name}.{fieldName} could not be found.");
+        }
+
+        var value = field.GetValue(null);
+        if (value is Array array)
+        {
+            return array;
+        }
+
+        throw new InvalidOperationException($"{type.Name}.{fieldName} is not an array.");
     }
 }
