@@ -5,7 +5,7 @@ Last updated: 2026-05-25
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.87`, save version `2`.
+- Unity client code is at Prototype `0.2.88`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -48,6 +48,7 @@ Last updated: 2026-05-25
 - Added a tappable Home patrol info popup on the idle combat area so players can inspect the current stage, enemy, active tick rewards, and the no-auto-clear rule; the Home idle validator now clicks and closes it.
 - Added a Home campaign checkpoint detail popup so tapping a stage node now opens a larger AFK-style panel with a map preview, enemy formation, completion reward row, and Battle/Close controls; the Home idle validator checks and closes it.
 - Fixed local campaign clear rewards so winning a stage grants the displayed Myth Essence reward and returns it in the action result payload; the Home idle validator now forces a won clear and checks the currency increase.
+- Guarded the stage-detail Battle action so only the current unlocked checkpoint can start Formation, and extended the Home idle validator to click the current checkpoint through the detail popup into the Formation screen.
 - Polished the Hero Detail gear slice: it now exposes all 2 equipment tracks plus all 6 accessory slots, `Equip Gear` opens the selected gear list for equipment and accessories, and `Remove Gear` can unequip accessories locally or through the Server Mode backend action.
 - Added validator coverage for the Hero Detail gear list popup so equipment slots open the inline list first and only the list's `Open Gear` row navigates to the Gear screen.
 - Added contextual Hero Detail gear action labels so equipment slots show `Open Gear` while accessory slots keep `Equip Gear`.

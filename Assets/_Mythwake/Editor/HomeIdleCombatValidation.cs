@@ -94,6 +94,8 @@ public static class HomeIdleCombatValidation
             throw new InvalidOperationException("Campaign Stage Detail Popup should close from its close button.");
         }
 
+        ValidateCurrentStageDetailBattleFlow(controller);
+
         var idleRoot = RequireObject("Home Idle Combat Root", true);
         AssertInsideParent(RequireObject("Home Generated Art Root", true), idleRoot);
         AssertDoesNotOverlap(mapRoot, idleRoot);
@@ -220,6 +222,38 @@ public static class HomeIdleCombatValidation
         }
 
         return null;
+    }
+
+    private static void ValidateCurrentStageDetailBattleFlow(IdlePrototypeController controller)
+    {
+        var currentStage = GetPrivateField<int>(controller, "enemyLevel");
+        var startStage = (int)InvokePrivate(controller, "GetCampaignMapStartStage");
+        var currentNodeIndex = Mathf.Clamp(currentStage - startStage, 0, 9);
+        var currentNode = RequireButton($"Campaign Stage Node {currentNodeIndex + 1}");
+        currentNode.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+
+        var detailPopup = RequireObject("Campaign Stage Detail Popup", true);
+        var battleButton = RequireButton("Stage Detail Battle Button");
+        if (!battleButton.interactable)
+        {
+            throw new InvalidOperationException("Current stage detail Battle button should be interactable.");
+        }
+
+        battleButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        if (detailPopup.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Stage detail popup should close when starting the current stage formation.");
+        }
+
+        var formationRoot = RequireObject("Campaign Formation Root", true);
+        var formationHeader = RequireText(formationRoot, "Formation Header");
+        RequireCopy(formationHeader.text, "Formation");
+        AssertTextFits(formationHeader, "Formation Header");
+
+        controller.ShowHome();
+        Canvas.ForceUpdateCanvases();
     }
 
     private static object CreateWonCombatResult(object controller)

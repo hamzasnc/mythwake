@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.87";
+    public const string PrototypeVersion = "0.2.88";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -2233,6 +2233,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void StartSelectedCampaignStageFromDetail()
     {
+        if (selectedCampaignStage != enemyLevel || campaignFightInProgress || backendRequestInProgress || backendLifecycleFlushInProgress)
+        {
+            RefreshCampaignStageDetailPopupUi();
+            return;
+        }
+
         HideCampaignStageDetailPopup();
         ShowBattle();
     }
