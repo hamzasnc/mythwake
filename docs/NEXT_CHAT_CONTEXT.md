@@ -90,7 +90,7 @@ Important Unity scripts:
 Latest local gameplay/UI batch:
 - Dungeons now have a dedicated map screen opened from the bottom Dungeons nav item, with Gold, Essence, and Gear dungeon cards.
 - Village now has a dedicated scrollable map screen opened from the bottom Village nav item, with 12 build plots and imported building art.
-- Village free plots open a build panel. Built plots open a building detail panel with level, next upgrade cost, available Myth Essence, `Aufwerten`, `Abreissen`, and `Schliessen`.
+- Village free plots open a build panel. Built plots open a building detail panel with level, next upgrade cost, available Myth Essence, visible HP/ATK/Fast Rewards bonus categories, `Aufwerten`, `Abreissen`, and `Schliessen`; the Village validator also checks Max Level disables upgrade.
 - Village building upgrades spend Myth Essence locally and route through the existing backend Village upgrade action in Server Mode.
 - Village building details show placeholder bonuses. In local mode, built building type and level apply small Team ATK/HP or Fast Rewards Gold/Essence rate boosts. Server Mode remains backend-authoritative and does not add these local stat bonuses on top of backend snapshot stats.
 - Village bonuses are intentionally local-only until the Village balance/definition pass.
@@ -176,7 +176,7 @@ Latest verification notes:
   - Editor menu helpers.
   - Menus include `Tools/Mythwake/Build Prototype UI` and `Tools/Mythwake/Bind Home Navbar Assets`.
 - `Assets/_Mythwake/Editor/VillageUiValidation.cs`
-  - Editor menu `Mythwake/Validate Village UI` checks Village map/build/detail/upgrade/demolish controls.
+  - Editor menu `Mythwake/Validate Village UI` checks Village map/build/detail/upgrade/demolish controls, bonus detail categories, text fit, and Max Level upgrade lockout.
 
 Unity builder caution:
 - `Build Prototype UI` recreates the scene UI and can reset layout/object references.

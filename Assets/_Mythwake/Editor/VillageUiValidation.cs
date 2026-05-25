@@ -68,37 +68,54 @@ public static class VillageUiValidation
             throw new InvalidOperationException("Village build button should be interactable for a free selected plot.");
         }
 
-        ForceBuiltVillagePlot(controller, 0, 0, 1);
-        InvokePrivate(controller, "SelectVillagePlot", 0);
-        Canvas.ForceUpdateCanvases();
-
-        RequireActive("Village Building Detail Panel");
-        if (!upgradeButton.interactable)
-        {
-            throw new InvalidOperationException("Village upgrade button should be interactable for a level 1 built plot.");
-        }
-
-        if (!demolishButton.interactable)
-        {
-            throw new InvalidOperationException("Village demolish button should be interactable for a built plot.");
-        }
-
-        var upgradeLabel = GetButtonLabel(upgradeButton);
-        if (!upgradeLabel.Contains("Aufwerten") || !upgradeLabel.Contains("5"))
-        {
-            throw new InvalidOperationException($"Village upgrade button label mismatch: '{upgradeLabel}'");
-        }
-
-        var detailBody = RequireObject("Village Building Detail Body", true).GetComponent<TMP_Text>();
-        if (detailBody == null || !detailBody.text.Contains("Lv. 1") || !detailBody.text.Contains("Bonus:") || !detailBody.text.Contains("Upgrade auf Lv. 2"))
-        {
-            throw new InvalidOperationException($"Village building detail body missing level/upgrade copy: '{(detailBody == null ? "<missing>" : detailBody.text)}'");
-        }
+        AssertVillageBuiltPlotDetail(controller, 0, 0, 1, "Team HP", "Upgrade auf Lv. 2", "Aufwerten (5)", true, upgradeButton, demolishButton);
+        AssertVillageBuiltPlotDetail(controller, 1, 0, 2, "Team ATK", "Upgrade auf Lv. 3", "Aufwerten (10)", true, upgradeButton, demolishButton);
+        AssertVillageBuiltPlotDetail(controller, 2, 0, 3, "Essence/s Fast Rewards", "Upgrade auf Lv. 4", "Aufwerten (15)", true, upgradeButton, demolishButton);
+        AssertVillageBuiltPlotDetail(controller, 5, 0, 4, "Gold/s Fast Rewards", "Upgrade auf Lv. 5", "Aufwerten (20)", true, upgradeButton, demolishButton);
+        AssertVillageBuiltPlotDetail(controller, 0, 0, 20, "Team HP", "Max Level erreicht.", "Max", false, upgradeButton, demolishButton);
 
         if (!villagePanel.activeInHierarchy)
         {
             throw new InvalidOperationException("Village panel should be active after ShowVillage.");
         }
+    }
+
+    private static void AssertVillageBuiltPlotDetail(IdlePrototypeController controller, int plotIndex, int buildingOptionIndex, int level, string expectedBonus, string expectedProgressionCopy, string expectedUpgradeLabel, bool expectUpgradeInteractable, Button upgradeButton, Button demolishButton)
+    {
+        ForceBuiltVillagePlot(controller, plotIndex, buildingOptionIndex, level);
+        InvokePrivate(controller, "SelectVillagePlot", plotIndex);
+        Canvas.ForceUpdateCanvases();
+
+        RequireActive("Village Building Detail Panel");
+
+        if (upgradeButton.interactable != expectUpgradeInteractable)
+        {
+            throw new InvalidOperationException($"Village upgrade button interactable mismatch for plot {plotIndex + 1} level {level}. Expected {expectUpgradeInteractable}, got {upgradeButton.interactable}.");
+        }
+
+        if (!demolishButton.interactable)
+        {
+            throw new InvalidOperationException($"Village demolish button should be interactable for built plot {plotIndex + 1}.");
+        }
+
+        var upgradeLabel = GetButtonLabel(upgradeButton);
+        if (upgradeLabel != expectedUpgradeLabel)
+        {
+            throw new InvalidOperationException($"Village upgrade button label mismatch for plot {plotIndex + 1} level {level}: expected '{expectedUpgradeLabel}', got '{upgradeLabel}'.");
+        }
+
+        var detailBody = RequireObject("Village Building Detail Body", true).GetComponent<TMP_Text>();
+        if (detailBody == null)
+        {
+            throw new InvalidOperationException("Village building detail body is missing TMP_Text.");
+        }
+
+        RequireCopy(detailBody.text, $"Lv. {level}", $"Village plot {plotIndex + 1} detail");
+        RequireCopy(detailBody.text, "Bonus:", $"Village plot {plotIndex + 1} detail");
+        RequireCopy(detailBody.text, expectedBonus, $"Village plot {plotIndex + 1} detail");
+        RequireCopy(detailBody.text, expectedProgressionCopy, $"Village plot {plotIndex + 1} detail");
+        RequireCopy(detailBody.text, "Vorhanden:", $"Village plot {plotIndex + 1} detail");
+        AssertTextFits(detailBody, $"Village plot {plotIndex + 1} detail body");
     }
 
     private static void ForceBuiltVillagePlot(IdlePrototypeController controller, int plotIndex, int buildingOptionIndex, int level)
@@ -183,6 +200,26 @@ public static class VillageUiValidation
     {
         var label = button.GetComponentInChildren<TMP_Text>(true);
         return label == null ? string.Empty : label.text;
+    }
+
+    private static void RequireCopy(string text, string expected, string context)
+    {
+        if (string.IsNullOrWhiteSpace(text) || !text.Contains(expected))
+        {
+            throw new InvalidOperationException($"{context} is missing '{expected}': '{text}'");
+        }
+    }
+
+    private static void AssertTextFits(TMP_Text label, string context)
+    {
+        label.ForceMeshUpdate();
+        if (!label.isTextOverflowing)
+        {
+            return;
+        }
+
+        var rect = label.rectTransform.rect;
+        throw new InvalidOperationException($"{context} overflows: '{label.text}' width={rect.width}, height={rect.height}, fontSize={label.fontSize}.");
     }
 
     private static T FindSceneComponent<T>() where T : Component

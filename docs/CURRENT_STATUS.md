@@ -24,7 +24,7 @@ Last updated: 2026-05-25
 - Converted the built-village-plot panel from a debug demolish menu into a building detail panel.
 - Added a Village building upgrade button in the Unity client.
 - Wired the button to local Myth Essence spending and to the existing backend `/village/upgrade` action in Server Mode.
-- Added an editor validation entry point for the Village UI so map, build panel, building detail, upgrade, demolish, and close controls can be checked in Unity.
+- Added an editor validation entry point for the Village UI so map, build panel, building detail, upgrade, demolish, close controls, bonus detail categories, and max-level upgrade lockout can be checked in Unity.
 - Added visible placeholder Village bonuses; local mode applies small Team ATK/HP or Fast Rewards rate boosts from built building type and level.
 - Kept Village bonuses local-only until a proper Village balance/definition pass, so Server Mode remains backend-authoritative.
 - Polished the Fast Rewards popup so local mode shows stored time, rate, Village bonus, and ready rewards, while Server Mode shows backend min/cap/rate/ready estimate.
