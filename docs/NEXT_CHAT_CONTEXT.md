@@ -28,13 +28,13 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `65fe7e0 Reposition gear showcase labels`
+- `9ef0afe Polish gear screen copy layout`
 
 Current continuation:
 - Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, and runtime rig part loading.
 - Fast Rewards UI validator in `Assets/_Mythwake/Editor/FastRewardsUiValidation.cs`.
 - Summon UI validator in `Assets/_Mythwake/Editor/SummonUiValidation.cs`.
-- Upgrade clutter validator in `Assets/_Mythwake/Editor/UpgradeClutterValidation.cs` checks that old Battle/Hero upgrade controls stay hidden, Gear upgrade controls live on Gear, Gear showcase art loads/fits without intercepting input, the Gear showcase label names all visible equipment slots, fits, and does not overlap the icon rows, Hero Detail gear slots do not overlap the portrait/stats/actions, Hero Detail gear lists stay inside their popup, equipment/accessory list rows switch correctly, localized/contextual Hero Detail action labels and gear-list rows are correct after a German language refresh and do not overflow, and debug shortcuts live in Shop/tools.
+- Upgrade clutter validator in `Assets/_Mythwake/Editor/UpgradeClutterValidation.cs` checks that old Battle/Hero upgrade controls stay hidden, Gear upgrade controls live on Gear, Gear navigation uses compact arrow labels, Gear builder defaults do not recreate stale placeholder copy, Gear showcase art loads/fits without intercepting input, the Gear showcase label names all visible equipment slots, fits, and does not overlap the icon rows, Hero Detail gear slots do not overlap the portrait/stats/actions, Hero Detail gear lists stay inside their popup, equipment/accessory list rows switch correctly, localized/contextual Hero Detail action labels and gear-list rows are correct after a German language refresh and do not overflow, and debug shortcuts live in Shop/tools.
 - Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Current status summary in `docs/CURRENT_STATUS.md` and this handoff note.
 
@@ -600,6 +600,7 @@ The next chat should continue in this order unless the user redirects:
 6. Continue the Hero/Gear polish pass behind the new upgrade-clutter guard.
    - Run `Mythwake/Validate Upgrade Clutter` after layout changes.
    - Visually verify the 8-slot Hero Detail gear layout in Unity/emulator.
+   - Gear builder defaults now match the current localized runtime control stack; keep future Gear UI rebuilds behind that validator.
    - Server Mode accessory removal now has an endpoint; next work can focus on UI feedback/spacing rather than missing backend plumbing.
    - Hero level-up belongs in Heroes or hero detail.
    - Weapon/Armor/accessory upgrades belong in Gear.

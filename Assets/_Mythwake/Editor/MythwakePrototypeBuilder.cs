@@ -200,18 +200,16 @@ public static class MythwakePrototypeBuilder
         var heroAscendButton = CreateButton("Hero Ascend Button", heroesPanel.transform, "Ascend Astra (20 Shards)", ButtonColor);
         SetRect(heroAscendButton.GetComponent<RectTransform>(), new Vector2(0, -475), new Vector2(760, 100), new Vector2(0.5f, 1f));
 
-        var equipmentPanel = CreatePanel("Equipment Panel", heroesPanel.transform, PanelColor);
-        SetRect(equipmentPanel.rectTransform, new Vector2(0, -655), new Vector2(860, 230), new Vector2(0.5f, 1f));
+        var equipmentSummary = CreateText("Equipment Summary Text", gearPanel.transform, $"{L("ui.inventory.tab.gear")}\nWeapon {L("ui.common.level_short")}. 1  +8 ATK\nArmor {L("ui.common.level_short")}. 1  +80 HP", 24, FontStyles.Bold);
+        SetRect(equipmentSummary.rectTransform, new Vector2(0, -486), new Vector2(760, 88), new Vector2(0.5f, 1f));
+        ConfigureTextFit(equipmentSummary, 15f, 24f);
 
-        var equipmentSummary = CreateText("Equipment Summary Text", equipmentPanel.transform, "Equipment\nWeapon Lv. 1  +8 ATK\nArmor Lv. 1  +80 HP", 28, FontStyles.Bold);
-        SetRect(equipmentSummary.rectTransform, new Vector2(0, -68), new Vector2(780, 105), new Vector2(0.5f, 1f));
-
-        var weaponUpgradeButton = CreateButton("Weapon Upgrade Button", equipmentPanel.transform, "Weapon +1\n80 Gold", UpgradeButtonColor);
-        SetRect(weaponUpgradeButton.GetComponent<RectTransform>(), new Vector2(-210, -165), new Vector2(360, 78), new Vector2(0.5f, 1f));
+        var weaponUpgradeButton = CreateButton("Weapon Upgrade Button", gearPanel.transform, $"Weapon +1\n80 {L("currency.gold.name")}", UpgradeButtonColor);
+        SetRect(weaponUpgradeButton.GetComponent<RectTransform>(), new Vector2(-210, -588), new Vector2(300, 64), new Vector2(0.5f, 1f));
         weaponUpgradeButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
 
-        var armorUpgradeButton = CreateButton("Armor Upgrade Button", equipmentPanel.transform, "Armor +1\n75 Gold", UpgradeButtonColor);
-        SetRect(armorUpgradeButton.GetComponent<RectTransform>(), new Vector2(210, -165), new Vector2(360, 78), new Vector2(0.5f, 1f));
+        var armorUpgradeButton = CreateButton("Armor Upgrade Button", gearPanel.transform, $"Armor +1\n75 {L("currency.gold.name")}", UpgradeButtonColor);
+        SetRect(armorUpgradeButton.GetComponent<RectTransform>(), new Vector2(210, -588), new Vector2(300, 64), new Vector2(0.5f, 1f));
         armorUpgradeButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
 
         var heroCardTexts = new TMP_Text[5];
@@ -229,46 +227,46 @@ public static class MythwakePrototypeBuilder
         var gearHeader = CreateText("Gear Header", gearPanel.transform, "Gear", 42, FontStyles.Bold);
         SetRect(gearHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
 
-        var accessorySummary = CreateText("Accessory Summary Text", gearPanel.transform, "Accessories\nATK +0  HP +0\nGear Dungeon Floor 1", 34, FontStyles.Bold);
-        SetRect(accessorySummary.rectTransform, new Vector2(0, -145), new Vector2(860, 145), new Vector2(0.5f, 1f));
+        var accessorySummary = CreateText("Accessory Summary Text", gearPanel.transform, $"{L("ui.inventory.tab.gear")}\nATK +0  HP +0\n{L("ui.common.floor")} 1", 22, FontStyles.Bold);
+        SetRect(accessorySummary.rectTransform, new Vector2(0, -674), new Vector2(760, 62), new Vector2(0.5f, 1f));
+        ConfigureTextFit(accessorySummary, 15f, 22f);
 
-        var accessoryCard = CreatePanel("Accessory Card", gearPanel.transform, PanelColor);
-        SetRect(accessoryCard.rectTransform, new Vector2(0, -410), new Vector2(860, 300), new Vector2(0.5f, 1f));
+        var accessorySelected = CreateText("Accessory Selected Text", gearPanel.transform, $"{L("accessory.item_slot_earrings.name")}\n{L("ui.common.equipped")}: {L("ui.common.empty")}\n{Lf("gear.selected_fuse_tier", "R0")}", 22, FontStyles.Bold);
+        SetRect(accessorySelected.rectTransform, new Vector2(0, -750), new Vector2(760, 70), new Vector2(0.5f, 1f));
+        ConfigureTextFit(accessorySelected, 15f, 22f);
 
-        var accessorySelected = CreateText("Accessory Selected Text", accessoryCard.transform, "Ohrringe\nEquipped: None\nSelected Fuse Tier: R0", 31, FontStyles.Bold);
-        SetRect(accessorySelected.rectTransform, new Vector2(0, -85), new Vector2(780, 145), new Vector2(0.5f, 1f));
+        var accessoryInventory = CreateText("Accessory Inventory Text", gearPanel.transform, $"{L("ui.common.bag")} {L("ui.common.copies")}\nR0 0   R1 0   R2 0   R3 0   R4 0", 22, FontStyles.Normal);
+        SetRect(accessoryInventory.rectTransform, new Vector2(0, -838), new Vector2(760, 64), new Vector2(0.5f, 1f));
+        accessoryInventory.alignment = TextAlignmentOptions.Center;
+        ConfigureTextFit(accessoryInventory, 15f, 22f);
 
-        var accessoryInventory = CreateText("Accessory Inventory Text", accessoryCard.transform, "Inventory Copies\nR0: 0\nR1: 0\nR2: 0\nR3: 0\nR4: 0", 25, FontStyles.Normal);
-        SetRect(accessoryInventory.rectTransform, new Vector2(0, -215), new Vector2(780, 125), new Vector2(0.5f, 1f));
-        accessoryInventory.alignment = TextAlignmentOptions.Left;
-
-        var previousSlotButton = CreateButton("Accessory Previous Slot Button", gearPanel.transform, "Prev Slot", ButtonColor);
-        SetRect(previousSlotButton.GetComponent<RectTransform>(), new Vector2(-290, -610), new Vector2(250, 76), new Vector2(0.5f, 1f));
+        var previousSlotButton = CreateButton("Accessory Previous Slot Button", gearPanel.transform, "<", ButtonColor);
+        SetRect(previousSlotButton.GetComponent<RectTransform>(), new Vector2(-320, -918), new Vector2(130, 54), new Vector2(0.5f, 1f));
         previousSlotButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
 
-        var nextSlotButton = CreateButton("Accessory Next Slot Button", gearPanel.transform, "Next Slot", ButtonColor);
-        SetRect(nextSlotButton.GetComponent<RectTransform>(), new Vector2(0, -610), new Vector2(250, 76), new Vector2(0.5f, 1f));
+        var nextSlotButton = CreateButton("Accessory Next Slot Button", gearPanel.transform, ">", ButtonColor);
+        SetRect(nextSlotButton.GetComponent<RectTransform>(), new Vector2(320, -918), new Vector2(130, 54), new Vector2(0.5f, 1f));
         nextSlotButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
 
-        var equipAccessoryButton = CreateButton("Accessory Equip Button", gearPanel.transform, "Equip Selected", UpgradeButtonColor);
-        SetRect(equipAccessoryButton.GetComponent<RectTransform>(), new Vector2(290, -610), new Vector2(250, 76), new Vector2(0.5f, 1f));
-        equipAccessoryButton.GetComponentInChildren<TMP_Text>().fontSize = 23;
-
-        var previousRarityButton = CreateButton("Accessory Previous Rarity Button", gearPanel.transform, "Prev Rarity", ButtonColor);
-        SetRect(previousRarityButton.GetComponent<RectTransform>(), new Vector2(-290, -720), new Vector2(250, 76), new Vector2(0.5f, 1f));
+        var previousRarityButton = CreateButton("Accessory Previous Rarity Button", gearPanel.transform, "<", ButtonColor);
+        SetRect(previousRarityButton.GetComponent<RectTransform>(), new Vector2(-320, -984), new Vector2(130, 54), new Vector2(0.5f, 1f));
         previousRarityButton.GetComponentInChildren<TMP_Text>().fontSize = 23;
 
-        var nextRarityButton = CreateButton("Accessory Next Rarity Button", gearPanel.transform, "Next Rarity", ButtonColor);
-        SetRect(nextRarityButton.GetComponent<RectTransform>(), new Vector2(0, -720), new Vector2(250, 76), new Vector2(0.5f, 1f));
+        var nextRarityButton = CreateButton("Accessory Next Rarity Button", gearPanel.transform, ">", ButtonColor);
+        SetRect(nextRarityButton.GetComponent<RectTransform>(), new Vector2(320, -984), new Vector2(130, 54), new Vector2(0.5f, 1f));
         nextRarityButton.GetComponentInChildren<TMP_Text>().fontSize = 23;
 
-        var fuseAccessoryButton = CreateButton("Accessory Fuse Button", gearPanel.transform, "Fuse 3 Copies", UpgradeButtonColor);
-        SetRect(fuseAccessoryButton.GetComponent<RectTransform>(), new Vector2(290, -720), new Vector2(250, 76), new Vector2(0.5f, 1f));
-        fuseAccessoryButton.GetComponentInChildren<TMP_Text>().fontSize = 23;
+        var equipAccessoryButton = CreateButton("Accessory Equip Button", gearPanel.transform, Lf("gear.equip_rarity", "R0"), UpgradeButtonColor);
+        SetRect(equipAccessoryButton.GetComponent<RectTransform>(), new Vector2(-215, -1052), new Vector2(205, 58), new Vector2(0.5f, 1f));
+        equipAccessoryButton.GetComponentInChildren<TMP_Text>().fontSize = 23;
 
-        var levelAccessoryButton = CreateButton("Accessory Level Button", gearPanel.transform, "Level Equipped", UpgradeButtonColor);
-        SetRect(levelAccessoryButton.GetComponent<RectTransform>(), new Vector2(0, -840), new Vector2(760, 95), new Vector2(0.5f, 1f));
-        levelAccessoryButton.GetComponentInChildren<TMP_Text>().fontSize = 28;
+        var levelAccessoryButton = CreateButton("Accessory Level Button", gearPanel.transform, L("gear.level_equipped"), UpgradeButtonColor);
+        SetRect(levelAccessoryButton.GetComponent<RectTransform>(), new Vector2(0, -1052), new Vector2(205, 58), new Vector2(0.5f, 1f));
+        levelAccessoryButton.GetComponentInChildren<TMP_Text>().fontSize = 23;
+
+        var fuseAccessoryButton = CreateButton("Accessory Fuse Button", gearPanel.transform, Lf("gear.fuse_rarity", 3, "R0"), UpgradeButtonColor);
+        SetRect(fuseAccessoryButton.GetComponent<RectTransform>(), new Vector2(215, -1052), new Vector2(205, 58), new Vector2(0.5f, 1f));
+        fuseAccessoryButton.GetComponentInChildren<TMP_Text>().fontSize = 23;
 
         var summonHeader = CreateText("Summon Header", summonPanel.transform, "Summon", 42, FontStyles.Bold);
         SetRect(summonHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
@@ -564,6 +562,14 @@ public static class MythwakePrototypeBuilder
         return label;
     }
 
+    private static void ConfigureTextFit(TMP_Text text, float minSize, float maxSize)
+    {
+        text.enableAutoSizing = true;
+        text.fontSizeMin = minSize;
+        text.fontSizeMax = maxSize;
+        text.textWrappingMode = TextWrappingModes.Normal;
+    }
+
     [MenuItem("GameObject/Mythwake/Build Prototype UI", false, 10)]
     private static void BuildPrototypeUiFromGameObjectMenu()
     {
@@ -639,5 +645,15 @@ public static class MythwakePrototypeBuilder
     private static Texture2D LoadCurrencyIconTexture(string fileName)
     {
         return AssetDatabase.LoadAssetAtPath<Texture2D>($"{CurrencyIconAssetRoot}{fileName}");
+    }
+
+    private static string L(string key)
+    {
+        return MythwakeLocalization.Text(MythwakeLanguage.English, key);
+    }
+
+    private static string Lf(string key, params object[] args)
+    {
+        return MythwakeLocalization.Format(MythwakeLanguage.English, key, args);
     }
 }

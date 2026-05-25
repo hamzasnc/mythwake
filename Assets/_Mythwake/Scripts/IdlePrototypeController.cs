@@ -17401,6 +17401,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         MoveUiElement(accessoryEquipButton, gearPanel, new Vector2(-215, -1052), new Vector2(205, 58));
         MoveUiElement(accessoryLevelButton, gearPanel, new Vector2(0, -1052), new Vector2(205, 58));
         MoveUiElement(accessoryFuseButton, gearPanel, new Vector2(215, -1052), new Vector2(205, 58));
+        SetButtonLabel(accessoryPreviousSlotButton, "<");
+        SetButtonLabel(accessoryNextSlotButton, ">");
+        SetButtonLabel(accessoryPreviousRarityButton, "<");
+        SetButtonLabel(accessoryNextRarityButton, ">");
         ConfigureRuntimeTextFit(equipmentSummaryText, 15f, 24f);
         ConfigureRuntimeTextFit(accessorySummaryText, 15f, 22f);
         ConfigureRuntimeTextFit(accessorySelectedText, 15f, 22f);

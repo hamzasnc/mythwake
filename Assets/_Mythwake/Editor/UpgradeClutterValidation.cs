@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public static class UpgradeClutterValidation
 {
     private const string ScenePath = "Assets/Scenes/SampleScene.unity";
+    private const string PrototypeBuilderPath = "Assets/_Mythwake/Editor/MythwakePrototypeBuilder.cs";
 
     [MenuItem("Mythwake/Validate Upgrade Clutter")]
     public static void RunUpgradeClutterValidation()
@@ -27,6 +28,8 @@ public static class UpgradeClutterValidation
 
     private static void ValidateUpgradeClutter()
     {
+        ValidatePrototypeBuilderGearDefaults();
+
         EditorSceneManager.OpenScene(ScenePath);
 
         var controller = FindSceneComponent<IdlePrototypeController>();
@@ -44,6 +47,26 @@ public static class UpgradeClutterValidation
         ValidateHeroesScreen(controller);
         ValidateGearScreen(controller);
         ValidateShopTools(controller);
+    }
+
+    private static void ValidatePrototypeBuilderGearDefaults()
+    {
+        var builderScript = AssetDatabase.LoadAssetAtPath<MonoScript>(PrototypeBuilderPath);
+        if (builderScript == null)
+        {
+            throw new InvalidOperationException($"Missing prototype builder script at {PrototypeBuilderPath}.");
+        }
+
+        var source = builderScript.text;
+        AssertSourceDoesNotContain(source, "Gear Dungeon Floor", "Prototype builder should not recreate old Gear Dungeon floor copy.");
+        AssertSourceDoesNotContain(source, "Selected Fuse Tier", "Prototype builder should not recreate old selected fuse-tier copy.");
+        AssertSourceDoesNotContain(source, "Inventory Copies", "Prototype builder should not recreate old inventory copy layout.");
+        AssertSourceDoesNotContain(source, "Equip Selected", "Prototype builder should not recreate old accessory equip button copy.");
+        AssertSourceDoesNotContain(source, "\"Prev Slot\"", "Prototype builder should not recreate old slot navigation button copy.");
+        AssertSourceDoesNotContain(source, "\"Next Slot\"", "Prototype builder should not recreate old slot navigation button copy.");
+        AssertSourceDoesNotContain(source, "\"Prev Rarity\"", "Prototype builder should not recreate old rarity navigation button copy.");
+        AssertSourceDoesNotContain(source, "\"Next Rarity\"", "Prototype builder should not recreate old rarity navigation button copy.");
+        AssertSourceDoesNotContain(source, "Fuse 3 Copies", "Prototype builder should not recreate old fuse button copy.");
     }
 
     private static void ValidateBattleScreen(IdlePrototypeController controller)
@@ -646,6 +669,10 @@ public static class UpgradeClutterValidation
         RequireToolButtonInPanel(controller, "accessoryEquipButton", gearPanel);
         RequireToolButtonInPanel(controller, "accessoryLevelButton", gearPanel);
         RequireToolButtonInPanel(controller, "accessoryFuseButton", gearPanel);
+        AssertButtonLabel(RequireButtonField(controller, "accessoryPreviousSlotButton"), "<", "Gear screen previous slot button should use compact arrow copy.");
+        AssertButtonLabel(RequireButtonField(controller, "accessoryNextSlotButton"), ">", "Gear screen next slot button should use compact arrow copy.");
+        AssertButtonLabel(RequireButtonField(controller, "accessoryPreviousRarityButton"), "<", "Gear screen previous rarity button should use compact arrow copy.");
+        AssertButtonLabel(RequireButtonField(controller, "accessoryNextRarityButton"), ">", "Gear screen next rarity button should use compact arrow copy.");
         ValidateGearScreenRuntimeArt(gearPanel);
         ValidateGearScreenControlLayout(controller, gearPanel);
         ValidateGearScreenLanguageRefresh(controller, gearPanel);
@@ -834,6 +861,14 @@ public static class UpgradeClutterValidation
         if (text != null && text.text.Contains(forbiddenText))
         {
             throw new InvalidOperationException($"{message} Got '{text.text}'.");
+        }
+    }
+
+    private static void AssertSourceDoesNotContain(string source, string forbiddenText, string message)
+    {
+        if (!string.IsNullOrEmpty(source) && source.Contains(forbiddenText))
+        {
+            throw new InvalidOperationException(message);
         }
     }
 
