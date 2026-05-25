@@ -375,10 +375,25 @@ public static class HomeIdleCombatValidation
         var currentNodeIndex = Mathf.Clamp(currentStage - startStage, 0, 9);
         var currentNode = RequireButton($"Campaign Stage Node {currentNodeIndex + 1}");
         var currentHalo = RequireChildObject(currentNode.gameObject, "Stage Current Halo");
+        var currentBadge = RequireChildObject(currentNode.gameObject, "Stage Current Badge");
         var haloImage = currentHalo.GetComponent<Image>();
+        var currentBadgeImage = currentBadge.GetComponent<Image>();
+        var currentBadgeText = RequireText(currentBadge, "Label");
         if (!currentHalo.activeInHierarchy || haloImage == null || haloImage.color.a < 0.2f)
         {
             throw new InvalidOperationException("Current campaign stage node should show a visible current-stage halo.");
+        }
+
+        if (!currentBadge.activeInHierarchy || currentBadgeImage == null || currentBadgeImage.color.a < 0.5f)
+        {
+            throw new InvalidOperationException("Current campaign stage node should show a visible current-stage badge.");
+        }
+
+        RequireCopy(currentBadgeText.text, "ZIEL");
+        AssertTextFits(currentBadgeText, "Campaign current badge label");
+        if (currentBadgeImage.raycastTarget || currentBadgeText.raycastTarget)
+        {
+            throw new InvalidOperationException("Current campaign stage badge should not intercept node input.");
         }
 
         var haloRect = currentHalo.GetComponent<RectTransform>();
@@ -392,9 +407,15 @@ public static class HomeIdleCombatValidation
         {
             var lockedNode = RequireButton($"Campaign Stage Node {currentNodeIndex + 2}");
             var lockedHalo = RequireChildObject(lockedNode.gameObject, "Stage Current Halo");
+            var lockedCurrentBadge = RequireChildObject(lockedNode.gameObject, "Stage Current Badge");
             if (lockedHalo.activeInHierarchy)
             {
                 throw new InvalidOperationException("Locked campaign stage node should not show the current-stage halo.");
+            }
+
+            if (lockedCurrentBadge.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Locked campaign stage node should not show the current-stage badge.");
             }
         }
     }
@@ -421,6 +442,7 @@ public static class HomeIdleCombatValidation
             var currentSelectedHalo = RequireChildObject(currentNode.gameObject, "Stage Selected Halo");
             var selectedHalo = RequireChildObject(selectedNode.gameObject, "Stage Selected Halo");
             var selectedCurrentHalo = RequireChildObject(selectedNode.gameObject, "Stage Current Halo");
+            var selectedCurrentBadge = RequireChildObject(selectedNode.gameObject, "Stage Current Badge");
             var selectedHaloImage = selectedHalo.GetComponent<Image>();
 
             if (!currentHalo.activeInHierarchy)
@@ -441,6 +463,11 @@ public static class HomeIdleCombatValidation
             if (selectedCurrentHalo.activeInHierarchy)
             {
                 throw new InvalidOperationException("Selected locked campaign node should not inherit the current-stage halo.");
+            }
+
+            if (selectedCurrentBadge.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Selected locked campaign node should not inherit the current-stage badge.");
             }
 
             if (selectedHaloImage.raycastTarget)
@@ -488,6 +515,12 @@ public static class HomeIdleCombatValidation
             if (clearedBadgeImage.raycastTarget || clearedBadgeText.raycastTarget)
             {
                 throw new InvalidOperationException("Cleared campaign stage badge should not intercept node input.");
+            }
+
+            var clearedCurrentBadge = RequireChildObject(clearedNode.gameObject, "Stage Current Badge");
+            if (clearedCurrentBadge.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Cleared campaign stage node should not show the current-stage badge.");
             }
 
             var currentNode = RequireButton("Campaign Stage Node 6");
@@ -558,6 +591,12 @@ public static class HomeIdleCombatValidation
             if (currentLockedBadge.activeInHierarchy)
             {
                 throw new InvalidOperationException("Current campaign stage node should not show the locked badge.");
+            }
+
+            var currentBadge = RequireChildObject(currentNode.gameObject, "Stage Current Badge");
+            if (!currentBadge.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Current campaign stage node should keep the current-stage badge while lock badges are hidden.");
             }
         }
         finally

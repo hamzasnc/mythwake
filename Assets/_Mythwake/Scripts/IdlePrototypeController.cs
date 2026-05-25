@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.114";
+    public const string PrototypeVersion = "0.2.115";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1300,6 +1300,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Image[] campaignStageButtonFrames;
     private Image[] campaignStageButtonSelectedHalos;
     private Image[] campaignStageButtonCurrentHalos;
+    private Image[] campaignStageButtonCurrentBadges;
+    private TMP_Text[] campaignStageButtonCurrentBadgeTexts;
     private Image[] campaignStageButtonBossBadges;
     private TMP_Text[] campaignStageButtonBossBadgeTexts;
     private Image[] campaignStageButtonMilestoneBadges;
@@ -14205,6 +14207,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         campaignStageButtonFrames = new Image[nodePositions.Length];
         campaignStageButtonSelectedHalos = new Image[nodePositions.Length];
         campaignStageButtonCurrentHalos = new Image[nodePositions.Length];
+        campaignStageButtonCurrentBadges = new Image[nodePositions.Length];
+        campaignStageButtonCurrentBadgeTexts = new TMP_Text[nodePositions.Length];
         campaignStageButtonBossBadges = new Image[nodePositions.Length];
         campaignStageButtonBossBadgeTexts = new TMP_Text[nodePositions.Length];
         campaignStageButtonMilestoneBadges = new Image[nodePositions.Length];
@@ -14392,9 +14396,22 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         lockedText.color = new Color(0.78f, 0.84f, 0.96f);
         lockedText.raycastTarget = false;
 
+        var currentBadge = CreateRuntimePanel(buttonObject.transform, "Stage Current Badge", new Vector2(0, -50), new Vector2(58, 26), new Color(0.44f, 0.16f, 0.68f, 0.94f));
+        currentBadge.gameObject.SetActive(false);
+        var currentText = CreateRuntimeText(currentBadge, "Label", "ZIEL", 14, new Vector2(0, -2), new Vector2(52, 22));
+        currentText.fontStyle = FontStyles.Bold;
+        currentText.enableAutoSizing = true;
+        currentText.fontSizeMin = 10;
+        currentText.fontSizeMax = 14;
+        currentText.textWrappingMode = TextWrappingModes.NoWrap;
+        currentText.color = new Color(1f, 0.9f, 0.42f);
+        currentText.raycastTarget = false;
+
         campaignStageButtonFrames[nodeIndex] = frame;
         campaignStageButtonSelectedHalos[nodeIndex] = selectedHalo.GetComponent<Image>();
         campaignStageButtonCurrentHalos[nodeIndex] = currentHalo.GetComponent<Image>();
+        campaignStageButtonCurrentBadges[nodeIndex] = currentBadge.GetComponent<Image>();
+        campaignStageButtonCurrentBadgeTexts[nodeIndex] = currentText;
         campaignStageButtonBossBadges[nodeIndex] = bossBadge.GetComponent<Image>();
         campaignStageButtonBossBadgeTexts[nodeIndex] = bossText;
         campaignStageButtonMilestoneBadges[nodeIndex] = milestoneBadge.GetComponent<Image>();
@@ -18755,6 +18772,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 campaignStageButtonCurrentHalos[i].color = isCurrent
                     ? new Color(1f, 0.84f, 0.28f, 0.46f)
                     : Color.clear;
+            }
+
+            if (campaignStageButtonCurrentBadges != null && i < campaignStageButtonCurrentBadges.Length && campaignStageButtonCurrentBadges[i] != null)
+            {
+                campaignStageButtonCurrentBadges[i].gameObject.SetActive(isCurrent);
+                campaignStageButtonCurrentBadges[i].color = new Color(0.44f, 0.16f, 0.68f, 0.94f);
+            }
+
+            if (campaignStageButtonCurrentBadgeTexts != null && i < campaignStageButtonCurrentBadgeTexts.Length && campaignStageButtonCurrentBadgeTexts[i] != null)
+            {
+                campaignStageButtonCurrentBadgeTexts[i].text = "ZIEL";
+                campaignStageButtonCurrentBadgeTexts[i].color = new Color(1f, 0.9f, 0.42f);
             }
 
             if (campaignStageButtonSelectedHalos != null && i < campaignStageButtonSelectedHalos.Length && campaignStageButtonSelectedHalos[i] != null)
