@@ -642,6 +642,66 @@ public static class UpgradeClutterValidation
         RequireToolButtonInPanel(controller, "accessoryEquipButton", gearPanel);
         RequireToolButtonInPanel(controller, "accessoryLevelButton", gearPanel);
         RequireToolButtonInPanel(controller, "accessoryFuseButton", gearPanel);
+        ValidateGearScreenRuntimeArt(gearPanel);
+    }
+
+    private static void ValidateGearScreenRuntimeArt(GameObject gearPanel)
+    {
+        var gearRoot = RequireSceneObject("Runtime Art Gear Showcase");
+        RequireInsidePanel(gearPanel, gearRoot);
+
+        var gearImageNames = new[]
+        {
+            "Gear Hero",
+            "Gear Weapon Slot",
+            "Gear Armor Slot",
+            "Gear Headgear Slot",
+            "Gear Gloves Slot",
+            "Gear Boots Slot",
+            "Gear Accessory Slot",
+        };
+        var gearImageMaxSizes = new[]
+        {
+            new Vector2(150.5f, 150.5f),
+            new Vector2(104.5f, 84.5f),
+            new Vector2(104.5f, 84.5f),
+            new Vector2(104.5f, 84.5f),
+            new Vector2(96.5f, 72.5f),
+            new Vector2(96.5f, 72.5f),
+            new Vector2(104.5f, 84.5f),
+        };
+
+        for (var i = 0; i < gearImageNames.Length; i++)
+        {
+            var gearImage = RequireSceneObject(gearImageNames[i]);
+            RequireInsidePanel(gearRoot, gearImage);
+            ValidateRuntimeArtImage(gearImage, gearImageMaxSizes[i].x, gearImageMaxSizes[i].y, "Gear screen runtime art");
+        }
+    }
+
+    private static void ValidateRuntimeArtImage(GameObject gameObject, float maxWidth, float maxHeight, string context)
+    {
+        var image = gameObject.GetComponent<RawImage>();
+        if (image == null)
+        {
+            throw new InvalidOperationException($"{context}: {gameObject.name} should use a RawImage.");
+        }
+
+        if (image.texture == null)
+        {
+            throw new InvalidOperationException($"{context}: {gameObject.name} should render loaded texture art.");
+        }
+
+        if (image.raycastTarget)
+        {
+            throw new InvalidOperationException($"{context}: {gameObject.name} should not intercept UI input.");
+        }
+
+        var rect = RequireRectTransform(gameObject);
+        if (rect.rect.width <= 0f || rect.rect.height <= 0f || rect.rect.width > maxWidth || rect.rect.height > maxHeight)
+        {
+            throw new InvalidOperationException($"{context}: {gameObject.name} should fit its art bounds. width={rect.rect.width}, height={rect.rect.height}, maxWidth={maxWidth}, maxHeight={maxHeight}.");
+        }
     }
 
     private static void ValidateShopTools(IdlePrototypeController controller)

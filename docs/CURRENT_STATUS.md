@@ -46,6 +46,7 @@ Last updated: 2026-05-25
 - Empty Hero Detail accessory slots now show the best available bag copy hint, use a rarity-tinted highlight when copies are available, and the validator checks that the hint appears, fits, and is visually highlighted.
 - Hero Detail accessory option lists now put owned, equippable copies above empty rows and keep higher rarity first inside those groups, matching the best-copy slot hint; the validator locks that ordering.
 - Hero Detail now renders the new armory background and equipment/accessory slot icon art, and the upgrade clutter validator checks that the art loads, fits, and does not intercept slot input.
+- Gear screen runtime showcase art now uses the new equipment icon set, and the upgrade clutter validator checks the hero, weapon, armor, headgear, gloves, boots, and accessory images for loaded textures, fit, and input passthrough.
 - Added backend `accessory_unequip` support, including the action catalog entry, `/gear/accessories/unequip` route, state mutation, and Player/HTTP tests.
 - Added `scripts/check-unity-current-slice.cmd` / `.ps1` so the current slice validator can be run from PowerShell or CI-style local checks once this Unity project is not already open.
 - Added backend tests for service-level and HTTP-level Village upgrades.
