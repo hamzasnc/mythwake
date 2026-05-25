@@ -266,6 +266,34 @@ public static class UpgradeClutterValidation
         }
     }
 
+    private static void AssertHeroDetailVisibleGearSlotIcon(IdlePrototypeController controller, Button[] gearSlots, int gearSlotIndex, string context)
+    {
+        var slotIcons = RequireField<RawImage[]>(controller, "heroDetailGearSlotIcons");
+        if (slotIcons.Length <= gearSlotIndex)
+        {
+            throw new InvalidOperationException($"{context}: hero detail gear slot icon array should include slot {gearSlotIndex + 1}.");
+        }
+
+        var icon = slotIcons[gearSlotIndex];
+        if (icon == null || !IsRawImageVisible(icon))
+        {
+            throw new InvalidOperationException($"{context}: equipped gear slot should show icon art.");
+        }
+
+        if (!icon.transform.IsChildOf(gearSlots[gearSlotIndex].transform))
+        {
+            throw new InvalidOperationException($"{context}: gear slot icon should stay inside its slot.");
+        }
+
+        RequireInsidePanel(gearSlots[gearSlotIndex].gameObject, icon.gameObject);
+        if (icon.raycastTarget)
+        {
+            throw new InvalidOperationException($"{context}: gear slot icon should not intercept button input.");
+        }
+
+        AssertVisibleTexture(icon, $"{context} icon");
+    }
+
     private static void ValidateHeroDetailEquipmentSlotLabels(IdlePrototypeController controller, Button[] gearSlots)
     {
         for (var i = 0; i < 2; i++)
@@ -296,15 +324,21 @@ public static class UpgradeClutterValidation
     private static void ValidateHeroDetailLanguageRefresh(IdlePrototypeController controller, Button[] gearSlots, RectTransform gearListRoot, Button equipGearButton, Button removeGearButton, Button[] gearOptionButtons)
     {
         const int heroIndex = 0;
+        const int equippedAccessorySlot = 0;
+        const int equippedGearSlotIndex = equippedAccessorySlot + 2;
+        const int equippedAccessoryRarity = 0;
         const int emptyAccessorySlot = 1;
         const int emptyGearSlotIndex = emptyAccessorySlot + 2;
 
         var originalLanguage = RequireField<MythwakeLanguage>(controller, "language");
+        var originalEquippedAccessoryRarity = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, equippedAccessorySlot);
+        var originalEquippedAccessoryLevel = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryLevel", heroIndex, equippedAccessorySlot);
         var originalEmptyAccessoryRarity = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, emptyAccessorySlot);
         var originalEmptyAccessoryLevel = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryLevel", heroIndex, emptyAccessorySlot);
         try
         {
             SetPrivateField(controller, "language", MythwakeLanguage.German);
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, equippedAccessorySlot, equippedAccessoryRarity, 1);
             InvokePrivate(controller, "RefreshHeroDetailUi");
             InvokePrivate(controller, "ShowHeroDetailGearSlot", 0);
             Canvas.ForceUpdateCanvases();
@@ -315,9 +349,10 @@ public static class UpgradeClutterValidation
             AssertHeroDetailEquipmentTrackCopy(controller, gearOptionButtons[0]);
             AssertHeroDetailGearListTextFits(gearListRoot.gameObject, gearOptionButtons, "Hero detail German equipment list");
 
-            InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
+            InvokePrivate(controller, "ShowHeroDetailGearSlot", equippedGearSlotIndex);
             Canvas.ForceUpdateCanvases();
 
+            AssertHeroDetailVisibleGearSlotIcon(controller, gearSlots, equippedGearSlotIndex, "Hero detail German equipped accessory slot");
             ValidateHeroDetailAccessoryGearList(gearListRoot.gameObject, gearOptionButtons);
             AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.equip_gear"), "Hero detail accessory action should refresh when language changes.");
             AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.remove_gear"), "Hero detail remove action should stay localized after slot changes.");
@@ -333,6 +368,7 @@ public static class UpgradeClutterValidation
         finally
         {
             SetPrivateField(controller, "language", originalLanguage);
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, equippedAccessorySlot, originalEquippedAccessoryRarity, originalEquippedAccessoryLevel);
             InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, emptyAccessorySlot, originalEmptyAccessoryRarity, originalEmptyAccessoryLevel);
             InvokePrivate(controller, "RefreshHeroDetailUi");
             Canvas.ForceUpdateCanvases();
