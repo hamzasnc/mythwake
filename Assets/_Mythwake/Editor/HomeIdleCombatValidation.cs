@@ -70,9 +70,18 @@ public static class HomeIdleCombatValidation
         var idleRoot = RequireObject("Home Idle Combat Root", true);
         AssertInsideParent(RequireObject("Home Generated Art Root", true), idleRoot);
         AssertDoesNotOverlap(mapRoot, idleRoot);
+        AssertSameWidth(mapRoot, idleRoot);
+        AssertConnectedBelow(mapRoot, idleRoot);
         var battleButton = RequireButton("Home Battle Button").gameObject;
         AssertExtendsBehind(mapRoot, battleButton);
-        AssertBelow(battleButton, idleRoot);
+        AssertExtendsBelow(idleRoot, battleButton);
+        var idleMap = RequireRawImageWithTexture("Home Idle Mini Map Background");
+        if (!idleMap.texture.name.Contains("area_map_"))
+        {
+            throw new InvalidOperationException($"Home Idle Mini Map Background should use an area map texture, got '{idleMap.texture.name}'.");
+        }
+
+        AssertInsideParent(idleRoot, idleMap.gameObject);
         var idleText = RequireText(idleRoot, "Home Idle Combat Text");
         var rewardText = RequireText(idleRoot, "Home Idle Reward Text");
         RequireCopy(idleText.text, "Patrol");
@@ -272,7 +281,7 @@ public static class HomeIdleCombatValidation
         throw new InvalidOperationException($"{background.name} should extend behind {foreground.name}: background top={backgroundBounds.top}, bottom={backgroundBounds.bottom}; foreground top={foregroundBounds.top}, bottom={foregroundBounds.bottom}.");
     }
 
-    private static void AssertBelow(GameObject upper, GameObject lower)
+    private static void AssertConnectedBelow(GameObject upper, GameObject lower)
     {
         var upperRect = upper.GetComponent<RectTransform>();
         var lowerRect = lower.GetComponent<RectTransform>();
@@ -283,12 +292,48 @@ public static class HomeIdleCombatValidation
 
         var upperBounds = GetAnchoredBounds(upperRect);
         var lowerBounds = GetAnchoredBounds(lowerRect);
-        if (lowerBounds.top < upperBounds.bottom)
+        if (Mathf.Abs(lowerBounds.top - upperBounds.bottom) <= 2f)
         {
             return;
         }
 
-        throw new InvalidOperationException($"{lower.name} should sit below {upper.name}: lower top={lowerBounds.top}, upper bottom={upperBounds.bottom}.");
+        throw new InvalidOperationException($"{lower.name} should connect to {upper.name}: lower top={lowerBounds.top}, upper bottom={upperBounds.bottom}.");
+    }
+
+    private static void AssertSameWidth(GameObject first, GameObject second)
+    {
+        var firstRect = first.GetComponent<RectTransform>();
+        var secondRect = second.GetComponent<RectTransform>();
+        if (firstRect == null || secondRect == null)
+        {
+            throw new InvalidOperationException($"{first.name} or {second.name} is missing a RectTransform.");
+        }
+
+        if (Mathf.Abs(firstRect.rect.width - secondRect.rect.width) <= 2f)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException($"{second.name} should match {first.name} width: first={firstRect.rect.width}, second={secondRect.rect.width}.");
+    }
+
+    private static void AssertExtendsBelow(GameObject background, GameObject foreground)
+    {
+        var backgroundRect = background.GetComponent<RectTransform>();
+        var foregroundRect = foreground.GetComponent<RectTransform>();
+        if (backgroundRect == null || foregroundRect == null)
+        {
+            throw new InvalidOperationException($"{background.name} or {foreground.name} is missing a RectTransform.");
+        }
+
+        var backgroundBounds = GetAnchoredBounds(backgroundRect);
+        var foregroundBounds = GetAnchoredBounds(foregroundRect);
+        if (backgroundBounds.bottom < foregroundBounds.bottom)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException($"{background.name} should extend below {foreground.name}: background bottom={backgroundBounds.bottom}, foreground bottom={foregroundBounds.bottom}.");
     }
 
     private static (float left, float right, float top, float bottom) GetAnchoredBounds(RectTransform rectTransform)
