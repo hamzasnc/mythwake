@@ -18079,12 +18079,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var heroIndex = GetSelectedHeroIndex();
         if (slotIndex == 0)
         {
-            return $"{GetLocalizedEquipmentName(WeaponTrack)}\n{Tr("ui.common.level_short")} {GetEquipmentDisplayLevel(WeaponTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: true))}";
+            return $"{GetLocalizedEquipmentName(WeaponTrack)}\n{Tr("ui.common.training")} {Tr("ui.common.level_short")} {GetEquipmentDisplayLevel(WeaponTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: true))}";
         }
 
         if (slotIndex == 1)
         {
-            return $"{GetLocalizedEquipmentName(ArmorTrack)}\n{Tr("ui.common.level_short")} {GetEquipmentDisplayLevel(ArmorTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: false))}";
+            return $"{GetLocalizedEquipmentName(ArmorTrack)}\n{Tr("ui.common.training")} {Tr("ui.common.level_short")} {GetEquipmentDisplayLevel(ArmorTrack, GetHeroEquipmentLevel(heroIndex, isWeapon: false))}";
         }
 
         var accessorySlot = slotIndex - 2;

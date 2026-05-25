@@ -147,6 +147,7 @@ public static class UpgradeClutterValidation
         }
 
         ValidateHeroDetailEquipmentArt(controller, heroDetailRoot.gameObject, gearSlots, expectedGearSlotCount);
+        ValidateHeroDetailEquipmentSlotLabels(controller, gearSlots);
         ValidateHeroDetailGearLayout(heroDetailRoot.gameObject, gearSlots, expectedGearSlotCount);
         ValidateHeroDetailEmptyAccessorySlot(controller, gearSlots);
 
@@ -248,6 +249,25 @@ public static class UpgradeClutterValidation
             InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, accessorySlot, originalRarity, originalLevel);
             InvokePrivate(controller, "RefreshHeroDetailUi");
             Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void ValidateHeroDetailEquipmentSlotLabels(IdlePrototypeController controller, Button[] gearSlots)
+    {
+        for (var i = 0; i < 2; i++)
+        {
+            var label = gearSlots[i].GetComponentInChildren<TMP_Text>(includeInactive: true);
+            if (label == null)
+            {
+                throw new InvalidOperationException($"Hero detail equipment slot {i + 1} should keep a visible label.");
+            }
+
+            if (!label.text.Contains(GetLocalizedText(controller, "ui.common.training")))
+            {
+                throw new InvalidOperationException($"Hero detail equipment slot {i + 1} should be labeled as training, not an equipped item. Got '{label.text}'.");
+            }
+
+            AssertTextFits(label, gearSlots[i].name, "Hero detail equipment training slot label");
         }
     }
 
