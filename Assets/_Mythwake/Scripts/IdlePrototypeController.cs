@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.110";
+    public const string PrototypeVersion = "0.2.111";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -5778,7 +5778,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return new RewardDefinition($"reward_campaign_stage_{Mathf.Max(1, clearedStage):000}", 0, 0, rewardEssence);
         }
 
-        var rewardGems = CampaignBalance.milestoneGemBase + Mathf.FloorToInt(clearedStage * CampaignBalance.milestoneGemScale);
+        var rewardGems = GetCampaignMilestoneGemReward(clearedStage);
         var rewardPassXp = CampaignBalance.milestonePassXp;
         return new RewardDefinition($"reward_campaign_stage_{Mathf.Max(1, clearedStage):000}", 0, rewardGems, rewardEssence, rewardPassXp);
     }
@@ -18964,15 +18964,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshCampaignStageDetailRewardSlot(0, GetCurrencyIconTexture("exp_shard"), $"+{stage.essenceReward}\n{GetLocalizedCurrencyName(MythEssenceCurrencyId)}");
         if (IsCampaignMilestoneStage(stageNumber))
         {
-            var rewardGems = CampaignBalance.milestoneGemBase + Mathf.FloorToInt(stageNumber * CampaignBalance.milestoneGemScale);
-            RefreshCampaignStageDetailRewardSlot(1, GetCurrencyIconTexture("mythic_gem"), $"+{rewardGems}\nGems");
-            RefreshCampaignStageDetailRewardSlot(2, GetCurrencyIconTexture("gold_coin"), $"+{CampaignBalance.milestonePassXp}\nPass XP");
+            var rewardGems = GetCampaignMilestoneGemReward(stageNumber);
+            var rewardGemLabel = IsCampaignBossStage(stageNumber) ? "Boss Gems" : "Bonus Gems";
+            var rewardPassLabel = IsCampaignBossStage(stageNumber) ? "Boss XP" : "Pass XP";
+            RefreshCampaignStageDetailRewardSlot(1, GetCurrencyIconTexture("mythic_gem"), $"+{rewardGems}\n{rewardGemLabel}");
+            RefreshCampaignStageDetailRewardSlot(2, GetCurrencyIconTexture("gold_coin"), $"+{CampaignBalance.milestonePassXp}\n{rewardPassLabel}");
         }
         else
         {
             var nextMilestone = Mathf.CeilToInt(stageNumber / (float)CampaignMilestoneInterval) * CampaignMilestoneInterval;
-            RefreshCampaignStageDetailRewardSlot(1, GetCurrencyIconTexture("mythic_gem"), $"Milestone\n{GetCampaignStageLabel(nextMilestone)}");
-            RefreshCampaignStageDetailRewardSlot(2, GetCurrencyIconTexture("gold_coin"), "Idle\nseparat");
+            RefreshCampaignStageDetailRewardSlot(1, GetCurrencyIconTexture("mythic_gem"), $"Bonus bei\n{GetCampaignStageLabel(nextMilestone)}");
+            RefreshCampaignStageDetailRewardSlot(2, GetCurrencyIconTexture("gold_coin"), "Patrol\nseparat");
         }
 
         SetButtonInteractable(campaignStageDetailBattleButton, isCurrent && !campaignFightInProgress && !backendRequestInProgress && !backendLifecycleFlushInProgress);
@@ -19636,11 +19638,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (IsCampaignMilestoneStage(stageNumber))
         {
-            var rewardGems = CampaignBalance.milestoneGemBase + Mathf.FloorToInt(Mathf.Max(1, stageNumber) * CampaignBalance.milestoneGemScale);
+            var rewardGems = GetCampaignMilestoneGemReward(stageNumber);
             return $"Bonus: +{rewardGems} Gems +{CampaignBalance.milestonePassXp} Pass XP.";
         }
 
         return "Normal. Bonus alle 5.";
+    }
+
+    private static int GetCampaignMilestoneGemReward(int stageNumber)
+    {
+        return CampaignBalance.milestoneGemBase + Mathf.FloorToInt(Mathf.Max(1, stageNumber) * CampaignBalance.milestoneGemScale);
     }
 
     private static Vector2[] GetCampaignMapNodePositions()

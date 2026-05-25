@@ -74,14 +74,20 @@ public static class HomeIdleCombatValidation
         var detailEnemyHeader = RequireText(detailPopup, "Stage Detail Enemy Header");
         var detailRewardHeader = RequireText(detailPopup, "Stage Detail Reward Header");
         var detailRewardText = RequireText(detailPopup, "Stage Detail Reward Text 1");
+        var detailRewardText2 = RequireText(detailPopup, "Stage Detail Reward Text 2");
+        var detailRewardText3 = RequireText(detailPopup, "Stage Detail Reward Text 3");
         RequireCopy(detailTitle.text, "Abschnitt");
         RequireCopy(detailBody.text, "Damage");
         RequireCopy(detailBody.text, "Normal");
         RequireCopy(detailEnemyHeader.text, "Feindliche Formation");
         RequireCopy(detailRewardHeader.text, "Belohnungen bei Abschluss");
         RequireCopy(detailRewardText.text, "Essence");
+        RequireCopy(detailRewardText2.text, "Bonus bei");
+        RequireCopy(detailRewardText3.text, "Patrol");
         AssertTextFits(detailBody, "Stage Detail Body");
         AssertTextFits(detailRewardText, "Stage Detail Reward Text 1");
+        AssertTextFits(detailRewardText2, "Stage Detail Reward Text 2");
+        AssertTextFits(detailRewardText3, "Stage Detail Reward Text 3");
         RequireRawImageWithTexture("Stage Detail Map Preview");
         for (var i = 1; i <= 5; i++)
         {
@@ -616,9 +622,15 @@ public static class HomeIdleCombatValidation
 
             var detailPopup = RequireObject("Campaign Stage Detail Popup", true);
             var detailBody = RequireText(detailPopup, "Stage Detail Body");
+            var detailRewardText2 = RequireText(detailPopup, "Stage Detail Reward Text 2");
+            var detailRewardText3 = RequireText(detailPopup, "Stage Detail Reward Text 3");
             RequireCopy(detailBody.text, "Normal");
             RequireCopy(detailBody.text, "Bonus alle 5");
+            RequireCopy(detailRewardText2.text, "Bonus bei");
+            RequireCopy(detailRewardText3.text, "Patrol");
             AssertTextFits(detailBody, "Normal campaign stage detail body");
+            AssertTextFits(detailRewardText2, "Normal campaign stage detail reward 2");
+            AssertTextFits(detailRewardText3, "Normal campaign stage detail reward 3");
 
             SetPrivateField(controller, "selectedCampaignStage", 5);
             InvokePrivate(controller, "RefreshCampaignMapUi");
@@ -626,7 +638,11 @@ public static class HomeIdleCombatValidation
             RequireCopy(detailBody.text, "Bonus");
             RequireCopy(detailBody.text, "Gems");
             RequireCopy(detailBody.text, "Pass XP");
+            RequireCopy(detailRewardText2.text, "Bonus Gems");
+            RequireCopy(detailRewardText3.text, "Pass XP");
             AssertTextFits(detailBody, "Bonus campaign stage detail body");
+            AssertTextFits(detailRewardText2, "Bonus campaign stage detail reward 2");
+            AssertTextFits(detailRewardText3, "Bonus campaign stage detail reward 3");
 
             SetPrivateField(controller, "enemyLevel", 11);
             SetPrivateField(controller, "selectedCampaignStage", 10);
@@ -634,7 +650,11 @@ public static class HomeIdleCombatValidation
             Canvas.ForceUpdateCanvases();
             RequireCopy(detailBody.text, "Boss");
             RequireCopy(detailBody.text, "Boss-Knoten");
+            RequireCopy(detailRewardText2.text, "Boss Gems");
+            RequireCopy(detailRewardText3.text, "Boss XP");
             AssertTextFits(detailBody, "Boss campaign stage detail body");
+            AssertTextFits(detailRewardText2, "Boss campaign stage detail reward 2");
+            AssertTextFits(detailRewardText3, "Boss campaign stage detail reward 3");
         }
         finally
         {
