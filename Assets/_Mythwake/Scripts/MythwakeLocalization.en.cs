@@ -114,6 +114,7 @@ public static partial class MythwakeLocalization
         { "accessory.item_slot_bracelet.name", "Bracelet" },
         { "accessory.item_slot_gloves.name", "Gloves" },
         { "accessory.item_slot_shoes.name", "Shoes" },
+        { "accessory.item_slot_headgear.name", "Headgear" },
         { "accessory.description", "Accessory loot from Gear Dungeon. Copies can be equipped on heroes or fused upward from the Hero gear panel." },
         { "accessory.fuse.max", "Fuse: max rarity" },
         { "accessory.fuse.next", "Fuse: {0} copies -> {1}" },

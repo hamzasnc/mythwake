@@ -37,6 +37,43 @@ public sealed class MythwakeRuntimeArtPresenter
         "hero_paladin",
         "hero_ravik"
     };
+    private const string EquipmentIconTextureRoot = "EquipmentIcons/";
+    private static readonly string[] EquipmentWeaponIconTextureNames =
+    {
+        EquipmentIconTextureRoot + "equipment_weapon_01_sword",
+        EquipmentIconTextureRoot + "equipment_weapon_02_axe",
+        EquipmentIconTextureRoot + "equipment_weapon_03_staff"
+    };
+    private static readonly string[] EquipmentArmorIconTextureNames =
+    {
+        EquipmentIconTextureRoot + "equipment_armor_01_plate",
+        EquipmentIconTextureRoot + "equipment_armor_02_leather",
+        EquipmentIconTextureRoot + "equipment_armor_03_robe"
+    };
+    private static readonly string[] EquipmentHeadgearIconTextureNames =
+    {
+        EquipmentIconTextureRoot + "equipment_headgear_01_helm",
+        EquipmentIconTextureRoot + "equipment_headgear_02_hood",
+        EquipmentIconTextureRoot + "equipment_headgear_03_mask"
+    };
+    private static readonly string[] EquipmentGlovesIconTextureNames =
+    {
+        EquipmentIconTextureRoot + "equipment_gloves_01_plate",
+        EquipmentIconTextureRoot + "equipment_gloves_02_leather",
+        EquipmentIconTextureRoot + "equipment_gloves_03_mage"
+    };
+    private static readonly string[] EquipmentBootsIconTextureNames =
+    {
+        EquipmentIconTextureRoot + "equipment_boots_01_plate",
+        EquipmentIconTextureRoot + "equipment_boots_02_leather",
+        EquipmentIconTextureRoot + "equipment_boots_03_winged"
+    };
+    private static readonly string[] EquipmentAccessoryIconTextureNames =
+    {
+        EquipmentIconTextureRoot + "equipment_accessory_01_amulet",
+        EquipmentIconTextureRoot + "equipment_accessory_02_ring",
+        EquipmentIconTextureRoot + "equipment_accessory_03_talisman"
+    };
 
     private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();
     private readonly Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();
@@ -49,6 +86,12 @@ public sealed class MythwakeRuntimeArtPresenter
     private RawImage battleEnemyImage;
     private RawImage battleVfxImage;
     private RawImage gearHeroImage;
+    private RawImage gearWeaponImage;
+    private RawImage gearArmorImage;
+    private RawImage gearHeadgearImage;
+    private RawImage gearGlovesImage;
+    private RawImage gearBootsImage;
+    private RawImage gearAccessoryImage;
     private RawImage summonHeroImage;
     private RawImage summonVfxImage;
     private TMP_Text battleTitleText;
@@ -102,7 +145,7 @@ public sealed class MythwakeRuntimeArtPresenter
             CreateText(dungeonsRoot, "Dungeon Visual Title", "Resource Towers", 28, new Vector2(0f, -24f), new Vector2(760f, 42f), FontStyles.Bold);
             CreateTextureImage(dungeonsRoot, "Gold Dungeon Token", "icon_gold", new Vector2(-240f, -130f), new Vector2(72f, 72f));
             CreateTextureImage(dungeonsRoot, "Essence Dungeon Token", "dungeon_essence", new Vector2(0f, -130f), new Vector2(72f, 72f));
-            CreateTextureImage(dungeonsRoot, "Gear Dungeon Token", "icon_weapon", new Vector2(240f, -130f), new Vector2(72f, 72f));
+            CreateTextureImage(dungeonsRoot, "Gear Dungeon Token", EquipmentWeaponIconTextureNames[0], new Vector2(240f, -130f), new Vector2(96f, 64f));
             dungeonText = CreateText(dungeonsRoot, "Dungeon Visual Summary", "Gold F1     Essence F1     Gear F1", 18, new Vector2(0f, -204f), new Vector2(760f, 34f), FontStyles.Bold);
         }
 
@@ -113,10 +156,18 @@ public sealed class MythwakeRuntimeArtPresenter
             CreateBackgroundLayers(gearRoot);
             CreateText(gearRoot, "Gear Visual Title", "Hero Loadout", 28, new Vector2(0f, -22f), new Vector2(720f, 42f), FontStyles.Bold);
             gearHeroImage = CreateTextureImage(gearRoot, "Gear Hero", "hero_astra", new Vector2(0f, -158f), new Vector2(150f, 150f));
-            CreateTextureImage(gearRoot, "Gear Weapon Slot", "icon_weapon", new Vector2(-255f, -100f), new Vector2(76f, 76f));
-            CreateTextureImage(gearRoot, "Gear Armor Slot", "icon_armor", new Vector2(255f, -100f), new Vector2(76f, 76f));
-            CreateTextureImage(gearRoot, "Gear Gold Slot", "icon_gold", new Vector2(-255f, -215f), new Vector2(76f, 76f));
-            CreateTextureImage(gearRoot, "Gear Essence Slot", "icon_essence", new Vector2(255f, -215f), new Vector2(76f, 76f));
+            gearWeaponImage = CreateTextureImage(gearRoot, "Gear Weapon Slot", EquipmentWeaponIconTextureNames[0], new Vector2(-285f, -96f), new Vector2(104f, 84f));
+            gearArmorImage = CreateTextureImage(gearRoot, "Gear Armor Slot", EquipmentArmorIconTextureNames[0], new Vector2(285f, -96f), new Vector2(104f, 84f));
+            gearHeadgearImage = CreateTextureImage(gearRoot, "Gear Headgear Slot", EquipmentHeadgearIconTextureNames[0], new Vector2(-285f, -202f), new Vector2(104f, 84f));
+            gearGlovesImage = CreateTextureImage(gearRoot, "Gear Gloves Slot", EquipmentGlovesIconTextureNames[0], new Vector2(-95f, -225f), new Vector2(96f, 72f));
+            gearBootsImage = CreateTextureImage(gearRoot, "Gear Boots Slot", EquipmentBootsIconTextureNames[0], new Vector2(95f, -225f), new Vector2(96f, 72f));
+            gearAccessoryImage = CreateTextureImage(gearRoot, "Gear Accessory Slot", EquipmentAccessoryIconTextureNames[0], new Vector2(285f, -202f), new Vector2(104f, 84f));
+            FitRawImageToTexture(gearWeaponImage, new Vector2(104f, 84f));
+            FitRawImageToTexture(gearArmorImage, new Vector2(104f, 84f));
+            FitRawImageToTexture(gearHeadgearImage, new Vector2(104f, 84f));
+            FitRawImageToTexture(gearGlovesImage, new Vector2(96f, 72f));
+            FitRawImageToTexture(gearBootsImage, new Vector2(96f, 72f));
+            FitRawImageToTexture(gearAccessoryImage, new Vector2(104f, 84f));
             CreateText(gearRoot, "Gear Visual Power", "Weapon  Armor  Accessories", 18, new Vector2(0f, -270f), new Vector2(720f, 34f), FontStyles.Bold);
         }
 
@@ -176,6 +227,12 @@ public sealed class MythwakeRuntimeArtPresenter
         var heroTexture = GetHeroTextureName(state.selectedHeroIndex);
         SetTexture(battleHeroImage, heroTexture);
         SetTexture(gearHeroImage, heroTexture);
+        SetTexture(gearWeaponImage, GetEquipmentIconTextureName(EquipmentWeaponIconTextureNames, state.selectedHeroIndex), new Vector2(104f, 84f));
+        SetTexture(gearArmorImage, GetEquipmentIconTextureName(EquipmentArmorIconTextureNames, state.selectedHeroIndex + 1), new Vector2(104f, 84f));
+        SetTexture(gearHeadgearImage, GetEquipmentIconTextureName(EquipmentHeadgearIconTextureNames, state.selectedHeroIndex + 2), new Vector2(104f, 84f));
+        SetTexture(gearGlovesImage, GetEquipmentIconTextureName(EquipmentGlovesIconTextureNames, state.selectedHeroIndex), new Vector2(96f, 72f));
+        SetTexture(gearBootsImage, GetEquipmentIconTextureName(EquipmentBootsIconTextureNames, state.selectedHeroIndex + 1), new Vector2(96f, 72f));
+        SetTexture(gearAccessoryImage, GetEquipmentIconTextureName(EquipmentAccessoryIconTextureNames, state.selectedHeroIndex + 2), new Vector2(104f, 84f));
         SetTexture(summonHeroImage, GetHeroTextureName(currentSummonHeroIndex));
         SetTexture(battleEnemyImage, currentEnemyTexture);
         SetTexture(battleVfxImage, currentVfxTexture);
@@ -394,6 +451,35 @@ public sealed class MythwakeRuntimeArtPresenter
         }
     }
 
+    private void SetTexture(RawImage image, string textureName, Vector2 maxSize)
+    {
+        if (image == null)
+        {
+            return;
+        }
+
+        image.texture = GetTexture(textureName);
+        FitRawImageToTexture(image, maxSize);
+    }
+
+    private static void FitRawImageToTexture(RawImage image, Vector2 maxSize)
+    {
+        if (image == null || image.texture == null)
+        {
+            return;
+        }
+
+        var width = image.texture.width;
+        var height = image.texture.height;
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        var scale = Mathf.Min(maxSize.x / width, maxSize.y / height);
+        image.rectTransform.sizeDelta = new Vector2(width * scale, height * scale);
+    }
+
     private static void SetFillPercent(Image fill, float percent)
     {
         if (fill == null)
@@ -452,6 +538,16 @@ public sealed class MythwakeRuntimeArtPresenter
     private static string GetHeroTextureName(int heroIndex)
     {
         return HeroTextureNames[Mathf.Clamp(heroIndex, 0, HeroTextureNames.Length - 1)];
+    }
+
+    private static string GetEquipmentIconTextureName(string[] textureNames, int variantSeed)
+    {
+        if (textureNames == null || textureNames.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        return textureNames[Mathf.Abs(variantSeed) % textureNames.Length];
     }
 
     private static string GetEnemyTextureName(string mode)

@@ -114,6 +114,7 @@ public static partial class MythwakeLocalization
         { "accessory.item_slot_bracelet.name", "Armband" },
         { "accessory.item_slot_gloves.name", "Handschuhe" },
         { "accessory.item_slot_shoes.name", "Schuhe" },
+        { "accessory.item_slot_headgear.name", "Helm" },
         { "accessory.description", "Beute aus dem Ausrüstungs-Dungeon. Kopien können Helden ausgerüstet oder im Helden-Ausrüstungsfenster fusioniert werden." },
         { "accessory.fuse.max", "Fusion: höchste Seltenheit" },
         { "accessory.fuse.next", "Fusion: {0} Kopien -> {1}" },
