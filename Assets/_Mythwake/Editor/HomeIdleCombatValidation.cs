@@ -16,7 +16,7 @@ public static class HomeIdleCombatValidation
         try
         {
             ValidateHomeIdleCombatUi();
-            Debug.Log("Home Idle Combat validated: campaign map, popup exclusivity, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
+            Debug.Log("Home Idle Combat validated: campaign map, region texture sync, popup exclusivity, reward progress, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
         }
         catch (Exception ex)
         {
@@ -114,6 +114,7 @@ public static class HomeIdleCombatValidation
         }
 
         AssertInsideParent(idleRoot, idleMap.gameObject);
+        ValidateHomeProgressMapTextureSwitch(controller, mapImage, idleMap);
         var idleText = RequireText(idleRoot, "Home Idle Combat Text");
         var rewardText = RequireText(idleRoot, "Home Idle Reward Text");
         var lootPopupText = RequireText(idleRoot, "Home Idle Loot Pop Text");
@@ -121,6 +122,7 @@ public static class HomeIdleCombatValidation
         RequireCopy(rewardText.text, "Naechste");
         AssertTextFits(idleText, "Home Idle Combat Text");
         AssertTextFits(rewardText, "Home Idle Reward Text");
+        ValidateHomeIdleRewardProgressAndServerMode(controller, GetPrivateField<Image>(controller, "homeIdleRewardFill"), rewardText, lootPopupText);
 
         var infoButton = RequireButton("Home Idle Info Button");
         infoButton.onClick.Invoke();
@@ -274,6 +276,118 @@ public static class HomeIdleCombatValidation
 
         RequireButton("Stage Detail Close Button").onClick.Invoke();
         Canvas.ForceUpdateCanvases();
+    }
+
+    private static void ValidateHomeProgressMapTextureSwitch(IdlePrototypeController controller, RawImage mapImage, RawImage idleMap)
+    {
+        var enemyLevelBefore = GetPrivateField<int>(controller, "enemyLevel");
+        var selectedStageBefore = GetPrivateField<int>(controller, "selectedCampaignStage");
+        var centerBefore = GetPrivateField<bool>(controller, "homeCampaignMapNeedsCenter");
+
+        try
+        {
+            const int regionSwapStage = 21;
+            var expectedTextureName = (string)InvokePrivate(controller, "GetHomeProgressMapTextureNameForStage", regionSwapStage);
+            if (string.IsNullOrWhiteSpace(expectedTextureName) || expectedTextureName == "area_map_scorched_plains")
+            {
+                throw new InvalidOperationException($"Stage {regionSwapStage} should resolve to a later Home progress map texture, got '{expectedTextureName}'.");
+            }
+
+            SetPrivateField(controller, "enemyLevel", regionSwapStage);
+            SetPrivateField(controller, "selectedCampaignStage", regionSwapStage);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", true);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+
+            AssertTextureNameContains(mapImage, expectedTextureName, "Home campaign map region switch");
+            AssertTextureNameContains(idleMap, expectedTextureName, "Home idle mini-map region switch");
+
+            var startStage = (int)InvokePrivate(controller, "GetCampaignMapStartStage");
+            var currentNodeIndex = Mathf.Clamp(regionSwapStage - startStage, 0, 9);
+            RequireButton($"Campaign Stage Node {currentNodeIndex + 1}").onClick.Invoke();
+            Canvas.ForceUpdateCanvases();
+
+            var detailMap = RequireRawImageWithTexture("Stage Detail Map Preview");
+            AssertTextureNameContains(detailMap, expectedTextureName, "Stage detail map preview region switch");
+            RequireButton("Stage Detail Close Button").onClick.Invoke();
+            Canvas.ForceUpdateCanvases();
+        }
+        finally
+        {
+            SetPrivateField(controller, "enemyLevel", enemyLevelBefore);
+            SetPrivateField(controller, "selectedCampaignStage", selectedStageBefore);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
+            InvokePrivate(controller, "SetCampaignStageDetailPopupVisible", false);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void ValidateHomeIdleRewardProgressAndServerMode(IdlePrototypeController controller, Image rewardFill, TMP_Text rewardText, TMP_Text lootPopupText)
+    {
+        if (rewardFill == null)
+        {
+            throw new InvalidOperationException("Missing Home idle reward fill image.");
+        }
+
+        var backendBefore = GetPrivateField<bool>(controller, "backendGameplayEnabled");
+        var timerBefore = GetPrivateField<float>(controller, "homeIdleRewardTimer");
+        var lootTimerBefore = GetPrivateField<float>(controller, "homeIdleLootPopupTimer");
+        var goldBefore = GetPrivateField<int>(controller, "gold");
+        var essenceBefore = GetPrivateField<int>(controller, "mythEssence");
+        var lastGoldBefore = GetPrivateField<int>(controller, "homeIdleLastRewardGold");
+        var lastEssenceBefore = GetPrivateField<int>(controller, "homeIdleLastRewardEssence");
+        var lootTextBefore = lootPopupText.text;
+
+        try
+        {
+            SetPrivateField(controller, "backendGameplayEnabled", false);
+            SetPrivateField(controller, "homeIdleRewardTimer", 3f);
+            InvokePrivate(controller, "RefreshHomeIdleCombatUi");
+            Canvas.ForceUpdateCanvases();
+
+            AssertApproximately(rewardFill.rectTransform.anchorMax.x, 0.3f, 0.01f, "Home idle reward fill progress");
+            RequireCopy(rewardText.text, "Naechste");
+            RequireCopy(rewardText.text, "7s");
+            AssertTextFits(rewardText, "Home Idle Reward Text progress state");
+
+            SetPrivateField(controller, "backendGameplayEnabled", true);
+            SetPrivateField(controller, "homeIdleRewardTimer", 9.8f);
+            SetPrivateField(controller, "homeIdleLootPopupTimer", 0f);
+            SetPrivateField(controller, "homeIdleLastRewardGold", 0);
+            SetPrivateField(controller, "homeIdleLastRewardEssence", 0);
+            lootPopupText.text = string.Empty;
+
+            InvokePrivate(controller, "TickHomeIdleCombat", 10.5f);
+            Canvas.ForceUpdateCanvases();
+
+            if (GetPrivateField<int>(controller, "gold") != goldBefore || GetPrivateField<int>(controller, "mythEssence") != essenceBefore)
+            {
+                throw new InvalidOperationException("Home idle combat should not grant local rewards while Server Mode is active.");
+            }
+
+            if (lootPopupText.gameObject.activeSelf)
+            {
+                throw new InvalidOperationException("Home idle loot popup should stay hidden while Server Mode blocks local reward ticks.");
+            }
+
+            RequireCopy(rewardText.text, "Server Mode");
+            RequireCopy(rewardText.text, "serverseitig");
+            AssertTextFits(rewardText, "Home Idle Reward Text server state");
+        }
+        finally
+        {
+            SetPrivateField(controller, "backendGameplayEnabled", backendBefore);
+            SetPrivateField(controller, "homeIdleRewardTimer", timerBefore);
+            SetPrivateField(controller, "homeIdleLootPopupTimer", lootTimerBefore);
+            SetPrivateField(controller, "gold", goldBefore);
+            SetPrivateField(controller, "mythEssence", essenceBefore);
+            SetPrivateField(controller, "homeIdleLastRewardGold", lastGoldBefore);
+            SetPrivateField(controller, "homeIdleLastRewardEssence", lastEssenceBefore);
+            lootPopupText.text = lootTextBefore;
+            InvokePrivate(controller, "RefreshHomeIdleCombatUi");
+            Canvas.ForceUpdateCanvases();
+        }
     }
 
     private static void ValidateHomePopupExclusivity(IdlePrototypeController controller)
@@ -589,6 +703,24 @@ public static class HomeIdleCombatValidation
         {
             throw new InvalidOperationException($"{label} does not fit: preferred height={preferred.y}, rect height={rect.height}, text='{text.text}'.");
         }
+    }
+
+    private static void AssertTextureNameContains(RawImage image, string expectedTextureName, string context)
+    {
+        if (image == null || image.texture == null || !image.texture.name.Contains(expectedTextureName))
+        {
+            throw new InvalidOperationException($"{context} should use {expectedTextureName}, got '{image?.texture?.name}'.");
+        }
+    }
+
+    private static void AssertApproximately(float actual, float expected, float tolerance, string context)
+    {
+        if (Mathf.Abs(actual - expected) <= tolerance)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException($"{context} expected {expected}, got {actual}.");
     }
 
     private static void RequireCopy(string text, string expected)

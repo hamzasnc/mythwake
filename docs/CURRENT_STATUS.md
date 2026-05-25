@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.95`, save version `2`.
+- Unity client code is at Prototype `0.2.96`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -44,6 +44,7 @@ Last updated: 2026-05-26
 - Imported the remaining `area_map_*` region images into Runtime resources so Home progress maps can swap by stage region.
 - Reworked the Home idle combat lane so its mini-map background connects directly to the main campaign map, spans the same width, and continues downward behind the fighting heroes/monsters.
 - Updated `Mythwake/Validate Home Idle Combat` so it guards the connected Home map layout, the idle mini-map texture, the Battle button coverage, active reward ticks, and no automatic stage clear.
+- Extended `Mythwake/Validate Home Idle Combat` so it also checks progress-map region texture sync across the main campaign map, stage-detail preview, and lower idle mini-map, plus reward progress fill behavior and Server Mode local-reward blocking.
 - Added a short floating Home idle loot popup for local active Gold/Myth Essence ticks, with validator coverage that confirms the popup appears and fits.
 - Added a tappable Home patrol info popup on the idle combat area so players can inspect the current stage, enemy, active tick rewards, and the no-auto-clear rule; the Home idle validator now clicks and closes it.
 - Added a Home campaign checkpoint detail popup so tapping a stage node now opens a larger AFK-style panel with a map preview, enemy formation, completion reward row, and Battle/Close controls; the Home idle validator checks and closes it.
