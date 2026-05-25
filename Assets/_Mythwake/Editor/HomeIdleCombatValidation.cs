@@ -41,8 +41,20 @@ public static class HomeIdleCombatValidation
         controller.ShowHome();
         Canvas.ForceUpdateCanvases();
 
-        RequireObject("Home Campaign Map Root", true);
-        RequireRawImageWithTexture("Campaign World Map Image");
+        var mapRoot = RequireObject("Home Campaign Map Root", true);
+        var scrollRect = mapRoot.GetComponent<ScrollRect>();
+        if (scrollRect == null || scrollRect.content == null || !scrollRect.vertical || scrollRect.horizontal)
+        {
+            throw new InvalidOperationException("Home Campaign Map Root should be a vertical-only ScrollRect with content.");
+        }
+
+        var mapContent = RequireObject("Campaign Map Content", true);
+        var mapImage = RequireRawImageWithTexture("Campaign World Map Image");
+        if (!mapImage.texture.name.Contains("area_map_scorched_plains"))
+        {
+            throw new InvalidOperationException($"Campaign map should use area_map_scorched_plains, got '{mapImage.texture.name}'.");
+        }
+
         var preview = RequireObject("Campaign Stage Preview", true);
         var previewText = RequireText(preview, "Campaign Stage Preview Text");
         RequireCopy(previewText.text, "Abschnitt");
@@ -50,12 +62,14 @@ public static class HomeIdleCombatValidation
         AssertTextFits(previewText, "Campaign Stage Preview Text");
 
         var node = RequireButton("Campaign Stage Node 3");
+        AssertInsideParent(mapContent, node.gameObject);
         node.onClick.Invoke();
         Canvas.ForceUpdateCanvases();
         RequireCopy(previewText.text, "Abschnitt");
 
         var idleRoot = RequireObject("Home Idle Combat Root", true);
         AssertInsideParent(RequireObject("Home Generated Art Root", true), idleRoot);
+        AssertDoesNotOverlap(mapRoot, idleRoot);
         var idleText = RequireText(idleRoot, "Home Idle Combat Text");
         var rewardText = RequireText(idleRoot, "Home Idle Reward Text");
         RequireCopy(idleText.text, "Patrol");
@@ -212,6 +226,38 @@ public static class HomeIdleCombatValidation
         {
             throw new InvalidOperationException($"{child.name} is outside {parent.name}: left={left}, right={right}, top={top}, bottom={bottom}.");
         }
+    }
+
+    private static void AssertDoesNotOverlap(GameObject first, GameObject second)
+    {
+        var firstRect = first.GetComponent<RectTransform>();
+        var secondRect = second.GetComponent<RectTransform>();
+        if (firstRect == null || secondRect == null)
+        {
+            throw new InvalidOperationException($"{first.name} or {second.name} is missing a RectTransform.");
+        }
+
+        var firstBounds = GetAnchoredBounds(firstRect);
+        var secondBounds = GetAnchoredBounds(secondRect);
+        var overlaps = firstBounds.left < secondBounds.right &&
+            firstBounds.right > secondBounds.left &&
+            firstBounds.bottom < secondBounds.top &&
+            firstBounds.top > secondBounds.bottom;
+
+        if (overlaps)
+        {
+            throw new InvalidOperationException($"{first.name} should not overlap {second.name}.");
+        }
+    }
+
+    private static (float left, float right, float top, float bottom) GetAnchoredBounds(RectTransform rectTransform)
+    {
+        var rect = rectTransform.rect;
+        var left = rectTransform.anchoredPosition.x - rect.width * rectTransform.pivot.x;
+        var right = left + rect.width;
+        var top = rectTransform.anchoredPosition.y + rect.height * (1f - rectTransform.pivot.y);
+        var bottom = top - rect.height;
+        return (left, right, top, bottom);
     }
 
     private static void AssertTextFits(TMP_Text text, string label)

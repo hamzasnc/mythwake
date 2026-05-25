@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.76";
+    public const string PrototypeVersion = "0.2.77";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -626,6 +626,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int HomeIdleVisibleUnitCount = 3;
     private const float HomeIdleRewardIntervalSeconds = 10f;
     private const float HomeIdleRewardRateMultiplier = 0.28f;
+    private const string HomeCampaignMapTextureName = "area_map_scorched_plains";
     private const float FightUltimateCinematicSeconds = 0.9f;
     private const float FightUltimateWorldSlowScale = 0.18f;
     private const int FightAutoAttackManaGain = 2;
@@ -643,6 +644,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static readonly Vector2 DungeonMapViewportPosition = new Vector2(0f, -166f);
     private static readonly Vector2 DungeonMapViewportSize = new Vector2(1000f, 970f);
     private static readonly Vector2 DungeonWorldMapSize = new Vector2(1760f, 1320f);
+    private static readonly Vector2 HomeCampaignMapViewportPosition = new Vector2(0f, -190f);
+    private static readonly Vector2 HomeCampaignMapViewportSize = new Vector2(940f, 570f);
+    private static readonly Vector2 HomeCampaignMapContentSize = new Vector2(940f, 1670f);
     private static readonly Vector2 GoldDungeonMapPosition = new Vector2(292f, -692f);
     private static readonly Vector2 EssenceDungeonMapPosition = new Vector2(196f, -168f);
     private static readonly Vector2 GearDungeonMapPosition = new Vector2(-20f, -935f);
@@ -1243,6 +1247,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text homeShortcutToggleText;
     private TMP_Text homeLeftShortcutToggleText;
     private RectTransform homeCampaignMapRoot;
+    private RectTransform homeCampaignMapContentRoot;
+    private ScrollRect homeCampaignMapScrollRect;
+    private RawImage homeCampaignMapImage;
     private RectTransform homeIdleCombatRoot;
     private RectTransform campaignStagePreviewRoot;
     private TMP_Text campaignStagePreviewText;
@@ -1265,6 +1272,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private float homeIdleRewardTimer;
     private int homeIdleLastRewardGold;
     private int homeIdleLastRewardEssence;
+    private bool homeCampaignMapNeedsCenter = true;
     private RectTransform villageMapRoot;
     private RectTransform villageMapViewportRoot;
     private ScrollRect villageMapScrollRect;
@@ -14028,22 +14036,44 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var rootObject = new GameObject("Home Campaign Map Root", typeof(RectTransform));
         rootObject.transform.SetParent(homeActionRoot, false);
         homeCampaignMapRoot = rootObject.GetComponent<RectTransform>();
-        SetRuntimeRect(homeCampaignMapRoot, new Vector2(0, -245), new Vector2(860, 710), new Vector2(0.5f, 1f));
+        SetRuntimeRect(homeCampaignMapRoot, HomeCampaignMapViewportPosition, HomeCampaignMapViewportSize, new Vector2(0.5f, 1f));
         homeCampaignMapRoot.SetAsFirstSibling();
+        homeCampaignMapRoot.gameObject.AddComponent<RectMask2D>();
+        homeCampaignMapScrollRect = homeCampaignMapRoot.gameObject.AddComponent<ScrollRect>();
+        homeCampaignMapScrollRect.horizontal = false;
+        homeCampaignMapScrollRect.vertical = true;
+        homeCampaignMapScrollRect.movementType = ScrollRect.MovementType.Clamped;
+        homeCampaignMapScrollRect.inertia = true;
+        homeCampaignMapScrollRect.scrollSensitivity = 44f;
+        homeCampaignMapScrollRect.viewport = homeCampaignMapRoot;
 
-        var mapBack = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Backplate", Vector2.zero, new Vector2(860, 710), new Color(0.08f, 0.12f, 0.19f, 0.98f));
+        var viewportImage = rootObject.AddComponent<Image>();
+        viewportImage.color = new Color(0.025f, 0.035f, 0.055f, 0.92f);
+        viewportImage.raycastTarget = true;
+
+        homeCampaignMapContentRoot = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Content", Vector2.zero, HomeCampaignMapContentSize, Color.clear);
+        var contentImage = homeCampaignMapContentRoot.GetComponent<Image>();
+        if (contentImage != null)
+        {
+            contentImage.color = Color.clear;
+            contentImage.raycastTarget = false;
+        }
+
+        homeCampaignMapScrollRect.content = homeCampaignMapContentRoot;
+
+        var mapBack = CreateRuntimePanel(homeCampaignMapContentRoot, "Campaign Map Backplate", Vector2.zero, HomeCampaignMapContentSize, new Color(0.08f, 0.12f, 0.19f, 0.98f));
         mapBack.SetAsFirstSibling();
-        CreateLayeredRuntimeBackground(mapBack, new Vector2(860, 710), 0.72f);
-        var worldMap = CreateRuntimeRawImage(mapBack, "Campaign World Map Image", LoadRuntimeTexture("mythwake_map"), Vector2.zero, new Vector2(860, 710), new Vector2(0.5f, 1f));
-        worldMap.color = new Color(1f, 1f, 1f, 0.72f);
+        homeCampaignMapImage = CreateRuntimeRawImage(mapBack, "Campaign World Map Image", LoadRuntimeTexture(HomeCampaignMapTextureName), Vector2.zero, HomeCampaignMapContentSize, new Vector2(0.5f, 1f));
+        homeCampaignMapImage.color = Color.white;
+        homeCampaignMapImage.raycastTarget = true;
 
-        var lake = CreateRuntimePanel(mapBack, "Frozen River", new Vector2(-118, -535), new Vector2(690, 54), new Color(0.5f, 0.8f, 1f, 0.34f));
-        lake.localRotation = Quaternion.Euler(0f, 0f, -8f);
+        CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Top Fade", new Vector2(0, -14), new Vector2(920, 34), new Color(0.02f, 0.025f, 0.035f, 0.42f));
+        CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Bottom Fade", new Vector2(0, -546), new Vector2(920, 46), new Color(0.02f, 0.025f, 0.035f, 0.56f));
 
         var nodePositions = GetCampaignMapNodePositions();
         for (var i = 0; i < nodePositions.Length - 1; i++)
         {
-            CreateCampaignPathSegment(homeCampaignMapRoot, nodePositions[i], nodePositions[i + 1]);
+            CreateCampaignPathSegment(homeCampaignMapContentRoot, nodePositions[i], nodePositions[i + 1]);
         }
 
         campaignStageButtons = new Button[nodePositions.Length];
@@ -14053,15 +14083,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         for (var i = 0; i < nodePositions.Length; i++)
         {
-            campaignStageButtons[i] = CreateCampaignStageButton(homeCampaignMapRoot, i, nodePositions[i]);
+            campaignStageButtons[i] = CreateCampaignStageButton(homeCampaignMapContentRoot, i, nodePositions[i]);
         }
 
-        campaignStagePreviewRoot = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Stage Preview", new Vector2(0, -548), new Vector2(790, 108), new Color(0.03f, 0.035f, 0.055f, 0.84f));
+        campaignStagePreviewRoot = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Stage Preview", new Vector2(0, -452), new Vector2(800, 104), new Color(0.03f, 0.035f, 0.055f, 0.84f));
         campaignStagePreviewText = CreateRuntimeText(campaignStagePreviewRoot, "Campaign Stage Preview Text", string.Empty, 21, new Vector2(0, -13), new Vector2(740, 82));
         campaignStagePreviewText.enableAutoSizing = true;
         campaignStagePreviewText.fontSizeMin = 16;
         campaignStagePreviewText.fontSizeMax = 21;
         campaignStagePreviewText.alignment = TextAlignmentOptions.Center;
+        campaignStagePreviewText.raycastTarget = false;
     }
 
     private void EnsureRuntimeHomeIdleCombat()
@@ -14071,15 +14102,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -690), new Vector2(720, 270), new Color(0.02f, 0.025f, 0.035f, 0.28f));
+        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -800), new Vector2(720, 242), new Color(0.02f, 0.025f, 0.035f, 0.22f));
         homeIdleCombatRoot.SetAsLastSibling();
 
-        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Top Shade", new Vector2(0, -12), new Vector2(680, 48), new Color(0.015f, 0.018f, 0.026f, 0.46f));
-        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Ground", new Vector2(0, -210), new Vector2(650, 42), new Color(0.33f, 0.24f, 0.16f, 0.42f));
-        var clashGlow = CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Clash Glow", new Vector2(0, -132), new Vector2(82, 82), new Color(1f, 0.73f, 0.26f, 0.24f));
+        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Top Shade", new Vector2(0, -12), new Vector2(680, 42), new Color(0.015f, 0.018f, 0.026f, 0.38f));
+        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Ground", new Vector2(0, -184), new Vector2(650, 42), new Color(0.33f, 0.24f, 0.16f, 0.42f));
+        var clashGlow = CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Clash Glow", new Vector2(0, -118), new Vector2(82, 82), new Color(1f, 0.73f, 0.26f, 0.24f));
         clashGlow.localRotation = Quaternion.Euler(0f, 0f, 45f);
 
-        homeIdleCombatText = CreateRuntimeText(homeIdleCombatRoot, "Home Idle Combat Text", string.Empty, 21, new Vector2(0, -16), new Vector2(650, 34));
+        homeIdleCombatText = CreateRuntimeText(homeIdleCombatRoot, "Home Idle Combat Text", string.Empty, 20, new Vector2(0, -14), new Vector2(690, 32));
         homeIdleCombatText.fontStyle = FontStyles.Bold;
         homeIdleCombatText.enableAutoSizing = true;
         homeIdleCombatText.fontSizeMin = 15;
@@ -14101,19 +14132,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var heroIndex = GetHomeIdleHeroIndex(i);
             var heroTextureName = GetHeroTextureName(heroIndex);
-            homeIdleHeroImages[i] = CreateRuntimeRawImage(homeIdleCombatRoot, $"Home Idle Hero {i + 1}", LoadCombatTexture(heroTextureName, "idle", 0, heroTextureName), heroPositions[i], new Vector2(118, 118), new Vector2(0.5f, 1f));
+            homeIdleHeroImages[i] = CreateRuntimeRawImage(homeIdleCombatRoot, $"Home Idle Hero {i + 1}", LoadCombatTexture(heroTextureName, "idle", 0, heroTextureName), heroPositions[i], new Vector2(126, 126), new Vector2(0.5f, 1f));
             homeIdleHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
 
             var enemyTextureName = GetCampaignEnemyTextureName(enemyLevel, i);
-            homeIdleEnemyImages[i] = CreateRuntimeRawImage(homeIdleCombatRoot, $"Home Idle Enemy {i + 1}", LoadCombatTexture(enemyTextureName, "idle", 0, "enemy_campaign"), enemyPositions[i], new Vector2(112, 112), new Vector2(0.5f, 1f));
+            homeIdleEnemyImages[i] = CreateRuntimeRawImage(homeIdleCombatRoot, $"Home Idle Enemy {i + 1}", LoadCombatTexture(enemyTextureName, "idle", 0, "enemy_campaign"), enemyPositions[i], new Vector2(120, 120), new Vector2(0.5f, 1f));
             homeIdleEnemyImages[i].rectTransform.localScale = new Vector3(GetEnemyFacingScale(enemyTextureName), 1f, 1f);
         }
 
-        homeIdleRewardFill = CreateRuntimeHealthFill(homeIdleCombatRoot, "Home Idle Reward Progress", new Vector2(0, -236), 610f, new Color(0.38f, 0.95f, 0.84f, 0.92f));
+        homeIdleRewardFill = CreateRuntimeHealthFill(homeIdleCombatRoot, "Home Idle Reward Progress", new Vector2(0, -212), 620f, new Color(0.38f, 0.95f, 0.84f, 0.92f));
         var rewardBack = homeIdleRewardFill.transform.parent.GetComponent<RectTransform>();
         if (rewardBack != null)
         {
-            rewardBack.sizeDelta = new Vector2(610f, 22f);
+            rewardBack.sizeDelta = new Vector2(620f, 22f);
         }
 
         homeIdleRewardText = CreateRuntimeText(homeIdleRewardFill.transform.parent, "Home Idle Reward Text", string.Empty, 17, Vector2.zero, new Vector2(590, 22));
@@ -18433,6 +18464,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshCampaignStagePreview();
+        CenterCampaignMapOnSelectedStageIfNeeded();
     }
 
     private void RefreshCampaignStagePreview()
@@ -18519,6 +18551,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 homeIdleRewardText.text = $"{lastReward}Naechste +{FormatCompactNumber(gold)} Gold +{FormatCompactNumber(essence)} Essence in {secondsRemaining}s";
             }
         }
+    }
+
+    private void CenterCampaignMapOnSelectedStageIfNeeded()
+    {
+        if (!homeCampaignMapNeedsCenter || homeCampaignMapScrollRect == null || homeCampaignMapContentRoot == null || campaignStageButtons == null)
+        {
+            return;
+        }
+
+        var startStage = GetCampaignMapStartStage();
+        var nodeIndex = Mathf.Clamp(selectedCampaignStage - startStage, 0, campaignStageButtons.Length - 1);
+        var nodeRect = campaignStageButtons[nodeIndex] != null ? campaignStageButtons[nodeIndex].GetComponent<RectTransform>() : null;
+        if (nodeRect == null)
+        {
+            return;
+        }
+
+        var scrollableHeight = Mathf.Max(1f, HomeCampaignMapContentSize.y - HomeCampaignMapViewportSize.y);
+        var centeredTopOffset = Mathf.Clamp(-nodeRect.anchoredPosition.y - (HomeCampaignMapViewportSize.y * 0.5f), 0f, scrollableHeight);
+        homeCampaignMapScrollRect.verticalNormalizedPosition = 1f - (centeredTopOffset / scrollableHeight);
+        homeCampaignMapNeedsCenter = false;
     }
 
     private void PrepareHomeIdleCombatTextures()
@@ -18943,6 +18996,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void SelectVisibleCampaignStage(int nodeIndex)
     {
         selectedCampaignStage = Mathf.Max(1, GetCampaignMapStartStage() + Mathf.Clamp(nodeIndex, 0, 9));
+        homeCampaignMapNeedsCenter = true;
         RefreshCampaignMapUi();
         RefreshGameplayInteractivity();
     }
@@ -18978,16 +19032,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(-320, -490),
-            new Vector2(-220, -410),
-            new Vector2(-92, -465),
-            new Vector2(42, -382),
-            new Vector2(178, -432),
-            new Vector2(300, -332),
-            new Vector2(238, -230),
-            new Vector2(82, -258),
-            new Vector2(-76, -190),
-            new Vector2(-252, -238)
+            new Vector2(-292, -1320),
+            new Vector2(-112, -1218),
+            new Vector2(110, -1268),
+            new Vector2(286, -1136),
+            new Vector2(158, -982),
+            new Vector2(-54, -888),
+            new Vector2(-268, -748),
+            new Vector2(-76, -620),
+            new Vector2(170, -508),
+            new Vector2(310, -342)
         };
     }
 
@@ -18995,9 +19049,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(-250, -122),
-            new Vector2(-160, -174),
-            new Vector2(-70, -112)
+            new Vector2(-275, -86),
+            new Vector2(-172, -138),
+            new Vector2(-62, -86)
         };
     }
 
@@ -19005,9 +19059,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(248, -118),
-            new Vector2(158, -174),
-            new Vector2(70, -112)
+            new Vector2(278, -86),
+            new Vector2(172, -138),
+            new Vector2(62, -86)
         };
     }
 
