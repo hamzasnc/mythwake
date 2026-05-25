@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.106`, save version `2`.
+- Unity client code is at Prototype `0.2.107`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -41,6 +41,7 @@ Last updated: 2026-05-26
 - Added a first Home idle combat slice: the campaign map stays in the background, stage nodes still open a compact info preview, and a foreground patrol fight animates three formation heroes against current-stage monsters for small active local Gold/Myth Essence ticks without changing `enemyLevel`.
 - Added `Mythwake/Validate Home Idle Combat` and included it in `Mythwake/Validate Current Slice`; it checks map art, clickable preview info, visible patrol units, one active reward tick, and that idle combat does not auto-clear campaign stages.
 - Home campaign nodes now show a visible halo only on the actual current unlocked stage, and the Home idle validator checks that locked nodes do not inherit that marker.
+- Home campaign boss/milestone nodes now show a visible Boss badge, and the Home idle validator checks boss and non-boss badge state.
 - Home campaign path segments now color reached paths brighter and keep future locked paths dim, with Home idle validator coverage that future-path selection does not fake progress.
 - Moved Home idle patrol combat below the map so it no longer covers checkpoint interaction, switched the campaign map to `area_map_scorched_plains`, enlarged it into a vertical scroll viewport, and anchored stage checkpoints to the scrollable map content.
 - Lowered the Home idle patrol farther into the bottom free lane below the Battle button and extended the visible campaign-map viewport downward so the current-stage map occupies more of the screen.

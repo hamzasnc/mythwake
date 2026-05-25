@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.106";
+    public const string PrototypeVersion = "0.2.107";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -652,6 +652,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const float CritDamageMultiplier = 1.5f;
     private const int StarterEquipmentLevel = 1;
     private const int CampaignMilestoneInterval = 5;
+    private const int CampaignBossStageInterval = 10;
     private const int DungeonBonusInterval = 5;
     private const int DungeonSetProgressGoal = 9;
     private const float DungeonBossHpMultiplier = 1.8f;
@@ -1298,6 +1299,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RawImage[] campaignStageButtonIcons;
     private Image[] campaignStageButtonFrames;
     private Image[] campaignStageButtonCurrentHalos;
+    private Image[] campaignStageButtonBossBadges;
+    private TMP_Text[] campaignStageButtonBossBadgeTexts;
     private Image[] campaignPathSegmentImages;
     private RawImage[] homeIdleHeroImages;
     private RawImage[] homeIdleEnemyImages;
@@ -14194,6 +14197,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         campaignStageButtonIcons = new RawImage[nodePositions.Length];
         campaignStageButtonFrames = new Image[nodePositions.Length];
         campaignStageButtonCurrentHalos = new Image[nodePositions.Length];
+        campaignStageButtonBossBadges = new Image[nodePositions.Length];
+        campaignStageButtonBossBadgeTexts = new TMP_Text[nodePositions.Length];
 
         for (var i = 0; i < nodePositions.Length; i++)
         {
@@ -14326,8 +14331,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         text.textWrappingMode = TextWrappingModes.NoWrap;
         text.raycastTarget = false;
 
+        var bossBadge = CreateRuntimePanel(buttonObject.transform, "Stage Boss Badge", new Vector2(0, 2), new Vector2(82, 28), new Color(0.54f, 0.1f, 0.08f, 0.94f));
+        bossBadge.gameObject.SetActive(false);
+        var bossText = CreateRuntimeText(bossBadge, "Label", "BOSS", 15, new Vector2(0, -2), new Vector2(76, 24));
+        bossText.fontStyle = FontStyles.Bold;
+        bossText.enableAutoSizing = true;
+        bossText.fontSizeMin = 10;
+        bossText.fontSizeMax = 15;
+        bossText.textWrappingMode = TextWrappingModes.NoWrap;
+        bossText.color = new Color(1f, 0.88f, 0.42f);
+        bossText.raycastTarget = false;
+
         campaignStageButtonFrames[nodeIndex] = frame;
         campaignStageButtonCurrentHalos[nodeIndex] = currentHalo.GetComponent<Image>();
+        campaignStageButtonBossBadges[nodeIndex] = bossBadge.GetComponent<Image>();
+        campaignStageButtonBossBadgeTexts[nodeIndex] = bossText;
         campaignStageButtonIcons[nodeIndex] = icon;
         campaignStageButtonTexts[nodeIndex] = text;
 
@@ -18654,6 +18672,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             var isCurrent = stageNumber == enemyLevel;
             var isLocked = stageNumber > enemyLevel;
             var isSelected = stageNumber == selectedCampaignStage;
+            var isBoss = IsCampaignBossStage(stageNumber);
 
             if (campaignStageButtonTexts != null && i < campaignStageButtonTexts.Length && campaignStageButtonTexts[i] != null)
             {
@@ -18686,6 +18705,22 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                     ? LoadRuntimeTexture("dungeon_portal")
                     : LoadCombatTexture(GetCampaignEnemyTextureName(stageNumber, 0), "idle", 0, "enemy_campaign");
                 campaignStageButtonIcons[i].color = isLocked ? new Color(0.32f, 0.34f, 0.4f, 0.72f) : Color.white;
+            }
+
+            if (campaignStageButtonBossBadges != null && i < campaignStageButtonBossBadges.Length && campaignStageButtonBossBadges[i] != null)
+            {
+                campaignStageButtonBossBadges[i].gameObject.SetActive(isBoss);
+                campaignStageButtonBossBadges[i].color = isLocked
+                    ? new Color(0.18f, 0.13f, 0.16f, 0.82f)
+                    : new Color(0.54f, 0.1f, 0.08f, 0.94f);
+            }
+
+            if (campaignStageButtonBossBadgeTexts != null && i < campaignStageButtonBossBadgeTexts.Length && campaignStageButtonBossBadgeTexts[i] != null)
+            {
+                campaignStageButtonBossBadgeTexts[i].text = "BOSS";
+                campaignStageButtonBossBadgeTexts[i].color = isLocked
+                    ? new Color(0.74f, 0.68f, 0.72f)
+                    : new Color(1f, 0.88f, 0.42f);
             }
 
             campaignStageButtons[i].interactable = !campaignFightInProgress && !backendRequestInProgress && !backendLifecycleFlushInProgress;
@@ -18883,7 +18918,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
                 if (campaignStageDetailEnemyTexts != null && i < campaignStageDetailEnemyTexts.Length && campaignStageDetailEnemyTexts[i] != null)
                 {
-                    campaignStageDetailEnemyTexts[i].text = i == 0 && stageNumber % 10 == 0 ? $"Boss Lv {stageNumber}" : $"Lv {stageNumber}";
+                    campaignStageDetailEnemyTexts[i].text = i == 0 && IsCampaignBossStage(stageNumber) ? $"Boss Lv {stageNumber}" : $"Lv {stageNumber}";
                 }
             }
         }
@@ -19532,6 +19567,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         stageNumber = Mathf.Max(1, stageNumber);
         return $"{(stageNumber - 1) / 10 + 1}-{(stageNumber - 1) % 10 + 1}";
+    }
+
+    private static bool IsCampaignBossStage(int stageNumber)
+    {
+        return Mathf.Max(1, stageNumber) % CampaignBossStageInterval == 0;
     }
 
     private static Vector2[] GetCampaignMapNodePositions()

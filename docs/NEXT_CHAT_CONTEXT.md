@@ -28,9 +28,10 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `0dbb87d Mark current home stage node`
+- `03f8af6 Color home campaign path progress`
 
 Current continuation:
+- Home campaign boss/milestone nodes now show visible Boss badges; `Validate Home Idle Combat` checks boss and non-boss badge state.
 - Home campaign path segments now color reached paths brighter and keep future locked paths dim; `Validate Home Idle Combat` checks that selecting a locked future node does not fake path progress.
 - Home campaign nodes now show a visible current-stage halo, and `Validate Home Idle Combat` checks that only the actual unlocked current node gets it.
 - Home idle combat lower mini-map now uses a stage-progress crop instead of a static slice, and `Validate Home Idle Combat` checks progress-map UV sync across the idle lane and stage-detail preview.
@@ -90,7 +91,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.106`
+- Prototype `0.2.107`
 - Save version `2`
 
 Important Unity scripts:
@@ -109,7 +110,7 @@ Latest local gameplay/UI batch:
 - The Home campaign map now uses `area_map_scorched_plains`, is a larger vertical ScrollRect with the checkpoints on the scrollable content, and has a connected lower idle mini-map background behind the patrol fight.
 - Latest Home layout pass imports the remaining `area_map_*` region images, keeps the main map pulled up under the resource bar, and extends the lower idle map background directly from the main map down behind heroes and monsters.
 - The current Home map viewport fills the marked play area behind side controls and the Battle button; the idle patrol is below the Battle button but sits on a same-width connected map image rather than a separate dark lane.
-- The Home lower idle patrol heroes and monsters are enlarged, and `Validate Home Idle Combat` now guards the connected upper/lower map layout, current-stage node halo, path progress colors, progress-map region texture/UV sync across main/detail/idle maps, reward progress fill behavior, two-line local last/next reward summary copy, Server Mode local-reward blocking, Server Mode Patrol Info copy, stale loot popup clearing, active reward tick, and no automatic stage clear.
+- The Home lower idle patrol heroes and monsters are enlarged, and `Validate Home Idle Combat` now guards the connected upper/lower map layout, current-stage node halo, boss-node badges, path progress colors, progress-map region texture/UV sync across main/detail/idle maps, reward progress fill behavior, two-line local last/next reward summary copy, Server Mode local-reward blocking, Server Mode Patrol Info copy, stale loot popup clearing, active reward tick, and no automatic stage clear.
 - Home idle combat now shows a short floating loot popup when the local active Gold/Myth Essence tick is granted, and the Home idle validator checks that it appears and fits.
 - The Home idle combat area is now tappable and opens a `Patrol Info` popup with current stage, enemy, last reward, next reward countdown, tick cadence, and no-auto-clear copy; the validator clicks it before and after a local reward tick.
 - Tapping a Home campaign checkpoint now opens a larger `Abschnitt Details` popup with map preview, enemy formation, completion reward row, and Battle/Close controls; `Validate Home Idle Combat` checks the popup and closes it.

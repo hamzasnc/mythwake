@@ -16,7 +16,7 @@ public static class HomeIdleCombatValidation
         try
         {
             ValidateHomeIdleCombatUi();
-            Debug.Log("Home Idle Combat validated: campaign map, current-stage marker, path progress colors, region texture/UV sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
+            Debug.Log("Home Idle Combat validated: campaign map, current-stage marker, boss node badges, path progress colors, region texture/UV sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
         }
         catch (Exception ex)
         {
@@ -100,6 +100,7 @@ public static class HomeIdleCombatValidation
         ValidateCurrentStageDetailBattleFlow(controller);
         ValidateCurrentStageNodeMarker(controller);
         ValidateCampaignPathProgress(controller);
+        ValidateCampaignBossNodeBadges(controller);
 
         var idleRoot = RequireObject("Home Idle Combat Root", true);
         AssertInsideParent(RequireObject("Home Generated Art Root", true), idleRoot);
@@ -436,6 +437,54 @@ public static class HomeIdleCombatValidation
             SetPrivateField(controller, "selectedCampaignStage", selectedStageBefore);
             SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
             InvokePrivate(controller, "SetCampaignStageDetailPopupVisible", false);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void ValidateCampaignBossNodeBadges(IdlePrototypeController controller)
+    {
+        var enemyLevelBefore = GetPrivateField<int>(controller, "enemyLevel");
+        var selectedStageBefore = GetPrivateField<int>(controller, "selectedCampaignStage");
+        var centerBefore = GetPrivateField<bool>(controller, "homeCampaignMapNeedsCenter");
+
+        try
+        {
+            const int currentStage = 11;
+            SetPrivateField(controller, "enemyLevel", currentStage);
+            SetPrivateField(controller, "selectedCampaignStage", currentStage);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", true);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+
+            var bossNode = RequireButton("Campaign Stage Node 4");
+            var bossBadge = RequireChildObject(bossNode.gameObject, "Stage Boss Badge");
+            var bossBadgeImage = bossBadge.GetComponent<Image>();
+            var bossBadgeText = RequireText(bossBadge, "Label");
+            if (!bossBadge.activeInHierarchy || bossBadgeImage == null || bossBadgeImage.color.a < 0.5f)
+            {
+                throw new InvalidOperationException("Boss campaign stage node should show a visible boss badge.");
+            }
+
+            RequireCopy(bossBadgeText.text, "BOSS");
+            AssertTextFits(bossBadgeText, "Campaign boss badge label");
+            if (bossBadgeImage.raycastTarget || bossBadgeText.raycastTarget)
+            {
+                throw new InvalidOperationException("Boss campaign stage badge should not intercept node input.");
+            }
+
+            var normalNode = RequireButton("Campaign Stage Node 3");
+            var normalBadge = RequireChildObject(normalNode.gameObject, "Stage Boss Badge");
+            if (normalBadge.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Non-boss campaign stage node should not show the boss badge.");
+            }
+        }
+        finally
+        {
+            SetPrivateField(controller, "enemyLevel", enemyLevelBefore);
+            SetPrivateField(controller, "selectedCampaignStage", selectedStageBefore);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
             InvokePrivate(controller, "RefreshCampaignMapUi");
             Canvas.ForceUpdateCanvases();
         }
