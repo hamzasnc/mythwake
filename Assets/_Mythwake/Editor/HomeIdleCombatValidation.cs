@@ -84,6 +84,7 @@ public static class HomeIdleCombatValidation
         AssertInsideParent(idleRoot, idleMap.gameObject);
         var idleText = RequireText(idleRoot, "Home Idle Combat Text");
         var rewardText = RequireText(idleRoot, "Home Idle Reward Text");
+        var lootPopupText = RequireText(idleRoot, "Home Idle Loot Pop Text");
         RequireCopy(idleText.text, "Patrol");
         RequireCopy(rewardText.text, "Naechste");
         AssertTextFits(idleText, "Home Idle Combat Text");
@@ -115,6 +116,15 @@ public static class HomeIdleCombatValidation
             {
                 throw new InvalidOperationException($"Home idle combat should grant a small local gold reward. Before={goldBefore}, after={goldAfter}.");
             }
+
+            if (!lootPopupText.gameObject.activeSelf)
+            {
+                throw new InvalidOperationException("Home idle loot popup should become visible after a local reward tick.");
+            }
+
+            RequireCopy(lootPopupText.text, "Gold");
+            RequireCopy(lootPopupText.text, "Essence");
+            AssertTextFits(lootPopupText, "Home Idle Loot Pop Text");
         }
         finally
         {
@@ -122,8 +132,10 @@ public static class HomeIdleCombatValidation
             SetPrivateField(controller, "gold", goldBefore);
             SetPrivateField(controller, "mythEssence", mythEssenceBefore);
             SetPrivateField(controller, "homeIdleRewardTimer", 0f);
+            SetPrivateField(controller, "homeIdleLootPopupTimer", 0f);
             SetPrivateField(controller, "homeIdleLastRewardGold", 0);
             SetPrivateField(controller, "homeIdleLastRewardEssence", 0);
+            InvokePrivate(controller, "RefreshHomeIdleCombatUi");
             InvokePrivate(controller, "SaveProgress");
         }
     }

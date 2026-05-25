@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.83";
+    public const string PrototypeVersion = "0.2.84";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -638,6 +638,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int HomeIdleVisibleUnitCount = 3;
     private const float HomeIdleRewardIntervalSeconds = 10f;
     private const float HomeIdleRewardRateMultiplier = 0.28f;
+    private const float HomeIdleLootPopupSeconds = 1.45f;
     private const string HomeCampaignMapTextureName = "area_map_scorched_plains";
     private const int HomeProgressMapStagesPerCard = 10;
     private const float FightUltimateCinematicSeconds = 0.9f;
@@ -1286,6 +1287,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RawImage[] homeIdleEnemyImages;
     private TMP_Text homeIdleCombatText;
     private TMP_Text homeIdleRewardText;
+    private TMP_Text homeIdleLootPopupText;
     private Image homeIdleRewardFill;
     private Texture2D[][] homeIdleHeroIdleFrames;
     private Texture2D[][] homeIdleHeroAttackFrames;
@@ -1295,6 +1297,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private int homeIdlePreparedStage = -1;
     private float homeIdleCombatTimer;
     private float homeIdleRewardTimer;
+    private float homeIdleLootPopupTimer;
     private int homeIdleLastRewardGold;
     private int homeIdleLastRewardEssence;
     private bool homeCampaignMapNeedsCenter = true;
@@ -14187,6 +14190,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         homeIdleRewardText.fontSizeMax = 17;
         homeIdleRewardText.textWrappingMode = TextWrappingModes.NoWrap;
         homeIdleRewardText.raycastTarget = false;
+
+        homeIdleLootPopupText = CreateRuntimeText(homeIdleCombatRoot, "Home Idle Loot Pop Text", string.Empty, 26, new Vector2(0, -132), new Vector2(520, 42));
+        homeIdleLootPopupText.fontStyle = FontStyles.Bold;
+        homeIdleLootPopupText.enableAutoSizing = true;
+        homeIdleLootPopupText.fontSizeMin = 16;
+        homeIdleLootPopupText.fontSizeMax = 28;
+        homeIdleLootPopupText.textWrappingMode = TextWrappingModes.NoWrap;
+        homeIdleLootPopupText.color = new Color(1f, 0.86f, 0.32f, 0f);
+        homeIdleLootPopupText.outlineColor = new Color(0.05f, 0.025f, 0.01f, 0.95f);
+        homeIdleLootPopupText.outlineWidth = 0.16f;
+        homeIdleLootPopupText.raycastTarget = false;
+        homeIdleLootPopupText.gameObject.SetActive(false);
+        homeIdleLootPopupText.transform.SetAsLastSibling();
     }
 
     private Button CreateCampaignStageButton(Transform parent, int nodeIndex, Vector2 position)
@@ -18585,6 +18601,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         homeIdleCombatTimer += deltaSeconds;
+        homeIdleLootPopupTimer = Mathf.Max(0f, homeIdleLootPopupTimer - deltaSeconds);
         PrepareHomeIdleCombatTextures();
         AnimateHomeIdleCombatUnits();
 
@@ -18639,6 +18656,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 homeIdleRewardText.text = $"{lastReward}Naechste +{FormatCompactNumber(gold)} Gold +{FormatCompactNumber(essence)} Essence in {secondsRemaining}s";
             }
         }
+
+        RefreshHomeIdleLootPopupUi();
+    }
+
+    private void RefreshHomeIdleLootPopupUi()
+    {
+        if (homeIdleLootPopupText == null)
+        {
+            return;
+        }
+
+        if (homeIdleLootPopupTimer <= 0f || string.IsNullOrWhiteSpace(homeIdleLootPopupText.text))
+        {
+            homeIdleLootPopupText.gameObject.SetActive(false);
+            return;
+        }
+
+        var elapsedPercent = 1f - Mathf.Clamp01(homeIdleLootPopupTimer / HomeIdleLootPopupSeconds);
+        var alpha = Mathf.Clamp01(homeIdleLootPopupTimer / 0.42f);
+        homeIdleLootPopupText.gameObject.SetActive(true);
+        homeIdleLootPopupText.rectTransform.anchoredPosition = new Vector2(0f, -132f + elapsedPercent * 42f);
+        homeIdleLootPopupText.color = new Color(1f, 0.86f, 0.32f, alpha);
     }
 
     private void CenterCampaignMapOnSelectedStageIfNeeded()
@@ -18799,9 +18838,22 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         GrantCurrency(MythEssenceCurrencyId, essence);
         homeIdleLastRewardGold = gold;
         homeIdleLastRewardEssence = essence;
+        ShowHomeIdleLootPopup(gold, essence);
         SaveProgress();
         RefreshTopBarUi();
         RefreshOfflineRewardUi();
+    }
+
+    private void ShowHomeIdleLootPopup(int gold, int essence)
+    {
+        if (homeIdleLootPopupText == null)
+        {
+            return;
+        }
+
+        homeIdleLootPopupText.text = $"+{FormatCompactNumber(gold)} Gold  +{FormatCompactNumber(essence)} Essence";
+        homeIdleLootPopupTimer = HomeIdleLootPopupSeconds;
+        RefreshHomeIdleLootPopupUi();
     }
 
     private int GetHomeIdleRewardGoldAmount()

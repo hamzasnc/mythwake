@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.83
+Prototype version: 0.2.84
 Local save version: 2
 
 Current prototype:
@@ -176,6 +176,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.84: Added a short floating loot popup when Home idle combat grants its local active Gold/Myth Essence tick, with validator coverage.
 - Prototype 0.2.83: Extended the Home idle combat mini-map so it connects directly to the main campaign map, matches its width, and runs downward behind the foreground patrol fight.
 - Prototype 0.2.82: Moved the Home idle progress map into the lower combat area as the background behind heroes and monsters.
 - Prototype 0.2.81: Imported the remaining `area_map_*` region images as Runtime resources and added stage-region map selection support for Home progress maps.
