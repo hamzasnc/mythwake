@@ -82,14 +82,14 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.92`
+- Prototype `0.2.93`
 - Save version `2`
 
 Important Unity scripts:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Latest local gameplay/UI batch:
-- Dungeons now have a dedicated map screen opened from the bottom Dungeons nav item, with Gold, Essence, and Gear dungeon cards; `Validate Dungeons UI` checks the world-map viewport, map art, pan/scroll handlers, zoom controls, all three dungeon markers, marker text/art fit, and Gold/Essence/Gear Formation entry flows.
+- Dungeons now have a dedicated map screen opened from the bottom Dungeons nav item, with Gold, Essence, and Gear dungeon cards; `Validate Dungeons UI` checks the world-map viewport, map art, pan/scroll handlers, zoom controls and clamps, all three dungeon markers, marker spacing/text/art fit, and Gold/Essence/Gear Formation entry plus back-navigation flows.
 - Village now has a dedicated scrollable map screen opened from the bottom Village nav item, with 12 build plots and imported building art.
 - Village free plots open a build panel. Built plots open a building detail panel with level, next upgrade cost, available Myth Essence, visible HP/ATK/Fast Rewards bonus categories, `Aufwerten`, `Abreissen`, and `Schliessen`; the Village validator also checks the scrollable map/content wiring, all 12 plot buttons, loaded map/building art, build/detail close flows, built-plot hidden build marks, and Max Level disables upgrade.
 - Village building upgrades spend Myth Essence locally and route through the existing backend Village upgrade action in Server Mode.
@@ -110,7 +110,7 @@ Latest local gameplay/UI batch:
 - The Home idle validator also checks locked checkpoint detail Battle guards under direct invocation and verifies local campaign clear action results carry a non-empty Myth Essence reward payload.
 - The Home idle validator now also checks popup exclusivity between Fast Rewards, Patrol Info, and checkpoint details.
 - The Summon UI validator now checks visible result-slot text fit/art, hidden unused result cards, Auto-Summon toggle mark state, and result close flow.
-- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Dungeons map/Formation entry, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode. Batchmode execution is currently blocked while the project is already open in another Unity instance.
+- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Dungeons map/zoom clamp/Formation entry and back navigation, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode. Batchmode execution is currently blocked while the project is already open in another Unity instance.
 - Hero Detail now exposes all 2 equipment tracks plus all 6 accessory slots with armory background, visible starter Weapon/Armor training icons, and equipped-only accessory slot icon art. The localized main gear action shows Open Gear for starter Weapon/Armor training tracks and Equip Gear for accessory slots, starter Weapon/Armor slots and rows are labeled as training, empty accessory slots stay visually empty even when bag copies exist and after German refresh, accessory lists put owned copies above empty rows and higher rarity first inside each group with visible copy/tap-to-equip text, the selected equipment/accessory slot list opens instead of immediately leaving for Gear, the equipment list's Open Gear row navigates to the Gear screen, the validator keeps training slot/row wording through German refresh, and Remove Gear unequips accessories locally or through Server Mode via `/gear/accessories/unequip`.
 - Hero Detail and Gear equipment icon loading now has an Editor asset-path fallback plus blank-placeholder protection, so missing textures no longer appear as white RawImage blocks and the upgrade clutter validator catches hidden/white placeholder art, including equipped Hero Detail accessory icons after German refresh.
 - Hero Detail previous/next buttons have been pulled inward below the hero stage so they no longer collide with the lower gear slots; the upgrade clutter validator now checks that spacing.

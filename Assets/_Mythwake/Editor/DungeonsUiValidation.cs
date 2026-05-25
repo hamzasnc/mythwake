@@ -10,6 +10,9 @@ using UnityEngine.UI;
 public static class DungeonsUiValidation
 {
     private const string ScenePath = "Assets/Scenes/SampleScene.unity";
+    private const float DungeonMapMinZoom = 0.8f;
+    private const float DungeonMapMaxZoom = 1.8f;
+    private const float FloatTolerance = 0.001f;
 
     [MenuItem("Mythwake/Validate Dungeons UI")]
     public static void RunDungeonsUiValidation()
@@ -17,7 +20,7 @@ public static class DungeonsUiValidation
         try
         {
             ValidateDungeonsUi();
-            Debug.Log("Dungeons UI validated: map viewport, zoom controls, dungeon markers, and Formation entry flows are present.");
+            Debug.Log("Dungeons UI validated: map viewport, zoom clamps, dungeon markers, and Formation back flows are present.");
         }
         catch (Exception ex)
         {
@@ -56,6 +59,7 @@ public static class DungeonsUiValidation
         ValidateDungeonMarker(mapContent, "Gold Dungeon Map Marker", "Gold", "Gold", "dungeon_portal");
         ValidateDungeonMarker(mapContent, "Essence Dungeon Map Marker", "Essence", "Essence", "dungeon_essence");
         ValidateDungeonMarker(mapContent, "Gear Dungeon Map Marker", "Iron", "Drop", "dungeon_fire");
+        ValidateDungeonMarkerSpacing();
 
         var resultText = RequireText(dungeonsPanel, "Dungeon Result Text");
         AssertTextFits(resultText, "Dungeon Result Text");
@@ -133,6 +137,27 @@ public static class DungeonsUiValidation
         {
             throw new InvalidOperationException($"Dungeon zoom-out button should decrease zoom. Before={zoomedIn}, after={zoomedOut}.");
         }
+
+        for (var i = 0; i < 20; i++)
+        {
+            zoomIn.onClick.Invoke();
+        }
+
+        Canvas.ForceUpdateCanvases();
+        var maxZoom = GetPrivateField<float>(controller, "dungeonMapZoom");
+        AssertApproximately(maxZoom, DungeonMapMaxZoom, "Dungeon zoom max clamp");
+
+        for (var i = 0; i < 30; i++)
+        {
+            zoomOut.onClick.Invoke();
+        }
+
+        Canvas.ForceUpdateCanvases();
+        var minZoom = GetPrivateField<float>(controller, "dungeonMapZoom");
+        AssertApproximately(minZoom, DungeonMapMinZoom, "Dungeon zoom min clamp");
+
+        InvokePrivate(controller, "SetDungeonMapZoom", 1f);
+        Canvas.ForceUpdateCanvases();
     }
 
     private static void ValidateDungeonMarker(GameObject mapContent, string markerName, string expectedTitle, string expectedDetail, string expectedIconTexture)
@@ -155,6 +180,17 @@ public static class DungeonsUiValidation
         AssertTextFits(title, $"{markerName} title");
         AssertTextFits(progress, $"{markerName} progress");
         AssertTextFits(detail, $"{markerName} detail");
+    }
+
+    private static void ValidateDungeonMarkerSpacing()
+    {
+        var goldMarker = RequireButton("Gold Dungeon Map Marker").gameObject;
+        var essenceMarker = RequireButton("Essence Dungeon Map Marker").gameObject;
+        var gearMarker = RequireButton("Gear Dungeon Map Marker").gameObject;
+
+        AssertNoRectOverlap(goldMarker, essenceMarker, "Gold and Essence dungeon markers");
+        AssertNoRectOverlap(goldMarker, gearMarker, "Gold and Gear dungeon markers");
+        AssertNoRectOverlap(essenceMarker, gearMarker, "Essence and Gear dungeon markers");
     }
 
     private static void ValidateDungeonFormationEntry(IdlePrototypeController controller, string markerName, string expectedDungeonId, string expectedHeader)
@@ -186,6 +222,22 @@ public static class DungeonsUiValidation
         {
             throw new InvalidOperationException($"{markerName} Formation confirm button should be interactable.");
         }
+
+        var backButton = RequireButton("Formation Back Button");
+        if (!backButton.interactable)
+        {
+            throw new InvalidOperationException($"{markerName} Formation back button should be interactable.");
+        }
+
+        backButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+
+        if (formationRoot.activeInHierarchy)
+        {
+            throw new InvalidOperationException($"{markerName} Formation root should close after using Back.");
+        }
+
+        RequireObject("Dungeons Panel", true);
     }
 
     private static GameObject RequireObject(string name, bool activeInHierarchy)
@@ -322,6 +374,45 @@ public static class DungeonsUiValidation
         {
             throw new InvalidOperationException($"{child.name} is outside {parent.name}: left={left}, right={right}, top={top}, bottom={bottom}.");
         }
+    }
+
+    private static void AssertNoRectOverlap(GameObject first, GameObject second, string context)
+    {
+        if (first.transform.parent != second.transform.parent)
+        {
+            throw new InvalidOperationException($"{context} should share the same map parent.");
+        }
+
+        var firstRect = GetAnchoredRect(first.GetComponent<RectTransform>());
+        var secondRect = GetAnchoredRect(second.GetComponent<RectTransform>());
+        if (firstRect.Overlaps(secondRect))
+        {
+            throw new InvalidOperationException($"{context} overlap: first={firstRect}, second={secondRect}.");
+        }
+    }
+
+    private static Rect GetAnchoredRect(RectTransform rect)
+    {
+        if (rect == null)
+        {
+            throw new InvalidOperationException("Missing RectTransform while checking dungeon marker overlap.");
+        }
+
+        var width = rect.rect.width;
+        var height = rect.rect.height;
+        var left = rect.anchoredPosition.x - width * rect.pivot.x;
+        var top = rect.anchoredPosition.y + height * (1f - rect.pivot.y);
+        return new Rect(left, top - height, width, height);
+    }
+
+    private static void AssertApproximately(float actual, float expected, string context)
+    {
+        if (Mathf.Abs(actual - expected) <= FloatTolerance)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException($"{context} expected {expected}, got {actual}.");
     }
 
     private static void AssertTextFits(TMP_Text label, string context)
