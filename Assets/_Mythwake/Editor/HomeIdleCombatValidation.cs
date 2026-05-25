@@ -94,6 +94,7 @@ public static class HomeIdleCombatValidation
             throw new InvalidOperationException("Campaign Stage Detail Popup should close from its close button.");
         }
 
+        ValidateLockedStageDetailBattleGuard(controller);
         ValidateCurrentStageDetailBattleFlow(controller);
 
         var idleRoot = RequireObject("Home Idle Combat Root", true);
@@ -179,7 +180,7 @@ public static class HomeIdleCombatValidation
 
             var stageDefinition = InvokePrivate(controller, "GetStageDefinition", stageBefore);
             var wonResult = CreateWonCombatResult(controller);
-            InvokePrivate(controller, "ApplyCampaignFightResult", stageBefore, stageDefinition, wonResult);
+            var actionResult = (MythwakeActionResultDto)InvokePrivate(controller, "ApplyCampaignFightResult", stageBefore, stageDefinition, wonResult);
             Canvas.ForceUpdateCanvases();
 
             var stageAfterClear = GetPrivateField<int>(controller, "enemyLevel");
@@ -193,6 +194,13 @@ public static class HomeIdleCombatValidation
             {
                 throw new InvalidOperationException($"Campaign clear should grant the displayed Myth Essence reward. Before={mythEssenceAfterIdle}, after={mythEssenceAfterClear}.");
             }
+
+            if (!actionResult.success || actionResult.reward.mythEssence <= 0 || string.IsNullOrWhiteSpace(actionResult.reward.rewardId))
+            {
+                throw new InvalidOperationException($"Campaign clear should return a success reward payload, got success={actionResult.success}, rewardId='{actionResult.reward.rewardId}', essence={actionResult.reward.mythEssence}.");
+            }
+
+            RequireCopy(actionResult.message, "Reward");
         }
         finally
         {
@@ -222,6 +230,48 @@ public static class HomeIdleCombatValidation
         }
 
         return null;
+    }
+
+    private static void ValidateLockedStageDetailBattleGuard(IdlePrototypeController controller)
+    {
+        var currentStage = GetPrivateField<int>(controller, "enemyLevel");
+        var startStage = (int)InvokePrivate(controller, "GetCampaignMapStartStage");
+        var currentNodeIndex = Mathf.Clamp(currentStage - startStage, 0, 9);
+        if (currentNodeIndex >= 9)
+        {
+            return;
+        }
+
+        var lockedNode = RequireButton($"Campaign Stage Node {currentNodeIndex + 2}");
+        lockedNode.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+
+        var detailPopup = RequireObject("Campaign Stage Detail Popup", true);
+        var detailBody = RequireText(detailPopup, "Stage Detail Body");
+        RequireCopy(detailBody.text, "Gesperrt");
+        AssertTextFits(detailBody, "Locked Stage Detail Body");
+
+        var battleButton = RequireButton("Stage Detail Battle Button");
+        if (battleButton.interactable)
+        {
+            throw new InvalidOperationException("Locked stage detail Battle button should not be interactable.");
+        }
+
+        battleButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        if (!detailPopup.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Locked stage detail popup should stay open when its guarded Battle listener is invoked directly.");
+        }
+
+        var formationRoot = RequireObject("Campaign Formation Root", false);
+        if (formationRoot.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Locked stage detail Battle guard should not enter Formation.");
+        }
+
+        RequireButton("Stage Detail Close Button").onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
     }
 
     private static void ValidateCurrentStageDetailBattleFlow(IdlePrototypeController controller)
