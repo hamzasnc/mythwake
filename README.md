@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.91
+Prototype version: 0.2.92
 Local save version: 2
 
 Current prototype:
@@ -75,7 +75,7 @@ Current prototype:
 - Mission Track XP is earned from daily mission claims
 - Mission Track rewards can be claimed in the Shop tab
 - Ravik and Paladin art/combat preview hooks exist, including Paladin Spine handoff validation tooling
-- Unity editor validation covers the current gameplay/UI slice, including Home popup exclusivity, Village map/build/detail close flows, Fast Rewards popup exclusivity/close/fallback claim state, Summon result close/auto-toggle/slot-fit states, Upgrade Clutter, Gear showcase art, visible Weapon/Armor training icons, equipped-only Hero Detail accessory icons, empty Hero Detail accessory slots, Hero Detail gear spacing/list-state/localization/label-list fit, and Paladin handoff checks
+- Unity editor validation covers the current gameplay/UI slice, including Home popup exclusivity, Village map/build/detail close flows, Dungeons map/zoom/Formation entry flows, Fast Rewards popup exclusivity/close/fallback claim state, Summon result close/auto-toggle/slot-fit states, Upgrade Clutter, Gear showcase art, visible Weapon/Armor training icons, equipped-only Hero Detail accessory icons, empty Hero Detail accessory slots, Hero Detail gear spacing/list-state/localization/label-list fit, and Paladin handoff checks
 - Hero Detail shows all equipment/accessory slots, keeps starter Weapon/Armor training icons visible, only renders accessory icon art once gear is equipped, keeps empty accessory slots visually empty even when bag copies exist, keeps previous/next navigation clear of the gear-slot columns, uses localized contextual gear action labels, prioritizes owned copies in accessory slot lists, and supports accessory removal locally and in Server Mode
 - Hero Detail labels starter Weapon/Armor slots and rows as training tracks instead of claiming they are equipped item instances
 - Gear screen keeps equipment summaries, accessory text, and gear action controls stacked below the showcase with validator coverage for spacing
@@ -176,6 +176,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.92: Added Dungeons UI validation for the world-map viewport, zoom controls, dungeon markers, and all three dungeon Formation entry flows, and included it in Current Slice validation.
 - Prototype 0.2.91: Extended Home and Summon validators for Home popup exclusivity plus Summon result slot fit, auto-toggle, and close flow coverage.
 - Prototype 0.2.90: Extended Village and Fast Rewards validators for scrollable map coverage, loaded building art, close flows, popup exclusivity, and disabled Server Mode fallback claims.
 - Prototype 0.2.89: Extended Home idle validation for locked checkpoint detail Battle guards and campaign clear reward payloads.

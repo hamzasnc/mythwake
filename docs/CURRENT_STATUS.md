@@ -5,7 +5,7 @@ Last updated: 2026-05-25
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.91`, save version `2`.
+- Unity client code is at Prototype `0.2.92`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -34,7 +34,7 @@ Last updated: 2026-05-25
 - Added an editor validation entry point for the Summon UI so the Vanguard Oath banner, Paladin feature art, rates, carousel center card, Paladin result popup, Auto-Summon label, repeat costs, and x10/x300 gem-gated repeat states can be checked in Unity.
 - Added an editor validation entry point for upgrade clutter so legacy Battle/Hero upgrade buttons stay hidden, Gear upgrade controls stay on Gear, and debug shortcuts stay in Shop/tools.
 - Extended the upgrade clutter validator so the 8-slot Hero Detail gear layout also has non-overlap checks against the portrait, stats, resources, and action buttons.
-- Added a `Mythwake/Validate Current Slice` editor validation entry point that runs Village UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff checks in one pass.
+- Added a `Mythwake/Validate Current Slice` editor validation entry point that runs Village UI, Dungeons UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Added a first Home idle combat slice: the campaign map stays in the background, stage nodes still open a compact info preview, and a foreground patrol fight animates three formation heroes against current-stage monsters for small active local Gold/Myth Essence ticks without changing `enemyLevel`.
 - Added `Mythwake/Validate Home Idle Combat` and included it in `Mythwake/Validate Current Slice`; it checks map art, clickable preview info, visible patrol units, one active reward tick, and that idle combat does not auto-clear campaign stages.
 - Moved Home idle patrol combat below the map so it no longer covers checkpoint interaction, switched the campaign map to `area_map_scorched_plains`, enlarged it into a vertical scroll viewport, and anchored stage checkpoints to the scrollable map content.
@@ -54,6 +54,7 @@ Last updated: 2026-05-25
 - Extended the Fast Rewards validator to cover Home popup exclusivity, close-button behavior, and disabled Server Mode fallback claims when no backend session is available.
 - Extended the Home idle validator to cover popup exclusivity between Fast Rewards, Patrol Info, and checkpoint details.
 - Extended the Summon validator to cover visible result-slot text fit/art, hidden unused result cards, Auto-Summon toggle mark state, and result close flow.
+- Added a dedicated Dungeons UI validator and included it in Current Slice; it checks the world-map viewport, map art, pan/scroll handlers, zoom controls, all three dungeon markers, marker text/art fit, and Gold/Essence/Gear Formation entry flows.
 - Polished the Hero Detail gear slice: it now exposes all 2 equipment tracks plus all 6 accessory slots, `Equip Gear` opens the selected gear list for equipment and accessories, and `Remove Gear` can unequip accessories locally or through the Server Mode backend action.
 - Added validator coverage for the Hero Detail gear list popup so equipment slots open the inline list first and only the list's `Open Gear` row navigates to the Gear screen.
 - Added contextual Hero Detail gear action labels so equipment slots show `Open Gear` while accessory slots keep `Equip Gear`.
