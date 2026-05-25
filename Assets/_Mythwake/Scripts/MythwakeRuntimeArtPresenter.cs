@@ -168,7 +168,7 @@ public sealed class MythwakeRuntimeArtPresenter
             FitRawImageToTexture(gearGlovesImage, new Vector2(96f, 72f));
             FitRawImageToTexture(gearBootsImage, new Vector2(96f, 72f));
             FitRawImageToTexture(gearAccessoryImage, new Vector2(104f, 84f));
-            CreateText(gearRoot, "Gear Visual Power", "Weapon  Armor  Headgear  Gloves  Boots  Accessory", 18, new Vector2(0f, -270f), new Vector2(720f, 34f), FontStyles.Bold);
+            CreateText(gearRoot, "Gear Visual Power", "Weapon  Armor  Headgear  Gloves  Boots  Accessory", 15, new Vector2(0f, -66f), new Vector2(720f, 22f), FontStyles.Bold);
         }
 
         if (summonPanel != null && summonRoot == null)

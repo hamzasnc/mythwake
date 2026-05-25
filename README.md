@@ -46,7 +46,7 @@ Current prototype:
 - Equipment upgrades are saved locally and add team-wide ATK and HP
 - Starter equipment balance is defined through stable server/database-ready definitions
 - Core prototype balance is being reshaped into code-side definition rows with stable IDs for later database migration
-- Accessory gear system with Ohrringe, Kette, Armband, Handschuhe, and Schuhe slots
+- Accessory gear system with Ohrringe, Kette, Armband, Handschuhe, Schuhe, and Helm slots
 - Accessory slot/rarity pairs now have item-like definitions with stable IDs, level caps, stat scaling, drop weights, and fuse targets
 - Accessory items have rarity tiers R0-R4, can be equipped, leveled, and saved locally
 - Accessory max level starts at 20 for R0 and increases by 10 per rarity tier

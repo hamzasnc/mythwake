@@ -678,10 +678,10 @@ public static class UpgradeClutterValidation
             ValidateRuntimeArtImage(gearImage, gearImageMaxSizes[i].x, gearImageMaxSizes[i].y, "Gear screen runtime art");
         }
 
-        ValidateGearShowcaseSlotLabel(gearRoot);
+        ValidateGearShowcaseSlotLabel(gearRoot, gearImageNames);
     }
 
-    private static void ValidateGearShowcaseSlotLabel(GameObject gearRoot)
+    private static void ValidateGearShowcaseSlotLabel(GameObject gearRoot, string[] gearImageNames)
     {
         var slotLabel = RequireSceneObject("Gear Visual Power");
         RequireInsidePanel(gearRoot, slotLabel);
@@ -702,6 +702,13 @@ public static class UpgradeClutterValidation
         }
 
         AssertTextFits(label, slotLabel.name, "Gear screen runtime art slot label");
+
+        var title = RequireSceneObject("Gear Visual Title");
+        AssertNoOverlap(title, slotLabel, 0f, "Gear screen runtime art slot label layout");
+        for (var i = 0; i < gearImageNames.Length; i++)
+        {
+            AssertNoOverlap(slotLabel, RequireSceneObject(gearImageNames[i]), 4f, "Gear screen runtime art slot label layout");
+        }
     }
 
     private static void ValidateRuntimeArtImage(GameObject gameObject, float maxWidth, float maxHeight, string context)
