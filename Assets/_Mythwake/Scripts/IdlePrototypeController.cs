@@ -17645,6 +17645,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
 
             optionButton.gameObject.SetActive(true);
+            SetHeroDetailGearOptionRow(optionButton, AccessoryRarityCount - 1 - rarity);
             var copies = GetAccessoryInventoryCount(accessorySlot, rarity);
             var equipped = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot) == rarity;
             var levelText = equipped ? $"  {Tr("ui.common.equipped")} {Tr("ui.common.level_short")} {GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot)}" : string.Empty;
@@ -17668,6 +17669,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void SetHeroDetailGearOptionRow(Button optionButton, int rowIndex)
+    {
+        var rect = optionButton == null ? null : optionButton.GetComponent<RectTransform>();
+        if (rect == null)
+        {
+            return;
+        }
+
+        rect.anchoredPosition = new Vector2(0, -92 - rowIndex * 56);
+    }
+
     private void RefreshHeroDetailEquipmentTrackList(EquipmentTrackDefinition track, int level, int heroIndex)
     {
         var hero = GetHeroDefinition(heroIndex);
@@ -17686,6 +17698,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
 
             optionButton.gameObject.SetActive(i < 2);
+            SetHeroDetailGearOptionRow(optionButton, i);
             optionButton.interactable = i == 1;
             var image = optionButton.GetComponent<Image>();
             if (image != null)

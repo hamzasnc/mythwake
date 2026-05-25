@@ -279,6 +279,23 @@ public static class UpgradeClutterValidation
             }
         }
 
+        if (gearOptionButtons.Length < 2)
+        {
+            throw new InvalidOperationException("Hero detail accessory list should expose multiple rarity option rows.");
+        }
+
+        var lowestRarityRect = gearOptionButtons[0].GetComponent<RectTransform>();
+        var highestRarityRect = gearOptionButtons[gearOptionButtons.Length - 1].GetComponent<RectTransform>();
+        if (lowestRarityRect == null || highestRarityRect == null)
+        {
+            throw new InvalidOperationException("Hero detail accessory option rows should keep RectTransforms.");
+        }
+
+        if (highestRarityRect.anchoredPosition.y <= lowestRarityRect.anchoredPosition.y)
+        {
+            throw new InvalidOperationException("Hero detail accessory list should display higher rarity rows above lower rarity rows.");
+        }
+
         if (gearOptionButtons.Length > 0 && gearOptionButtons[0].interactable)
         {
             throw new InvalidOperationException("Hero detail equipped accessory option row should not be clickable.");
