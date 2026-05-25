@@ -27,15 +27,13 @@ Remote:
 Important Git rule:
 - Pushes/commits should use account/author `hamzasnc`, not `devasperity`.
 
-Latest known local commit before the current uncommitted pass:
-- `73878bc Clean up paladin spine handoff`
+Latest known pushed commit before the current uncommitted pass:
+- `b6d93ad Feature paladin in vanguard summon banner`
 
 Current uncommitted pass:
-- Village building detail/upgrade UI in Unity.
-- Backend Village upgrade tests.
-- Backend AFK cap aligned to the local 24h cap.
-- Current status summary in `docs/CURRENT_STATUS.md`.
-- Editor validation helper for Village UI in `Assets/_Mythwake/Editor/VillageUiValidation.cs`.
+- Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, and runtime rig part loading.
+- Fast Rewards UI validator in `Assets/_Mythwake/Editor/FastRewardsUiValidation.cs`.
+- Current status summary in `docs/CURRENT_STATUS.md` and this handoff note.
 
 ## User Preferences And Product Intent
 
@@ -94,10 +92,12 @@ Latest local gameplay/UI batch:
 - Village building details show placeholder bonuses. In local mode, built building type and level apply small Team ATK/HP or Fast Rewards Gold/Essence rate boosts. Server Mode remains backend-authoritative and does not add these local stat bonuses on top of backend snapshot stats.
 - Village bonuses are intentionally local-only until the Village balance/definition pass.
 - Fast Rewards popup now separates local and Server Mode: local shows stored time, rate, Village bonus, and ready rewards; Server Mode shows backend min/cap/rate/ready estimate and notes that Village local bonuses do not modify server rewards yet.
+- A Unity editor validator now checks Fast Rewards popup controls, local copy, Server Mode fallback copy, redeem/claim labels, and button bounds through `Mythwake/Validate Fast Rewards UI`.
 - A Unity editor validator now checks the Village map/build/detail/upgrade/demolish control structure. Batchmode execution is currently blocked while the project is already open in another Unity instance.
 - Local Fast Rewards and backend AFK definitions now both use a 24h stored reward cap.
 - Paladin combat assets, combat preview, and Spine handoff validation are present.
 - Paladin is now also featured in the local `Vanguard Oath` summon banner and included in that banner's Epic pool.
+- A Unity editor validator now checks Paladin client definition, local summon banners, formation/fight hook anchors, backend definition/migration anchors, EN/DE localization, runtime portrait, combat sheets, skeletal part textures, and Paladin runtime rig part loading through `Mythwake/Validate Paladin Integration`.
 - Home now has a runtime campaign map with clickable stage nodes and a stage preview.
 - Battle no longer starts immediately from the main button. Flow is now map/stage selection -> Battle -> Formation -> Confirm -> visible fight.
 - Dungeons now use the same Formation -> Confirm -> visible fight flow.
@@ -566,18 +566,14 @@ The next chat should continue in this order unless the user redirects:
    - `README.md`, `docs/NEXT_CHAT_CONTEXT.md`, and `docs/CURRENT_STATUS.md` are now the main handoff notes.
 
 4. Polish Fast Rewards.
-   - Continuous accumulation display and copy.
-   - Rate per second based on stage.
-   - 24h cap is already aligned locally/backend.
-   - Claim updates Gold and Myth Essence.
-   - Keep Server Mode display behavior clear.
+   - Run `Mythwake/Validate Fast Rewards UI`.
+   - Visually verify popup text and button spacing on editor/device.
+   - Continuous accumulation display, 24h cap, local rates, Village bonus line, and Server Mode copy now have a validator, but still need a real visual pass.
 
 5. Continue Paladin integration checks.
-   - Roster/detail screen.
-   - Formation.
-   - Fight pose/preview.
-   - Backend definitions.
-   - Spine validation.
+   - Run `Mythwake/Validate Paladin Integration`.
+   - Run `Mythwake/Validate Paladin Spine Handoff`.
+   - Visually verify roster/detail screen, formation, fight pose/preview, and summon result display.
 
 6. Move remaining upgrade clutter into proper screens.
    - Hero level-up belongs in Heroes or hero detail.
