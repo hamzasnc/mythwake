@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.107";
+    public const string PrototypeVersion = "0.2.108";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1301,6 +1301,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Image[] campaignStageButtonCurrentHalos;
     private Image[] campaignStageButtonBossBadges;
     private TMP_Text[] campaignStageButtonBossBadgeTexts;
+    private Image[] campaignStageButtonMilestoneBadges;
+    private TMP_Text[] campaignStageButtonMilestoneBadgeTexts;
     private Image[] campaignPathSegmentImages;
     private RawImage[] homeIdleHeroImages;
     private RawImage[] homeIdleEnemyImages;
@@ -14199,6 +14201,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         campaignStageButtonCurrentHalos = new Image[nodePositions.Length];
         campaignStageButtonBossBadges = new Image[nodePositions.Length];
         campaignStageButtonBossBadgeTexts = new TMP_Text[nodePositions.Length];
+        campaignStageButtonMilestoneBadges = new Image[nodePositions.Length];
+        campaignStageButtonMilestoneBadgeTexts = new TMP_Text[nodePositions.Length];
 
         for (var i = 0; i < nodePositions.Length; i++)
         {
@@ -14342,10 +14346,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         bossText.color = new Color(1f, 0.88f, 0.42f);
         bossText.raycastTarget = false;
 
+        var milestoneBadge = CreateRuntimePanel(buttonObject.transform, "Stage Milestone Badge", new Vector2(0, 2), new Vector2(82, 28), new Color(0.64f, 0.42f, 0.12f, 0.94f));
+        milestoneBadge.gameObject.SetActive(false);
+        var milestoneText = CreateRuntimeText(milestoneBadge, "Label", "BONUS", 15, new Vector2(0, -2), new Vector2(76, 24));
+        milestoneText.fontStyle = FontStyles.Bold;
+        milestoneText.enableAutoSizing = true;
+        milestoneText.fontSizeMin = 10;
+        milestoneText.fontSizeMax = 15;
+        milestoneText.textWrappingMode = TextWrappingModes.NoWrap;
+        milestoneText.color = new Color(1f, 0.94f, 0.58f);
+        milestoneText.raycastTarget = false;
+
         campaignStageButtonFrames[nodeIndex] = frame;
         campaignStageButtonCurrentHalos[nodeIndex] = currentHalo.GetComponent<Image>();
         campaignStageButtonBossBadges[nodeIndex] = bossBadge.GetComponent<Image>();
         campaignStageButtonBossBadgeTexts[nodeIndex] = bossText;
+        campaignStageButtonMilestoneBadges[nodeIndex] = milestoneBadge.GetComponent<Image>();
+        campaignStageButtonMilestoneBadgeTexts[nodeIndex] = milestoneText;
         campaignStageButtonIcons[nodeIndex] = icon;
         campaignStageButtonTexts[nodeIndex] = text;
 
@@ -18673,6 +18690,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             var isLocked = stageNumber > enemyLevel;
             var isSelected = stageNumber == selectedCampaignStage;
             var isBoss = IsCampaignBossStage(stageNumber);
+            var showMilestoneBadge = IsCampaignMilestoneStage(stageNumber) && !isBoss;
 
             if (campaignStageButtonTexts != null && i < campaignStageButtonTexts.Length && campaignStageButtonTexts[i] != null)
             {
@@ -18721,6 +18739,22 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 campaignStageButtonBossBadgeTexts[i].color = isLocked
                     ? new Color(0.74f, 0.68f, 0.72f)
                     : new Color(1f, 0.88f, 0.42f);
+            }
+
+            if (campaignStageButtonMilestoneBadges != null && i < campaignStageButtonMilestoneBadges.Length && campaignStageButtonMilestoneBadges[i] != null)
+            {
+                campaignStageButtonMilestoneBadges[i].gameObject.SetActive(showMilestoneBadge);
+                campaignStageButtonMilestoneBadges[i].color = isLocked
+                    ? new Color(0.18f, 0.16f, 0.12f, 0.82f)
+                    : new Color(0.64f, 0.42f, 0.12f, 0.94f);
+            }
+
+            if (campaignStageButtonMilestoneBadgeTexts != null && i < campaignStageButtonMilestoneBadgeTexts.Length && campaignStageButtonMilestoneBadgeTexts[i] != null)
+            {
+                campaignStageButtonMilestoneBadgeTexts[i].text = "BONUS";
+                campaignStageButtonMilestoneBadgeTexts[i].color = isLocked
+                    ? new Color(0.72f, 0.69f, 0.6f)
+                    : new Color(1f, 0.94f, 0.58f);
             }
 
             campaignStageButtons[i].interactable = !campaignFightInProgress && !backendRequestInProgress && !backendLifecycleFlushInProgress;
@@ -18924,7 +18958,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshCampaignStageDetailRewardSlot(0, GetCurrencyIconTexture("exp_shard"), $"+{stage.essenceReward}\n{GetLocalizedCurrencyName(MythEssenceCurrencyId)}");
-        if (stageNumber % CampaignMilestoneInterval == 0)
+        if (IsCampaignMilestoneStage(stageNumber))
         {
             var rewardGems = CampaignBalance.milestoneGemBase + Mathf.FloorToInt(stageNumber * CampaignBalance.milestoneGemScale);
             RefreshCampaignStageDetailRewardSlot(1, GetCurrencyIconTexture("mythic_gem"), $"+{rewardGems}\nGems");
@@ -19572,6 +19606,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static bool IsCampaignBossStage(int stageNumber)
     {
         return Mathf.Max(1, stageNumber) % CampaignBossStageInterval == 0;
+    }
+
+    private static bool IsCampaignMilestoneStage(int stageNumber)
+    {
+        return Mathf.Max(1, stageNumber) % CampaignMilestoneInterval == 0;
     }
 
     private static Vector2[] GetCampaignMapNodePositions()
