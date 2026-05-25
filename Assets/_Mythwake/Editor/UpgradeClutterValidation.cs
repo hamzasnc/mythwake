@@ -138,6 +138,7 @@ public static class UpgradeClutterValidation
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, 0, 1);
         InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
         Canvas.ForceUpdateCanvases();
+        ValidateHeroDetailAccessoryGearList(gearListRoot.gameObject, gearOptionButtons);
         AssertButtonLabel(equipGearButton, GetLocalizedText(controller, "ui.common.equip_gear"), "Hero detail accessory action should keep the Equip Gear label.");
         AssertButtonLabel(removeGearButton, GetLocalizedText(controller, "ui.common.remove_gear"), "Hero detail remove action should use localized text.");
         if (!(bool)InvokePrivate(controller, "CanRemoveSelectedHeroDetailAccessory") || !removeGearButton.interactable)
@@ -174,6 +175,7 @@ public static class UpgradeClutterValidation
             InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
             Canvas.ForceUpdateCanvases();
 
+            ValidateHeroDetailAccessoryGearList(gearListRoot.gameObject, gearOptionButtons);
             AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.equip_gear"), "Hero detail accessory action should refresh when language changes.");
             AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.remove_gear"), "Hero detail remove action should stay localized after slot changes.");
             AssertHeroDetailGearListTextFits(gearListRoot.gameObject, gearOptionButtons, "Hero detail German accessory list");
@@ -183,6 +185,33 @@ public static class UpgradeClutterValidation
             SetPrivateField(controller, "language", originalLanguage);
             InvokePrivate(controller, "RefreshHeroDetailUi");
             Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void ValidateHeroDetailAccessoryGearList(GameObject gearListRoot, Button[] gearOptionButtons)
+    {
+        if (!gearListRoot.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Hero detail accessory gear list should be active.");
+        }
+
+        for (var i = 0; i < gearOptionButtons.Length; i++)
+        {
+            var option = gearOptionButtons[i];
+            if (option == null)
+            {
+                throw new InvalidOperationException($"Hero detail accessory option {i + 1} is missing its button.");
+            }
+
+            if (!option.gameObject.activeInHierarchy)
+            {
+                throw new InvalidOperationException($"Hero detail accessory list should show rarity option row {i + 1}.");
+            }
+        }
+
+        if (gearOptionButtons.Length > 0 && gearOptionButtons[0].interactable)
+        {
+            throw new InvalidOperationException("Hero detail equipped accessory option row should not be clickable.");
         }
     }
 
