@@ -271,6 +271,7 @@ public static class UpgradeClutterValidation
 
             AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.open_gear_short"), "Hero detail equipment action should refresh when language changes.");
             AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.remove_gear"), "Hero detail remove action should refresh when language changes.");
+            AssertHeroDetailEquipmentTrackCopy(controller, gearOptionButtons[0]);
             AssertHeroDetailGearListTextFits(gearListRoot.gameObject, gearOptionButtons, "Hero detail German equipment list");
 
             InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
