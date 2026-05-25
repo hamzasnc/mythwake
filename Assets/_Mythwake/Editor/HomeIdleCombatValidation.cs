@@ -90,6 +90,24 @@ public static class HomeIdleCombatValidation
         AssertTextFits(idleText, "Home Idle Combat Text");
         AssertTextFits(rewardText, "Home Idle Reward Text");
 
+        var infoButton = RequireButton("Home Idle Info Button");
+        infoButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        var infoPopup = RequireObject("Home Idle Info Popup", true);
+        var infoBody = RequireText(infoPopup, "Home Idle Info Body");
+        RequireCopy(infoBody.text, "Patrol");
+        RequireCopy(infoBody.text, "Gold");
+        RequireCopy(infoBody.text, "Essence");
+        RequireCopy(infoBody.text, "schliesst keine Abschnitte");
+        AssertTextFits(infoBody, "Home Idle Info Body");
+        var infoCloseButton = RequireButton("Home Idle Info Close Button");
+        infoCloseButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        if (infoPopup.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Home Idle Info Popup should close from its close button.");
+        }
+
         for (var i = 1; i <= 3; i++)
         {
             RequireRawImageWithTexture($"Home Idle Hero {i}");

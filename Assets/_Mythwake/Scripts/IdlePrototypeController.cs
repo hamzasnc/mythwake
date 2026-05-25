@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.84";
+    public const string PrototypeVersion = "0.2.85";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1277,6 +1277,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RawImage homeCampaignMapImage;
     private RectTransform homeIdleCombatRoot;
     private RawImage homeIdleCombatMapImage;
+    private Button homeIdleInfoButton;
+    private RectTransform homeIdleInfoPopupRoot;
+    private TMP_Text homeIdleInfoBodyText;
+    private Button homeIdleInfoCloseButton;
     private RectTransform campaignStagePreviewRoot;
     private TMP_Text campaignStagePreviewText;
     private Button[] campaignStageButtons;
@@ -2200,6 +2204,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void HideChatPopup()
     {
         SetChatPopupVisible(false);
+    }
+
+    private void ShowHomeIdleInfoPopup()
+    {
+        SetHomeIdleInfoPopupVisible(true);
+    }
+
+    private void HideHomeIdleInfoPopup()
+    {
+        SetHomeIdleInfoPopupVisible(false);
     }
 
     private void ShowManagementPopup()
@@ -9178,6 +9192,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             homeChatButton.onClick.AddListener(ShowChatPopup);
         }
 
+        if (homeIdleInfoButton != null)
+        {
+            homeIdleInfoButton.onClick.AddListener(ShowHomeIdleInfoPopup);
+        }
+
         if (topGemPlusButton != null)
         {
             topGemPlusButton.onClick.AddListener(ShowShop);
@@ -9276,6 +9295,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (chatCloseButton != null)
         {
             chatCloseButton.onClick.AddListener(HideChatPopup);
+        }
+
+        if (homeIdleInfoCloseButton != null)
+        {
+            homeIdleInfoCloseButton.onClick.AddListener(HideHomeIdleInfoPopup);
         }
 
         if (formationConfirmButton != null)
@@ -9426,6 +9450,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             homeChatButton.onClick.RemoveListener(ShowChatPopup);
         }
 
+        if (homeIdleInfoButton != null)
+        {
+            homeIdleInfoButton.onClick.RemoveListener(ShowHomeIdleInfoPopup);
+        }
+
         if (topGemPlusButton != null)
         {
             topGemPlusButton.onClick.RemoveListener(ShowShop);
@@ -9524,6 +9553,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (chatCloseButton != null)
         {
             chatCloseButton.onClick.RemoveListener(HideChatPopup);
+        }
+
+        if (homeIdleInfoCloseButton != null)
+        {
+            homeIdleInfoCloseButton.onClick.RemoveListener(HideHomeIdleInfoPopup);
         }
 
         if (formationConfirmButton != null)
@@ -14146,6 +14180,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var clashGlow = CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Clash Glow", new Vector2(0, -130), new Vector2(72, 72), new Color(1f, 0.73f, 0.26f, 0.22f));
         clashGlow.localRotation = Quaternion.Euler(0f, 0f, 45f);
 
+        homeIdleInfoButton = CreateRuntimeButton(homeIdleCombatRoot, "Home Idle Info Button", string.Empty, 0, -42, 920, 220);
+        var idleInfoButtonImage = homeIdleInfoButton.GetComponent<Image>();
+        if (idleInfoButtonImage != null)
+        {
+            idleInfoButtonImage.color = new Color(1f, 1f, 1f, 0f);
+            idleInfoButtonImage.raycastTarget = true;
+        }
+
         homeIdleCombatText = CreateRuntimeText(homeIdleCombatRoot, "Home Idle Combat Text", string.Empty, 18, new Vector2(0, -48), new Vector2(690, 26));
         homeIdleCombatText.fontStyle = FontStyles.Bold;
         homeIdleCombatText.enableAutoSizing = true;
@@ -14203,6 +14245,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         homeIdleLootPopupText.raycastTarget = false;
         homeIdleLootPopupText.gameObject.SetActive(false);
         homeIdleLootPopupText.transform.SetAsLastSibling();
+
+        homeIdleInfoButton.transform.SetAsLastSibling();
     }
 
     private Button CreateCampaignStageButton(Transform parent, int nodeIndex, Vector2 position)
@@ -14606,6 +14650,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         chatBodyText.textWrappingMode = TextWrappingModes.Normal;
         chatCloseButton = CreateRuntimeButton(chatPopupRoot, "Chat Close Button", "Close", 0, -184, 170, 52);
         chatPopupRoot.gameObject.SetActive(false);
+
+        homeIdleInfoPopupRoot = CreateRuntimePopup(homeActionRoot, "Home Idle Info Popup", new Vector2(0, -860), new Vector2(760, 360), "Patrol Info");
+        homeIdleInfoBodyText = CreateRuntimeText(homeIdleInfoPopupRoot, "Home Idle Info Body", string.Empty, 22, new Vector2(0, -98), new Vector2(660, 172));
+        homeIdleInfoBodyText.alignment = TextAlignmentOptions.Center;
+        homeIdleInfoBodyText.enableAutoSizing = true;
+        homeIdleInfoBodyText.fontSizeMin = 16;
+        homeIdleInfoBodyText.fontSizeMax = 22;
+        homeIdleInfoBodyText.textWrappingMode = TextWrappingModes.Normal;
+        homeIdleInfoCloseButton = CreateRuntimeButton(homeIdleInfoPopupRoot, "Home Idle Info Close Button", "Close", 0, -294, 170, 52);
+        homeIdleInfoPopupRoot.gameObject.SetActive(false);
     }
 
     private void CreateInventoryGridSlots()
@@ -18658,6 +18712,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshHomeIdleLootPopupUi();
+        RefreshHomeIdleInfoPopupUi();
     }
 
     private void RefreshHomeIdleLootPopupUi()
@@ -18678,6 +18733,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         homeIdleLootPopupText.gameObject.SetActive(true);
         homeIdleLootPopupText.rectTransform.anchoredPosition = new Vector2(0f, -132f + elapsedPercent * 42f);
         homeIdleLootPopupText.color = new Color(1f, 0.86f, 0.32f, alpha);
+    }
+
+    private void RefreshHomeIdleInfoPopupUi()
+    {
+        if (homeIdleInfoBodyText == null || homeIdleInfoPopupRoot == null || !homeIdleInfoPopupRoot.gameObject.activeSelf)
+        {
+            return;
+        }
+
+        var stage = GetStageDefinition(enemyLevel);
+        var secondsRemaining = Mathf.Max(1, Mathf.CeilToInt(HomeIdleRewardIntervalSeconds - homeIdleRewardTimer));
+        var gold = GetHomeIdleRewardGoldAmount();
+        var essence = GetHomeIdleRewardEssenceAmount();
+        var rewardCopy = backendGameplayEnabled
+            ? "Server Mode zeigt den Kampf; Rewards bleiben serverseitig."
+            : $"+{FormatCompactNumber(gold)} Gold +{FormatCompactNumber(essence)} Essence alle {HomeIdleRewardIntervalSeconds:0}s.";
+
+        homeIdleInfoBodyText.text =
+            $"Patrol {GetCampaignStageLabel(enemyLevel)}: {stage.enemyName}\n" +
+            $"{rewardCopy}\n" +
+            $"Naechster Tick: {secondsRemaining}s\n" +
+            "Battle startet die Formation. Patrol schliesst keine Abschnitte automatisch ab.";
     }
 
     private void CenterCampaignMapOnSelectedStageIfNeeded()
@@ -19293,6 +19370,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 managementPopupRoot.gameObject.SetActive(false);
             }
 
+            if (homeIdleInfoPopupRoot != null)
+            {
+                homeIdleInfoPopupRoot.gameObject.SetActive(false);
+            }
+
             inventoryPopupRoot.SetAsLastSibling();
             RefreshInventoryPopupUi();
         }
@@ -19321,6 +19403,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (managementPopupRoot != null)
             {
                 managementPopupRoot.gameObject.SetActive(false);
+            }
+
+            if (homeIdleInfoPopupRoot != null)
+            {
+                homeIdleInfoPopupRoot.gameObject.SetActive(false);
             }
 
             fastRewardsPopupRoot.SetAsLastSibling();
@@ -19353,8 +19440,50 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 managementPopupRoot.gameObject.SetActive(false);
             }
 
+            if (homeIdleInfoPopupRoot != null)
+            {
+                homeIdleInfoPopupRoot.gameObject.SetActive(false);
+            }
+
             chatPopupRoot.SetAsLastSibling();
         }
+    }
+
+    private void SetHomeIdleInfoPopupVisible(bool isVisible)
+    {
+        if (homeIdleInfoPopupRoot == null)
+        {
+            return;
+        }
+
+        homeIdleInfoPopupRoot.gameObject.SetActive(isVisible);
+        if (!isVisible)
+        {
+            return;
+        }
+
+        if (inventoryPopupRoot != null)
+        {
+            inventoryPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (fastRewardsPopupRoot != null)
+        {
+            fastRewardsPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (chatPopupRoot != null)
+        {
+            chatPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (managementPopupRoot != null)
+        {
+            managementPopupRoot.gameObject.SetActive(false);
+        }
+
+        homeIdleInfoPopupRoot.SetAsLastSibling();
+        RefreshHomeIdleInfoPopupUi();
     }
 
     private void SetManagementPopupVisible(bool isVisible)
@@ -19383,6 +19512,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (chatPopupRoot != null)
         {
             chatPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (homeIdleInfoPopupRoot != null)
+        {
+            homeIdleInfoPopupRoot.gameObject.SetActive(false);
         }
 
         managementPopupRoot.SetAsLastSibling();
