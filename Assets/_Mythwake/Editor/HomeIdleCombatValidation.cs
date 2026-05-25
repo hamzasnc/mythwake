@@ -145,6 +145,9 @@ public static class HomeIdleCombatValidation
         var stageBefore = GetPrivateField<int>(controller, "enemyLevel");
         var goldBefore = GetPrivateField<int>(controller, "gold");
         var mythEssenceBefore = GetPrivateField<int>(controller, "mythEssence");
+        var enemyHpBefore = GetPrivateField<int>(controller, "enemyHp");
+        var enemyMaxHpBefore = GetPrivateField<int>(controller, "enemyMaxHp");
+        var dailyStageClearCountBefore = GetPrivateField<int>(controller, "dailyStageClearCount");
         try
         {
             InvokePrivate(controller, "TickHomeIdleCombat", 10.1f);
@@ -152,6 +155,7 @@ public static class HomeIdleCombatValidation
 
             var stageAfter = GetPrivateField<int>(controller, "enemyLevel");
             var goldAfter = GetPrivateField<int>(controller, "gold");
+            var mythEssenceAfterIdle = GetPrivateField<int>(controller, "mythEssence");
             if (stageAfter != stageBefore)
             {
                 throw new InvalidOperationException($"Home idle combat must not auto-clear stages. Before={stageBefore}, after={stageAfter}.");
@@ -170,12 +174,32 @@ public static class HomeIdleCombatValidation
             RequireCopy(lootPopupText.text, "Gold");
             RequireCopy(lootPopupText.text, "Essence");
             AssertTextFits(lootPopupText, "Home Idle Loot Pop Text");
+
+            var stageDefinition = InvokePrivate(controller, "GetStageDefinition", stageBefore);
+            var wonResult = CreateWonCombatResult(controller);
+            InvokePrivate(controller, "ApplyCampaignFightResult", stageBefore, stageDefinition, wonResult);
+            Canvas.ForceUpdateCanvases();
+
+            var stageAfterClear = GetPrivateField<int>(controller, "enemyLevel");
+            var mythEssenceAfterClear = GetPrivateField<int>(controller, "mythEssence");
+            if (stageAfterClear <= stageBefore)
+            {
+                throw new InvalidOperationException($"Campaign clear should advance the stage. Before={stageBefore}, after={stageAfterClear}.");
+            }
+
+            if (mythEssenceAfterClear <= mythEssenceAfterIdle)
+            {
+                throw new InvalidOperationException($"Campaign clear should grant the displayed Myth Essence reward. Before={mythEssenceAfterIdle}, after={mythEssenceAfterClear}.");
+            }
         }
         finally
         {
             SetPrivateField(controller, "enemyLevel", stageBefore);
             SetPrivateField(controller, "gold", goldBefore);
             SetPrivateField(controller, "mythEssence", mythEssenceBefore);
+            SetPrivateField(controller, "enemyHp", enemyHpBefore);
+            SetPrivateField(controller, "enemyMaxHp", enemyMaxHpBefore);
+            SetPrivateField(controller, "dailyStageClearCount", dailyStageClearCountBefore);
             SetPrivateField(controller, "homeIdleRewardTimer", 0f);
             SetPrivateField(controller, "homeIdleLootPopupTimer", 0f);
             SetPrivateField(controller, "homeIdleLastRewardGold", 0);
@@ -196,6 +220,36 @@ public static class HomeIdleCombatValidation
         }
 
         return null;
+    }
+
+    private static object CreateWonCombatResult(object controller)
+    {
+        var resultType = controller.GetType().GetNestedType("CombatResult", BindingFlags.NonPublic);
+        if (resultType == null)
+        {
+            throw new InvalidOperationException("Missing private CombatResult type.");
+        }
+
+        var result = Activator.CreateInstance(resultType);
+        SetStructField(result, "won", true);
+        SetStructField(result, "executed", true);
+        SetStructField(result, "elapsedSeconds", 8);
+        SetStructField(result, "teamHpRemaining", 1);
+        SetStructField(result, "enemyHpRemaining", 0);
+        SetStructField(result, "damageDealt", 100);
+        SetStructField(result, "damageTaken", 1);
+        return result;
+    }
+
+    private static void SetStructField(object target, string fieldName, object value)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException($"Missing struct field {fieldName}.");
+        }
+
+        field.SetValue(target, value);
     }
 
     private static GameObject RequireObject(string name, bool activeInHierarchy)

@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.86
+Prototype version: 0.2.87
 Local save version: 2
 
 Current prototype:
@@ -176,6 +176,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.87: Campaign clears now grant the displayed stage Myth Essence reward locally, include it in the result reward payload, and are covered by Home idle validation.
 - Prototype 0.2.86: Added a Home campaign checkpoint detail popup with map preview, enemy formation, completion rewards, and Battle/Close controls.
 - Prototype 0.2.85: Added a tap-to-open Home patrol info popup on the idle combat area with current stage, enemy, tick reward, and no-auto-clear copy.
 - Prototype 0.2.84: Added a short floating loot popup when Home idle combat grants its local active Gold/Myth Essence tick, with validator coverage.

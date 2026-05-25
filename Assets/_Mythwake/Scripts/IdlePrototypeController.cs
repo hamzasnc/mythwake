@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.86";
+    public const string PrototypeVersion = "0.2.87";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -4945,16 +4945,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (result.won)
         {
             var clearedStage = stageNumber;
-            var milestoneText = GrantCampaignMilestoneReward(clearedStage);
+            var clearReward = GetCampaignStageClearReward(clearedStage, stage);
+            GrantReward(clearReward);
+            var rewardText = FormatServerReward(ToRewardDto(clearReward));
             enemyLevel = Mathf.Max(enemyLevel, clearedStage + 1);
             selectedCampaignStage = Mathf.Max(1, enemyLevel);
             dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
-            var winMessage = $"Campaign Stage {clearedStage} cleared in {result.elapsedSeconds}s\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{milestoneText}";
+            var winMessage = $"Campaign Stage {clearedStage} cleared in {result.elapsedSeconds}s\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}  Reward +{rewardText}";
             PlayCombatVisual("campaign", $"Campaign Stage {clearedStage}", result, stage.maxHp);
             SetDungeonResult(winMessage);
-            return CreateActionResult(true, "campaign_fight", string.Empty, winMessage);
+            return CreateActionResult(true, "campaign_fight", string.Empty, winMessage, ToRewardDto(clearReward));
         }
         else
         {
@@ -5754,19 +5756,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return GetDungeonReward(EssenceDungeonDefinition, floor);
     }
 
-    private string GrantCampaignMilestoneReward(int clearedStage)
+    private RewardDefinition GetCampaignStageClearReward(int clearedStage, StageDefinition stage)
     {
+        var rewardEssence = Mathf.Max(1, stage.essenceReward);
         if (clearedStage <= 0 || clearedStage % CampaignMilestoneInterval != 0)
         {
-            return string.Empty;
+            return new RewardDefinition($"reward_campaign_stage_{Mathf.Max(1, clearedStage):000}", 0, 0, rewardEssence);
         }
 
         var rewardGems = CampaignBalance.milestoneGemBase + Mathf.FloorToInt(clearedStage * CampaignBalance.milestoneGemScale);
         var rewardPassXp = CampaignBalance.milestonePassXp;
-        var reward = new RewardDefinition($"reward_campaign_milestone_{clearedStage}", 0, rewardGems, 0, rewardPassXp);
-        GrantReward(reward);
-
-        return $"  Milestone +{rewardGems} Gems +{rewardPassXp} XP";
+        return new RewardDefinition($"reward_campaign_stage_{Mathf.Max(1, clearedStage):000}", 0, rewardGems, rewardEssence, rewardPassXp);
     }
 
     private RewardDefinition GetDungeonBonusReward(bool isGoldDungeon, int clearedFloor)
