@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.111";
+    public const string PrototypeVersion = "0.2.112";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1298,6 +1298,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text[] campaignStageButtonTexts;
     private RawImage[] campaignStageButtonIcons;
     private Image[] campaignStageButtonFrames;
+    private Image[] campaignStageButtonSelectedHalos;
     private Image[] campaignStageButtonCurrentHalos;
     private Image[] campaignStageButtonBossBadges;
     private TMP_Text[] campaignStageButtonBossBadgeTexts;
@@ -14198,6 +14199,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         campaignStageButtonTexts = new TMP_Text[nodePositions.Length];
         campaignStageButtonIcons = new RawImage[nodePositions.Length];
         campaignStageButtonFrames = new Image[nodePositions.Length];
+        campaignStageButtonSelectedHalos = new Image[nodePositions.Length];
         campaignStageButtonCurrentHalos = new Image[nodePositions.Length];
         campaignStageButtonBossBadges = new Image[nodePositions.Length];
         campaignStageButtonBossBadgeTexts = new TMP_Text[nodePositions.Length];
@@ -14321,6 +14323,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var frame = buttonObject.GetComponent<Image>();
         frame.color = new Color(0.21f, 0.12f, 0.21f, 0.96f);
 
+        var selectedHalo = CreateRuntimePanel(buttonObject.transform, "Stage Selected Halo", new Vector2(0, -4), new Vector2(136, 148), new Color(0.54f, 0.95f, 1f, 0.38f));
+        selectedHalo.gameObject.SetActive(false);
+
         var currentHalo = CreateRuntimePanel(buttonObject.transform, "Stage Current Halo", new Vector2(0, -4), new Vector2(124, 136), new Color(1f, 0.84f, 0.28f, 0.46f));
         currentHalo.gameObject.SetActive(false);
 
@@ -14358,6 +14363,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         milestoneText.raycastTarget = false;
 
         campaignStageButtonFrames[nodeIndex] = frame;
+        campaignStageButtonSelectedHalos[nodeIndex] = selectedHalo.GetComponent<Image>();
         campaignStageButtonCurrentHalos[nodeIndex] = currentHalo.GetComponent<Image>();
         campaignStageButtonBossBadges[nodeIndex] = bossBadge.GetComponent<Image>();
         campaignStageButtonBossBadgeTexts[nodeIndex] = bossText;
@@ -18715,6 +18721,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 campaignStageButtonCurrentHalos[i].color = isCurrent
                     ? new Color(1f, 0.84f, 0.28f, 0.46f)
                     : Color.clear;
+            }
+
+            if (campaignStageButtonSelectedHalos != null && i < campaignStageButtonSelectedHalos.Length && campaignStageButtonSelectedHalos[i] != null)
+            {
+                campaignStageButtonSelectedHalos[i].gameObject.SetActive(isSelected);
+                campaignStageButtonSelectedHalos[i].color = isLocked
+                    ? new Color(0.45f, 0.57f, 0.72f, 0.34f)
+                    : isCurrent
+                        ? new Color(0.95f, 1f, 0.72f, 0.38f)
+                        : new Color(0.54f, 0.95f, 1f, 0.38f);
             }
 
             if (campaignStageButtonIcons != null && i < campaignStageButtonIcons.Length && campaignStageButtonIcons[i] != null)

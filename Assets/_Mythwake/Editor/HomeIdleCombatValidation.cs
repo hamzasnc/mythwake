@@ -106,6 +106,7 @@ public static class HomeIdleCombatValidation
         ValidateLockedStageDetailBattleGuard(controller);
         ValidateCurrentStageDetailBattleFlow(controller);
         ValidateCurrentStageNodeMarker(controller);
+        ValidateSelectedStageNodeMarker(controller);
         ValidateCampaignPathProgress(controller);
         ValidateCampaignBossNodeBadges(controller);
         ValidateCampaignMilestoneNodeBadges(controller);
@@ -393,6 +394,66 @@ public static class HomeIdleCombatValidation
             {
                 throw new InvalidOperationException("Locked campaign stage node should not show the current-stage halo.");
             }
+        }
+    }
+
+    private static void ValidateSelectedStageNodeMarker(IdlePrototypeController controller)
+    {
+        var enemyLevelBefore = GetPrivateField<int>(controller, "enemyLevel");
+        var selectedStageBefore = GetPrivateField<int>(controller, "selectedCampaignStage");
+        var centerBefore = GetPrivateField<bool>(controller, "homeCampaignMapNeedsCenter");
+
+        try
+        {
+            const int currentStage = 5;
+            const int selectedStage = 6;
+            SetPrivateField(controller, "enemyLevel", currentStage);
+            SetPrivateField(controller, "selectedCampaignStage", selectedStage);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", true);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+
+            var currentNode = RequireButton("Campaign Stage Node 5");
+            var selectedNode = RequireButton("Campaign Stage Node 6");
+            var currentHalo = RequireChildObject(currentNode.gameObject, "Stage Current Halo");
+            var currentSelectedHalo = RequireChildObject(currentNode.gameObject, "Stage Selected Halo");
+            var selectedHalo = RequireChildObject(selectedNode.gameObject, "Stage Selected Halo");
+            var selectedCurrentHalo = RequireChildObject(selectedNode.gameObject, "Stage Current Halo");
+            var selectedHaloImage = selectedHalo.GetComponent<Image>();
+
+            if (!currentHalo.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Selecting a future node should not move the current-stage halo away from the current campaign node.");
+            }
+
+            if (currentSelectedHalo.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Only the selected campaign node should show the selected-stage halo.");
+            }
+
+            if (!selectedHalo.activeInHierarchy || selectedHaloImage == null || selectedHaloImage.color.a < 0.2f)
+            {
+                throw new InvalidOperationException("Selected campaign stage node should show a visible selected-stage halo.");
+            }
+
+            if (selectedCurrentHalo.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Selected locked campaign node should not inherit the current-stage halo.");
+            }
+
+            if (selectedHaloImage.raycastTarget)
+            {
+                throw new InvalidOperationException("Selected campaign stage halo should not intercept node input.");
+            }
+        }
+        finally
+        {
+            SetPrivateField(controller, "enemyLevel", enemyLevelBefore);
+            SetPrivateField(controller, "selectedCampaignStage", selectedStageBefore);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
+            InvokePrivate(controller, "SetCampaignStageDetailPopupVisible", false);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
         }
     }
 
