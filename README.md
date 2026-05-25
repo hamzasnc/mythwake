@@ -75,7 +75,7 @@ Current prototype:
 - Mission Track XP is earned from daily mission claims
 - Mission Track rewards can be claimed in the Shop tab
 - Ravik and Paladin art/combat preview hooks exist, including Paladin Spine handoff validation tooling
-- Unity editor validation covers the current gameplay/UI slice, including Village, Fast Rewards, Summon, Upgrade Clutter, and Paladin handoff checks
+- Unity editor validation covers the current gameplay/UI slice, including Village, Fast Rewards, Summon, Upgrade Clutter, Hero Detail gear spacing, and Paladin handoff checks
 - Hero Detail shows all equipment/accessory slots and supports accessory removal locally and in Server Mode
 
 Backend:
@@ -170,7 +170,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
-- Prototype 0.2.75: Added Village building detail/upgrade UI, visible local-only placeholder building bonuses, local and Server Mode upgrade actions, backend Village upgrade tests, backend AFK 24h cap alignment, Fast Rewards server/local display polish, Hero Detail gear polish with backend accessory unequip, Paladin/Summon/Upgrade Clutter validation helpers, and a current-slice Unity validation script.
+- Prototype 0.2.75: Added Village building detail/upgrade UI, visible local-only placeholder building bonuses, local and Server Mode upgrade actions, backend Village upgrade tests, backend AFK 24h cap alignment, Fast Rewards server/local display polish, Hero Detail gear polish with backend accessory unequip and spacing validation, Paladin/Summon/Upgrade Clutter validation helpers, and a current-slice Unity validation script.
 - Prototype 0.2.74: Added Paladin combat preview and cleaned up the Paladin Spine handoff.
 - Prototype 0.2.73: Added Paladin combat assets.
 - Prototype 0.2.72: Added multiplayer/backend Village building state.

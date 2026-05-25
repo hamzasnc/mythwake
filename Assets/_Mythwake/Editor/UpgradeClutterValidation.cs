@@ -15,7 +15,7 @@ public static class UpgradeClutterValidation
         try
         {
             ValidateUpgradeClutter();
-            Debug.Log("Upgrade clutter validated: legacy Battle/Hero controls are hidden, Gear controls live on Gear, and debug tools live on Shop.");
+            Debug.Log("Upgrade clutter validated: legacy Battle/Hero controls are hidden, Gear controls live on Gear, Hero Detail gear slots fit, and debug tools live on Shop.");
         }
         catch (Exception ex)
         {
@@ -115,6 +115,8 @@ public static class UpgradeClutterValidation
             RequireInsidePanel(heroDetailRoot.gameObject, gearSlots[i].gameObject);
         }
 
+        ValidateHeroDetailGearLayout(heroDetailRoot.gameObject, gearSlots, expectedGearSlotCount);
+
         InvokePrivate(controller, "OpenSelectedHeroDetailGearOptions");
         Canvas.ForceUpdateCanvases();
         var gearListRoot = RequireObjectField<RectTransform>(controller, "heroDetailGearListRoot");
@@ -140,6 +142,40 @@ public static class UpgradeClutterValidation
 
         SetPrivateField(controller, "backendGameplayEnabled", false);
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, -1, 0);
+    }
+
+    private static void ValidateHeroDetailGearLayout(GameObject heroDetailRoot, Button[] gearSlots, int expectedGearSlotCount)
+    {
+        var guardedObjects = new[]
+        {
+            RequireSceneObject("Hero Detail Stage"),
+            RequireSceneObject("Hero Detail Portrait"),
+            RequireSceneObject("Hero Detail Stat Backplate"),
+            RequireSceneObject("Hero Detail Stats"),
+            RequireSceneObject("Hero Detail Resources"),
+            RequireSceneObject("Hero Detail Remove Gear Button"),
+            RequireSceneObject("Hero Detail Level Button"),
+            RequireSceneObject("Hero Detail Equip Gear Button"),
+        };
+
+        for (var i = 0; i < expectedGearSlotCount; i++)
+        {
+            var gearSlot = gearSlots[i].gameObject;
+            if (!gearSlot.transform.IsChildOf(heroDetailRoot.transform))
+            {
+                throw new InvalidOperationException($"{gearSlot.name} should stay directly inside {heroDetailRoot.name}.");
+            }
+
+            for (var otherIndex = i + 1; otherIndex < expectedGearSlotCount; otherIndex++)
+            {
+                AssertNoOverlap(gearSlot, gearSlots[otherIndex].gameObject, 4f, "Hero Detail gear slot spacing");
+            }
+
+            for (var guardedIndex = 0; guardedIndex < guardedObjects.Length; guardedIndex++)
+            {
+                AssertNoOverlap(gearSlot, guardedObjects[guardedIndex], 4f, "Hero Detail gear layout");
+            }
+        }
     }
 
     private static void ValidateGearScreen(IdlePrototypeController controller)
@@ -217,25 +253,81 @@ public static class UpgradeClutterValidation
     private static void AssertInsideParent(GameObject parent, GameObject child)
     {
         var parentRect = parent.GetComponent<RectTransform>();
-        var childRect = child.GetComponent<RectTransform>();
-        if (parentRect == null || childRect == null)
+        if (parentRect == null)
         {
-            throw new InvalidOperationException($"{child.name} or {parent.name} is missing a RectTransform.");
+            throw new InvalidOperationException($"{parent.name} is missing a RectTransform.");
         }
 
         var parentWidth = parentRect.rect.width;
         var parentHeight = parentRect.rect.height;
-        var childWidth = childRect.rect.width;
-        var childHeight = childRect.rect.height;
-        var left = childRect.anchoredPosition.x - childWidth * childRect.pivot.x;
-        var right = left + childWidth;
-        var top = childRect.anchoredPosition.y + childHeight * (1f - childRect.pivot.y);
-        var bottom = top - childHeight;
+        var childBounds = GetLocalBounds(child);
 
-        if (left < -parentWidth * 0.5f || right > parentWidth * 0.5f || top > 0f || bottom < -parentHeight)
+        if (childBounds.Left < -parentWidth * 0.5f || childBounds.Right > parentWidth * 0.5f || childBounds.Top > 0f || childBounds.Bottom < -parentHeight)
         {
-            throw new InvalidOperationException($"{child.name} is outside {parent.name}: left={left}, right={right}, top={top}, bottom={bottom}.");
+            throw new InvalidOperationException($"{child.name} is outside {parent.name}: left={childBounds.Left}, right={childBounds.Right}, top={childBounds.Top}, bottom={childBounds.Bottom}.");
         }
+    }
+
+    private static void AssertNoOverlap(GameObject first, GameObject second, float padding, string context)
+    {
+        var firstRect = RequireRectTransform(first);
+        var secondRect = RequireRectTransform(second);
+        if (firstRect.parent != secondRect.parent)
+        {
+            throw new InvalidOperationException($"{context}: {first.name} and {second.name} must share a parent for layout comparison.");
+        }
+
+        var firstBounds = GetLocalBounds(first);
+        var secondBounds = GetLocalBounds(second);
+        if (BoundsOverlap(firstBounds, secondBounds, padding))
+        {
+            throw new InvalidOperationException($"{context}: {first.name} overlaps {second.name}. First left={firstBounds.Left}, right={firstBounds.Right}, top={firstBounds.Top}, bottom={firstBounds.Bottom}; second left={secondBounds.Left}, right={secondBounds.Right}, top={secondBounds.Top}, bottom={secondBounds.Bottom}.");
+        }
+    }
+
+    private static RectTransform RequireRectTransform(GameObject gameObject)
+    {
+        var rect = gameObject.GetComponent<RectTransform>();
+        if (rect == null)
+        {
+            throw new InvalidOperationException($"{gameObject.name} is missing a RectTransform.");
+        }
+
+        return rect;
+    }
+
+    private static LocalBounds GetLocalBounds(GameObject gameObject)
+    {
+        var rect = RequireRectTransform(gameObject);
+        var left = rect.anchoredPosition.x - rect.rect.width * rect.pivot.x;
+        var right = left + rect.rect.width;
+        var top = rect.anchoredPosition.y + rect.rect.height * (1f - rect.pivot.y);
+        var bottom = top - rect.rect.height;
+        return new LocalBounds(left, right, top, bottom);
+    }
+
+    private static bool BoundsOverlap(LocalBounds first, LocalBounds second, float padding)
+    {
+        return first.Left < second.Right + padding
+            && first.Right > second.Left - padding
+            && first.Bottom < second.Top + padding
+            && first.Top > second.Bottom - padding;
+    }
+
+    private struct LocalBounds
+    {
+        public LocalBounds(float left, float right, float top, float bottom)
+        {
+            Left = left;
+            Right = right;
+            Top = top;
+            Bottom = bottom;
+        }
+
+        public float Left { get; }
+        public float Right { get; }
+        public float Top { get; }
+        public float Bottom { get; }
     }
 
     private static Button RequireButtonField(object target, string fieldName)
@@ -299,6 +391,17 @@ public static class UpgradeClutterValidation
         }
 
         return null;
+    }
+
+    private static GameObject RequireSceneObject(string name)
+    {
+        var sceneObject = FindSceneObject(name);
+        if (sceneObject == null)
+        {
+            throw new InvalidOperationException($"Missing scene object: {name}");
+        }
+
+        return sceneObject;
     }
 
     private static object InvokePrivate(object target, string methodName, params object[] args)

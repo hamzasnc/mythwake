@@ -25,16 +25,16 @@ Remote:
 - `https://github.com/hamzasnc/mythwake.git`
 
 Important Git rule:
-- Pushes/commits should use account/author `hamzasnc`, not `devasperity`.
+- Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `26bd80b Add Unity current slice check script`
+- `57f4391 Add server accessory unequip`
 
 Current continuation:
 - Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, and runtime rig part loading.
 - Fast Rewards UI validator in `Assets/_Mythwake/Editor/FastRewardsUiValidation.cs`.
 - Summon UI validator in `Assets/_Mythwake/Editor/SummonUiValidation.cs`.
-- Upgrade clutter validator in `Assets/_Mythwake/Editor/UpgradeClutterValidation.cs` checks that old Battle/Hero upgrade controls stay hidden, Gear upgrade controls live on Gear, and debug shortcuts live in Shop/tools.
+- Upgrade clutter validator in `Assets/_Mythwake/Editor/UpgradeClutterValidation.cs` checks that old Battle/Hero upgrade controls stay hidden, Gear upgrade controls live on Gear, Hero Detail gear slots do not overlap the portrait/stats/actions, and debug shortcuts live in Shop/tools.
 - Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Current status summary in `docs/CURRENT_STATUS.md` and this handoff note.
 

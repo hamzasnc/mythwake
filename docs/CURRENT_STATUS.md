@@ -33,6 +33,7 @@ Last updated: 2026-05-25
 - Added a Paladin integration editor validator that checks the client hero definition, local summon banners, formation/fight hook anchors, backend definition/migration anchors, EN/DE localization keys, runtime portrait, combat sheets, skeletal part textures, and Paladin runtime rig part loading.
 - Added an editor validation entry point for the Summon UI so the Vanguard Oath banner, Paladin feature art, rates, carousel center card, and Paladin result popup can be checked in Unity.
 - Added an editor validation entry point for upgrade clutter so legacy Battle/Hero upgrade buttons stay hidden, Gear upgrade controls stay on Gear, and debug shortcuts stay in Shop/tools.
+- Extended the upgrade clutter validator so the 7-slot Hero Detail gear layout also has non-overlap checks against the portrait, stats, resources, and action buttons.
 - Added a `Mythwake/Validate Current Slice` editor validation entry point that runs Village UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Polished the Hero Detail gear slice: it now exposes all 2 equipment tracks plus all 5 accessory slots, `Equip Gear` opens the selected gear list, and `Remove Gear` can unequip accessories locally or through the Server Mode backend action.
 - Added backend `accessory_unequip` support, including the action catalog entry, `/gear/accessories/unequip` route, state mutation, and Player/HTTP tests.
@@ -46,4 +47,4 @@ Last updated: 2026-05-25
 
 1. Close the extra Unity project instance and run `.\scripts\check-unity-current-slice.cmd`, or run `Mythwake/Validate Current Slice` in the open editor, then fix any validator failures before continuing.
 2. Visually verify Village, Fast Rewards, Vanguard Oath/Summon result, and Paladin formation/fight presentation in Unity/emulator.
-3. Continue the visible Hero/Gear polish pass behind `Mythwake/Validate Upgrade Clutter`, especially 7-slot Hero Detail spacing in Unity/emulator.
+3. Visually verify the 7-slot Hero Detail spacing in Unity/emulator, then continue the visible Hero/Gear polish pass behind `Mythwake/Validate Upgrade Clutter`.
