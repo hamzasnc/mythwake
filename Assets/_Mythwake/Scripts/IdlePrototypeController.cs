@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.99";
+    public const string PrototypeVersion = "0.2.100";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -14700,14 +14700,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         chatCloseButton = CreateRuntimeButton(chatPopupRoot, "Chat Close Button", "Close", 0, -184, 170, 52);
         chatPopupRoot.gameObject.SetActive(false);
 
-        homeIdleInfoPopupRoot = CreateRuntimePopup(homeActionRoot, "Home Idle Info Popup", new Vector2(0, -860), new Vector2(760, 360), "Patrol Info");
-        homeIdleInfoBodyText = CreateRuntimeText(homeIdleInfoPopupRoot, "Home Idle Info Body", string.Empty, 22, new Vector2(0, -98), new Vector2(660, 172));
+        homeIdleInfoPopupRoot = CreateRuntimePopup(homeActionRoot, "Home Idle Info Popup", new Vector2(0, -820), new Vector2(760, 430), "Patrol Info");
+        homeIdleInfoBodyText = CreateRuntimeText(homeIdleInfoPopupRoot, "Home Idle Info Body", string.Empty, 22, new Vector2(0, -102), new Vector2(670, 246));
         homeIdleInfoBodyText.alignment = TextAlignmentOptions.Center;
         homeIdleInfoBodyText.enableAutoSizing = true;
         homeIdleInfoBodyText.fontSizeMin = 16;
         homeIdleInfoBodyText.fontSizeMax = 22;
         homeIdleInfoBodyText.textWrappingMode = TextWrappingModes.Normal;
-        homeIdleInfoCloseButton = CreateRuntimeButton(homeIdleInfoPopupRoot, "Home Idle Info Close Button", "Close", 0, -294, 170, 52);
+        homeIdleInfoCloseButton = CreateRuntimeButton(homeIdleInfoPopupRoot, "Home Idle Info Close Button", "Close", 0, -360, 170, 52);
         homeIdleInfoPopupRoot.gameObject.SetActive(false);
 
         campaignStageDetailPopupRoot = CreateRuntimePopup(homeActionRoot, "Campaign Stage Detail Popup", new Vector2(0, -258), new Vector2(840, 760), "Abschnitt Details");
@@ -18963,18 +18963,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var stage = GetStageDefinition(enemyLevel);
-        var secondsRemaining = Mathf.Max(1, Mathf.CeilToInt(HomeIdleRewardIntervalSeconds - homeIdleRewardTimer));
         var gold = GetHomeIdleRewardGoldAmount();
         var essence = GetHomeIdleRewardEssenceAmount();
         var rewardCopy = backendGameplayEnabled
-            ? "Server Mode zeigt den Kampf; Rewards bleiben serverseitig."
-            : $"+{FormatCompactNumber(gold)} Gold +{FormatCompactNumber(essence)} Essence alle {HomeIdleRewardIntervalSeconds:0}s.";
+            ? "Server Mode zeigt den Kampf; Rewards bleiben serverseitig.\nLokale Patrol-Ticks pausieren."
+            : FormatHomeIdleInfoRewardCopy(gold, essence);
 
         homeIdleInfoBodyText.text =
             $"Patrol {GetCampaignStageLabel(enemyLevel)}: {stage.enemyName}\n" +
             $"{rewardCopy}\n" +
-            $"Naechster Tick: {secondsRemaining}s\n" +
+            $"Tickrate: alle {HomeIdleRewardIntervalSeconds:0}s\n" +
             "Battle startet die Formation. Patrol schliesst keine Abschnitte automatisch ab.";
+    }
+
+    private string FormatHomeIdleInfoRewardCopy(int gold, int essence)
+    {
+        var secondsRemaining = Mathf.Max(1, Mathf.CeilToInt(HomeIdleRewardIntervalSeconds - homeIdleRewardTimer));
+        var lastRewardCopy = homeIdleLastRewardGold > 0 || homeIdleLastRewardEssence > 0
+            ? $"Letzte: +{FormatCompactNumber(homeIdleLastRewardGold)} Gold +{FormatCompactNumber(homeIdleLastRewardEssence)} Essence"
+            : "Letzte: noch kein Tick";
+        return $"{lastRewardCopy}\nNaechste: +{FormatCompactNumber(gold)} Gold +{FormatCompactNumber(essence)} Essence in {secondsRemaining}s";
     }
 
     private void CenterCampaignMapOnSelectedStageIfNeeded()

@@ -28,9 +28,10 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `58dc5b6 Show full home idle reward summary`
+- `e4bcb82 Improve home idle reward layout`
 
 Current continuation:
+- Home idle Patrol Info now shows last reward, next reward countdown, and tick cadence details, with validator coverage before and after local reward ticks.
 - Home idle reward summary now has a taller two-line last/next reward label and validator coverage in `Assets/_Mythwake/Editor/HomeIdleCombatValidation.cs`.
 - Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, runtime rig part loading, and Formation/Fight runtime rig visibility.
 - Dungeons UI validator in `Assets/_Mythwake/Editor/DungeonsUiValidation.cs`.
@@ -83,7 +84,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.99`
+- Prototype `0.2.100`
 - Save version `2`
 
 Important Unity scripts:
@@ -104,7 +105,7 @@ Latest local gameplay/UI batch:
 - The current Home map viewport fills the marked play area behind side controls and the Battle button; the idle patrol is below the Battle button but sits on a same-width connected map image rather than a separate dark lane.
 - The Home lower idle patrol heroes and monsters are enlarged, and `Validate Home Idle Combat` now guards the connected upper/lower map layout, progress-map region sync across main/detail/idle maps, reward progress fill behavior, two-line local last/next reward summary copy, Server Mode local-reward blocking, Server Mode Patrol Info copy, stale loot popup clearing, active reward tick, and no automatic stage clear.
 - Home idle combat now shows a short floating loot popup when the local active Gold/Myth Essence tick is granted, and the Home idle validator checks that it appears and fits.
-- The Home idle combat area is now tappable and opens a `Patrol Info` popup with current stage, enemy, active tick reward, next tick, and no-auto-clear copy; the validator clicks and closes it.
+- The Home idle combat area is now tappable and opens a `Patrol Info` popup with current stage, enemy, last reward, next reward countdown, tick cadence, and no-auto-clear copy; the validator clicks it before and after a local reward tick.
 - Tapping a Home campaign checkpoint now opens a larger `Abschnitt Details` popup with map preview, enemy formation, completion reward row, and Battle/Close controls; `Validate Home Idle Combat` checks the popup and closes it.
 - Local campaign stage clears now grant the displayed stage Myth Essence reward and return it in the action result payload; `Validate Home Idle Combat` creates a won clear and checks the stage advance plus currency increase.
 - The stage-detail Battle action is now guarded to current unlocked checkpoints only, and `Validate Home Idle Combat` clicks the current checkpoint detail Battle button into the Formation screen before returning Home.

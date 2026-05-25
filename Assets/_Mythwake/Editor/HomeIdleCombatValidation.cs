@@ -16,7 +16,7 @@ public static class HomeIdleCombatValidation
         try
         {
             ValidateHomeIdleCombatUi();
-            Debug.Log("Home Idle Combat validated: campaign map, region texture sync, popup exclusivity, reward progress, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
+            Debug.Log("Home Idle Combat validated: campaign map, region texture sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
         }
         catch (Exception ex)
         {
@@ -130,8 +130,11 @@ public static class HomeIdleCombatValidation
         var infoPopup = RequireObject("Home Idle Info Popup", true);
         var infoBody = RequireText(infoPopup, "Home Idle Info Body");
         RequireCopy(infoBody.text, "Patrol");
+        RequireCopy(infoBody.text, "Letzte:");
+        RequireCopy(infoBody.text, "Naechste:");
         RequireCopy(infoBody.text, "Gold");
         RequireCopy(infoBody.text, "Essence");
+        RequireCopy(infoBody.text, "Tickrate");
         RequireCopy(infoBody.text, "schliesst keine Abschnitte");
         AssertTextFits(infoBody, "Home Idle Info Body");
         var infoCloseButton = RequireButton("Home Idle Info Close Button");
@@ -187,6 +190,19 @@ public static class HomeIdleCombatValidation
             RequireCopy(rewardText.text, "Naechste");
             RequireLineBreak(rewardText.text, "Home Idle Reward Text after local tick");
             AssertTextFits(rewardText, "Home Idle Reward Text after local tick");
+
+            InvokePrivate(controller, "ShowHomeIdleInfoPopup");
+            Canvas.ForceUpdateCanvases();
+            var infoPopupAfterTick = RequireObject("Home Idle Info Popup", true);
+            var infoBodyAfterTick = RequireText(infoPopupAfterTick, "Home Idle Info Body");
+            RequireCopy(infoBodyAfterTick.text, "Letzte:");
+            RequireCopy(infoBodyAfterTick.text, "Naechste:");
+            RequireCopy(infoBodyAfterTick.text, "Gold");
+            RequireCopy(infoBodyAfterTick.text, "Essence");
+            RequireCopy(infoBodyAfterTick.text, "Tickrate");
+            AssertTextFits(infoBodyAfterTick, "Home Idle Info Body after local tick");
+            RequireButton("Home Idle Info Close Button").onClick.Invoke();
+            Canvas.ForceUpdateCanvases();
 
             var stageDefinition = InvokePrivate(controller, "GetStageDefinition", stageBefore);
             var wonResult = CreateWonCombatResult(controller);
