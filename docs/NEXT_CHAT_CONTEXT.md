@@ -97,7 +97,7 @@ Latest local gameplay/UI batch:
 - Fast Rewards popup now separates local and Server Mode: local shows stored time, rate, Village bonus, and ready rewards; Server Mode shows backend min/cap/rate/ready estimate and notes that Village local bonuses do not modify server rewards yet.
 - A Unity editor validator now checks Fast Rewards popup controls, local copy, Server Mode fallback copy, redeem/claim labels, and button bounds through `Mythwake/Validate Fast Rewards UI`.
 - Unity editor validators now cover Village map/build/detail/upgrade/demolish, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode. Batchmode execution is currently blocked while the project is already open in another Unity instance.
-- Hero Detail now exposes all 2 equipment tracks plus all 5 accessory slots. The localized main gear action shows Open Gear for equipment slots and Equip Gear for accessory slots, empty accessory slots show and visually highlight the best available bag copy hint, accessory lists put owned copies above empty rows and higher rarity first inside each group, the selected equipment/accessory slot list opens instead of immediately leaving for Gear, the equipment list's Open Gear row navigates to the Gear screen, and Remove Gear unequips accessories locally or through Server Mode via `/gear/accessories/unequip`.
+- Hero Detail now exposes all 2 equipment tracks plus all 6 accessory slots with armory background and slot icon art. The localized main gear action shows Open Gear for equipment slots and Equip Gear for accessory slots, empty accessory slots show and visually highlight the best available bag copy hint, accessory lists put owned copies above empty rows and higher rarity first inside each group, the selected equipment/accessory slot list opens instead of immediately leaving for Gear, the equipment list's Open Gear row navigates to the Gear screen, and Remove Gear unequips accessories locally or through Server Mode via `/gear/accessories/unequip`.
 - Backend action catalog now includes `accessory_unequip`, with Player and HTTP tests covering accessory removal and body validation.
 - Local Fast Rewards and backend AFK definitions now both use a 24h stored reward cap.
 - Paladin combat assets, combat preview, and Spine handoff validation are present.
@@ -593,7 +593,7 @@ The next chat should continue in this order unless the user redirects:
 
 6. Continue the Hero/Gear polish pass behind the new upgrade-clutter guard.
    - Run `Mythwake/Validate Upgrade Clutter` after layout changes.
-   - Visually verify the 7-slot Hero Detail gear layout in Unity/emulator.
+   - Visually verify the 8-slot Hero Detail gear layout in Unity/emulator.
    - Server Mode accessory removal now has an endpoint; next work can focus on UI feedback/spacing rather than missing backend plumbing.
    - Hero level-up belongs in Heroes or hero detail.
    - Weapon/Armor/accessory upgrades belong in Gear.

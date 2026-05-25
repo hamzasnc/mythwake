@@ -16,7 +16,7 @@ public static class UpgradeClutterValidation
         try
         {
             ValidateUpgradeClutter();
-            Debug.Log("Upgrade clutter validated: legacy Battle/Hero controls are hidden, Gear controls live on Gear, Hero Detail gear slots fit, and debug tools live on Shop.");
+            Debug.Log("Upgrade clutter validated: legacy Battle/Hero controls are hidden, Gear controls live on Gear, Hero Detail gear slots/art fit, and debug tools live on Shop.");
         }
         catch (Exception ex)
         {
@@ -119,6 +119,7 @@ public static class UpgradeClutterValidation
             RequireInsidePanel(heroDetailRoot.gameObject, gearSlots[i].gameObject);
         }
 
+        ValidateHeroDetailEquipmentArt(controller, heroDetailRoot.gameObject, gearSlots, expectedGearSlotCount);
         ValidateHeroDetailGearLayout(heroDetailRoot.gameObject, gearSlots, expectedGearSlotCount);
         ValidateHeroDetailEmptyAccessoryInventoryHint(controller, gearSlots);
 
@@ -501,6 +502,66 @@ public static class UpgradeClutterValidation
     private static string GetLocalizedText(IdlePrototypeController controller, string key)
     {
         return (string)InvokePrivate(controller, "Tr", key);
+    }
+
+    private static void ValidateHeroDetailEquipmentArt(IdlePrototypeController controller, GameObject heroDetailRoot, Button[] gearSlots, int expectedGearSlotCount)
+    {
+        var background = RequireSceneObject("Hero Detail Armory Background");
+        RequireInsidePanel(heroDetailRoot, background);
+
+        var backgroundImage = background.GetComponent<RawImage>();
+        if (backgroundImage == null || backgroundImage.texture == null)
+        {
+            throw new InvalidOperationException("Hero detail armory background should render the equipment art texture.");
+        }
+
+        if (backgroundImage.raycastTarget)
+        {
+            throw new InvalidOperationException("Hero detail armory background should not intercept gear slot input.");
+        }
+
+        var slotIcons = RequireField<RawImage[]>(controller, "heroDetailGearSlotIcons");
+        if (slotIcons.Length < expectedGearSlotCount)
+        {
+            throw new InvalidOperationException($"Hero detail should expose {expectedGearSlotCount} gear slot icons.");
+        }
+
+        for (var i = 0; i < expectedGearSlotCount; i++)
+        {
+            var icon = slotIcons[i];
+            if (icon == null)
+            {
+                throw new InvalidOperationException($"Hero detail gear slot {i + 1} is missing its icon.");
+            }
+
+            if (icon.texture == null)
+            {
+                throw new InvalidOperationException($"Hero detail gear slot {i + 1} should render equipment icon art.");
+            }
+
+            if (icon.raycastTarget)
+            {
+                throw new InvalidOperationException($"Hero detail gear slot {i + 1} icon should not intercept button input.");
+            }
+
+            if (!icon.transform.IsChildOf(gearSlots[i].transform))
+            {
+                throw new InvalidOperationException($"Hero detail gear slot {i + 1} icon should stay inside its slot.");
+            }
+
+            RequireInsidePanel(gearSlots[i].gameObject, icon.gameObject);
+            var iconRect = RequireRectTransform(icon.gameObject);
+            if (iconRect.rect.width <= 0f || iconRect.rect.height <= 0f || iconRect.rect.width > 84.5f || iconRect.rect.height > 56.5f)
+            {
+                throw new InvalidOperationException($"Hero detail gear slot {i + 1} icon should fit within the icon frame. width={iconRect.rect.width}, height={iconRect.rect.height}.");
+            }
+
+            var label = gearSlots[i].GetComponentInChildren<TMP_Text>(includeInactive: true);
+            if (label != null)
+            {
+                AssertNoOverlap(icon.gameObject, label.gameObject, 0f, "Hero Detail gear slot icon layout");
+            }
+        }
     }
 
     private static void ValidateHeroDetailGearLayout(GameObject heroDetailRoot, Button[] gearSlots, int expectedGearSlotCount)
