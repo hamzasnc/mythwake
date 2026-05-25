@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.113";
+    public const string PrototypeVersion = "0.2.114";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1306,6 +1306,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text[] campaignStageButtonMilestoneBadgeTexts;
     private Image[] campaignStageButtonClearedBadges;
     private TMP_Text[] campaignStageButtonClearedBadgeTexts;
+    private Image[] campaignStageButtonLockedBadges;
+    private TMP_Text[] campaignStageButtonLockedBadgeTexts;
     private Image[] campaignPathSegmentImages;
     private RawImage[] homeIdleHeroImages;
     private RawImage[] homeIdleEnemyImages;
@@ -14209,6 +14211,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         campaignStageButtonMilestoneBadgeTexts = new TMP_Text[nodePositions.Length];
         campaignStageButtonClearedBadges = new Image[nodePositions.Length];
         campaignStageButtonClearedBadgeTexts = new TMP_Text[nodePositions.Length];
+        campaignStageButtonLockedBadges = new Image[nodePositions.Length];
+        campaignStageButtonLockedBadgeTexts = new TMP_Text[nodePositions.Length];
 
         for (var i = 0; i < nodePositions.Length; i++)
         {
@@ -14377,6 +14381,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         clearedText.color = new Color(0.78f, 1f, 0.72f);
         clearedText.raycastTarget = false;
 
+        var lockedBadge = CreateRuntimePanel(buttonObject.transform, "Stage Locked Badge", new Vector2(-34, -50), new Vector2(54, 26), new Color(0.13f, 0.15f, 0.22f, 0.9f));
+        lockedBadge.gameObject.SetActive(false);
+        var lockedText = CreateRuntimeText(lockedBadge, "Label", "LOCK", 13, new Vector2(0, -2), new Vector2(48, 22));
+        lockedText.fontStyle = FontStyles.Bold;
+        lockedText.enableAutoSizing = true;
+        lockedText.fontSizeMin = 9;
+        lockedText.fontSizeMax = 13;
+        lockedText.textWrappingMode = TextWrappingModes.NoWrap;
+        lockedText.color = new Color(0.78f, 0.84f, 0.96f);
+        lockedText.raycastTarget = false;
+
         campaignStageButtonFrames[nodeIndex] = frame;
         campaignStageButtonSelectedHalos[nodeIndex] = selectedHalo.GetComponent<Image>();
         campaignStageButtonCurrentHalos[nodeIndex] = currentHalo.GetComponent<Image>();
@@ -14386,6 +14401,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         campaignStageButtonMilestoneBadgeTexts[nodeIndex] = milestoneText;
         campaignStageButtonClearedBadges[nodeIndex] = clearedBadge.GetComponent<Image>();
         campaignStageButtonClearedBadgeTexts[nodeIndex] = clearedText;
+        campaignStageButtonLockedBadges[nodeIndex] = lockedBadge.GetComponent<Image>();
+        campaignStageButtonLockedBadgeTexts[nodeIndex] = lockedText;
         campaignStageButtonIcons[nodeIndex] = icon;
         campaignStageButtonTexts[nodeIndex] = text;
 
@@ -18800,6 +18817,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 campaignStageButtonClearedBadgeTexts[i].text = "OK";
                 campaignStageButtonClearedBadgeTexts[i].color = new Color(0.78f, 1f, 0.72f);
+            }
+
+            if (campaignStageButtonLockedBadges != null && i < campaignStageButtonLockedBadges.Length && campaignStageButtonLockedBadges[i] != null)
+            {
+                campaignStageButtonLockedBadges[i].gameObject.SetActive(isLocked);
+                campaignStageButtonLockedBadges[i].color = new Color(0.13f, 0.15f, 0.22f, 0.9f);
+            }
+
+            if (campaignStageButtonLockedBadgeTexts != null && i < campaignStageButtonLockedBadgeTexts.Length && campaignStageButtonLockedBadgeTexts[i] != null)
+            {
+                campaignStageButtonLockedBadgeTexts[i].text = "LOCK";
+                campaignStageButtonLockedBadgeTexts[i].color = new Color(0.78f, 0.84f, 0.96f);
             }
 
             campaignStageButtons[i].interactable = !campaignFightInProgress && !backendRequestInProgress && !backendLifecycleFlushInProgress;
