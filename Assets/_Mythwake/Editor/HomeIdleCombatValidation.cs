@@ -16,7 +16,7 @@ public static class HomeIdleCombatValidation
         try
         {
             ValidateHomeIdleCombatUi();
-            Debug.Log("Home Idle Combat validated: campaign map, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
+            Debug.Log("Home Idle Combat validated: campaign map, popup exclusivity, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
         }
         catch (Exception ex)
         {
@@ -54,6 +54,8 @@ public static class HomeIdleCombatValidation
         {
             throw new InvalidOperationException($"Campaign map should use area_map_scorched_plains, got '{mapImage.texture.name}'.");
         }
+
+        ValidateHomePopupExclusivity(controller);
 
         var preview = RequireObject("Campaign Stage Preview", true);
         var previewText = RequireText(preview, "Campaign Stage Preview Text");
@@ -274,6 +276,35 @@ public static class HomeIdleCombatValidation
         Canvas.ForceUpdateCanvases();
     }
 
+    private static void ValidateHomePopupExclusivity(IdlePrototypeController controller)
+    {
+        InvokePrivate(controller, "ShowFastRewardsPopup");
+        Canvas.ForceUpdateCanvases();
+        RequireObject("Fast Rewards Popup", true);
+
+        InvokePrivate(controller, "ShowHomeIdleInfoPopup");
+        Canvas.ForceUpdateCanvases();
+        RequireObject("Home Idle Info Popup", true);
+        RequireInactive("Fast Rewards Popup", "Home Idle Info should close Fast Rewards.");
+
+        InvokePrivate(controller, "ShowFastRewardsPopup");
+        Canvas.ForceUpdateCanvases();
+        RequireObject("Fast Rewards Popup", true);
+
+        var currentStage = GetPrivateField<int>(controller, "enemyLevel");
+        var startStage = (int)InvokePrivate(controller, "GetCampaignMapStartStage");
+        var currentNodeIndex = Mathf.Clamp(currentStage - startStage, 0, 9);
+        RequireButton($"Campaign Stage Node {currentNodeIndex + 1}").onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+
+        RequireObject("Campaign Stage Detail Popup", true);
+        RequireInactive("Fast Rewards Popup", "Campaign Stage Detail should close Fast Rewards.");
+        RequireInactive("Home Idle Info Popup", "Campaign Stage Detail should close Home Idle Info.");
+
+        RequireButton("Stage Detail Close Button").onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+    }
+
     private static void ValidateCurrentStageDetailBattleFlow(IdlePrototypeController controller)
     {
         var currentStage = GetPrivateField<int>(controller, "enemyLevel");
@@ -350,6 +381,15 @@ public static class HomeIdleCombatValidation
         }
 
         return gameObject;
+    }
+
+    private static void RequireInactive(string name, string context)
+    {
+        var gameObject = RequireObject(name, false);
+        if (gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException($"{context} {name} is still active.");
+        }
     }
 
     private static Button RequireButton(string name)

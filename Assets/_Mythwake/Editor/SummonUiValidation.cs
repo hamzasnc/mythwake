@@ -18,7 +18,7 @@ public static class SummonUiValidation
         try
         {
             ValidateSummonUi();
-            Debug.Log("Summon UI validated: Vanguard banner, Paladin feature art, rates, carousel, result popup, and repeat summon button states are present.");
+            Debug.Log("Summon UI validated: Vanguard banner, Paladin feature art, rates, carousel, result popup, auto toggle, close flow, and repeat summon button states are present.");
         }
         catch (Exception ex)
         {
@@ -104,10 +104,17 @@ public static class SummonUiValidation
         var resultTenCost = GetPrivateField<TMP_Text>(controller, "summonResultTenCostText");
         var resultMaxCost = GetPrivateField<TMP_Text>(controller, "summonResultMaxCostText");
         var autoToggleText = GetPrivateField<TMP_Text>(controller, "summonAutoToggleText");
+        var autoToggleButton = GetPrivateField<Button>(controller, "summonAutoToggleButton");
+        var autoToggleMark = GetPrivateField<TMP_Text>(controller, "summonAutoCheckboxMarkText");
+        var resultCloseButton = GetPrivateField<Button>(controller, "summonResultCloseButton");
 
         RequireCopy(resultTitle.text, "Summon x10 Result");
         RequireResultSlot(resultNames, resultCounts, resultImages, 0, "Paladin", "x3", PaladinHeroId);
+        ValidateSummonResultSlots(resultNames, resultCounts, resultImages, 1);
         RequireCopy(autoToggleText.text, "Auto-Summon");
+        AssertTextFits(resultTitle, "Summon result title");
+        AssertTextFits(autoToggleText, "Summon auto toggle label");
+        ValidateSummonAutoToggle(autoToggleButton, autoToggleMark, autoToggleText);
 
         if (GetButtonLabel(resultTenButton) != "x10" || GetButtonLabel(resultMaxButton) != "x300")
         {
@@ -124,6 +131,13 @@ public static class SummonUiValidation
         InvokePrivate(controller, "RefreshUi");
         Canvas.ForceUpdateCanvases();
         AssertResultRepeatButtons(resultTenButton, resultMaxButton, resultTenCost, resultMaxCost, "315", "9450", true, false, "Summon result x10-only gem state");
+
+        resultCloseButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        if (resultRoot.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Summon result popup should close from its close button.");
+        }
     }
 
     private static int FindHeroIndex(string heroId)
@@ -172,6 +186,67 @@ public static class SummonUiValidation
         {
             throw new InvalidOperationException($"Summon result slot {slotIndex} should show {expectedTextureName} art.");
         }
+    }
+
+    private static void ValidateSummonResultSlots(TMP_Text[] names, TMP_Text[] counts, RawImage[] images, int visibleSlotCount)
+    {
+        for (var i = 0; i < visibleSlotCount; i++)
+        {
+            if (names == null || i >= names.Length || names[i] == null)
+            {
+                throw new InvalidOperationException($"Summon result slot {i} is missing its name label.");
+            }
+
+            if (counts == null || i >= counts.Length || counts[i] == null)
+            {
+                throw new InvalidOperationException($"Summon result slot {i} is missing its count label.");
+            }
+
+            if (images == null || i >= images.Length || images[i] == null || images[i].texture == null)
+            {
+                throw new InvalidOperationException($"Summon result slot {i} is missing loaded hero art.");
+            }
+
+            AssertTextFits(names[i], $"Summon result slot {i} name");
+            AssertTextFits(counts[i], $"Summon result slot {i} count");
+        }
+
+        for (var i = visibleSlotCount; names != null && i < names.Length; i++)
+        {
+            var card = names[i] == null ? null : names[i].transform.parent;
+            if (card != null && card.gameObject.activeInHierarchy)
+            {
+                throw new InvalidOperationException($"Summon result slot {i} should be hidden when it has no draw count.");
+            }
+        }
+    }
+
+    private static void ValidateSummonAutoToggle(Button autoToggleButton, TMP_Text autoToggleMark, TMP_Text autoToggleText)
+    {
+        if (autoToggleButton == null || autoToggleMark == null || autoToggleText == null)
+        {
+            throw new InvalidOperationException("Summon auto toggle controls should exist in the result popup.");
+        }
+
+        autoToggleButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        if (autoToggleMark.text != "X")
+        {
+            throw new InvalidOperationException($"Summon auto toggle should show an X mark after enabling, got '{autoToggleMark.text}'.");
+        }
+
+        RequireCopy(autoToggleText.text, "Auto-Summon");
+        AssertTextFits(autoToggleText, "Summon auto toggle enabled label");
+
+        autoToggleButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        if (!string.IsNullOrEmpty(autoToggleMark.text))
+        {
+            throw new InvalidOperationException($"Summon auto toggle should clear its mark after disabling, got '{autoToggleMark.text}'.");
+        }
+
+        RequireCopy(autoToggleText.text, "Auto-Summon");
+        AssertTextFits(autoToggleText, "Summon auto toggle disabled label");
     }
 
     private static void AssertResultRepeatButtons(Button tenButton, Button maxButton, TMP_Text tenCost, TMP_Text maxCost, string expectedTenCost, string expectedMaxCost, bool expectedTenInteractable, bool expectedMaxInteractable, string context)
