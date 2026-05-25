@@ -121,6 +121,10 @@ func TestProgressionCosts(t *testing.T) {
 	if !ok || accessory.SlotID != "earrings" || accessory.RarityID != "r0" || accessory.FuseTargetID != "accessory_earrings_r1" {
 		t.Fatalf("unexpected starter accessory definition: %#v ok=%v", accessory, ok)
 	}
+	headgear, ok := AccessoryDefinitionByID("accessory_headgear_r0")
+	if !ok || headgear.SlotID != "headgear" || headgear.RarityID != "r0" || headgear.FuseTargetID != "accessory_headgear_r1" || headgear.HealthPerLevel != 12 {
+		t.Fatalf("unexpected headgear accessory definition: %#v ok=%v", headgear, ok)
+	}
 	rarity, ok := AccessoryRarityDefinitionByID("r0")
 	if !ok || rarity.MaxLevel != 20 || rarity.FuseCopyCost != 3 {
 		t.Fatalf("unexpected r0 rarity definition: %#v ok=%v", rarity, ok)

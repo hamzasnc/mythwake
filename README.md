@@ -47,7 +47,7 @@ Current prototype:
 - Starter equipment balance is defined through stable server/database-ready definitions
 - Core prototype balance is being reshaped into code-side definition rows with stable IDs for later database migration
 - Accessory gear system with Ohrringe, Kette, Armband, Handschuhe, Schuhe, and Helm slots
-- Accessory slot/rarity pairs now have item-like definitions with stable IDs, level caps, stat scaling, drop weights, and fuse targets
+- Accessory slot/rarity pairs now have item-like client/backend definitions with stable IDs, level caps, stat scaling, drop weights, and fuse targets
 - Accessory items have rarity tiers R0-R4, can be equipped, leveled, and saved locally
 - Accessory max level starts at 20 for R0 and increases by 10 per rarity tier
 - Gear Dungeon drops random accessory copies
@@ -114,6 +114,7 @@ Backend:
 - Backend hero definitions now include server-owned stat scaling and level/ascension caps, and team ATK/HP/Power are derived from those definitions
 - Backend starter equipment definitions now include server-owned stat scaling and max-level caps, and equipment training validates against those definitions
 - Backend Accessory equip, level, and fuse actions now validate against server-owned accessory and rarity definitions instead of deriving slot/fuse behavior from ID strings
+- Backend accessory definition snapshots and PostgreSQL seeds include all 6 client slots, including `headgear`/Helm and its R0-R4 item definitions
 - Backend Accessory unequip returns the equipped copy to inventory and refreshes authoritative team stats
 - Equipped Accessories now contribute definition-based ATK/HP to backend team stats
 - PostgreSQL now seeds DB-ready hero, campaign, reward, progression cost, summon, mission, and Mission Track definition tables

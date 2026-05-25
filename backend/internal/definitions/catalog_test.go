@@ -56,14 +56,14 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if len(snapshot.Dungeons) != 3 {
 		t.Fatalf("expected 3 dungeons, got %#v", snapshot.Dungeons)
 	}
-	if len(snapshot.AccessorySlots) != 5 {
-		t.Fatalf("expected 5 accessory slot definitions, got %#v", snapshot.AccessorySlots)
+	if len(snapshot.AccessorySlots) != 6 {
+		t.Fatalf("expected 6 accessory slot definitions, got %#v", snapshot.AccessorySlots)
 	}
 	if len(snapshot.AccessoryRarities) != 5 {
 		t.Fatalf("expected 5 accessory rarity definitions, got %#v", snapshot.AccessoryRarities)
 	}
-	if len(snapshot.Accessories) != 25 {
-		t.Fatalf("expected 25 accessory definitions, got %d", len(snapshot.Accessories))
+	if len(snapshot.Accessories) != 30 {
+		t.Fatalf("expected 30 accessory definitions, got %d", len(snapshot.Accessories))
 	}
 	if len(snapshot.ProgressionCosts) == 0 {
 		t.Fatal("expected progression cost definitions")
@@ -149,8 +149,15 @@ func TestSnapshotCarriesCampaignAndAccessoryDefinitionData(t *testing.T) {
 	}
 
 	var found bool
+	var foundHeadgear bool
 	for _, definition := range snapshot.Accessories {
 		if definition.AccessoryID != "accessory_earrings_r0" {
+			if definition.AccessoryID == "accessory_headgear_r0" {
+				foundHeadgear = true
+				if definition.SlotID != "headgear" || definition.RarityID != "r0" || definition.FuseTargetID != "accessory_headgear_r1" {
+					t.Fatalf("unexpected headgear accessory definition: %#v", definition)
+				}
+			}
 			continue
 		}
 		found = true
@@ -160,6 +167,9 @@ func TestSnapshotCarriesCampaignAndAccessoryDefinitionData(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("expected accessory_earrings_r0 definition")
+	}
+	if !foundHeadgear {
+		t.Fatal("expected accessory_headgear_r0 definition")
 	}
 }
 

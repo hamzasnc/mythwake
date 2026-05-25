@@ -28,7 +28,7 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `57f4391 Add server accessory unequip`
+- `65fe7e0 Reposition gear showcase labels`
 
 Current continuation:
 - Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, and runtime rig part loading.
@@ -99,6 +99,7 @@ Latest local gameplay/UI batch:
 - Unity editor validators now cover Village map/build/detail/upgrade/demolish, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode. Batchmode execution is currently blocked while the project is already open in another Unity instance.
 - Hero Detail now exposes all 2 equipment tracks plus all 6 accessory slots with armory background and slot icon art. The localized main gear action shows Open Gear for equipment slots and Equip Gear for accessory slots, empty accessory slots show and visually highlight the best available bag copy hint, accessory lists put owned copies above empty rows and higher rarity first inside each group, the selected equipment/accessory slot list opens instead of immediately leaving for Gear, the equipment list's Open Gear row navigates to the Gear screen, and Remove Gear unequips accessories locally or through Server Mode via `/gear/accessories/unequip`.
 - Backend action catalog now includes `accessory_unequip`, with Player and HTTP tests covering accessory removal and body validation.
+- Backend accessory definitions now include the sixth `headgear`/Helm slot and R0-R4 headgear item definitions in both the static snapshot and PostgreSQL migrations, so Server Mode matches the 6-slot client UI.
 - Local Fast Rewards and backend AFK definitions now both use a 24h stored reward cap.
 - Paladin combat assets, combat preview, and Spine handoff validation are present.
 - Paladin is now also featured in the local `Vanguard Oath` summon banner and included in that banner's Epic pool.

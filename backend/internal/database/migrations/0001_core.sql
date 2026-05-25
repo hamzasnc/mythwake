@@ -101,7 +101,8 @@ INSERT INTO accessory_slot_definitions (id, display_name, sort_order) VALUES
 	('necklace', 'Kette', 20),
 	('bracelet', 'Armband', 30),
 	('gloves', 'Handschuhe', 40),
-	('shoes', 'Schuhe', 50)
+	('shoes', 'Schuhe', 50),
+	('headgear', 'Helm', 60)
 ON CONFLICT (id) DO UPDATE SET
 	display_name = EXCLUDED.display_name,
 	sort_order = EXCLUDED.sort_order;
@@ -151,7 +152,12 @@ INSERT INTO accessory_definitions (
 	('accessory_shoes_r1', 'shoes', 'r1', 3, 26, 55, 'accessory_shoes_r2'),
 	('accessory_shoes_r2', 'shoes', 'r2', 5, 44, 22, 'accessory_shoes_r3'),
 	('accessory_shoes_r3', 'shoes', 'r3', 8, 70, 8, 'accessory_shoes_r4'),
-	('accessory_shoes_r4', 'shoes', 'r4', 12, 100, 2, NULL)
+	('accessory_shoes_r4', 'shoes', 'r4', 12, 100, 2, NULL),
+	('accessory_headgear_r0', 'headgear', 'r0', 2, 12, 120, 'accessory_headgear_r1'),
+	('accessory_headgear_r1', 'headgear', 'r1', 4, 24, 55, 'accessory_headgear_r2'),
+	('accessory_headgear_r2', 'headgear', 'r2', 6, 36, 22, 'accessory_headgear_r3'),
+	('accessory_headgear_r3', 'headgear', 'r3', 8, 48, 8, 'accessory_headgear_r4'),
+	('accessory_headgear_r4', 'headgear', 'r4', 10, 60, 2, NULL)
 ON CONFLICT (id) DO UPDATE SET
 	slot_id = EXCLUDED.slot_id,
 	rarity_id = EXCLUDED.rarity_id,

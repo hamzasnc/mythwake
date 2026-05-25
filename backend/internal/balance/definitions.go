@@ -252,6 +252,7 @@ var accessorySlotDefinitions = []AccessorySlotDefinition{
 	{ID: "bracelet", DisplayName: "Armband", SortOrder: 30},
 	{ID: "gloves", DisplayName: "Handschuhe", SortOrder: 40},
 	{ID: "shoes", DisplayName: "Schuhe", SortOrder: 50},
+	{ID: "headgear", DisplayName: "Helm", SortOrder: 60},
 }
 
 var accessoryRarityDefinitions = []AccessoryRarityDefinition{
@@ -288,6 +289,11 @@ var accessoryDefinitions = []AccessoryDefinition{
 	{ID: "accessory_shoes_r2", SlotID: "shoes", RarityID: "r2", AttackPerLevel: 5, HealthPerLevel: 44, DropWeight: 22, FuseTargetID: "accessory_shoes_r3"},
 	{ID: "accessory_shoes_r3", SlotID: "shoes", RarityID: "r3", AttackPerLevel: 8, HealthPerLevel: 70, DropWeight: 8, FuseTargetID: "accessory_shoes_r4"},
 	{ID: "accessory_shoes_r4", SlotID: "shoes", RarityID: "r4", AttackPerLevel: 12, HealthPerLevel: 100, DropWeight: 2},
+	{ID: "accessory_headgear_r0", SlotID: "headgear", RarityID: "r0", AttackPerLevel: 2, HealthPerLevel: 12, DropWeight: 120, FuseTargetID: "accessory_headgear_r1"},
+	{ID: "accessory_headgear_r1", SlotID: "headgear", RarityID: "r1", AttackPerLevel: 4, HealthPerLevel: 24, DropWeight: 55, FuseTargetID: "accessory_headgear_r2"},
+	{ID: "accessory_headgear_r2", SlotID: "headgear", RarityID: "r2", AttackPerLevel: 6, HealthPerLevel: 36, DropWeight: 22, FuseTargetID: "accessory_headgear_r3"},
+	{ID: "accessory_headgear_r3", SlotID: "headgear", RarityID: "r3", AttackPerLevel: 8, HealthPerLevel: 48, DropWeight: 8, FuseTargetID: "accessory_headgear_r4"},
+	{ID: "accessory_headgear_r4", SlotID: "headgear", RarityID: "r4", AttackPerLevel: 10, HealthPerLevel: 60, DropWeight: 2},
 }
 
 var dungeonDefinitions = map[string]DungeonDefinition{
