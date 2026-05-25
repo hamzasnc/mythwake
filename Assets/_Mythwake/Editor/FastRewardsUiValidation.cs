@@ -16,7 +16,7 @@ public static class FastRewardsUiValidation
         try
         {
             ValidateFastRewardsUi();
-            Debug.Log("Fast Rewards UI validated: popup controls, local/capped copy, cap-left copy, popup exclusivity, close flow, reward button state, and Server Mode fallback copy are present.");
+            Debug.Log("Fast Rewards UI validated: popup controls, local/capped copy, cap-left copy, popup exclusivity, close flow, reward button state, and Server Mode claim timing copy are present.");
         }
         catch (Exception ex)
         {
@@ -105,6 +105,31 @@ public static class FastRewardsUiValidation
             throw new InvalidOperationException("Fast Rewards Server Mode fallback Claim button should stay disabled without a backend session.");
         }
 
+        SetPrivateField(controller, "backendDefinitions", CreateServerAfkDefinitions());
+        SetPrivateField(controller, "hasBackendDefinitions", true);
+        SetPrivateField(controller, "backendLastAfkClaimUtc", DateTime.UtcNow.ToString("o"));
+        InvokePrivate(controller, "RefreshFastRewardsPopupUi");
+        Canvas.ForceUpdateCanvases();
+
+        RequireCopy(bodyText.text, "Claim status: wait");
+        AssertTextFits(bodyText, "Fast Rewards Server Mode waiting body");
+        if (redeemButton.interactable)
+        {
+            throw new InvalidOperationException("Fast Rewards Server Mode Claim button should stay disabled until the backend min claim time is reached.");
+        }
+
+        SetPrivateField(controller, "backendLastAfkClaimUtc", DateTime.UtcNow.AddSeconds(-660).ToString("o"));
+        InvokePrivate(controller, "RefreshFastRewardsPopupUi");
+        Canvas.ForceUpdateCanvases();
+
+        RequireCopy(bodyText.text, "Claim status: ready");
+        RequireCopy(bodyText.text, "Ready estimate:");
+        AssertTextFits(bodyText, "Fast Rewards Server Mode ready body");
+        if (redeemButton.interactable)
+        {
+            throw new InvalidOperationException("Fast Rewards Server Mode Claim button should still require a backend session even after the min claim time is reached.");
+        }
+
         if (!popup.activeInHierarchy)
         {
             throw new InvalidOperationException("Fast Rewards popup should remain active after local and Server Mode refreshes.");
@@ -157,6 +182,28 @@ public static class FastRewardsUiValidation
         {
             throw new InvalidOperationException($"Fast Rewards local button label should stay Redeem for '{expectedStoredLine}', got '{buttonLabel}'.");
         }
+    }
+
+    private static MythwakeDefinitionSnapshotDto CreateServerAfkDefinitions()
+    {
+        return new MythwakeDefinitionSnapshotDto
+        {
+            contentHash = "fast-rewards-validator",
+            afkRewards = new[]
+            {
+                new MythwakeAfkRewardDefinitionDto
+                {
+                    afkRewardId = "afk_main",
+                    rewardId = "reward_afk_main",
+                    minClaimSeconds = 600,
+                    maxClaimSeconds = 86400,
+                    tickSeconds = 60,
+                    baseMythEssencePerTick = 10,
+                    mythEssencePerStage = 1,
+                    goldPerMythEssenceDivisor = 1
+                }
+            }
+        };
     }
 
     private static void AssertInsideParent(GameObject parent, GameObject child)

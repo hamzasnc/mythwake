@@ -28,9 +28,10 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `888342e Expand home idle patrol info`
+- `df73133 Show fast rewards cap time`
 
 Current continuation:
+- Server Mode Fast Rewards now shows claim-status copy and gates the Claim button until the backend min claim time is reached and a backend session exists.
 - Fast Rewards now shows remaining time before the 24h cap and has validator coverage for normal, empty, and capped cap-left states.
 - Home idle Patrol Info now shows last reward, next reward countdown, and tick cadence details, with validator coverage before and after local reward ticks.
 - Home idle reward summary now has a taller two-line last/next reward label and validator coverage in `Assets/_Mythwake/Editor/HomeIdleCombatValidation.cs`.
@@ -85,7 +86,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.101`
+- Prototype `0.2.102`
 - Save version `2`
 
 Important Unity scripts:
@@ -98,8 +99,8 @@ Latest local gameplay/UI batch:
 - Village building upgrades spend Myth Essence locally and route through the existing backend Village upgrade action in Server Mode.
 - Village building details show placeholder bonuses. In local mode, built building type and level apply small Team ATK/HP or Fast Rewards Gold/Essence rate boosts. Server Mode remains backend-authoritative and does not add these local stat bonuses on top of backend snapshot stats.
 - Village bonuses are intentionally local-only until the Village balance/definition pass.
-- Fast Rewards popup now separates local and Server Mode: local shows stored time, remaining cap time, rate, Village bonus, and ready rewards; Server Mode shows backend min/cap/rate/ready estimate and notes that Village local bonuses do not modify server rewards yet.
-- A Unity editor validator now checks Fast Rewards popup controls, local copy, cap-left copy, 0s/capped 24h states, popup exclusivity, close flow, Server Mode fallback copy, disabled no-session fallback claim state, redeem/claim labels, text fit, and button bounds through `Mythwake/Validate Fast Rewards UI`.
+- Fast Rewards popup now separates local and Server Mode: local shows stored time, remaining cap time, rate, Village bonus, and ready rewards; Server Mode shows backend min/cap/rate, claim status, ready estimate, and notes that Village local bonuses do not modify server rewards yet.
+- A Unity editor validator now checks Fast Rewards popup controls, local copy, cap-left copy, 0s/capped 24h states, popup exclusivity, close flow, Server Mode fallback copy, disabled no-session fallback, waiting/ready server claim status, redeem/claim labels, text fit, and button bounds through `Mythwake/Validate Fast Rewards UI`.
 - Home now has a first AFK-Arena-style idle combat slice: the campaign map remains in the background with clickable stage-node info, while a foreground patrol fight animates three formation heroes against current-stage monsters and grants small active local Gold/Myth Essence ticks without changing `enemyLevel`.
 - The Home campaign map now uses `area_map_scorched_plains`, is a larger vertical ScrollRect with the checkpoints on the scrollable content, and has a connected lower idle mini-map background behind the patrol fight.
 - Latest Home layout pass imports the remaining `area_map_*` region images, keeps the main map pulled up under the resource bar, and extends the lower idle map background directly from the main map down behind heroes and monsters.

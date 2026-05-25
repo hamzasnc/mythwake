@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.101";
+    public const string PrototypeVersion = "0.2.102";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -20040,7 +20040,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (fastRewardsRedeemButton != null)
             {
-                fastRewardsRedeemButton.interactable = backendClient != null && backendClient.HasSession && !backendRequestInProgress;
+                fastRewardsRedeemButton.interactable = false;
             }
 
             return;
@@ -20050,16 +20050,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var claimSeconds = Mathf.Clamp(elapsedSeconds, 0, Mathf.Max(definition.maxClaimSeconds, definition.minClaimSeconds));
         CalculateBackendAfkReward(definition, elapsedSeconds, enemyLevel, out var pendingGold, out var pendingEssence);
         var elapsedText = elapsedKnown ? FormatDuration(claimSeconds) : "unknown";
+        var claimReady = IsBackendFastRewardClaimReady(definition, elapsedKnown, elapsedSeconds);
         fastRewardsPopupText.text =
             "Server Mode: backend-authoritative rewards\n" +
             $"Timer: {elapsedText} / {FormatDuration(definition.maxClaimSeconds)}  Min {FormatDuration(definition.minClaimSeconds)}\n" +
+            $"Claim status: {FormatBackendFastRewardClaimStatus(definition, elapsedKnown, elapsedSeconds)}\n" +
             $"Rate: +{FormatRate(GetBackendAfkGoldPerSecond(definition, enemyLevel))} Gold/s   +{FormatRate(GetBackendAfkEssencePerSecond(definition, enemyLevel))} Essence/s\n" +
             "Village local bonuses do not modify server rewards yet.\n" +
             $"Ready estimate: +{FormatCompactNumber(pendingGold)} Gold   +{FormatCompactNumber(pendingEssence)} Essence";
 
         if (fastRewardsRedeemButton != null)
         {
-            fastRewardsRedeemButton.interactable = backendClient != null && backendClient.HasSession && !backendRequestInProgress;
+            fastRewardsRedeemButton.interactable = backendClient != null && backendClient.HasSession && !backendRequestInProgress && claimReady;
         }
     }
 
@@ -20078,6 +20080,22 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private string FormatFastRewardsCapTime(int remainingSeconds)
     {
         return remainingSeconds <= 0 ? "capped" : FormatDuration(remainingSeconds);
+    }
+
+    private bool IsBackendFastRewardClaimReady(MythwakeAfkRewardDefinitionDto definition, bool elapsedKnown, int elapsedSeconds)
+    {
+        return elapsedKnown && elapsedSeconds >= Mathf.Max(0, definition.minClaimSeconds);
+    }
+
+    private string FormatBackendFastRewardClaimStatus(MythwakeAfkRewardDefinitionDto definition, bool elapsedKnown, int elapsedSeconds)
+    {
+        if (!elapsedKnown)
+        {
+            return "sync server timer first";
+        }
+
+        var secondsUntilReady = Mathf.Max(0, definition.minClaimSeconds) - elapsedSeconds;
+        return secondsUntilReady <= 0 ? "ready" : $"wait {FormatDuration(secondsUntilReady)}";
     }
 
     private bool TryGetBackendAfkElapsedSeconds(out int elapsedSeconds)
