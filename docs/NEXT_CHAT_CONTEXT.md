@@ -34,7 +34,7 @@ Current continuation:
 - Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, and runtime rig part loading.
 - Fast Rewards UI validator in `Assets/_Mythwake/Editor/FastRewardsUiValidation.cs`.
 - Summon UI validator in `Assets/_Mythwake/Editor/SummonUiValidation.cs`.
-- Upgrade clutter validator in `Assets/_Mythwake/Editor/UpgradeClutterValidation.cs` checks that old Battle/Hero upgrade controls stay hidden, Gear upgrade controls live on Gear, Hero Detail gear slots do not overlap the portrait/stats/actions, Hero Detail gear lists stay inside their popup, and debug shortcuts live in Shop/tools.
+- Upgrade clutter validator in `Assets/_Mythwake/Editor/UpgradeClutterValidation.cs` checks that old Battle/Hero upgrade controls stay hidden, Gear upgrade controls live on Gear, Hero Detail gear slots do not overlap the portrait/stats/actions, Hero Detail gear lists stay inside their popup, contextual Hero Detail gear action labels are correct, and debug shortcuts live in Shop/tools.
 - Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Current status summary in `docs/CURRENT_STATUS.md` and this handoff note.
 
@@ -97,7 +97,7 @@ Latest local gameplay/UI batch:
 - Fast Rewards popup now separates local and Server Mode: local shows stored time, rate, Village bonus, and ready rewards; Server Mode shows backend min/cap/rate/ready estimate and notes that Village local bonuses do not modify server rewards yet.
 - A Unity editor validator now checks Fast Rewards popup controls, local copy, Server Mode fallback copy, redeem/claim labels, and button bounds through `Mythwake/Validate Fast Rewards UI`.
 - Unity editor validators now cover Village map/build/detail/upgrade/demolish, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode. Batchmode execution is currently blocked while the project is already open in another Unity instance.
-- Hero Detail now exposes all 2 equipment tracks plus all 5 accessory slots. `Equip Gear` opens the selected equipment/accessory slot list instead of immediately leaving for Gear, the equipment list's `Open Gear` row navigates to the Gear screen, and `Remove Gear` unequips accessories locally or through Server Mode via `/gear/accessories/unequip`.
+- Hero Detail now exposes all 2 equipment tracks plus all 5 accessory slots. The main gear action shows `Open Gear` for equipment slots and `Equip Gear` for accessory slots, opens the selected equipment/accessory slot list instead of immediately leaving for Gear, the equipment list's `Open Gear` row navigates to the Gear screen, and `Remove Gear` unequips accessories locally or through Server Mode via `/gear/accessories/unequip`.
 - Backend action catalog now includes `accessory_unequip`, with Player and HTTP tests covering accessory removal and body validation.
 - Local Fast Rewards and backend AFK definitions now both use a 24h stored reward cap.
 - Paladin combat assets, combat preview, and Spine handoff validation are present.

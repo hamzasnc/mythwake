@@ -17533,8 +17533,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshHeroDetailGearList();
 
         SetButtonLabel(heroDetailLevelButton, IsHeroLevelMax(heroIndex) ? "Max Level" : "Level Up");
-        SetButtonLabel(heroDetailEquipGearButton, "Equip Gear");
-        SetButtonLabel(heroDetailRemoveGearButton, "Remove Gear");
         SetButtonInteractable(heroDetailLevelButton, !IsHeroLevelMax(heroIndex) && mythEssence >= upgradeCost);
         RefreshHeroDetailGearActionButtons(true);
     }
@@ -17805,8 +17803,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void RefreshHeroDetailGearActionButtons(bool canManageHeroes)
     {
+        SetButtonLabel(heroDetailEquipGearButton, GetHeroDetailEquipGearButtonLabel());
+        SetButtonLabel(heroDetailRemoveGearButton, "Remove Gear");
         SetButtonInteractable(heroDetailEquipGearButton, canManageHeroes);
         SetButtonInteractable(heroDetailRemoveGearButton, canManageHeroes && CanRemoveSelectedHeroDetailAccessory());
+    }
+
+    private string GetHeroDetailEquipGearButtonLabel()
+    {
+        return selectedHeroDetailGearSlotIndex >= 0 && selectedHeroDetailGearSlotIndex < 2 ? "Open Gear" : "Equip Gear";
     }
 
     private bool CanRemoveSelectedHeroDetailAccessory()

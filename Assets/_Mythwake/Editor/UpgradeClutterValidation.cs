@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -94,7 +95,8 @@ public static class UpgradeClutterValidation
         }
 
         RequireInsidePanel(heroDetailRoot.gameObject, RequireButtonField(controller, "heroDetailLevelButton").gameObject);
-        RequireInsidePanel(heroDetailRoot.gameObject, RequireButtonField(controller, "heroDetailEquipGearButton").gameObject);
+        var equipGearButton = RequireButtonField(controller, "heroDetailEquipGearButton");
+        RequireInsidePanel(heroDetailRoot.gameObject, equipGearButton.gameObject);
         var removeGearButton = RequireButtonField(controller, "heroDetailRemoveGearButton");
         RequireInsidePanel(heroDetailRoot.gameObject, removeGearButton.gameObject);
 
@@ -128,12 +130,13 @@ public static class UpgradeClutterValidation
         var gearListCloseButton = RequireButtonField(controller, "heroDetailGearListCloseButton");
         var gearOptionButtons = RequireField<Button[]>(controller, "heroDetailGearOptionButtons");
         ValidateHeroDetailGearListLayout(heroDetailRoot.gameObject, gearListRoot.gameObject, gearListCloseButton, gearOptionButtons);
-        ValidateHeroDetailEquipmentGearList(controller, heroDetailRoot, gearListRoot, gearOptionButtons);
+        ValidateHeroDetailEquipmentGearList(controller, heroDetailRoot, gearListRoot, equipGearButton, gearOptionButtons);
 
         SetPrivateField(controller, "backendGameplayEnabled", false);
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, 0, 1);
         InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
         Canvas.ForceUpdateCanvases();
+        AssertButtonLabel(equipGearButton, "Equip Gear", "Hero detail accessory action should keep the Equip Gear label.");
         if (!(bool)InvokePrivate(controller, "CanRemoveSelectedHeroDetailAccessory") || !removeGearButton.interactable)
         {
             throw new InvalidOperationException("Hero detail Remove Gear should be available for a locally equipped accessory slot.");
@@ -149,12 +152,13 @@ public static class UpgradeClutterValidation
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, -1, 0);
     }
 
-    private static void ValidateHeroDetailEquipmentGearList(IdlePrototypeController controller, RectTransform heroDetailRoot, RectTransform gearListRoot, Button[] gearOptionButtons)
+    private static void ValidateHeroDetailEquipmentGearList(IdlePrototypeController controller, RectTransform heroDetailRoot, RectTransform gearListRoot, Button equipGearButton, Button[] gearOptionButtons)
     {
         InvokePrivate(controller, "HideHeroDetailGearList");
         InvokePrivate(controller, "ShowHeroDetailGearSlot", 0);
         InvokePrivate(controller, "OpenSelectedHeroDetailGearOptions");
         Canvas.ForceUpdateCanvases();
+        AssertButtonLabel(equipGearButton, "Open Gear", "Hero detail equipment action should use the Open Gear label.");
 
         if (!heroDetailRoot.gameObject.activeInHierarchy || !gearListRoot.gameObject.activeInHierarchy)
         {
@@ -207,6 +211,20 @@ public static class UpgradeClutterValidation
         controller.ShowHeroes();
         InvokePrivate(controller, "ShowHeroDetail", 0);
         Canvas.ForceUpdateCanvases();
+    }
+
+    private static void AssertButtonLabel(Button button, string expected, string message)
+    {
+        var label = button.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (label == null)
+        {
+            throw new InvalidOperationException($"{button.name} is missing its label text.");
+        }
+
+        if (!string.Equals(label.text, expected, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"{message} Expected '{expected}', got '{label.text}'.");
+        }
     }
 
     private static void ValidateHeroDetailGearLayout(GameObject heroDetailRoot, Button[] gearSlots, int expectedGearSlotCount)
