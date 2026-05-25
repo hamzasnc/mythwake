@@ -70,6 +70,7 @@ public static class HomeIdleCombatValidation
         var idleRoot = RequireObject("Home Idle Combat Root", true);
         AssertInsideParent(RequireObject("Home Generated Art Root", true), idleRoot);
         AssertDoesNotOverlap(mapRoot, idleRoot);
+        AssertBelow(RequireButton("Home Battle Button").gameObject, idleRoot);
         var idleText = RequireText(idleRoot, "Home Idle Combat Text");
         var rewardText = RequireText(idleRoot, "Home Idle Reward Text");
         RequireCopy(idleText.text, "Patrol");
@@ -248,6 +249,25 @@ public static class HomeIdleCombatValidation
         {
             throw new InvalidOperationException($"{first.name} should not overlap {second.name}.");
         }
+    }
+
+    private static void AssertBelow(GameObject upper, GameObject lower)
+    {
+        var upperRect = upper.GetComponent<RectTransform>();
+        var lowerRect = lower.GetComponent<RectTransform>();
+        if (upperRect == null || lowerRect == null)
+        {
+            throw new InvalidOperationException($"{upper.name} or {lower.name} is missing a RectTransform.");
+        }
+
+        var upperBounds = GetAnchoredBounds(upperRect);
+        var lowerBounds = GetAnchoredBounds(lowerRect);
+        if (lowerBounds.top < upperBounds.bottom)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException($"{lower.name} should sit below {upper.name}: lower top={lowerBounds.top}, upper bottom={upperBounds.bottom}.");
     }
 
     private static (float left, float right, float top, float bottom) GetAnchoredBounds(RectTransform rectTransform)

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.77";
+    public const string PrototypeVersion = "0.2.78";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -644,8 +644,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static readonly Vector2 DungeonMapViewportPosition = new Vector2(0f, -166f);
     private static readonly Vector2 DungeonMapViewportSize = new Vector2(1000f, 970f);
     private static readonly Vector2 DungeonWorldMapSize = new Vector2(1760f, 1320f);
-    private static readonly Vector2 HomeCampaignMapViewportPosition = new Vector2(0f, -190f);
-    private static readonly Vector2 HomeCampaignMapViewportSize = new Vector2(940f, 570f);
+    private static readonly Vector2 HomeCampaignMapViewportPosition = new Vector2(0f, -180f);
+    private static readonly Vector2 HomeCampaignMapViewportSize = new Vector2(940f, 760f);
     private static readonly Vector2 HomeCampaignMapContentSize = new Vector2(940f, 1670f);
     private static readonly Vector2 GoldDungeonMapPosition = new Vector2(292f, -692f);
     private static readonly Vector2 EssenceDungeonMapPosition = new Vector2(196f, -168f);
@@ -14065,10 +14065,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         mapBack.SetAsFirstSibling();
         homeCampaignMapImage = CreateRuntimeRawImage(mapBack, "Campaign World Map Image", LoadRuntimeTexture(HomeCampaignMapTextureName), Vector2.zero, HomeCampaignMapContentSize, new Vector2(0.5f, 1f));
         homeCampaignMapImage.color = Color.white;
-        homeCampaignMapImage.raycastTarget = true;
+        homeCampaignMapImage.raycastTarget = false;
 
         CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Top Fade", new Vector2(0, -14), new Vector2(920, 34), new Color(0.02f, 0.025f, 0.035f, 0.42f));
-        CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Bottom Fade", new Vector2(0, -546), new Vector2(920, 46), new Color(0.02f, 0.025f, 0.035f, 0.56f));
+        CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Bottom Fade", new Vector2(0, -736), new Vector2(920, 46), new Color(0.02f, 0.025f, 0.035f, 0.56f));
 
         var nodePositions = GetCampaignMapNodePositions();
         for (var i = 0; i < nodePositions.Length - 1; i++)
@@ -14086,7 +14086,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             campaignStageButtons[i] = CreateCampaignStageButton(homeCampaignMapContentRoot, i, nodePositions[i]);
         }
 
-        campaignStagePreviewRoot = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Stage Preview", new Vector2(0, -452), new Vector2(800, 104), new Color(0.03f, 0.035f, 0.055f, 0.84f));
+        campaignStagePreviewRoot = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Stage Preview", new Vector2(0, -640), new Vector2(800, 104), new Color(0.03f, 0.035f, 0.055f, 0.84f));
         campaignStagePreviewText = CreateRuntimeText(campaignStagePreviewRoot, "Campaign Stage Preview Text", string.Empty, 21, new Vector2(0, -13), new Vector2(740, 82));
         campaignStagePreviewText.enableAutoSizing = true;
         campaignStagePreviewText.fontSizeMin = 16;
@@ -14102,15 +14102,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -800), new Vector2(720, 242), new Color(0.02f, 0.025f, 0.035f, 0.22f));
+        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -1238), new Vector2(720, 158), new Color(0.02f, 0.025f, 0.035f, 0.2f));
         homeIdleCombatRoot.SetAsLastSibling();
 
-        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Top Shade", new Vector2(0, -12), new Vector2(680, 42), new Color(0.015f, 0.018f, 0.026f, 0.38f));
-        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Ground", new Vector2(0, -184), new Vector2(650, 42), new Color(0.33f, 0.24f, 0.16f, 0.42f));
-        var clashGlow = CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Clash Glow", new Vector2(0, -118), new Vector2(82, 82), new Color(1f, 0.73f, 0.26f, 0.24f));
+        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Top Shade", new Vector2(0, -8), new Vector2(680, 30), new Color(0.015f, 0.018f, 0.026f, 0.32f));
+        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Ground", new Vector2(0, -118), new Vector2(650, 34), new Color(0.33f, 0.24f, 0.16f, 0.38f));
+        var clashGlow = CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Clash Glow", new Vector2(0, -78), new Vector2(60, 60), new Color(1f, 0.73f, 0.26f, 0.22f));
         clashGlow.localRotation = Quaternion.Euler(0f, 0f, 45f);
 
-        homeIdleCombatText = CreateRuntimeText(homeIdleCombatRoot, "Home Idle Combat Text", string.Empty, 20, new Vector2(0, -14), new Vector2(690, 32));
+        homeIdleCombatText = CreateRuntimeText(homeIdleCombatRoot, "Home Idle Combat Text", string.Empty, 18, new Vector2(0, -8), new Vector2(690, 26));
         homeIdleCombatText.fontStyle = FontStyles.Bold;
         homeIdleCombatText.enableAutoSizing = true;
         homeIdleCombatText.fontSizeMin = 15;
@@ -14132,15 +14132,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var heroIndex = GetHomeIdleHeroIndex(i);
             var heroTextureName = GetHeroTextureName(heroIndex);
-            homeIdleHeroImages[i] = CreateRuntimeRawImage(homeIdleCombatRoot, $"Home Idle Hero {i + 1}", LoadCombatTexture(heroTextureName, "idle", 0, heroTextureName), heroPositions[i], new Vector2(126, 126), new Vector2(0.5f, 1f));
+            homeIdleHeroImages[i] = CreateRuntimeRawImage(homeIdleCombatRoot, $"Home Idle Hero {i + 1}", LoadCombatTexture(heroTextureName, "idle", 0, heroTextureName), heroPositions[i], new Vector2(92, 92), new Vector2(0.5f, 1f));
             homeIdleHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
 
             var enemyTextureName = GetCampaignEnemyTextureName(enemyLevel, i);
-            homeIdleEnemyImages[i] = CreateRuntimeRawImage(homeIdleCombatRoot, $"Home Idle Enemy {i + 1}", LoadCombatTexture(enemyTextureName, "idle", 0, "enemy_campaign"), enemyPositions[i], new Vector2(120, 120), new Vector2(0.5f, 1f));
+            homeIdleEnemyImages[i] = CreateRuntimeRawImage(homeIdleCombatRoot, $"Home Idle Enemy {i + 1}", LoadCombatTexture(enemyTextureName, "idle", 0, "enemy_campaign"), enemyPositions[i], new Vector2(88, 88), new Vector2(0.5f, 1f));
             homeIdleEnemyImages[i].rectTransform.localScale = new Vector3(GetEnemyFacingScale(enemyTextureName), 1f, 1f);
         }
 
-        homeIdleRewardFill = CreateRuntimeHealthFill(homeIdleCombatRoot, "Home Idle Reward Progress", new Vector2(0, -212), 620f, new Color(0.38f, 0.95f, 0.84f, 0.92f));
+        homeIdleRewardFill = CreateRuntimeHealthFill(homeIdleCombatRoot, "Home Idle Reward Progress", new Vector2(0, -142), 620f, new Color(0.38f, 0.95f, 0.84f, 0.92f));
         var rewardBack = homeIdleRewardFill.transform.parent.GetComponent<RectTransform>();
         if (rewardBack != null)
         {
@@ -19049,9 +19049,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(-275, -86),
-            new Vector2(-172, -138),
-            new Vector2(-62, -86)
+            new Vector2(-270, -42),
+            new Vector2(-166, -76),
+            new Vector2(-62, -42)
         };
     }
 
@@ -19059,9 +19059,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(278, -86),
-            new Vector2(172, -138),
-            new Vector2(62, -86)
+            new Vector2(270, -42),
+            new Vector2(166, -76),
+            new Vector2(62, -42)
         };
     }
 

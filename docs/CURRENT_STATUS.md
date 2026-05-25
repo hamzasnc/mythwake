@@ -5,7 +5,7 @@ Last updated: 2026-05-25
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.77`, save version `2`.
+- Unity client code is at Prototype `0.2.78`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -14,7 +14,7 @@ Last updated: 2026-05-25
 
 ## What Was Behind The Notes
 
-- `README.md` and `docs/NEXT_CHAT_CONTEXT.md` have been refreshed for the current `0.2.77` Home idle combat/Village/Dungeons/Paladin state.
+- `README.md` and `docs/NEXT_CHAT_CONTEXT.md` have been refreshed for the current `0.2.78` Home idle combat/Village/Dungeons/Paladin state.
 - Parts of `docs/ROADMAP.md` still describe older batch goals and can be cleaned up later.
 - The note "split Dungeons into a real screen" is now first-pass done.
 - The note "make Fast Rewards real enough for testing" is now closer: local accumulation, 24h cap, Village rate bonuses, and Server Mode/backend-authoritative popup copy are in place. Claim timing still needs visual verification.
@@ -38,6 +38,7 @@ Last updated: 2026-05-25
 - Added a first Home idle combat slice: the campaign map stays in the background, stage nodes still open a compact info preview, and a foreground patrol fight animates three formation heroes against current-stage monsters for small active local Gold/Myth Essence ticks without changing `enemyLevel`.
 - Added `Mythwake/Validate Home Idle Combat` and included it in `Mythwake/Validate Current Slice`; it checks map art, clickable preview info, visible patrol units, one active reward tick, and that idle combat does not auto-clear campaign stages.
 - Moved Home idle patrol combat below the map so it no longer covers checkpoint interaction, switched the campaign map to `area_map_scorched_plains`, enlarged it into a vertical scroll viewport, and anchored stage checkpoints to the scrollable map content.
+- Lowered the Home idle patrol farther into the bottom free lane below the Battle button and extended the visible campaign-map viewport downward so the current-stage map occupies more of the screen.
 - Polished the Hero Detail gear slice: it now exposes all 2 equipment tracks plus all 6 accessory slots, `Equip Gear` opens the selected gear list for equipment and accessories, and `Remove Gear` can unequip accessories locally or through the Server Mode backend action.
 - Added validator coverage for the Hero Detail gear list popup so equipment slots open the inline list first and only the list's `Open Gear` row navigates to the Gear screen.
 - Added contextual Hero Detail gear action labels so equipment slots show `Open Gear` while accessory slots keep `Equip Gear`.
