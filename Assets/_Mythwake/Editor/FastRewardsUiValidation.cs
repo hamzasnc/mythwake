@@ -16,7 +16,7 @@ public static class FastRewardsUiValidation
         try
         {
             ValidateFastRewardsUi();
-            Debug.Log("Fast Rewards UI validated: popup controls, local/capped copy, popup exclusivity, close flow, reward button state, and Server Mode fallback copy are present.");
+            Debug.Log("Fast Rewards UI validated: popup controls, local/capped copy, cap-left copy, popup exclusivity, close flow, reward button state, and Server Mode fallback copy are present.");
         }
         catch (Exception ex)
         {
@@ -59,6 +59,7 @@ public static class FastRewardsUiValidation
         var localBodyText = bodyText.text;
         RequireCopy(localBodyText, "Local Mode: continuous stored rewards");
         RequireCopy(localBodyText, "Stored:");
+        RequireCopy(localBodyText, "Cap left: 22h 0m");
         RequireCopy(localBodyText, "Rate:");
         RequireCopy(localBodyText, "Village bonus:");
         RequireCopy(localBodyText, "Ready:");
@@ -77,8 +78,8 @@ public static class FastRewardsUiValidation
 
         ValidateFastRewardsPopupExclusivity(controller, popup);
 
-        AssertLocalFastRewardsState(controller, bodyText, redeemButton, 0f, "Stored: 0s / 24h 0m", "Ready: +0 Gold   +0 Essence", false);
-        AssertLocalFastRewardsState(controller, bodyText, redeemButton, 24f * 60f * 60f, "Stored: 24h 0m / 24h 0m", "Ready:", true);
+        AssertLocalFastRewardsState(controller, bodyText, redeemButton, 0f, "Stored: 0s / 24h 0m", "Cap left: 24h 0m", "Ready: +0 Gold   +0 Essence", false);
+        AssertLocalFastRewardsState(controller, bodyText, redeemButton, 24f * 60f * 60f, "Stored: 24h 0m / 24h 0m", "Cap left: capped", "Ready:", true);
 
         SetPrivateField(controller, "backendGameplayEnabled", true);
         SetPrivateField(controller, "backendClient", null);
@@ -134,7 +135,7 @@ public static class FastRewardsUiValidation
         RequireInactive("Home Idle Info Popup", "Fast Rewards should close the Home idle info popup.");
     }
 
-    private static void AssertLocalFastRewardsState(IdlePrototypeController controller, TMP_Text bodyText, Button redeemButton, float storedSeconds, string expectedStoredLine, string expectedReadyLine, bool expectRedeemInteractable)
+    private static void AssertLocalFastRewardsState(IdlePrototypeController controller, TMP_Text bodyText, Button redeemButton, float storedSeconds, string expectedStoredLine, string expectedCapLine, string expectedReadyLine, bool expectRedeemInteractable)
     {
         SetPrivateField(controller, "backendGameplayEnabled", false);
         SetPrivateField(controller, "afkRewardStoredSeconds", storedSeconds);
@@ -142,6 +143,7 @@ public static class FastRewardsUiValidation
         Canvas.ForceUpdateCanvases();
 
         RequireCopy(bodyText.text, expectedStoredLine);
+        RequireCopy(bodyText.text, expectedCapLine);
         RequireCopy(bodyText.text, expectedReadyLine);
         AssertTextFits(bodyText, $"Fast Rewards local {expectedStoredLine}");
 

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.100";
+    public const string PrototypeVersion = "0.2.101";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -14680,15 +14680,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         inventoryPopupRoot.gameObject.SetActive(false);
         RefreshInventoryPopupUi();
 
-        fastRewardsPopupRoot = CreateRuntimePopup(homeActionRoot, "Fast Rewards Popup", new Vector2(0, -380), new Vector2(760, 460), "Fast Rewards");
-        fastRewardsPopupText = CreateRuntimeText(fastRewardsPopupRoot, "Fast Rewards Body", string.Empty, 22, new Vector2(0, -96), new Vector2(660, 250));
+        fastRewardsPopupRoot = CreateRuntimePopup(homeActionRoot, "Fast Rewards Popup", new Vector2(0, -350), new Vector2(760, 500), "Fast Rewards");
+        fastRewardsPopupText = CreateRuntimeText(fastRewardsPopupRoot, "Fast Rewards Body", string.Empty, 22, new Vector2(0, -96), new Vector2(660, 292));
         fastRewardsPopupText.alignment = TextAlignmentOptions.Center;
         fastRewardsPopupText.enableAutoSizing = true;
         fastRewardsPopupText.fontSizeMin = 16;
         fastRewardsPopupText.fontSizeMax = 22;
         fastRewardsPopupText.textWrappingMode = TextWrappingModes.Normal;
-        fastRewardsRedeemButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Redeem Button", "Redeem", -120, -385, 210, 58);
-        fastRewardsCloseButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Close Button", "Close", 145, -385, 160, 58);
+        fastRewardsRedeemButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Redeem Button", "Redeem", -120, -425, 210, 58);
+        fastRewardsCloseButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Close Button", "Close", 145, -425, 160, 58);
         fastRewardsPopupRoot.gameObject.SetActive(false);
 
         chatPopupRoot = CreateRuntimePopup(homeActionRoot, "Chat Popup", new Vector2(-210, -590), new Vector2(560, 240), "Chat");
@@ -20008,11 +20008,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var storedSeconds = Mathf.FloorToInt(afkRewardStoredSeconds);
+        var maxSeconds = GetAfkRewardMaxSeconds();
         var pendingGold = CalculateAfkGoldReward(afkRewardStoredSeconds);
         var pendingEssence = CalculateAfkEssenceReward(afkRewardStoredSeconds);
         fastRewardsPopupText.text =
             "Local Mode: continuous stored rewards\n" +
-            $"Stored: {FormatDuration(storedSeconds)} / {FormatDuration(GetAfkRewardMaxSeconds())}\n" +
+            $"Stored: {FormatDuration(storedSeconds)} / {FormatDuration(maxSeconds)}\n" +
+            $"Cap left: {FormatFastRewardsCapTime(maxSeconds - storedSeconds)}\n" +
             $"Rate: +{FormatRate(GetAfkGoldPerSecond())} Gold/s   +{FormatRate(GetAfkEssencePerSecond())} Essence/s\n" +
             $"{FormatLocalFastRewardsBonusLine()}\n" +
             $"Ready: +{FormatCompactNumber(pendingGold)} Gold   +{FormatCompactNumber(pendingEssence)} Essence";
@@ -20071,6 +20073,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return $"Village bonus: +{FormatRate(goldRateBonus)} Gold/s   +{FormatRate(essenceRateBonus)} Essence/s";
+    }
+
+    private string FormatFastRewardsCapTime(int remainingSeconds)
+    {
+        return remainingSeconds <= 0 ? "capped" : FormatDuration(remainingSeconds);
     }
 
     private bool TryGetBackendAfkElapsedSeconds(out int elapsedSeconds)

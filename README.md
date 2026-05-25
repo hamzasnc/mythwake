@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.100
+Prototype version: 0.2.101
 Local save version: 2
 
 Current prototype:
@@ -177,6 +177,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.101: Added a Fast Rewards cap-left line with extra popup room and validator coverage for normal, empty, and capped local AFK reward states.
 - Prototype 0.2.100: Expanded the Home idle Patrol Info popup with last/next tick reward details, tick cadence copy, and validator coverage after local reward ticks.
 - Prototype 0.2.99: Split the Home idle local reward summary into last/next reward lines with a taller progress label area and validator coverage.
 - Prototype 0.2.98: Fixed the Home idle local reward summary so the last Patrol tick shows both Gold and Essence, with validator coverage.
