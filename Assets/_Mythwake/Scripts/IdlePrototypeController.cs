@@ -10209,13 +10209,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (accessorySummaryText != null)
         {
-            accessorySummaryText.text = $"{GetLocalizedHeroName(heroIndex)} {GetInventoryTabLabel(InventoryTabMode.Gear)}\nATK +{GetHeroAccessoryAttackBonus(heroIndex)}  HP +{GetHeroAccessoryHealthBonus(heroIndex)}\n{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {gearDungeonFloor}";
+            accessorySummaryText.text = $"{GetLocalizedHeroName(heroIndex)} {GetInventoryTabLabel(InventoryTabMode.Gear)}\nATK +{GetHeroAccessoryAttackBonus(heroIndex)}  HP +{GetHeroAccessoryHealthBonus(heroIndex)}\n{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} {Tr("ui.common.floor")} {gearDungeonFloor}";
         }
 
         if (accessorySelectedText != null)
         {
             var equippedText = GetEquippedAccessoryText(slot);
-            accessorySelectedText.text = $"{GetLocalizedAccessorySlotName(slot)}\n{Tr("ui.common.equipped")}: {equippedText}\nSelected Fuse Tier: {GetAccessoryRarityName(rarity)}";
+            accessorySelectedText.text = $"{GetLocalizedAccessorySlotName(slot)}\n{Tr("ui.common.equipped")}: {equippedText}\n{TrFormat("gear.selected_fuse_tier", GetAccessoryRarityName(rarity))}";
         }
 
         if (accessoryInventoryText != null)
@@ -10225,15 +10225,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (accessoryEquipText != null)
         {
-            accessoryEquipText.text = $"Equip {GetAccessoryRarityName(rarity)}\n{Tr("ui.common.copies")} {GetAccessoryInventoryCount(slot, rarity)}";
+            accessoryEquipText.text = $"{TrFormat("gear.equip_rarity", GetAccessoryRarityName(rarity))}\n{Tr("ui.common.copies")} {GetAccessoryInventoryCount(slot, rarity)}";
         }
 
         if (accessoryLevelText != null)
         {
             var equippedRarity = GetHeroEquippedAccessoryRarity(heroIndex, slot);
             accessoryLevelText.text = equippedRarity < 0
-                ? "Level Equipped\nNo item"
-                : $"Level Equipped\n{GetAccessoryLevelCost(slot)} {GetLocalizedCurrencyName(GoldCurrencyId)}";
+                ? $"{Tr("gear.level_equipped")}\n{Tr("gear.no_item")}"
+                : $"{Tr("gear.level_equipped")}\n{GetAccessoryLevelCost(slot)} {GetLocalizedCurrencyName(GoldCurrencyId)}";
         }
 
         if (accessoryFuseText != null)
@@ -10241,9 +10241,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             var accessory = GetAccessoryDefinition(slot, rarity);
             var fuseCost = GetAccessoryFuseCost(rarity);
             var nextTier = string.IsNullOrEmpty(accessory.fuseTargetAccessoryId)
-                ? "Max"
+                ? Tr("ui.common.max")
                 : GetAccessoryRarityName(GetAccessoryDefinitionById(accessory.fuseTargetAccessoryId).rarityIndex);
-            accessoryFuseText.text = $"Fuse {fuseCost}x {GetAccessoryRarityName(rarity)}\nInto {nextTier}";
+            accessoryFuseText.text = $"{TrFormat("gear.fuse_rarity", fuseCost, GetAccessoryRarityName(rarity))}\n{TrFormat("gear.fuse_into", nextTier)}";
         }
     }
 
@@ -10288,10 +10288,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private string GetAccessoryInventoryText(int slot)
     {
-        var text = $"{Tr("ui.inventory.title")} {Tr("ui.common.copies")}";
+        var text = $"{Tr("ui.inventory.title")} {Tr("ui.common.copies")}\n";
         for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
         {
-            text += $"\n{GetAccessoryRarityName(rarity)}: {GetAccessoryInventoryCount(slot, rarity)}";
+            if (rarity > 0)
+            {
+                text += "   ";
+            }
+
+            text += $"{GetAccessoryRarityName(rarity)} {GetAccessoryInventoryCount(slot, rarity)}";
         }
 
         return text;
@@ -17396,6 +17401,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         MoveUiElement(accessoryEquipButton, gearPanel, new Vector2(-215, -1052), new Vector2(205, 58));
         MoveUiElement(accessoryLevelButton, gearPanel, new Vector2(0, -1052), new Vector2(205, 58));
         MoveUiElement(accessoryFuseButton, gearPanel, new Vector2(215, -1052), new Vector2(205, 58));
+        ConfigureRuntimeTextFit(equipmentSummaryText, 15f, 24f);
+        ConfigureRuntimeTextFit(accessorySummaryText, 15f, 22f);
+        ConfigureRuntimeTextFit(accessorySelectedText, 15f, 22f);
+        ConfigureRuntimeTextFit(accessoryInventoryText, 15f, 22f);
     }
 
     private void LayoutSummonScreen()
@@ -17505,6 +17514,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             SetRuntimeRect(rectTransform, anchoredPosition, size, new Vector2(0.5f, 1f));
         }
+    }
+
+    private static void ConfigureRuntimeTextFit(TMP_Text text, float minSize, float maxSize)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.enableAutoSizing = true;
+        text.fontSizeMin = minSize;
+        text.fontSizeMax = maxSize;
+        text.textWrappingMode = TextWrappingModes.Normal;
     }
 
     private static void SetComponentActive(Component component, bool active)

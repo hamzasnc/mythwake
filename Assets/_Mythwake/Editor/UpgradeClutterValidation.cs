@@ -648,6 +648,7 @@ public static class UpgradeClutterValidation
         RequireToolButtonInPanel(controller, "accessoryFuseButton", gearPanel);
         ValidateGearScreenRuntimeArt(gearPanel);
         ValidateGearScreenControlLayout(controller, gearPanel);
+        ValidateGearScreenLanguageRefresh(controller, gearPanel);
     }
 
     private static void ValidateGearScreenRuntimeArt(GameObject gearPanel)
@@ -784,6 +785,12 @@ public static class UpgradeClutterValidation
             {
                 AssertButtonTextFits(button, "Gear screen control button text");
             }
+
+            var text = controls[i].GetComponent<TMP_Text>();
+            if (text != null)
+            {
+                AssertTextFits(text, controls[i].name, "Gear screen control text");
+            }
         }
 
         for (var i = 0; i < controls.Length; i++)
@@ -792,6 +799,41 @@ public static class UpgradeClutterValidation
             {
                 AssertNoOverlap(controls[i], controls[j], 4f, "Gear screen control spacing");
             }
+        }
+    }
+
+    private static void ValidateGearScreenLanguageRefresh(IdlePrototypeController controller, GameObject gearPanel)
+    {
+        var originalLanguage = RequireField<MythwakeLanguage>(controller, "language");
+        try
+        {
+            SetPrivateField(controller, "language", MythwakeLanguage.German);
+            InvokePrivate(controller, "RefreshUi");
+            controller.ShowGear();
+            Canvas.ForceUpdateCanvases();
+
+            AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessorySelectedText"), "Selected Fuse Tier", "Gear screen selected accessory text should localize fuse-tier copy.");
+            AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryEquipText"), "Equip ", "Gear screen accessory equip button should localize action copy.");
+            AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryLevelText"), "Level Equipped", "Gear screen accessory level button should localize action copy.");
+            AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryLevelText"), "No item", "Gear screen accessory level button should localize empty copy.");
+            AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryFuseText"), "Fuse ", "Gear screen accessory fuse button should localize action copy.");
+            AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryFuseText"), "Into ", "Gear screen accessory fuse button should localize target copy.");
+            ValidateGearScreenControlLayout(controller, gearPanel);
+        }
+        finally
+        {
+            SetPrivateField(controller, "language", originalLanguage);
+            InvokePrivate(controller, "RefreshUi");
+            controller.ShowGear();
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void AssertTextDoesNotContain(TMP_Text text, string forbiddenText, string message)
+    {
+        if (text != null && text.text.Contains(forbiddenText))
+        {
+            throw new InvalidOperationException($"{message} Got '{text.text}'.");
         }
     }
 
