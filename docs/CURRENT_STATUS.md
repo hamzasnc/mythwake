@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.103`, save version `2`.
+- Unity client code is at Prototype `0.2.104`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -48,6 +48,7 @@ Last updated: 2026-05-26
 - Reworked the Home idle combat lane so its mini-map background connects directly to the main campaign map, spans the same width, and continues downward behind the fighting heroes/monsters.
 - Updated `Mythwake/Validate Home Idle Combat` so it guards the connected Home map layout, the idle mini-map texture, the Battle button coverage, active reward ticks, and no automatic stage clear.
 - Extended `Mythwake/Validate Home Idle Combat` so it also checks progress-map region texture sync across the main campaign map, stage-detail preview, and lower idle mini-map, plus reward progress fill behavior and Server Mode local-reward blocking.
+- Home idle combat now crops the lower mini-map background by current stage progress instead of using one static slice, and the Home idle validator checks main/detail/idle map texture and UV sync.
 - Home idle Server Mode now clears stale local loot popups and shows an empty reward progress bar while rewards are server-side; the Home idle validator guards the progress bar, popup clearing, and Server Mode Patrol Info copy.
 - Home idle local reward summaries now show both the last Gold and last Essence tick; the Home idle validator checks the local tick summary after a reward fires.
 - Home idle local reward summaries now split the last and next tick lines into a taller label area so the lower patrol reward copy remains readable; the Home idle validator guards the line break and fit.

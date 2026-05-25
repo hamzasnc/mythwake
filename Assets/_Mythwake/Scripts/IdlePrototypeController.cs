@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.103";
+    public const string PrototypeVersion = "0.2.104";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -14217,7 +14217,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         homeIdleCombatRoot.gameObject.AddComponent<RectMask2D>();
 
         homeIdleCombatMapImage = CreateRuntimeRawImage(homeIdleCombatRoot, "Home Idle Mini Map Background", LoadRuntimeTexture(GetSelectedHomeProgressMapTextureName()), Vector2.zero, new Vector2(1040, 318), new Vector2(0.5f, 1f));
-        homeIdleCombatMapImage.uvRect = new Rect(0.04f, 0.3f, 0.92f, 0.16f);
+        homeIdleCombatMapImage.uvRect = GetHomeIdleCombatMapUvRect(enemyLevel);
         homeIdleCombatMapImage.color = new Color(1f, 1f, 1f, 0.74f);
         homeIdleCombatMapImage.raycastTarget = false;
         homeIdleCombatMapImage.transform.SetAsFirstSibling();
@@ -14714,7 +14714,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         campaignStageDetailPopupRoot = CreateRuntimePopup(homeActionRoot, "Campaign Stage Detail Popup", new Vector2(0, -258), new Vector2(840, 760), "Abschnitt Details");
         campaignStageDetailTitleText = campaignStageDetailPopupRoot.Find("Title").GetComponent<TMP_Text>();
         campaignStageDetailMapImage = CreateRuntimeRawImage(campaignStageDetailPopupRoot, "Stage Detail Map Preview", LoadRuntimeTexture(GetSelectedHomeProgressMapTextureName()), new Vector2(0, -100), new Vector2(720, 150), new Vector2(0.5f, 1f));
-        campaignStageDetailMapImage.uvRect = new Rect(0.08f, 0.38f, 0.84f, 0.26f);
+        campaignStageDetailMapImage.uvRect = GetCampaignStageDetailMapUvRect(enemyLevel);
         campaignStageDetailMapImage.color = new Color(1f, 1f, 1f, 0.84f);
         campaignStageDetailMapImage.raycastTarget = false;
 
@@ -18747,6 +18747,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var texture = LoadRuntimeTexture(textureName);
         homeIdleCombatMapImage.texture = texture != null ? texture : LoadRuntimeTexture(HomeCampaignMapTextureName);
+        homeIdleCombatMapImage.uvRect = GetHomeIdleCombatMapUvRect(enemyLevel);
+    }
+
+    private static Rect GetCampaignStageDetailMapUvRect(int stageNumber)
+    {
+        var stageProgress = GetHomeProgressMapStageProgress(stageNumber);
+        return new Rect(0.08f, Mathf.Lerp(0.58f, 0.2f, stageProgress), 0.84f, 0.26f);
+    }
+
+    private static Rect GetHomeIdleCombatMapUvRect(int stageNumber)
+    {
+        var stageProgress = GetHomeProgressMapStageProgress(stageNumber);
+        return new Rect(0.04f, Mathf.Lerp(0.38f, 0.12f, stageProgress), 0.92f, 0.18f);
+    }
+
+    private static float GetHomeProgressMapStageProgress(int stageNumber)
+    {
+        stageNumber = Mathf.Max(1, stageNumber);
+        return ((stageNumber - 1) % HomeProgressMapStagesPerCard) / Mathf.Max(1f, HomeProgressMapStagesPerCard - 1f);
     }
 
     private void RefreshCampaignStagePreview()
@@ -18794,8 +18813,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (campaignStageDetailMapImage != null)
         {
             campaignStageDetailMapImage.texture = LoadRuntimeTexture(GetHomeProgressMapTextureNameForStage(stageNumber));
-            var stageProgress = ((stageNumber - 1) % HomeProgressMapStagesPerCard) / Mathf.Max(1f, HomeProgressMapStagesPerCard - 1f);
-            campaignStageDetailMapImage.uvRect = new Rect(0.08f, Mathf.Lerp(0.58f, 0.2f, stageProgress), 0.84f, 0.26f);
+            campaignStageDetailMapImage.uvRect = GetCampaignStageDetailMapUvRect(stageNumber);
         }
 
         if (campaignStageDetailBodyText != null)

@@ -16,7 +16,7 @@ public static class HomeIdleCombatValidation
         try
         {
             ValidateHomeIdleCombatUi();
-            Debug.Log("Home Idle Combat validated: campaign map, region texture sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
+            Debug.Log("Home Idle Combat validated: campaign map, region texture/UV sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
         }
         catch (Exception ex)
         {
@@ -305,10 +305,11 @@ public static class HomeIdleCombatValidation
         var enemyLevelBefore = GetPrivateField<int>(controller, "enemyLevel");
         var selectedStageBefore = GetPrivateField<int>(controller, "selectedCampaignStage");
         var centerBefore = GetPrivateField<bool>(controller, "homeCampaignMapNeedsCenter");
+        var initialIdleUv = idleMap.uvRect;
 
         try
         {
-            const int regionSwapStage = 21;
+            const int regionSwapStage = 25;
             var expectedTextureName = (string)InvokePrivate(controller, "GetHomeProgressMapTextureNameForStage", regionSwapStage);
             if (string.IsNullOrWhiteSpace(expectedTextureName) || expectedTextureName == "area_map_scorched_plains")
             {
@@ -323,6 +324,11 @@ public static class HomeIdleCombatValidation
 
             AssertTextureNameContains(mapImage, expectedTextureName, "Home campaign map region switch");
             AssertTextureNameContains(idleMap, expectedTextureName, "Home idle mini-map region switch");
+            AssertUvApproximately(idleMap.uvRect, GetExpectedHomeIdleCombatMapUvRect(regionSwapStage), "Home idle mini-map region UV switch");
+            if (Mathf.Abs(idleMap.uvRect.y - initialIdleUv.y) <= 0.01f)
+            {
+                throw new InvalidOperationException($"Home idle mini-map UV should move with stage progress. Before={initialIdleUv}, after={idleMap.uvRect}.");
+            }
 
             var startStage = (int)InvokePrivate(controller, "GetCampaignMapStartStage");
             var currentNodeIndex = Mathf.Clamp(regionSwapStage - startStage, 0, 9);
@@ -331,6 +337,7 @@ public static class HomeIdleCombatValidation
 
             var detailMap = RequireRawImageWithTexture("Stage Detail Map Preview");
             AssertTextureNameContains(detailMap, expectedTextureName, "Stage detail map preview region switch");
+            AssertUvApproximately(detailMap.uvRect, GetExpectedCampaignStageDetailMapUvRect(regionSwapStage), "Stage detail map preview region UV switch");
             RequireButton("Stage Detail Close Button").onClick.Invoke();
             Canvas.ForceUpdateCanvases();
         }
@@ -751,6 +758,32 @@ public static class HomeIdleCombatValidation
         {
             throw new InvalidOperationException($"{context} should use {expectedTextureName}, got '{image?.texture?.name}'.");
         }
+    }
+
+    private static Rect GetExpectedCampaignStageDetailMapUvRect(int stageNumber)
+    {
+        var stageProgress = GetExpectedHomeProgressMapStageProgress(stageNumber);
+        return new Rect(0.08f, Mathf.Lerp(0.58f, 0.2f, stageProgress), 0.84f, 0.26f);
+    }
+
+    private static Rect GetExpectedHomeIdleCombatMapUvRect(int stageNumber)
+    {
+        var stageProgress = GetExpectedHomeProgressMapStageProgress(stageNumber);
+        return new Rect(0.04f, Mathf.Lerp(0.38f, 0.12f, stageProgress), 0.92f, 0.18f);
+    }
+
+    private static float GetExpectedHomeProgressMapStageProgress(int stageNumber)
+    {
+        stageNumber = Mathf.Max(1, stageNumber);
+        return ((stageNumber - 1) % 10) / 9f;
+    }
+
+    private static void AssertUvApproximately(Rect actual, Rect expected, string context)
+    {
+        AssertApproximately(actual.x, expected.x, 0.001f, $"{context} x");
+        AssertApproximately(actual.y, expected.y, 0.001f, $"{context} y");
+        AssertApproximately(actual.width, expected.width, 0.001f, $"{context} width");
+        AssertApproximately(actual.height, expected.height, 0.001f, $"{context} height");
     }
 
     private static void AssertApproximately(float actual, float expected, float tolerance, string context)
