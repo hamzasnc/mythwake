@@ -16,7 +16,7 @@ public static class FastRewardsUiValidation
         try
         {
             ValidateFastRewardsUi();
-            Debug.Log("Fast Rewards UI validated: popup controls, local/capped copy, reward button state, and Server Mode fallback copy are present.");
+            Debug.Log("Fast Rewards UI validated: popup controls, local/capped copy, popup exclusivity, close flow, reward button state, and Server Mode fallback copy are present.");
         }
         catch (Exception ex)
         {
@@ -75,10 +75,13 @@ public static class FastRewardsUiValidation
             throw new InvalidOperationException($"Fast Rewards local button label mismatch: '{localButtonLabel}'");
         }
 
+        ValidateFastRewardsPopupExclusivity(controller, popup);
+
         AssertLocalFastRewardsState(controller, bodyText, redeemButton, 0f, "Stored: 0s / 24h 0m", "Ready: +0 Gold   +0 Essence", false);
         AssertLocalFastRewardsState(controller, bodyText, redeemButton, 24f * 60f * 60f, "Stored: 24h 0m / 24h 0m", "Ready:", true);
 
         SetPrivateField(controller, "backendGameplayEnabled", true);
+        SetPrivateField(controller, "backendClient", null);
         SetPrivateField(controller, "backendRequestInProgress", false);
         SetPrivateField(controller, "hasBackendDefinitions", false);
         InvokePrivate(controller, "RefreshFastRewardsPopupUi");
@@ -96,10 +99,39 @@ public static class FastRewardsUiValidation
             throw new InvalidOperationException($"Fast Rewards Server Mode button label mismatch: '{serverButtonLabel}'");
         }
 
+        if (redeemButton.interactable)
+        {
+            throw new InvalidOperationException("Fast Rewards Server Mode fallback Claim button should stay disabled without a backend session.");
+        }
+
         if (!popup.activeInHierarchy)
         {
             throw new InvalidOperationException("Fast Rewards popup should remain active after local and Server Mode refreshes.");
         }
+
+        closeButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        if (popup.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Fast Rewards popup should close from its close button.");
+        }
+    }
+
+    private static void ValidateFastRewardsPopupExclusivity(IdlePrototypeController controller, GameObject popup)
+    {
+        InvokePrivate(controller, "ShowHomeIdleInfoPopup");
+        Canvas.ForceUpdateCanvases();
+        RequireActive("Home Idle Info Popup");
+
+        InvokePrivate(controller, "ShowFastRewardsPopup");
+        Canvas.ForceUpdateCanvases();
+
+        if (!popup.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Fast Rewards popup should be active after reopening it.");
+        }
+
+        RequireInactive("Home Idle Info Popup", "Fast Rewards should close the Home idle info popup.");
     }
 
     private static void AssertLocalFastRewardsState(IdlePrototypeController controller, TMP_Text bodyText, Button redeemButton, float storedSeconds, string expectedStoredLine, string expectedReadyLine, bool expectRedeemInteractable)
@@ -168,6 +200,15 @@ public static class FastRewardsUiValidation
     private static void RequireActive(string name)
     {
         RequireObject(name, true);
+    }
+
+    private static void RequireInactive(string name, string context)
+    {
+        var gameObject = RequireObject(name, false);
+        if (gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException($"{context} {name} is still active.");
+        }
     }
 
     private static Button RequireButton(string name)

@@ -16,7 +16,7 @@ public static class VillageUiValidation
         try
         {
             ValidateVillageUi();
-            Debug.Log("Village UI validated: map, build panel, built-building detail panel, upgrade, demolish, and close controls are present.");
+            Debug.Log("Village UI validated: map, all build plots, build panel, built-building detail panel, upgrade, demolish, and close controls are present.");
         }
         catch (Exception ex)
         {
@@ -41,8 +41,12 @@ public static class VillageUiValidation
         Canvas.ForceUpdateCanvases();
 
         var villagePanel = RequireObject("Village Panel", true);
-        RequireObject("Village Map Viewport", true);
-        RequireObject("Village Build Plot 1", true);
+        var mapViewport = RequireObject("Village Map Viewport", true);
+        var mapContent = RequireObject("Village Map Content", true);
+        var mapImage = RequireRawImageWithTexture("Village Empty Map");
+        ValidateVillageScrollRect(mapViewport, mapContent);
+        AssertInsideParent(mapContent, mapImage.gameObject);
+        ValidateVillageMapPlots(mapContent);
 
         var buildPanel = RequireObject("Village Build Panel", false);
         var detailPanel = RequireObject("Village Building Detail Panel", false);
@@ -63,21 +67,114 @@ public static class VillageUiValidation
         Canvas.ForceUpdateCanvases();
 
         RequireActive("Village Build Panel");
+        ValidateVillageBuildPanelOptions(buildPanel);
         if (!buildButton.interactable)
         {
             throw new InvalidOperationException("Village build button should be interactable for a free selected plot.");
         }
+
+        buildCloseButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        if (buildPanel.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Village build panel should close from its close button.");
+        }
+
+        AssertSelectedVillagePlot(controller, -1, "Village build close");
 
         AssertVillageBuiltPlotDetail(controller, 0, 0, 1, "Team HP", "Upgrade auf Lv. 2", "Aufwerten (5)", true, upgradeButton, demolishButton);
         AssertVillageBuiltPlotDetail(controller, 1, 0, 2, "Team ATK", "Upgrade auf Lv. 3", "Aufwerten (10)", true, upgradeButton, demolishButton);
         AssertVillageBuiltPlotDetail(controller, 2, 0, 3, "Essence/s Fast Rewards", "Upgrade auf Lv. 4", "Aufwerten (15)", true, upgradeButton, demolishButton);
         AssertVillageBuiltPlotDetail(controller, 5, 0, 4, "Gold/s Fast Rewards", "Upgrade auf Lv. 5", "Aufwerten (20)", true, upgradeButton, demolishButton);
         AssertVillageBuiltPlotDetail(controller, 0, 0, 20, "Team HP", "Max Level erreicht.", "Max", false, upgradeButton, demolishButton);
+        ValidateVillageDetailClose(controller, 3, 0, 1, detailCloseButton, detailPanel);
 
         if (!villagePanel.activeInHierarchy)
         {
             throw new InvalidOperationException("Village panel should be active after ShowVillage.");
         }
+    }
+
+    private static void ValidateVillageMapPlots(GameObject mapContent)
+    {
+        for (var i = 0; i < 12; i++)
+        {
+            var plot = RequireButton($"Village Build Plot {i + 1}");
+            AssertInsideParent(mapContent, plot.gameObject);
+
+            var buildMark = FindChild(plot.transform, "Build Mark");
+            if (buildMark == null || buildMark.GetComponent<TMP_Text>() == null)
+            {
+                throw new InvalidOperationException($"Village Build Plot {i + 1} is missing its build mark label.");
+            }
+        }
+    }
+
+    private static void ValidateVillageScrollRect(GameObject mapViewport, GameObject mapContent)
+    {
+        var scrollRect = mapViewport.GetComponent<ScrollRect>();
+        if (scrollRect == null)
+        {
+            throw new InvalidOperationException("Village Map Viewport is missing its ScrollRect.");
+        }
+
+        if (scrollRect.content == null || scrollRect.content.gameObject != mapContent)
+        {
+            throw new InvalidOperationException("Village Map Viewport ScrollRect should use Village Map Content as content.");
+        }
+
+        if (!scrollRect.vertical || scrollRect.horizontal)
+        {
+            throw new InvalidOperationException("Village Map Viewport should scroll vertically only.");
+        }
+
+        var viewportRect = mapViewport.GetComponent<RectTransform>();
+        var contentRect = mapContent.GetComponent<RectTransform>();
+        if (viewportRect == null || contentRect == null || contentRect.rect.height <= viewportRect.rect.height)
+        {
+            throw new InvalidOperationException("Village Map Content should be taller than the viewport so the village map can scroll.");
+        }
+    }
+
+    private static void ValidateVillageBuildPanelOptions(GameObject buildPanel)
+    {
+        for (var i = 0; i < 3; i++)
+        {
+            var option = RequireButton($"Village Build Option {i + 1}");
+            AssertInsideParent(buildPanel, option.gameObject);
+
+            var icon = FindChild(option.transform, "Icon")?.GetComponent<RawImage>();
+            if (icon == null || icon.texture == null)
+            {
+                throw new InvalidOperationException($"Village Build Option {i + 1} is missing loaded building art.");
+            }
+
+            var label = FindChild(option.transform, "Label")?.GetComponent<TMP_Text>();
+            if (label == null)
+            {
+                throw new InvalidOperationException($"Village Build Option {i + 1} is missing its label.");
+            }
+
+            AssertTextFits(label, $"Village Build Option {i + 1} label");
+        }
+    }
+
+    private static void ValidateVillageDetailClose(IdlePrototypeController controller, int plotIndex, int buildingOptionIndex, int level, Button detailCloseButton, GameObject detailPanel)
+    {
+        ForceBuiltVillagePlot(controller, plotIndex, buildingOptionIndex, level);
+        InvokePrivate(controller, "SelectVillagePlot", plotIndex);
+        Canvas.ForceUpdateCanvases();
+
+        RequireActive("Village Building Detail Panel");
+        detailCloseButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+
+        if (detailPanel.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Village building detail panel should close from its close button.");
+        }
+
+        AssertSelectedVillagePlot(controller, -1, "Village detail close");
     }
 
     private static void AssertVillageBuiltPlotDetail(IdlePrototypeController controller, int plotIndex, int buildingOptionIndex, int level, string expectedBonus, string expectedProgressionCopy, string expectedUpgradeLabel, bool expectUpgradeInteractable, Button upgradeButton, Button demolishButton)
@@ -87,6 +184,7 @@ public static class VillageUiValidation
         Canvas.ForceUpdateCanvases();
 
         RequireActive("Village Building Detail Panel");
+        ValidateBuiltVillagePlotArt(plotIndex);
 
         if (upgradeButton.interactable != expectUpgradeInteractable)
         {
@@ -116,6 +214,36 @@ public static class VillageUiValidation
         RequireCopy(detailBody.text, expectedProgressionCopy, $"Village plot {plotIndex + 1} detail");
         RequireCopy(detailBody.text, "Vorhanden:", $"Village plot {plotIndex + 1} detail");
         AssertTextFits(detailBody, $"Village plot {plotIndex + 1} detail body");
+    }
+
+    private static void ValidateBuiltVillagePlotArt(int plotIndex)
+    {
+        var plot = RequireObject($"Village Build Plot {plotIndex + 1}", true);
+        var building = FindChild(plot.transform, "Building")?.GetComponent<RawImage>();
+        if (building == null)
+        {
+            throw new InvalidOperationException($"Village Build Plot {plotIndex + 1} is missing its building image.");
+        }
+
+        if (!building.gameObject.activeInHierarchy || building.texture == null)
+        {
+            throw new InvalidOperationException($"Village Build Plot {plotIndex + 1} should show loaded building art after being forced built.");
+        }
+
+        var buildMark = FindChild(plot.transform, "Build Mark");
+        if (buildMark != null && buildMark.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException($"Village Build Plot {plotIndex + 1} should hide its build mark after being built.");
+        }
+    }
+
+    private static void AssertSelectedVillagePlot(IdlePrototypeController controller, int expectedIndex, string context)
+    {
+        var selectedIndex = GetPrivateField<int>(controller, "selectedVillagePlotIndex");
+        if (selectedIndex != expectedIndex)
+        {
+            throw new InvalidOperationException($"{context} selected plot mismatch: expected {expectedIndex}, got {selectedIndex}.");
+        }
     }
 
     private static void ForceBuiltVillagePlot(IdlePrototypeController controller, int plotIndex, int buildingOptionIndex, int level)
@@ -194,6 +322,48 @@ public static class VillageUiValidation
         }
 
         return button;
+    }
+
+    private static RawImage RequireRawImageWithTexture(string name)
+    {
+        var gameObject = RequireObject(name, true);
+        var image = gameObject.GetComponent<RawImage>();
+        if (image == null)
+        {
+            throw new InvalidOperationException($"{name} is missing a RawImage component.");
+        }
+
+        if (image.texture == null)
+        {
+            throw new InvalidOperationException($"{name} is missing a loaded texture.");
+        }
+
+        return image;
+    }
+
+    private static Transform FindChild(Transform parent, string childName)
+    {
+        if (parent == null)
+        {
+            return null;
+        }
+
+        for (var i = 0; i < parent.childCount; i++)
+        {
+            var child = parent.GetChild(i);
+            if (child.name == childName)
+            {
+                return child;
+            }
+
+            var match = FindChild(child, childName);
+            if (match != null)
+            {
+                return match;
+            }
+        }
+
+        return null;
     }
 
     private static string GetButtonLabel(Button button)
