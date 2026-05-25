@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.98`, save version `2`.
+- Unity client code is at Prototype `0.2.99`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -47,6 +47,7 @@ Last updated: 2026-05-26
 - Extended `Mythwake/Validate Home Idle Combat` so it also checks progress-map region texture sync across the main campaign map, stage-detail preview, and lower idle mini-map, plus reward progress fill behavior and Server Mode local-reward blocking.
 - Home idle Server Mode now clears stale local loot popups and shows an empty reward progress bar while rewards are server-side; the Home idle validator guards the progress bar, popup clearing, and Server Mode Patrol Info copy.
 - Home idle local reward summaries now show both the last Gold and last Essence tick; the Home idle validator checks the local tick summary after a reward fires.
+- Home idle local reward summaries now split the last and next tick lines into a taller label area so the lower patrol reward copy remains readable; the Home idle validator guards the line break and fit.
 - Added a short floating Home idle loot popup for local active Gold/Myth Essence ticks, with validator coverage that confirms the popup appears and fits.
 - Added a tappable Home patrol info popup on the idle combat area so players can inspect the current stage, enemy, active tick rewards, and the no-auto-clear rule; the Home idle validator now clicks and closes it.
 - Added a Home campaign checkpoint detail popup so tapping a stage node now opens a larger AFK-style panel with a map preview, enemy formation, completion reward row, and Battle/Close controls; the Home idle validator checks and closes it.

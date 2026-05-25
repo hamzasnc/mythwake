@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.98";
+    public const string PrototypeVersion = "0.2.99";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -14269,15 +14269,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var rewardBack = homeIdleRewardFill.transform.parent.GetComponent<RectTransform>();
         if (rewardBack != null)
         {
-            rewardBack.sizeDelta = new Vector2(620f, 22f);
+            rewardBack.sizeDelta = new Vector2(620f, 44f);
         }
 
-        homeIdleRewardText = CreateRuntimeText(homeIdleRewardFill.transform.parent, "Home Idle Reward Text", string.Empty, 17, Vector2.zero, new Vector2(590, 22));
+        homeIdleRewardText = CreateRuntimeText(homeIdleRewardFill.transform.parent, "Home Idle Reward Text", string.Empty, 16, Vector2.zero, new Vector2(596, 40));
         homeIdleRewardText.fontStyle = FontStyles.Bold;
         homeIdleRewardText.enableAutoSizing = true;
-        homeIdleRewardText.fontSizeMin = 12;
-        homeIdleRewardText.fontSizeMax = 17;
-        homeIdleRewardText.textWrappingMode = TextWrappingModes.NoWrap;
+        homeIdleRewardText.fontSizeMin = 11;
+        homeIdleRewardText.fontSizeMax = 16;
+        homeIdleRewardText.textWrappingMode = TextWrappingModes.Normal;
+        homeIdleRewardText.outlineColor = new Color(0.02f, 0.02f, 0.03f, 0.95f);
+        homeIdleRewardText.outlineWidth = 0.14f;
         homeIdleRewardText.raycastTarget = false;
 
         homeIdleLootPopupText = CreateRuntimeText(homeIdleCombatRoot, "Home Idle Loot Pop Text", string.Empty, 26, new Vector2(0, -132), new Vector2(520, 42));
@@ -18923,7 +18925,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 var gold = GetHomeIdleRewardGoldAmount();
                 var essence = GetHomeIdleRewardEssenceAmount();
                 var lastReward = homeIdleLastRewardGold > 0 || homeIdleLastRewardEssence > 0
-                    ? $"Letzte +{FormatCompactNumber(homeIdleLastRewardGold)} Gold +{FormatCompactNumber(homeIdleLastRewardEssence)} Essence  "
+                    ? $"Letzte +{FormatCompactNumber(homeIdleLastRewardGold)} Gold +{FormatCompactNumber(homeIdleLastRewardEssence)} Essence\n"
                     : string.Empty;
                 homeIdleRewardText.text = $"{lastReward}Naechste +{FormatCompactNumber(gold)} Gold +{FormatCompactNumber(essence)} Essence in {secondsRemaining}s";
             }

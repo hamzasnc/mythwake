@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.98
+Prototype version: 0.2.99
 Local save version: 2
 
 Current prototype:
@@ -177,6 +177,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.99: Split the Home idle local reward summary into last/next reward lines with a taller progress label area and validator coverage.
 - Prototype 0.2.98: Fixed the Home idle local reward summary so the last Patrol tick shows both Gold and Essence, with validator coverage.
 - Prototype 0.2.97: Cleaned up Home idle Server Mode presentation so the local reward progress bar and old loot popups are hidden while rewards are server-side, with validator coverage.
 - Prototype 0.2.96: Extended Home idle combat validation for progress-map region sync across main/detail/idle maps, reward progress fill behavior, and Server Mode local-reward blocking.

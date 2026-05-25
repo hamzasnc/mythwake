@@ -185,6 +185,7 @@ public static class HomeIdleCombatValidation
             RequireCopy(rewardText.text, "Gold");
             RequireCopy(rewardText.text, "Essence");
             RequireCopy(rewardText.text, "Naechste");
+            RequireLineBreak(rewardText.text, "Home Idle Reward Text after local tick");
             AssertTextFits(rewardText, "Home Idle Reward Text after local tick");
 
             var stageDefinition = InvokePrivate(controller, "GetStageDefinition", stageBefore);
@@ -751,6 +752,14 @@ public static class HomeIdleCombatValidation
         if (string.IsNullOrWhiteSpace(text) || text.IndexOf(expected, StringComparison.Ordinal) < 0)
         {
             throw new InvalidOperationException($"Expected copy '{expected}' in '{text}'.");
+        }
+    }
+
+    private static void RequireLineBreak(string text, string context)
+    {
+        if (string.IsNullOrEmpty(text) || text.IndexOf('\n') < 0)
+        {
+            throw new InvalidOperationException($"{context} should split the last and next reward summaries onto separate lines, got '{text}'.");
         }
     }
 
