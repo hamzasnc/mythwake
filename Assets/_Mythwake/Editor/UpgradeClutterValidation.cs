@@ -67,6 +67,10 @@ public static class UpgradeClutterValidation
         AssertSourceDoesNotContain(source, "\"Prev Rarity\"", "Prototype builder should not recreate old rarity navigation button copy.");
         AssertSourceDoesNotContain(source, "\"Next Rarity\"", "Prototype builder should not recreate old rarity navigation button copy.");
         AssertSourceDoesNotContain(source, "Fuse 3 Copies", "Prototype builder should not recreate old fuse button copy.");
+        AssertSourceDoesNotContain(source, "Weapon +1", "Prototype builder should use localized equipment names for weapon upgrade copy.");
+        AssertSourceDoesNotContain(source, "Armor +1", "Prototype builder should use localized equipment names for armor upgrade copy.");
+        AssertSourceDoesNotContain(source, "Weapon {L(", "Prototype builder equipment summary should use equipment localization keys.");
+        AssertSourceDoesNotContain(source, "Armor {L(", "Prototype builder equipment summary should use equipment localization keys.");
     }
 
     private static void ValidateBattleScreen(IdlePrototypeController controller)

@@ -80,7 +80,7 @@ Current prototype:
 - Gear screen keeps equipment summaries, accessory text, and gear action controls stacked below the showcase with validator coverage for spacing
 - Gear screen accessory action labels are localized and covered by German refresh validation
 - Gear screen accessory inventory copy counts use a compact two-line summary with auto-sized text
-- Prototype UI builder now creates Gear controls in the current localized runtime layout, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale Gear placeholder copy
+- Prototype UI builder now creates Gear controls in the current localized runtime layout with localized equipment names, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale Gear placeholder copy
 
 Backend:
 - Go API skeleton in `backend/`

@@ -600,7 +600,7 @@ The next chat should continue in this order unless the user redirects:
 6. Continue the Hero/Gear polish pass behind the new upgrade-clutter guard.
    - Run `Mythwake/Validate Upgrade Clutter` after layout changes.
    - Visually verify the 8-slot Hero Detail gear layout in Unity/emulator.
-   - Gear builder defaults now match the current localized runtime control stack; keep future Gear UI rebuilds behind that validator.
+   - Gear builder defaults now match the current localized runtime control stack, including equipment names; keep future Gear UI rebuilds behind that validator.
    - Server Mode accessory removal now has an endpoint; next work can focus on UI feedback/spacing rather than missing backend plumbing.
    - Hero level-up belongs in Heroes or hero detail.
    - Weapon/Armor/accessory upgrades belong in Gear.

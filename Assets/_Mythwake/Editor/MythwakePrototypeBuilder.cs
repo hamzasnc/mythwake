@@ -9,6 +9,8 @@ public static class MythwakePrototypeBuilder
 {
     private const string HomeNavbarAssetRoot = "Assets/_Mythwake/UI/Home Screen/bottom_navbar/";
     private const string CurrencyIconAssetRoot = "Assets/_Mythwake/UI/icons/";
+    private const string EquipmentWeaponId = "equipment_weapon";
+    private const string EquipmentArmorId = "equipment_armor";
 
     private static readonly Color BackgroundColor = new Color(0.07f, 0.1f, 0.16f);
     private static readonly Color PanelColor = new Color(0.12f, 0.16f, 0.24f, 0.95f);
@@ -200,15 +202,15 @@ public static class MythwakePrototypeBuilder
         var heroAscendButton = CreateButton("Hero Ascend Button", heroesPanel.transform, "Ascend Astra (20 Shards)", ButtonColor);
         SetRect(heroAscendButton.GetComponent<RectTransform>(), new Vector2(0, -475), new Vector2(760, 100), new Vector2(0.5f, 1f));
 
-        var equipmentSummary = CreateText("Equipment Summary Text", gearPanel.transform, $"{L("ui.inventory.tab.gear")}\nWeapon {L("ui.common.level_short")}. 1  +8 ATK\nArmor {L("ui.common.level_short")}. 1  +80 HP", 24, FontStyles.Bold);
+        var equipmentSummary = CreateText("Equipment Summary Text", gearPanel.transform, $"{L("ui.inventory.tab.gear")}\n{EquipmentName(EquipmentWeaponId)} {L("ui.common.level_short")}. 1  +8 ATK\n{EquipmentName(EquipmentArmorId)} {L("ui.common.level_short")}. 1  +80 HP", 24, FontStyles.Bold);
         SetRect(equipmentSummary.rectTransform, new Vector2(0, -486), new Vector2(760, 88), new Vector2(0.5f, 1f));
         ConfigureTextFit(equipmentSummary, 15f, 24f);
 
-        var weaponUpgradeButton = CreateButton("Weapon Upgrade Button", gearPanel.transform, $"Weapon +1\n80 {L("currency.gold.name")}", UpgradeButtonColor);
+        var weaponUpgradeButton = CreateButton("Weapon Upgrade Button", gearPanel.transform, $"{EquipmentName(EquipmentWeaponId)} +1\n80 {L("currency.gold.name")}", UpgradeButtonColor);
         SetRect(weaponUpgradeButton.GetComponent<RectTransform>(), new Vector2(-210, -588), new Vector2(300, 64), new Vector2(0.5f, 1f));
         weaponUpgradeButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
 
-        var armorUpgradeButton = CreateButton("Armor Upgrade Button", gearPanel.transform, $"Armor +1\n75 {L("currency.gold.name")}", UpgradeButtonColor);
+        var armorUpgradeButton = CreateButton("Armor Upgrade Button", gearPanel.transform, $"{EquipmentName(EquipmentArmorId)} +1\n75 {L("currency.gold.name")}", UpgradeButtonColor);
         SetRect(armorUpgradeButton.GetComponent<RectTransform>(), new Vector2(210, -588), new Vector2(300, 64), new Vector2(0.5f, 1f));
         armorUpgradeButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
 
@@ -655,5 +657,10 @@ public static class MythwakePrototypeBuilder
     private static string Lf(string key, params object[] args)
     {
         return MythwakeLocalization.Format(MythwakeLanguage.English, key, args);
+    }
+
+    private static string EquipmentName(string equipmentId)
+    {
+        return L($"equipment.{equipmentId}.name");
     }
 }

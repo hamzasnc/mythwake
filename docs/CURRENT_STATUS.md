@@ -53,7 +53,7 @@ Last updated: 2026-05-25
 - Gear screen summary text and upgrade/accessory controls now have clearer vertical spacing below the showcase, and the upgrade clutter validator checks those controls do not overlap the showcase or each other.
 - Gear screen accessory action copy is now localized for selected fuse tier, equip, level, empty, fuse, target tier, and floor labels, with German refresh coverage in the upgrade clutter validator.
 - Gear screen accessory inventory copy counts now render as a compact two-line summary with auto-sized Gear text blocks, keeping the control stack readable in localized layouts.
-- The prototype UI builder now creates the Gear equipment/accessory controls in the current localized runtime layout, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale builder placeholder copy.
+- The prototype UI builder now creates the Gear equipment/accessory controls in the current localized runtime layout with localized equipment names, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale builder placeholder copy.
 - Added backend `accessory_unequip` support, including the action catalog entry, `/gear/accessories/unequip` route, state mutation, and Player/HTTP tests.
 - Backend definition snapshots and PostgreSQL seeds now include the sixth `headgear`/Helm accessory slot plus R0-R4 headgear definitions, matching the Hero Detail and Gear UI.
 - Added `scripts/check-unity-current-slice.cmd` / `.ps1` so the current slice validator can be run from PowerShell or CI-style local checks once this Unity project is not already open.
