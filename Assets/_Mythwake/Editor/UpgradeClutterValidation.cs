@@ -125,6 +125,11 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException("Hero detail Equip Gear should open the selected gear list instead of leaving the Heroes screen.");
         }
 
+        var gearListCloseButton = RequireButtonField(controller, "heroDetailGearListCloseButton");
+        var gearOptionButtons = RequireField<Button[]>(controller, "heroDetailGearOptionButtons");
+        ValidateHeroDetailGearListLayout(heroDetailRoot.gameObject, gearListRoot.gameObject, gearListCloseButton, gearOptionButtons);
+        ValidateHeroDetailEquipmentGearList(controller, heroDetailRoot, gearListRoot, gearOptionButtons);
+
         SetPrivateField(controller, "backendGameplayEnabled", false);
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, 0, 1);
         InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
@@ -142,6 +147,66 @@ public static class UpgradeClutterValidation
 
         SetPrivateField(controller, "backendGameplayEnabled", false);
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, -1, 0);
+    }
+
+    private static void ValidateHeroDetailEquipmentGearList(IdlePrototypeController controller, RectTransform heroDetailRoot, RectTransform gearListRoot, Button[] gearOptionButtons)
+    {
+        InvokePrivate(controller, "HideHeroDetailGearList");
+        InvokePrivate(controller, "ShowHeroDetailGearSlot", 0);
+        InvokePrivate(controller, "OpenSelectedHeroDetailGearOptions");
+        Canvas.ForceUpdateCanvases();
+
+        if (!heroDetailRoot.gameObject.activeInHierarchy || !gearListRoot.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Hero detail Equip Gear should open the selected equipment slot list before navigating away.");
+        }
+
+        var gearPanel = RequireObjectField<GameObject>(controller, "gearPanel");
+        if (gearPanel.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Hero detail equipment slot list should not immediately leave for the Gear screen.");
+        }
+
+        for (var i = 0; i < gearOptionButtons.Length; i++)
+        {
+            var option = gearOptionButtons[i];
+            if (option == null)
+            {
+                throw new InvalidOperationException($"Hero detail gear option {i + 1} is missing its button.");
+            }
+
+            if (i < 2 && !option.gameObject.activeInHierarchy)
+            {
+                throw new InvalidOperationException($"Hero detail equipment option {i + 1} should be visible.");
+            }
+
+            if (i >= 2 && option.gameObject.activeInHierarchy)
+            {
+                throw new InvalidOperationException($"Hero detail equipment list should hide unused option row {i + 1}.");
+            }
+        }
+
+        if (gearOptionButtons[0].interactable)
+        {
+            throw new InvalidOperationException("Hero detail equipped equipment summary row should not be clickable.");
+        }
+
+        if (!gearOptionButtons[1].interactable)
+        {
+            throw new InvalidOperationException("Hero detail equipment list should expose an Open Gear action row.");
+        }
+
+        InvokePrivate(controller, "EquipHeroDetailGearOption", 1);
+        Canvas.ForceUpdateCanvases();
+
+        if (!gearPanel.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Hero detail equipment Open Gear row should navigate to the Gear screen.");
+        }
+
+        controller.ShowHeroes();
+        InvokePrivate(controller, "ShowHeroDetail", 0);
+        Canvas.ForceUpdateCanvases();
     }
 
     private static void ValidateHeroDetailGearLayout(GameObject heroDetailRoot, Button[] gearSlots, int expectedGearSlotCount)
@@ -175,6 +240,31 @@ public static class UpgradeClutterValidation
             {
                 AssertNoOverlap(gearSlot, guardedObjects[guardedIndex], 4f, "Hero Detail gear layout");
             }
+        }
+    }
+
+    private static void ValidateHeroDetailGearListLayout(GameObject heroDetailRoot, GameObject gearListRoot, Button gearListCloseButton, Button[] gearOptionButtons)
+    {
+        RequireInsidePanel(heroDetailRoot, gearListRoot);
+        RequireInsidePanel(gearListRoot, gearListCloseButton.gameObject);
+
+        GameObject previousOption = null;
+        for (var i = 0; i < gearOptionButtons.Length; i++)
+        {
+            var option = gearOptionButtons[i];
+            if (option == null || !option.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            RequireInsidePanel(gearListRoot, option.gameObject);
+            AssertNoOverlap(gearListCloseButton.gameObject, option.gameObject, 4f, "Hero Detail gear list layout");
+            if (previousOption != null)
+            {
+                AssertNoOverlap(previousOption, option.gameObject, 4f, "Hero Detail gear list option spacing");
+            }
+
+            previousOption = option.gameObject;
         }
     }
 

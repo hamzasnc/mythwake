@@ -35,7 +35,8 @@ Last updated: 2026-05-25
 - Added an editor validation entry point for upgrade clutter so legacy Battle/Hero upgrade buttons stay hidden, Gear upgrade controls stay on Gear, and debug shortcuts stay in Shop/tools.
 - Extended the upgrade clutter validator so the 7-slot Hero Detail gear layout also has non-overlap checks against the portrait, stats, resources, and action buttons.
 - Added a `Mythwake/Validate Current Slice` editor validation entry point that runs Village UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Paladin integration, and Paladin Spine handoff checks in one pass.
-- Polished the Hero Detail gear slice: it now exposes all 2 equipment tracks plus all 5 accessory slots, `Equip Gear` opens the selected gear list, and `Remove Gear` can unequip accessories locally or through the Server Mode backend action.
+- Polished the Hero Detail gear slice: it now exposes all 2 equipment tracks plus all 5 accessory slots, `Equip Gear` opens the selected gear list for equipment and accessories, and `Remove Gear` can unequip accessories locally or through the Server Mode backend action.
+- Added validator coverage for the Hero Detail gear list popup so equipment slots open the inline list first and only the list's `Open Gear` row navigates to the Gear screen.
 - Added backend `accessory_unequip` support, including the action catalog entry, `/gear/accessories/unequip` route, state mutation, and Player/HTTP tests.
 - Added `scripts/check-unity-current-slice.cmd` / `.ps1` so the current slice validator can be run from PowerShell or CI-style local checks once this Unity project is not already open.
 - Added backend tests for service-level and HTTP-level Village upgrades.

@@ -17754,12 +17754,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             selectedHeroDetailGearSlotIndex = FindFirstHeroDetailAccessorySlotWithCopy();
         }
 
-        if (selectedHeroDetailGearSlotIndex < 2)
-        {
-            ShowGear();
-            return;
-        }
-
         ShowHeroDetailGearSlot(selectedHeroDetailGearSlotIndex);
     }
 
