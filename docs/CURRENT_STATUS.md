@@ -43,7 +43,7 @@ Last updated: 2026-05-25
 - Added Hero Detail action-label overflow checks so localized Level Up, Open/Equip Gear, and Remove Gear labels must fit inside their buttons.
 - Added Hero Detail gear-list text overflow checks so localized list titles and option rows must fit in equipment/accessory popups.
 - Added a Hero Detail gear-list state guard so equipment lists expose only summary/open rows while accessory lists restore every rarity row after switching slots.
-- Empty Hero Detail accessory slots now stay visually empty until gear is equipped, even when bag copies exist; owned copies remain prioritized inside the accessory list, and the validator checks empty-slot labels/icons.
+- Empty Hero Detail accessory slots now stay visually empty until gear is equipped, even when bag copies exist; owned copies remain prioritized inside the accessory list, and the validator checks empty-slot labels/icons including after German language refresh.
 - Hero Detail accessory option lists now put owned, equippable copies above empty rows and keep higher rarity first inside those groups, so empty slots stay clean while the picker still surfaces useful copies; the validator locks that ordering and the copy/tap-to-equip text.
 - Hero Detail now renders the new armory background plus visible starter Weapon/Armor training icons and equipped accessory slot icon art, and the upgrade clutter validator checks that active art loads, empty accessory slots stay blank, everything fits, and icons do not intercept slot input.
 - Hero Detail now labels starter Weapon/Armor slots and rows as training tracks instead of claiming they are equipped item instances; the validator guards both slot and row wording in the normal and German refresh paths.

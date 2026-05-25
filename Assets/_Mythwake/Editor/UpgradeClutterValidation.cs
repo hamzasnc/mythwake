@@ -216,32 +216,8 @@ public static class UpgradeClutterValidation
             InvokePrivate(controller, "ShowHeroDetailGearSlot", gearSlotIndex);
             Canvas.ForceUpdateCanvases();
 
-            var slotText = gearSlots[gearSlotIndex].GetComponentInChildren<TMP_Text>(includeInactive: true);
-            if (slotText == null)
-            {
-                throw new InvalidOperationException("Hero detail accessory slot should keep a visible label.");
-            }
-
             var expectedCopies = originalCopies + addedCopies;
-            if (!slotText.text.Contains(GetLocalizedText(controller, "ui.common.empty")) || slotText.text.Contains(GetLocalizedText(controller, "ui.common.bag")) || slotText.text.Contains("R3") || slotText.text.Contains($"x{expectedCopies}"))
-            {
-                throw new InvalidOperationException($"Hero detail empty accessory slot should stay empty even when bag copies exist. Got '{slotText.text}'.");
-            }
-
-            AssertTextFits(slotText, gearSlots[gearSlotIndex].name, "Hero detail empty accessory label");
-
-            var slotIcons = RequireField<RawImage[]>(controller, "heroDetailGearSlotIcons");
-            var icon = slotIcons[gearSlotIndex];
-            if (icon == null || IsRawImageVisible(icon))
-            {
-                throw new InvalidOperationException("Hero detail empty accessory slot should not show inventory-copy icon art before gear is equipped.");
-            }
-
-            var frame = gearSlots[gearSlotIndex].GetComponent<Image>();
-            if (frame == null)
-            {
-                throw new InvalidOperationException("Hero detail accessory slot should keep a visible frame image.");
-            }
+            AssertHeroDetailEmptyAccessorySlotState(controller, gearSlots, gearSlotIndex, "Hero detail empty accessory slot", "R3", $"x{expectedCopies}");
         }
         finally
         {
@@ -249,6 +225,44 @@ public static class UpgradeClutterValidation
             InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, accessorySlot, originalRarity, originalLevel);
             InvokePrivate(controller, "RefreshHeroDetailUi");
             Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void AssertHeroDetailEmptyAccessorySlotState(IdlePrototypeController controller, Button[] gearSlots, int gearSlotIndex, string context, params string[] forbiddenText)
+    {
+        var slotText = gearSlots[gearSlotIndex].GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (slotText == null)
+        {
+            throw new InvalidOperationException($"{context}: accessory slot should keep a visible label.");
+        }
+
+        if (!slotText.text.Contains(GetLocalizedText(controller, "ui.common.empty")) || slotText.text.Contains(GetLocalizedText(controller, "ui.common.bag")))
+        {
+            throw new InvalidOperationException($"{context}: empty accessory slot should stay empty instead of showing inventory copy details. Got '{slotText.text}'.");
+        }
+
+        for (var i = 0; i < forbiddenText.Length; i++)
+        {
+            var value = forbiddenText[i];
+            if (!string.IsNullOrEmpty(value) && slotText.text.Contains(value))
+            {
+                throw new InvalidOperationException($"{context}: empty accessory slot should not include '{value}'. Got '{slotText.text}'.");
+            }
+        }
+
+        AssertTextFits(slotText, gearSlots[gearSlotIndex].name, $"{context} label");
+
+        var slotIcons = RequireField<RawImage[]>(controller, "heroDetailGearSlotIcons");
+        var icon = slotIcons[gearSlotIndex];
+        if (icon == null || IsRawImageVisible(icon))
+        {
+            throw new InvalidOperationException($"{context}: empty accessory slot should not show inventory-copy icon art before gear is equipped.");
+        }
+
+        var frame = gearSlots[gearSlotIndex].GetComponent<Image>();
+        if (frame == null)
+        {
+            throw new InvalidOperationException($"{context}: accessory slot should keep a visible frame image.");
         }
     }
 
@@ -281,7 +295,13 @@ public static class UpgradeClutterValidation
 
     private static void ValidateHeroDetailLanguageRefresh(IdlePrototypeController controller, Button[] gearSlots, RectTransform gearListRoot, Button equipGearButton, Button removeGearButton, Button[] gearOptionButtons)
     {
+        const int heroIndex = 0;
+        const int emptyAccessorySlot = 1;
+        const int emptyGearSlotIndex = emptyAccessorySlot + 2;
+
         var originalLanguage = RequireField<MythwakeLanguage>(controller, "language");
+        var originalEmptyAccessoryRarity = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, emptyAccessorySlot);
+        var originalEmptyAccessoryLevel = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryLevel", heroIndex, emptyAccessorySlot);
         try
         {
             SetPrivateField(controller, "language", MythwakeLanguage.German);
@@ -302,10 +322,18 @@ public static class UpgradeClutterValidation
             AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.equip_gear"), "Hero detail accessory action should refresh when language changes.");
             AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.remove_gear"), "Hero detail remove action should stay localized after slot changes.");
             AssertHeroDetailGearListTextFits(gearListRoot.gameObject, gearOptionButtons, "Hero detail German accessory list");
+
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, emptyAccessorySlot, -1, 0);
+            InvokePrivate(controller, "ShowHeroDetailGearSlot", emptyGearSlotIndex);
+            Canvas.ForceUpdateCanvases();
+
+            AssertHeroDetailEmptyAccessorySlotState(controller, gearSlots, emptyGearSlotIndex, "Hero detail German empty accessory slot");
+            AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.equip_gear"), "Hero detail empty accessory action should stay localized after language changes.");
         }
         finally
         {
             SetPrivateField(controller, "language", originalLanguage);
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, emptyAccessorySlot, originalEmptyAccessoryRarity, originalEmptyAccessoryLevel);
             InvokePrivate(controller, "RefreshHeroDetailUi");
             Canvas.ForceUpdateCanvases();
         }
