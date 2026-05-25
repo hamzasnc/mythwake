@@ -514,6 +514,7 @@ public static class UpgradeClutterValidation
         {
             throw new InvalidOperationException("Hero detail armory background should render the equipment art texture.");
         }
+        AssertVisibleTexture(backgroundImage, "Hero detail armory background");
 
         if (backgroundImage.raycastTarget)
         {
@@ -538,6 +539,7 @@ public static class UpgradeClutterValidation
             {
                 throw new InvalidOperationException($"Hero detail gear slot {i + 1} should render equipment icon art.");
             }
+            AssertVisibleTexture(icon, $"Hero detail gear slot {i + 1} icon");
 
             if (icon.raycastTarget)
             {
@@ -723,6 +725,7 @@ public static class UpgradeClutterValidation
         {
             throw new InvalidOperationException($"{context}: {gameObject.name} should render loaded texture art.");
         }
+        AssertVisibleTexture(image, $"{context}: {gameObject.name}");
 
         if (image.raycastTarget)
         {
@@ -733,6 +736,19 @@ public static class UpgradeClutterValidation
         if (rect.rect.width <= 0f || rect.rect.height <= 0f || rect.rect.width > maxWidth || rect.rect.height > maxHeight)
         {
             throw new InvalidOperationException($"{context}: {gameObject.name} should fit its art bounds. width={rect.rect.width}, height={rect.rect.height}, maxWidth={maxWidth}, maxHeight={maxHeight}.");
+        }
+    }
+
+    private static void AssertVisibleTexture(RawImage image, string context)
+    {
+        if (!image.enabled || !image.gameObject.activeInHierarchy || image.color.a < 0.95f)
+        {
+            throw new InvalidOperationException($"{context} should be visibly rendered, not hidden as a blank placeholder.");
+        }
+
+        if (image.texture == Texture2D.whiteTexture || image.texture.width <= 8 || image.texture.height <= 8)
+        {
+            throw new InvalidOperationException($"{context} should use real art, not Unity's white placeholder texture.");
         }
     }
 

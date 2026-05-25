@@ -14597,9 +14597,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (inventorySlotIcons != null && inventorySlotIcons[i] != null)
             {
-                inventorySlotIcons[i].texture = LoadRuntimeTexture(item.iconTextureName);
-                inventorySlotIcons[i].color = Color.white;
-                FitRawImageToTexture(inventorySlotIcons[i], new Vector2(92f, 74f));
+                SetRuntimeRawImageTexture(inventorySlotIcons[i], LoadRuntimeTexture(item.iconTextureName), new Vector2(92f, 74f));
             }
 
             if (inventorySlotCountTexts != null && inventorySlotCountTexts[i] != null)
@@ -14674,9 +14672,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (inventoryDetailIcon != null)
         {
-            inventoryDetailIcon.texture = LoadRuntimeTexture(item.iconTextureName);
-            inventoryDetailIcon.color = Color.white;
-            FitRawImageToTexture(inventoryDetailIcon, new Vector2(112f, 90f));
+            SetRuntimeRawImageTexture(inventoryDetailIcon, LoadRuntimeTexture(item.iconTextureName), new Vector2(112f, 90f));
         }
 
         if (inventoryDetailTitleText != null)
@@ -17722,9 +17718,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (heroDetailGearSlotIcons != null && i < heroDetailGearSlotIcons.Length && heroDetailGearSlotIcons[i] != null)
             {
-                heroDetailGearSlotIcons[i].texture = LoadRuntimeTexture(GetHeroDetailGearSlotIconTextureName(i));
-                heroDetailGearSlotIcons[i].color = Color.white;
-                FitRawImageToTexture(heroDetailGearSlotIcons[i], new Vector2(84f, 56f));
+                SetRuntimeRawImageTexture(heroDetailGearSlotIcons[i], LoadRuntimeTexture(GetHeroDetailGearSlotIconTextureName(i)), new Vector2(84f, 56f));
             }
 
             if (heroDetailGearSlotFrames != null && i < heroDetailGearSlotFrames.Length && heroDetailGearSlotFrames[i] != null)
@@ -19524,6 +19518,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         image.rectTransform.sizeDelta = new Vector2(width * scale, height * scale);
     }
 
+    private static void SetRuntimeRawImageTexture(RawImage image, Texture texture, Vector2 maxSize)
+    {
+        if (image == null)
+        {
+            return;
+        }
+
+        image.texture = texture;
+        image.color = texture == null ? new Color(1f, 1f, 1f, 0f) : Color.white;
+        if (texture != null)
+        {
+            FitRawImageToTexture(image, maxSize);
+        }
+    }
+
     private static Button CreateRuntimeImageButton(Transform parent, string name, Texture2D texture, Vector2 anchoredPosition, Vector2 rectSize, out RawImage image)
     {
         var buttonObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage), typeof(Button));
@@ -19585,13 +19594,29 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var sprite = Resources.Load<Sprite>($"Mythwake/Art/Runtime/{textureName}");
-        if (sprite == null)
+        if (sprite != null)
         {
-            return null;
+            sprite.texture.filterMode = FilterMode.Point;
+            return sprite.texture;
         }
 
-        sprite.texture.filterMode = FilterMode.Point;
-        return sprite.texture;
+#if UNITY_EDITOR
+        var editorTexture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/_Mythwake/Resources/Mythwake/Art/Runtime/{textureName}.png");
+        if (editorTexture != null)
+        {
+            editorTexture.filterMode = FilterMode.Point;
+            return editorTexture;
+        }
+
+        var editorSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/_Mythwake/Resources/Mythwake/Art/Runtime/{textureName}.png");
+        if (editorSprite != null)
+        {
+            editorSprite.texture.filterMode = FilterMode.Point;
+            return editorSprite.texture;
+        }
+#endif
+
+        return null;
     }
 
     private static Texture2D[] LoadCombatAnimationFrames(string textureName, string clipName, string fallbackTextureName)

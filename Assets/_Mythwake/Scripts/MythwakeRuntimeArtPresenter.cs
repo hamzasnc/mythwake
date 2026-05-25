@@ -344,8 +344,7 @@ public sealed class MythwakeRuntimeArtPresenter
 
         var rawImage = imageObject.GetComponent<RawImage>();
         rawImage.raycastTarget = false;
-        rawImage.texture = GetTexture(textureName);
-        rawImage.color = Color.white;
+        SetRawImageTexture(rawImage, GetTexture(textureName));
         return rawImage;
     }
 
@@ -415,6 +414,21 @@ public sealed class MythwakeRuntimeArtPresenter
             }
         }
 
+#if UNITY_EDITOR
+        if (texture == null)
+        {
+            texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/_Mythwake/Resources/{ResourceRoot}{textureName}.png");
+            if (texture == null)
+            {
+                var editorSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/_Mythwake/Resources/{ResourceRoot}{textureName}.png");
+                if (editorSprite != null)
+                {
+                    texture = editorSprite.texture;
+                }
+            }
+        }
+#endif
+
         if (texture != null)
         {
             texture.filterMode = FilterMode.Point;
@@ -447,7 +461,7 @@ public sealed class MythwakeRuntimeArtPresenter
     {
         if (image != null)
         {
-            image.texture = GetTexture(textureName);
+            SetRawImageTexture(image, GetTexture(textureName));
         }
     }
 
@@ -458,8 +472,19 @@ public sealed class MythwakeRuntimeArtPresenter
             return;
         }
 
-        image.texture = GetTexture(textureName);
+        SetRawImageTexture(image, GetTexture(textureName));
         FitRawImageToTexture(image, maxSize);
+    }
+
+    private static void SetRawImageTexture(RawImage image, Texture texture)
+    {
+        if (image == null)
+        {
+            return;
+        }
+
+        image.texture = texture;
+        image.color = texture == null ? new Color(1f, 1f, 1f, 0f) : Color.white;
     }
 
     private static void FitRawImageToTexture(RawImage image, Vector2 maxSize)

@@ -46,6 +46,7 @@ Last updated: 2026-05-25
 - Empty Hero Detail accessory slots now show the best available bag copy hint, use a rarity-tinted highlight when copies are available, and the validator checks that the hint appears, fits, and is visually highlighted.
 - Hero Detail accessory option lists now put owned, equippable copies above empty rows and keep higher rarity first inside those groups, matching the best-copy slot hint; the validator locks that ordering.
 - Hero Detail now renders the new armory background and equipment/accessory slot icon art, and the upgrade clutter validator checks that the art loads, fits, and does not intercept slot input.
+- Hero Detail and Gear runtime equipment icons now use an Editor asset-path fallback when `Resources.Load` is stale, hide missing-texture RawImage placeholders instead of showing white blocks, and the validator rejects hidden/white-placeholder icon art.
 - Gear screen runtime showcase art now uses the new equipment icon set, and the upgrade clutter validator checks the hero, weapon, armor, headgear, gloves, boots, and accessory images for loaded textures, fit, and input passthrough.
 - Gear screen runtime showcase copy now names all visible equipment slots from the title area, and the upgrade clutter validator checks that the full label fits without overlapping the icon rows.
 - Added backend `accessory_unequip` support, including the action catalog entry, `/gear/accessories/unequip` route, state mutation, and Player/HTTP tests.
