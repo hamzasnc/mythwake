@@ -18107,12 +18107,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var heroIndex = GetSelectedHeroIndex();
         if (slotIndex == 0)
         {
-            return string.Empty;
+            return GetEquipmentWeaponIconTextureName(heroIndex);
         }
 
         if (slotIndex == 1)
         {
-            return string.Empty;
+            return GetEquipmentArmorIconTextureName(heroIndex);
         }
 
         var accessorySlot = slotIndex - 2;

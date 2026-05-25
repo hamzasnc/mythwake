@@ -75,8 +75,8 @@ Current prototype:
 - Mission Track XP is earned from daily mission claims
 - Mission Track rewards can be claimed in the Shop tab
 - Ravik and Paladin art/combat preview hooks exist, including Paladin Spine handoff validation tooling
-- Unity editor validation covers the current gameplay/UI slice, including Village, Fast Rewards, Summon, Upgrade Clutter, Gear showcase art, equipped-only Hero Detail item icons, empty Hero Detail accessory slots, Hero Detail gear spacing/list-state/localization/label-list fit, and Paladin handoff checks
-- Hero Detail shows all equipment/accessory slots, keeps starter Weapon/Armor training slots free of item icon art, only renders accessory icon art once gear is equipped, keeps empty accessory slots visually empty even when bag copies exist, keeps previous/next navigation clear of the gear-slot columns, uses localized contextual gear action labels, prioritizes owned copies in accessory slot lists, and supports accessory removal locally and in Server Mode
+- Unity editor validation covers the current gameplay/UI slice, including Village, Fast Rewards, Summon, Upgrade Clutter, Gear showcase art, visible Weapon/Armor training icons, equipped-only Hero Detail accessory icons, empty Hero Detail accessory slots, Hero Detail gear spacing/list-state/localization/label-list fit, and Paladin handoff checks
+- Hero Detail shows all equipment/accessory slots, keeps starter Weapon/Armor training icons visible, only renders accessory icon art once gear is equipped, keeps empty accessory slots visually empty even when bag copies exist, keeps previous/next navigation clear of the gear-slot columns, uses localized contextual gear action labels, prioritizes owned copies in accessory slot lists, and supports accessory removal locally and in Server Mode
 - Hero Detail labels starter Weapon/Armor slots and rows as training tracks instead of claiming they are equipped item instances
 - Gear screen keeps equipment summaries, accessory text, and gear action controls stacked below the showcase with validator coverage for spacing
 - Gear screen accessory action labels are localized and covered by German refresh validation
