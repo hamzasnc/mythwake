@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.75
+Prototype version: 0.2.76
 Local save version: 2
 
 Current prototype:
@@ -176,6 +176,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.76: Added a first AFK-Arena-style Home idle combat slice with the campaign map in the background, clickable stage-node info, visible foreground hero-vs-monster patrol combat, small active local Gold/Myth Essence ticks, and validator coverage that confirms the idle patrol does not auto-clear stages.
 - Prototype 0.2.75: Added Village building detail/upgrade UI, visible local-only placeholder building bonuses, local and Server Mode upgrade actions, backend Village upgrade tests, backend AFK 24h cap alignment, Fast Rewards server/local display polish, Hero Detail gear polish with localized contextual actions, backend accessory unequip, and spacing validation, Paladin/Summon/Upgrade Clutter validation helpers, and a current-slice Unity validation script.
 - Prototype 0.2.74: Added Paladin combat preview and cleaned up the Paladin Spine handoff.
 - Prototype 0.2.73: Added Paladin combat assets.

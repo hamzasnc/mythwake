@@ -14,10 +14,11 @@ public static class CurrentSliceValidation
             RunPrivateValidator(typeof(FastRewardsUiValidation), "ValidateFastRewardsUi", "Fast Rewards UI");
             RunPrivateValidator(typeof(SummonUiValidation), "ValidateSummonUi", "Summon UI");
             RunPrivateValidator(typeof(UpgradeClutterValidation), "ValidateUpgradeClutter", "Upgrade Clutter");
+            RunPrivateValidator(typeof(HomeIdleCombatValidation), "ValidateHomeIdleCombatUi", "Home Idle Combat");
             RunValidator("Paladin Integration", PaladinSpineValidation.RunPaladinIntegrationValidation);
             RunValidator("Paladin Spine Handoff", PaladinSpineValidation.RunPaladinSpineValidation);
 
-            Debug.Log("Current Mythwake slice validated: Village, Fast Rewards, Summon, Upgrade Clutter, Paladin integration, and Paladin Spine handoff.");
+            Debug.Log("Current Mythwake slice validated: Village, Fast Rewards, Summon, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff.");
         }
         catch (Exception ex)
         {

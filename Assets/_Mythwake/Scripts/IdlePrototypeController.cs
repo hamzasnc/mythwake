@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.75";
+    public const string PrototypeVersion = "0.2.76";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -623,6 +623,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int AfkRewardMaxSeconds = 24 * 60 * 60;
     private const float AfkRewardAutosaveSeconds = 30f;
     private const int DefaultCombatDurationSeconds = 30;
+    private const int HomeIdleVisibleUnitCount = 3;
+    private const float HomeIdleRewardIntervalSeconds = 10f;
+    private const float HomeIdleRewardRateMultiplier = 0.28f;
     private const float FightUltimateCinematicSeconds = 0.9f;
     private const float FightUltimateWorldSlowScale = 0.18f;
     private const int FightAutoAttackManaGain = 2;
@@ -1240,12 +1243,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text homeShortcutToggleText;
     private TMP_Text homeLeftShortcutToggleText;
     private RectTransform homeCampaignMapRoot;
+    private RectTransform homeIdleCombatRoot;
     private RectTransform campaignStagePreviewRoot;
     private TMP_Text campaignStagePreviewText;
     private Button[] campaignStageButtons;
     private TMP_Text[] campaignStageButtonTexts;
     private RawImage[] campaignStageButtonIcons;
     private Image[] campaignStageButtonFrames;
+    private RawImage[] homeIdleHeroImages;
+    private RawImage[] homeIdleEnemyImages;
+    private TMP_Text homeIdleCombatText;
+    private TMP_Text homeIdleRewardText;
+    private Image homeIdleRewardFill;
+    private Texture2D[][] homeIdleHeroIdleFrames;
+    private Texture2D[][] homeIdleHeroAttackFrames;
+    private Texture2D[][] homeIdleEnemyIdleFrames;
+    private Texture2D[][] homeIdleEnemyAttackFrames;
+    private int[] homeIdlePreparedHeroIndices;
+    private int homeIdlePreparedStage = -1;
+    private float homeIdleCombatTimer;
+    private float homeIdleRewardTimer;
+    private int homeIdleLastRewardGold;
+    private int homeIdleLastRewardEssence;
     private RectTransform villageMapRoot;
     private RectTransform villageMapViewportRoot;
     private ScrollRect villageMapScrollRect;
@@ -1740,6 +1759,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         TickAfkRewards(Time.deltaTime);
+        TickHomeIdleCombat(Time.deltaTime);
 
         if (!autoAttackEnabled)
         {
@@ -13482,6 +13502,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureRuntimeSummonOffer();
         EnsureRuntimeHomeActions();
         EnsureRuntimeCampaignMap();
+        EnsureRuntimeHomeIdleCombat();
         EnsureRuntimeHomePopups();
         EnsureRuntimeBattleFlowUi();
         EnsureRuntimeMenuHeader();
@@ -14013,6 +14034,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var mapBack = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Backplate", Vector2.zero, new Vector2(860, 710), new Color(0.08f, 0.12f, 0.19f, 0.98f));
         mapBack.SetAsFirstSibling();
         CreateLayeredRuntimeBackground(mapBack, new Vector2(860, 710), 0.72f);
+        var worldMap = CreateRuntimeRawImage(mapBack, "Campaign World Map Image", LoadRuntimeTexture("mythwake_map"), Vector2.zero, new Vector2(860, 710), new Vector2(0.5f, 1f));
+        worldMap.color = new Color(1f, 1f, 1f, 0.72f);
 
         var lake = CreateRuntimePanel(mapBack, "Frozen River", new Vector2(-118, -535), new Vector2(690, 54), new Color(0.5f, 0.8f, 1f, 0.34f));
         lake.localRotation = Quaternion.Euler(0f, 0f, -8f);
@@ -14033,12 +14056,73 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             campaignStageButtons[i] = CreateCampaignStageButton(homeCampaignMapRoot, i, nodePositions[i]);
         }
 
-        campaignStagePreviewRoot = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Stage Preview", new Vector2(0, -620), new Vector2(790, 118), new Color(0.03f, 0.035f, 0.055f, 0.82f));
-        campaignStagePreviewText = CreateRuntimeText(campaignStagePreviewRoot, "Campaign Stage Preview Text", string.Empty, 22, new Vector2(0, -16), new Vector2(740, 88));
+        campaignStagePreviewRoot = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Stage Preview", new Vector2(0, -548), new Vector2(790, 108), new Color(0.03f, 0.035f, 0.055f, 0.84f));
+        campaignStagePreviewText = CreateRuntimeText(campaignStagePreviewRoot, "Campaign Stage Preview Text", string.Empty, 21, new Vector2(0, -13), new Vector2(740, 82));
         campaignStagePreviewText.enableAutoSizing = true;
         campaignStagePreviewText.fontSizeMin = 16;
-        campaignStagePreviewText.fontSizeMax = 22;
+        campaignStagePreviewText.fontSizeMax = 21;
         campaignStagePreviewText.alignment = TextAlignmentOptions.Center;
+    }
+
+    private void EnsureRuntimeHomeIdleCombat()
+    {
+        if (homeActionRoot == null || homeIdleCombatRoot != null)
+        {
+            return;
+        }
+
+        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -690), new Vector2(720, 270), new Color(0.02f, 0.025f, 0.035f, 0.28f));
+        homeIdleCombatRoot.SetAsLastSibling();
+
+        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Top Shade", new Vector2(0, -12), new Vector2(680, 48), new Color(0.015f, 0.018f, 0.026f, 0.46f));
+        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Ground", new Vector2(0, -210), new Vector2(650, 42), new Color(0.33f, 0.24f, 0.16f, 0.42f));
+        var clashGlow = CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Clash Glow", new Vector2(0, -132), new Vector2(82, 82), new Color(1f, 0.73f, 0.26f, 0.24f));
+        clashGlow.localRotation = Quaternion.Euler(0f, 0f, 45f);
+
+        homeIdleCombatText = CreateRuntimeText(homeIdleCombatRoot, "Home Idle Combat Text", string.Empty, 21, new Vector2(0, -16), new Vector2(650, 34));
+        homeIdleCombatText.fontStyle = FontStyles.Bold;
+        homeIdleCombatText.enableAutoSizing = true;
+        homeIdleCombatText.fontSizeMin = 15;
+        homeIdleCombatText.fontSizeMax = 21;
+        homeIdleCombatText.textWrappingMode = TextWrappingModes.NoWrap;
+        homeIdleCombatText.color = new Color(0.9f, 0.98f, 1f);
+
+        homeIdleHeroImages = new RawImage[HomeIdleVisibleUnitCount];
+        homeIdleEnemyImages = new RawImage[HomeIdleVisibleUnitCount];
+        homeIdleHeroIdleFrames = new Texture2D[HomeIdleVisibleUnitCount][];
+        homeIdleHeroAttackFrames = new Texture2D[HomeIdleVisibleUnitCount][];
+        homeIdleEnemyIdleFrames = new Texture2D[HomeIdleVisibleUnitCount][];
+        homeIdleEnemyAttackFrames = new Texture2D[HomeIdleVisibleUnitCount][];
+        homeIdlePreparedHeroIndices = new int[HomeIdleVisibleUnitCount];
+
+        var heroPositions = GetHomeIdleHeroPositions();
+        var enemyPositions = GetHomeIdleEnemyPositions();
+        for (var i = 0; i < HomeIdleVisibleUnitCount; i++)
+        {
+            var heroIndex = GetHomeIdleHeroIndex(i);
+            var heroTextureName = GetHeroTextureName(heroIndex);
+            homeIdleHeroImages[i] = CreateRuntimeRawImage(homeIdleCombatRoot, $"Home Idle Hero {i + 1}", LoadCombatTexture(heroTextureName, "idle", 0, heroTextureName), heroPositions[i], new Vector2(118, 118), new Vector2(0.5f, 1f));
+            homeIdleHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
+
+            var enemyTextureName = GetCampaignEnemyTextureName(enemyLevel, i);
+            homeIdleEnemyImages[i] = CreateRuntimeRawImage(homeIdleCombatRoot, $"Home Idle Enemy {i + 1}", LoadCombatTexture(enemyTextureName, "idle", 0, "enemy_campaign"), enemyPositions[i], new Vector2(112, 112), new Vector2(0.5f, 1f));
+            homeIdleEnemyImages[i].rectTransform.localScale = new Vector3(GetEnemyFacingScale(enemyTextureName), 1f, 1f);
+        }
+
+        homeIdleRewardFill = CreateRuntimeHealthFill(homeIdleCombatRoot, "Home Idle Reward Progress", new Vector2(0, -236), 610f, new Color(0.38f, 0.95f, 0.84f, 0.92f));
+        var rewardBack = homeIdleRewardFill.transform.parent.GetComponent<RectTransform>();
+        if (rewardBack != null)
+        {
+            rewardBack.sizeDelta = new Vector2(610f, 22f);
+        }
+
+        homeIdleRewardText = CreateRuntimeText(homeIdleRewardFill.transform.parent, "Home Idle Reward Text", string.Empty, 17, Vector2.zero, new Vector2(590, 22));
+        homeIdleRewardText.fontStyle = FontStyles.Bold;
+        homeIdleRewardText.enableAutoSizing = true;
+        homeIdleRewardText.fontSizeMin = 12;
+        homeIdleRewardText.fontSizeMax = 17;
+        homeIdleRewardText.textWrappingMode = TextWrappingModes.NoWrap;
+        homeIdleRewardText.raycastTarget = false;
     }
 
     private Button CreateCampaignStageButton(Transform parent, int nodeIndex, Vector2 position)
@@ -18285,15 +18369,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (homeStageLevelBadgeText != null)
         {
-            homeStageLevelBadgeText.text = $"Stufe {enemyLevel}";
+            homeStageLevelBadgeText.text = $"Abschnitt {GetCampaignStageLabel(enemyLevel)}";
         }
 
         if (homeStageModeBadgeText != null)
         {
-            homeStageModeBadgeText.text = "Albtraum";
+            homeStageModeBadgeText.text = "Idle-Kampf";
         }
 
         SetHomeShortcutsExpanded(homeShortcutsExpanded);
+        RefreshHomeIdleCombatUi();
         RefreshFastRewardsPopupUi();
 
     }
@@ -18321,7 +18406,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (campaignStageButtonTexts != null && i < campaignStageButtonTexts.Length && campaignStageButtonTexts[i] != null)
             {
-                campaignStageButtonTexts[i].text = $"{(stageNumber - 1) / 10 + 1}-{(stageNumber - 1) % 10 + 1}";
+                campaignStageButtonTexts[i].text = GetCampaignStageLabel(stageNumber);
                 campaignStageButtonTexts[i].color = isLocked ? new Color(0.56f, 0.6f, 0.68f) : Color.white;
             }
 
@@ -18359,17 +18444,233 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var stageNumber = Mathf.Max(1, selectedCampaignStage);
         var stage = GetStageDefinition(stageNumber);
-        var status = stageNumber < enemyLevel ? "Cleared" : stageNumber == enemyLevel ? "Current Target" : "Locked";
+        var status = stageNumber < enemyLevel ? "Abgeschlossen" : stageNumber == enemyLevel ? "Aktuelles Ziel" : "Gesperrt";
         var requiredPower = GetStageRecommendedPower(stageNumber);
         var fightLine = stageNumber == enemyLevel
-            ? "Battle opens formation."
+            ? "Battle startet die Formation; Idle sammelt nur kleine Beute."
             : stageNumber < enemyLevel
-                ? "Replay selection comes later."
-                : "Clear the current stage first.";
+                ? "Replay-Auswahl kommt spaeter."
+                : "Schliesse zuerst den aktuellen Abschnitt ab.";
         campaignStagePreviewText.text =
-            $"{Tr("ui.common.stage")} {stageNumber}: {stage.enemyName}  |  {status}\n" +
+            $"Abschnitt {GetCampaignStageLabel(stageNumber)}: {stage.enemyName}  |  {status}\n" +
             $"{Tr("ui.common.power")} {FormatCompactNumber(GetTeamPower())}/{FormatCompactNumber(requiredPower)}  {Tr("ui.common.reward")} +{stage.essenceReward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}\n" +
             fightLine;
+    }
+
+    private void TickHomeIdleCombat(float deltaSeconds)
+    {
+        if (deltaSeconds <= 0f || activeScreen != AppScreen.Home || homeIdleCombatRoot == null)
+        {
+            return;
+        }
+
+        homeIdleCombatTimer += deltaSeconds;
+        PrepareHomeIdleCombatTextures();
+        AnimateHomeIdleCombatUnits();
+
+        if (!backendGameplayEnabled && !campaignFightInProgress && !backendRequestInProgress && !backendLifecycleFlushInProgress)
+        {
+            homeIdleRewardTimer += deltaSeconds;
+            while (homeIdleRewardTimer >= HomeIdleRewardIntervalSeconds)
+            {
+                homeIdleRewardTimer -= HomeIdleRewardIntervalSeconds;
+                GrantHomeIdleRewardTick();
+            }
+        }
+
+        RefreshHomeIdleCombatUi();
+    }
+
+    private void RefreshHomeIdleCombatUi()
+    {
+        if (homeIdleCombatRoot == null)
+        {
+            return;
+        }
+
+        PrepareHomeIdleCombatTextures();
+
+        var stage = GetStageDefinition(enemyLevel);
+        if (homeIdleCombatText != null)
+        {
+            var mode = backendGameplayEnabled ? "Server Mode" : "Patrol";
+            homeIdleCombatText.text = $"{mode} {GetCampaignStageLabel(enemyLevel)}: {stage.enemyName}";
+        }
+
+        if (homeIdleRewardFill != null)
+        {
+            SetRuntimeFillPercent(homeIdleRewardFill, homeIdleRewardTimer / HomeIdleRewardIntervalSeconds);
+        }
+
+        if (homeIdleRewardText != null)
+        {
+            if (backendGameplayEnabled)
+            {
+                homeIdleRewardText.text = "Server Mode: sichtbarer Kampf, Rewards serverseitig";
+            }
+            else
+            {
+                var secondsRemaining = Mathf.Max(1, Mathf.CeilToInt(HomeIdleRewardIntervalSeconds - homeIdleRewardTimer));
+                var gold = GetHomeIdleRewardGoldAmount();
+                var essence = GetHomeIdleRewardEssenceAmount();
+                var lastReward = homeIdleLastRewardGold > 0 || homeIdleLastRewardEssence > 0
+                    ? $"Letzte +{FormatCompactNumber(homeIdleLastRewardGold)} Gold "
+                    : string.Empty;
+                homeIdleRewardText.text = $"{lastReward}Naechste +{FormatCompactNumber(gold)} Gold +{FormatCompactNumber(essence)} Essence in {secondsRemaining}s";
+            }
+        }
+    }
+
+    private void PrepareHomeIdleCombatTextures()
+    {
+        if (homeIdleHeroImages == null || homeIdleEnemyImages == null)
+        {
+            return;
+        }
+
+        EnsureFormationOrder();
+        var stageNumber = Mathf.Max(1, enemyLevel);
+        var needsRefresh = homeIdlePreparedStage != stageNumber ||
+            homeIdlePreparedHeroIndices == null ||
+            homeIdlePreparedHeroIndices.Length != HomeIdleVisibleUnitCount ||
+            homeIdleHeroIdleFrames == null ||
+            homeIdleEnemyIdleFrames == null;
+
+        for (var i = 0; i < HomeIdleVisibleUnitCount && !needsRefresh; i++)
+        {
+            if (homeIdlePreparedHeroIndices[i] != GetHomeIdleHeroIndex(i))
+            {
+                needsRefresh = true;
+            }
+        }
+
+        if (!needsRefresh)
+        {
+            return;
+        }
+
+        homeIdlePreparedStage = stageNumber;
+        if (homeIdlePreparedHeroIndices == null || homeIdlePreparedHeroIndices.Length != HomeIdleVisibleUnitCount)
+        {
+            homeIdlePreparedHeroIndices = new int[HomeIdleVisibleUnitCount];
+        }
+
+        if (homeIdleHeroIdleFrames == null || homeIdleHeroIdleFrames.Length != HomeIdleVisibleUnitCount)
+        {
+            homeIdleHeroIdleFrames = new Texture2D[HomeIdleVisibleUnitCount][];
+        }
+
+        if (homeIdleHeroAttackFrames == null || homeIdleHeroAttackFrames.Length != HomeIdleVisibleUnitCount)
+        {
+            homeIdleHeroAttackFrames = new Texture2D[HomeIdleVisibleUnitCount][];
+        }
+
+        if (homeIdleEnemyIdleFrames == null || homeIdleEnemyIdleFrames.Length != HomeIdleVisibleUnitCount)
+        {
+            homeIdleEnemyIdleFrames = new Texture2D[HomeIdleVisibleUnitCount][];
+        }
+
+        if (homeIdleEnemyAttackFrames == null || homeIdleEnemyAttackFrames.Length != HomeIdleVisibleUnitCount)
+        {
+            homeIdleEnemyAttackFrames = new Texture2D[HomeIdleVisibleUnitCount][];
+        }
+
+        for (var i = 0; i < HomeIdleVisibleUnitCount; i++)
+        {
+            var heroIndex = GetHomeIdleHeroIndex(i);
+            var heroTextureName = GetHeroTextureName(heroIndex);
+            homeIdlePreparedHeroIndices[i] = heroIndex;
+            homeIdleHeroIdleFrames[i] = LoadCombatAnimationFrames(heroTextureName, "idle", heroTextureName);
+            homeIdleHeroAttackFrames[i] = LoadCombatAnimationFrames(heroTextureName, "attack", heroTextureName);
+            SetRawImageTexture(homeIdleHeroImages, i, GetFirstTexture(homeIdleHeroIdleFrames[i]));
+            if (homeIdleHeroImages[i] != null)
+            {
+                homeIdleHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
+            }
+
+            var enemyTextureName = GetCampaignEnemyTextureName(stageNumber, i);
+            homeIdleEnemyIdleFrames[i] = LoadCombatAnimationFrames(enemyTextureName, "idle", "enemy_campaign");
+            homeIdleEnemyAttackFrames[i] = LoadCombatAnimationFrames(enemyTextureName, "attack", "enemy_campaign");
+            SetRawImageTexture(homeIdleEnemyImages, i, GetFirstTexture(homeIdleEnemyIdleFrames[i]));
+            if (homeIdleEnemyImages[i] != null)
+            {
+                homeIdleEnemyImages[i].rectTransform.localScale = new Vector3(GetEnemyFacingScale(enemyTextureName), 1f, 1f);
+            }
+        }
+    }
+
+    private void AnimateHomeIdleCombatUnits()
+    {
+        var heroPositions = GetHomeIdleHeroPositions();
+        var enemyPositions = GetHomeIdleEnemyPositions();
+        for (var i = 0; i < HomeIdleVisibleUnitCount; i++)
+        {
+            var heroStrike = Mathf.PingPong(homeIdleCombatTimer * 1.55f + i * 0.22f, 1f);
+            var heroLunge = heroStrike > 0.68f ? Mathf.Sin((heroStrike - 0.68f) / 0.32f * Mathf.PI) * 18f : 0f;
+            var heroBob = Mathf.Sin(homeIdleCombatTimer * 5.6f + i * 0.9f) * 5f;
+            SetHomeIdleUnitPose(homeIdleHeroImages, homeIdleHeroIdleFrames, homeIdleHeroAttackFrames, i, heroPositions[i] + new Vector2(heroLunge, heroBob), heroLunge > 4f, 10f);
+
+            var enemyStrike = Mathf.PingPong(homeIdleCombatTimer * 1.35f + i * 0.31f, 1f);
+            var enemyLunge = enemyStrike > 0.74f ? Mathf.Sin((enemyStrike - 0.74f) / 0.26f * Mathf.PI) * -14f : 0f;
+            var enemyBob = Mathf.Sin(homeIdleCombatTimer * 4.9f + i * 0.72f) * 4f;
+            SetHomeIdleUnitPose(homeIdleEnemyImages, homeIdleEnemyIdleFrames, homeIdleEnemyAttackFrames, i, enemyPositions[i] + new Vector2(enemyLunge, enemyBob), enemyLunge < -3f, 9f);
+        }
+    }
+
+    private void SetHomeIdleUnitPose(RawImage[] images, Texture2D[][] idleFrames, Texture2D[][] attackFrames, int index, Vector2 position, bool attacking, float framesPerSecond)
+    {
+        if (images == null || index < 0 || index >= images.Length || images[index] == null)
+        {
+            return;
+        }
+
+        images[index].rectTransform.anchoredPosition = position;
+        var frames = attacking && attackFrames != null && index < attackFrames.Length && HasFrames(attackFrames[index])
+            ? attackFrames[index]
+            : idleFrames != null && index < idleFrames.Length && HasFrames(idleFrames[index])
+                ? idleFrames[index]
+                : null;
+
+        if (frames == null || frames.Length == 0)
+        {
+            return;
+        }
+
+        var frameIndex = Mathf.FloorToInt((homeIdleCombatTimer + index * 0.11f) * framesPerSecond) % frames.Length;
+        images[index].texture = frames[frameIndex];
+    }
+
+    private void GrantHomeIdleRewardTick()
+    {
+        if (backendGameplayEnabled)
+        {
+            return;
+        }
+
+        var gold = GetHomeIdleRewardGoldAmount();
+        var essence = GetHomeIdleRewardEssenceAmount();
+        if (gold <= 0 && essence <= 0)
+        {
+            return;
+        }
+
+        GrantCurrency(GoldCurrencyId, gold);
+        GrantCurrency(MythEssenceCurrencyId, essence);
+        homeIdleLastRewardGold = gold;
+        homeIdleLastRewardEssence = essence;
+        SaveProgress();
+        RefreshTopBarUi();
+        RefreshOfflineRewardUi();
+    }
+
+    private int GetHomeIdleRewardGoldAmount()
+    {
+        return Mathf.Max(1, Mathf.FloorToInt(GetAfkGoldPerSecond() * HomeIdleRewardIntervalSeconds * HomeIdleRewardRateMultiplier));
+    }
+
+    private int GetHomeIdleRewardEssenceAmount()
+    {
+        return Mathf.Max(1, Mathf.FloorToInt(GetAfkEssencePerSecond() * HomeIdleRewardIntervalSeconds * HomeIdleRewardRateMultiplier));
     }
 
     private void EnsureFormationOrder()
@@ -18646,6 +18947,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshGameplayInteractivity();
     }
 
+    private int GetHomeIdleHeroIndex(int visibleIndex)
+    {
+        EnsureFormationOrder();
+        if (formationSlotHeroIndices != null && visibleIndex >= 0 && visibleIndex < formationSlotHeroIndices.Length)
+        {
+            return Mathf.Clamp(formationSlotHeroIndices[visibleIndex], 0, HeroCount - 1);
+        }
+
+        return Mathf.Clamp(visibleIndex, 0, HeroCount - 1);
+    }
+
     private int GetCampaignMapStartStage()
     {
         if (enemyLevel <= 7)
@@ -18654,6 +18966,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return Mathf.Max(1, enemyLevel - 4);
+    }
+
+    private static string GetCampaignStageLabel(int stageNumber)
+    {
+        stageNumber = Mathf.Max(1, stageNumber);
+        return $"{(stageNumber - 1) / 10 + 1}-{(stageNumber - 1) % 10 + 1}";
     }
 
     private static Vector2[] GetCampaignMapNodePositions()
@@ -18670,6 +18988,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             new Vector2(82, -258),
             new Vector2(-76, -190),
             new Vector2(-252, -238)
+        };
+    }
+
+    private static Vector2[] GetHomeIdleHeroPositions()
+    {
+        return new[]
+        {
+            new Vector2(-250, -122),
+            new Vector2(-160, -174),
+            new Vector2(-70, -112)
+        };
+    }
+
+    private static Vector2[] GetHomeIdleEnemyPositions()
+    {
+        return new[]
+        {
+            new Vector2(248, -118),
+            new Vector2(158, -174),
+            new Vector2(70, -112)
         };
     }
 
