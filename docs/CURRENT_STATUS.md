@@ -44,7 +44,7 @@ Last updated: 2026-05-25
 - Added Hero Detail gear-list text overflow checks so localized list titles and option rows must fit in equipment/accessory popups.
 - Added a Hero Detail gear-list state guard so equipment lists expose only summary/open rows while accessory lists restore every rarity row after switching slots.
 - Empty Hero Detail accessory slots now show the best available bag copy hint, use a rarity-tinted highlight when copies are available, and the validator checks that the hint appears, fits, and is visually highlighted.
-- Hero Detail accessory option lists now show higher rarity rows above lower rarity rows, matching the best-copy slot hint, and the validator locks that ordering.
+- Hero Detail accessory option lists now put owned, equippable copies above empty rows and keep higher rarity first inside those groups, matching the best-copy slot hint; the validator locks that ordering.
 - Added backend `accessory_unequip` support, including the action catalog entry, `/gear/accessories/unequip` route, state mutation, and Player/HTTP tests.
 - Added `scripts/check-unity-current-slice.cmd` / `.ps1` so the current slice validator can be run from PowerShell or CI-style local checks once this Unity project is not already open.
 - Added backend tests for service-level and HTTP-level Village upgrades.

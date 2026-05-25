@@ -140,6 +140,7 @@ public static class UpgradeClutterValidation
         InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
         Canvas.ForceUpdateCanvases();
         ValidateHeroDetailAccessoryGearList(gearListRoot.gameObject, gearOptionButtons);
+        ValidateHeroDetailAccessoryOwnedRowsFirst(controller, gearOptionButtons);
         AssertButtonLabel(equipGearButton, GetLocalizedText(controller, "ui.common.equip_gear"), "Hero detail accessory action should keep the Equip Gear label.");
         AssertButtonLabel(removeGearButton, GetLocalizedText(controller, "ui.common.remove_gear"), "Hero detail remove action should use localized text.");
         if (!(bool)InvokePrivate(controller, "CanRemoveSelectedHeroDetailAccessory") || !removeGearButton.interactable)
@@ -299,6 +300,74 @@ public static class UpgradeClutterValidation
         if (gearOptionButtons.Length > 0 && gearOptionButtons[0].interactable)
         {
             throw new InvalidOperationException("Hero detail equipped accessory option row should not be clickable.");
+        }
+    }
+
+    private static void ValidateHeroDetailAccessoryOwnedRowsFirst(IdlePrototypeController controller, Button[] gearOptionButtons)
+    {
+        const int heroIndex = 0;
+        const int accessorySlot = 1;
+        const int gearSlotIndex = accessorySlot + 2;
+        const int lowerOwnedRarity = 1;
+        const int higherOwnedRarity = 3;
+        const int emptyRarity = 4;
+
+        if (gearOptionButtons.Length <= emptyRarity)
+        {
+            throw new InvalidOperationException("Hero detail accessory list should expose every rarity row for owned-row ordering.");
+        }
+
+        var originalRarity = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, accessorySlot);
+        var originalLevel = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryLevel", heroIndex, accessorySlot);
+        var originalCopies = new int[gearOptionButtons.Length];
+        for (var rarity = 0; rarity < originalCopies.Length; rarity++)
+        {
+            originalCopies[rarity] = (int)InvokePrivate(controller, "GetAccessoryInventoryCount", accessorySlot, rarity);
+        }
+
+        try
+        {
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, accessorySlot, -1, 0);
+            for (var rarity = 0; rarity < originalCopies.Length; rarity++)
+            {
+                InvokePrivate(controller, "AddAccessoryInventory", accessorySlot, rarity, -originalCopies[rarity]);
+            }
+
+            InvokePrivate(controller, "AddAccessoryInventory", accessorySlot, lowerOwnedRarity, 1);
+            InvokePrivate(controller, "AddAccessoryInventory", accessorySlot, higherOwnedRarity, 1);
+            InvokePrivate(controller, "ShowHeroDetailGearSlot", gearSlotIndex);
+            Canvas.ForceUpdateCanvases();
+
+            if (!gearOptionButtons[higherOwnedRarity].interactable || !gearOptionButtons[lowerOwnedRarity].interactable)
+            {
+                throw new InvalidOperationException("Hero detail accessory rows with owned copies should stay clickable.");
+            }
+
+            var higherOwnedRect = RequireRectTransform(gearOptionButtons[higherOwnedRarity].gameObject);
+            var lowerOwnedRect = RequireRectTransform(gearOptionButtons[lowerOwnedRarity].gameObject);
+            var emptyRect = RequireRectTransform(gearOptionButtons[emptyRarity].gameObject);
+            if (higherOwnedRect.anchoredPosition.y <= lowerOwnedRect.anchoredPosition.y)
+            {
+                throw new InvalidOperationException("Hero detail owned accessory rows should keep higher rarity above lower rarity.");
+            }
+
+            if (lowerOwnedRect.anchoredPosition.y <= emptyRect.anchoredPosition.y)
+            {
+                throw new InvalidOperationException("Hero detail owned accessory rows should appear above empty rarity rows.");
+            }
+        }
+        finally
+        {
+            for (var rarity = 0; rarity < originalCopies.Length; rarity++)
+            {
+                var currentCopies = (int)InvokePrivate(controller, "GetAccessoryInventoryCount", accessorySlot, rarity);
+                InvokePrivate(controller, "AddAccessoryInventory", accessorySlot, rarity, -currentCopies);
+                InvokePrivate(controller, "AddAccessoryInventory", accessorySlot, rarity, originalCopies[rarity]);
+            }
+
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, accessorySlot, originalRarity, originalLevel);
+            InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
+            Canvas.ForceUpdateCanvases();
         }
     }
 

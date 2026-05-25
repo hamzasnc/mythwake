@@ -17645,9 +17645,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
 
             optionButton.gameObject.SetActive(true);
-            SetHeroDetailGearOptionRow(optionButton, AccessoryRarityCount - 1 - rarity);
             var copies = GetAccessoryInventoryCount(accessorySlot, rarity);
             var equipped = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot) == rarity;
+            SetHeroDetailGearOptionRow(optionButton, GetHeroDetailAccessoryOptionRowIndex(accessorySlot, heroIndex, rarity));
             var levelText = equipped ? $"  {Tr("ui.common.equipped")} {Tr("ui.common.level_short")} {GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot)}" : string.Empty;
             var actionText = equipped ? Tr("ui.common.equipped") : copies > 0 ? Tr("ui.common.tap_to_equip") : Tr("ui.common.no_copy");
             if (optionText != null)
@@ -17667,6 +17667,43 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             optionButton.interactable = canInteract && copies > 0 && !equipped;
         }
+    }
+
+    private int GetHeroDetailAccessoryOptionRowIndex(int accessorySlot, int heroIndex, int rarity)
+    {
+        var rowIndex = 0;
+        for (var candidateRarity = 0; candidateRarity < AccessoryRarityCount; candidateRarity++)
+        {
+            if (CompareHeroDetailAccessoryOptions(accessorySlot, heroIndex, candidateRarity, rarity) < 0)
+            {
+                rowIndex++;
+            }
+        }
+
+        return rowIndex;
+    }
+
+    private int CompareHeroDetailAccessoryOptions(int accessorySlot, int heroIndex, int leftRarity, int rightRarity)
+    {
+        var leftGroup = GetHeroDetailAccessoryOptionGroup(accessorySlot, heroIndex, leftRarity);
+        var rightGroup = GetHeroDetailAccessoryOptionGroup(accessorySlot, heroIndex, rightRarity);
+        if (leftGroup != rightGroup)
+        {
+            return leftGroup.CompareTo(rightGroup);
+        }
+
+        return rightRarity.CompareTo(leftRarity);
+    }
+
+    private int GetHeroDetailAccessoryOptionGroup(int accessorySlot, int heroIndex, int rarity)
+    {
+        var equipped = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot) == rarity;
+        if (GetAccessoryInventoryCount(accessorySlot, rarity) > 0 && !equipped)
+        {
+            return 0;
+        }
+
+        return equipped ? 1 : 2;
     }
 
     private void SetHeroDetailGearOptionRow(Button optionButton, int rowIndex)
