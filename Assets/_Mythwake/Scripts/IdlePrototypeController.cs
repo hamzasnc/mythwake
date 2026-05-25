@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.85";
+    public const string PrototypeVersion = "0.2.86";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1283,6 +1283,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button homeIdleInfoCloseButton;
     private RectTransform campaignStagePreviewRoot;
     private TMP_Text campaignStagePreviewText;
+    private RectTransform campaignStageDetailPopupRoot;
+    private TMP_Text campaignStageDetailTitleText;
+    private RawImage campaignStageDetailMapImage;
+    private TMP_Text campaignStageDetailBodyText;
+    private RawImage[] campaignStageDetailEnemyImages;
+    private TMP_Text[] campaignStageDetailEnemyTexts;
+    private RawImage[] campaignStageDetailRewardIcons;
+    private TMP_Text[] campaignStageDetailRewardTexts;
+    private Button campaignStageDetailBattleButton;
+    private Button campaignStageDetailCloseButton;
     private Button[] campaignStageButtons;
     private TMP_Text[] campaignStageButtonTexts;
     private RawImage[] campaignStageButtonIcons;
@@ -2214,6 +2224,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void HideHomeIdleInfoPopup()
     {
         SetHomeIdleInfoPopupVisible(false);
+    }
+
+    private void HideCampaignStageDetailPopup()
+    {
+        SetCampaignStageDetailPopupVisible(false);
+    }
+
+    private void StartSelectedCampaignStageFromDetail()
+    {
+        HideCampaignStageDetailPopup();
+        ShowBattle();
     }
 
     private void ShowManagementPopup()
@@ -9197,6 +9218,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             homeIdleInfoButton.onClick.AddListener(ShowHomeIdleInfoPopup);
         }
 
+        if (campaignStageDetailBattleButton != null)
+        {
+            campaignStageDetailBattleButton.onClick.AddListener(StartSelectedCampaignStageFromDetail);
+        }
+
+        if (campaignStageDetailCloseButton != null)
+        {
+            campaignStageDetailCloseButton.onClick.AddListener(HideCampaignStageDetailPopup);
+        }
+
         if (topGemPlusButton != null)
         {
             topGemPlusButton.onClick.AddListener(ShowShop);
@@ -9453,6 +9484,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (homeIdleInfoButton != null)
         {
             homeIdleInfoButton.onClick.RemoveListener(ShowHomeIdleInfoPopup);
+        }
+
+        if (campaignStageDetailBattleButton != null)
+        {
+            campaignStageDetailBattleButton.onClick.RemoveListener(StartSelectedCampaignStageFromDetail);
+        }
+
+        if (campaignStageDetailCloseButton != null)
+        {
+            campaignStageDetailCloseButton.onClick.RemoveListener(HideCampaignStageDetailPopup);
         }
 
         if (topGemPlusButton != null)
@@ -14660,6 +14701,64 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         homeIdleInfoBodyText.textWrappingMode = TextWrappingModes.Normal;
         homeIdleInfoCloseButton = CreateRuntimeButton(homeIdleInfoPopupRoot, "Home Idle Info Close Button", "Close", 0, -294, 170, 52);
         homeIdleInfoPopupRoot.gameObject.SetActive(false);
+
+        campaignStageDetailPopupRoot = CreateRuntimePopup(homeActionRoot, "Campaign Stage Detail Popup", new Vector2(0, -258), new Vector2(840, 760), "Abschnitt Details");
+        campaignStageDetailTitleText = campaignStageDetailPopupRoot.Find("Title").GetComponent<TMP_Text>();
+        campaignStageDetailMapImage = CreateRuntimeRawImage(campaignStageDetailPopupRoot, "Stage Detail Map Preview", LoadRuntimeTexture(GetSelectedHomeProgressMapTextureName()), new Vector2(0, -100), new Vector2(720, 150), new Vector2(0.5f, 1f));
+        campaignStageDetailMapImage.uvRect = new Rect(0.08f, 0.38f, 0.84f, 0.26f);
+        campaignStageDetailMapImage.color = new Color(1f, 1f, 1f, 0.84f);
+        campaignStageDetailMapImage.raycastTarget = false;
+
+        campaignStageDetailBodyText = CreateRuntimeText(campaignStageDetailPopupRoot, "Stage Detail Body", string.Empty, 21, new Vector2(0, -268), new Vector2(700, 92));
+        campaignStageDetailBodyText.enableAutoSizing = true;
+        campaignStageDetailBodyText.fontSizeMin = 15;
+        campaignStageDetailBodyText.fontSizeMax = 21;
+        campaignStageDetailBodyText.textWrappingMode = TextWrappingModes.Normal;
+        campaignStageDetailBodyText.alignment = TextAlignmentOptions.Center;
+
+        var enemyHeader = CreateRuntimeText(campaignStageDetailPopupRoot, "Stage Detail Enemy Header", "Feindliche Formation", 24, new Vector2(0, -388), new Vector2(680, 38));
+        enemyHeader.fontStyle = FontStyles.Bold;
+        enemyHeader.textWrappingMode = TextWrappingModes.NoWrap;
+        var rewardHeader = CreateRuntimeText(campaignStageDetailPopupRoot, "Stage Detail Reward Header", "Belohnungen bei Abschluss", 24, new Vector2(0, -560), new Vector2(680, 38));
+        rewardHeader.fontStyle = FontStyles.Bold;
+        rewardHeader.textWrappingMode = TextWrappingModes.NoWrap;
+
+        campaignStageDetailEnemyImages = new RawImage[5];
+        campaignStageDetailEnemyTexts = new TMP_Text[5];
+        for (var i = 0; i < campaignStageDetailEnemyImages.Length; i++)
+        {
+            var x = -288f + i * 144f;
+            CreateRuntimePanel(campaignStageDetailPopupRoot, $"Stage Detail Enemy Frame {i + 1}", new Vector2(x, -426), new Vector2(112, 112), new Color(0.03f, 0.09f, 0.09f, 0.84f));
+            campaignStageDetailEnemyImages[i] = CreateRuntimeRawImage(campaignStageDetailPopupRoot, $"Stage Detail Enemy {i + 1}", null, new Vector2(x, -434), new Vector2(96, 96), new Vector2(0.5f, 1f));
+            campaignStageDetailEnemyImages[i].raycastTarget = false;
+            campaignStageDetailEnemyTexts[i] = CreateRuntimeText(campaignStageDetailPopupRoot, $"Stage Detail Enemy Label {i + 1}", string.Empty, 16, new Vector2(x, -526), new Vector2(112, 28));
+            campaignStageDetailEnemyTexts[i].enableAutoSizing = true;
+            campaignStageDetailEnemyTexts[i].fontSizeMin = 11;
+            campaignStageDetailEnemyTexts[i].fontSizeMax = 16;
+            campaignStageDetailEnemyTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
+            campaignStageDetailEnemyTexts[i].raycastTarget = false;
+        }
+
+        campaignStageDetailRewardIcons = new RawImage[3];
+        campaignStageDetailRewardTexts = new TMP_Text[3];
+        for (var i = 0; i < campaignStageDetailRewardIcons.Length; i++)
+        {
+            var x = -238f + i * 238f;
+            CreateRuntimePanel(campaignStageDetailPopupRoot, $"Stage Detail Reward Frame {i + 1}", new Vector2(x, -608), new Vector2(188, 86), new Color(0.18f, 0.095f, 0.045f, 0.86f));
+            campaignStageDetailRewardIcons[i] = CreateRuntimeRawImage(campaignStageDetailPopupRoot, $"Stage Detail Reward Icon {i + 1}", null, new Vector2(x - 56, -626), new Vector2(42, 54), new Vector2(0.5f, 1f));
+            campaignStageDetailRewardIcons[i].raycastTarget = false;
+            campaignStageDetailRewardTexts[i] = CreateRuntimeText(campaignStageDetailPopupRoot, $"Stage Detail Reward Text {i + 1}", string.Empty, 18, new Vector2(x + 26, -631), new Vector2(112, 54));
+            campaignStageDetailRewardTexts[i].alignment = TextAlignmentOptions.Left;
+            campaignStageDetailRewardTexts[i].enableAutoSizing = true;
+            campaignStageDetailRewardTexts[i].fontSizeMin = 12;
+            campaignStageDetailRewardTexts[i].fontSizeMax = 18;
+            campaignStageDetailRewardTexts[i].textWrappingMode = TextWrappingModes.Normal;
+            campaignStageDetailRewardTexts[i].raycastTarget = false;
+        }
+
+        campaignStageDetailCloseButton = CreateRuntimeButton(campaignStageDetailPopupRoot, "Stage Detail Close Button", "Close", -160, -704, 180, 52);
+        campaignStageDetailBattleButton = CreateRuntimeButton(campaignStageDetailPopupRoot, "Stage Detail Battle Button", "Battle", 130, -704, 240, 62);
+        campaignStageDetailPopupRoot.gameObject.SetActive(false);
     }
 
     private void CreateInventoryGridSlots()
@@ -18567,6 +18666,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshCampaignStagePreview();
+        RefreshCampaignStageDetailPopupUi();
         RefreshHomeProgressMapUi();
         CenterCampaignMapOnSelectedStageIfNeeded();
     }
@@ -18595,12 +18695,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private string GetSelectedHomeProgressMapTextureName()
     {
+        return GetHomeProgressMapTextureNameForStage(enemyLevel);
+    }
+
+    private string GetHomeProgressMapTextureNameForStage(int stageNumber)
+    {
         if (HomeProgressMaps.Length == 0)
         {
             return HomeCampaignMapTextureName;
         }
 
-        return HomeProgressMaps[GetCurrentHomeProgressMapIndex()].textureName;
+        stageNumber = Mathf.Max(1, stageNumber);
+        for (var i = 0; i < HomeProgressMaps.Length; i++)
+        {
+            var startStage = HomeProgressMaps[i].startStage;
+            if (stageNumber >= startStage && stageNumber < startStage + HomeProgressMapStagesPerCard)
+            {
+                return HomeProgressMaps[i].textureName;
+            }
+        }
+
+        return stageNumber < HomeProgressMaps[0].startStage ? HomeProgressMaps[0].textureName : HomeProgressMaps[HomeProgressMaps.Length - 1].textureName;
     }
 
     private void SetHomeCampaignMapTexture(string textureName)
@@ -18645,6 +18760,95 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             $"Abschnitt {GetCampaignStageLabel(stageNumber)}: {stage.enemyName}  |  {status}\n" +
             $"{Tr("ui.common.power")} {FormatCompactNumber(GetTeamPower())}/{FormatCompactNumber(requiredPower)}  {Tr("ui.common.reward")} +{stage.essenceReward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}\n" +
             fightLine;
+    }
+
+    private void RefreshCampaignStageDetailPopupUi()
+    {
+        if (campaignStageDetailPopupRoot == null || !campaignStageDetailPopupRoot.gameObject.activeSelf)
+        {
+            return;
+        }
+
+        var stageNumber = Mathf.Max(1, selectedCampaignStage);
+        var stage = GetStageDefinition(stageNumber);
+        var isCurrent = stageNumber == enemyLevel;
+        var isCleared = stageNumber < enemyLevel;
+        var status = isCleared ? "Abgeschlossen" : isCurrent ? "Aktuelles Ziel" : "Gesperrt";
+        var requiredPower = GetStageRecommendedPower(stageNumber);
+        var enemyDamage = GetCampaignEnemyDamage(stageNumber);
+
+        if (campaignStageDetailTitleText != null)
+        {
+            campaignStageDetailTitleText.text = $"Abschnitt {GetCampaignStageLabel(stageNumber)}";
+        }
+
+        if (campaignStageDetailMapImage != null)
+        {
+            campaignStageDetailMapImage.texture = LoadRuntimeTexture(GetHomeProgressMapTextureNameForStage(stageNumber));
+            var stageProgress = ((stageNumber - 1) % HomeProgressMapStagesPerCard) / Mathf.Max(1f, HomeProgressMapStagesPerCard - 1f);
+            campaignStageDetailMapImage.uvRect = new Rect(0.08f, Mathf.Lerp(0.58f, 0.2f, stageProgress), 0.84f, 0.26f);
+        }
+
+        if (campaignStageDetailBodyText != null)
+        {
+            var actionLine = isCurrent
+                ? "Battle startet die Formation fuer diesen Abschnitt."
+                : isCleared
+                    ? "Replay-Auswahl kommt spaeter; Progress bleibt auf dem aktuellen Ziel."
+                    : "Schliesse zuerst den aktuellen Abschnitt ab.";
+            campaignStageDetailBodyText.text =
+                $"{stage.enemyName}  |  {status}\n" +
+                $"{Tr("ui.common.recommended_power")} {FormatCompactNumber(requiredPower)}   HP {FormatCompactNumber(stage.maxHp)}   Damage {FormatCompactNumber(enemyDamage)}\n" +
+                actionLine;
+        }
+
+        if (campaignStageDetailEnemyImages != null)
+        {
+            for (var i = 0; i < campaignStageDetailEnemyImages.Length; i++)
+            {
+                var textureName = GetCampaignEnemyTextureName(stageNumber, i);
+                if (campaignStageDetailEnemyImages[i] != null)
+                {
+                    campaignStageDetailEnemyImages[i].texture = LoadCombatTexture(textureName, "idle", 0, "enemy_campaign");
+                    campaignStageDetailEnemyImages[i].rectTransform.localScale = new Vector3(GetEnemyFacingScale(textureName), 1f, 1f);
+                }
+
+                if (campaignStageDetailEnemyTexts != null && i < campaignStageDetailEnemyTexts.Length && campaignStageDetailEnemyTexts[i] != null)
+                {
+                    campaignStageDetailEnemyTexts[i].text = i == 0 && stageNumber % 10 == 0 ? $"Boss Lv {stageNumber}" : $"Lv {stageNumber}";
+                }
+            }
+        }
+
+        RefreshCampaignStageDetailRewardSlot(0, GetCurrencyIconTexture("exp_shard"), $"+{stage.essenceReward}\n{GetLocalizedCurrencyName(MythEssenceCurrencyId)}");
+        if (stageNumber % CampaignMilestoneInterval == 0)
+        {
+            var rewardGems = CampaignBalance.milestoneGemBase + Mathf.FloorToInt(stageNumber * CampaignBalance.milestoneGemScale);
+            RefreshCampaignStageDetailRewardSlot(1, GetCurrencyIconTexture("mythic_gem"), $"+{rewardGems}\nGems");
+            RefreshCampaignStageDetailRewardSlot(2, GetCurrencyIconTexture("gold_coin"), $"+{CampaignBalance.milestonePassXp}\nPass XP");
+        }
+        else
+        {
+            var nextMilestone = Mathf.CeilToInt(stageNumber / (float)CampaignMilestoneInterval) * CampaignMilestoneInterval;
+            RefreshCampaignStageDetailRewardSlot(1, GetCurrencyIconTexture("mythic_gem"), $"Milestone\n{GetCampaignStageLabel(nextMilestone)}");
+            RefreshCampaignStageDetailRewardSlot(2, GetCurrencyIconTexture("gold_coin"), "Idle\nseparat");
+        }
+
+        SetButtonInteractable(campaignStageDetailBattleButton, isCurrent && !campaignFightInProgress && !backendRequestInProgress && !backendLifecycleFlushInProgress);
+        SetButtonLabel(campaignStageDetailBattleButton, isCurrent ? "Battle" : isCleared ? "Cleared" : "Locked");
+    }
+
+    private void RefreshCampaignStageDetailRewardSlot(int index, Texture2D icon, string label)
+    {
+        if (campaignStageDetailRewardIcons != null && index >= 0 && index < campaignStageDetailRewardIcons.Length && campaignStageDetailRewardIcons[index] != null)
+        {
+            campaignStageDetailRewardIcons[index].texture = icon;
+        }
+
+        if (campaignStageDetailRewardTexts != null && index >= 0 && index < campaignStageDetailRewardTexts.Length && campaignStageDetailRewardTexts[index] != null)
+        {
+            campaignStageDetailRewardTexts[index].text = label;
+        }
     }
 
     private void TickHomeIdleCombat(float deltaSeconds)
@@ -19215,6 +19419,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         selectedCampaignStage = Mathf.Max(1, GetCampaignMapStartStage() + Mathf.Clamp(nodeIndex, 0, 9));
         homeCampaignMapNeedsCenter = true;
         RefreshCampaignMapUi();
+        SetCampaignStageDetailPopupVisible(true);
         RefreshGameplayInteractivity();
     }
 
@@ -19375,6 +19580,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 homeIdleInfoPopupRoot.gameObject.SetActive(false);
             }
 
+            if (campaignStageDetailPopupRoot != null)
+            {
+                campaignStageDetailPopupRoot.gameObject.SetActive(false);
+            }
+
             inventoryPopupRoot.SetAsLastSibling();
             RefreshInventoryPopupUi();
         }
@@ -19410,6 +19620,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 homeIdleInfoPopupRoot.gameObject.SetActive(false);
             }
 
+            if (campaignStageDetailPopupRoot != null)
+            {
+                campaignStageDetailPopupRoot.gameObject.SetActive(false);
+            }
+
             fastRewardsPopupRoot.SetAsLastSibling();
             RefreshFastRewardsPopupUi();
         }
@@ -19443,6 +19658,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (homeIdleInfoPopupRoot != null)
             {
                 homeIdleInfoPopupRoot.gameObject.SetActive(false);
+            }
+
+            if (campaignStageDetailPopupRoot != null)
+            {
+                campaignStageDetailPopupRoot.gameObject.SetActive(false);
             }
 
             chatPopupRoot.SetAsLastSibling();
@@ -19482,8 +19702,55 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             managementPopupRoot.gameObject.SetActive(false);
         }
 
+        if (campaignStageDetailPopupRoot != null)
+        {
+            campaignStageDetailPopupRoot.gameObject.SetActive(false);
+        }
+
         homeIdleInfoPopupRoot.SetAsLastSibling();
         RefreshHomeIdleInfoPopupUi();
+    }
+
+    private void SetCampaignStageDetailPopupVisible(bool isVisible)
+    {
+        if (campaignStageDetailPopupRoot == null)
+        {
+            return;
+        }
+
+        campaignStageDetailPopupRoot.gameObject.SetActive(isVisible);
+        if (!isVisible)
+        {
+            return;
+        }
+
+        if (inventoryPopupRoot != null)
+        {
+            inventoryPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (fastRewardsPopupRoot != null)
+        {
+            fastRewardsPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (chatPopupRoot != null)
+        {
+            chatPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (homeIdleInfoPopupRoot != null)
+        {
+            homeIdleInfoPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (managementPopupRoot != null)
+        {
+            managementPopupRoot.gameObject.SetActive(false);
+        }
+
+        campaignStageDetailPopupRoot.SetAsLastSibling();
+        RefreshCampaignStageDetailPopupUi();
     }
 
     private void SetManagementPopupVisible(bool isVisible)
@@ -19517,6 +19784,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (homeIdleInfoPopupRoot != null)
         {
             homeIdleInfoPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (campaignStageDetailPopupRoot != null)
+        {
+            campaignStageDetailPopupRoot.gameObject.SetActive(false);
         }
 
         managementPopupRoot.SetAsLastSibling();
@@ -19944,6 +20216,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             debugAccessoryButton,
             fightEndButton,
             homeBeginButton,
+            campaignStageDetailBattleButton,
+            campaignStageDetailCloseButton,
+            homeIdleInfoCloseButton,
             heroRosterTabButton,
             heroSetTeamTabButton,
             heroSortToggleButton,

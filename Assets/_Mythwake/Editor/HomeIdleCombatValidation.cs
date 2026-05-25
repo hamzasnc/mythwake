@@ -66,6 +66,33 @@ public static class HomeIdleCombatValidation
         node.onClick.Invoke();
         Canvas.ForceUpdateCanvases();
         RequireCopy(previewText.text, "Abschnitt");
+        var detailPopup = RequireObject("Campaign Stage Detail Popup", true);
+        var detailTitle = RequireText(detailPopup, "Title");
+        var detailBody = RequireText(detailPopup, "Stage Detail Body");
+        var detailEnemyHeader = RequireText(detailPopup, "Stage Detail Enemy Header");
+        var detailRewardHeader = RequireText(detailPopup, "Stage Detail Reward Header");
+        var detailRewardText = RequireText(detailPopup, "Stage Detail Reward Text 1");
+        RequireCopy(detailTitle.text, "Abschnitt");
+        RequireCopy(detailBody.text, "Damage");
+        RequireCopy(detailEnemyHeader.text, "Feindliche Formation");
+        RequireCopy(detailRewardHeader.text, "Belohnungen bei Abschluss");
+        RequireCopy(detailRewardText.text, "Essence");
+        AssertTextFits(detailBody, "Stage Detail Body");
+        AssertTextFits(detailRewardText, "Stage Detail Reward Text 1");
+        RequireRawImageWithTexture("Stage Detail Map Preview");
+        for (var i = 1; i <= 5; i++)
+        {
+            RequireRawImageWithTexture($"Stage Detail Enemy {i}");
+        }
+
+        RequireRawImageWithTexture("Stage Detail Reward Icon 1");
+        var detailCloseButton = RequireButton("Stage Detail Close Button");
+        detailCloseButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        if (detailPopup.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Campaign Stage Detail Popup should close from its close button.");
+        }
 
         var idleRoot = RequireObject("Home Idle Combat Root", true);
         AssertInsideParent(RequireObject("Home Generated Art Root", true), idleRoot);
