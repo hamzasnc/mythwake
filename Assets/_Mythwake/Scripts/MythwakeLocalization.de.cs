@@ -24,6 +24,7 @@ public static partial class MythwakeLocalization
 
         { "ui.common.level_short", "Lv" },
         { "ui.common.level", "Level" },
+        { "ui.common.level_up", "Verbessern" },
         { "ui.common.max_level", "Max. Level" },
         { "ui.common.power", "Macht" },
         { "ui.common.team_power", "Team-Macht" },
@@ -47,6 +48,9 @@ public static partial class MythwakeLocalization
         { "ui.common.locked", "Gesperrt" },
         { "ui.common.tap_to_equip", "Tippen zum Ausrüsten" },
         { "ui.common.no_copy", "Keine Kopie" },
+        { "ui.common.equip_gear", "Anlegen" },
+        { "ui.common.open_gear_short", "Oeffnen" },
+        { "ui.common.remove_gear", "Ablegen" },
         { "ui.common.open_gear", "Ausrüstung für {0} öffnen" },
 
         { "currency.gold.name", "Gold" },

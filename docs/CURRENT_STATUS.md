@@ -38,6 +38,7 @@ Last updated: 2026-05-25
 - Polished the Hero Detail gear slice: it now exposes all 2 equipment tracks plus all 5 accessory slots, `Equip Gear` opens the selected gear list for equipment and accessories, and `Remove Gear` can unequip accessories locally or through the Server Mode backend action.
 - Added validator coverage for the Hero Detail gear list popup so equipment slots open the inline list first and only the list's `Open Gear` row navigates to the Gear screen.
 - Added contextual Hero Detail gear action labels so equipment slots show `Open Gear` while accessory slots keep `Equip Gear`.
+- Routed Hero Detail action labels through localization keys so Level Up, Open/Equip Gear, and Remove Gear follow the active language.
 - Added backend `accessory_unequip` support, including the action catalog entry, `/gear/accessories/unequip` route, state mutation, and Player/HTTP tests.
 - Added `scripts/check-unity-current-slice.cmd` / `.ps1` so the current slice validator can be run from PowerShell or CI-style local checks once this Unity project is not already open.
 - Added backend tests for service-level and HTTP-level Village upgrades.

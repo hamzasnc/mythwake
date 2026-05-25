@@ -94,11 +94,13 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException("Hero detail window should be active after opening a hero card.");
         }
 
-        RequireInsidePanel(heroDetailRoot.gameObject, RequireButtonField(controller, "heroDetailLevelButton").gameObject);
+        var levelButton = RequireButtonField(controller, "heroDetailLevelButton");
+        RequireInsidePanel(heroDetailRoot.gameObject, levelButton.gameObject);
         var equipGearButton = RequireButtonField(controller, "heroDetailEquipGearButton");
         RequireInsidePanel(heroDetailRoot.gameObject, equipGearButton.gameObject);
         var removeGearButton = RequireButtonField(controller, "heroDetailRemoveGearButton");
         RequireInsidePanel(heroDetailRoot.gameObject, removeGearButton.gameObject);
+        AssertButtonLabel(levelButton, GetLocalizedText(controller, "ui.common.level_up"), "Hero detail level action should use localized text.");
 
         var gearSlots = RequireField<Button[]>(controller, "heroDetailGearSlotButtons");
         var expectedGearSlotCount = 2 + GetStaticArray(typeof(IdlePrototypeController), "AccessorySlots").Length;
@@ -136,7 +138,8 @@ public static class UpgradeClutterValidation
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, 0, 1);
         InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
         Canvas.ForceUpdateCanvases();
-        AssertButtonLabel(equipGearButton, "Equip Gear", "Hero detail accessory action should keep the Equip Gear label.");
+        AssertButtonLabel(equipGearButton, GetLocalizedText(controller, "ui.common.equip_gear"), "Hero detail accessory action should keep the Equip Gear label.");
+        AssertButtonLabel(removeGearButton, GetLocalizedText(controller, "ui.common.remove_gear"), "Hero detail remove action should use localized text.");
         if (!(bool)InvokePrivate(controller, "CanRemoveSelectedHeroDetailAccessory") || !removeGearButton.interactable)
         {
             throw new InvalidOperationException("Hero detail Remove Gear should be available for a locally equipped accessory slot.");
@@ -158,7 +161,7 @@ public static class UpgradeClutterValidation
         InvokePrivate(controller, "ShowHeroDetailGearSlot", 0);
         InvokePrivate(controller, "OpenSelectedHeroDetailGearOptions");
         Canvas.ForceUpdateCanvases();
-        AssertButtonLabel(equipGearButton, "Open Gear", "Hero detail equipment action should use the Open Gear label.");
+        AssertButtonLabel(equipGearButton, GetLocalizedText(controller, "ui.common.open_gear_short"), "Hero detail equipment action should use the Open Gear label.");
 
         if (!heroDetailRoot.gameObject.activeInHierarchy || !gearListRoot.gameObject.activeInHierarchy)
         {
@@ -225,6 +228,11 @@ public static class UpgradeClutterValidation
         {
             throw new InvalidOperationException($"{message} Expected '{expected}', got '{label.text}'.");
         }
+    }
+
+    private static string GetLocalizedText(IdlePrototypeController controller, string key)
+    {
+        return (string)InvokePrivate(controller, "Tr", key);
     }
 
     private static void ValidateHeroDetailGearLayout(GameObject heroDetailRoot, Button[] gearSlots, int expectedGearSlotCount)
