@@ -43,9 +43,9 @@ Last updated: 2026-05-25
 - Added Hero Detail action-label overflow checks so localized Level Up, Open/Equip Gear, and Remove Gear labels must fit inside their buttons.
 - Added Hero Detail gear-list text overflow checks so localized list titles and option rows must fit in equipment/accessory popups.
 - Added a Hero Detail gear-list state guard so equipment lists expose only summary/open rows while accessory lists restore every rarity row after switching slots.
-- Empty Hero Detail accessory slots now show the best available bag copy hint, use a rarity-tinted highlight when copies are available, and the validator checks that the hint appears, fits, and is visually highlighted.
-- Hero Detail accessory option lists now put owned, equippable copies above empty rows and keep higher rarity first inside those groups, matching the best-copy slot hint; the validator locks that ordering.
-- Hero Detail now renders the new armory background and equipment/accessory slot icon art, and the upgrade clutter validator checks that the art loads, fits, and does not intercept slot input.
+- Empty Hero Detail accessory slots now stay visually empty until gear is equipped, even when bag copies exist; owned copies remain prioritized inside the accessory list, and the validator checks empty-slot labels/icons.
+- Hero Detail accessory option lists now put owned, equippable copies above empty rows and keep higher rarity first inside those groups, so empty slots stay clean while the picker still surfaces useful copies; the validator locks that ordering.
+- Hero Detail now renders the new armory background plus equipped equipment/accessory slot icon art, and the upgrade clutter validator checks that equipped art loads, empty slots stay blank, everything fits, and icons do not intercept slot input.
 - Hero Detail and Gear runtime equipment icons now use an Editor asset-path fallback when `Resources.Load` is stale, hide missing-texture RawImage placeholders instead of showing white blocks, and the validator rejects hidden/white-placeholder icon art.
 - Hero Detail previous/next buttons now sit outside the gear-slot columns, and the upgrade clutter validator checks they do not overlap any of the 8 gear slots.
 - Gear screen runtime showcase art now uses the new equipment icon set, and the upgrade clutter validator checks the hero, weapon, armor, headgear, gloves, boots, and accessory images for loaded textures, fit, and input passthrough.

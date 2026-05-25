@@ -148,7 +148,7 @@ public static class UpgradeClutterValidation
 
         ValidateHeroDetailEquipmentArt(controller, heroDetailRoot.gameObject, gearSlots, expectedGearSlotCount);
         ValidateHeroDetailGearLayout(heroDetailRoot.gameObject, gearSlots, expectedGearSlotCount);
-        ValidateHeroDetailEmptyAccessoryInventoryHint(controller, gearSlots);
+        ValidateHeroDetailEmptyAccessorySlot(controller, gearSlots);
 
         InvokePrivate(controller, "OpenSelectedHeroDetailGearOptions");
         Canvas.ForceUpdateCanvases();
@@ -188,7 +188,7 @@ public static class UpgradeClutterValidation
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, -1, 0);
     }
 
-    private static void ValidateHeroDetailEmptyAccessoryInventoryHint(IdlePrototypeController controller, Button[] gearSlots)
+    private static void ValidateHeroDetailEmptyAccessorySlot(IdlePrototypeController controller, Button[] gearSlots)
     {
         const int heroIndex = 0;
         const int accessorySlot = 1;
@@ -207,9 +207,9 @@ public static class UpgradeClutterValidation
 
             var emptyColor = new Color(0.36f, 0.22f, 0.13f, 0.9f);
             var baseFrameColor = (Color)InvokePrivate(controller, "GetHeroDetailGearSlotColor", gearSlotIndex);
-            if (ApproximatelySameColor(baseFrameColor, emptyColor))
+            if (!ApproximatelySameColor(baseFrameColor, emptyColor))
             {
-                throw new InvalidOperationException("Hero detail accessory slot with bag copies should use a rarity-tinted base highlight.");
+                throw new InvalidOperationException("Hero detail accessory slot with bag copies should still render as empty until gear is equipped.");
             }
 
             InvokePrivate(controller, "ShowHeroDetailGearSlot", gearSlotIndex);
@@ -222,22 +222,24 @@ public static class UpgradeClutterValidation
             }
 
             var expectedCopies = originalCopies + addedCopies;
-            if (!slotText.text.Contains(GetLocalizedText(controller, "ui.common.bag")) || !slotText.text.Contains("R3") || !slotText.text.Contains($"x{expectedCopies}"))
+            if (!slotText.text.Contains(GetLocalizedText(controller, "ui.common.empty")) || slotText.text.Contains(GetLocalizedText(controller, "ui.common.bag")) || slotText.text.Contains("R3") || slotText.text.Contains($"x{expectedCopies}"))
             {
-                throw new InvalidOperationException($"Hero detail empty accessory slot should show the best bag copy hint. Got '{slotText.text}'.");
+                throw new InvalidOperationException($"Hero detail empty accessory slot should stay empty even when bag copies exist. Got '{slotText.text}'.");
             }
 
-            AssertTextFits(slotText, gearSlots[gearSlotIndex].name, "Hero detail empty accessory bag hint");
+            AssertTextFits(slotText, gearSlots[gearSlotIndex].name, "Hero detail empty accessory label");
+
+            var slotIcons = RequireField<RawImage[]>(controller, "heroDetailGearSlotIcons");
+            var icon = slotIcons[gearSlotIndex];
+            if (icon == null || IsRawImageVisible(icon))
+            {
+                throw new InvalidOperationException("Hero detail empty accessory slot should not show inventory-copy icon art before gear is equipped.");
+            }
 
             var frame = gearSlots[gearSlotIndex].GetComponent<Image>();
             if (frame == null)
             {
                 throw new InvalidOperationException("Hero detail accessory slot should keep a visible frame image.");
-            }
-
-            if (ApproximatelySameColor(frame.color, emptyColor))
-            {
-                throw new InvalidOperationException("Hero detail accessory slot with bag copies should be visually highlighted.");
             }
         }
         finally
@@ -554,6 +556,7 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException($"Hero detail should expose {expectedGearSlotCount} gear slot icons.");
         }
 
+        var heroIndex = (int)InvokePrivate(controller, "GetSelectedHeroIndex");
         for (var i = 0; i < expectedGearSlotCount; i++)
         {
             var icon = slotIcons[i];
@@ -562,23 +565,35 @@ public static class UpgradeClutterValidation
                 throw new InvalidOperationException($"Hero detail gear slot {i + 1} is missing its icon.");
             }
 
-            if (icon.texture == null)
-            {
-                throw new InvalidOperationException($"Hero detail gear slot {i + 1} should render equipment icon art.");
-            }
-            AssertVisibleTexture(icon, $"Hero detail gear slot {i + 1} icon");
-
-            if (icon.raycastTarget)
-            {
-                throw new InvalidOperationException($"Hero detail gear slot {i + 1} icon should not intercept button input.");
-            }
-
             if (!icon.transform.IsChildOf(gearSlots[i].transform))
             {
                 throw new InvalidOperationException($"Hero detail gear slot {i + 1} icon should stay inside its slot.");
             }
 
             RequireInsidePanel(gearSlots[i].gameObject, icon.gameObject);
+            if (icon.raycastTarget)
+            {
+                throw new InvalidOperationException($"Hero detail gear slot {i + 1} icon should not intercept button input.");
+            }
+
+            var accessorySlot = i - 2;
+            var shouldShowIcon = i < 2 || (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, accessorySlot) >= 0;
+            if (!shouldShowIcon)
+            {
+                if (IsRawImageVisible(icon))
+                {
+                    throw new InvalidOperationException($"Hero detail empty gear slot {i + 1} should not render icon art before gear is equipped.");
+                }
+
+                continue;
+            }
+
+            if (icon.texture == null)
+            {
+                throw new InvalidOperationException($"Hero detail gear slot {i + 1} should render equipment icon art.");
+            }
+            AssertVisibleTexture(icon, $"Hero detail gear slot {i + 1} icon");
+
             var iconRect = RequireRectTransform(icon.gameObject);
             if (iconRect.rect.width <= 0f || iconRect.rect.height <= 0f || iconRect.rect.width > 84.5f || iconRect.rect.height > 56.5f)
             {
@@ -785,6 +800,15 @@ public static class UpgradeClutterValidation
         {
             throw new InvalidOperationException($"{context} should use real art, not Unity's white placeholder texture.");
         }
+    }
+
+    private static bool IsRawImageVisible(RawImage image)
+    {
+        return image != null
+            && image.enabled
+            && image.gameObject.activeInHierarchy
+            && image.texture != null
+            && image.color.a > 0.05f;
     }
 
     private static void ValidateGearScreenControlLayout(IdlePrototypeController controller, GameObject gearPanel)

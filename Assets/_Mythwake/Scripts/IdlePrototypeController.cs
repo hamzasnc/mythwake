@@ -17744,7 +17744,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (heroDetailGearSlotIcons != null && i < heroDetailGearSlotIcons.Length && heroDetailGearSlotIcons[i] != null)
             {
-                SetRuntimeRawImageTexture(heroDetailGearSlotIcons[i], LoadRuntimeTexture(GetHeroDetailGearSlotIconTextureName(i)), new Vector2(84f, 56f));
+                var iconTextureName = GetHeroDetailGearSlotIconTextureName(i);
+                SetRuntimeRawImageTexture(heroDetailGearSlotIcons[i], LoadRuntimeTexture(iconTextureName), new Vector2(84f, 56f));
             }
 
             if (heroDetailGearSlotFrames != null && i < heroDetailGearSlotFrames.Length && heroDetailGearSlotFrames[i] != null)
@@ -18095,11 +18096,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var rarity = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot);
         if (rarity < 0)
         {
-            if (TryGetBestAccessoryInventoryCopy(accessorySlot, out var bestRarity, out var copies))
-            {
-                return $"{GetLocalizedAccessorySlotName(accessorySlot)}\n{Tr("ui.common.bag")} {GetAccessoryRarityName(bestRarity)} x{copies}";
-            }
-
             return $"{GetLocalizedAccessorySlotName(accessorySlot)}\n{Tr("ui.common.empty")}";
         }
 
@@ -18122,41 +18118,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var accessorySlot = slotIndex - 2;
         if (accessorySlot < 0 || accessorySlot >= AccessorySlotCount)
         {
-            return EquipmentAccessoryIconTextureNames[0];
+            return string.Empty;
         }
 
         var rarity = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot);
-        if (rarity < 0 && TryGetBestAccessoryInventoryCopy(accessorySlot, out var bestRarity, out _))
-        {
-            rarity = bestRarity;
-        }
-
         if (rarity < 0)
         {
-            rarity = selectedAccessoryRarity;
+            return string.Empty;
         }
 
         return GetInventoryAccessoryIconTextureName(accessorySlot, rarity);
-    }
-
-    private bool TryGetBestAccessoryInventoryCopy(int accessorySlot, out int rarity, out int copies)
-    {
-        EnsureAccessories();
-        accessorySlot = Mathf.Clamp(accessorySlot, 0, AccessorySlotCount - 1);
-        for (var candidateRarity = AccessoryRarityCount - 1; candidateRarity >= 0; candidateRarity--)
-        {
-            var candidateCopies = GetAccessoryInventoryCount(accessorySlot, candidateRarity);
-            if (candidateCopies > 0)
-            {
-                rarity = candidateRarity;
-                copies = candidateCopies;
-                return true;
-            }
-        }
-
-        rarity = -1;
-        copies = 0;
-        return false;
     }
 
     private Color GetHeroDetailGearSlotColor(int slotIndex)
@@ -18178,13 +18149,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return GetAccessoryRarityColor(rarity);
         }
 
-        var emptyColor = new Color(0.36f, 0.22f, 0.13f, 0.9f);
-        if (TryGetBestAccessoryInventoryCopy(accessorySlot, out var bestRarity, out _))
-        {
-            return Color.Lerp(emptyColor, GetAccessoryRarityColor(bestRarity), 0.55f);
-        }
-
-        return emptyColor;
+        return new Color(0.36f, 0.22f, 0.13f, 0.9f);
     }
 
     private string GetHeroDetailTitle(HeroDefinition hero)
