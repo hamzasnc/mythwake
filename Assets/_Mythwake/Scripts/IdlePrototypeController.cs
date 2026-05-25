@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.97";
+    public const string PrototypeVersion = "0.2.98";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -18923,7 +18923,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 var gold = GetHomeIdleRewardGoldAmount();
                 var essence = GetHomeIdleRewardEssenceAmount();
                 var lastReward = homeIdleLastRewardGold > 0 || homeIdleLastRewardEssence > 0
-                    ? $"Letzte +{FormatCompactNumber(homeIdleLastRewardGold)} Gold "
+                    ? $"Letzte +{FormatCompactNumber(homeIdleLastRewardGold)} Gold +{FormatCompactNumber(homeIdleLastRewardEssence)} Essence  "
                     : string.Empty;
                 homeIdleRewardText.text = $"{lastReward}Naechste +{FormatCompactNumber(gold)} Gold +{FormatCompactNumber(essence)} Essence in {secondsRemaining}s";
             }

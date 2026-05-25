@@ -181,6 +181,11 @@ public static class HomeIdleCombatValidation
             RequireCopy(lootPopupText.text, "Gold");
             RequireCopy(lootPopupText.text, "Essence");
             AssertTextFits(lootPopupText, "Home Idle Loot Pop Text");
+            RequireCopy(rewardText.text, "Letzte");
+            RequireCopy(rewardText.text, "Gold");
+            RequireCopy(rewardText.text, "Essence");
+            RequireCopy(rewardText.text, "Naechste");
+            AssertTextFits(rewardText, "Home Idle Reward Text after local tick");
 
             var stageDefinition = InvokePrivate(controller, "GetStageDefinition", stageBefore);
             var wonResult = CreateWonCombatResult(controller);
