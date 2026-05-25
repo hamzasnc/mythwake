@@ -16,7 +16,7 @@ public static class FastRewardsUiValidation
         try
         {
             ValidateFastRewardsUi();
-            Debug.Log("Fast Rewards UI validated: popup controls, local/capped copy, cap-left copy, popup exclusivity, close flow, reward button state, and Server Mode claim timing copy are present.");
+            Debug.Log("Fast Rewards UI validated: popup controls, local/capped copy, cap-left copy, local redeem reset, popup exclusivity, close flow, reward button state, and Server Mode claim timing copy are present.");
         }
         catch (Exception ex)
         {
@@ -76,6 +76,7 @@ public static class FastRewardsUiValidation
             throw new InvalidOperationException($"Fast Rewards local button label mismatch: '{localButtonLabel}'");
         }
 
+        ValidateLocalFastRewardsRedeemFlow(controller, popup, bodyText, redeemButton);
         ValidateFastRewardsPopupExclusivity(controller, popup);
 
         AssertLocalFastRewardsState(controller, bodyText, redeemButton, 0f, "Stored: 0s / 24h 0m", "Cap left: 24h 0m", "Ready: +0 Gold   +0 Essence", false);
@@ -181,6 +182,73 @@ public static class FastRewardsUiValidation
         if (buttonLabel != "Redeem")
         {
             throw new InvalidOperationException($"Fast Rewards local button label should stay Redeem for '{expectedStoredLine}', got '{buttonLabel}'.");
+        }
+    }
+
+    private static void ValidateLocalFastRewardsRedeemFlow(IdlePrototypeController controller, GameObject popup, TMP_Text bodyText, Button redeemButton)
+    {
+        var backendBefore = GetPrivateField<bool>(controller, "backendGameplayEnabled");
+        var storedBefore = GetPrivateField<float>(controller, "afkRewardStoredSeconds");
+        var goldBefore = GetPrivateField<int>(controller, "gold");
+        var essenceBefore = GetPrivateField<int>(controller, "mythEssence");
+        var lastGoldBefore = GetPrivateField<int>(controller, "lastOfflineGoldReward");
+        var lastEssenceBefore = GetPrivateField<int>(controller, "lastOfflineReward");
+        var lastSecondsBefore = GetPrivateField<int>(controller, "lastOfflineSeconds");
+        var lastServerBefore = GetPrivateField<bool>(controller, "lastOfflineRewardIsServer");
+
+        try
+        {
+            SetPrivateField(controller, "backendGameplayEnabled", false);
+            SetPrivateField(controller, "afkRewardStoredSeconds", 7200f);
+            InvokePrivate(controller, "RefreshFastRewardsPopupUi");
+            Canvas.ForceUpdateCanvases();
+
+            if (!redeemButton.interactable)
+            {
+                throw new InvalidOperationException("Fast Rewards local redeem flow should start with an interactable Redeem button.");
+            }
+
+            redeemButton.onClick.Invoke();
+            Canvas.ForceUpdateCanvases();
+
+            if (!popup.activeInHierarchy)
+            {
+                throw new InvalidOperationException("Fast Rewards popup should remain open after a local redeem.");
+            }
+
+            if (GetPrivateField<float>(controller, "afkRewardStoredSeconds") > 0.01f)
+            {
+                throw new InvalidOperationException("Fast Rewards local redeem should reset stored AFK seconds to zero.");
+            }
+
+            if (GetPrivateField<int>(controller, "gold") <= goldBefore || GetPrivateField<int>(controller, "mythEssence") <= essenceBefore)
+            {
+                throw new InvalidOperationException("Fast Rewards local redeem should grant both Gold and Essence.");
+            }
+
+            RequireCopy(bodyText.text, "Stored: 0s / 24h 0m");
+            RequireCopy(bodyText.text, "Cap left: 24h 0m");
+            RequireCopy(bodyText.text, "Ready: +0 Gold   +0 Essence");
+            AssertTextFits(bodyText, "Fast Rewards local redeemed body");
+
+            if (redeemButton.interactable)
+            {
+                throw new InvalidOperationException("Fast Rewards local Redeem button should be disabled after rewards are claimed.");
+            }
+        }
+        finally
+        {
+            SetPrivateField(controller, "backendGameplayEnabled", backendBefore);
+            SetPrivateField(controller, "afkRewardStoredSeconds", storedBefore);
+            SetPrivateField(controller, "gold", goldBefore);
+            SetPrivateField(controller, "mythEssence", essenceBefore);
+            SetPrivateField(controller, "lastOfflineGoldReward", lastGoldBefore);
+            SetPrivateField(controller, "lastOfflineReward", lastEssenceBefore);
+            SetPrivateField(controller, "lastOfflineSeconds", lastSecondsBefore);
+            SetPrivateField(controller, "lastOfflineRewardIsServer", lastServerBefore);
+            InvokePrivate(controller, "SaveProgress");
+            InvokePrivate(controller, "RefreshFastRewardsPopupUi");
+            Canvas.ForceUpdateCanvases();
         }
     }
 
@@ -359,5 +427,16 @@ public static class FastRewardsUiValidation
         }
 
         field.SetValue(target, value);
+    }
+
+    private static T GetPrivateField<T>(object target, string fieldName)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException($"Missing private field: {fieldName}");
+        }
+
+        return (T)field.GetValue(target);
     }
 }

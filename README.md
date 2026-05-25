@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.102
+Prototype version: 0.2.103
 Local save version: 2
 
 Current prototype:
@@ -177,6 +177,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.103: Kept the Fast Rewards popup refreshed after local redeem and added validator coverage for the local claim/reset/button-disable flow.
 - Prototype 0.2.102: Added Server Mode Fast Rewards claim-status copy and min-claim button gating, with validator coverage for waiting and ready server AFK states.
 - Prototype 0.2.101: Added a Fast Rewards cap-left line with extra popup room and validator coverage for normal, empty, and capped local AFK reward states.
 - Prototype 0.2.100: Expanded the Home idle Patrol Info popup with last/next tick reward details, tick cadence copy, and validator coverage after local reward ticks.

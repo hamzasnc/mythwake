@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.102";
+    public const string PrototypeVersion = "0.2.103";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -2519,6 +2519,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         afkRewardAutosaveTimer = 0f;
         SaveProgress();
         RefreshUi();
+        RefreshFastRewardsPopupUi();
     }
 
     public void Fight()
