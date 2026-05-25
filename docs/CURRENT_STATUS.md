@@ -31,6 +31,7 @@ Last updated: 2026-05-25
 - Added an editor validation entry point for the Fast Rewards popup so local copy, Server Mode fallback copy, redeem/claim labels, button state, and control bounds can be checked in Unity.
 - Added Paladin to the local `Vanguard Oath` summon banner so the frontline banner actually features and rolls the Paladin.
 - Added a Paladin integration editor validator that checks the client hero definition, local summon banners, formation/fight hook anchors, backend definition/migration anchors, EN/DE localization keys, runtime portrait, combat sheets, skeletal part textures, and Paladin runtime rig part loading.
+- Added an editor validation entry point for the Summon UI so the Vanguard Oath banner, Paladin feature art, rates, carousel center card, and Paladin result popup can be checked in Unity.
 - Added backend tests for service-level and HTTP-level Village upgrades.
 - Added migration `0026_afk_reward_24h_cap.sql` so existing PostgreSQL dev databases pick up the 24h AFK cap.
 - Refreshed `README.md` and `docs/NEXT_CHAT_CONTEXT.md` so the main handoff notes match the current pass.
@@ -40,5 +41,6 @@ Last updated: 2026-05-25
 
 1. Close the extra Unity project instance or run the new `Mythwake/Validate Village UI` menu item in the open editor, then visually verify Village map, building detail, upgrade, demolish, and panel spacing in Unity/emulator.
 2. Run the new `Mythwake/Validate Fast Rewards UI` menu item in Unity, then visually verify Fast Rewards popup text and button spacing in Unity/emulator.
-3. Run the new `Mythwake/Validate Paladin Integration` and existing `Mythwake/Validate Paladin Spine Handoff` menu items in Unity, then visually verify Paladin roster/detail, formation, fight pose, and summon results.
-4. Move remaining upgrade clutter into the proper Hero/Gear/Village screens.
+3. Run the new `Mythwake/Validate Summon UI` menu item in Unity, then visually verify Vanguard Oath, Paladin feature art, summon rates, and result popup spacing.
+4. Run the new `Mythwake/Validate Paladin Integration` and existing `Mythwake/Validate Paladin Spine Handoff` menu items in Unity, then visually verify Paladin roster/detail, formation, fight pose, and summon results.
+5. Move remaining upgrade clutter into the proper Hero/Gear/Village screens.

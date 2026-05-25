@@ -33,6 +33,7 @@ Latest known pushed commit before the current uncommitted pass:
 Current uncommitted pass:
 - Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, and runtime rig part loading.
 - Fast Rewards UI validator in `Assets/_Mythwake/Editor/FastRewardsUiValidation.cs`.
+- Summon UI validator in `Assets/_Mythwake/Editor/SummonUiValidation.cs`.
 - Current status summary in `docs/CURRENT_STATUS.md` and this handoff note.
 
 ## User Preferences And Product Intent
@@ -129,6 +130,7 @@ Latest local gameplay/UI batch:
 - Hero overview was cleaned toward an AFK-style roster: old selected-hero summary/header/upgrade/essence layers are hidden, the screen uses one dark roster backdrop with a teal filter bar, larger name-less hero cards, level/stars/shard progress, and bottom `Held` / `Team festlegen` subtabs.
 - Summon screen now starts an AFK-style hero draw banner section with a fantasy background, visible `Summon` and `Summon 10` buttons, gem costs on each button, and a 10-pull cost discount. The layout is ordered top-to-bottom as selected hero banner image, summon buttons, then the rotation carousel; the summon buttons use a brown AFK-style look with the `mythic_gem` icon at 20x27 on the left and a small white cost label below it. The old large yellow parchment is hidden on Summon, summon count is a small left-side chip, and rates sit in their own highlighted teal/gold box. A bottom banner carousel now shows preview boxes with left/right arrows and swipe gestures; switching banners changes the featured heroes and local summon odds for now.
 - Summoning now opens a result popup that groups all drawn heroes and shows how many times each appeared. Local and backend summon pools now grant 1 shard per duplicate pull. The result popup has bottom `x10` and `x300` buttons, disabled when gems are insufficient, plus an `Auto-Summon` checkbox that keeps pulling in x10 chunks up to 300 total pulls.
+- A Unity editor validator now checks the Vanguard Oath Summon slice, Paladin feature art, local rates, carousel selected card, and Paladin result popup through `Mythwake/Validate Summon UI`.
 - Campaign/Village fights can now keep running while the player leaves through the bottom nav to edit heroes/gear, then pressing Village/Battle resumes the active fight/result. Team formation changes during such a fight abort the current fight without granting rewards. Dungeon fights/formations hide the top resource bar and bottom navbar for a focused boss-fight view.
 - Visible fight end conditions now stop immediately once the winning side has killed/disappeared all enemies, instead of waiting out the remaining visual duration while the displayed damage total keeps climbing.
 - Ravik is now added as a playable Epic fire mage. His generated transparent portrait and combat frames live under `Assets/_Mythwake/Resources/Mythwake/Art/Runtime/hero_ravik.png` and `Assets/_Mythwake/Resources/Mythwake/Art/CombatAnimated/hero_ravik_*`. The source sheet/manifest live under `Assets/_Mythwake/ArtSource/Generated/ember_mage/`. The current Ravik pass uses a production-style split: stable bottom-center body frames plus separate attack/ultimate VFX layers, so large fire effects no longer change his body frame size or root position.
@@ -571,6 +573,7 @@ The next chat should continue in this order unless the user redirects:
    - Continuous accumulation display, 24h cap, local rates, Village bonus line, and Server Mode copy now have a validator, but still need a real visual pass.
 
 5. Continue Paladin integration checks.
+   - Run `Mythwake/Validate Summon UI`.
    - Run `Mythwake/Validate Paladin Integration`.
    - Run `Mythwake/Validate Paladin Spine Handoff`.
    - Visually verify roster/detail screen, formation, fight pose/preview, and summon result display.
