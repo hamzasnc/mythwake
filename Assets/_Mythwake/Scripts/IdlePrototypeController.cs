@@ -17849,10 +17849,35 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var rarity = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot);
         if (rarity < 0)
         {
+            if (TryGetBestAccessoryInventoryCopy(accessorySlot, out var bestRarity, out var copies))
+            {
+                return $"{GetLocalizedAccessorySlotName(accessorySlot)}\n{Tr("ui.common.bag")} {GetAccessoryRarityName(bestRarity)} x{copies}";
+            }
+
             return $"{GetLocalizedAccessorySlotName(accessorySlot)}\n{Tr("ui.common.empty")}";
         }
 
         return $"{GetLocalizedAccessorySlotName(accessorySlot)}\n{GetAccessoryRarityName(rarity)} {Tr("ui.common.level_short")} {GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot)}";
+    }
+
+    private bool TryGetBestAccessoryInventoryCopy(int accessorySlot, out int rarity, out int copies)
+    {
+        EnsureAccessories();
+        accessorySlot = Mathf.Clamp(accessorySlot, 0, AccessorySlotCount - 1);
+        for (var candidateRarity = AccessoryRarityCount - 1; candidateRarity >= 0; candidateRarity--)
+        {
+            var candidateCopies = GetAccessoryInventoryCount(accessorySlot, candidateRarity);
+            if (candidateCopies > 0)
+            {
+                rarity = candidateRarity;
+                copies = candidateCopies;
+                return true;
+            }
+        }
+
+        rarity = -1;
+        copies = 0;
+        return false;
     }
 
     private Color GetHeroDetailGearSlotColor(int slotIndex)

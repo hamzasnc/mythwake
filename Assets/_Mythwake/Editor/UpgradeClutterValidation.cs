@@ -120,6 +120,7 @@ public static class UpgradeClutterValidation
         }
 
         ValidateHeroDetailGearLayout(heroDetailRoot.gameObject, gearSlots, expectedGearSlotCount);
+        ValidateHeroDetailEmptyAccessoryInventoryHint(controller, gearSlots);
 
         InvokePrivate(controller, "OpenSelectedHeroDetailGearOptions");
         Canvas.ForceUpdateCanvases();
@@ -156,6 +157,48 @@ public static class UpgradeClutterValidation
 
         SetPrivateField(controller, "backendGameplayEnabled", false);
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, -1, 0);
+    }
+
+    private static void ValidateHeroDetailEmptyAccessoryInventoryHint(IdlePrototypeController controller, Button[] gearSlots)
+    {
+        const int heroIndex = 0;
+        const int accessorySlot = 1;
+        const int gearSlotIndex = accessorySlot + 2;
+        const int rarity = 3;
+        const int addedCopies = 2;
+
+        var originalRarity = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, accessorySlot);
+        var originalLevel = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryLevel", heroIndex, accessorySlot);
+        var originalCopies = (int)InvokePrivate(controller, "GetAccessoryInventoryCount", accessorySlot, rarity);
+
+        try
+        {
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, accessorySlot, -1, 0);
+            InvokePrivate(controller, "AddAccessoryInventory", accessorySlot, rarity, addedCopies);
+            InvokePrivate(controller, "ShowHeroDetailGearSlot", gearSlotIndex);
+            Canvas.ForceUpdateCanvases();
+
+            var slotText = gearSlots[gearSlotIndex].GetComponentInChildren<TMP_Text>(includeInactive: true);
+            if (slotText == null)
+            {
+                throw new InvalidOperationException("Hero detail accessory slot should keep a visible label.");
+            }
+
+            var expectedCopies = originalCopies + addedCopies;
+            if (!slotText.text.Contains(GetLocalizedText(controller, "ui.common.bag")) || !slotText.text.Contains("R3") || !slotText.text.Contains($"x{expectedCopies}"))
+            {
+                throw new InvalidOperationException($"Hero detail empty accessory slot should show the best bag copy hint. Got '{slotText.text}'.");
+            }
+
+            AssertTextFits(slotText, gearSlots[gearSlotIndex].name, "Hero detail empty accessory bag hint");
+        }
+        finally
+        {
+            InvokePrivate(controller, "AddAccessoryInventory", accessorySlot, rarity, -addedCopies);
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, accessorySlot, originalRarity, originalLevel);
+            InvokePrivate(controller, "RefreshHeroDetailUi");
+            Canvas.ForceUpdateCanvases();
+        }
     }
 
     private static void ValidateHeroDetailLanguageRefresh(IdlePrototypeController controller, RectTransform gearListRoot, Button equipGearButton, Button removeGearButton, Button[] gearOptionButtons)
