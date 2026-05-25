@@ -16,7 +16,7 @@ public static class FastRewardsUiValidation
         try
         {
             ValidateFastRewardsUi();
-            Debug.Log("Fast Rewards UI validated: popup controls, local copy, reward button state, and Server Mode fallback copy are present.");
+            Debug.Log("Fast Rewards UI validated: popup controls, local/capped copy, reward button state, and Server Mode fallback copy are present.");
         }
         catch (Exception ex)
         {
@@ -55,12 +55,14 @@ public static class FastRewardsUiValidation
         Canvas.ForceUpdateCanvases();
 
         RequireActive("Fast Rewards Popup");
-        var localBodyText = RequireText(body, "Fast Rewards Body").text;
+        var bodyText = RequireText(body, "Fast Rewards Body");
+        var localBodyText = bodyText.text;
         RequireCopy(localBodyText, "Local Mode: continuous stored rewards");
         RequireCopy(localBodyText, "Stored:");
         RequireCopy(localBodyText, "Rate:");
         RequireCopy(localBodyText, "Village bonus:");
         RequireCopy(localBodyText, "Ready:");
+        AssertTextFits(bodyText, "Fast Rewards local body");
 
         if (!redeemButton.interactable)
         {
@@ -73,16 +75,20 @@ public static class FastRewardsUiValidation
             throw new InvalidOperationException($"Fast Rewards local button label mismatch: '{localButtonLabel}'");
         }
 
+        AssertLocalFastRewardsState(controller, bodyText, redeemButton, 0f, "Stored: 0s / 24h 0m", "Ready: +0 Gold   +0 Essence", false);
+        AssertLocalFastRewardsState(controller, bodyText, redeemButton, 24f * 60f * 60f, "Stored: 24h 0m / 24h 0m", "Ready:", true);
+
         SetPrivateField(controller, "backendGameplayEnabled", true);
         SetPrivateField(controller, "backendRequestInProgress", false);
         SetPrivateField(controller, "hasBackendDefinitions", false);
         InvokePrivate(controller, "RefreshFastRewardsPopupUi");
         Canvas.ForceUpdateCanvases();
 
-        var serverBodyText = RequireText(body, "Fast Rewards Body").text;
+        var serverBodyText = bodyText.text;
         RequireCopy(serverBodyText, "Server Mode: backend-authoritative rewards");
         RequireCopy(serverBodyText, "Definitions not loaded yet.");
         RequireCopy(serverBodyText, "Local stored rewards are paused in Server Mode.");
+        AssertTextFits(bodyText, "Fast Rewards Server Mode fallback body");
 
         var serverButtonLabel = GetButtonLabel(redeemButton);
         if (serverButtonLabel != "Claim")
@@ -93,6 +99,29 @@ public static class FastRewardsUiValidation
         if (!popup.activeInHierarchy)
         {
             throw new InvalidOperationException("Fast Rewards popup should remain active after local and Server Mode refreshes.");
+        }
+    }
+
+    private static void AssertLocalFastRewardsState(IdlePrototypeController controller, TMP_Text bodyText, Button redeemButton, float storedSeconds, string expectedStoredLine, string expectedReadyLine, bool expectRedeemInteractable)
+    {
+        SetPrivateField(controller, "backendGameplayEnabled", false);
+        SetPrivateField(controller, "afkRewardStoredSeconds", storedSeconds);
+        InvokePrivate(controller, "RefreshFastRewardsPopupUi");
+        Canvas.ForceUpdateCanvases();
+
+        RequireCopy(bodyText.text, expectedStoredLine);
+        RequireCopy(bodyText.text, expectedReadyLine);
+        AssertTextFits(bodyText, $"Fast Rewards local {expectedStoredLine}");
+
+        if (redeemButton.interactable != expectRedeemInteractable)
+        {
+            throw new InvalidOperationException($"Fast Rewards redeem button state mismatch for '{expectedStoredLine}'. Expected {expectRedeemInteractable}, got {redeemButton.interactable}.");
+        }
+
+        var buttonLabel = GetButtonLabel(redeemButton);
+        if (buttonLabel != "Redeem")
+        {
+            throw new InvalidOperationException($"Fast Rewards local button label should stay Redeem for '{expectedStoredLine}', got '{buttonLabel}'.");
         }
     }
 
@@ -176,6 +205,18 @@ public static class FastRewardsUiValidation
     {
         var label = button.GetComponentInChildren<TMP_Text>(true);
         return label == null ? string.Empty : label.text;
+    }
+
+    private static void AssertTextFits(TMP_Text label, string context)
+    {
+        label.ForceMeshUpdate();
+        if (!label.isTextOverflowing)
+        {
+            return;
+        }
+
+        var rect = label.rectTransform.rect;
+        throw new InvalidOperationException($"{context} overflows: '{label.text}' width={rect.width}, height={rect.height}, fontSize={label.fontSize}.");
     }
 
     private static T FindSceneComponent<T>() where T : Component
