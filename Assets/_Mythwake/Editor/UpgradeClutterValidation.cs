@@ -257,6 +257,20 @@ public static class UpgradeClutterValidation
         {
             throw new InvalidOperationException($"{message} Expected '{expected}', got '{label.text}'.");
         }
+
+        AssertButtonLabelFits(button, label, message);
+    }
+
+    private static void AssertButtonLabelFits(Button button, TMP_Text label, string message)
+    {
+        label.ForceMeshUpdate();
+        if (!label.isTextOverflowing)
+        {
+            return;
+        }
+
+        var rect = label.rectTransform.rect;
+        throw new InvalidOperationException($"{message} '{label.text}' overflows {button.name}: labelWidth={rect.width}, labelHeight={rect.height}, fontSize={label.fontSize}.");
     }
 
     private static string GetLocalizedText(IdlePrototypeController controller, string key)
