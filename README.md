@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.93
+Prototype version: 0.2.94
 Local save version: 2
 
 Current prototype:
@@ -176,6 +176,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.94: Fixed the Unity current-slice `.cmd` wrapper so PowerShell validation failures propagate as non-zero exit codes for local/CI-style checks.
 - Prototype 0.2.93: Extended Dungeons UI validation for zoom clamps, marker spacing, and Formation back navigation from all dungeon markers.
 - Prototype 0.2.92: Added Dungeons UI validation for the world-map viewport, zoom controls, dungeon markers, and all three dungeon Formation entry flows, and included it in Current Slice validation.
 - Prototype 0.2.91: Extended Home and Summon validators for Home popup exclusivity plus Summon result slot fit, auto-toggle, and close flow coverage.

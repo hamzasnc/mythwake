@@ -82,7 +82,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.93`
+- Prototype `0.2.94`
 - Save version `2`
 
 Important Unity scripts:
@@ -177,7 +177,7 @@ Latest verification notes:
 - `git diff --check` passes for touched client/backend/docs files, with existing LF->CRLF warnings on some backend/docs files.
 - Direct `dotnet build` fails on this machine because .NET Framework 4.7.1 reference assemblies are not installed globally.
 - Plain MSBuild without `/p:LangVersion=latest` can fail because the generated Unity csproj still says C# 7.3 while current code uses newer syntax.
-- Unity batchmode validation command is prepared, but currently blocked because another Unity instance has this project open.
+- Unity batchmode validation command is prepared, and the `.cmd` wrapper now propagates PowerShell failures correctly; full execution is currently blocked because another Unity instance has this project open.
   - Main local gameplay, UI runtime construction, backend mode switching, save/load, action handlers.
   - It is currently large/monolithic. Be careful with surgical edits.
 - `Assets/_Mythwake/Scripts/MythwakeBackendClient.cs`
