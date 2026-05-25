@@ -18,7 +18,7 @@ public static class SummonUiValidation
         try
         {
             ValidateSummonUi();
-            Debug.Log("Summon UI validated: Vanguard banner, Paladin feature art, rates, carousel, and result popup are present.");
+            Debug.Log("Summon UI validated: Vanguard banner, Paladin feature art, rates, carousel, result popup, and repeat summon button states are present.");
         }
         catch (Exception ex)
         {
@@ -52,6 +52,7 @@ public static class SummonUiValidation
         AssertInsideParent(resultPopup, RequireObject("Result Summon Ten", false));
         AssertInsideParent(resultPopup, RequireObject("Result Summon Max", false));
         AssertInsideParent(resultPopup, RequireObject("Result Close", false));
+        AssertInsideParent(resultPopup, RequireObject("Auto Summon Toggle", false));
 
         var paladinHeroIndex = FindHeroIndex(PaladinHeroId);
         var vanguardBannerIndex = FindBannerIndex(VanguardBannerId);
@@ -102,19 +103,27 @@ public static class SummonUiValidation
         var resultMaxButton = GetPrivateField<Button>(controller, "summonResultMaxButton");
         var resultTenCost = GetPrivateField<TMP_Text>(controller, "summonResultTenCostText");
         var resultMaxCost = GetPrivateField<TMP_Text>(controller, "summonResultMaxCostText");
+        var autoToggleText = GetPrivateField<TMP_Text>(controller, "summonAutoToggleText");
 
         RequireCopy(resultTitle.text, "Summon x10 Result");
         RequireResultSlot(resultNames, resultCounts, resultImages, 0, "Paladin", "x3", PaladinHeroId);
+        RequireCopy(autoToggleText.text, "Auto-Summon");
 
         if (GetButtonLabel(resultTenButton) != "x10" || GetButtonLabel(resultMaxButton) != "x300")
         {
             throw new InvalidOperationException("Summon result repeat buttons should keep x10 and x300 labels.");
         }
 
-        if (string.IsNullOrWhiteSpace(resultTenCost.text) || string.IsNullOrWhiteSpace(resultMaxCost.text))
-        {
-            throw new InvalidOperationException("Summon result repeat buttons should show gem costs.");
-        }
+        AssertResultRepeatButtons(resultTenButton, resultMaxButton, resultTenCost, resultMaxCost, "315", "9450", true, true, "Summon result high-gem state");
+        SetPrivateField(controller, "gems", 314);
+        InvokePrivate(controller, "RefreshUi");
+        Canvas.ForceUpdateCanvases();
+        AssertResultRepeatButtons(resultTenButton, resultMaxButton, resultTenCost, resultMaxCost, "315", "9450", false, false, "Summon result insufficient-gem state");
+
+        SetPrivateField(controller, "gems", 315);
+        InvokePrivate(controller, "RefreshUi");
+        Canvas.ForceUpdateCanvases();
+        AssertResultRepeatButtons(resultTenButton, resultMaxButton, resultTenCost, resultMaxCost, "315", "9450", true, false, "Summon result x10-only gem state");
     }
 
     private static int FindHeroIndex(string heroId)
@@ -162,6 +171,44 @@ public static class SummonUiValidation
         if (images == null || slotIndex >= images.Length || images[slotIndex] == null || images[slotIndex].texture == null || !images[slotIndex].texture.name.Contains(expectedTextureName))
         {
             throw new InvalidOperationException($"Summon result slot {slotIndex} should show {expectedTextureName} art.");
+        }
+    }
+
+    private static void AssertResultRepeatButtons(Button tenButton, Button maxButton, TMP_Text tenCost, TMP_Text maxCost, string expectedTenCost, string expectedMaxCost, bool expectedTenInteractable, bool expectedMaxInteractable, string context)
+    {
+        if (tenCost == null || tenCost.text != expectedTenCost)
+        {
+            throw new InvalidOperationException($"{context}: x10 repeat cost should be {expectedTenCost}, got '{(tenCost == null ? "<missing>" : tenCost.text)}'.");
+        }
+
+        if (maxCost == null || maxCost.text != expectedMaxCost)
+        {
+            throw new InvalidOperationException($"{context}: x300 repeat cost should be {expectedMaxCost}, got '{(maxCost == null ? "<missing>" : maxCost.text)}'.");
+        }
+
+        AssertButtonState(tenButton, "x10", expectedTenInteractable, context);
+        AssertButtonState(maxButton, "x300", expectedMaxInteractable, context);
+
+        AssertTextFits(tenCost, $"{context} x10 cost");
+        AssertTextFits(maxCost, $"{context} x300 cost");
+    }
+
+    private static void AssertButtonState(Button button, string expectedLabel, bool expectedInteractable, string context)
+    {
+        if (button == null)
+        {
+            throw new InvalidOperationException($"{context}: {expectedLabel} button is missing.");
+        }
+
+        var label = GetButtonLabel(button);
+        if (label != expectedLabel)
+        {
+            throw new InvalidOperationException($"{context}: expected {expectedLabel} button label, got '{label}'.");
+        }
+
+        if (button.interactable != expectedInteractable)
+        {
+            throw new InvalidOperationException($"{context}: {expectedLabel} button interactable mismatch. Expected {expectedInteractable}, got {button.interactable}.");
         }
     }
 
@@ -217,6 +264,18 @@ public static class SummonUiValidation
     {
         var label = button.GetComponentInChildren<TMP_Text>(true);
         return label == null ? string.Empty : label.text;
+    }
+
+    private static void AssertTextFits(TMP_Text label, string context)
+    {
+        label.ForceMeshUpdate();
+        if (!label.isTextOverflowing)
+        {
+            return;
+        }
+
+        var rect = label.rectTransform.rect;
+        throw new InvalidOperationException($"{context} overflows: '{label.text}' width={rect.width}, height={rect.height}, fontSize={label.fontSize}.");
     }
 
     private static T FindSceneComponent<T>() where T : Component

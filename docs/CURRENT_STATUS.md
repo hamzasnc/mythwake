@@ -31,7 +31,7 @@ Last updated: 2026-05-25
 - Added an editor validation entry point for the Fast Rewards popup so local copy, 0s/capped 24h states, Server Mode fallback copy, redeem/claim labels, button state, text fit, and control bounds can be checked in Unity.
 - Added Paladin to the local `Vanguard Oath` summon banner so the frontline banner actually features and rolls the Paladin.
 - Added a Paladin integration editor validator that checks the client hero definition, local summon banners, formation/fight hook anchors, backend definition/migration anchors, EN/DE localization keys, runtime portrait, combat sheets, skeletal part textures, and Paladin runtime rig part loading.
-- Added an editor validation entry point for the Summon UI so the Vanguard Oath banner, Paladin feature art, rates, carousel center card, and Paladin result popup can be checked in Unity.
+- Added an editor validation entry point for the Summon UI so the Vanguard Oath banner, Paladin feature art, rates, carousel center card, Paladin result popup, Auto-Summon label, repeat costs, and x10/x300 gem-gated repeat states can be checked in Unity.
 - Added an editor validation entry point for upgrade clutter so legacy Battle/Hero upgrade buttons stay hidden, Gear upgrade controls stay on Gear, and debug shortcuts stay in Shop/tools.
 - Extended the upgrade clutter validator so the 8-slot Hero Detail gear layout also has non-overlap checks against the portrait, stats, resources, and action buttons.
 - Added a `Mythwake/Validate Current Slice` editor validation entry point that runs Village UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Paladin integration, and Paladin Spine handoff checks in one pass.
