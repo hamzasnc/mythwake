@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.82";
+    public const string PrototypeVersion = "0.2.83";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -14127,23 +14127,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -1240), new Vector2(780, 188), new Color(0.02f, 0.025f, 0.035f, 0.78f));
-        homeIdleCombatRoot.SetAsLastSibling();
+        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -1200), new Vector2(1040, 318), new Color(0.02f, 0.025f, 0.035f, 0.78f));
+        homeIdleCombatRoot.SetAsFirstSibling();
         homeIdleCombatRoot.gameObject.AddComponent<RectMask2D>();
 
-        homeIdleCombatMapImage = CreateRuntimeRawImage(homeIdleCombatRoot, "Home Idle Mini Map Background", LoadRuntimeTexture(GetSelectedHomeProgressMapTextureName()), new Vector2(0, -2), new Vector2(780, 188), new Vector2(0.5f, 1f));
-        homeIdleCombatMapImage.uvRect = new Rect(0.04f, 0.38f, 0.92f, 0.28f);
+        homeIdleCombatMapImage = CreateRuntimeRawImage(homeIdleCombatRoot, "Home Idle Mini Map Background", LoadRuntimeTexture(GetSelectedHomeProgressMapTextureName()), Vector2.zero, new Vector2(1040, 318), new Vector2(0.5f, 1f));
+        homeIdleCombatMapImage.uvRect = new Rect(0.04f, 0.3f, 0.92f, 0.16f);
         homeIdleCombatMapImage.color = new Color(1f, 1f, 1f, 0.74f);
         homeIdleCombatMapImage.raycastTarget = false;
         homeIdleCombatMapImage.transform.SetAsFirstSibling();
 
-        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Map Dim", new Vector2(0, -2), new Vector2(780, 188), new Color(0.01f, 0.014f, 0.024f, 0.35f));
-        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Top Shade", new Vector2(0, -8), new Vector2(680, 30), new Color(0.015f, 0.018f, 0.026f, 0.32f));
-        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Ground", new Vector2(0, -138), new Vector2(650, 38), new Color(0.33f, 0.24f, 0.16f, 0.38f));
-        var clashGlow = CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Clash Glow", new Vector2(0, -90), new Vector2(72, 72), new Color(1f, 0.73f, 0.26f, 0.22f));
+        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Map Dim", Vector2.zero, new Vector2(1040, 318), new Color(0.01f, 0.014f, 0.024f, 0.35f));
+        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Top Shade", new Vector2(0, -48), new Vector2(680, 30), new Color(0.015f, 0.018f, 0.026f, 0.32f));
+        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Ground", new Vector2(0, -178), new Vector2(650, 38), new Color(0.33f, 0.24f, 0.16f, 0.38f));
+        var clashGlow = CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Clash Glow", new Vector2(0, -130), new Vector2(72, 72), new Color(1f, 0.73f, 0.26f, 0.22f));
         clashGlow.localRotation = Quaternion.Euler(0f, 0f, 45f);
 
-        homeIdleCombatText = CreateRuntimeText(homeIdleCombatRoot, "Home Idle Combat Text", string.Empty, 18, new Vector2(0, -8), new Vector2(690, 26));
+        homeIdleCombatText = CreateRuntimeText(homeIdleCombatRoot, "Home Idle Combat Text", string.Empty, 18, new Vector2(0, -48), new Vector2(690, 26));
         homeIdleCombatText.fontStyle = FontStyles.Bold;
         homeIdleCombatText.enableAutoSizing = true;
         homeIdleCombatText.fontSizeMin = 15;
@@ -14173,7 +14173,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             homeIdleEnemyImages[i].rectTransform.localScale = new Vector3(GetEnemyFacingScale(enemyTextureName), 1f, 1f);
         }
 
-        homeIdleRewardFill = CreateRuntimeHealthFill(homeIdleCombatRoot, "Home Idle Reward Progress", new Vector2(0, -164), 620f, new Color(0.38f, 0.95f, 0.84f, 0.92f));
+        homeIdleRewardFill = CreateRuntimeHealthFill(homeIdleCombatRoot, "Home Idle Reward Progress", new Vector2(0, -204), 620f, new Color(0.38f, 0.95f, 0.84f, 0.92f));
         var rewardBack = homeIdleRewardFill.transform.parent.GetComponent<RectTransform>();
         if (rewardBack != null)
         {
@@ -19137,9 +19137,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(-276, -24),
-            new Vector2(-168, -76),
-            new Vector2(-58, -24)
+            new Vector2(-276, -64),
+            new Vector2(-168, -116),
+            new Vector2(-58, -64)
         };
     }
 
@@ -19147,9 +19147,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(276, -24),
-            new Vector2(168, -76),
-            new Vector2(58, -24)
+            new Vector2(276, -64),
+            new Vector2(168, -116),
+            new Vector2(58, -64)
         };
     }
 
