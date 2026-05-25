@@ -43,6 +43,7 @@ public static partial class MythwakeLocalization
         { "ui.common.owned", "Besitz" },
         { "ui.common.bag", "Inventar" },
         { "ui.common.equipped", "Ausgerüstet" },
+        { "ui.common.training", "Training" },
         { "ui.common.copies", "Kopien" },
         { "ui.common.empty", "Leer" },
         { "ui.common.locked", "Gesperrt" },

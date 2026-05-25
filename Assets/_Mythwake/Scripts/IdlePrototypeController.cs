@@ -17944,7 +17944,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 var bonus = track.equipmentId == WeaponTrack.equipmentId ? GetHeroEquipmentAttackBonus(heroIndex) : GetHeroEquipmentHealthBonus(heroIndex);
                 optionText.text = i == 0
-                    ? $"{GetLocalizedEquipmentName(track)} {Tr("ui.common.level_short")} {GetEquipmentDisplayLevel(track, level)}   +{bonus} {track.statLabel}\n{Tr("ui.common.equipped")} {GetLocalizedHeroName(hero)}"
+                    ? $"{GetLocalizedEquipmentName(track)} {Tr("ui.common.level_short")} {GetEquipmentDisplayLevel(track, level)}   +{bonus} {track.statLabel}\n{Tr("ui.common.training")} {GetLocalizedHeroName(hero)}"
                     : TrFormat("ui.common.open_gear", GetLocalizedHeroName(hero));
             }
         }

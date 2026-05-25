@@ -463,6 +463,7 @@ public static class UpgradeClutterValidation
         {
             throw new InvalidOperationException("Hero detail equipped equipment summary row should not be clickable.");
         }
+        AssertHeroDetailEquipmentTrackCopy(controller, gearOptionButtons[0]);
 
         if (!gearOptionButtons[1].interactable)
         {
@@ -480,6 +481,22 @@ public static class UpgradeClutterValidation
         controller.ShowHeroes();
         InvokePrivate(controller, "ShowHeroDetail", 0);
         Canvas.ForceUpdateCanvases();
+    }
+
+    private static void AssertHeroDetailEquipmentTrackCopy(IdlePrototypeController controller, Button optionButton)
+    {
+        var text = optionButton.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (text == null)
+        {
+            throw new InvalidOperationException("Hero detail equipment summary row should keep visible copy.");
+        }
+
+        if (!text.text.Contains(GetLocalizedText(controller, "ui.common.training")) || text.text.Contains(GetLocalizedText(controller, "ui.common.equipped")))
+        {
+            throw new InvalidOperationException($"Hero detail equipment summary row should describe starter equipment as training, not equipped gear. Got '{text.text}'.");
+        }
+
+        AssertTextFits(text, optionButton.name, "Hero detail equipment summary row");
     }
 
     private static void AssertButtonLabel(Button button, string expected, string message)
