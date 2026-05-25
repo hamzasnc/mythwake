@@ -151,13 +151,13 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException("Hero detail Remove Gear should stay available in Server Mode when a backend-equipped accessory is selected.");
         }
 
-        ValidateHeroDetailLanguageRefresh(controller, equipGearButton, removeGearButton);
+        ValidateHeroDetailLanguageRefresh(controller, gearListRoot, equipGearButton, removeGearButton, gearOptionButtons);
 
         SetPrivateField(controller, "backendGameplayEnabled", false);
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, -1, 0);
     }
 
-    private static void ValidateHeroDetailLanguageRefresh(IdlePrototypeController controller, Button equipGearButton, Button removeGearButton)
+    private static void ValidateHeroDetailLanguageRefresh(IdlePrototypeController controller, RectTransform gearListRoot, Button equipGearButton, Button removeGearButton, Button[] gearOptionButtons)
     {
         var originalLanguage = RequireField<MythwakeLanguage>(controller, "language");
         try
@@ -169,12 +169,14 @@ public static class UpgradeClutterValidation
 
             AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.open_gear_short"), "Hero detail equipment action should refresh when language changes.");
             AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.remove_gear"), "Hero detail remove action should refresh when language changes.");
+            AssertHeroDetailGearListTextFits(gearListRoot.gameObject, gearOptionButtons, "Hero detail German equipment list");
 
             InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
             Canvas.ForceUpdateCanvases();
 
             AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.equip_gear"), "Hero detail accessory action should refresh when language changes.");
             AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.remove_gear"), "Hero detail remove action should stay localized after slot changes.");
+            AssertHeroDetailGearListTextFits(gearListRoot.gameObject, gearOptionButtons, "Hero detail German accessory list");
         }
         finally
         {
@@ -196,6 +198,8 @@ public static class UpgradeClutterValidation
         {
             throw new InvalidOperationException("Hero detail Equip Gear should open the selected equipment slot list before navigating away.");
         }
+
+        AssertHeroDetailGearListTextFits(gearListRoot.gameObject, gearOptionButtons, "Hero detail equipment list");
 
         var gearPanel = RequireObjectField<GameObject>(controller, "gearPanel");
         if (gearPanel.activeInHierarchy)
@@ -263,6 +267,42 @@ public static class UpgradeClutterValidation
 
     private static void AssertButtonLabelFits(Button button, TMP_Text label, string message)
     {
+        AssertTextFits(label, button.name, message);
+    }
+
+    private static void AssertButtonTextFits(Button button, string message)
+    {
+        var label = button.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (label == null)
+        {
+            throw new InvalidOperationException($"{button.name} is missing its label text.");
+        }
+
+        AssertTextFits(label, button.name, message);
+    }
+
+    private static void AssertHeroDetailGearListTextFits(GameObject gearListRoot, Button[] gearOptionButtons, string message)
+    {
+        var title = gearListRoot.transform.Find("Title")?.GetComponent<TMP_Text>();
+        if (title == null)
+        {
+            throw new InvalidOperationException($"{gearListRoot.name} is missing its title text.");
+        }
+
+        AssertTextFits(title, $"{gearListRoot.name} Title", message);
+
+        for (var i = 0; i < gearOptionButtons.Length; i++)
+        {
+            var option = gearOptionButtons[i];
+            if (option != null && option.gameObject.activeInHierarchy)
+            {
+                AssertButtonTextFits(option, $"{message} option {i + 1}");
+            }
+        }
+    }
+
+    private static void AssertTextFits(TMP_Text label, string ownerName, string message)
+    {
         label.ForceMeshUpdate();
         if (!label.isTextOverflowing)
         {
@@ -270,7 +310,7 @@ public static class UpgradeClutterValidation
         }
 
         var rect = label.rectTransform.rect;
-        throw new InvalidOperationException($"{message} '{label.text}' overflows {button.name}: labelWidth={rect.width}, labelHeight={rect.height}, fontSize={label.fontSize}.");
+        throw new InvalidOperationException($"{message}: '{label.text}' overflows {ownerName}: labelWidth={rect.width}, labelHeight={rect.height}, fontSize={label.fontSize}.");
     }
 
     private static string GetLocalizedText(IdlePrototypeController controller, string key)
@@ -328,6 +368,7 @@ public static class UpgradeClutterValidation
 
             RequireInsidePanel(gearListRoot, option.gameObject);
             AssertNoOverlap(gearListCloseButton.gameObject, option.gameObject, 4f, "Hero Detail gear list layout");
+            AssertButtonTextFits(option, "Hero Detail gear list option text");
             if (previousOption != null)
             {
                 AssertNoOverlap(previousOption, option.gameObject, 4f, "Hero Detail gear list option spacing");
@@ -335,6 +376,8 @@ public static class UpgradeClutterValidation
 
             previousOption = option.gameObject;
         }
+
+        AssertHeroDetailGearListTextFits(gearListRoot, gearOptionButtons, "Hero Detail gear list");
     }
 
     private static void ValidateGearScreen(IdlePrototypeController controller)

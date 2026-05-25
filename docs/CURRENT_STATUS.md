@@ -41,6 +41,7 @@ Last updated: 2026-05-25
 - Routed Hero Detail action labels through localization keys so Level Up, Open/Equip Gear, and Remove Gear follow the active language.
 - Extended the upgrade clutter validator to switch Hero Detail to German during validation and confirm the open gear, equip gear, and remove gear labels refresh live.
 - Added Hero Detail action-label overflow checks so localized Level Up, Open/Equip Gear, and Remove Gear labels must fit inside their buttons.
+- Added Hero Detail gear-list text overflow checks so localized list titles and option rows must fit in equipment/accessory popups.
 - Added backend `accessory_unequip` support, including the action catalog entry, `/gear/accessories/unequip` route, state mutation, and Player/HTTP tests.
 - Added `scripts/check-unity-current-slice.cmd` / `.ps1` so the current slice validator can be run from PowerShell or CI-style local checks once this Unity project is not already open.
 - Added backend tests for service-level and HTTP-level Village upgrades.
