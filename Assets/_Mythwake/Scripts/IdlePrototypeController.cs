@@ -17894,7 +17894,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var rarity = GetHeroEquippedAccessoryRarity(GetSelectedHeroIndex(), accessorySlot);
-        return rarity >= 0 ? GetAccessoryRarityColor(rarity) : new Color(0.36f, 0.22f, 0.13f, 0.9f);
+        if (rarity >= 0)
+        {
+            return GetAccessoryRarityColor(rarity);
+        }
+
+        var emptyColor = new Color(0.36f, 0.22f, 0.13f, 0.9f);
+        if (TryGetBestAccessoryInventoryCopy(accessorySlot, out var bestRarity, out _))
+        {
+            return Color.Lerp(emptyColor, GetAccessoryRarityColor(bestRarity), 0.55f);
+        }
+
+        return emptyColor;
     }
 
     private string GetHeroDetailTitle(HeroDefinition hero)

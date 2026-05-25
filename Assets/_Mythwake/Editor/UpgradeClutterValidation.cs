@@ -175,6 +175,14 @@ public static class UpgradeClutterValidation
         {
             InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, accessorySlot, -1, 0);
             InvokePrivate(controller, "AddAccessoryInventory", accessorySlot, rarity, addedCopies);
+
+            var emptyColor = new Color(0.36f, 0.22f, 0.13f, 0.9f);
+            var baseFrameColor = (Color)InvokePrivate(controller, "GetHeroDetailGearSlotColor", gearSlotIndex);
+            if (ApproximatelySameColor(baseFrameColor, emptyColor))
+            {
+                throw new InvalidOperationException("Hero detail accessory slot with bag copies should use a rarity-tinted base highlight.");
+            }
+
             InvokePrivate(controller, "ShowHeroDetailGearSlot", gearSlotIndex);
             Canvas.ForceUpdateCanvases();
 
@@ -191,6 +199,17 @@ public static class UpgradeClutterValidation
             }
 
             AssertTextFits(slotText, gearSlots[gearSlotIndex].name, "Hero detail empty accessory bag hint");
+
+            var frame = gearSlots[gearSlotIndex].GetComponent<Image>();
+            if (frame == null)
+            {
+                throw new InvalidOperationException("Hero detail accessory slot should keep a visible frame image.");
+            }
+
+            if (ApproximatelySameColor(frame.color, emptyColor))
+            {
+                throw new InvalidOperationException("Hero detail accessory slot with bag copies should be visually highlighted.");
+            }
         }
         finally
         {
@@ -199,6 +218,14 @@ public static class UpgradeClutterValidation
             InvokePrivate(controller, "RefreshHeroDetailUi");
             Canvas.ForceUpdateCanvases();
         }
+    }
+
+    private static bool ApproximatelySameColor(Color a, Color b)
+    {
+        return Mathf.Abs(a.r - b.r) < 0.01f
+            && Mathf.Abs(a.g - b.g) < 0.01f
+            && Mathf.Abs(a.b - b.b) < 0.01f
+            && Mathf.Abs(a.a - b.a) < 0.01f;
     }
 
     private static void ValidateHeroDetailLanguageRefresh(IdlePrototypeController controller, RectTransform gearListRoot, Button equipGearButton, Button removeGearButton, Button[] gearOptionButtons)
