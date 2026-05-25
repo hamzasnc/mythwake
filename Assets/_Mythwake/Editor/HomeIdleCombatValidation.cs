@@ -16,7 +16,7 @@ public static class HomeIdleCombatValidation
         try
         {
             ValidateHomeIdleCombatUi();
-            Debug.Log("Home Idle Combat validated: campaign map, current-stage marker, region texture/UV sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
+            Debug.Log("Home Idle Combat validated: campaign map, current-stage marker, path progress colors, region texture/UV sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
         }
         catch (Exception ex)
         {
@@ -99,6 +99,7 @@ public static class HomeIdleCombatValidation
         ValidateLockedStageDetailBattleGuard(controller);
         ValidateCurrentStageDetailBattleFlow(controller);
         ValidateCurrentStageNodeMarker(controller);
+        ValidateCampaignPathProgress(controller);
 
         var idleRoot = RequireObject("Home Idle Combat Root", true);
         AssertInsideParent(RequireObject("Home Generated Art Root", true), idleRoot);
@@ -381,6 +382,62 @@ public static class HomeIdleCombatValidation
             {
                 throw new InvalidOperationException("Locked campaign stage node should not show the current-stage halo.");
             }
+        }
+    }
+
+    private static void ValidateCampaignPathProgress(IdlePrototypeController controller)
+    {
+        var enemyLevelBefore = GetPrivateField<int>(controller, "enemyLevel");
+        var selectedStageBefore = GetPrivateField<int>(controller, "selectedCampaignStage");
+        var centerBefore = GetPrivateField<bool>(controller, "homeCampaignMapNeedsCenter");
+
+        try
+        {
+            const int currentStage = 5;
+            SetPrivateField(controller, "enemyLevel", currentStage);
+            SetPrivateField(controller, "selectedCampaignStage", currentStage);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", true);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+
+            var pathSegments = GetPrivateField<Image[]>(controller, "campaignPathSegmentImages");
+            if (pathSegments == null || pathSegments.Length < 5)
+            {
+                throw new InvalidOperationException("Campaign map should keep path segment images for progress coloring.");
+            }
+
+            var reachedSegment = pathSegments[3];
+            var lockedSegment = pathSegments[4];
+            if (reachedSegment == null || lockedSegment == null)
+            {
+                throw new InvalidOperationException("Campaign path segment images should not contain null entries.");
+            }
+
+            if (reachedSegment.raycastTarget || lockedSegment.raycastTarget)
+            {
+                throw new InvalidOperationException("Campaign path segment images should not intercept map node input.");
+            }
+
+            if (reachedSegment.color.a <= lockedSegment.color.a || reachedSegment.color.r <= lockedSegment.color.r)
+            {
+                throw new InvalidOperationException($"Reached campaign path segment should read brighter than locked segments. Reached={reachedSegment.color}, locked={lockedSegment.color}.");
+            }
+
+            RequireButton("Campaign Stage Node 6").onClick.Invoke();
+            Canvas.ForceUpdateCanvases();
+            if (pathSegments[4].color.a >= reachedSegment.color.a)
+            {
+                throw new InvalidOperationException("Selecting a locked future node should not make the next path segment look reached.");
+            }
+        }
+        finally
+        {
+            SetPrivateField(controller, "enemyLevel", enemyLevelBefore);
+            SetPrivateField(controller, "selectedCampaignStage", selectedStageBefore);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
+            InvokePrivate(controller, "SetCampaignStageDetailPopupVisible", false);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
         }
     }
 

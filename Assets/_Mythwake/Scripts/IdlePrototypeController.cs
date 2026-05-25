@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.105";
+    public const string PrototypeVersion = "0.2.106";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1298,6 +1298,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RawImage[] campaignStageButtonIcons;
     private Image[] campaignStageButtonFrames;
     private Image[] campaignStageButtonCurrentHalos;
+    private Image[] campaignPathSegmentImages;
     private RawImage[] homeIdleHeroImages;
     private RawImage[] homeIdleEnemyImages;
     private TMP_Text homeIdleCombatText;
@@ -14182,9 +14183,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Bottom Fade", new Vector2(0, -1166), new Vector2(1010, 46), new Color(0.02f, 0.025f, 0.035f, 0.56f));
 
         var nodePositions = GetCampaignMapNodePositions();
+        campaignPathSegmentImages = new Image[Mathf.Max(0, nodePositions.Length - 1)];
         for (var i = 0; i < nodePositions.Length - 1; i++)
         {
-            CreateCampaignPathSegment(homeCampaignMapContentRoot, nodePositions[i], nodePositions[i + 1]);
+            campaignPathSegmentImages[i] = CreateCampaignPathSegment(homeCampaignMapContentRoot, nodePositions[i], nodePositions[i + 1]);
         }
 
         campaignStageButtons = new Button[nodePositions.Length];
@@ -14336,13 +14338,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return button;
     }
 
-    private void CreateCampaignPathSegment(Transform parent, Vector2 start, Vector2 end)
+    private Image CreateCampaignPathSegment(Transform parent, Vector2 start, Vector2 end)
     {
         var midpoint = (start + end) * 0.5f;
         var delta = end - start;
         var length = Mathf.Max(1f, delta.magnitude);
-        var segment = CreateRuntimePanel(parent, "Campaign Path Segment", midpoint, new Vector2(length + 24f, 18f), new Color(0.74f, 0.82f, 0.93f, 0.68f));
+        var segment = CreateRuntimePanel(parent, "Campaign Path Segment", midpoint, new Vector2(length + 24f, 18f), new Color(0.55f, 0.64f, 0.78f, 0.32f));
         segment.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+        return segment.GetComponent<Image>();
     }
 
     private void EnsureRuntimeBattleFlowUi()
@@ -18688,10 +18691,34 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             campaignStageButtons[i].interactable = !campaignFightInProgress && !backendRequestInProgress && !backendLifecycleFlushInProgress;
         }
 
+        RefreshCampaignPathSegments(startStage);
         RefreshCampaignStagePreview();
         RefreshCampaignStageDetailPopupUi();
         RefreshHomeProgressMapUi();
         CenterCampaignMapOnSelectedStageIfNeeded();
+    }
+
+    private void RefreshCampaignPathSegments(int startStage)
+    {
+        if (campaignPathSegmentImages == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < campaignPathSegmentImages.Length; i++)
+        {
+            var segment = campaignPathSegmentImages[i];
+            if (segment == null)
+            {
+                continue;
+            }
+
+            var segmentEndStage = startStage + i + 1;
+            var isReached = segmentEndStage <= enemyLevel;
+            segment.color = isReached
+                ? new Color(1f, 0.86f, 0.38f, 0.86f)
+                : new Color(0.55f, 0.64f, 0.78f, 0.32f);
+        }
     }
 
     private void RefreshHomeProgressMapUi()
