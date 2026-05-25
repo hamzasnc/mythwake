@@ -183,7 +183,7 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException("Hero detail Remove Gear should stay available in Server Mode when a backend-equipped accessory is selected.");
         }
 
-        ValidateHeroDetailLanguageRefresh(controller, gearListRoot, equipGearButton, removeGearButton, gearOptionButtons);
+        ValidateHeroDetailLanguageRefresh(controller, gearSlots, gearListRoot, equipGearButton, removeGearButton, gearOptionButtons);
 
         SetPrivateField(controller, "backendGameplayEnabled", false);
         InvokePrivate(controller, "SetHeroEquippedAccessory", 0, 0, -1, 0);
@@ -279,7 +279,7 @@ public static class UpgradeClutterValidation
             && Mathf.Abs(a.a - b.a) < 0.01f;
     }
 
-    private static void ValidateHeroDetailLanguageRefresh(IdlePrototypeController controller, RectTransform gearListRoot, Button equipGearButton, Button removeGearButton, Button[] gearOptionButtons)
+    private static void ValidateHeroDetailLanguageRefresh(IdlePrototypeController controller, Button[] gearSlots, RectTransform gearListRoot, Button equipGearButton, Button removeGearButton, Button[] gearOptionButtons)
     {
         var originalLanguage = RequireField<MythwakeLanguage>(controller, "language");
         try
@@ -289,6 +289,7 @@ public static class UpgradeClutterValidation
             InvokePrivate(controller, "ShowHeroDetailGearSlot", 0);
             Canvas.ForceUpdateCanvases();
 
+            ValidateHeroDetailEquipmentSlotLabels(controller, gearSlots);
             AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.open_gear_short"), "Hero detail equipment action should refresh when language changes.");
             AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.remove_gear"), "Hero detail remove action should refresh when language changes.");
             AssertHeroDetailEquipmentTrackCopy(controller, gearOptionButtons[0]);
