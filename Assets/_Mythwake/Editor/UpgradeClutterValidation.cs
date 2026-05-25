@@ -372,6 +372,8 @@ public static class UpgradeClutterValidation
             {
                 throw new InvalidOperationException("Hero detail accessory rows with owned copies should stay clickable.");
             }
+            AssertHeroDetailOwnedCopyOptionText(controller, gearOptionButtons[higherOwnedRarity], "Hero detail higher owned accessory row");
+            AssertHeroDetailOwnedCopyOptionText(controller, gearOptionButtons[lowerOwnedRarity], "Hero detail lower owned accessory row");
 
             var higherOwnedRect = RequireRectTransform(gearOptionButtons[higherOwnedRarity].gameObject);
             var lowerOwnedRect = RequireRectTransform(gearOptionButtons[lowerOwnedRarity].gameObject);
@@ -399,6 +401,22 @@ public static class UpgradeClutterValidation
             InvokePrivate(controller, "ShowHeroDetailGearSlot", 2);
             Canvas.ForceUpdateCanvases();
         }
+    }
+
+    private static void AssertHeroDetailOwnedCopyOptionText(IdlePrototypeController controller, Button optionButton, string context)
+    {
+        var text = optionButton.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (text == null)
+        {
+            throw new InvalidOperationException($"{context} should keep visible option copy.");
+        }
+
+        if (!text.text.Contains($"{GetLocalizedText(controller, "ui.common.copies")} 1") || !text.text.Contains(GetLocalizedText(controller, "ui.common.tap_to_equip")))
+        {
+            throw new InvalidOperationException($"{context} should show owned copies and tap-to-equip copy in the picker. Got '{text.text}'.");
+        }
+
+        AssertTextFits(text, optionButton.name, context);
     }
 
     private static void ValidateHeroDetailEquipmentGearList(IdlePrototypeController controller, RectTransform heroDetailRoot, RectTransform gearListRoot, Button equipGearButton, Button[] gearOptionButtons)
