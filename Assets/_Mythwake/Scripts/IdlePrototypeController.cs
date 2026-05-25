@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.108";
+    public const string PrototypeVersion = "0.2.109";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -18888,16 +18888,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var stageNumber = Mathf.Max(1, selectedCampaignStage);
         var stage = GetStageDefinition(stageNumber);
         var status = stageNumber < enemyLevel ? "Abgeschlossen" : stageNumber == enemyLevel ? "Aktuelles Ziel" : "Gesperrt";
+        var stageType = GetCampaignStageTypeLabel(stageNumber);
+        var specialNote = GetCampaignStagePreviewSpecialNote(stageNumber);
         var requiredPower = GetStageRecommendedPower(stageNumber);
         var fightLine = stageNumber == enemyLevel
-            ? "Battle startet die Formation; Idle sammelt nur kleine Beute."
+            ? "Battle -> Formation; Idle sammelt nur kleine Beute."
             : stageNumber < enemyLevel
-                ? "Replay-Auswahl kommt spaeter."
-                : "Schliesse zuerst den aktuellen Abschnitt ab.";
+                ? "Replay spaeter."
+                : "Erst aktuellen Abschnitt abschliessen.";
         campaignStagePreviewText.text =
-            $"Abschnitt {GetCampaignStageLabel(stageNumber)}: {stage.enemyName}  |  {status}\n" +
+            $"Abschnitt {GetCampaignStageLabel(stageNumber)}: {stage.enemyName}  |  {stageType}  |  {status}\n" +
             $"{Tr("ui.common.power")} {FormatCompactNumber(GetTeamPower())}/{FormatCompactNumber(requiredPower)}  {Tr("ui.common.reward")} +{stage.essenceReward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}\n" +
-            fightLine;
+            $"{specialNote} {fightLine}";
     }
 
     private void RefreshCampaignStageDetailPopupUi()
@@ -19611,6 +19613,32 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static bool IsCampaignMilestoneStage(int stageNumber)
     {
         return Mathf.Max(1, stageNumber) % CampaignMilestoneInterval == 0;
+    }
+
+    private static string GetCampaignStageTypeLabel(int stageNumber)
+    {
+        if (IsCampaignBossStage(stageNumber))
+        {
+            return "Boss";
+        }
+
+        return IsCampaignMilestoneStage(stageNumber) ? "Bonus" : "Normal";
+    }
+
+    private static string GetCampaignStagePreviewSpecialNote(int stageNumber)
+    {
+        if (IsCampaignBossStage(stageNumber))
+        {
+            return "Boss-Knoten: starke Formation.";
+        }
+
+        if (IsCampaignMilestoneStage(stageNumber))
+        {
+            var rewardGems = CampaignBalance.milestoneGemBase + Mathf.FloorToInt(Mathf.Max(1, stageNumber) * CampaignBalance.milestoneGemScale);
+            return $"Bonus: +{rewardGems} Gems +{CampaignBalance.milestonePassXp} Pass XP.";
+        }
+
+        return "Normal. Bonus alle 5.";
     }
 
     private static Vector2[] GetCampaignMapNodePositions()

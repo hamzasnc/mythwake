@@ -102,6 +102,7 @@ public static class HomeIdleCombatValidation
         ValidateCampaignPathProgress(controller);
         ValidateCampaignBossNodeBadges(controller);
         ValidateCampaignMilestoneNodeBadges(controller);
+        ValidateCampaignStagePreviewTags(controller);
 
         var idleRoot = RequireObject("Home Idle Combat Root", true);
         AssertInsideParent(RequireObject("Home Generated Art Root", true), idleRoot);
@@ -541,6 +542,50 @@ public static class HomeIdleCombatValidation
             {
                 throw new InvalidOperationException("Boss milestone campaign stage node should still show the boss badge.");
             }
+        }
+        finally
+        {
+            SetPrivateField(controller, "enemyLevel", enemyLevelBefore);
+            SetPrivateField(controller, "selectedCampaignStage", selectedStageBefore);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void ValidateCampaignStagePreviewTags(IdlePrototypeController controller)
+    {
+        var enemyLevelBefore = GetPrivateField<int>(controller, "enemyLevel");
+        var selectedStageBefore = GetPrivateField<int>(controller, "selectedCampaignStage");
+        var centerBefore = GetPrivateField<bool>(controller, "homeCampaignMapNeedsCenter");
+        var previewText = RequireText(RequireObject("Campaign Stage Preview", true), "Campaign Stage Preview Text");
+
+        try
+        {
+            SetPrivateField(controller, "enemyLevel", 6);
+            SetPrivateField(controller, "selectedCampaignStage", 4);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", true);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+            RequireCopy(previewText.text, "Normal");
+            RequireCopy(previewText.text, "Bonus alle 5");
+            AssertTextFits(previewText, "Normal campaign stage preview text");
+
+            SetPrivateField(controller, "selectedCampaignStage", 5);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+            RequireCopy(previewText.text, "Bonus");
+            RequireCopy(previewText.text, "Gems");
+            RequireCopy(previewText.text, "Pass XP");
+            AssertTextFits(previewText, "Bonus campaign stage preview text");
+
+            SetPrivateField(controller, "enemyLevel", 11);
+            SetPrivateField(controller, "selectedCampaignStage", 10);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+            RequireCopy(previewText.text, "Boss");
+            RequireCopy(previewText.text, "Boss-Knoten");
+            AssertTextFits(previewText, "Boss campaign stage preview text");
         }
         finally
         {
