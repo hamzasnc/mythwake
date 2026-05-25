@@ -575,6 +575,8 @@ public static class UpgradeClutterValidation
             RequireSceneObject("Hero Detail Stat Backplate"),
             RequireSceneObject("Hero Detail Stats"),
             RequireSceneObject("Hero Detail Resources"),
+            RequireSceneObject("Hero Detail Previous Button"),
+            RequireSceneObject("Hero Detail Next Button"),
             RequireSceneObject("Hero Detail Remove Gear Button"),
             RequireSceneObject("Hero Detail Level Button"),
             RequireSceneObject("Hero Detail Equip Gear Button"),

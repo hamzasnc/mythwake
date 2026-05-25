@@ -15280,8 +15280,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroDetailResourceText.fontSizeMax = 20;
         heroDetailResourceText.textWrappingMode = TextWrappingModes.NoWrap;
 
-        heroDetailPreviousButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Previous Button", "<", -360, -605, 76, 72);
-        heroDetailNextButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Next Button", ">", 360, -605, 76, 72);
+        heroDetailPreviousButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Previous Button", "<", -245, -618, 64, 66);
+        heroDetailNextButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Next Button", ">", 245, -618, 64, 66);
         heroDetailRemoveGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Remove Gear Button", "Remove Gear", -250, -1018, 210, 62);
         heroDetailLevelButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Level Button", "Level Up", 0, -1022, 260, 74);
         heroDetailEquipGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Equip Gear Button", "Equip Gear", 250, -1018, 210, 62);
