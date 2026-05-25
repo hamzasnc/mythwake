@@ -5,7 +5,7 @@ Last updated: 2026-05-25
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.80`, save version `2`.
+- Unity client code is at Prototype `0.2.83`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -14,7 +14,7 @@ Last updated: 2026-05-25
 
 ## What Was Behind The Notes
 
-- `README.md` and `docs/NEXT_CHAT_CONTEXT.md` have been refreshed for the current `0.2.80` Home idle combat/Village/Dungeons/Paladin state.
+- `README.md` and `docs/NEXT_CHAT_CONTEXT.md` were refreshed earlier for the Home idle combat/Village/Dungeons/Paladin state; the latest Home idle map layout is now tracked here and in `docs/NEXT_CHAT_CONTEXT.md`.
 - Parts of `docs/ROADMAP.md` still describe older batch goals and can be cleaned up later.
 - The note "split Dungeons into a real screen" is now first-pass done.
 - The note "make Fast Rewards real enough for testing" is now closer: local accumulation, 24h cap, Village rate bonuses, and Server Mode/backend-authoritative popup copy are in place. Claim timing still needs visual verification.
@@ -41,6 +41,9 @@ Last updated: 2026-05-25
 - Lowered the Home idle patrol farther into the bottom free lane below the Battle button and extended the visible campaign-map viewport downward so the current-stage map occupies more of the screen.
 - Expanded the Home campaign map viewport to fill the full marked play area behind side controls and the Battle button, leaving only the idle patrol in the lower lane.
 - Pulled the Home campaign map up to the top edge under the resource bar and enlarged the lower idle patrol heroes and monsters so the fight reads better.
+- Imported the remaining `area_map_*` region images into Runtime resources so Home progress maps can swap by stage region.
+- Reworked the Home idle combat lane so its mini-map background connects directly to the main campaign map, spans the same width, and continues downward behind the fighting heroes/monsters.
+- Updated `Mythwake/Validate Home Idle Combat` so it guards the connected Home map layout, the idle mini-map texture, the Battle button coverage, active reward ticks, and no automatic stage clear.
 - Polished the Hero Detail gear slice: it now exposes all 2 equipment tracks plus all 6 accessory slots, `Equip Gear` opens the selected gear list for equipment and accessories, and `Remove Gear` can unequip accessories locally or through the Server Mode backend action.
 - Added validator coverage for the Hero Detail gear list popup so equipment slots open the inline list first and only the list's `Open Gear` row navigates to the Gear screen.
 - Added contextual Hero Detail gear action labels so equipment slots show `Open Gear` while accessory slots keep `Equip Gear`.
@@ -67,11 +70,11 @@ Last updated: 2026-05-25
 - Added backend tests for service-level and HTTP-level Village upgrades.
 - Added migration `0026_afk_reward_24h_cap.sql` so existing PostgreSQL dev databases pick up the 24h AFK cap.
 - Refreshed `README.md` and `docs/NEXT_CHAT_CONTEXT.md` so the main handoff notes match the current pass.
-- Unity batch validation is currently blocked because this project is already open in another Unity instance.
+- Unity batch validation is currently blocked because this project is already open in another Unity instance; C# runtime/editor MSBuild checks pass with the Unity .NET Framework path override.
 
 ## Next Small Steps
 
 1. Close the extra Unity project instance and run `.\scripts\check-unity-current-slice.cmd`, or run `Mythwake/Validate Current Slice` in the open editor, then fix any validator failures before continuing.
-2. Visually verify Home idle combat on device/editor: map readability, foreground patrol spacing, reward tick pacing, and the stage-node info preview.
+2. Visually verify Home idle combat on device/editor: connected upper/lower map readability, foreground patrol spacing, reward tick pacing, and the stage-node info preview.
 3. Visually verify Village, Fast Rewards, Vanguard Oath/Summon result, and Paladin formation/fight presentation in Unity/emulator.
 4. Visually verify the 8-slot Hero Detail spacing in Unity/emulator, then continue the visible Hero/Gear polish pass behind `Mythwake/Validate Upgrade Clutter`.

@@ -28,14 +28,14 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `9ef0afe Polish gear screen copy layout`
+- `f318013 Guard connected home idle map layout`
 
 Current continuation:
 - Paladin integration validator in `Assets/_Mythwake/Editor/PaladinSpineValidation.cs`, now including formation/fight hook anchors, backend definition/migration anchors, runtime rig part loading, and Formation/Fight runtime rig visibility.
 - Fast Rewards UI validator in `Assets/_Mythwake/Editor/FastRewardsUiValidation.cs`.
 - Summon UI validator in `Assets/_Mythwake/Editor/SummonUiValidation.cs`.
 - Upgrade clutter validator in `Assets/_Mythwake/Editor/UpgradeClutterValidation.cs` checks that old Battle/Hero upgrade controls stay hidden, Gear upgrade controls live on Gear, Gear navigation uses compact arrow labels, Gear builder defaults do not recreate stale placeholder copy, Gear showcase art loads/fits without intercepting input, the Gear showcase label names all visible equipment slots, fits, and does not overlap the icon rows, Hero Detail gear slots do not overlap the portrait/stats/actions, Hero Detail gear lists stay inside their popup, equipment/accessory list rows switch correctly, localized/contextual Hero Detail action labels and gear-list rows are correct after a German language refresh and do not overflow, and debug shortcuts live in Shop/tools.
-- Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Paladin integration, and Paladin Spine handoff checks in one pass.
+- Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Current status summary in `docs/CURRENT_STATUS.md` and this handoff note.
 
 ## User Preferences And Product Intent
@@ -81,7 +81,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.80`
+- Prototype `0.2.83`
 - Save version `2`
 
 Important Unity scripts:
@@ -97,10 +97,10 @@ Latest local gameplay/UI batch:
 - Fast Rewards popup now separates local and Server Mode: local shows stored time, rate, Village bonus, and ready rewards; Server Mode shows backend min/cap/rate/ready estimate and notes that Village local bonuses do not modify server rewards yet.
 - A Unity editor validator now checks Fast Rewards popup controls, local copy, 0s/capped 24h states, Server Mode fallback copy, redeem/claim labels, text fit, and button bounds through `Mythwake/Validate Fast Rewards UI`.
 - Home now has a first AFK-Arena-style idle combat slice: the campaign map remains in the background with clickable stage-node info, while a foreground patrol fight animates three formation heroes against current-stage monsters and grants small active local Gold/Myth Essence ticks without changing `enemyLevel`.
-- The Home campaign map now uses `area_map_scorched_plains`, is a larger vertical ScrollRect with the checkpoints on the scrollable content, and keeps the patrol fight in its own lower lane outside the map.
-- Latest Home layout pass pushes the patrol fight below the Battle button into the lower free lane and extends the visible scorched-plains map farther downward.
-- The current Home map viewport now fills the full marked play area behind side controls and the Battle button; only the idle patrol remains below that map area.
-- The Home campaign map is now pulled up to the top edge under the resource bar, and the lower idle patrol units have been enlarged.
+- The Home campaign map now uses `area_map_scorched_plains`, is a larger vertical ScrollRect with the checkpoints on the scrollable content, and has a connected lower idle mini-map background behind the patrol fight.
+- Latest Home layout pass imports the remaining `area_map_*` region images, keeps the main map pulled up under the resource bar, and extends the lower idle map background directly from the main map down behind heroes and monsters.
+- The current Home map viewport fills the marked play area behind side controls and the Battle button; the idle patrol is below the Battle button but sits on a same-width connected map image rather than a separate dark lane.
+- The Home lower idle patrol heroes and monsters are enlarged, and `Validate Home Idle Combat` now guards the connected upper/lower map layout, active reward tick, and no automatic stage clear.
 - Unity editor validators now cover Village map/build/detail/upgrade/demolish, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode. Batchmode execution is currently blocked while the project is already open in another Unity instance.
 - Hero Detail now exposes all 2 equipment tracks plus all 6 accessory slots with armory background, visible starter Weapon/Armor training icons, and equipped-only accessory slot icon art. The localized main gear action shows Open Gear for starter Weapon/Armor training tracks and Equip Gear for accessory slots, starter Weapon/Armor slots and rows are labeled as training, empty accessory slots stay visually empty even when bag copies exist and after German refresh, accessory lists put owned copies above empty rows and higher rarity first inside each group with visible copy/tap-to-equip text, the selected equipment/accessory slot list opens instead of immediately leaving for Gear, the equipment list's Open Gear row navigates to the Gear screen, the validator keeps training slot/row wording through German refresh, and Remove Gear unequips accessories locally or through Server Mode via `/gear/accessories/unequip`.
 - Hero Detail and Gear equipment icon loading now has an Editor asset-path fallback plus blank-placeholder protection, so missing textures no longer appear as white RawImage blocks and the upgrade clutter validator catches hidden/white placeholder art, including equipped Hero Detail accessory icons after German refresh.
@@ -581,28 +581,33 @@ The next chat should continue in this order unless the user redirects:
 
 1. Run or manually trigger the current slice validation.
    - Close the extra Unity project instance and run `.\scripts\check-unity-current-slice.cmd`, or use `Mythwake/Validate Current Slice` in the open editor.
-   - Then visually verify Village, Fast Rewards, Vanguard Oath/Summon result, Paladin formation/fight pose, and spacing on editor/device.
+   - Then visually verify the connected Home upper/lower map, Village, Fast Rewards, Vanguard Oath/Summon result, Paladin formation/fight pose, and spacing on editor/device.
 
-2. Finish the Village building test slice.
+2. Finish the Home idle combat visual pass.
+   - Verify the main campaign map and lower idle mini-map read as one continuous area.
+   - Check foreground patrol spacing, reward tick pacing, stage-node preview readability, and Battle button overlap on editor/device.
+   - Keep `Mythwake/Validate Home Idle Combat` updated if the Home layout shifts again.
+
+3. Finish the Village building test slice.
    - Visually verify the new building bonus line in the detail panel.
    - Keep local and Server Mode state display in sync.
    - Tune bonus values only after a visual/emulator pass.
 
-3. Refresh remaining docs only when the code changes again.
+4. Refresh remaining docs only when the code changes again.
    - `README.md`, `docs/NEXT_CHAT_CONTEXT.md`, and `docs/CURRENT_STATUS.md` are now the main handoff notes.
 
-4. Polish Fast Rewards.
+5. Polish Fast Rewards.
    - Run `Mythwake/Validate Fast Rewards UI`.
    - Visually verify popup text and button spacing on editor/device.
    - Continuous accumulation display, 24h cap, local rates, Village bonus line, and Server Mode copy now have a validator, but still need a real visual pass.
 
-5. Continue Paladin integration checks.
+6. Continue Paladin integration checks.
    - Run `Mythwake/Validate Summon UI`.
    - Run `Mythwake/Validate Paladin Integration`.
    - Run `Mythwake/Validate Paladin Spine Handoff`.
    - Visually verify roster/detail screen, formation, fight pose/preview, and summon result display.
 
-6. Continue the Hero/Gear polish pass behind the new upgrade-clutter guard.
+7. Continue the Hero/Gear polish pass behind the new upgrade-clutter guard.
    - Run `Mythwake/Validate Upgrade Clutter` after layout changes.
    - Visually verify the 8-slot Hero Detail gear layout in Unity/emulator.
    - Gear builder defaults now match the current localized runtime control stack, including equipment names; keep future Gear UI rebuilds behind that validator.
@@ -611,7 +616,7 @@ The next chat should continue in this order unless the user redirects:
    - Weapon/Armor/accessory upgrades belong in Gear.
    - Battle screen should not contain upgrade clutter.
 
-7. Keep backend tests green after client-facing changes.
+8. Keep backend tests green after client-facing changes.
    - Run Go tests if backend touched.
    - Run `check-backend` / `check-postgres-e2e` when backend contracts change.
 
