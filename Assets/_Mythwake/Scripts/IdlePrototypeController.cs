@@ -17383,19 +17383,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void LayoutGearScreen()
     {
-        MoveUiElement(equipmentSummaryText, gearPanel, new Vector2(0, -485), new Vector2(760, 88));
-        MoveUiElement(weaponUpgradeButton, gearPanel, new Vector2(-210, -575), new Vector2(320, 68));
-        MoveUiElement(armorUpgradeButton, gearPanel, new Vector2(210, -575), new Vector2(320, 68));
-        MoveUiElement(accessorySummaryText, gearPanel, new Vector2(0, -665), new Vector2(760, 62));
-        MoveUiElement(accessorySelectedText, gearPanel, new Vector2(0, -735), new Vector2(760, 70));
-        MoveUiElement(accessoryInventoryText, gearPanel, new Vector2(0, -805), new Vector2(760, 64));
-        MoveUiElement(accessoryPreviousSlotButton, gearPanel, new Vector2(-320, -878), new Vector2(130, 54));
-        MoveUiElement(accessoryNextSlotButton, gearPanel, new Vector2(320, -878), new Vector2(130, 54));
-        MoveUiElement(accessoryPreviousRarityButton, gearPanel, new Vector2(-320, -940), new Vector2(130, 54));
-        MoveUiElement(accessoryNextRarityButton, gearPanel, new Vector2(320, -940), new Vector2(130, 54));
-        MoveUiElement(accessoryEquipButton, gearPanel, new Vector2(-215, -1010), new Vector2(205, 58));
-        MoveUiElement(accessoryLevelButton, gearPanel, new Vector2(0, -1010), new Vector2(205, 58));
-        MoveUiElement(accessoryFuseButton, gearPanel, new Vector2(215, -1010), new Vector2(205, 58));
+        MoveUiElement(equipmentSummaryText, gearPanel, new Vector2(0, -486), new Vector2(760, 88));
+        MoveUiElement(weaponUpgradeButton, gearPanel, new Vector2(-210, -588), new Vector2(300, 64));
+        MoveUiElement(armorUpgradeButton, gearPanel, new Vector2(210, -588), new Vector2(300, 64));
+        MoveUiElement(accessorySummaryText, gearPanel, new Vector2(0, -674), new Vector2(760, 62));
+        MoveUiElement(accessorySelectedText, gearPanel, new Vector2(0, -750), new Vector2(760, 70));
+        MoveUiElement(accessoryInventoryText, gearPanel, new Vector2(0, -838), new Vector2(760, 64));
+        MoveUiElement(accessoryPreviousSlotButton, gearPanel, new Vector2(-320, -918), new Vector2(130, 54));
+        MoveUiElement(accessoryNextSlotButton, gearPanel, new Vector2(320, -918), new Vector2(130, 54));
+        MoveUiElement(accessoryPreviousRarityButton, gearPanel, new Vector2(-320, -984), new Vector2(130, 54));
+        MoveUiElement(accessoryNextRarityButton, gearPanel, new Vector2(320, -984), new Vector2(130, 54));
+        MoveUiElement(accessoryEquipButton, gearPanel, new Vector2(-215, -1052), new Vector2(205, 58));
+        MoveUiElement(accessoryLevelButton, gearPanel, new Vector2(0, -1052), new Vector2(205, 58));
+        MoveUiElement(accessoryFuseButton, gearPanel, new Vector2(215, -1052), new Vector2(205, 58));
     }
 
     private void LayoutSummonScreen()

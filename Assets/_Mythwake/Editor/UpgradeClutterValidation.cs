@@ -647,6 +647,7 @@ public static class UpgradeClutterValidation
         RequireToolButtonInPanel(controller, "accessoryLevelButton", gearPanel);
         RequireToolButtonInPanel(controller, "accessoryFuseButton", gearPanel);
         ValidateGearScreenRuntimeArt(gearPanel);
+        ValidateGearScreenControlLayout(controller, gearPanel);
     }
 
     private static void ValidateGearScreenRuntimeArt(GameObject gearPanel)
@@ -751,6 +752,46 @@ public static class UpgradeClutterValidation
         if (image.texture == Texture2D.whiteTexture || image.texture.width <= 8 || image.texture.height <= 8)
         {
             throw new InvalidOperationException($"{context} should use real art, not Unity's white placeholder texture.");
+        }
+    }
+
+    private static void ValidateGearScreenControlLayout(IdlePrototypeController controller, GameObject gearPanel)
+    {
+        var gearRoot = RequireSceneObject("Runtime Art Gear Showcase");
+        var controls = new[]
+        {
+            RequireObjectField<TMP_Text>(controller, "equipmentSummaryText").gameObject,
+            RequireButtonField(controller, "weaponUpgradeButton").gameObject,
+            RequireButtonField(controller, "armorUpgradeButton").gameObject,
+            RequireObjectField<TMP_Text>(controller, "accessorySummaryText").gameObject,
+            RequireObjectField<TMP_Text>(controller, "accessorySelectedText").gameObject,
+            RequireObjectField<TMP_Text>(controller, "accessoryInventoryText").gameObject,
+            RequireButtonField(controller, "accessoryPreviousSlotButton").gameObject,
+            RequireButtonField(controller, "accessoryNextSlotButton").gameObject,
+            RequireButtonField(controller, "accessoryPreviousRarityButton").gameObject,
+            RequireButtonField(controller, "accessoryNextRarityButton").gameObject,
+            RequireButtonField(controller, "accessoryEquipButton").gameObject,
+            RequireButtonField(controller, "accessoryLevelButton").gameObject,
+            RequireButtonField(controller, "accessoryFuseButton").gameObject,
+        };
+
+        for (var i = 0; i < controls.Length; i++)
+        {
+            RequireInsidePanel(gearPanel, controls[i]);
+            AssertNoOverlap(gearRoot, controls[i], 4f, "Gear screen control layout");
+            var button = controls[i].GetComponent<Button>();
+            if (button != null)
+            {
+                AssertButtonTextFits(button, "Gear screen control button text");
+            }
+        }
+
+        for (var i = 0; i < controls.Length; i++)
+        {
+            for (var j = i + 1; j < controls.Length; j++)
+            {
+                AssertNoOverlap(controls[i], controls[j], 4f, "Gear screen control spacing");
+            }
         }
     }
 
