@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.78
+Prototype version: 0.2.79
 Local save version: 2
 
 Current prototype:
@@ -176,6 +176,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.79: Expanded the visible Home campaign map to fill the full marked play area behind the side buttons and Battle button while keeping the idle patrol below it.
 - Prototype 0.2.78: Lowered the Home idle patrol into the free lane below the Battle button and extended the visible scorched-plains campaign map farther downward.
 - Prototype 0.2.77: Moved Home idle patrol combat below the campaign map, switched the campaign background to `area_map_scorched_plains`, made the map a larger vertical ScrollRect, and placed stage checkpoints on the scrollable map content.
 - Prototype 0.2.76: Added a first AFK-Arena-style Home idle combat slice with the campaign map in the background, clickable stage-node info, visible foreground hero-vs-monster patrol combat, small active local Gold/Myth Essence ticks, and validator coverage that confirms the idle patrol does not auto-clear stages.

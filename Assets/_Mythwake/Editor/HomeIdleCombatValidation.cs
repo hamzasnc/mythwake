@@ -70,7 +70,9 @@ public static class HomeIdleCombatValidation
         var idleRoot = RequireObject("Home Idle Combat Root", true);
         AssertInsideParent(RequireObject("Home Generated Art Root", true), idleRoot);
         AssertDoesNotOverlap(mapRoot, idleRoot);
-        AssertBelow(RequireButton("Home Battle Button").gameObject, idleRoot);
+        var battleButton = RequireButton("Home Battle Button").gameObject;
+        AssertExtendsBehind(mapRoot, battleButton);
+        AssertBelow(battleButton, idleRoot);
         var idleText = RequireText(idleRoot, "Home Idle Combat Text");
         var rewardText = RequireText(idleRoot, "Home Idle Reward Text");
         RequireCopy(idleText.text, "Patrol");
@@ -249,6 +251,25 @@ public static class HomeIdleCombatValidation
         {
             throw new InvalidOperationException($"{first.name} should not overlap {second.name}.");
         }
+    }
+
+    private static void AssertExtendsBehind(GameObject background, GameObject foreground)
+    {
+        var backgroundRect = background.GetComponent<RectTransform>();
+        var foregroundRect = foreground.GetComponent<RectTransform>();
+        if (backgroundRect == null || foregroundRect == null)
+        {
+            throw new InvalidOperationException($"{background.name} or {foreground.name} is missing a RectTransform.");
+        }
+
+        var backgroundBounds = GetAnchoredBounds(backgroundRect);
+        var foregroundBounds = GetAnchoredBounds(foregroundRect);
+        if (backgroundBounds.top >= foregroundBounds.top && backgroundBounds.bottom <= foregroundBounds.bottom)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException($"{background.name} should extend behind {foreground.name}: background top={backgroundBounds.top}, bottom={backgroundBounds.bottom}; foreground top={foregroundBounds.top}, bottom={foregroundBounds.bottom}.");
     }
 
     private static void AssertBelow(GameObject upper, GameObject lower)

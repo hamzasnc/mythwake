@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.78";
+    public const string PrototypeVersion = "0.2.79";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -644,9 +644,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static readonly Vector2 DungeonMapViewportPosition = new Vector2(0f, -166f);
     private static readonly Vector2 DungeonMapViewportSize = new Vector2(1000f, 970f);
     private static readonly Vector2 DungeonWorldMapSize = new Vector2(1760f, 1320f);
-    private static readonly Vector2 HomeCampaignMapViewportPosition = new Vector2(0f, -180f);
-    private static readonly Vector2 HomeCampaignMapViewportSize = new Vector2(940f, 760f);
-    private static readonly Vector2 HomeCampaignMapContentSize = new Vector2(940f, 1670f);
+    private static readonly Vector2 HomeCampaignMapViewportPosition = new Vector2(0f, -64f);
+    private static readonly Vector2 HomeCampaignMapViewportSize = new Vector2(1040f, 1160f);
+    private static readonly Vector2 HomeCampaignMapContentSize = new Vector2(1040f, 1848f);
     private static readonly Vector2 GoldDungeonMapPosition = new Vector2(292f, -692f);
     private static readonly Vector2 EssenceDungeonMapPosition = new Vector2(196f, -168f);
     private static readonly Vector2 GearDungeonMapPosition = new Vector2(-20f, -935f);
@@ -14067,8 +14067,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         homeCampaignMapImage.color = Color.white;
         homeCampaignMapImage.raycastTarget = false;
 
-        CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Top Fade", new Vector2(0, -14), new Vector2(920, 34), new Color(0.02f, 0.025f, 0.035f, 0.42f));
-        CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Bottom Fade", new Vector2(0, -736), new Vector2(920, 46), new Color(0.02f, 0.025f, 0.035f, 0.56f));
+        CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Top Fade", new Vector2(0, -14), new Vector2(1010, 34), new Color(0.02f, 0.025f, 0.035f, 0.42f));
+        CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Bottom Fade", new Vector2(0, -1136), new Vector2(1010, 46), new Color(0.02f, 0.025f, 0.035f, 0.56f));
 
         var nodePositions = GetCampaignMapNodePositions();
         for (var i = 0; i < nodePositions.Length - 1; i++)
@@ -14086,7 +14086,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             campaignStageButtons[i] = CreateCampaignStageButton(homeCampaignMapContentRoot, i, nodePositions[i]);
         }
 
-        campaignStagePreviewRoot = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Stage Preview", new Vector2(0, -640), new Vector2(800, 104), new Color(0.03f, 0.035f, 0.055f, 0.84f));
+        campaignStagePreviewRoot = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Stage Preview", new Vector2(0, -836), new Vector2(800, 104), new Color(0.03f, 0.035f, 0.055f, 0.84f));
         campaignStagePreviewText = CreateRuntimeText(campaignStagePreviewRoot, "Campaign Stage Preview Text", string.Empty, 21, new Vector2(0, -13), new Vector2(740, 82));
         campaignStagePreviewText.enableAutoSizing = true;
         campaignStagePreviewText.fontSizeMin = 16;
@@ -14102,7 +14102,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -1238), new Vector2(720, 158), new Color(0.02f, 0.025f, 0.035f, 0.2f));
+        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -1248), new Vector2(720, 150), new Color(0.02f, 0.025f, 0.035f, 0.2f));
         homeIdleCombatRoot.SetAsLastSibling();
 
         CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Top Shade", new Vector2(0, -8), new Vector2(680, 30), new Color(0.015f, 0.018f, 0.026f, 0.32f));
