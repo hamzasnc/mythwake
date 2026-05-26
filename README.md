@@ -85,6 +85,7 @@ Current prototype:
 - Local accessory equip, unequip, level, and fuse action-result messages now use EN/DE localization keys and are covered by Gear validation
 - Gear screen accessory inventory copy counts use a compact two-line summary with auto-sized text
 - Gear screen now uses compact dark Training and Accessory sections, explicit Slot/Rarity nav labels, stronger text contrast, and validator coverage so it no longer falls back to the oversized empty parchment block
+- MuMuPlayer Android pass can install and launch the current APK, with real 1080x1920 screenshots, filtered Logcat, memory notes, and first performance observations captured under `docs/screenshots/android/2026-05-26-mumu/`
 - Prototype UI builder now creates Gear controls in the current localized runtime layout with localized equipment names, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale Gear placeholder copy
 - Home idle patrol keeps the middle hero/enemy lane clear of the reward strip, and the Home idle validator now guards mobile touch target size plus unit/reward/loot-popup separation
 
@@ -185,8 +186,10 @@ Backend:
   - `docs/ROADMAP.md`
   - `docs/UNITY_TEST_STAND.md` (includes the latest Mobile UX pass and open Android emulator/device follow-up)
   - `docs/screenshots/ANDROID_FALLBACK_2026-05-26.md`
+  - `docs/screenshots/android/2026-05-26-mumu/README.md`
 
 Changelog:
+- Prototype 0.2.138 MuMu pass: Built `Builds/Android/Mythwake-0.2.138-mumu.apk`, installed and launched it in MuMuPlayer (`emulator-5554`, Android 12, 1080x1920, 280 dpi), measured a cold `am start -W` launch at about 700 ms, captured real screenshots for Home, Stage Detail, Patrol Info, Village, Fast Rewards, Hero Detail, Gear, Summon, Formation, Fight, and Result, recorded filtered Logcat/memory/performance notes without Mythwake/Unity exceptions, fixed the `EquipmentIcons.meta` YAML warning, and hardened the Current Slice wrapper against Unity's benign NamedPipe shutdown IOException.
 - Prototype 0.2.138: Rechecked Android tooling, rebuilt `Builds/Android/Mythwake-0.2.138.apk`, confirmed ADB still has no attached emulator/device for install/logcat/touch/FPS, reran 1080x1920 fallback screenshots, and polished the Gear screen with compact Training/Accessory cards, readable Slot/Rarity navigation labels, lighter section copy, cohesive nav button styling, EN/DE localization keys, and stricter Upgrade Clutter validation.
 - Prototype 0.2.137: Added reproducible Android APK and portrait screenshot batch helpers, produced `Builds/Android/Mythwake-0.2.137.apk` with Unity Android Build Support, captured 1080x1920 fallback screenshots for Home, Village/Fast Rewards, Hero Detail, Gear, Summon, Formation, and visible Fight, and fixed Ravik/Paladin preview rigs so their first visible frame applies the intended mobile scale instead of overfilling Fight/Formation. Real install, logcat, touch, safe-area, and FPS checks remain blocked until an Android emulator/device is attached.
 - Prototype 0.2.136: Fixed the Mobile UX Current Slice validator so it targets the real portrait `Prototype UI` canvas instead of an old zero-scale legacy scene canvas, reran the full Current Slice successfully, and documented the blocked emulator/device screenshot and performance pass plus the future Email/Password and later Google Play Services login need.

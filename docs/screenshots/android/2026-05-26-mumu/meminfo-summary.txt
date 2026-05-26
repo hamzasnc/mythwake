@@ -1,0 +1,9 @@
+                 Total    Dirty    Clean    Dirty    Total     Size    Alloc     Free
+  Native Heap    32398    32364        0        0    33200    62792    14994    40830
+  Dalvik Heap    17876    17784        0        0    19364    21298    10649    10649
+      Unknown   201048   201032        0        0   201408
+        TOTAL   396013   290032    87976        0   508548    84090    25643    51479
+         Native Heap:    32364                          33200
+            Graphics:        0                              0
+             Unknown:                                  241164
+           TOTAL PSS:   396013            TOTAL RSS:   508548      TOTAL SWAP (KB):        0

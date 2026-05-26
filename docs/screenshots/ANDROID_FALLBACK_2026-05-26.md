@@ -46,3 +46,4 @@ Captured ignored local artifacts:
 - Gear was the roughest fallback screen before this pass because the oversized parchment left a large empty block and weak visual hierarchy.
 - Gear now uses compact dark Training and Accessory cards, readable Slot/Rarity labels, stronger text contrast, and cohesive brown navigation/action buttons.
 - True device-only items remain open: notch/status-bar safe area, Android gesture navigation, touch feel, launch time, logcat, and FPS/stutter checks.
+- Later the same day, MuMuPlayer became available as a real Android emulator target; see `docs/screenshots/android/2026-05-26-mumu/README.md` for the install/start/screenshot/logcat pass.

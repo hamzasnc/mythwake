@@ -1,0 +1,16 @@
+Applications Graphics Acceleration Info:
+Uptime: 2092430 Realtime: 2092430
+
+** Graphics info for pid 4682 [com.DefaultCompany.Mythwake] **
+Profile data in ms:
+
+	com.DefaultCompany.Mythwake/com.unity3d.player.UnityPlayerGameActivity/android.view.ViewRootImpl@958d91d (visibility=0)
+View hierarchy:
+
+  com.DefaultCompany.Mythwake/com.unity3d.player.UnityPlayerGameActivity/android.view.ViewRootImpl@958d91d
+  10 views, 12,34 kB of render nodes
+
+
+Total ViewRootImpl   : 1
+Total attached Views : 10
+Total RenderNode     : 12,34 kB (used) / 12,34 kB (capacity)

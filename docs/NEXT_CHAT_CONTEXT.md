@@ -15,7 +15,7 @@ Current direction:
 - Redis optional for sessions, rate limits, locks, and temporary coordination.
 - No Docker requirement. Local Windows PostgreSQL is the expected setup for now.
 - Android and iOS are both required.
-- Android testing currently uses Android Studio emulator / device installs.
+- Android testing currently uses MuMuPlayer when available, plus Android Studio emulator / physical device installs for follow-up checks.
 - User wants practical game progress and visible in-game UI, not endless backend-only work.
 
 Current branch:
@@ -28,22 +28,28 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `0f06b55 Add Android build and screenshot tooling`
+- `e12d6b9 Polish Gear mobile layout`
 
 Current continuation:
-- Prototype `0.2.138` rechecked the real Android path and polished Gear. Unity embedded `adb` starts, but `adb devices -l` is still empty and `adb get-state` returns `error: no devices/emulators found`, so install/start/logcat/touch/safe-area/FPS and true device screenshots remain blocked on this machine.
+- Prototype `0.2.138` now has a real MuMuPlayer Android pass. MuMu was detected as `emulator-5554` on Android `12`, `1080x1920`, `280 dpi`, `60 Hz`; `Builds\Android\Mythwake-0.2.138-mumu.apk` installed and launched successfully.
+- After the final metadata-fix rebuild/reinstall, `am start -W` reported cold `TotalTime 715 ms` and the host stopwatch measured about `0.76s` until the launch command returned. The Unity Activity stayed focused in portrait.
+- Real MuMu screenshots, filtered Logcat, `gfxinfo`, and memory notes live under `docs/screenshots/android/2026-05-26-mumu/`; the set covers Home, Home stage detail, Patrol Info, Village, Village build/detail, Fast Rewards, Hero Detail, Hero Detail gear list, Gear, Summon, Summon result, Formation, Fight, and Result.
+- Filtered Logcat showed no Mythwake/Unity `Exception`, `NullReference`, `FATAL`, `ANR`, or missing-asset errors. Warnings were emulator/Android noise (`vold`, Google Play Services background starts, MuMu `opengl-gc`, telephony null).
+- MuMu UX findings: Home/Village/Fast Rewards/Hero/Gear/Summon/Fight are touchable and readable; Gear's compact card layout holds up. Remaining follow-ups are Summon result one-pull spacing, dense Formation presentation, Hero Detail right-edge guide line, Result Continue responsiveness after very short fights, physical-device safe-area verification, and a better runtime FPS/profiler overlay because MuMu `gfxinfo` is thin for Unity.
+- The pass fixed the `EquipmentIcons.meta` YAML warning and hardened `scripts/check-unity-current-slice.ps1` so Unity's benign NamedPipe shutdown IOException no longer turns a successful slice into a false failure.
+- Earlier Prototype `0.2.138` rechecked the Android path before MuMu was connected and polished Gear. Unity embedded `adb` worked, but no Android target was listed at that time.
 - `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.138.apk` succeeds. The ignored local APK artifact is `Builds/Android/Mythwake-0.2.138.apk` at 164,143,730 bytes, with the cached Unity build report logging about 00:01:30.
 - Fallback 1080x1920 screenshots were regenerated under ignored local artifact path `Builds\Android\portrait-screenshots\`. The set covers Home, Home stage detail, Home patrol info, Village, Fast Rewards, Hero Detail, Gear, Summon, Summon result, Formation, and visible Fight.
 - Gear is now noticeably cleaner in the fallback pass: the old oversized parchment is hidden, Training and Accessory controls live in compact dark cards, Slot/Rarity navigation has central readable labels, nav buttons use the brown action style, and EN/DE title/nav/action copy is guarded by Upgrade Clutter validation.
 - Prototype `0.2.137` adds a reproducible Android APK helper (`scripts/build-android.cmd`) and editor-batch portrait screenshot fallback helper (`scripts/capture-portrait-screenshots.cmd`).
 - `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk` succeeds with Unity Android Build Support; the ignored local APK artifact is `Builds/Android/Mythwake-0.2.137.apk` at 164,140,446 bytes, with the cached Unity build report logging about 00:01:35.
-- A real Android install/start/logcat/touch/performance pass is still blocked: Unity embedded `adb` is available, but `adb devices -l` lists no emulator/physical device and no `emulator.exe` exists in the checked Unity SDK or `%LOCALAPPDATA%\Android\Sdk\emulator` paths.
+- Before MuMu was connected, a real Android install/start/logcat/touch/performance pass was blocked: Unity embedded `adb` was available, but `adb devices -l` listed no emulator/physical device and no `emulator.exe` existed in the checked Unity SDK or `%LOCALAPPDATA%\Android\Sdk\emulator` paths.
 - Fallback 1080x1920 screenshots were captured under ignored local artifact path `Builds\Android\portrait-screenshots\` for Home, Home stage detail, Home patrol info, Village, Fast Rewards, Hero Detail, Gear, Summon, Summon result, Formation, and visible Fight. Ravik/Paladin preview rigs now apply their preview pose immediately, and their Formation/Fight scales were reduced so the first visible frame no longer overfills the portrait fight area.
 - Latest Prototype `0.2.137` client checks pass: `scripts/check-unity-csharp.cmd`, `scripts/check-unity-current-slice.cmd`, `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk`, `scripts/capture-portrait-screenshots.cmd -OutputDirectory Builds\Android\portrait-screenshots`, and `git diff --check` with only LF-to-CRLF working-copy warnings for touched Markdown files.
 - Prototype `0.2.136` fixes the Mobile UX Current Slice validator so it targets the actual runtime `Prototype UI` canvas instead of the old zero-scale legacy scene `Canvas`; `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` pass after this fix.
 - Future account direction is now explicit: durable tester accounts need Email + Password registration/login first so testers do not restart from zero, and Google Login through Play Store / Google Play Services should come later. Do not build full Google Login yet.
 - Prototype `0.2.135` tightens the Android/mobile baseline by switching PlayerSettings to portrait 1080x1920, disabling landscape/upside-down autorotation and Android render-outside-safe-area, and adding `Mythwake/Validate Mobile UX` into Current Slice for portrait settings, CanvasScaler, version label fit, mobile nav touch targets, and core screen navigation.
-- A real Android device/emulator run is still blocked on this machine: Unity's embedded `adb` exists, but no device is attached and no emulator executable was found. The repo now has Android build and portrait screenshot fallback helpers, and the final batchmode Current Slice should be rerun after any further UI/code changes.
+- A physical Android phone pass is still open for notch/gesture safe area and touch feel outside MuMu. The repo now has Android build, MuMu screenshot, and portrait screenshot fallback helpers, and the final batchmode Current Slice should be rerun after any further UI/code changes.
 - Prototype `0.2.134` / Backend `0.2.58` adds editable Village balance/admin fields across static backend definitions, `/definitions`, PostgreSQL migration `0029_village_balance_admin_fields.sql`, and `debug.v_common_village_building_balance`; Unity local fallback values now match backend Village balance, and the Village/Fast Rewards validators check labels, curves, formulas, mode compatibility, and local/server bonus display.
 - Prototype `0.2.133` / Backend `0.2.57` makes Village AFK-rate bonuses server-authoritative for AFK claims: built Village definitions with `afk_gold_rate` and `afk_essence_rate` now add Gold/Essence during backend AFK reward claims, while Server Mode keeps local client bonuses paused to avoid double counting.
 - Prototype `0.2.132` adds `Mythwake/Validate Fight Formation UI` and wires it into `Mythwake/Validate Current Slice`; the validator covers campaign Formation swap, auto-next toggle, visible Fight controls, AUTO/x2 state, HP/mana skill cards, ultimate queueing, result-popup Continue flow, and dungeon fight focus chrome hiding.

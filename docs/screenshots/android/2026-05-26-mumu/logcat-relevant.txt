@@ -1,0 +1,18 @@
+MuMuPlayer filtered Logcat summary for Mythwake 0.2.138.
+
+Startup:
+05-26 18:26:39.351 I/ActivityTaskManager: START u0 cmp=com.DefaultCompany.Mythwake/com.unity3d.player.UnityPlayerGameActivity
+05-26 18:26:39.385 I/ActivityManager: Start proc 4682:com.DefaultCompany.Mythwake/u0a55
+
+Warnings observed:
+05-26 18:26:39.939 W/vold: ignore the failure of setting attributes for /data/media/0/Android/data/com.DefaultCompany.Mythwake/
+05-26 18:31:10.003 W/ActivityManager: Background start not allowed for Google Play Services scheduler wakeup
+05-26 18:44:05.194 D/opengl-gc: MuMu periodic OpenGL GC check
+05-26 18:55:17.204 E/TelephonyManager: telephony service is null
+
+Scan result:
+- No Mythwake/Unity Exception lines found.
+- No NullReference lines found.
+- No FATAL or ANR lines found.
+- No missing Mythwake asset/resource lines found.
+- Remaining warnings look emulator/Android-environment related, not project crashes.

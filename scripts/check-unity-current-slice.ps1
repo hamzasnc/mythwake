@@ -62,7 +62,11 @@ if ($exitCode -ne 0 -or $unityText.Contains("Aborting batchmode due to fatal err
 
 if (Test-Path -LiteralPath $LogFile) {
     $fatalLog = Select-String -Path $LogFile -Pattern "Aborting batchmode due to fatal error|Multiple Unity instances cannot open the same project|Exception:"
-    if ($fatalLog) {
+    $actionableFatalLog = @($fatalLog | Where-Object {
+        $_.Line -notmatch "Exception occured while accepting client connection: System\.IO\.IOException: (Die Pipe wird gerade geschlossen|Pipe is closing)"
+    })
+
+    if ($actionableFatalLog) {
         Write-Host "Unity validation log contains a fatal error or exception."
         Get-Content -Path $LogFile -Tail 80
         throw "Unity current slice validation failed. Close any open Unity instance for this project and retry."

@@ -23,12 +23,11 @@ Latest Android/device availability check:
 - Project has an Android Build Profile at `Assets/Settings/Build Profiles/Android™.asset`.
 - The repo now has `scripts/build-android.cmd` / `.ps1` for reproducible APK builds and `scripts/capture-portrait-screenshots.cmd` / `.ps1` for batch portrait screenshot fallback capture.
 - `adb` is not available on PATH, but Unity's embedded Android SDK includes `C:\Program Files\Unity\Hub\Editor\6000.4.5f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe`.
-- Unity's embedded `adb devices -l` found no attached Android emulator or physical device.
+- Unity's embedded `adb devices -l` initially found no attached Android emulator or physical device, but MuMuPlayer later exposed `emulator-5554`.
 - No emulator executable was found in the Unity embedded SDK or `%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe`.
 - Unity Android Build Support, SDK, NDK, and OpenJDK are installed under the Unity editor path.
 - `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk` succeeds. The ignored local artifact is `Builds/Android/Mythwake-0.2.137.apk`, 164,140,446 bytes. The cached Unity build report logged about 00:01:35.
-- A real Android install/start/logcat/touch/performance pass remains blocked by missing device/emulator access.
-- Latest recheck for Prototype `0.2.138`: `adb devices -l` is still empty and `adb get-state` returns `error: no devices/emulators found`. `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.138.apk` succeeds; the ignored local artifact is 164,143,730 bytes and the cached Unity build report logged about 00:01:30.
+- Prototype `0.2.138` MuMu recheck: MuMuPlayer is reachable as `emulator-5554` on Android `12`, `1080x1920`, `280 dpi`, `60 Hz`. `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.138-mumu.apk` succeeds; `adb install -r -d` succeeds; after the final metadata-fix reinstall, `am start -W` reports cold `TotalTime 715 ms`.
 
 Mobile UX issues addressed in Prototype `0.2.135`:
 
@@ -45,6 +44,7 @@ Current validation state for the mobile-portrait slice:
 - `scripts/check-unity-current-slice.cmd` passes after the Mobile UX validator was narrowed to the actual runtime `Prototype UI` canvas.
 - `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk` passes.
 - `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.138.apk` passes after the Gear polish.
+- `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.138-mumu.apk` passes for the MuMu test APK.
 - `scripts/capture-portrait-screenshots.cmd -OutputDirectory Builds\Android\portrait-screenshots` passes.
 - Current Slice coverage includes Home map/idle combat touch targets, reward strip fit, unit/reward separation, popup exclusivity, Village scroll/build/detail flows, Dungeons map zoom/marker spacing, Fast Rewards copy/progress/close flows, Summon result slots and repeat buttons, Hero Detail/Gear spacing and localized text fit, Gear action labels, combat result summary shape, Fight/Formation controls and result flow, and Paladin formation/fight handoff checks.
 
@@ -61,15 +61,19 @@ Mobile UX issues addressed in this continuation:
 - Home Next Goal now auto-sizes and points through the early loop with Power and resource gaps.
 - Fight/Formation now has a dedicated validator for campaign Formation swap, auto-next, visible Fight controls, AUTO/x2, HP/mana skill cards, ultimate queueing, result Continue flow, and dungeon focus chrome hiding.
 - Mobile UX validation now checks the runtime portrait canvas used by Topbar/Bottom Nav instead of failing on the old zero-scale legacy `Canvas` that remains in the scene.
+- Installed and launched the fresh APK in MuMuPlayer, captured real Android screenshots under `docs/screenshots/android/2026-05-26-mumu/`, and saved filtered Logcat, `gfxinfo`, and memory notes there.
+- MuMu Logcat had no Mythwake/Unity `Exception`, `NullReference`, `FATAL`, `ANR`, or missing-asset errors. Observed warnings are emulator/Android environment noise.
+- MuMu touch pass covered Home, Stage Detail, Patrol Info, Village build/detail, Fast Rewards, Hero Detail/Gear list, Gear, Summon/result, Formation, Fight, and Result. Gear holds up visually after the compact card polish.
+- Fixed the `EquipmentIcons.meta` YAML warning and narrowed `scripts/check-unity-current-slice.ps1` so Unity's benign NamedPipe shutdown IOException is ignored after the slice itself validates.
 
 Not yet run in this pass:
 
-- Emulator install or physical-device run.
-- Real emulator/device screenshots for Home, Village/Fast Rewards, Hero Detail, Gear, Summon, and Fight. Editor-batch fallback screenshots exist, but they are not a substitute for real safe-area/touch/device rendering.
-- Manual safe-area checks for notches, Android gesture navigation, and status/navigation bar cutouts.
-- Device performance/load-time sampling on Home Map, Hero Detail, Gear, Village, Summon, and Fight.
+- Physical-device run.
+- Manual safe-area checks for real notches, Android gesture navigation, and status/navigation bar cutouts beyond MuMu.
+- Profiler-grade FPS/frame-time sampling. MuMu exposes a 60 Hz display mode, but `dumpsys gfxinfo` does not provide useful Unity SurfaceView frame buckets.
+- Server Mode networking from MuMu against a running backend.
 
-Next Android pass should attach an emulator/device, install `Builds/Android/Mythwake-0.2.138.apk` or rerun `scripts/build-android.cmd`, then record screenshots, logcat, touch behavior, safe-area behavior, load time, and rough FPS/performance for Home, Hero Detail/Gear List, Gear, Village/Fast Rewards, Summon, Formation, Fight, and Result.
+Next Android pass should use a physical Android phone, install `Builds\Android\Mythwake-0.2.138-mumu.apk` or rerun `scripts/build-android.cmd`, then compare real notch/gesture safe-area, touch feel, load time, logcat, screenshots, and FPS/performance against the MuMu baseline.
 
 ## Future Account Login Need
 
