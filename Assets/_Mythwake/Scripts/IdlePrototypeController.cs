@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.128";
+    public const string PrototypeVersion = "0.2.129";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -2829,7 +2829,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAccessories();
         if (!TryGetAccessoryDefinitionById(accessoryId, out var accessory))
         {
-            var invalidResult = CreateActionResult(false, "accessory_equip", "invalid_accessory", $"Unknown accessory: {accessoryId}");
+            var invalidResult = CreateActionResult(false, "accessory_equip", "invalid_accessory", TrFormat("accessory.action.invalid", accessoryId));
             RefreshUi();
             return invalidResult;
         }
@@ -2841,13 +2841,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (GetAccessoryInventoryCount(slot, rarity) <= 0)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_equip", "missing_item", $"No {GetLocalizedAccessoryName(slot, rarity)} copy to equip.");
+            return CreateActionResult(false, "accessory_equip", "missing_item", TrFormat("accessory.action.equip.missing", GetLocalizedAccessoryName(slot, rarity)));
         }
 
         if (GetHeroEquippedAccessoryRarity(heroIndex, slot) == rarity)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_equip", "already_equipped", $"{GetLocalizedAccessoryName(slot, rarity)} is already equipped on {GetLocalizedHeroName(heroIndex)}.");
+            return CreateActionResult(false, "accessory_equip", "already_equipped", TrFormat("accessory.action.equip.already", GetLocalizedAccessoryName(slot, rarity), GetLocalizedHeroName(heroIndex)));
         }
 
         var previousRarity = GetHeroEquippedAccessoryRarity(heroIndex, slot);
@@ -2861,7 +2861,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "accessory_equip", string.Empty, $"Equipped {GetLocalizedAccessoryName(slot, rarity)} on {GetLocalizedHeroName(heroIndex)}.");
+        return CreateActionResult(true, "accessory_equip", string.Empty, TrFormat("accessory.action.equip.success", GetLocalizedAccessoryName(slot, rarity), GetLocalizedHeroName(heroIndex)));
     }
 
     public MythwakeActionResultDto UnequipAccessory(string accessoryId)
@@ -2869,7 +2869,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAccessories();
         if (!TryGetAccessoryDefinitionById(accessoryId, out var accessory))
         {
-            var invalidResult = CreateActionResult(false, "accessory_unequip", "invalid_accessory", $"Unknown accessory: {accessoryId}");
+            var invalidResult = CreateActionResult(false, "accessory_unequip", "invalid_accessory", TrFormat("accessory.action.invalid", accessoryId));
             RefreshUi();
             return invalidResult;
         }
@@ -2881,7 +2881,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (GetHeroEquippedAccessoryRarity(heroIndex, slot) != rarity)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_unequip", "not_equipped", $"{GetLocalizedAccessoryName(slot, rarity)} is not equipped on {GetLocalizedHeroName(heroIndex)}.");
+            return CreateActionResult(false, "accessory_unequip", "not_equipped", TrFormat("accessory.action.unequip.not_equipped", GetLocalizedAccessoryName(slot, rarity), GetLocalizedHeroName(heroIndex)));
         }
 
         AddAccessoryInventory(slot, rarity, 1);
@@ -2890,7 +2890,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "accessory_unequip", string.Empty, $"Removed {GetLocalizedAccessoryName(slot, rarity)} from {GetLocalizedHeroName(heroIndex)}.");
+        return CreateActionResult(true, "accessory_unequip", string.Empty, TrFormat("accessory.action.unequip.success", GetLocalizedAccessoryName(slot, rarity), GetLocalizedHeroName(heroIndex)));
     }
 
     public void LevelSelectedAccessory()
@@ -2917,7 +2917,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAccessories();
         if (!TryGetAccessoryDefinitionById(accessoryId, out var accessory))
         {
-            var invalidResult = CreateActionResult(false, "accessory_level", "invalid_accessory", $"Unknown accessory: {accessoryId}");
+            var invalidResult = CreateActionResult(false, "accessory_level", "invalid_accessory", TrFormat("accessory.action.invalid", accessoryId));
             RefreshUi();
             return invalidResult;
         }
@@ -2929,7 +2929,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (GetHeroEquippedAccessoryRarity(heroIndex, slot) != rarity)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_level", "not_equipped", $"{GetLocalizedAccessoryName(slot, rarity)} is not equipped on {GetLocalizedHeroName(heroIndex)}.");
+            return CreateActionResult(false, "accessory_level", "not_equipped", TrFormat("accessory.action.unequip.not_equipped", GetLocalizedAccessoryName(slot, rarity), GetLocalizedHeroName(heroIndex)));
         }
 
         var maxLevel = GetAccessoryMaxLevel(rarity);
@@ -2937,14 +2937,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (currentLevel >= maxLevel)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_level", "max_level", $"{GetLocalizedHeroName(heroIndex)} {GetLocalizedAccessoryName(slot, rarity)} is already max level.");
+            return CreateActionResult(false, "accessory_level", "max_level", TrFormat("accessory.action.level.max", GetLocalizedHeroName(heroIndex), GetLocalizedAccessoryName(slot, rarity)));
         }
 
         var cost = GetAccessoryLevelCost(slot);
         if (!TrySpendCurrency(GoldCurrencyId, cost))
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_level", "insufficient_currency", $"Need {cost} {GetLocalizedCurrencyName(GoldCurrencyId)} to level {GetLocalizedAccessorySlotName(slot)}.");
+            return CreateActionResult(false, "accessory_level", "insufficient_currency", TrFormat("accessory.action.level.insufficient", cost, GetLocalizedCurrencyName(GoldCurrencyId), GetLocalizedAccessorySlotName(slot)));
         }
 
         SetHeroEquippedAccessory(heroIndex, slot, rarity, currentLevel + 1);
@@ -2952,7 +2952,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "accessory_level", string.Empty, $"Leveled {GetLocalizedHeroName(heroIndex)} {GetLocalizedAccessoryName(slot, rarity)} to {Tr("ui.common.level_short")}. {GetHeroEquippedAccessoryLevel(heroIndex, slot)}.");
+        return CreateActionResult(true, "accessory_level", string.Empty, TrFormat("accessory.action.level.success", GetLocalizedHeroName(heroIndex), GetLocalizedAccessoryName(slot, rarity), Tr("ui.common.level_short"), GetHeroEquippedAccessoryLevel(heroIndex, slot)));
     }
 
     public void FuseSelectedAccessory()
@@ -2978,7 +2978,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAccessories();
         if (!TryGetAccessoryDefinitionById(accessoryId, out var accessory))
         {
-            var invalidResult = CreateActionResult(false, "accessory_fuse", "invalid_accessory", $"Unknown accessory: {accessoryId}");
+            var invalidResult = CreateActionResult(false, "accessory_fuse", "invalid_accessory", TrFormat("accessory.action.invalid", accessoryId));
             RefreshUi();
             return invalidResult;
         }
@@ -2990,7 +2990,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (string.IsNullOrEmpty(accessory.fuseTargetAccessoryId) || GetAccessoryInventoryCount(slot, rarity) < fuseCost)
         {
             RefreshUi();
-            return CreateActionResult(false, "accessory_fuse", "missing_items", $"Need {fuseCost}x {GetLocalizedAccessoryName(slot, rarity)} to fuse.");
+            return CreateActionResult(false, "accessory_fuse", "missing_items", TrFormat("accessory.action.fuse.missing", fuseCost, GetLocalizedAccessoryName(slot, rarity)));
         }
 
         var fuseTarget = GetAccessoryDefinitionById(accessory.fuseTargetAccessoryId);
@@ -3000,7 +3000,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "accessory_fuse", string.Empty, $"Fused into {GetLocalizedAccessoryName(fuseTarget.slotIndex, fuseTarget.rarityIndex)}.");
+        return CreateActionResult(true, "accessory_fuse", string.Empty, TrFormat("accessory.action.fuse.success", GetLocalizedAccessoryName(fuseTarget.slotIndex, fuseTarget.rarityIndex)));
     }
 
     public void SummonOnce()

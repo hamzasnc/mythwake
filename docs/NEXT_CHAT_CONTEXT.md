@@ -116,7 +116,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.128`
+- Prototype `0.2.129`
 - Save version `2`
 
 Important Unity scripts:
@@ -150,6 +150,7 @@ Latest local gameplay/UI batch:
 - Hero Detail previous/next buttons have been pulled inward below the hero stage so they no longer collide with the lower gear slots; the upgrade clutter validator now checks that spacing.
 - Gear screen summary text and gear/accessory action controls were tightened into a clearer stacked layout below the showcase; the upgrade clutter validator now checks the controls do not overlap the showcase or each other.
 - Gear screen accessory action copy is localized for selected rarity, bag/equipped copy count, equip, level, empty, fuse, target tier, and floor labels; the upgrade clutter validator switches to German, checks the old English/fuse-tier strings are gone, and confirms the selected-rarity plus equip-action copy summaries fit.
+- Local accessory equip, level, unequip, and fuse action-result messages now use EN/DE localization keys, and the Gear validator exercises the German action flow while restoring the test inventory and equipped state.
 - Gear screen accessory inventory copy counts are compacted into a two-line summary, and the Gear text blocks use auto-sizing so localized layouts have room to breathe.
 - Backend action catalog now includes `accessory_unequip`, with Player and HTTP tests covering accessory removal and body validation.
 - Backend accessory definitions now include the sixth `headgear`/Helm slot and R0-R4 headgear item definitions in both the static snapshot and PostgreSQL migrations, so Server Mode matches the 6-slot client UI.

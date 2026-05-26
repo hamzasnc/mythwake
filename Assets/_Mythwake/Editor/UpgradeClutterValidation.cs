@@ -817,6 +817,7 @@ public static class UpgradeClutterValidation
         ValidateGearScreenRuntimeArt(gearPanel);
         ValidateGearScreenControlLayout(controller, gearPanel);
         ValidateGearScreenSelectedAccessorySummary(controller);
+        ValidateGearActionResultLocalization(controller);
         ValidateGearScreenLanguageRefresh(controller, gearPanel);
     }
 
@@ -1059,6 +1060,82 @@ public static class UpgradeClutterValidation
             InvokePrivate(controller, "RefreshUi");
             controller.ShowGear();
             Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void ValidateGearActionResultLocalization(IdlePrototypeController controller)
+    {
+        const int heroIndex = 0;
+        const int slot = 3;
+        const int rarity = 0;
+        const int targetRarity = 1;
+        const string accessoryId = "accessory_gloves_r0";
+
+        var originalLanguage = RequireField<MythwakeLanguage>(controller, "language");
+        var originalHeroIndex = RequireField<int>(controller, "selectedHeroIndex");
+        var originalSlot = RequireField<int>(controller, "selectedAccessorySlot");
+        var originalRarity = RequireField<int>(controller, "selectedAccessoryRarity");
+        var originalGold = RequireField<int>(controller, "gold");
+        var originalCopies = (int)InvokePrivate(controller, "GetAccessoryInventoryCount", slot, rarity);
+        var originalTargetCopies = (int)InvokePrivate(controller, "GetAccessoryInventoryCount", slot, targetRarity);
+        var originalEquippedRarity = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, slot);
+        var originalEquippedLevel = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryLevel", heroIndex, slot);
+
+        try
+        {
+            SetPrivateField(controller, "language", MythwakeLanguage.German);
+            SetPrivateField(controller, "selectedHeroIndex", heroIndex);
+            SetPrivateField(controller, "selectedAccessorySlot", slot);
+            SetPrivateField(controller, "selectedAccessoryRarity", rarity);
+            SetPrivateField(controller, "gold", Mathf.Max(originalGold, 5000));
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, slot, -1, 0);
+            InvokePrivate(controller, "AddAccessoryInventory", slot, rarity, 4);
+
+            var equipResult = controller.EquipAccessory(accessoryId);
+            AssertActionResultMessage(equipResult, "angelegt", "Equipped", "Gear equip action result should localize German success copy.");
+
+            var levelResult = controller.LevelAccessory(accessoryId);
+            AssertActionResultMessage(levelResult, "erreicht", "Leveled", "Gear level action result should localize German success copy.");
+
+            var unequipResult = controller.UnequipAccessory(accessoryId);
+            AssertActionResultMessage(unequipResult, "abgelegt", "Removed", "Gear unequip action result should localize German success copy.");
+
+            var fuseResult = controller.FuseAccessory(accessoryId);
+            AssertActionResultMessage(fuseResult, "Fusioniert", "Fused", "Gear fuse action result should localize German success copy.");
+        }
+        finally
+        {
+            RestoreAccessoryInventoryCount(controller, slot, rarity, originalCopies);
+            RestoreAccessoryInventoryCount(controller, slot, targetRarity, originalTargetCopies);
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, slot, originalEquippedRarity, originalEquippedLevel);
+            SetPrivateField(controller, "gold", originalGold);
+            SetPrivateField(controller, "selectedHeroIndex", originalHeroIndex);
+            SetPrivateField(controller, "selectedAccessorySlot", originalSlot);
+            SetPrivateField(controller, "selectedAccessoryRarity", originalRarity);
+            SetPrivateField(controller, "language", originalLanguage);
+            InvokePrivate(controller, "RefreshUi");
+            InvokePrivate(controller, "SaveProgress");
+            controller.ShowGear();
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void RestoreAccessoryInventoryCount(IdlePrototypeController controller, int slot, int rarity, int expectedCount)
+    {
+        var currentCount = (int)InvokePrivate(controller, "GetAccessoryInventoryCount", slot, rarity);
+        InvokePrivate(controller, "AddAccessoryInventory", slot, rarity, expectedCount - currentCount);
+    }
+
+    private static void AssertActionResultMessage(MythwakeActionResultDto result, string expectedText, string forbiddenText, string message)
+    {
+        if (!result.success)
+        {
+            throw new InvalidOperationException($"{message} Action failed with '{result.errorCode}': {result.message}");
+        }
+
+        if (string.IsNullOrWhiteSpace(result.message) || !result.message.Contains(expectedText) || result.message.Contains(forbiddenText))
+        {
+            throw new InvalidOperationException($"{message} Got '{result.message}'.");
         }
     }
 
