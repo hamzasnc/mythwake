@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.118`, save version `2`.
+- Unity client code is at Prototype `0.2.119`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -32,6 +32,7 @@ Last updated: 2026-05-26
 - Fast Rewards now shows the remaining time before the 24h storage cap, gives the popup more text room, and the Fast Rewards validator checks normal, empty, and capped cap-left states.
 - Server Mode Fast Rewards now shows an explicit claim status and keeps the Claim button gated until the backend min claim time is reached and a backend session exists; the Fast Rewards validator checks waiting and ready server AFK states.
 - Local Fast Rewards redeem now explicitly refreshes the open popup after claiming, and the Fast Rewards validator checks the claim/reset/button-disable flow.
+- Fast Rewards now has a compact progress bar/status line: local mode shows stored-percent plus cap-left state, Server Mode shows synced timer progress plus wait/ready state, and the validator checks fill percent and progress text fit.
 - Added Paladin to the local `Vanguard Oath` summon banner so the frontline banner actually features and rolls the Paladin.
 - Added a Paladin integration editor validator that checks the client hero definition, local summon banners, formation/fight hook anchors, backend definition/migration anchors, EN/DE localization keys, runtime portrait, combat sheets, skeletal part textures, Paladin runtime rig part loading, and Formation/Fight runtime rig visibility.
 - Added an editor validation entry point for the Summon UI so the Vanguard Oath banner, Paladin feature art, rates, carousel center card, Paladin result popup, Auto-Summon label, repeat costs, and x10/x300 gem-gated repeat states can be checked in Unity.

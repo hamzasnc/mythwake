@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.118";
+    public const string PrototypeVersion = "0.2.119";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1384,6 +1384,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text inventoryDetailDescriptionText;
     private TMP_Text inventoryDetailStatsText;
     private TMP_Text fastRewardsPopupText;
+    private Image fastRewardsProgressFill;
+    private TMP_Text fastRewardsProgressText;
     private Button inventoryCloseButton;
     private Button inventoryDetailCloseButton;
     private Button inventoryMiscTabButton;
@@ -14787,12 +14789,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshInventoryPopupUi();
 
         fastRewardsPopupRoot = CreateRuntimePopup(homeActionRoot, "Fast Rewards Popup", new Vector2(0, -350), new Vector2(760, 500), "Fast Rewards");
-        fastRewardsPopupText = CreateRuntimeText(fastRewardsPopupRoot, "Fast Rewards Body", string.Empty, 22, new Vector2(0, -96), new Vector2(660, 292));
+        fastRewardsPopupText = CreateRuntimeText(fastRewardsPopupRoot, "Fast Rewards Body", string.Empty, 22, new Vector2(0, -96), new Vector2(660, 224));
         fastRewardsPopupText.alignment = TextAlignmentOptions.Center;
         fastRewardsPopupText.enableAutoSizing = true;
         fastRewardsPopupText.fontSizeMin = 16;
         fastRewardsPopupText.fontSizeMax = 22;
         fastRewardsPopupText.textWrappingMode = TextWrappingModes.Normal;
+        fastRewardsProgressFill = CreateRuntimeHealthFill(fastRewardsPopupRoot, "Fast Rewards Progress", new Vector2(0, -344), 610f, new Color(0.36f, 0.95f, 0.84f, 0.92f));
+        var fastRewardsProgressRoot = fastRewardsProgressFill.transform.parent.GetComponent<RectTransform>();
+        if (fastRewardsProgressRoot != null)
+        {
+            fastRewardsProgressRoot.sizeDelta = new Vector2(610f, 42f);
+        }
+
+        fastRewardsProgressText = CreateRuntimeText(fastRewardsPopupRoot, "Fast Rewards Progress Text", string.Empty, 17, new Vector2(0, -350), new Vector2(580, 30));
+        fastRewardsProgressText.fontStyle = FontStyles.Bold;
+        fastRewardsProgressText.enableAutoSizing = true;
+        fastRewardsProgressText.fontSizeMin = 12;
+        fastRewardsProgressText.fontSizeMax = 17;
+        fastRewardsProgressText.textWrappingMode = TextWrappingModes.NoWrap;
+        fastRewardsProgressText.raycastTarget = false;
         fastRewardsRedeemButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Redeem Button", "Redeem", -120, -425, 210, 58);
         fastRewardsCloseButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Close Button", "Close", 145, -425, 160, 58);
         fastRewardsPopupRoot.gameObject.SetActive(false);
@@ -20545,6 +20561,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var maxSeconds = GetAfkRewardMaxSeconds();
         var pendingGold = CalculateAfkGoldReward(afkRewardStoredSeconds);
         var pendingEssence = CalculateAfkEssenceReward(afkRewardStoredSeconds);
+        var progressPercent = maxSeconds <= 0 ? 0f : Mathf.Clamp01(storedSeconds / (float)maxSeconds);
         fastRewardsPopupText.text =
             "Local Mode: continuous stored rewards\n" +
             $"Stored: {FormatDuration(storedSeconds)} / {FormatDuration(maxSeconds)}\n" +
@@ -20552,6 +20569,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             $"Rate: +{FormatRate(GetAfkGoldPerSecond())} Gold/s   +{FormatRate(GetAfkEssencePerSecond())} Essence/s\n" +
             $"{FormatLocalFastRewardsBonusLine()}\n" +
             $"Ready: +{FormatCompactNumber(pendingGold)} Gold   +{FormatCompactNumber(pendingEssence)} Essence";
+        RefreshFastRewardsProgress(progressPercent, FormatFastRewardsProgressText("Stored", progressPercent, FormatFastRewardsProgressCapStatus(maxSeconds - storedSeconds)), new Color(0.36f, 0.95f, 0.84f, 0.92f));
 
         if (fastRewardsRedeemButton != null)
         {
@@ -20571,6 +20589,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 "Definitions not loaded yet.\n" +
                 "Use Server Mode bootstrap or Sync first.\n" +
                 "Local stored rewards are paused in Server Mode.";
+            RefreshFastRewardsProgress(0f, "Server: sync needed", new Color(0.34f, 0.36f, 0.42f, 0.88f));
 
             if (fastRewardsRedeemButton != null)
             {
@@ -20585,18 +20604,41 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         CalculateBackendAfkReward(definition, elapsedSeconds, enemyLevel, out var pendingGold, out var pendingEssence);
         var elapsedText = elapsedKnown ? FormatDuration(claimSeconds) : "unknown";
         var claimReady = IsBackendFastRewardClaimReady(definition, elapsedKnown, elapsedSeconds);
+        var progressPercent = definition.maxClaimSeconds <= 0 ? 0f : Mathf.Clamp01(claimSeconds / (float)definition.maxClaimSeconds);
+        var claimStatus = FormatBackendFastRewardClaimStatus(definition, elapsedKnown, elapsedSeconds);
         fastRewardsPopupText.text =
             "Server Mode: backend-authoritative rewards\n" +
             $"Timer: {elapsedText} / {FormatDuration(definition.maxClaimSeconds)}  Min {FormatDuration(definition.minClaimSeconds)}\n" +
-            $"Claim status: {FormatBackendFastRewardClaimStatus(definition, elapsedKnown, elapsedSeconds)}\n" +
+            $"Claim status: {claimStatus}\n" +
             $"Rate: +{FormatRate(GetBackendAfkGoldPerSecond(definition, enemyLevel))} Gold/s   +{FormatRate(GetBackendAfkEssencePerSecond(definition, enemyLevel))} Essence/s\n" +
             "Village local bonuses do not modify server rewards yet.\n" +
             $"Ready estimate: +{FormatCompactNumber(pendingGold)} Gold   +{FormatCompactNumber(pendingEssence)} Essence";
+        RefreshFastRewardsProgress(progressPercent, FormatFastRewardsProgressText("Server", progressPercent, claimStatus), claimReady ? new Color(0.42f, 0.95f, 0.52f, 0.92f) : new Color(1f, 0.73f, 0.28f, 0.92f));
 
         if (fastRewardsRedeemButton != null)
         {
             fastRewardsRedeemButton.interactable = backendClient != null && backendClient.HasSession && !backendRequestInProgress && claimReady;
         }
+    }
+
+    private void RefreshFastRewardsProgress(float progressPercent, string statusText, Color fillColor)
+    {
+        if (fastRewardsProgressFill != null)
+        {
+            SetRuntimeFillPercent(fastRewardsProgressFill, progressPercent);
+            fastRewardsProgressFill.color = fillColor;
+        }
+
+        if (fastRewardsProgressText != null)
+        {
+            fastRewardsProgressText.text = statusText;
+        }
+    }
+
+    private static string FormatFastRewardsProgressText(string prefix, float progressPercent, string status)
+    {
+        var percent = Mathf.RoundToInt(Mathf.Clamp01(progressPercent) * 100f);
+        return $"{prefix}: {percent}% | {status}";
     }
 
     private string FormatLocalFastRewardsBonusLine()
@@ -20614,6 +20656,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private string FormatFastRewardsCapTime(int remainingSeconds)
     {
         return remainingSeconds <= 0 ? "capped" : FormatDuration(remainingSeconds);
+    }
+
+    private string FormatFastRewardsProgressCapStatus(int remainingSeconds)
+    {
+        return remainingSeconds <= 0 ? "capped" : $"{FormatDuration(remainingSeconds)} left";
     }
 
     private bool IsBackendFastRewardClaimReady(MythwakeAfkRewardDefinitionDto definition, bool elapsedKnown, int elapsedSeconds)
@@ -20801,6 +20848,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             homeBeginButton,
             campaignStageDetailBattleButton,
             campaignStageDetailCloseButton,
+            fastRewardsRedeemButton,
+            fastRewardsCloseButton,
             homeIdleInfoCloseButton,
             heroRosterTabButton,
             heroSetTeamTabButton,

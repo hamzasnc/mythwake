@@ -42,10 +42,16 @@ public static class FastRewardsUiValidation
 
         var popup = RequireObject("Fast Rewards Popup", false);
         var body = RequireObject("Fast Rewards Body", false);
+        var progressRoot = RequireObject("Fast Rewards Progress", false);
+        var progressFill = RequireChildImage(progressRoot, "Fill");
+        var progressTextObject = RequireObject("Fast Rewards Progress Text", false);
+        var progressText = RequireText(progressTextObject, "Fast Rewards Progress Text");
         var redeemButton = RequireButton("Fast Rewards Redeem Button");
         var closeButton = RequireButton("Fast Rewards Close Button");
 
         AssertInsideParent(popup, body);
+        AssertInsideParent(popup, progressRoot);
+        AssertInsideParent(popup, progressTextObject);
         AssertInsideParent(popup, redeemButton.gameObject);
         AssertInsideParent(popup, closeButton.gameObject);
 
@@ -64,6 +70,10 @@ public static class FastRewardsUiValidation
         RequireCopy(localBodyText, "Village bonus:");
         RequireCopy(localBodyText, "Ready:");
         AssertTextFits(bodyText, "Fast Rewards local body");
+        RequireCopy(progressText.text, "Stored: 8%");
+        RequireCopy(progressText.text, "22h 0m left");
+        AssertTextFits(progressText, "Fast Rewards local progress text");
+        AssertFillPercent(progressFill, 7200f / (24f * 60f * 60f), 0.01f, "Fast Rewards local progress fill");
 
         if (!redeemButton.interactable)
         {
@@ -76,11 +86,11 @@ public static class FastRewardsUiValidation
             throw new InvalidOperationException($"Fast Rewards local button label mismatch: '{localButtonLabel}'");
         }
 
-        ValidateLocalFastRewardsRedeemFlow(controller, popup, bodyText, redeemButton);
+        ValidateLocalFastRewardsRedeemFlow(controller, popup, bodyText, progressText, progressFill, redeemButton);
         ValidateFastRewardsPopupExclusivity(controller, popup);
 
-        AssertLocalFastRewardsState(controller, bodyText, redeemButton, 0f, "Stored: 0s / 24h 0m", "Cap left: 24h 0m", "Ready: +0 Gold   +0 Essence", false);
-        AssertLocalFastRewardsState(controller, bodyText, redeemButton, 24f * 60f * 60f, "Stored: 24h 0m / 24h 0m", "Cap left: capped", "Ready:", true);
+        AssertLocalFastRewardsState(controller, bodyText, progressText, progressFill, redeemButton, 0f, "Stored: 0s / 24h 0m", "Cap left: 24h 0m", "Ready: +0 Gold   +0 Essence", "Stored: 0% | 24h 0m left", 0f, false);
+        AssertLocalFastRewardsState(controller, bodyText, progressText, progressFill, redeemButton, 24f * 60f * 60f, "Stored: 24h 0m / 24h 0m", "Cap left: capped", "Ready:", "Stored: 100% | capped", 1f, true);
 
         SetPrivateField(controller, "backendGameplayEnabled", true);
         SetPrivateField(controller, "backendClient", null);
@@ -94,6 +104,9 @@ public static class FastRewardsUiValidation
         RequireCopy(serverBodyText, "Definitions not loaded yet.");
         RequireCopy(serverBodyText, "Local stored rewards are paused in Server Mode.");
         AssertTextFits(bodyText, "Fast Rewards Server Mode fallback body");
+        RequireCopy(progressText.text, "Server: sync needed");
+        AssertTextFits(progressText, "Fast Rewards Server Mode fallback progress text");
+        AssertFillPercent(progressFill, 0f, 0.01f, "Fast Rewards Server Mode fallback progress fill");
 
         var serverButtonLabel = GetButtonLabel(redeemButton);
         if (serverButtonLabel != "Claim")
@@ -113,7 +126,11 @@ public static class FastRewardsUiValidation
         Canvas.ForceUpdateCanvases();
 
         RequireCopy(bodyText.text, "Claim status: wait");
+        RequireCopy(progressText.text, "Server: 0%");
+        RequireCopy(progressText.text, "wait");
         AssertTextFits(bodyText, "Fast Rewards Server Mode waiting body");
+        AssertTextFits(progressText, "Fast Rewards Server Mode waiting progress text");
+        AssertFillPercent(progressFill, 0f, 0.01f, "Fast Rewards Server Mode waiting progress fill");
         if (redeemButton.interactable)
         {
             throw new InvalidOperationException("Fast Rewards Server Mode Claim button should stay disabled until the backend min claim time is reached.");
@@ -125,7 +142,11 @@ public static class FastRewardsUiValidation
 
         RequireCopy(bodyText.text, "Claim status: ready");
         RequireCopy(bodyText.text, "Ready estimate:");
+        RequireCopy(progressText.text, "Server:");
+        RequireCopy(progressText.text, "ready");
         AssertTextFits(bodyText, "Fast Rewards Server Mode ready body");
+        AssertTextFits(progressText, "Fast Rewards Server Mode ready progress text");
+        AssertFillPercent(progressFill, 660f / (24f * 60f * 60f), 0.02f, "Fast Rewards Server Mode ready progress fill");
         if (redeemButton.interactable)
         {
             throw new InvalidOperationException("Fast Rewards Server Mode Claim button should still require a backend session even after the min claim time is reached.");
@@ -161,7 +182,7 @@ public static class FastRewardsUiValidation
         RequireInactive("Home Idle Info Popup", "Fast Rewards should close the Home idle info popup.");
     }
 
-    private static void AssertLocalFastRewardsState(IdlePrototypeController controller, TMP_Text bodyText, Button redeemButton, float storedSeconds, string expectedStoredLine, string expectedCapLine, string expectedReadyLine, bool expectRedeemInteractable)
+    private static void AssertLocalFastRewardsState(IdlePrototypeController controller, TMP_Text bodyText, TMP_Text progressText, Image progressFill, Button redeemButton, float storedSeconds, string expectedStoredLine, string expectedCapLine, string expectedReadyLine, string expectedProgressLine, float expectedProgressPercent, bool expectRedeemInteractable)
     {
         SetPrivateField(controller, "backendGameplayEnabled", false);
         SetPrivateField(controller, "afkRewardStoredSeconds", storedSeconds);
@@ -171,7 +192,10 @@ public static class FastRewardsUiValidation
         RequireCopy(bodyText.text, expectedStoredLine);
         RequireCopy(bodyText.text, expectedCapLine);
         RequireCopy(bodyText.text, expectedReadyLine);
+        RequireCopy(progressText.text, expectedProgressLine);
         AssertTextFits(bodyText, $"Fast Rewards local {expectedStoredLine}");
+        AssertTextFits(progressText, $"Fast Rewards local progress {expectedStoredLine}");
+        AssertFillPercent(progressFill, expectedProgressPercent, 0.01f, $"Fast Rewards local progress fill {expectedStoredLine}");
 
         if (redeemButton.interactable != expectRedeemInteractable)
         {
@@ -185,7 +209,7 @@ public static class FastRewardsUiValidation
         }
     }
 
-    private static void ValidateLocalFastRewardsRedeemFlow(IdlePrototypeController controller, GameObject popup, TMP_Text bodyText, Button redeemButton)
+    private static void ValidateLocalFastRewardsRedeemFlow(IdlePrototypeController controller, GameObject popup, TMP_Text bodyText, TMP_Text progressText, Image progressFill, Button redeemButton)
     {
         var backendBefore = GetPrivateField<bool>(controller, "backendGameplayEnabled");
         var storedBefore = GetPrivateField<float>(controller, "afkRewardStoredSeconds");
@@ -229,7 +253,10 @@ public static class FastRewardsUiValidation
             RequireCopy(bodyText.text, "Stored: 0s / 24h 0m");
             RequireCopy(bodyText.text, "Cap left: 24h 0m");
             RequireCopy(bodyText.text, "Ready: +0 Gold   +0 Essence");
+            RequireCopy(progressText.text, "Stored: 0% | 24h 0m left");
             AssertTextFits(bodyText, "Fast Rewards local redeemed body");
+            AssertTextFits(progressText, "Fast Rewards local redeemed progress text");
+            AssertFillPercent(progressFill, 0f, 0.01f, "Fast Rewards local redeemed progress fill");
 
             if (redeemButton.interactable)
             {
@@ -340,6 +367,23 @@ public static class FastRewardsUiValidation
         return button;
     }
 
+    private static Image RequireChildImage(GameObject parent, string childName)
+    {
+        var child = parent.transform.Find(childName);
+        if (child == null)
+        {
+            throw new InvalidOperationException($"{parent.name} is missing child {childName}.");
+        }
+
+        var image = child.GetComponent<Image>();
+        if (image == null)
+        {
+            throw new InvalidOperationException($"{parent.name}/{childName} is missing an Image component.");
+        }
+
+        return image;
+    }
+
     private static TMP_Text RequireText(GameObject gameObject, string name)
     {
         var text = gameObject.GetComponent<TMP_Text>();
@@ -375,6 +419,15 @@ public static class FastRewardsUiValidation
 
         var rect = label.rectTransform.rect;
         throw new InvalidOperationException($"{context} overflows: '{label.text}' width={rect.width}, height={rect.height}, fontSize={label.fontSize}.");
+    }
+
+    private static void AssertFillPercent(Image fill, float expected, float tolerance, string context)
+    {
+        var actual = fill.rectTransform.anchorMax.x;
+        if (Mathf.Abs(actual - expected) > tolerance)
+        {
+            throw new InvalidOperationException($"{context} mismatch: expected {expected:0.###}, got {actual:0.###}.");
+        }
     }
 
     private static T FindSceneComponent<T>() where T : Component
