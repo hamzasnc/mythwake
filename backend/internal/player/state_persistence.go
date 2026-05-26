@@ -219,6 +219,41 @@ func (service *Service) villageStatBonuses() (int, int) {
 	return totalAttack, totalHealth
 }
 
+func (service *Service) applyVillageAFKRewardBonuses(reward api.Reward, claimedSeconds int) api.Reward {
+	if claimedSeconds <= 0 {
+		return reward
+	}
+
+	goldRate, essenceRate := service.villageAFKRateBonuses()
+	reward.Gold += int(math.Floor(goldRate * float64(claimedSeconds)))
+	reward.MythEssence += int(math.Floor(essenceRate * float64(claimedSeconds)))
+	return reward
+}
+
+func (service *Service) villageAFKRateBonuses() (float64, float64) {
+	totalGoldRate := 0.0
+	totalEssenceRate := 0.0
+	for slotIndex, building := range service.villageBuildings {
+		definition, ok := service.villageBuildingDefinitionForState(slotIndex, building)
+		if !ok {
+			continue
+		}
+		level := max(1, building.Level)
+		if definition.MaxLevel > 0 {
+			level = min(level, definition.MaxLevel)
+		}
+		bonus := float64(level) * definition.BonusValuePerLevel
+		switch definition.BonusType {
+		case balance.VillageBonusAFKGoldRate:
+			totalGoldRate += bonus
+		case balance.VillageBonusAFKEssenceRate:
+			totalEssenceRate += bonus
+		}
+	}
+
+	return totalGoldRate, totalEssenceRate
+}
+
 func clampHeroLevel(value int, maximum int) int {
 	value = max(1, value)
 	if maximum <= 0 {

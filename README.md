@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.132
+Prototype version: 0.2.133
 Local save version: 2
 
 Current prototype:
@@ -24,7 +24,7 @@ Current prototype:
 - Server Mode uses backend hero, equipment, accessory, and snapshot team stats for authoritative stat previews
 - Server Mode upgrade buttons now respect backend max-level/max-ascension caps and AFK timing definitions
 - Local and backend AFK reward caps are aligned at 24 hours
-- Fast Rewards popup separates local stored rewards from Server Mode backend-authoritative AFK claim timing
+- Fast Rewards popup separates local stored rewards from Server Mode backend-authoritative AFK claim timing and server-snapshot Village AFK bonuses
 - Server Mode preference persists across Unity restarts and reboots through `/client/bootstrap`
 - Server Mode blocks local debug grants/reset so PostgreSQL remains the authoritative test source
 - Gameplay buttons are gated while backend requests are in flight to avoid accidental double actions
@@ -65,7 +65,7 @@ Current prototype:
 - Dungeons have a dedicated map screen with Gold, Essence, and Gear dungeon cards
 - Village has a dedicated scrollable map with 12 build plots, building placement art, and built-building detail controls
 - Village buildings can be built, upgraded, and demolished locally and through Server Mode backend actions
-- Village building detail now shows current and next/max placeholder bonuses; the Village hint line summarizes local Team ATK/HP and Fast Rewards rate boosts or the Server Mode local-bonus pause while Server Mode stays backend-authoritative
+- Village building detail now shows current and next/max definition bonuses; the Village hint line summarizes local Team ATK/HP and Fast Rewards rate boosts or the Server Mode local-bonus pause while Server Mode stays backend-authoritative
 - Server definitions now include DB-ready Village building definitions for stable ID, plot/option, build cost, max level, upgrade cost, and bonus type/value
 - Campaign and dungeon fights now simulate win/loss with team HP and enemy damage, and local result summaries mirror the server combat shape with team HP, enemy HP, team ATK, enemy damage, dealt/taken/heal/crit/miss details
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
@@ -106,7 +106,7 @@ Backend:
 - Starter Weapon and Armor training levels persist in PostgreSQL and affect team power
 - Summon count, daily mission claims, and Battle Pass claims persist in PostgreSQL
 - Village building state and levels persist in PostgreSQL and are exposed through player snapshots
-- PostgreSQL now seeds common Village building definitions, and backend Village build/upgrade actions use the injected definition catalog for costs, IDs, max levels, and server-side Team ATK/HP bonuses
+- PostgreSQL now seeds common Village building definitions, and backend Village build/upgrade/AFK-claim paths use the injected definition catalog for costs, IDs, max levels, server-side Team ATK/HP bonuses, and AFK Gold/Essence rate bonuses
 - Claim and summon debug views are available for Navicat
 - PostgreSQL writes now sit behind a durable state cache wrapper
 - Critical server actions now use ledger write-behind by default, so the action/result is durable before success while materialized state can flush in batches
@@ -181,6 +181,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md` (includes the latest Mobile UX pass and open Android emulator/device follow-up)
 
 Changelog:
+- Prototype 0.2.133 / Backend 0.2.57: Server AFK claims now apply catalog-driven Village Gold/Essence rate bonuses from built buildings, Server Mode Fast Rewards shows the server-snapshot Village bonus line, and backend Village tests cover invalid building options, insufficient Essence, max-level upgrades, demolish, upgrade costs, snapshots, and AFK bonus claims.
 - Prototype 0.2.132: Added a dedicated Fight/Formation editor validator to the Current Slice, covering campaign formation swap, auto-next toggle, visible fight controls, AUTO/x2 toggles, HP/mana skill cards, ultimate queueing, result popup flow, and dungeon fight focus chrome hiding.
 - Prototype 0.2.131: Reordered and clarified the Home Next Goal hint around the early loop: push when Power is ready, then Gear, Weapon/Armor/accessory, Hero, Village, Gear Dungeon, Summon, or explicit farm gaps; Home validation now checks the campaign-power hint shape.
 - Prototype 0.2.130: Reworked local Campaign/Dungeon combat result summaries to mirror server-style HP/ATK/enemy damage/dealt/taken/heal/crit/miss fields and added validator coverage for the local summary shape.

@@ -248,6 +248,33 @@ func TestVillageBuildRejectsOccupiedSlot(t *testing.T) {
 	}
 }
 
+func TestVillageBuildRejectsUnknownBuildingOption(t *testing.T) {
+	service := NewService()
+	service.state.MythEssence = 20
+	beforeEssence := service.state.MythEssence
+
+	result := service.BuildVillageBuilding(0, 99)
+	if result.Success || result.ErrorCode != "invalid_village_building" {
+		t.Fatalf("expected invalid_village_building, got %#v", result)
+	}
+	if service.state.MythEssence != beforeEssence {
+		t.Fatalf("invalid building option should not spend essence, before=%d after=%d", beforeEssence, service.state.MythEssence)
+	}
+}
+
+func TestVillageBuildRejectsInsufficientEssence(t *testing.T) {
+	service := NewService()
+	service.state.MythEssence = 0
+
+	result := service.BuildVillageBuilding(0, 0)
+	if result.Success || result.ErrorCode != "insufficient_currency" {
+		t.Fatalf("expected insufficient_currency, got %#v", result)
+	}
+	if len(service.villageBuildings) != 0 {
+		t.Fatalf("insufficient build should not add village buildings, got %#v", service.villageBuildings)
+	}
+}
+
 func TestVillageDemolishFreesSlot(t *testing.T) {
 	service := NewService()
 	service.state.MythEssence = 20
@@ -261,6 +288,28 @@ func TestVillageDemolishFreesSlot(t *testing.T) {
 	}
 	if _, ok := service.villageBuildings[1]; ok {
 		t.Fatalf("expected village slot 1 to be empty, got %#v", service.villageBuildings)
+	}
+}
+
+func TestVillageUpgradeRejectsMaxLevel(t *testing.T) {
+	service := NewService()
+	service.state.MythEssence = 200
+
+	if result := service.BuildVillageBuilding(0, 0); !result.Success {
+		t.Fatalf("expected village build to succeed, got %#v", result)
+	}
+
+	building := service.villageBuildings[0]
+	building.Level = 20
+	service.villageBuildings[0] = building
+	beforeEssence := service.state.MythEssence
+
+	result := service.UpgradeVillageBuilding(0)
+	if result.Success || result.ErrorCode != "max_level" {
+		t.Fatalf("expected max_level, got %#v", result)
+	}
+	if service.state.MythEssence != beforeEssence {
+		t.Fatalf("max-level upgrade should not spend essence, before=%d after=%d", beforeEssence, service.state.MythEssence)
 	}
 }
 
@@ -440,6 +489,35 @@ func TestAFKClaimGrantsGoldAndEssence(t *testing.T) {
 	}
 	if !store.saved.LastAFKClaimedAt.Equal(now) {
 		t.Fatalf("expected saved afk claim time %s, got %s", now, store.saved.LastAFKClaimedAt)
+	}
+}
+
+func TestAFKClaimAppliesVillageRateBonuses(t *testing.T) {
+	service := NewService()
+	now := time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC)
+	service.now = func() time.Time { return now }
+	service.state.MythEssence = 20
+
+	if result := service.BuildVillageBuilding(5, 0); !result.Success {
+		t.Fatalf("expected gold-rate village build to succeed, got %#v", result)
+	}
+	if result := service.BuildVillageBuilding(2, 0); !result.Success {
+		t.Fatalf("expected essence-rate village build to succeed, got %#v", result)
+	}
+
+	claimedSeconds := 10 * 60
+	service.lastAFKClaimedAt = now.Add(-time.Duration(claimedSeconds) * time.Second)
+	baseReward, _ := balance.AFKReward(service.state.CampaignStage, claimedSeconds)
+
+	result := service.ClaimAFKRewards()
+	if !result.Success {
+		t.Fatalf("expected afk claim with village bonuses to succeed, got %#v", result)
+	}
+
+	const expectedGoldBonus = 48
+	const expectedEssenceBonus = 30
+	if result.Reward.Gold != baseReward.Gold+expectedGoldBonus || result.Reward.MythEssence != baseReward.MythEssence+expectedEssenceBonus {
+		t.Fatalf("expected AFK reward with village bonuses gold=%d essence=%d, got %#v", baseReward.Gold+expectedGoldBonus, baseReward.MythEssence+expectedEssenceBonus, result.Reward)
 	}
 }
 

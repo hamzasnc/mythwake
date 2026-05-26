@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.132";
+    public const string PrototypeVersion = "0.2.133";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -16771,6 +16771,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return 0f;
         }
 
+        return GetVillageAfkGoldRateBonusForServerSnapshot();
+    }
+
+    private float GetVillageAfkGoldRateBonusForServerSnapshot()
+    {
         EnsureVillageState();
         var bonus = 0f;
         for (var i = 0; i < VillagePlotCount; i++)
@@ -16791,6 +16796,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return 0f;
         }
 
+        return GetVillageAfkEssenceRateBonusForServerSnapshot();
+    }
+
+    private float GetVillageAfkEssenceRateBonusForServerSnapshot()
+    {
         EnsureVillageState();
         var bonus = 0f;
         for (var i = 0; i < VillagePlotCount; i++)
@@ -20870,7 +20880,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var elapsedKnown = TryGetBackendAfkElapsedSeconds(out var elapsedSeconds);
         var claimSeconds = Mathf.Clamp(elapsedSeconds, 0, Mathf.Max(definition.maxClaimSeconds, definition.minClaimSeconds));
-        CalculateBackendAfkReward(definition, elapsedSeconds, enemyLevel, out var pendingGold, out var pendingEssence);
+        var serverVillageGoldRate = GetVillageAfkGoldRateBonusForServerSnapshot();
+        var serverVillageEssenceRate = GetVillageAfkEssenceRateBonusForServerSnapshot();
+        CalculateBackendAfkReward(definition, elapsedSeconds, enemyLevel, serverVillageGoldRate, serverVillageEssenceRate, out var pendingGold, out var pendingEssence);
         var elapsedText = elapsedKnown ? FormatDuration(claimSeconds) : "unknown";
         var claimReady = IsBackendFastRewardClaimReady(definition, elapsedKnown, elapsedSeconds);
         var progressPercent = definition.maxClaimSeconds <= 0 ? 0f : Mathf.Clamp01(claimSeconds / (float)definition.maxClaimSeconds);
@@ -20879,8 +20891,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             "Server Mode: backend-authoritative rewards\n" +
             $"Timer: {elapsedText} / {FormatDuration(definition.maxClaimSeconds)}  Min {FormatDuration(definition.minClaimSeconds)}\n" +
             $"Claim status: {claimStatus}\n" +
-            $"Rate: +{FormatRate(GetBackendAfkGoldPerSecond(definition, enemyLevel))} Gold/s   +{FormatRate(GetBackendAfkEssencePerSecond(definition, enemyLevel))} Essence/s\n" +
-            "Village local bonuses do not modify server rewards yet.\n" +
+            $"Rate: +{FormatRate(GetBackendAfkGoldPerSecond(definition, enemyLevel) + serverVillageGoldRate)} Gold/s   +{FormatRate(GetBackendAfkEssencePerSecond(definition, enemyLevel) + serverVillageEssenceRate)} Essence/s\n" +
+            $"{FormatServerFastRewardsVillageBonusLine(serverVillageGoldRate, serverVillageEssenceRate)}\n" +
             $"Ready estimate: +{FormatCompactNumber(pendingGold)} Gold   +{FormatCompactNumber(pendingEssence)} Essence";
         RefreshFastRewardsProgress(progressPercent, FormatFastRewardsProgressText("Server", progressPercent, claimStatus), claimReady ? new Color(0.42f, 0.95f, 0.52f, 0.92f) : new Color(1f, 0.73f, 0.28f, 0.92f));
 
@@ -20920,6 +20932,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return $"Village bonus: +{FormatRate(goldRateBonus)} Gold/s   +{FormatRate(essenceRateBonus)} Essence/s";
+    }
+
+    private string FormatServerFastRewardsVillageBonusLine(float goldRateBonus, float essenceRateBonus)
+    {
+        if (goldRateBonus <= 0f && essenceRateBonus <= 0f)
+        {
+            return "Village bonus: server snapshot none yet";
+        }
+
+        return $"Village bonus: server snapshot +{FormatRate(goldRateBonus)} Gold/s   +{FormatRate(essenceRateBonus)} Essence/s";
     }
 
     private string FormatFastRewardsCapTime(int remainingSeconds)
@@ -20965,7 +20987,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return true;
     }
 
-    private static void CalculateBackendAfkReward(MythwakeAfkRewardDefinitionDto definition, int elapsedSeconds, int stage, out int gold, out int mythEssence)
+    private static void CalculateBackendAfkReward(MythwakeAfkRewardDefinitionDto definition, int elapsedSeconds, int stage, float villageGoldRate, float villageEssenceRate, out int gold, out int mythEssence)
     {
         gold = 0;
         mythEssence = 0;
@@ -20981,8 +21003,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var ticks = claimSeconds / tickSeconds;
         var essencePerTick = GetBackendAfkEssencePerTick(definition, stage);
         var goldPerTick = GetBackendAfkGoldPerTick(definition, essencePerTick);
-        gold = Mathf.Max(0, ticks * goldPerTick);
-        mythEssence = Mathf.Max(0, ticks * essencePerTick);
+        gold = Mathf.Max(0, ticks * goldPerTick + Mathf.FloorToInt(claimSeconds * Mathf.Max(0f, villageGoldRate)));
+        mythEssence = Mathf.Max(0, ticks * essencePerTick + Mathf.FloorToInt(claimSeconds * Mathf.Max(0f, villageEssenceRate)));
     }
 
     private static float GetBackendAfkEssencePerSecond(MythwakeAfkRewardDefinitionDto definition, int stage)

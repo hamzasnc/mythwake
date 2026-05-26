@@ -141,6 +141,7 @@ public static class FastRewardsUiValidation
         Canvas.ForceUpdateCanvases();
 
         RequireCopy(bodyText.text, "Claim status: ready");
+        RequireCopy(bodyText.text, "Village bonus: server snapshot");
         RequireCopy(bodyText.text, "Ready estimate:");
         RequireCopy(progressText.text, "Server:");
         RequireCopy(progressText.text, "ready");

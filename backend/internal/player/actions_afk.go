@@ -35,6 +35,7 @@ func (actions afkActions) ClaimAFKRewards(ctx context.Context, request ActionReq
 		if claimedSeconds <= 0 {
 			return actionFailure("afk_not_ready", fmt.Sprintf("AFK rewards need at least %s.", formatAFKDuration(service.balanceCatalog.AFKMinClaimSeconds())))
 		}
+		reward = service.applyVillageAFKRewardBonuses(reward, claimedSeconds)
 
 		economy.Grant(&service.state, reward)
 		service.lastAFKClaimedAt = now
