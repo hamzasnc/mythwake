@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.137";
+    public const string PrototypeVersion = "0.2.138";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1233,6 +1233,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text goldDungeonProgressText;
     private TMP_Text essenceDungeonProgressText;
     private TMP_Text gearDungeonProgressText;
+    private RectTransform gearTrainingCardRoot;
+    private RectTransform gearAccessoryCardRoot;
+    private TMP_Text gearTrainingTitleText;
+    private TMP_Text gearAccessoryTitleText;
+    private TMP_Text gearSlotNavText;
+    private TMP_Text gearRarityNavText;
     private RectTransform dungeonMapViewportRoot;
     private RectTransform dungeonWorldMapRoot;
     private Vector2 dungeonMapPointerStartPosition;
@@ -10416,6 +10422,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var displayedWeaponLevel = GetEquipmentDisplayLevel(WeaponTrack, heroWeaponLevel);
         var displayedArmorLevel = GetEquipmentDisplayLevel(ArmorTrack, heroArmorLevel);
 
+        if (gearTrainingTitleText != null)
+        {
+            gearTrainingTitleText.text = Tr("gear.training_title");
+        }
+
         if (equipmentSummaryText != null)
         {
             equipmentSummaryText.text = $"{GetLocalizedHeroName(hero)} {GetInventoryTabLabel(InventoryTabMode.Gear)}\n{GetLocalizedEquipmentName(WeaponTrack)} {Tr("ui.common.level_short")}. {FormatCappedValue(displayedWeaponLevel, GetEquipmentLevelCap(WeaponTrack))}  +{GetHeroEquipmentAttackBonus(heroIndex)} {WeaponTrack.statLabel}\n{GetLocalizedEquipmentName(ArmorTrack)} {Tr("ui.common.level_short")}. {FormatCappedValue(displayedArmorLevel, GetEquipmentLevelCap(ArmorTrack))}  +{GetHeroEquipmentHealthBonus(heroIndex)} {ArmorTrack.statLabel}";
@@ -10442,6 +10453,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var slot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         var rarity = Mathf.Clamp(selectedAccessoryRarity, 0, AccessoryRarityCount - 1);
         var heroIndex = GetSelectedHeroIndex();
+
+        if (gearAccessoryTitleText != null)
+        {
+            gearAccessoryTitleText.text = Tr("gear.accessory_title");
+        }
+
+        if (gearSlotNavText != null)
+        {
+            gearSlotNavText.text = TrFormat("gear.slot_nav", GetLocalizedAccessorySlotName(slot));
+        }
+
+        if (gearRarityNavText != null)
+        {
+            gearRarityNavText.text = TrFormat("gear.rarity_nav", GetAccessoryRarityName(rarity));
+        }
 
         if (accessorySummaryText != null)
         {
@@ -18238,29 +18264,95 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void EnsureRuntimeGearPolishDecor()
+    {
+        if (gearPanel == null || gearTrainingCardRoot != null)
+        {
+            return;
+        }
+
+        gearTrainingCardRoot = CreateRuntimePanel(gearPanel.transform, "Gear Training Card", new Vector2(0, -470), new Vector2(840, 206), new Color(0.045f, 0.06f, 0.082f, 0.94f));
+        CreateRuntimePanel(gearTrainingCardRoot, "Training Accent", new Vector2(0, -6), new Vector2(790, 4), new Color(0.24f, 0.74f, 0.88f, 0.72f));
+
+        gearAccessoryCardRoot = CreateRuntimePanel(gearPanel.transform, "Gear Accessory Card", new Vector2(0, -704), new Vector2(840, 440), new Color(0.045f, 0.055f, 0.072f, 0.96f));
+        CreateRuntimePanel(gearAccessoryCardRoot, "Accessory Accent", new Vector2(0, -6), new Vector2(790, 4), new Color(0.98f, 0.66f, 0.26f, 0.72f));
+
+        gearTrainingTitleText = CreateRuntimeText(gearPanel.transform, "Gear Training Title", Tr("gear.training_title"), 22, new Vector2(0, -470), new Vector2(760, 30));
+        gearTrainingTitleText.fontStyle = FontStyles.Bold;
+        gearTrainingTitleText.color = new Color(1f, 0.88f, 0.62f);
+        gearTrainingTitleText.enableAutoSizing = true;
+        gearTrainingTitleText.fontSizeMin = 15;
+        gearTrainingTitleText.fontSizeMax = 22;
+        gearTrainingTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        gearAccessoryTitleText = CreateRuntimeText(gearPanel.transform, "Gear Accessory Title", Tr("gear.accessory_title"), 22, new Vector2(0, -704), new Vector2(760, 30));
+        gearAccessoryTitleText.fontStyle = FontStyles.Bold;
+        gearAccessoryTitleText.color = new Color(1f, 0.88f, 0.62f);
+        gearAccessoryTitleText.enableAutoSizing = true;
+        gearAccessoryTitleText.fontSizeMin = 15;
+        gearAccessoryTitleText.fontSizeMax = 22;
+        gearAccessoryTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        gearSlotNavText = CreateRuntimeText(gearPanel.transform, "Gear Slot Nav Text", string.Empty, 18, new Vector2(0, -930), new Vector2(430, 34));
+        gearSlotNavText.fontStyle = FontStyles.Bold;
+        gearSlotNavText.color = new Color(0.78f, 0.91f, 1f);
+        gearSlotNavText.enableAutoSizing = true;
+        gearSlotNavText.fontSizeMin = 13;
+        gearSlotNavText.fontSizeMax = 18;
+        gearSlotNavText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        gearRarityNavText = CreateRuntimeText(gearPanel.transform, "Gear Rarity Nav Text", string.Empty, 18, new Vector2(0, -994), new Vector2(430, 34));
+        gearRarityNavText.fontStyle = FontStyles.Bold;
+        gearRarityNavText.color = new Color(0.78f, 0.91f, 1f);
+        gearRarityNavText.enableAutoSizing = true;
+        gearRarityNavText.fontSizeMin = 13;
+        gearRarityNavText.fontSizeMax = 18;
+        gearRarityNavText.textWrappingMode = TextWrappingModes.NoWrap;
+    }
+
     private void LayoutGearScreen()
     {
-        MoveUiElement(equipmentSummaryText, gearPanel, new Vector2(0, -486), new Vector2(760, 88));
-        MoveUiElement(weaponUpgradeButton, gearPanel, new Vector2(-210, -588), new Vector2(300, 64));
-        MoveUiElement(armorUpgradeButton, gearPanel, new Vector2(210, -588), new Vector2(300, 64));
-        MoveUiElement(accessorySummaryText, gearPanel, new Vector2(0, -674), new Vector2(760, 62));
-        MoveUiElement(accessorySelectedText, gearPanel, new Vector2(0, -750), new Vector2(760, 70));
-        MoveUiElement(accessoryInventoryText, gearPanel, new Vector2(0, -838), new Vector2(760, 64));
-        MoveUiElement(accessoryPreviousSlotButton, gearPanel, new Vector2(-320, -918), new Vector2(130, 54));
-        MoveUiElement(accessoryNextSlotButton, gearPanel, new Vector2(320, -918), new Vector2(130, 54));
-        MoveUiElement(accessoryPreviousRarityButton, gearPanel, new Vector2(-320, -984), new Vector2(130, 54));
-        MoveUiElement(accessoryNextRarityButton, gearPanel, new Vector2(320, -984), new Vector2(130, 54));
-        MoveUiElement(accessoryEquipButton, gearPanel, new Vector2(-215, -1052), new Vector2(205, 58));
-        MoveUiElement(accessoryLevelButton, gearPanel, new Vector2(0, -1052), new Vector2(205, 58));
-        MoveUiElement(accessoryFuseButton, gearPanel, new Vector2(215, -1052), new Vector2(205, 58));
+        EnsureRuntimeGearPolishDecor();
+        var oldBackdrop = gearPanel != null ? gearPanel.transform.Find("Gear Parchment Backdrop") : null;
+        SetComponentActive(oldBackdrop, false);
+
+        MoveUiElement(gearTrainingCardRoot, gearPanel, new Vector2(0, -470), new Vector2(840, 206));
+        MoveUiElement(gearAccessoryCardRoot, gearPanel, new Vector2(0, -704), new Vector2(840, 440));
+        if (gearTrainingCardRoot != null)
+        {
+            gearTrainingCardRoot.SetAsFirstSibling();
+        }
+
+        if (gearAccessoryCardRoot != null)
+        {
+            gearAccessoryCardRoot.SetAsFirstSibling();
+        }
+
+        MoveUiElement(gearTrainingTitleText, gearPanel, new Vector2(0, -474), new Vector2(760, 30));
+        MoveUiElement(equipmentSummaryText, gearPanel, new Vector2(0, -510), new Vector2(760, 64));
+        MoveUiElement(weaponUpgradeButton, gearPanel, new Vector2(-210, -594), new Vector2(300, 64));
+        MoveUiElement(armorUpgradeButton, gearPanel, new Vector2(210, -594), new Vector2(300, 64));
+        MoveUiElement(gearAccessoryTitleText, gearPanel, new Vector2(0, -708), new Vector2(760, 30));
+        MoveUiElement(accessorySummaryText, gearPanel, new Vector2(0, -742), new Vector2(760, 58));
+        MoveUiElement(accessorySelectedText, gearPanel, new Vector2(0, -806), new Vector2(760, 62));
+        MoveUiElement(accessoryInventoryText, gearPanel, new Vector2(0, -872), new Vector2(760, 48));
+        MoveUiElement(accessoryPreviousSlotButton, gearPanel, new Vector2(-330, -936), new Vector2(122, 52));
+        MoveUiElement(accessoryNextSlotButton, gearPanel, new Vector2(330, -936), new Vector2(122, 52));
+        MoveUiElement(gearSlotNavText, gearPanel, new Vector2(0, -944), new Vector2(430, 34));
+        MoveUiElement(accessoryPreviousRarityButton, gearPanel, new Vector2(-330, -998), new Vector2(122, 52));
+        MoveUiElement(accessoryNextRarityButton, gearPanel, new Vector2(330, -998), new Vector2(122, 52));
+        MoveUiElement(gearRarityNavText, gearPanel, new Vector2(0, -1006), new Vector2(430, 34));
+        MoveUiElement(accessoryEquipButton, gearPanel, new Vector2(-226, -1062), new Vector2(214, 62));
+        MoveUiElement(accessoryLevelButton, gearPanel, new Vector2(0, -1062), new Vector2(214, 62));
+        MoveUiElement(accessoryFuseButton, gearPanel, new Vector2(226, -1062), new Vector2(214, 62));
         SetButtonLabel(accessoryPreviousSlotButton, "<");
         SetButtonLabel(accessoryNextSlotButton, ">");
         SetButtonLabel(accessoryPreviousRarityButton, "<");
         SetButtonLabel(accessoryNextRarityButton, ">");
-        ConfigureRuntimeTextFit(equipmentSummaryText, 15f, 24f);
-        ConfigureRuntimeTextFit(accessorySummaryText, 15f, 22f);
-        ConfigureRuntimeTextFit(accessorySelectedText, 15f, 22f);
-        ConfigureRuntimeTextFit(accessoryInventoryText, 15f, 22f);
+        ConfigureRuntimeTextFit(equipmentSummaryText, 14f, 22f);
+        ConfigureRuntimeTextFit(accessorySummaryText, 14f, 20f);
+        ConfigureRuntimeTextFit(accessorySelectedText, 14f, 20f);
+        ConfigureRuntimeTextFit(accessoryInventoryText, 14f, 19f);
         ConfigureRuntimeButtonLabelFit(weaponUpgradeButton, 10f, 16f);
         ConfigureRuntimeButtonLabelFit(armorUpgradeButton, 10f, 16f);
         ConfigureRuntimeButtonLabelFit(accessoryEquipButton, 9f, 15f);
@@ -18352,10 +18444,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetTextColor(nextGoalText, new Color(0.23f, 0.12f, 0.045f));
         SetTextColor(offlineRewardText, new Color(0.23f, 0.12f, 0.045f));
         SetTextColor(selectedHeroText, new Color(0.24f, 0.13f, 0.055f));
-        SetTextColor(equipmentSummaryText, new Color(0.24f, 0.13f, 0.055f));
-        SetTextColor(accessorySummaryText, new Color(0.24f, 0.13f, 0.055f));
-        SetTextColor(accessorySelectedText, new Color(0.24f, 0.13f, 0.055f));
-        SetTextColor(accessoryInventoryText, new Color(0.24f, 0.13f, 0.055f));
+        SetTextColor(equipmentSummaryText, new Color(0.94f, 0.83f, 0.62f));
+        SetTextColor(accessorySummaryText, new Color(0.78f, 0.91f, 1f));
+        SetTextColor(accessorySelectedText, new Color(0.94f, 0.83f, 0.62f));
+        SetTextColor(accessoryInventoryText, new Color(0.78f, 0.91f, 1f));
         SetTextColor(battlePassProgressText, new Color(0.24f, 0.13f, 0.055f));
         SetTextArrayColor(heroCardTexts, Color.white);
         SetTextArrayColor(dailyMissionTexts, new Color(0.24f, 0.13f, 0.055f));
@@ -21154,6 +21246,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroAscendButton,
             weaponUpgradeButton,
             armorUpgradeButton,
+            accessoryPreviousSlotButton,
+            accessoryNextSlotButton,
+            accessoryPreviousRarityButton,
+            accessoryNextRarityButton,
             accessoryEquipButton,
             accessoryLevelButton,
             accessoryFuseButton,

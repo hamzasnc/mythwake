@@ -28,9 +28,13 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `9d00e9c Validate final mobile current slice`
+- `0f06b55 Add Android build and screenshot tooling`
 
 Current continuation:
+- Prototype `0.2.138` rechecked the real Android path and polished Gear. Unity embedded `adb` starts, but `adb devices -l` is still empty and `adb get-state` returns `error: no devices/emulators found`, so install/start/logcat/touch/safe-area/FPS and true device screenshots remain blocked on this machine.
+- `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.138.apk` succeeds. The ignored local APK artifact is `Builds/Android/Mythwake-0.2.138.apk` at 164,143,730 bytes, with the cached Unity build report logging about 00:01:30.
+- Fallback 1080x1920 screenshots were regenerated under ignored local artifact path `Builds\Android\portrait-screenshots\`. The set covers Home, Home stage detail, Home patrol info, Village, Fast Rewards, Hero Detail, Gear, Summon, Summon result, Formation, and visible Fight.
+- Gear is now noticeably cleaner in the fallback pass: the old oversized parchment is hidden, Training and Accessory controls live in compact dark cards, Slot/Rarity navigation has central readable labels, nav buttons use the brown action style, and EN/DE title/nav/action copy is guarded by Upgrade Clutter validation.
 - Prototype `0.2.137` adds a reproducible Android APK helper (`scripts/build-android.cmd`) and editor-batch portrait screenshot fallback helper (`scripts/capture-portrait-screenshots.cmd`).
 - `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk` succeeds with Unity Android Build Support; the ignored local APK artifact is `Builds/Android/Mythwake-0.2.137.apk` at 164,140,446 bytes, with the cached Unity build report logging about 00:01:35.
 - A real Android install/start/logcat/touch/performance pass is still blocked: Unity embedded `adb` is available, but `adb devices -l` lists no emulator/physical device and no `emulator.exe` exists in the checked Unity SDK or `%LOCALAPPDATA%\Android\Sdk\emulator` paths.
@@ -128,7 +132,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.137`
+- Prototype `0.2.138`
 - Save version `2`
 
 Important Unity scripts:

@@ -849,6 +849,7 @@ public static class UpgradeClutterValidation
         AssertButtonLabel(RequireButtonField(controller, "accessoryPreviousRarityButton"), "<", "Gear screen previous rarity button should use compact arrow copy.");
         AssertButtonLabel(RequireButtonField(controller, "accessoryNextRarityButton"), ">", "Gear screen next rarity button should use compact arrow copy.");
         ValidateGearScreenRuntimeArt(gearPanel);
+        ValidateGearScreenPolishLayout(controller, gearPanel);
         ValidateGearScreenControlLayout(controller, gearPanel);
         ValidateGearScreenSelectedAccessorySummary(controller);
         ValidateGearActionResultLocalization(controller);
@@ -960,6 +961,59 @@ public static class UpgradeClutterValidation
         }
     }
 
+    private static void ValidateGearScreenPolishLayout(IdlePrototypeController controller, GameObject gearPanel)
+    {
+        var oldParchment = FindSceneObject("Gear Parchment Backdrop");
+        if (oldParchment != null && oldParchment.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Gear screen should hide the old oversized parchment backdrop after the compact polish layout is built.");
+        }
+
+        var gearRoot = RequireSceneObject("Runtime Art Gear Showcase");
+        var trainingCard = RequireSceneObject("Gear Training Card");
+        var accessoryCard = RequireSceneObject("Gear Accessory Card");
+        RequireInsidePanel(gearPanel, trainingCard);
+        RequireInsidePanel(gearPanel, accessoryCard);
+        AssertNoOverlap(gearRoot, trainingCard, 4f, "Gear screen polished card layout");
+        AssertNoOverlap(trainingCard, accessoryCard, 4f, "Gear screen polished card layout");
+
+        var titleObjects = new[]
+        {
+            RequireObjectField<TMP_Text>(controller, "gearTrainingTitleText").gameObject,
+            RequireObjectField<TMP_Text>(controller, "gearAccessoryTitleText").gameObject,
+            RequireObjectField<TMP_Text>(controller, "gearSlotNavText").gameObject,
+            RequireObjectField<TMP_Text>(controller, "gearRarityNavText").gameObject,
+        };
+
+        for (var i = 0; i < titleObjects.Length; i++)
+        {
+            RequireInsidePanel(gearPanel, titleObjects[i]);
+            var text = titleObjects[i].GetComponent<TMP_Text>();
+            if (text == null || string.IsNullOrWhiteSpace(text.text))
+            {
+                throw new InvalidOperationException($"{titleObjects[i].name} should show readable Gear section/navigation copy.");
+            }
+
+            AssertTextFits(text, titleObjects[i].name, "Gear screen polished section copy");
+        }
+
+        var slotNavText = RequireObjectField<TMP_Text>(controller, "gearSlotNavText");
+        var rarityNavText = RequireObjectField<TMP_Text>(controller, "gearRarityNavText");
+        var selectedSlot = RequireField<int>(controller, "selectedAccessorySlot");
+        var selectedRarity = RequireField<int>(controller, "selectedAccessoryRarity");
+        var expectedSlotName = (string)InvokePrivate(controller, "GetLocalizedAccessorySlotName", selectedSlot);
+        var expectedRarityName = (string)InvokePrivate(controller, "GetAccessoryRarityName", selectedRarity);
+        AssertTextContains(slotNavText, expectedSlotName, "Gear screen slot nav should name the selected accessory slot.");
+        AssertTextContains(rarityNavText, expectedRarityName, "Gear screen rarity nav should name the selected rarity.");
+
+        AssertNoOverlap(titleObjects[0], RequireObjectField<TMP_Text>(controller, "equipmentSummaryText").gameObject, 4f, "Gear screen polished section copy");
+        AssertNoOverlap(titleObjects[1], RequireObjectField<TMP_Text>(controller, "accessorySummaryText").gameObject, 4f, "Gear screen polished section copy");
+        AssertNoOverlap(titleObjects[2], RequireButtonField(controller, "accessoryPreviousSlotButton").gameObject, 4f, "Gear screen polished nav layout");
+        AssertNoOverlap(titleObjects[2], RequireButtonField(controller, "accessoryNextSlotButton").gameObject, 4f, "Gear screen polished nav layout");
+        AssertNoOverlap(titleObjects[3], RequireButtonField(controller, "accessoryPreviousRarityButton").gameObject, 4f, "Gear screen polished nav layout");
+        AssertNoOverlap(titleObjects[3], RequireButtonField(controller, "accessoryNextRarityButton").gameObject, 4f, "Gear screen polished nav layout");
+    }
+
     private static bool IsRawImageVisible(RawImage image)
     {
         return image != null
@@ -984,6 +1038,8 @@ public static class UpgradeClutterValidation
             RequireButtonField(controller, "accessoryNextSlotButton").gameObject,
             RequireButtonField(controller, "accessoryPreviousRarityButton").gameObject,
             RequireButtonField(controller, "accessoryNextRarityButton").gameObject,
+            RequireObjectField<TMP_Text>(controller, "gearSlotNavText").gameObject,
+            RequireObjectField<TMP_Text>(controller, "gearRarityNavText").gameObject,
             RequireButtonField(controller, "accessoryEquipButton").gameObject,
             RequireButtonField(controller, "accessoryLevelButton").gameObject,
             RequireButtonField(controller, "accessoryFuseButton").gameObject,
@@ -1033,6 +1089,7 @@ public static class UpgradeClutterValidation
             AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryFuseText"), "Fuse ", "Gear screen accessory fuse button should localize action copy.");
             AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryFuseText"), "Into ", "Gear screen accessory fuse button should localize target copy.");
             ValidateGearScreenSelectedAccessorySummary(controller);
+            ValidateGearScreenPolishLayout(controller, gearPanel);
             ValidateGearScreenControlLayout(controller, gearPanel);
         }
         finally
@@ -1426,13 +1483,13 @@ public static class UpgradeClutterValidation
 
     private static object InvokePrivate(object target, string methodName, params object[] args)
     {
-        var method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        var method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
         if (method == null)
         {
             throw new InvalidOperationException($"Missing private method: {methodName}");
         }
 
-        return method.Invoke(target, args);
+        return method.Invoke(method.IsStatic ? null : target, args);
     }
 
     private static T GetPrivateField<T>(object target, string fieldName)

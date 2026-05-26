@@ -28,6 +28,7 @@ Latest Android/device availability check:
 - Unity Android Build Support, SDK, NDK, and OpenJDK are installed under the Unity editor path.
 - `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk` succeeds. The ignored local artifact is `Builds/Android/Mythwake-0.2.137.apk`, 164,140,446 bytes. The cached Unity build report logged about 00:01:35.
 - A real Android install/start/logcat/touch/performance pass remains blocked by missing device/emulator access.
+- Latest recheck for Prototype `0.2.138`: `adb devices -l` is still empty and `adb get-state` returns `error: no devices/emulators found`. `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.138.apk` succeeds; the ignored local artifact is 164,143,730 bytes and the cached Unity build report logged about 00:01:30.
 
 Mobile UX issues addressed in Prototype `0.2.135`:
 
@@ -43,6 +44,7 @@ Current validation state for the mobile-portrait slice:
 - `git diff --check` passes with only LF-to-CRLF working-copy warnings for touched Markdown files.
 - `scripts/check-unity-current-slice.cmd` passes after the Mobile UX validator was narrowed to the actual runtime `Prototype UI` canvas.
 - `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk` passes.
+- `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.138.apk` passes after the Gear polish.
 - `scripts/capture-portrait-screenshots.cmd -OutputDirectory Builds\Android\portrait-screenshots` passes.
 - Current Slice coverage includes Home map/idle combat touch targets, reward strip fit, unit/reward separation, popup exclusivity, Village scroll/build/detail flows, Dungeons map zoom/marker spacing, Fast Rewards copy/progress/close flows, Summon result slots and repeat buttons, Hero Detail/Gear spacing and localized text fit, Gear action labels, combat result summary shape, Fight/Formation controls and result flow, and Paladin formation/fight handoff checks.
 
@@ -52,6 +54,7 @@ Mobile UX issues addressed in this continuation:
 - Captured 1080x1920 fallback PNGs under ignored local artifact path `Builds/Android/portrait-screenshots/` for Home, Home stage detail, Home patrol info, Village, Fast Rewards, Hero Detail, Gear, Summon, Summon result, Formation, and visible Fight.
 - Fixed Ravik/Paladin preview rigs so `ShowPreview` applies the first pose immediately, which makes batch screenshots and the first visible UI frame use the intended scale instead of oversized default rig transforms.
 - Reduced Ravik/Paladin Formation/Fight rig scale for the portrait battle layout. The fallback screenshots show Formation and visible Fight are substantially clearer after the fix.
+- Polished Gear after it showed up as the roughest fallback screen: the oversized empty parchment is hidden, Training and Accessory controls are grouped into compact dark cards, Slot/Rarity navigation now has readable labels, nav buttons use the brown action style, and Upgrade Clutter validation checks the new EN/DE layout.
 - Home idle patrol middle lane was moved above the reward strip and guarded by validation.
 - Gear selected-rarity copy now distinguishes bag/equipped copies, and local Gear action result copy is localized.
 - Combat result bodies now show server-like HP/ATK/enemy damage/result fields.
@@ -66,7 +69,7 @@ Not yet run in this pass:
 - Manual safe-area checks for notches, Android gesture navigation, and status/navigation bar cutouts.
 - Device performance/load-time sampling on Home Map, Hero Detail, Gear, Village, Summon, and Fight.
 
-Next Android pass should attach an emulator/device, install `Builds/Android/Mythwake-0.2.137.apk` or rerun `scripts/build-android.cmd`, then record screenshots, logcat, touch behavior, safe-area behavior, load time, and rough FPS/performance for Home, Hero Detail, Gear, Village/Fast Rewards, Summon, and Fight.
+Next Android pass should attach an emulator/device, install `Builds/Android/Mythwake-0.2.138.apk` or rerun `scripts/build-android.cmd`, then record screenshots, logcat, touch behavior, safe-area behavior, load time, and rough FPS/performance for Home, Hero Detail/Gear List, Gear, Village/Fast Rewards, Summon, Formation, Fight, and Result.
 
 ## Future Account Login Need
 
