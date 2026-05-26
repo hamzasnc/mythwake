@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.121`, save version `2`.
+- Unity client code is at Prototype `0.2.122`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -106,6 +106,7 @@ Last updated: 2026-05-26
 - Gear screen runtime showcase copy now names all visible equipment slots from the title area, and the upgrade clutter validator checks that the full label fits without overlapping the icon rows.
 - Gear screen summary text and upgrade/accessory controls now have clearer vertical spacing below the showcase, and the upgrade clutter validator checks those controls do not overlap the showcase or each other.
 - Gear screen accessory action copy is now localized for selected fuse tier, equip, level, empty, fuse, target tier, and floor labels, with German refresh coverage in the upgrade clutter validator.
+- Gear screen accessory selection now shows the selected rarity and current copy count inline, with Upgrade Clutter coverage in English and German refresh paths.
 - Gear screen accessory inventory copy counts now render as a compact two-line summary with auto-sized Gear text blocks, keeping the control stack readable in localized layouts.
 - The prototype UI builder now creates the Gear equipment/accessory controls in the current localized runtime layout with localized equipment names, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale builder placeholder copy.
 - Added backend `accessory_unequip` support, including the action catalog entry, `/gear/accessories/unequip` route, state mutation, and Player/HTTP tests.

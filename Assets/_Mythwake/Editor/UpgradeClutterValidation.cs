@@ -815,6 +815,7 @@ public static class UpgradeClutterValidation
         AssertButtonLabel(RequireButtonField(controller, "accessoryNextRarityButton"), ">", "Gear screen next rarity button should use compact arrow copy.");
         ValidateGearScreenRuntimeArt(gearPanel);
         ValidateGearScreenControlLayout(controller, gearPanel);
+        ValidateGearScreenSelectedAccessorySummary(controller);
         ValidateGearScreenLanguageRefresh(controller, gearPanel);
     }
 
@@ -994,6 +995,7 @@ public static class UpgradeClutterValidation
             AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryLevelText"), "No item", "Gear screen accessory level button should localize empty copy.");
             AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryFuseText"), "Fuse ", "Gear screen accessory fuse button should localize action copy.");
             AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryFuseText"), "Into ", "Gear screen accessory fuse button should localize target copy.");
+            ValidateGearScreenSelectedAccessorySummary(controller);
             ValidateGearScreenControlLayout(controller, gearPanel);
         }
         finally
@@ -1005,11 +1007,59 @@ public static class UpgradeClutterValidation
         }
     }
 
+    private static void ValidateGearScreenSelectedAccessorySummary(IdlePrototypeController controller)
+    {
+        const int slot = 1;
+        const int rarity = 3;
+        const int addedCopies = 2;
+        var originalSlot = RequireField<int>(controller, "selectedAccessorySlot");
+        var originalRarity = RequireField<int>(controller, "selectedAccessoryRarity");
+        var originalCopies = (int)InvokePrivate(controller, "GetAccessoryInventoryCount", slot, rarity);
+        var addedInventoryCopies = false;
+
+        try
+        {
+            SetPrivateField(controller, "selectedAccessorySlot", slot);
+            SetPrivateField(controller, "selectedAccessoryRarity", rarity);
+            InvokePrivate(controller, "AddAccessoryInventory", slot, rarity, addedCopies);
+            addedInventoryCopies = true;
+            InvokePrivate(controller, "RefreshUi");
+            controller.ShowGear();
+            Canvas.ForceUpdateCanvases();
+
+            var selectedText = RequireObjectField<TMP_Text>(controller, "accessorySelectedText");
+            AssertTextContains(selectedText, "R3", "Gear screen selected accessory summary should show the selected rarity.");
+            AssertTextContains(selectedText, $"{GetLocalizedText(controller, "ui.common.copies")} {originalCopies + addedCopies}", "Gear screen selected accessory summary should show selected-rarity copy count.");
+            AssertTextFits(selectedText, selectedText.name, "Gear screen selected accessory summary");
+        }
+        finally
+        {
+            if (addedInventoryCopies)
+            {
+                InvokePrivate(controller, "AddAccessoryInventory", slot, rarity, -addedCopies);
+            }
+
+            SetPrivateField(controller, "selectedAccessorySlot", originalSlot);
+            SetPrivateField(controller, "selectedAccessoryRarity", originalRarity);
+            InvokePrivate(controller, "RefreshUi");
+            controller.ShowGear();
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
     private static void AssertTextDoesNotContain(TMP_Text text, string forbiddenText, string message)
     {
         if (text != null && text.text.Contains(forbiddenText))
         {
             throw new InvalidOperationException($"{message} Got '{text.text}'.");
+        }
+    }
+
+    private static void AssertTextContains(TMP_Text text, string expectedText, string message)
+    {
+        if (text == null || !text.text.Contains(expectedText))
+        {
+            throw new InvalidOperationException($"{message} Expected '{expectedText}', got '{text?.text}'.");
         }
     }
 

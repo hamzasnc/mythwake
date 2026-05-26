@@ -55,7 +55,7 @@ public static partial class MythwakeLocalization
         { "ui.common.open_gear_short", "Open Gear" },
         { "ui.common.remove_gear", "Remove Gear" },
         { "ui.common.open_gear", "Open Gear screen for {0}" },
-        { "gear.selected_fuse_tier", "Selected fuse tier: {0}" },
+        { "gear.selected_fuse_tier", "Selected rarity: {0}" },
         { "gear.equip_rarity", "Equip {0}" },
         { "gear.level_equipped", "Level Equipped" },
         { "gear.no_item", "No item" },

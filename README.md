@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.121
+Prototype version: 0.2.122
 Local save version: 2
 
 Current prototype:
@@ -79,7 +79,7 @@ Current prototype:
 - Hero Detail shows all equipment/accessory slots, keeps starter Weapon/Armor training icons visible, only renders accessory icon art once gear is equipped, keeps empty accessory slots visually empty even when bag copies exist, keeps previous/next navigation clear of the gear-slot columns, uses localized contextual gear action labels, prioritizes owned copies in accessory slot lists, and supports accessory removal locally and in Server Mode
 - Hero Detail labels starter Weapon/Armor slots and rows as training tracks instead of claiming they are equipped item instances
 - Gear screen keeps equipment summaries, accessory text, and gear action controls stacked below the showcase with validator coverage for spacing
-- Gear screen accessory action labels are localized and covered by German refresh validation
+- Gear screen accessory selection now shows the selected rarity plus copy count inline, and accessory action labels are localized and covered by German refresh validation
 - Gear screen accessory inventory copy counts use a compact two-line summary with auto-sized text
 - Prototype UI builder now creates Gear controls in the current localized runtime layout with localized equipment names, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale Gear placeholder copy
 
@@ -177,6 +177,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.122: Added selected-rarity copy count to the Gear accessory slot summary, renamed the old fuse-tier copy to selected rarity, and extended Upgrade Clutter validation for EN/DE copy fit.
 - Prototype 0.2.121: Added a Village bonus summary hint for local and Server Mode state, kept the widened detail body layout stable, and extended Village UI validation for the hint.
 - Prototype 0.2.120: Added next/max bonus preview copy to Village building details and validator coverage for the extra detail state.
 - Prototype 0.2.119: Added a Fast Rewards progress bar/status line for local stored time and Server Mode claim readiness, with validator coverage for fill percent and text fit.
