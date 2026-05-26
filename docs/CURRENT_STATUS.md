@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.115`, save version `2`.
+- Unity client code is at Prototype `0.2.116`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -45,6 +45,7 @@ Last updated: 2026-05-26
 - Home campaign cleared nodes now show a small OK badge, and the Home idle validator checks that current and locked nodes do not inherit the cleared marker.
 - Home campaign locked nodes now show a small LOCK badge, and the Home idle validator checks that cleared and current nodes do not inherit the locked marker.
 - Home campaign current nodes now show a small ZIEL badge in addition to the current halo, and the Home idle validator checks that cleared and locked nodes do not inherit the target marker.
+- Home campaign stage previews now tint the panel and show a non-intercepting state accent for cleared/current/locked selections, with Home idle validator coverage.
 - Home campaign boss nodes now show a visible Boss badge, and the Home idle validator checks boss and non-boss badge state.
 - Home campaign non-boss milestone nodes now show a visible Bonus badge while boss milestones keep the Boss badge, with Home idle validator coverage.
 - Home campaign stage previews now include Boss/Bonus/Normal tags plus compact special-reward hints, with Home idle validator coverage for preview copy and fit.

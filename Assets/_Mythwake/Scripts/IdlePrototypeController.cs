@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.115";
+    public const string PrototypeVersion = "0.2.116";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1283,6 +1283,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text homeIdleInfoBodyText;
     private Button homeIdleInfoCloseButton;
     private RectTransform campaignStagePreviewRoot;
+    private Image campaignStagePreviewPanelImage;
+    private Image campaignStagePreviewStateAccent;
     private TMP_Text campaignStagePreviewText;
     private RectTransform campaignStageDetailPopupRoot;
     private TMP_Text campaignStageDetailTitleText;
@@ -14224,6 +14226,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         campaignStagePreviewRoot = CreateRuntimePanel(homeCampaignMapRoot, "Campaign Stage Preview", new Vector2(0, -836), new Vector2(800, 104), new Color(0.03f, 0.035f, 0.055f, 0.84f));
+        campaignStagePreviewPanelImage = campaignStagePreviewRoot.GetComponent<Image>();
+        var previewAccent = CreateRuntimePanel(campaignStagePreviewRoot, "Campaign Stage Preview State Accent", new Vector2(-390, -8), new Vector2(14, 88), new Color(1f, 0.84f, 0.28f, 0.86f));
+        campaignStagePreviewStateAccent = previewAccent.GetComponent<Image>();
         campaignStagePreviewText = CreateRuntimeText(campaignStagePreviewRoot, "Campaign Stage Preview Text", string.Empty, 21, new Vector2(0, -13), new Vector2(740, 82));
         campaignStagePreviewText.enableAutoSizing = true;
         campaignStagePreviewText.fontSizeMin = 16;
@@ -18990,19 +18995,66 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var stageNumber = Mathf.Max(1, selectedCampaignStage);
         var stage = GetStageDefinition(stageNumber);
-        var status = stageNumber < enemyLevel ? "Abgeschlossen" : stageNumber == enemyLevel ? "Aktuelles Ziel" : "Gesperrt";
+        var isCleared = stageNumber < enemyLevel;
+        var isCurrent = stageNumber == enemyLevel;
+        var isLocked = stageNumber > enemyLevel;
+        var status = isCleared ? "Abgeschlossen" : isCurrent ? "Aktuelles Ziel" : "Gesperrt";
         var stageType = GetCampaignStageTypeLabel(stageNumber);
         var specialNote = GetCampaignStagePreviewSpecialNote(stageNumber);
         var requiredPower = GetStageRecommendedPower(stageNumber);
-        var fightLine = stageNumber == enemyLevel
+        var fightLine = isCurrent
             ? "Battle -> Formation; Idle sammelt nur kleine Beute."
-            : stageNumber < enemyLevel
+            : isCleared
                 ? "Replay spaeter."
                 : "Erst aktuellen Abschnitt abschliessen.";
+        if (campaignStagePreviewPanelImage != null)
+        {
+            campaignStagePreviewPanelImage.color = GetCampaignStagePreviewPanelColor(isCleared, isCurrent, isLocked);
+        }
+
+        if (campaignStagePreviewStateAccent != null)
+        {
+            campaignStagePreviewStateAccent.color = GetCampaignStagePreviewAccentColor(isCleared, isCurrent, isLocked);
+        }
+
         campaignStagePreviewText.text =
             $"Abschnitt {GetCampaignStageLabel(stageNumber)}: {stage.enemyName}  |  {stageType}  |  {status}\n" +
             $"{Tr("ui.common.power")} {FormatCompactNumber(GetTeamPower())}/{FormatCompactNumber(requiredPower)}  {Tr("ui.common.reward")} +{stage.essenceReward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}\n" +
             $"{specialNote} {fightLine}";
+    }
+
+    private static Color GetCampaignStagePreviewPanelColor(bool isCleared, bool isCurrent, bool isLocked)
+    {
+        if (isCurrent)
+        {
+            return new Color(0.075f, 0.035f, 0.105f, 0.88f);
+        }
+
+        if (isCleared)
+        {
+            return new Color(0.035f, 0.085f, 0.062f, 0.86f);
+        }
+
+        return isLocked
+            ? new Color(0.028f, 0.034f, 0.052f, 0.88f)
+            : new Color(0.03f, 0.035f, 0.055f, 0.84f);
+    }
+
+    private static Color GetCampaignStagePreviewAccentColor(bool isCleared, bool isCurrent, bool isLocked)
+    {
+        if (isCurrent)
+        {
+            return new Color(1f, 0.84f, 0.28f, 0.9f);
+        }
+
+        if (isCleared)
+        {
+            return new Color(0.32f, 0.95f, 0.58f, 0.82f);
+        }
+
+        return isLocked
+            ? new Color(0.52f, 0.62f, 0.82f, 0.66f)
+            : new Color(1f, 0.84f, 0.28f, 0.86f);
     }
 
     private void RefreshCampaignStageDetailPopupUi()

@@ -16,7 +16,7 @@ public static class HomeIdleCombatValidation
         try
         {
             ValidateHomeIdleCombatUi();
-            Debug.Log("Home Idle Combat validated: campaign map, current-stage marker, boss node badges, path progress colors, region texture/UV sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
+            Debug.Log("Home Idle Combat validated: campaign map, current-stage marker, boss node badges, path progress colors, stage-preview state tint, region texture/UV sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
         }
         catch (Exception ex)
         {
@@ -59,6 +59,12 @@ public static class HomeIdleCombatValidation
 
         var preview = RequireObject("Campaign Stage Preview", true);
         var previewText = RequireText(preview, "Campaign Stage Preview Text");
+        var previewAccent = RequireChildObject(preview, "Campaign Stage Preview State Accent").GetComponent<Image>();
+        if (previewAccent == null || previewAccent.raycastTarget)
+        {
+            throw new InvalidOperationException("Campaign Stage Preview State Accent should be a non-intercepting Image.");
+        }
+
         RequireCopy(previewText.text, "Abschnitt");
         RequireCopy(previewText.text, "Idle sammelt nur kleine Beute");
         AssertTextFits(previewText, "Campaign Stage Preview Text");
@@ -113,6 +119,7 @@ public static class HomeIdleCombatValidation
         ValidateCampaignBossNodeBadges(controller);
         ValidateCampaignMilestoneNodeBadges(controller);
         ValidateCampaignStagePreviewTags(controller);
+        ValidateCampaignStagePreviewStateTint(controller);
         ValidateCampaignStageDetailTags(controller);
 
         var idleRoot = RequireObject("Home Idle Combat Root", true);
@@ -816,6 +823,77 @@ public static class HomeIdleCombatValidation
             SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
             InvokePrivate(controller, "RefreshCampaignMapUi");
             Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void ValidateCampaignStagePreviewStateTint(IdlePrototypeController controller)
+    {
+        var enemyLevelBefore = GetPrivateField<int>(controller, "enemyLevel");
+        var selectedStageBefore = GetPrivateField<int>(controller, "selectedCampaignStage");
+        var centerBefore = GetPrivateField<bool>(controller, "homeCampaignMapNeedsCenter");
+        var preview = RequireObject("Campaign Stage Preview", true);
+        var previewImage = preview.GetComponent<Image>();
+        var previewAccent = RequireChildObject(preview, "Campaign Stage Preview State Accent").GetComponent<Image>();
+
+        if (previewImage == null || previewAccent == null)
+        {
+            throw new InvalidOperationException("Campaign stage preview should expose panel and state accent images.");
+        }
+
+        try
+        {
+            SetPrivateField(controller, "enemyLevel", 6);
+            SetPrivateField(controller, "selectedCampaignStage", 4);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", true);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+            AssertPreviewStateTint(previewImage.color, previewAccent.color, "cleared");
+
+            SetPrivateField(controller, "selectedCampaignStage", 6);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+            AssertPreviewStateTint(previewImage.color, previewAccent.color, "current");
+
+            SetPrivateField(controller, "selectedCampaignStage", 8);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+            AssertPreviewStateTint(previewImage.color, previewAccent.color, "locked");
+        }
+        finally
+        {
+            SetPrivateField(controller, "enemyLevel", enemyLevelBefore);
+            SetPrivateField(controller, "selectedCampaignStage", selectedStageBefore);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void AssertPreviewStateTint(Color panel, Color accent, string state)
+    {
+        if (state == "cleared")
+        {
+            if (panel.g <= panel.r || panel.g <= panel.b || accent.g <= accent.r || accent.g <= accent.b || accent.a < 0.7f)
+            {
+                throw new InvalidOperationException($"Cleared campaign preview should tint green, got panel={panel}, accent={accent}.");
+            }
+
+            return;
+        }
+
+        if (state == "current")
+        {
+            if (panel.b <= panel.r || accent.r < 0.9f || accent.g < 0.7f || accent.b > 0.5f || accent.a < 0.75f)
+            {
+                throw new InvalidOperationException($"Current campaign preview should keep a purple panel with gold accent, got panel={panel}, accent={accent}.");
+            }
+
+            return;
+        }
+
+        if (accent.b <= accent.r || accent.b <= accent.g || panel.b <= panel.r || accent.a < 0.55f)
+        {
+            throw new InvalidOperationException($"Locked campaign preview should tint blue-gray, got panel={panel}, accent={accent}.");
         }
     }
 
