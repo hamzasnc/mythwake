@@ -18,11 +18,28 @@ The current internal test stand should prove that the core loop works with the G
 
 ## Mobile UX Pass 2026-05-26
 
-Batchmode validation is green for the current mobile-portrait slice:
+Latest Android/device availability check:
+
+- Project has an Android Build Profile at `Assets/Settings/Build Profiles/Android™.asset`.
+- The repo still has no checked-in Android build/install helper script.
+- `adb` is not available on PATH, but Unity's embedded Android SDK includes `C:\Program Files\Unity\Hub\Editor\6000.4.5f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe`.
+- Unity's embedded `adb devices -l` found no attached Android emulator or physical device.
+- No emulator executable was found in the Unity embedded SDK or `%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe`.
+- Unity batchmode Android/current-slice attempts are currently blocked because another Unity instance has `D:\Github\mythwake` open. Use the editor menu `Mythwake/Validate Current Slice` in the open editor, or close it before rerunning batchmode.
+
+Mobile UX issues addressed in Prototype `0.2.135`:
+
+- Project PlayerSettings now default to portrait `1080x1920` instead of landscape `1920x1080`.
+- Android landscape and upside-down autorotation are disabled for the tester baseline.
+- OS autorotation override is disabled so the portrait test layout remains stable.
+- Android render-outside-safe-area is disabled until runtime safe-area padding is implemented.
+- Current Slice now includes `Mythwake/Validate Mobile UX`, covering portrait settings, CanvasScaler reference shape, version label fit, top/bottom chrome bounds, bottom-nav and side-nav touch target sizes, and navigation to Home, Village, Dungeons, Heroes, Gear, Summon, Shop, and Battle.
+
+Current validation state for the mobile-portrait slice:
 
 - `scripts/check-unity-csharp.cmd` passes.
-- `scripts/check-unity-current-slice.cmd` passes.
-- `git diff --check` passes, with the usual LF/CRLF warnings on touched Markdown files.
+- `git diff --check` passes.
+- `scripts/check-unity-current-slice.cmd` previously passed for the Village balance/admin pass, but the latest Mobile UX rerun is blocked by the open Unity instance noted above.
 - Current Slice coverage includes Home map/idle combat touch targets, reward strip fit, unit/reward separation, popup exclusivity, Village scroll/build/detail flows, Dungeons map zoom/marker spacing, Fast Rewards copy/progress/close flows, Summon result slots and repeat buttons, Hero Detail/Gear spacing and localized text fit, Gear action labels, combat result summary shape, Fight/Formation controls and result flow, and Paladin formation/fight handoff checks.
 
 Mobile UX issues addressed in this continuation:
@@ -35,11 +52,11 @@ Mobile UX issues addressed in this continuation:
 
 Not yet run in this pass:
 
-- A real Android APK/AAB build, emulator install, or physical-device run. The repo currently has an Android Build Profile, but no checked-in build/install helper script.
+- A real Android APK/AAB build, emulator install, or physical-device run.
 - Manual safe-area checks for notches, Android gesture navigation, and status/navigation bar cutouts.
 - Device performance/load-time sampling on Home Map, Hero Detail, Gear, Village, Summon, and Fight.
 
-Next Android pass should either add a reproducible Unity Android build script or run the Android Build Profile manually, then record emulator/device screenshots for Home, Hero Detail, Gear, Village, Summon, and Fight.
+Next Android pass should attach an emulator/device, add or run a reproducible Unity Android build/install path, then record screenshots for Home, Hero Detail, Gear, Village, Summon, and Fight.
 
 ## Server Mode Rules
 

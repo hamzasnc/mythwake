@@ -28,9 +28,11 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `abee157 Validate fight formation slice`
+- `ad77a97 Add editable village balance fields`
 
 Current continuation:
+- Prototype `0.2.135` tightens the Android/mobile baseline by switching PlayerSettings to portrait 1080x1920, disabling landscape/upside-down autorotation and Android render-outside-safe-area, and adding `Mythwake/Validate Mobile UX` into Current Slice for portrait settings, CanvasScaler, version label fit, mobile nav touch targets, and core screen navigation.
+- A real Android device/emulator run is still blocked on this machine: Unity's embedded `adb` exists, but no device is attached, no emulator executable was found, there is no checked-in Android build/install helper, and batchmode Unity build/Current Slice attempts currently fail because another Unity instance has this project open.
 - Prototype `0.2.134` / Backend `0.2.58` adds editable Village balance/admin fields across static backend definitions, `/definitions`, PostgreSQL migration `0029_village_balance_admin_fields.sql`, and `debug.v_common_village_building_balance`; Unity local fallback values now match backend Village balance, and the Village/Fast Rewards validators check labels, curves, formulas, mode compatibility, and local/server bonus display.
 - Prototype `0.2.133` / Backend `0.2.57` makes Village AFK-rate bonuses server-authoritative for AFK claims: built Village definitions with `afk_gold_rate` and `afk_essence_rate` now add Gold/Essence during backend AFK reward claims, while Server Mode keeps local client bonuses paused to avoid double counting.
 - Prototype `0.2.132` adds `Mythwake/Validate Fight Formation UI` and wires it into `Mythwake/Validate Current Slice`; the validator covers campaign Formation swap, auto-next toggle, visible Fight controls, AUTO/x2 state, HP/mana skill cards, ultimate queueing, result-popup Continue flow, and dungeon fight focus chrome hiding.
@@ -39,7 +41,7 @@ Current continuation:
 - Village building data now has a client-side definition layer per plot/option: stable building ID, display name, texture, build cost, max level, upgrade cost-per-level, bonus type, bonus label, bonus curve, upgrade formula, mode compatibility, and bonus value per level live together instead of being spread across local arrays/helpers.
 - `Validate Village UI` now checks all 12x3 Village definitions for stable IDs, build costs, max level, loaded texture, expected bonus labels/values, linear bonus curve, upgrade formula, and local/server mode compatibility while Server Mode still pauses local Village bonuses.
 - Prototype Builder Gear defaults now use `gear.selected_rarity` instead of the stale selected fuse-tier key, so `Validate Upgrade Clutter` and the full Current Slice no longer fail after a UI rebuild.
-- `go test ./...`, `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `scripts/check-backend.cmd -BaseUrl http://localhost:18081 -CheckUnauthorized` passed on 2026-05-26 after the Village balance/admin field pass; run `git diff --check` before committing further edits.
+- `go test ./...`, `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `scripts/check-backend.cmd -BaseUrl http://localhost:18081 -CheckUnauthorized` passed on 2026-05-26 after the Village balance/admin field pass. In the Mobile UX pass, `scripts/check-unity-csharp.cmd` and `git diff --check` pass, while `scripts/check-unity-current-slice.cmd` is blocked by the open Unity instance.
 - Village building detail now shows both current bonus and `Naechster Bonus` / `Max Bonus`, and `Validate Village UI` checks the extra detail line.
 - Fast Rewards now has a compact progress bar/status line under the popup copy. Local mode shows stored percent plus cap-left state, Server Mode shows synced timer progress plus wait/ready state, and `Validate Fast Rewards UI` checks progress text fit and fill percentages.
 - Dungeons map zoom buttons now register their listeners through the runtime zoom-control setup path, so `Validate Dungeons UI` can exercise zoom in/out and clamp behavior without relying on a separate startup listener path.
@@ -73,7 +75,7 @@ Current continuation:
 - Fast Rewards UI validator in `Assets/_Mythwake/Editor/FastRewardsUiValidation.cs`.
 - Summon UI validator in `Assets/_Mythwake/Editor/SummonUiValidation.cs`.
 - Upgrade clutter validator in `Assets/_Mythwake/Editor/UpgradeClutterValidation.cs` checks that old Battle/Hero upgrade controls stay hidden, Gear upgrade controls live on Gear, Gear navigation uses compact arrow labels, Gear builder defaults do not recreate stale placeholder copy, Gear showcase art loads/fits without intercepting input, the Gear showcase label names all visible equipment slots, fits, and does not overlap the icon rows, Hero Detail gear slots do not overlap the portrait/stats/actions, Hero Detail gear lists stay inside their popup, equipment/accessory list rows switch correctly, localized/contextual Hero Detail action labels and gear-list rows are correct after a German language refresh and do not overflow, and debug shortcuts live in Shop/tools.
-- Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Dungeons UI, Fast Rewards UI, Summon UI, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff checks in one pass.
+- Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Dungeons UI, Fast Rewards UI, Mobile UX, Summon UI, Upgrade Clutter, Home Idle Combat, Fight Formation UI, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Current status summary in `docs/CURRENT_STATUS.md` and this handoff note.
 
 ## User Preferences And Product Intent
@@ -119,7 +121,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.134`
+- Prototype `0.2.135`
 - Save version `2`
 
 Important Unity scripts:
@@ -147,7 +149,7 @@ Latest local gameplay/UI batch:
 - The Home idle validator also checks locked checkpoint detail Battle guards under direct invocation and verifies local campaign clear action results carry a non-empty Myth Essence reward payload.
 - The Home idle validator now also checks popup exclusivity between Fast Rewards, Patrol Info, and checkpoint details.
 - The Summon UI validator now checks visible result-slot text fit/art, hidden unused result cards, Auto-Summon toggle mark state, and result close flow.
-- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Dungeons map/zoom clamp/Formation entry and back navigation, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Home Idle Combat, Fight/Formation visible controls and result flow, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode; the latest batchmode Current Slice passed after this continuation.
+- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Dungeons map/zoom clamp/Formation entry and back navigation, Fast Rewards, Mobile UX, Summon/Vanguard Oath, Upgrade Clutter, Home Idle Combat, Fight/Formation visible controls and result flow, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode when no editor instance has the project open.
 - Hero Detail now exposes all 2 equipment tracks plus all 6 accessory slots with armory background, visible starter Weapon/Armor training icons, and equipped-only accessory slot icon art. The localized main gear action shows Open Gear for starter Weapon/Armor training tracks and Equip Gear for accessory slots, starter Weapon/Armor slots and rows are labeled as training, empty accessory slots stay visually empty even when bag copies exist and after German refresh, accessory lists put owned copies above empty rows and higher rarity first inside each group with visible copy/tap-to-equip text, the selected equipment/accessory slot list opens instead of immediately leaving for Gear, the equipment list's Open Gear row navigates to the Gear screen, the validator keeps training slot/row wording through German refresh, and Remove Gear unequips accessories locally or through Server Mode via `/gear/accessories/unequip`.
 - Hero Detail and Gear equipment icon loading now has an Editor asset-path fallback plus blank-placeholder protection, so missing textures no longer appear as white RawImage blocks and the upgrade clutter validator catches hidden/white placeholder art, including equipped Hero Detail accessory icons after German refresh.
 - Hero Detail previous/next buttons have been pulled inward below the hero stage so they no longer collide with the lower gear slots; the upgrade clutter validator now checks that spacing.
@@ -174,7 +176,7 @@ Latest local gameplay/UI batch:
 - Multiple heroes/enemies can attack at the same time; combat is no longer an A -> B -> C alternating sequence.
 - Local Campaign/Dungeon fight result bodies now mirror the server combat summary shape more closely: Team HP, Enemy HP, Team ATK, Enemy DMG, dealt/taken damage, healing, crits, misses, and execute flags are shown consistently and covered by Upgrade Clutter validation.
 - Home Next Goal now points through the early loop in order: push Campaign when Power is ready, otherwise Gear drops/equip, Weapon/Armor/accessory/Hero upgrades, affordable Village build/upgrade, Gear Dungeon drops, Summon shards, or concrete Gold/Essence/Power farm gaps. Home validation checks the campaign-power hint path.
-- `docs/UNITY_TEST_STAND.md` records the 2026-05-26 Mobile UX pass. Batchmode Current Slice/C# validation covers the main portrait UI paths; an actual Android APK/emulator/device run is still open because this repo has no reproducible Android build/install helper yet.
+- `docs/UNITY_TEST_STAND.md` records the 2026-05-26 Mobile UX pass. Android PlayerSettings are now portrait-only/safe-area-friendlier and Current Slice includes a Mobile UX validator, but an actual Android APK/emulator/device run is still open because no device/emulator is attached and the open Unity editor blocks batchmode.
 - Normal hits reduce only one target HP bar.
 - Fight UI now has bottom hero skill cards with portrait, per-character mana bar, ready glow, click-to-queue ultimate, and an AUTO toggle above the right side of the cards.
 - Character mana is per hero, not team-wide. Heroes start at 0, no longer gain passive timer mana, gain +2 mana on successful hits, and each hero has a different max mana.
@@ -214,12 +216,12 @@ Latest backend combat direction:
 Latest verification notes:
 - `go test ./...` passes from `backend/`.
 - `scripts/check-unity-csharp.cmd` passes runtime/editor C# MSBuild checks through Unity's bundled .NET Framework references, with existing Unity serialization/Paladin JSON field warnings.
-- `scripts/check-unity-current-slice.cmd` passes in Unity batchmode; no open Unity instance blocked this run.
-- `scripts/check-backend.cmd -BaseUrl http://localhost:18081` passes against a temporary no-DB API started from the current tree.
-- `git diff --check` passes, with expected LF-to-CRLF warnings on touched files.
+- `scripts/check-unity-current-slice.cmd` previously passed after the Village balance/admin pass, but the latest Mobile UX rerun is blocked by an open Unity instance for this project.
+- `scripts/check-backend.cmd -BaseUrl http://localhost:18081` passed against a temporary no-DB API in the previous backend-affecting pass; the Mobile UX pass did not touch backend files.
+- `git diff --check` passes, with expected LF-to-CRLF warnings on touched Markdown files.
 - Direct `dotnet build` fails on this machine because .NET Framework 4.7.1 reference assemblies are not installed globally.
 - Plain MSBuild without `/p:LangVersion=latest` can fail because the generated Unity csproj still says C# 7.3 while current code uses newer syntax.
-- Unity batchmode validation command is prepared, the `.cmd` wrapper propagates PowerShell failures correctly, and full current-slice execution passed in the current run.
+- Unity batchmode validation command is prepared, the `.cmd` wrapper propagates PowerShell failures correctly, and full current-slice execution should be rerun after the open editor stops blocking batchmode.
   - Main local gameplay, UI runtime construction, backend mode switching, save/load, action handlers.
   - It is currently large/monolithic. Be careful with surgical edits.
 - `Assets/_Mythwake/Scripts/MythwakeBackendClient.cs`
