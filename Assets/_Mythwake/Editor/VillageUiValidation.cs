@@ -211,6 +211,7 @@ public static class VillageUiValidation
         RequireCopy(detailBody.text, $"Lv. {level}", $"Village plot {plotIndex + 1} detail");
         RequireCopy(detailBody.text, "Bonus:", $"Village plot {plotIndex + 1} detail");
         RequireCopy(detailBody.text, expectedBonus, $"Village plot {plotIndex + 1} detail");
+        RequireCopy(detailBody.text, expectUpgradeInteractable ? "Naechster Bonus:" : "Max Bonus:", $"Village plot {plotIndex + 1} detail");
         RequireCopy(detailBody.text, expectedProgressionCopy, $"Village plot {plotIndex + 1} detail");
         RequireCopy(detailBody.text, "Vorhanden:", $"Village plot {plotIndex + 1} detail");
         AssertTextFits(detailBody, $"Village plot {plotIndex + 1} detail body");

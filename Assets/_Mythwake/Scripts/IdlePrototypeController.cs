@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.119";
+    public const string PrototypeVersion = "0.2.120";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -15980,10 +15980,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             villageDemolishPanelRoot = CreateRuntimePopup(villagePanel.transform, "Village Building Detail Panel", new Vector2(0f, -880f), new Vector2(720f, 310f), "Gebaeude");
             villageDemolishPanelTitleText = villageDemolishPanelRoot.Find("Title")?.GetComponent<TMP_Text>();
-            villageDemolishPanelBodyText = CreateRuntimeText(villageDemolishPanelRoot, "Village Building Detail Body", string.Empty, 20, new Vector2(0f, -118f), new Vector2(620f, 112f));
+            villageDemolishPanelBodyText = CreateRuntimeText(villageDemolishPanelRoot, "Village Building Detail Body", string.Empty, 18, new Vector2(0f, -100f), new Vector2(620f, 132f));
             villageDemolishPanelBodyText.enableAutoSizing = true;
-            villageDemolishPanelBodyText.fontSizeMin = 15;
-            villageDemolishPanelBodyText.fontSizeMax = 20;
+            villageDemolishPanelBodyText.fontSizeMin = 12;
+            villageDemolishPanelBodyText.fontSizeMax = 18;
             villageDemolishPanelBodyText.color = new Color(0.86f, 0.92f, 1f);
             villageUpgradeButton = CreateRuntimeButton(villageDemolishPanelRoot, "Village Upgrade Button", "Aufwerten", -220f, -248f, 200f, 52f);
             villageDemolishButton = CreateRuntimeButton(villageDemolishPanelRoot, "Village Demolish Button", "Abreissen", 0f, -248f, 200f, 52f);
@@ -16397,9 +16397,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                     ? "Max Level erreicht."
                     : $"Upgrade auf Lv. {buildingLevel + 1}: {GetVillageBuildingUpgradeCost(buildingLevel)} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}";
                 var bonusText = GetVillageBuildingBonusText(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex), buildingLevel);
+                var nextBonusText = GetVillageBuildingNextBonusText(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex), buildingLevel);
+                var detailText =
+                    $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))} Lv. {buildingLevel}\n" +
+                    $"{bonusText}\n" +
+                    $"{nextBonusText}\n" +
+                    $"{nextUpgradeText}\n" +
+                    $"Vorhanden: {mythEssence} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}";
                 villageDemolishPanelBodyText.text = !string.IsNullOrEmpty(villageBuildFeedbackMessage)
-                    ? villageBuildFeedbackMessage
-                    : $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))} Lv. {buildingLevel}\n{bonusText}\n{nextUpgradeText}\nVorhanden: {mythEssence} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}";
+                    ? $"{villageBuildFeedbackMessage}\n{detailText}"
+                    : detailText;
             }
             else
             {
@@ -16598,31 +16605,43 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static string GetVillageBuildingBonusText(int plotIndex, int optionIndex, int level)
     {
+        return $"Bonus: {GetVillageBuildingBonusValueText(plotIndex, optionIndex, level)}";
+    }
+
+    private static string GetVillageBuildingNextBonusText(int plotIndex, int optionIndex, int level)
+    {
+        return level >= VillageBuildingMaxLevel
+            ? $"Max Bonus: {GetVillageBuildingBonusValueText(plotIndex, optionIndex, level)}"
+            : $"Naechster Bonus: {GetVillageBuildingBonusValueText(plotIndex, optionIndex, level + 1)}";
+    }
+
+    private static string GetVillageBuildingBonusValueText(int plotIndex, int optionIndex, int level)
+    {
         var attackBonus = GetVillageBuildingAttackBonus(plotIndex, optionIndex, level);
         if (attackBonus > 0)
         {
-            return $"Bonus: +{attackBonus} Team ATK";
+            return $"+{attackBonus} Team ATK";
         }
 
         var healthBonus = GetVillageBuildingHealthBonus(plotIndex, optionIndex, level);
         if (healthBonus > 0)
         {
-            return $"Bonus: +{healthBonus} Team HP";
+            return $"+{healthBonus} Team HP";
         }
 
         var goldRateBonus = GetVillageBuildingGoldRateBonus(plotIndex, optionIndex, level);
         if (goldRateBonus > 0f)
         {
-            return $"Bonus: +{FormatRate(goldRateBonus)} Gold/s Fast Rewards";
+            return $"+{FormatRate(goldRateBonus)} Gold/s Fast Rewards";
         }
 
         var essenceRateBonus = GetVillageBuildingEssenceRateBonus(plotIndex, optionIndex, level);
         if (essenceRateBonus > 0f)
         {
-            return $"Bonus: +{FormatRate(essenceRateBonus)} Essence/s Fast Rewards";
+            return $"+{FormatRate(essenceRateBonus)} Essence/s Fast Rewards";
         }
 
-        return "Bonus: in Vorbereitung";
+        return "in Vorbereitung";
     }
 
     private static int GetVillageBuildingAttackBonus(int plotIndex, int optionIndex, int level)

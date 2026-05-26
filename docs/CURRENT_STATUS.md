@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.119`, save version `2`.
+- Unity client code is at Prototype `0.2.120`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -26,6 +26,7 @@ Last updated: 2026-05-26
 - Wired the button to local Myth Essence spending and to the existing backend `/village/upgrade` action in Server Mode.
 - Added an editor validation entry point for the Village UI so map, build panel, building detail, upgrade, demolish, close controls, bonus detail categories, and max-level upgrade lockout can be checked in Unity.
 - Added visible placeholder Village bonuses; local mode applies small Team ATK/HP or Fast Rewards rate boosts from built building type and level.
+- Village building detail now shows both the current bonus and either the next upgrade's bonus or the max bonus, with validator coverage for the extra detail line.
 - Kept Village bonuses local-only until a proper Village balance/definition pass, so Server Mode remains backend-authoritative.
 - Polished the Fast Rewards popup so local mode shows stored time, rate, Village bonus, and ready rewards, while Server Mode shows backend min/cap/rate/ready estimate.
 - Added an editor validation entry point for the Fast Rewards popup so local copy, 0s/capped 24h states, Server Mode fallback copy, redeem/claim labels, button state, text fit, and control bounds can be checked in Unity.
