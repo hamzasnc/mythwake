@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.116";
+    public const string PrototypeVersion = "0.2.117";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1287,6 +1287,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Image campaignStagePreviewStateAccent;
     private TMP_Text campaignStagePreviewText;
     private RectTransform campaignStageDetailPopupRoot;
+    private Image campaignStageDetailPanelImage;
+    private Image campaignStageDetailStateAccent;
+    private Image campaignStageDetailStateBadgeImage;
+    private TMP_Text campaignStageDetailStateBadgeText;
     private TMP_Text campaignStageDetailTitleText;
     private RawImage campaignStageDetailMapImage;
     private TMP_Text campaignStageDetailBodyText;
@@ -14818,11 +14822,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         homeIdleInfoPopupRoot.gameObject.SetActive(false);
 
         campaignStageDetailPopupRoot = CreateRuntimePopup(homeActionRoot, "Campaign Stage Detail Popup", new Vector2(0, -258), new Vector2(840, 760), "Abschnitt Details");
+        campaignStageDetailPanelImage = campaignStageDetailPopupRoot.GetComponent<Image>();
+        var detailAccent = CreateRuntimePanel(campaignStageDetailPopupRoot, "Stage Detail State Accent", new Vector2(-410, -96), new Vector2(16, 560), new Color(1f, 0.84f, 0.28f, 0.78f));
+        campaignStageDetailStateAccent = detailAccent.GetComponent<Image>();
         campaignStageDetailTitleText = campaignStageDetailPopupRoot.Find("Title").GetComponent<TMP_Text>();
         campaignStageDetailMapImage = CreateRuntimeRawImage(campaignStageDetailPopupRoot, "Stage Detail Map Preview", LoadRuntimeTexture(GetSelectedHomeProgressMapTextureName()), new Vector2(0, -100), new Vector2(720, 150), new Vector2(0.5f, 1f));
         campaignStageDetailMapImage.uvRect = GetCampaignStageDetailMapUvRect(enemyLevel);
         campaignStageDetailMapImage.color = new Color(1f, 1f, 1f, 0.84f);
         campaignStageDetailMapImage.raycastTarget = false;
+        var detailStateBadge = CreateRuntimePanel(campaignStageDetailPopupRoot, "Stage Detail State Badge", new Vector2(292, -112), new Vector2(124, 40), new Color(1f, 0.84f, 0.28f, 0.9f));
+        campaignStageDetailStateBadgeImage = detailStateBadge.GetComponent<Image>();
+        campaignStageDetailStateBadgeText = CreateRuntimeText(detailStateBadge, "Stage Detail State Badge Text", "ZIEL", 20, new Vector2(0, -8), new Vector2(112, 28));
+        campaignStageDetailStateBadgeText.fontStyle = FontStyles.Bold;
+        campaignStageDetailStateBadgeText.enableAutoSizing = true;
+        campaignStageDetailStateBadgeText.fontSizeMin = 13;
+        campaignStageDetailStateBadgeText.fontSizeMax = 20;
+        campaignStageDetailStateBadgeText.textWrappingMode = TextWrappingModes.NoWrap;
+        campaignStageDetailStateBadgeText.raycastTarget = false;
 
         campaignStageDetailBodyText = CreateRuntimeText(campaignStageDetailPopupRoot, "Stage Detail Body", string.Empty, 21, new Vector2(0, -268), new Vector2(700, 92));
         campaignStageDetailBodyText.enableAutoSizing = true;
@@ -19009,12 +19025,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 : "Erst aktuellen Abschnitt abschliessen.";
         if (campaignStagePreviewPanelImage != null)
         {
-            campaignStagePreviewPanelImage.color = GetCampaignStagePreviewPanelColor(isCleared, isCurrent, isLocked);
+            campaignStagePreviewPanelImage.color = GetCampaignStageStatePanelColor(isCleared, isCurrent, isLocked);
         }
 
         if (campaignStagePreviewStateAccent != null)
         {
-            campaignStagePreviewStateAccent.color = GetCampaignStagePreviewAccentColor(isCleared, isCurrent, isLocked);
+            campaignStagePreviewStateAccent.color = GetCampaignStageStateAccentColor(isCleared, isCurrent, isLocked);
         }
 
         campaignStagePreviewText.text =
@@ -19023,7 +19039,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             $"{specialNote} {fightLine}";
     }
 
-    private static Color GetCampaignStagePreviewPanelColor(bool isCleared, bool isCurrent, bool isLocked)
+    private static Color GetCampaignStageStatePanelColor(bool isCleared, bool isCurrent, bool isLocked)
     {
         if (isCurrent)
         {
@@ -19040,7 +19056,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             : new Color(0.03f, 0.035f, 0.055f, 0.84f);
     }
 
-    private static Color GetCampaignStagePreviewAccentColor(bool isCleared, bool isCurrent, bool isLocked)
+    private static Color GetCampaignStageStateAccentColor(bool isCleared, bool isCurrent, bool isLocked)
     {
         if (isCurrent)
         {
@@ -19057,6 +19073,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             : new Color(1f, 0.84f, 0.28f, 0.86f);
     }
 
+    private static string GetCampaignStageStateBadgeLabel(bool isCleared, bool isCurrent, bool isLocked)
+    {
+        if (isCurrent)
+        {
+            return "ZIEL";
+        }
+
+        if (isCleared)
+        {
+            return "OK";
+        }
+
+        return isLocked ? "LOCK" : string.Empty;
+    }
+
+    private static Color GetCampaignStageStateBadgeTextColor(bool isLocked)
+    {
+        return isLocked ? new Color(0.88f, 0.93f, 1f) : new Color(0.09f, 0.055f, 0.025f);
+    }
+
     private void RefreshCampaignStageDetailPopupUi()
     {
         if (campaignStageDetailPopupRoot == null || !campaignStageDetailPopupRoot.gameObject.activeSelf)
@@ -19068,11 +19104,33 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var stage = GetStageDefinition(stageNumber);
         var isCurrent = stageNumber == enemyLevel;
         var isCleared = stageNumber < enemyLevel;
+        var isLocked = stageNumber > enemyLevel;
         var status = isCleared ? "Abgeschlossen" : isCurrent ? "Aktuelles Ziel" : "Gesperrt";
         var stageType = GetCampaignStageTypeLabel(stageNumber);
         var specialNote = GetCampaignStagePreviewSpecialNote(stageNumber);
         var requiredPower = GetStageRecommendedPower(stageNumber);
         var enemyDamage = GetCampaignEnemyDamage(stageNumber);
+
+        if (campaignStageDetailPanelImage != null)
+        {
+            campaignStageDetailPanelImage.color = GetCampaignStageStatePanelColor(isCleared, isCurrent, isLocked);
+        }
+
+        if (campaignStageDetailStateAccent != null)
+        {
+            campaignStageDetailStateAccent.color = GetCampaignStageStateAccentColor(isCleared, isCurrent, isLocked);
+        }
+
+        if (campaignStageDetailStateBadgeImage != null)
+        {
+            campaignStageDetailStateBadgeImage.color = GetCampaignStageStateAccentColor(isCleared, isCurrent, isLocked);
+        }
+
+        if (campaignStageDetailStateBadgeText != null)
+        {
+            campaignStageDetailStateBadgeText.text = GetCampaignStageStateBadgeLabel(isCleared, isCurrent, isLocked);
+            campaignStageDetailStateBadgeText.color = GetCampaignStageStateBadgeTextColor(isLocked);
+        }
 
         if (campaignStageDetailTitleText != null)
         {

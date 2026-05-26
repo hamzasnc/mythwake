@@ -16,7 +16,7 @@ public static class HomeIdleCombatValidation
         try
         {
             ValidateHomeIdleCombatUi();
-            Debug.Log("Home Idle Combat validated: campaign map, current-stage marker, boss node badges, path progress colors, stage-preview state tint, region texture/UV sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
+            Debug.Log("Home Idle Combat validated: campaign map, current-stage marker, boss node badges, path progress colors, stage-preview/detail state tint, region texture/UV sync, popup exclusivity, reward progress, patrol info tick details, server guard, clickable stage preview, foreground patrol fight, active loot tick, and no automatic stage clear are present.");
         }
         catch (Exception ex)
         {
@@ -77,6 +77,9 @@ public static class HomeIdleCombatValidation
         var detailPopup = RequireObject("Campaign Stage Detail Popup", true);
         var detailTitle = RequireText(detailPopup, "Title");
         var detailBody = RequireText(detailPopup, "Stage Detail Body");
+        var detailAccent = RequireChildObject(detailPopup, "Stage Detail State Accent").GetComponent<Image>();
+        var detailStateBadge = RequireChildObject(detailPopup, "Stage Detail State Badge").GetComponent<Image>();
+        var detailStateBadgeText = RequireText(RequireChildObject(detailPopup, "Stage Detail State Badge"), "Stage Detail State Badge Text");
         var detailEnemyHeader = RequireText(detailPopup, "Stage Detail Enemy Header");
         var detailRewardHeader = RequireText(detailPopup, "Stage Detail Reward Header");
         var detailRewardText = RequireText(detailPopup, "Stage Detail Reward Text 1");
@@ -90,7 +93,13 @@ public static class HomeIdleCombatValidation
         RequireCopy(detailRewardText.text, "Essence");
         RequireCopy(detailRewardText2.text, "Bonus bei");
         RequireCopy(detailRewardText3.text, "Patrol");
+        if (detailAccent == null || detailAccent.raycastTarget || detailStateBadge == null || detailStateBadge.raycastTarget || detailStateBadgeText.raycastTarget)
+        {
+            throw new InvalidOperationException("Campaign stage detail status accent and badge should not intercept input.");
+        }
+
         AssertTextFits(detailBody, "Stage Detail Body");
+        AssertTextFits(detailStateBadgeText, "Stage Detail State Badge Text");
         AssertTextFits(detailRewardText, "Stage Detail Reward Text 1");
         AssertTextFits(detailRewardText2, "Stage Detail Reward Text 2");
         AssertTextFits(detailRewardText3, "Stage Detail Reward Text 3");
@@ -120,6 +129,7 @@ public static class HomeIdleCombatValidation
         ValidateCampaignMilestoneNodeBadges(controller);
         ValidateCampaignStagePreviewTags(controller);
         ValidateCampaignStagePreviewStateTint(controller);
+        ValidateCampaignStageDetailStateMarkers(controller);
         ValidateCampaignStageDetailTags(controller);
 
         var idleRoot = RequireObject("Home Idle Combat Root", true);
@@ -894,6 +904,66 @@ public static class HomeIdleCombatValidation
         if (accent.b <= accent.r || accent.b <= accent.g || panel.b <= panel.r || accent.a < 0.55f)
         {
             throw new InvalidOperationException($"Locked campaign preview should tint blue-gray, got panel={panel}, accent={accent}.");
+        }
+    }
+
+    private static void ValidateCampaignStageDetailStateMarkers(IdlePrototypeController controller)
+    {
+        var enemyLevelBefore = GetPrivateField<int>(controller, "enemyLevel");
+        var selectedStageBefore = GetPrivateField<int>(controller, "selectedCampaignStage");
+        var centerBefore = GetPrivateField<bool>(controller, "homeCampaignMapNeedsCenter");
+
+        try
+        {
+            SetPrivateField(controller, "enemyLevel", 6);
+            SetPrivateField(controller, "selectedCampaignStage", 4);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", true);
+            InvokePrivate(controller, "SetCampaignStageDetailPopupVisible", true);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+            ValidateCampaignStageDetailStateMarker("cleared", "OK");
+
+            SetPrivateField(controller, "selectedCampaignStage", 6);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+            ValidateCampaignStageDetailStateMarker("current", "ZIEL");
+
+            SetPrivateField(controller, "selectedCampaignStage", 8);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+            ValidateCampaignStageDetailStateMarker("locked", "LOCK");
+        }
+        finally
+        {
+            SetPrivateField(controller, "enemyLevel", enemyLevelBefore);
+            SetPrivateField(controller, "selectedCampaignStage", selectedStageBefore);
+            SetPrivateField(controller, "homeCampaignMapNeedsCenter", centerBefore);
+            InvokePrivate(controller, "SetCampaignStageDetailPopupVisible", false);
+            InvokePrivate(controller, "RefreshCampaignMapUi");
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void ValidateCampaignStageDetailStateMarker(string state, string expectedBadge)
+    {
+        var detailPopup = RequireObject("Campaign Stage Detail Popup", true);
+        var detailPanel = detailPopup.GetComponent<Image>();
+        var detailAccent = RequireChildObject(detailPopup, "Stage Detail State Accent").GetComponent<Image>();
+        var detailBadge = RequireChildObject(detailPopup, "Stage Detail State Badge").GetComponent<Image>();
+        var detailBadgeText = RequireText(RequireChildObject(detailPopup, "Stage Detail State Badge"), "Stage Detail State Badge Text");
+
+        if (detailPanel == null || detailAccent == null || detailBadge == null)
+        {
+            throw new InvalidOperationException("Campaign stage detail popup should expose panel, accent, and badge images.");
+        }
+
+        AssertPreviewStateTint(detailPanel.color, detailAccent.color, state);
+        AssertPreviewStateTint(detailPanel.color, detailBadge.color, state);
+        RequireCopy(detailBadgeText.text, expectedBadge);
+        AssertTextFits(detailBadgeText, $"Campaign stage detail {state} badge text");
+        if (detailAccent.raycastTarget || detailBadge.raycastTarget || detailBadgeText.raycastTarget)
+        {
+            throw new InvalidOperationException($"Campaign stage detail {state} status marker should not intercept input.");
         }
     }
 

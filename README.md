@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.116
+Prototype version: 0.2.117
 Local save version: 2
 
 Current prototype:
@@ -75,7 +75,7 @@ Current prototype:
 - Mission Track XP is earned from daily mission claims
 - Mission Track rewards can be claimed in the Shop tab
 - Ravik and Paladin art/combat preview hooks exist, including Paladin Spine handoff validation tooling
-- Unity editor validation covers the current gameplay/UI slice, including Home current-stage halos and target badges, Home selected-stage node markers, Home cleared-stage badges, Home locked-stage badges, Home boss-node badges, Home milestone bonus badges, Home stage-preview state tint plus Boss/Bonus/Normal tags, Home stage-detail Boss/Bonus/Normal tags, Home stage-detail reward labels, Home path progress colors, Home map region texture/UV sync, Home reward progress/server guards, Home popup exclusivity, Village map/build/detail close flows, Dungeons map/zoom clamp/marker spacing/Formation back flows, Fast Rewards popup exclusivity/close/fallback claim state, Summon result close/auto-toggle/slot-fit states, Upgrade Clutter, Gear showcase art, visible Weapon/Armor training icons, equipped-only Hero Detail accessory icons, empty Hero Detail accessory slots, Hero Detail gear spacing/list-state/localization/label-list fit, and Paladin handoff checks
+- Unity editor validation covers the current gameplay/UI slice, including Home current-stage halos and target badges, Home selected-stage node markers, Home cleared-stage badges, Home locked-stage badges, Home boss-node badges, Home milestone bonus badges, Home stage-preview/detail state tint plus Boss/Bonus/Normal tags, Home stage-detail status badges, Home stage-detail reward labels, Home path progress colors, Home map region texture/UV sync, Home reward progress/server guards, Home popup exclusivity, Village map/build/detail close flows, Dungeons map/zoom clamp/marker spacing/Formation back flows, Fast Rewards popup exclusivity/close/fallback claim state, Summon result close/auto-toggle/slot-fit states, Upgrade Clutter, Gear showcase art, visible Weapon/Armor training icons, equipped-only Hero Detail accessory icons, empty Hero Detail accessory slots, Hero Detail gear spacing/list-state/localization/label-list fit, and Paladin handoff checks
 - Hero Detail shows all equipment/accessory slots, keeps starter Weapon/Armor training icons visible, only renders accessory icon art once gear is equipped, keeps empty accessory slots visually empty even when bag copies exist, keeps previous/next navigation clear of the gear-slot columns, uses localized contextual gear action labels, prioritizes owned copies in accessory slot lists, and supports accessory removal locally and in Server Mode
 - Hero Detail labels starter Weapon/Armor slots and rows as training tracks instead of claiming they are equipped item instances
 - Gear screen keeps equipment summaries, accessory text, and gear action controls stacked below the showcase with validator coverage for spacing
@@ -177,6 +177,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.117: Added matching Home campaign stage-detail state tint, an OK/ZIEL/LOCK badge, and validator coverage for cleared/current/locked detail popups.
 - Prototype 0.2.116: Added Home campaign stage-preview state tint and a non-intercepting accent strip for cleared/current/locked selections, with validator coverage.
 - Prototype 0.2.115: Added visible ZIEL badges to the current Home campaign node and validator coverage that cleared/locked nodes do not inherit the current target state.
 - Prototype 0.2.114: Added visible LOCK badges to locked Home campaign nodes and validator coverage that cleared/current nodes do not inherit the locked state.
