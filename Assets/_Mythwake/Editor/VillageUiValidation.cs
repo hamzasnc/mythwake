@@ -48,6 +48,7 @@ public static class VillageUiValidation
         ValidateVillageScrollRect(mapViewport, mapContent);
         AssertInsideParent(mapContent, mapImage.gameObject);
         ValidateVillageMapPlots(mapContent);
+        ValidateVillageDefinitionCatalog();
         AssertVillageBonusHint("Lokal:", "Village empty bonus hint");
         AssertVillageBonusHint("keine Village Boni", "Village empty bonus hint");
 
@@ -111,6 +112,67 @@ public static class VillageUiValidation
             {
                 throw new InvalidOperationException($"Village Build Plot {i + 1} is missing its build mark label.");
             }
+        }
+    }
+
+    private static void ValidateVillageDefinitionCatalog()
+    {
+        for (var plot = 0; plot < 12; plot++)
+        {
+            var expectedBonusToken = GetExpectedDefinitionBonusToken(plot);
+            for (var option = 0; option < 3; option++)
+            {
+                var id = (string)InvokePrivateStatic("GetVillageBuildingId", plot, option);
+                var expectedId = $"village_building_{plot + 1:D2}_option_{option + 1:D2}";
+                if (id != expectedId)
+                {
+                    throw new InvalidOperationException($"Village definition ID mismatch for plot {plot + 1} option {option + 1}: expected {expectedId}, got {id}.");
+                }
+
+                var buildCost = (int)InvokePrivateStatic("GetVillagePlotBuildCost", plot, option);
+                var expectedBuildCost = 5 + (option * 2);
+                if (buildCost != expectedBuildCost)
+                {
+                    throw new InvalidOperationException($"Village definition build-cost mismatch for {id}: expected {expectedBuildCost}, got {buildCost}.");
+                }
+
+                var maxLevel = (int)InvokePrivateStatic("GetVillageBuildingMaxLevel", plot, option);
+                if (maxLevel != 20)
+                {
+                    throw new InvalidOperationException($"Village definition max-level mismatch for {id}: expected 20, got {maxLevel}.");
+                }
+
+                var textureName = (string)InvokePrivateStatic("GetVillageBuildingTextureName", plot, option);
+                var texture = (Texture2D)InvokePrivateStatic("LoadVillageBuildingTexture", plot, option);
+                if (string.IsNullOrWhiteSpace(textureName) || texture == null)
+                {
+                    throw new InvalidOperationException($"Village definition {id} has missing texture '{textureName}'.");
+                }
+
+                var bonusText = (string)InvokePrivateStatic("GetVillageBuildingBonusValueText", plot, option, 1);
+                RequireCopy(bonusText, expectedBonusToken, $"Village definition {id} bonus");
+            }
+        }
+    }
+
+    private static string GetExpectedDefinitionBonusToken(int plotIndex)
+    {
+        switch (plotIndex)
+        {
+            case 0:
+            case 7:
+            case 8:
+                return "Team HP";
+            case 1:
+            case 3:
+            case 11:
+                return "Team ATK";
+            case 5:
+            case 6:
+            case 10:
+                return "Gold/s Fast Rewards";
+            default:
+                return "Essence/s Fast Rewards";
         }
     }
 
@@ -490,6 +552,17 @@ public static class VillageUiValidation
         }
 
         return method.Invoke(target, args);
+    }
+
+    private static object InvokePrivateStatic(string methodName, params object[] args)
+    {
+        var method = typeof(IdlePrototypeController).GetMethod(methodName, BindingFlags.Static | BindingFlags.NonPublic);
+        if (method == null)
+        {
+            throw new InvalidOperationException($"Missing private static method: {methodName}");
+        }
+
+        return method.Invoke(null, args);
     }
 
     private static T GetPrivateField<T>(object target, string fieldName)

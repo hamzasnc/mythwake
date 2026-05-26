@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.124";
+    public const string PrototypeVersion = "0.2.125";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -458,6 +458,43 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private enum VillageBonusType
+    {
+        None,
+        TeamAttack,
+        TeamHealth,
+        AfkGoldRate,
+        AfkEssenceRate
+    }
+
+    private struct VillageBuildingDefinition
+    {
+        public string buildingId;
+        public int plotIndex;
+        public int optionIndex;
+        public string displayName;
+        public string textureName;
+        public int buildCost;
+        public int maxLevel;
+        public int upgradeCostPerLevel;
+        public VillageBonusType bonusType;
+        public float bonusValuePerLevel;
+
+        public VillageBuildingDefinition(int plotIndex, int optionIndex, string displayName, string textureName, VillageBonusType bonusType, float bonusValuePerLevel)
+        {
+            this.plotIndex = plotIndex;
+            this.optionIndex = optionIndex;
+            this.buildingId = FormatVillageBuildingId(plotIndex, optionIndex);
+            this.displayName = displayName;
+            this.textureName = textureName;
+            this.buildCost = VillageBuildingBaseBuildCost + (optionIndex * VillageBuildingOptionCostStep);
+            this.maxLevel = VillageBuildingMaxLevel;
+            this.upgradeCostPerLevel = VillageBuildingUpgradeCostPerLevel;
+            this.bonusType = bonusType;
+            this.bonusValuePerLevel = bonusValuePerLevel;
+        }
+    }
+
     private enum AppScreen
     {
         Home,
@@ -691,6 +728,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const float VillageBuildingImageYOffsetRate = 0.12f;
     private const int VillageBuildingOptionCount = 3;
     private const int VillageBuildingMaxLevel = 20;
+    private const int VillageBuildingBaseBuildCost = 5;
+    private const int VillageBuildingOptionCostStep = 2;
     private const int VillageBuildingUpgradeCostPerLevel = 5;
     private const int VillageAttackBonusBasePerLevel = 2;
     private const int VillageHealthBonusBasePerLevel = 18;
@@ -712,51 +751,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         "Farm",
         "Freier Platz"
     };
-    private static readonly int[] VillagePlotBuildCosts =
-    {
-        5,
-        5,
-        5,
-        5,
-        5,
-        5,
-        5,
-        5,
-        5,
-        5,
-        5,
-        5
-    };
-    private static readonly string[,] VillageBuildingOptionNames =
-    {
-        { "Rathaus", "Gildenhalle", "Ratssitz" },
-        { "Heldenkaserne", "Trainingsdojo", "Heldenhaus" },
-        { "Arkanportal", "Runentor", "Kristallobelisk" },
-        { "Schmiede", "Waffenkammer", "Schmelzwerk" },
-        { "Magierturm", "Observatorium", "Zauberbibliothek" },
-        { "Marktstaende", "Handelsposten", "Basarzelt" },
-        { "Lagerhaus", "Kornspeicher", "Vorratslager" },
-        { "Zimmererhof", "Bauwerkstatt", "Artefaktladen" },
-        { "Taverne", "Gasthaus", "Festhalle" },
-        { "Alchemielabor", "Kraeuterhuette", "Trankladen" },
-        { "Feldhof", "Tiergatter", "Obsthain" },
-        { "Schrein", "Wachturm", "Gartenhain" }
-    };
-    private static readonly string[,] VillageBuildingTextureNames =
-    {
-        { "VillageBuildings/village_building_01_option_01_town_hall", "VillageBuildings/village_building_01_option_02_guild_hall", "VillageBuildings/village_building_01_option_03_council_keep" },
-        { "VillageBuildings/village_building_02_option_01_hero_barracks", "VillageBuildings/village_building_02_option_02_training_dojo", "VillageBuildings/village_building_02_option_03_hero_lodge" },
-        { "VillageBuildings/village_building_03_option_01_arcane_portal", "VillageBuildings/village_building_03_option_02_rune_gate", "VillageBuildings/village_building_03_option_03_crystal_obelisk" },
-        { "VillageBuildings/village_building_04_option_01_blacksmith", "VillageBuildings/village_building_04_option_02_armory", "VillageBuildings/village_building_04_option_03_furnace_workshop" },
-        { "VillageBuildings/village_building_05_option_01_mage_tower", "VillageBuildings/village_building_05_option_02_observatory", "VillageBuildings/village_building_05_option_03_spell_library" },
-        { "VillageBuildings/village_building_06_option_01_market_stalls", "VillageBuildings/village_building_06_option_02_trade_post", "VillageBuildings/village_building_06_option_03_bazaar_tent" },
-        { "VillageBuildings/village_building_07_option_01_warehouse", "VillageBuildings/village_building_07_option_02_granary", "VillageBuildings/village_building_07_option_03_supply_depot" },
-        { "VillageBuildings/village_building_08_option_01_carpenter_yard", "VillageBuildings/village_building_08_option_02_builder_workshop", "VillageBuildings/village_building_08_option_03_artificer_shop" },
-        { "VillageBuildings/village_building_09_option_01_tavern", "VillageBuildings/village_building_09_option_02_inn", "VillageBuildings/village_building_09_option_03_feast_hall" },
-        { "VillageBuildings/village_building_10_option_01_alchemy_lab", "VillageBuildings/village_building_10_option_02_herbalist_hut", "VillageBuildings/village_building_10_option_03_potion_shop" },
-        { "VillageBuildings/village_building_11_option_01_crop_farm", "VillageBuildings/village_building_11_option_02_animal_pen", "VillageBuildings/village_building_11_option_03_orchard" },
-        { "VillageBuildings/village_building_12_option_01_shrine", "VillageBuildings/village_building_12_option_02_watchtower", "VillageBuildings/village_building_12_option_03_garden_grove" }
-    };
+    private static readonly VillageBuildingDefinition[,] VillageBuildingDefinitions = CreateVillageBuildingDefinitions();
     private static readonly Vector2[] VillagePlotPositions =
     {
         new Vector2(0f, -160f),
@@ -16262,9 +16257,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var currentLevel = GetVillageBuildingLevel(selectedVillagePlotIndex);
-        if (currentLevel >= VillageBuildingMaxLevel)
+        var builtOptionIndex = GetVillageBuiltOptionIndex(selectedVillagePlotIndex);
+        var maxLevel = GetVillageBuildingMaxLevel(selectedVillagePlotIndex, builtOptionIndex);
+        if (currentLevel >= maxLevel)
         {
-            villageBuildFeedbackMessage = $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))} ist bereits Max Level.";
+            villageBuildFeedbackMessage = $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, builtOptionIndex)} ist bereits Max Level.";
             RefreshVillageUi();
             return;
         }
@@ -16284,7 +16281,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        var upgradeCost = GetVillageBuildingUpgradeCost(currentLevel);
+        var upgradeCost = GetVillageBuildingUpgradeCost(selectedVillagePlotIndex, builtOptionIndex, currentLevel);
         if (!TrySpendCurrency(MythEssenceCurrencyId, upgradeCost))
         {
             villageBuildFeedbackMessage = $"Nicht genug {GetLocalizedCurrencyName(MythEssenceCurrencyId)}. Kosten: {upgradeCost}, vorhanden: {mythEssence}.";
@@ -16292,9 +16289,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        var nextLevel = Mathf.Min(VillageBuildingMaxLevel, currentLevel + 1);
+        var nextLevel = Mathf.Min(maxLevel, currentLevel + 1);
         villagePlotBuildingLevels[selectedVillagePlotIndex] = nextLevel;
-        villageBuildFeedbackMessage = $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))} erreicht Lv. {nextLevel}.";
+        villageBuildFeedbackMessage = $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, builtOptionIndex)} erreicht Lv. {nextLevel}.";
 
         SaveProgress();
         RefreshUi();
@@ -16397,13 +16394,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (selectedBuilt)
             {
                 var buildingLevel = GetVillageBuildingLevel(selectedVillagePlotIndex);
-                var nextUpgradeText = buildingLevel >= VillageBuildingMaxLevel
+                var builtOptionIndex = GetVillageBuiltOptionIndex(selectedVillagePlotIndex);
+                var maxLevel = GetVillageBuildingMaxLevel(selectedVillagePlotIndex, builtOptionIndex);
+                var nextUpgradeText = buildingLevel >= maxLevel
                     ? "Max Level erreicht."
-                    : $"Upgrade auf Lv. {buildingLevel + 1}: {GetVillageBuildingUpgradeCost(buildingLevel)} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}";
-                var bonusText = GetVillageBuildingBonusText(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex), buildingLevel);
-                var nextBonusText = GetVillageBuildingNextBonusText(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex), buildingLevel);
+                    : $"Upgrade auf Lv. {buildingLevel + 1}: {GetVillageBuildingUpgradeCost(selectedVillagePlotIndex, builtOptionIndex, buildingLevel)} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}";
+                var bonusText = GetVillageBuildingBonusText(selectedVillagePlotIndex, builtOptionIndex, buildingLevel);
+                var nextBonusText = GetVillageBuildingNextBonusText(selectedVillagePlotIndex, builtOptionIndex, buildingLevel);
                 var detailText =
-                    $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex))} Lv. {buildingLevel}\n" +
+                    $"{GetVillageBuildingOptionName(selectedVillagePlotIndex, builtOptionIndex)} Lv. {buildingLevel}\n" +
                     $"{bonusText}\n" +
                     $"{nextBonusText}\n" +
                     $"{nextUpgradeText}\n" +
@@ -16420,7 +16419,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         RefreshVillageBuildOptions(hasSelection);
         SetButtonLabel(villageBuildButton, hasSelection && villagePlotBuiltStates[selectedVillagePlotIndex] ? "Gebaut" : hasSelection ? $"Bauen ({GetVillagePlotBuildCost(selectedVillagePlotIndex, selectedVillageBuildingOptionIndex)})" : "Bauen");
-        SetButtonLabel(villageUpgradeButton, selectedBuilt && GetVillageBuildingLevel(selectedVillagePlotIndex) >= VillageBuildingMaxLevel ? "Max" : selectedBuilt ? $"Aufwerten ({GetVillageBuildingUpgradeCost(GetVillageBuildingLevel(selectedVillagePlotIndex))})" : "Aufwerten");
+        if (selectedBuilt)
+        {
+            var builtOptionIndex = GetVillageBuiltOptionIndex(selectedVillagePlotIndex);
+            var buildingLevel = GetVillageBuildingLevel(selectedVillagePlotIndex);
+            SetButtonLabel(villageUpgradeButton, buildingLevel >= GetVillageBuildingMaxLevel(selectedVillagePlotIndex, builtOptionIndex) ? "Max" : $"Aufwerten ({GetVillageBuildingUpgradeCost(selectedVillagePlotIndex, builtOptionIndex, buildingLevel)})");
+        }
+        else
+        {
+            SetButtonLabel(villageUpgradeButton, "Aufwerten");
+        }
         RefreshVillageBuildInteractivity(CanInteractWithVillage());
     }
 
@@ -16466,7 +16474,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var canChooseBuilding = canInteract && hasSelection && !selectedPlotIsBuilt;
         var canUpgradeVillagePlot = canInteract
             && selectedPlotIsBuilt
-            && GetVillageBuildingLevel(selectedVillagePlotIndex) < VillageBuildingMaxLevel;
+            && GetVillageBuildingLevel(selectedVillagePlotIndex) < GetVillageBuildingMaxLevel(selectedVillagePlotIndex, GetVillageBuiltOptionIndex(selectedVillagePlotIndex));
         var canBuildVillagePlot = canChooseBuilding
             && selectedVillageBuildingOptionIndex >= 0
             && selectedVillageBuildingOptionIndex < VillageBuildingOptionCount;
@@ -16484,6 +16492,97 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private bool CanInteractWithVillage()
     {
         return !backendRequestInProgress && !backendLifecycleFlushInProgress && !campaignFightInProgress;
+    }
+
+    private static VillageBuildingDefinition[,] CreateVillageBuildingDefinitions()
+    {
+        var names = new[,]
+        {
+            { "Rathaus", "Gildenhalle", "Ratssitz" },
+            { "Heldenkaserne", "Trainingsdojo", "Heldenhaus" },
+            { "Arkanportal", "Runentor", "Kristallobelisk" },
+            { "Schmiede", "Waffenkammer", "Schmelzwerk" },
+            { "Magierturm", "Observatorium", "Zauberbibliothek" },
+            { "Marktstaende", "Handelsposten", "Basarzelt" },
+            { "Lagerhaus", "Kornspeicher", "Vorratslager" },
+            { "Zimmererhof", "Bauwerkstatt", "Artefaktladen" },
+            { "Taverne", "Gasthaus", "Festhalle" },
+            { "Alchemielabor", "Kraeuterhuette", "Trankladen" },
+            { "Feldhof", "Tiergatter", "Obsthain" },
+            { "Schrein", "Wachturm", "Gartenhain" }
+        };
+        var textures = new[,]
+        {
+            { "VillageBuildings/village_building_01_option_01_town_hall", "VillageBuildings/village_building_01_option_02_guild_hall", "VillageBuildings/village_building_01_option_03_council_keep" },
+            { "VillageBuildings/village_building_02_option_01_hero_barracks", "VillageBuildings/village_building_02_option_02_training_dojo", "VillageBuildings/village_building_02_option_03_hero_lodge" },
+            { "VillageBuildings/village_building_03_option_01_arcane_portal", "VillageBuildings/village_building_03_option_02_rune_gate", "VillageBuildings/village_building_03_option_03_crystal_obelisk" },
+            { "VillageBuildings/village_building_04_option_01_blacksmith", "VillageBuildings/village_building_04_option_02_armory", "VillageBuildings/village_building_04_option_03_furnace_workshop" },
+            { "VillageBuildings/village_building_05_option_01_mage_tower", "VillageBuildings/village_building_05_option_02_observatory", "VillageBuildings/village_building_05_option_03_spell_library" },
+            { "VillageBuildings/village_building_06_option_01_market_stalls", "VillageBuildings/village_building_06_option_02_trade_post", "VillageBuildings/village_building_06_option_03_bazaar_tent" },
+            { "VillageBuildings/village_building_07_option_01_warehouse", "VillageBuildings/village_building_07_option_02_granary", "VillageBuildings/village_building_07_option_03_supply_depot" },
+            { "VillageBuildings/village_building_08_option_01_carpenter_yard", "VillageBuildings/village_building_08_option_02_builder_workshop", "VillageBuildings/village_building_08_option_03_artificer_shop" },
+            { "VillageBuildings/village_building_09_option_01_tavern", "VillageBuildings/village_building_09_option_02_inn", "VillageBuildings/village_building_09_option_03_feast_hall" },
+            { "VillageBuildings/village_building_10_option_01_alchemy_lab", "VillageBuildings/village_building_10_option_02_herbalist_hut", "VillageBuildings/village_building_10_option_03_potion_shop" },
+            { "VillageBuildings/village_building_11_option_01_crop_farm", "VillageBuildings/village_building_11_option_02_animal_pen", "VillageBuildings/village_building_11_option_03_orchard" },
+            { "VillageBuildings/village_building_12_option_01_shrine", "VillageBuildings/village_building_12_option_02_watchtower", "VillageBuildings/village_building_12_option_03_garden_grove" }
+        };
+        var bonusTypes = new[]
+        {
+            VillageBonusType.TeamHealth,
+            VillageBonusType.TeamAttack,
+            VillageBonusType.AfkEssenceRate,
+            VillageBonusType.TeamAttack,
+            VillageBonusType.AfkEssenceRate,
+            VillageBonusType.AfkGoldRate,
+            VillageBonusType.AfkGoldRate,
+            VillageBonusType.TeamHealth,
+            VillageBonusType.TeamHealth,
+            VillageBonusType.AfkEssenceRate,
+            VillageBonusType.AfkGoldRate,
+            VillageBonusType.TeamAttack
+        };
+        var definitions = new VillageBuildingDefinition[VillagePlotCount, VillageBuildingOptionCount];
+        for (var plot = 0; plot < VillagePlotCount; plot++)
+        {
+            for (var option = 0; option < VillageBuildingOptionCount; option++)
+            {
+                var bonusType = bonusTypes[Mathf.Clamp(plot, 0, bonusTypes.Length - 1)];
+                definitions[plot, option] = new VillageBuildingDefinition(
+                    plot,
+                    option,
+                    names[plot, option],
+                    textures[plot, option],
+                    bonusType,
+                    GetVillageBuildingBonusValuePerLevel(bonusType, option));
+            }
+        }
+
+        return definitions;
+    }
+
+    private static float GetVillageBuildingBonusValuePerLevel(VillageBonusType bonusType, int optionIndex)
+    {
+        optionIndex = Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1);
+        switch (bonusType)
+        {
+            case VillageBonusType.TeamAttack:
+                return VillageAttackBonusBasePerLevel + optionIndex;
+            case VillageBonusType.TeamHealth:
+                return VillageHealthBonusBasePerLevel + (optionIndex * 4);
+            case VillageBonusType.AfkGoldRate:
+                return VillageGoldRateBonusBasePerLevel + (optionIndex * 0.03f);
+            case VillageBonusType.AfkEssenceRate:
+                return VillageEssenceRateBonusBasePerLevel + (optionIndex * 0.02f);
+            default:
+                return 0f;
+        }
+    }
+
+    private static VillageBuildingDefinition GetVillageBuildingDefinition(int plotIndex, int optionIndex)
+    {
+        plotIndex = Mathf.Clamp(plotIndex, 0, VillagePlotCount - 1);
+        optionIndex = Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1);
+        return VillageBuildingDefinitions[plotIndex, optionIndex];
     }
 
     private static string GetVillagePlotName(int plotIndex)
@@ -16506,13 +16605,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static int GetVillagePlotBuildCost(int plotIndex, int optionIndex)
     {
-        var baseCost = plotIndex >= 0 && plotIndex < VillagePlotBuildCosts.Length ? VillagePlotBuildCosts[plotIndex] : VillagePlotBuildCosts[0];
-        return baseCost + Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1) * 2;
+        return Mathf.Max(0, GetVillageBuildingDefinition(plotIndex, optionIndex).buildCost);
     }
 
     private static int GetVillageBuildingUpgradeCost(int currentLevel)
     {
-        return Mathf.Max(1, currentLevel) * VillageBuildingUpgradeCostPerLevel;
+        return GetVillageBuildingUpgradeCost(0, 0, currentLevel);
+    }
+
+    private static int GetVillageBuildingUpgradeCost(int plotIndex, int optionIndex, int currentLevel)
+    {
+        var definition = GetVillageBuildingDefinition(plotIndex, optionIndex);
+        return Mathf.Max(1, currentLevel) * Mathf.Max(1, definition.upgradeCostPerLevel);
+    }
+
+    private static int GetVillageBuildingMaxLevel(int plotIndex, int optionIndex)
+    {
+        return Mathf.Max(1, GetVillageBuildingDefinition(plotIndex, optionIndex).maxLevel);
     }
 
     private int GetVillageTeamPowerBonus()
@@ -16654,7 +16763,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static string GetVillageBuildingNextBonusText(int plotIndex, int optionIndex, int level)
     {
-        return level >= VillageBuildingMaxLevel
+        return level >= GetVillageBuildingMaxLevel(plotIndex, optionIndex)
             ? $"Max Bonus: {GetVillageBuildingBonusValueText(plotIndex, optionIndex, level)}"
             : $"Naechster Bonus: {GetVillageBuildingBonusValueText(plotIndex, optionIndex, level + 1)}";
     }
@@ -16690,42 +16799,46 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static int GetVillageBuildingAttackBonus(int plotIndex, int optionIndex, int level)
     {
-        if (plotIndex != 1 && plotIndex != 3 && plotIndex != 11)
+        var definition = GetVillageBuildingDefinition(plotIndex, optionIndex);
+        if (definition.bonusType != VillageBonusType.TeamAttack)
         {
             return 0;
         }
 
-        return Mathf.Max(1, level) * (VillageAttackBonusBasePerLevel + Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1));
+        return Mathf.RoundToInt(Mathf.Max(1, level) * definition.bonusValuePerLevel);
     }
 
     private static int GetVillageBuildingHealthBonus(int plotIndex, int optionIndex, int level)
     {
-        if (plotIndex != 0 && plotIndex != 7 && plotIndex != 8)
+        var definition = GetVillageBuildingDefinition(plotIndex, optionIndex);
+        if (definition.bonusType != VillageBonusType.TeamHealth)
         {
             return 0;
         }
 
-        return Mathf.Max(1, level) * (VillageHealthBonusBasePerLevel + Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1) * 4);
+        return Mathf.RoundToInt(Mathf.Max(1, level) * definition.bonusValuePerLevel);
     }
 
     private static float GetVillageBuildingGoldRateBonus(int plotIndex, int optionIndex, int level)
     {
-        if (plotIndex != 5 && plotIndex != 6 && plotIndex != 10)
+        var definition = GetVillageBuildingDefinition(plotIndex, optionIndex);
+        if (definition.bonusType != VillageBonusType.AfkGoldRate)
         {
             return 0f;
         }
 
-        return Mathf.Max(1, level) * (VillageGoldRateBonusBasePerLevel + Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1) * 0.03f);
+        return Mathf.Max(1, level) * definition.bonusValuePerLevel;
     }
 
     private static float GetVillageBuildingEssenceRateBonus(int plotIndex, int optionIndex, int level)
     {
-        if (plotIndex != 2 && plotIndex != 4 && plotIndex != 9)
+        var definition = GetVillageBuildingDefinition(plotIndex, optionIndex);
+        if (definition.bonusType != VillageBonusType.AfkEssenceRate)
         {
             return 0f;
         }
 
-        return Mathf.Max(1, level) * (VillageEssenceRateBonusBasePerLevel + Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1) * 0.02f);
+        return Mathf.Max(1, level) * definition.bonusValuePerLevel;
     }
 
     private static string GetVillageBuildingOptionName(int plotIndex, int optionIndex)
@@ -16735,7 +16848,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return "Gebaeude";
         }
 
-        return VillageBuildingOptionNames[plotIndex, Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1)];
+        return GetVillageBuildingDefinition(plotIndex, optionIndex).displayName;
     }
 
     private static string GetVillageBuildingTextureName(int plotIndex, int optionIndex)
@@ -16745,13 +16858,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return string.Empty;
         }
 
-        return VillageBuildingTextureNames[plotIndex, Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1)];
+        return GetVillageBuildingDefinition(plotIndex, optionIndex).textureName;
     }
 
     private static string GetVillageBuildingId(int plotIndex, int optionIndex)
     {
         plotIndex = Mathf.Clamp(plotIndex, 0, VillagePlotCount - 1);
         optionIndex = Mathf.Clamp(optionIndex, 0, VillageBuildingOptionCount - 1);
+        return GetVillageBuildingDefinition(plotIndex, optionIndex).buildingId;
+    }
+
+    private static string FormatVillageBuildingId(int plotIndex, int optionIndex)
+    {
         return $"village_building_{plotIndex + 1:D2}_option_{optionIndex + 1:D2}";
     }
 
@@ -16822,7 +16940,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (villagePlotBuiltStates[i])
             {
                 villagePlotBuildingSelections[i] = Mathf.Clamp(villagePlotBuildingSelections[i], 0, VillageBuildingOptionCount - 1);
-                villagePlotBuildingLevels[i] = Mathf.Max(1, villagePlotBuildingLevels[i]);
+                villagePlotBuildingLevels[i] = Mathf.Clamp(villagePlotBuildingLevels[i], 1, GetVillageBuildingMaxLevel(i, villagePlotBuildingSelections[i]));
             }
             else
             {
