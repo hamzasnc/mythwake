@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.130
+Prototype version: 0.2.131
 Local save version: 2
 
 Current prototype:
@@ -53,7 +53,7 @@ Current prototype:
 - Gear Dungeon drops random accessory copies
 - Three copies of the same slot and rarity can be fused into the next rarity
 - Hero upgrades use Myth Essence and are saved locally
-- Home screen shows a Next Goal hint for the current progression bottleneck
+- Home screen shows a Next Goal hint for the current progression bottleneck, including campaign power readiness, Gear drops, Hero/Gear/Village upgrades, Summon value, and concrete farm gaps
 - Campaign stages now use named enemy data with HP and progression-only clears
 - Campaign and dungeon scaling now create clearer upgrade walls with recommended power labels
 - First balance pass tunes Campaign pressure, dungeon rewards, summon pacing, daily missions, and offline reward caps for the early loop
@@ -181,6 +181,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.131: Reordered and clarified the Home Next Goal hint around the early loop: push when Power is ready, then Gear, Weapon/Armor/accessory, Hero, Village, Gear Dungeon, Summon, or explicit farm gaps; Home validation now checks the campaign-power hint shape.
 - Prototype 0.2.130: Reworked local Campaign/Dungeon combat result summaries to mirror server-style HP/ATK/enemy damage/dealt/taken/heal/crit/miss fields and added validator coverage for the local summary shape.
 - Prototype 0.2.129: Localized local accessory equip/unequip/level/fuse action-result messages and added Gear validation that exercises the German action flow while restoring test state.
 - Prototype 0.2.128: Clarified Gear selected-rarity and equip action copy counts by showing bag copies alongside equipped copies, with Upgrade Clutter validation through EN/DE refresh paths.

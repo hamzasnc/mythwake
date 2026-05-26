@@ -116,7 +116,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.130`
+- Prototype `0.2.131`
 - Save version `2`
 
 Important Unity scripts:
@@ -170,6 +170,7 @@ Latest local gameplay/UI batch:
 - Ranged units stay back and fire projectiles on their own timer.
 - Multiple heroes/enemies can attack at the same time; combat is no longer an A -> B -> C alternating sequence.
 - Local Campaign/Dungeon fight result bodies now mirror the server combat summary shape more closely: Team HP, Enemy HP, Team ATK, Enemy DMG, dealt/taken damage, healing, crits, misses, and execute flags are shown consistently and covered by Upgrade Clutter validation.
+- Home Next Goal now points through the early loop in order: push Campaign when Power is ready, otherwise Gear drops/equip, Weapon/Armor/accessory/Hero upgrades, affordable Village build/upgrade, Gear Dungeon drops, Summon shards, or concrete Gold/Essence/Power farm gaps. Home validation checks the campaign-power hint path.
 - Normal hits reduce only one target HP bar.
 - Fight UI now has bottom hero skill cards with portrait, per-character mana bar, ready glow, click-to-queue ultimate, and an AUTO toggle above the right side of the cards.
 - Character mana is per hero, not team-wide. Heroes start at 0, no longer gain passive timer mana, gain +2 mana on successful hits, and each hero has a different max mana.

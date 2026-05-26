@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.130";
+    public const string PrototypeVersion = "0.2.131";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -10263,54 +10263,136 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
+        nextGoalText.enableAutoSizing = true;
+        nextGoalText.fontSizeMin = 18;
+        nextGoalText.fontSizeMax = 26;
         nextGoalText.fontSize = 26;
+        nextGoalText.textWrappingMode = TextWrappingModes.Normal;
         nextGoalText.text = $"Next Goal\n{GetNextGoalText()}";
     }
 
     private string GetNextGoalText()
     {
-        var summonCost = GetSummonCost();
-        if (gems >= summonCost)
-        {
-            return $"Summon x1 to gain shards ({gems}/{summonCost} Gems)";
-        }
+        var teamPower = GetTeamPower();
+        var stagePower = GetStageRecommendedPower(enemyLevel);
+        var powerState = $"Power {FormatCompactNumber(teamPower)}/{FormatCompactNumber(stagePower)}";
 
         var weaponCost = GetWeaponUpgradeCost();
-        if (gold >= weaponCost)
-        {
-            return $"Upgrade Weapon for more ATK ({gold}/{weaponCost} Gold)";
-        }
-
         var armorCost = GetArmorUpgradeCost();
-        if (gold >= armorCost)
-        {
-            return $"Upgrade Armor for more HP ({gold}/{armorCost} Gold)";
-        }
+        var heroCost = GetHeroUpgradeCost(selectedHeroIndex);
+        var summonCost = GetSummonCost();
+        var gearFloor = Mathf.Max(1, gearDungeonFloor);
+        var gearPower = GetGearDungeonRecommendedPower(gearFloor);
 
-        if (mythEssence >= upgradeCost)
+        if (teamPower >= stagePower)
         {
-            return $"Level {GetHeroDefinition(selectedHeroIndex).name} with Myth Essence";
+            return $"Push Campaign Stage {enemyLevel} ({powerState})";
         }
 
         if (HasAccessoryCopiesToEquip())
         {
-            return "Open Gear tab and equip new accessory drops";
+            return $"Equip Gear drops, then retry Stage {enemyLevel} ({powerState})";
+        }
+
+        if (gold >= weaponCost && weaponCost <= armorCost)
+        {
+            return $"Upgrade Weapon for ATK ({FormatCompactNumber(gold)}/{FormatCompactNumber(weaponCost)} Gold)";
+        }
+
+        if (gold >= armorCost)
+        {
+            return $"Upgrade Armor for HP ({FormatCompactNumber(gold)}/{FormatCompactNumber(armorCost)} Gold)";
         }
 
         var accessorySlot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         if (equippedAccessoryRarities[accessorySlot] >= 0 && gold >= GetAccessoryLevelCost(accessorySlot))
         {
-            return "Level equipped accessories for extra stats";
+            return $"Level equipped accessory ({FormatCompactNumber(gold)}/{FormatCompactNumber(GetAccessoryLevelCost(accessorySlot))} Gold)";
         }
 
-        if (GetTeamPower() >= GetStageRecommendedPower(enemyLevel))
+        if (mythEssence >= heroCost)
         {
-            return $"Push Campaign Stage {enemyLevel}";
+            return $"Level {GetHeroDefinition(selectedHeroIndex).name} ({FormatCompactNumber(mythEssence)}/{FormatCompactNumber(heroCost)} Essence)";
+        }
+
+        if (TryGetAffordableVillageUpgradeGoal(out var villageUpgradeName, out var villageUpgradeCost))
+        {
+            return $"Upgrade Village {villageUpgradeName} ({FormatCompactNumber(mythEssence)}/{FormatCompactNumber(villageUpgradeCost)} Essence)";
+        }
+
+        if (TryGetAffordableVillageBuildGoal(out var villageBuildName, out var villageBuildCost))
+        {
+            return $"Build Village {villageBuildName} ({FormatCompactNumber(mythEssence)}/{FormatCompactNumber(villageBuildCost)} Essence)";
+        }
+
+        if (teamPower >= gearPower)
+        {
+            return $"Run Gear Dungeon F{gearFloor} for drops (Power {FormatCompactNumber(teamPower)}/{FormatCompactNumber(gearPower)})";
+        }
+
+        if (gems >= summonCost)
+        {
+            return $"Summon x1 for shards ({FormatCompactNumber(gems)}/{FormatCompactNumber(summonCost)} Gems)";
         }
 
         var goldGap = Mathf.Max(0, Mathf.Min(weaponCost, armorCost) - gold);
-        var essenceGap = Mathf.Max(0, upgradeCost - mythEssence);
-        return $"Farm dungeons: need {goldGap} Gold, {essenceGap} Essence, or Gear drops";
+        var essenceGap = Mathf.Max(0, heroCost - mythEssence);
+        var powerGap = Mathf.Max(0, stagePower - teamPower);
+        return $"Farm loop: +{FormatCompactNumber(powerGap)} Power, {FormatCompactNumber(goldGap)} Gold, {FormatCompactNumber(essenceGap)} Essence";
+    }
+
+    private bool TryGetAffordableVillageBuildGoal(out string buildingName, out int buildCost)
+    {
+        EnsureVillageState();
+        for (var plotIndex = 0; plotIndex < VillagePlotCount; plotIndex++)
+        {
+            if (villagePlotBuiltStates[plotIndex])
+            {
+                continue;
+            }
+
+            const int optionIndex = 0;
+            buildCost = GetVillagePlotBuildCost(plotIndex, optionIndex);
+            if (mythEssence >= buildCost)
+            {
+                buildingName = GetVillageBuildingOptionName(plotIndex, optionIndex);
+                return true;
+            }
+        }
+
+        buildingName = string.Empty;
+        buildCost = 0;
+        return false;
+    }
+
+    private bool TryGetAffordableVillageUpgradeGoal(out string buildingName, out int upgradeCost)
+    {
+        EnsureVillageState();
+        for (var plotIndex = 0; plotIndex < VillagePlotCount; plotIndex++)
+        {
+            if (!villagePlotBuiltStates[plotIndex])
+            {
+                continue;
+            }
+
+            var optionIndex = GetVillageBuiltOptionIndex(plotIndex);
+            var level = GetVillageBuildingLevel(plotIndex);
+            if (level >= GetVillageBuildingMaxLevel(plotIndex, optionIndex))
+            {
+                continue;
+            }
+
+            upgradeCost = GetVillageBuildingUpgradeCost(plotIndex, optionIndex, level);
+            if (mythEssence >= upgradeCost)
+            {
+                buildingName = GetVillageBuildingOptionName(plotIndex, optionIndex);
+                return true;
+            }
+        }
+
+        buildingName = string.Empty;
+        upgradeCost = 0;
+        return false;
     }
 
     private void RefreshEquipmentUi()

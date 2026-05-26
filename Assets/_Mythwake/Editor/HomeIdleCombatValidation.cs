@@ -40,6 +40,7 @@ public static class HomeIdleCombatValidation
         SetPrivateField(controller, "backendGameplayEnabled", false);
         controller.ShowHome();
         Canvas.ForceUpdateCanvases();
+        ValidateNextGoalHint(controller);
 
         var mapRoot = RequireObject("Home Campaign Map Root", true);
         var scrollRect = mapRoot.GetComponent<ScrollRect>();
@@ -301,6 +302,42 @@ public static class HomeIdleCombatValidation
         }
 
         return null;
+    }
+
+    private static void ValidateNextGoalHint(IdlePrototypeController controller)
+    {
+        var originalEnemyLevel = GetPrivateField<int>(controller, "enemyLevel");
+        var originalSelectedCampaignStage = GetPrivateField<int>(controller, "selectedCampaignStage");
+
+        try
+        {
+            SetPrivateField(controller, "enemyLevel", 1);
+            SetPrivateField(controller, "selectedCampaignStage", 1);
+            InvokePrivate(controller, "RefreshUi");
+            controller.ShowHome();
+            Canvas.ForceUpdateCanvases();
+
+            var goalText = (string)InvokePrivate(controller, "GetNextGoalText");
+            RequireCopy(goalText, "Campaign Stage");
+            RequireCopy(goalText, "Power");
+
+            var nextGoal = GetPrivateField<TMP_Text>(controller, "nextGoalText");
+            if (nextGoal != null && nextGoal.gameObject.activeInHierarchy)
+            {
+                RequireCopy(nextGoal.text, "Next Goal");
+                RequireCopy(nextGoal.text, "Campaign Stage");
+                RequireCopy(nextGoal.text, "Power");
+                AssertTextFits(nextGoal, "Next Goal Text");
+            }
+        }
+        finally
+        {
+            SetPrivateField(controller, "enemyLevel", originalEnemyLevel);
+            SetPrivateField(controller, "selectedCampaignStage", originalSelectedCampaignStage);
+            InvokePrivate(controller, "RefreshUi");
+            controller.ShowHome();
+            Canvas.ForceUpdateCanvases();
+        }
     }
 
     private static void ValidateLockedStageDetailBattleGuard(IdlePrototypeController controller)

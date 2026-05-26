@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.130`, save version `2`.
+- Unity client code is at Prototype `0.2.131`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -127,6 +127,7 @@ Last updated: 2026-05-26
 - Moved the same Village definition shape into backend/static definitions, `/definitions`, PostgreSQL migration `0028_village_building_definitions.sql`, and the injected backend balance catalog.
 - Backend Village build/upgrade actions now read cost, stable building ID, max level, and server-side Team ATK/HP bonus contribution through the catalog.
 - Local Campaign/Dungeon combat result bodies now use a server-style summary with Team HP, Enemy HP, Team ATK, Enemy DMG, damage dealt/taken, healing, crits, misses, and execute flags; Upgrade Clutter validates that summary shape.
+- Home Next Goal now follows the early loop more explicitly: push Campaign when Power is ready, otherwise suggest Gear drops/equip, Weapon/Armor/accessory/Hero upgrades, affordable Village build/upgrade, Gear Dungeon drops, Summon shards, or concrete Gold/Essence/Power farm gaps.
 - `go test ./...`, `scripts/check-backend.cmd` against a temporary no-DB API on `http://localhost:18080`, `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` now pass for the current slice.
 
 ## Next Small Steps
