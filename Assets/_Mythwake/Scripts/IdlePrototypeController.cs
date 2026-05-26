@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.120";
+    public const string PrototypeVersion = "0.2.121";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -15885,12 +15885,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (villageHintText == null)
         {
-            villageHintText = CreateRuntimeText(villagePanel.transform, "Village Hint", "Waehle einen Bauplatz.", 21, new Vector2(0f, -154f), new Vector2(760f, 34f));
+            villageHintText = CreateRuntimeText(villagePanel.transform, "Village Hint", "Waehle einen Bauplatz.", 19, new Vector2(0f, -154f), new Vector2(940f, 36f));
             villageHintText.color = new Color(0.75f, 0.9f, 1f);
             villageHintText.fontStyle = FontStyles.Bold;
             villageHintText.enableAutoSizing = true;
-            villageHintText.fontSizeMin = 15;
-            villageHintText.fontSizeMax = 21;
+            villageHintText.fontSizeMin = 12;
+            villageHintText.fontSizeMax = 19;
             villageHintText.textWrappingMode = TextWrappingModes.NoWrap;
         }
 
@@ -16327,9 +16327,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (villageHintText != null)
         {
+            var bonusSummaryText = GetVillageBonusSummaryText();
             villageHintText.text = selectedVillagePlotIndex >= 0
-                ? $"{GetVillagePlotName(selectedVillagePlotIndex)} ausgewaehlt"
-                : "Waehle einen Bauplatz.";
+                ? $"{GetVillagePlotName(selectedVillagePlotIndex)} ausgewaehlt | {bonusSummaryText}"
+                : bonusSummaryText;
         }
 
         for (var i = 0; i < VillagePlotCount; i++)
@@ -16601,6 +16602,46 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return bonus;
+    }
+
+    private string GetVillageBonusSummaryText()
+    {
+        if (backendGameplayEnabled)
+        {
+            return "Server Mode: Village Boni lokal pausiert";
+        }
+
+        var attackBonus = GetVillageTeamAttackBonus();
+        var healthBonus = GetVillageTeamHealthBonus();
+        var goldRateBonus = GetVillageAfkGoldRateBonus();
+        var essenceRateBonus = GetVillageAfkEssenceRateBonus();
+        if (attackBonus <= 0 && healthBonus <= 0 && goldRateBonus <= 0f && essenceRateBonus <= 0f)
+        {
+            return "Lokal: keine Village Boni";
+        }
+
+        var bonusParts = new List<string>();
+        if (attackBonus > 0)
+        {
+            bonusParts.Add($"+{attackBonus} ATK");
+        }
+
+        if (healthBonus > 0)
+        {
+            bonusParts.Add($"+{healthBonus} HP");
+        }
+
+        if (goldRateBonus > 0f)
+        {
+            bonusParts.Add($"+{FormatRate(goldRateBonus)} Gold/s");
+        }
+
+        if (essenceRateBonus > 0f)
+        {
+            bonusParts.Add($"+{FormatRate(essenceRateBonus)} Essence/s");
+        }
+
+        return $"Lokal: {string.Join(" | ", bonusParts)}";
     }
 
     private static string GetVillageBuildingBonusText(int plotIndex, int optionIndex, int level)
@@ -17679,7 +17720,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         MoveUiElement(villageHeaderText, villagePanel, new Vector2(0f, -112f), new Vector2(760f, 54f));
-        MoveUiElement(villageHintText, villagePanel, new Vector2(0f, -154f), new Vector2(760f, 34f));
+        MoveUiElement(villageHintText, villagePanel, new Vector2(0f, -154f), new Vector2(940f, 36f));
         MoveUiElement(villageMapViewportRoot, villagePanel, VillageMapPosition, VillageMapFrameSize);
         if (villageMapRoot != null && villageMapViewportRoot != null)
         {
@@ -17747,7 +17788,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             villageDemolishPanelRoot.SetAsLastSibling();
         }
 
-        MoveUiElement(villageDemolishPanelBodyText, villageDemolishPanelRoot != null ? villageDemolishPanelRoot.gameObject : villagePanel, new Vector2(0f, -118f), new Vector2(620f, 112f));
+        MoveUiElement(villageDemolishPanelBodyText, villageDemolishPanelRoot != null ? villageDemolishPanelRoot.gameObject : villagePanel, new Vector2(0f, -100f), new Vector2(620f, 132f));
         MoveUiElement(villageUpgradeButton, villageDemolishPanelRoot != null ? villageDemolishPanelRoot.gameObject : villagePanel, new Vector2(-220f, -248f), new Vector2(200f, 52f));
         MoveUiElement(villageDemolishButton, villageDemolishPanelRoot != null ? villageDemolishPanelRoot.gameObject : villagePanel, new Vector2(0f, -248f), new Vector2(200f, 52f));
         MoveUiElement(villageDemolishCloseButton, villageDemolishPanelRoot != null ? villageDemolishPanelRoot.gameObject : villagePanel, new Vector2(220f, -248f), new Vector2(200f, 52f));

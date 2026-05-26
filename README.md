@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.120
+Prototype version: 0.2.121
 Local save version: 2
 
 Current prototype:
@@ -65,7 +65,7 @@ Current prototype:
 - Dungeons have a dedicated map screen with Gold, Essence, and Gear dungeon cards
 - Village has a dedicated scrollable map with 12 build plots, building placement art, and built-building detail controls
 - Village buildings can be built, upgraded, and demolished locally and through Server Mode backend actions
-- Village building detail now shows current and next/max placeholder bonuses; local mode applies small Team ATK/HP or Fast Rewards rate boosts by building type and level while Server Mode stays backend-authoritative
+- Village building detail now shows current and next/max placeholder bonuses; the Village hint line summarizes local Team ATK/HP and Fast Rewards rate boosts or the Server Mode local-bonus pause while Server Mode stays backend-authoritative
 - Campaign and dungeon fights now simulate win/loss with team HP and enemy damage
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
 - Hero shards add minor Attack and HP immediately
@@ -177,6 +177,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.121: Added a Village bonus summary hint for local and Server Mode state, kept the widened detail body layout stable, and extended Village UI validation for the hint.
 - Prototype 0.2.120: Added next/max bonus preview copy to Village building details and validator coverage for the extra detail state.
 - Prototype 0.2.119: Added a Fast Rewards progress bar/status line for local stored time and Server Mode claim readiness, with validator coverage for fill percent and text fit.
 - Prototype 0.2.118: Added state-specific Home campaign stage-detail action labels/button colors, made Dungeons zoom/marker/drop-label wiring validator-safe, and tightened Summon/Gear/Hero/Home runtime UI fit paths.

@@ -110,7 +110,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.120`
+- Prototype `0.2.121`
 - Save version `2`
 
 Important Unity scripts:
@@ -119,9 +119,9 @@ Important Unity scripts:
 Latest local gameplay/UI batch:
 - Dungeons now have a dedicated map screen opened from the bottom Dungeons nav item, with Gold, Essence, and Gear dungeon cards; `Validate Dungeons UI` checks the world-map viewport, map art, pan/scroll handlers, zoom controls and clamps, all three dungeon markers, marker spacing/text/art fit, and Gold/Essence/Gear Formation entry plus back-navigation flows.
 - Village now has a dedicated scrollable map screen opened from the bottom Village nav item, with 12 build plots and imported building art.
-- Village free plots open a build panel. Built plots open a building detail panel with level, next upgrade cost, available Myth Essence, visible HP/ATK/Fast Rewards bonus categories, `Aufwerten`, `Abreissen`, and `Schliessen`; the Village validator also checks the scrollable map/content wiring, all 12 plot buttons, loaded map/building art, build/detail close flows, built-plot hidden build marks, and Max Level disables upgrade.
+- Village free plots open a build panel. Built plots open a building detail panel with level, next upgrade cost, available Myth Essence, visible HP/ATK/Fast Rewards bonus categories, `Aufwerten`, `Abreissen`, and `Schliessen`; the Village validator also checks the scrollable map/content wiring, all 12 plot buttons, loaded map/building art, build/detail close flows, built-plot hidden build marks, max-level upgrade lockout, and the Village bonus hint.
 - Village building upgrades spend Myth Essence locally and route through the existing backend Village upgrade action in Server Mode.
-- Village building details show current and next/max placeholder bonuses. In local mode, built building type and level apply small Team ATK/HP or Fast Rewards Gold/Essence rate boosts. Server Mode remains backend-authoritative and does not add these local stat bonuses on top of backend snapshot stats.
+- Village building details show current and next/max placeholder bonuses. In local mode, built building type and level apply small Team ATK/HP or Fast Rewards Gold/Essence rate boosts and the Village hint line summarizes the active totals. Server Mode remains backend-authoritative and the hint notes that local Village bonuses are paused.
 - Village bonuses are intentionally local-only until the Village balance/definition pass.
 - Fast Rewards popup now separates local and Server Mode: local shows stored time, remaining cap time, rate, Village bonus, and ready rewards; Server Mode shows backend min/cap/rate, claim status, ready estimate, and notes that Village local bonuses do not modify server rewards yet.
 - A Unity editor validator now checks Fast Rewards popup controls, local copy, cap-left copy, progress bar fill/text, local redeem grant/reset/button-disable flow, 0s/capped 24h states, popup exclusivity, close flow, Server Mode fallback copy, disabled no-session fallback, waiting/ready server claim status, redeem/claim labels, text fit, and button bounds through `Mythwake/Validate Fast Rewards UI`.

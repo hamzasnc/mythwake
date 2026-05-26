@@ -35,6 +35,7 @@ public static class VillageUiValidation
             throw new InvalidOperationException("Missing IdlePrototypeController in SampleScene.");
         }
 
+        SetPrivateField(controller, "backendGameplayEnabled", false);
         InvokePrivate(controller, "EnsureRuntimeScreenLayout");
         InvokePrivate(controller, "RegisterNavigation");
         controller.ShowVillage();
@@ -47,6 +48,8 @@ public static class VillageUiValidation
         ValidateVillageScrollRect(mapViewport, mapContent);
         AssertInsideParent(mapContent, mapImage.gameObject);
         ValidateVillageMapPlots(mapContent);
+        AssertVillageBonusHint("Lokal:", "Village empty bonus hint");
+        AssertVillageBonusHint("keine Village Boni", "Village empty bonus hint");
 
         var buildPanel = RequireObject("Village Build Panel", false);
         var detailPanel = RequireObject("Village Building Detail Panel", false);
@@ -88,6 +91,7 @@ public static class VillageUiValidation
         AssertVillageBuiltPlotDetail(controller, 5, 0, 4, "Gold/s Fast Rewards", "Upgrade auf Lv. 5", "Aufwerten (20)", true, upgradeButton, demolishButton);
         AssertVillageBuiltPlotDetail(controller, 0, 0, 20, "Team HP", "Max Level erreicht.", "Max", false, upgradeButton, demolishButton);
         ValidateVillageDetailClose(controller, 3, 0, 1, detailCloseButton, detailPanel);
+        ValidateVillageServerModeHint(controller);
 
         if (!villagePanel.activeInHierarchy)
         {
@@ -215,6 +219,60 @@ public static class VillageUiValidation
         RequireCopy(detailBody.text, expectedProgressionCopy, $"Village plot {plotIndex + 1} detail");
         RequireCopy(detailBody.text, "Vorhanden:", $"Village plot {plotIndex + 1} detail");
         AssertTextFits(detailBody, $"Village plot {plotIndex + 1} detail body");
+        AssertVillageBonusHint("Lokal:", $"Village plot {plotIndex + 1} bonus hint");
+        AssertVillageBonusHint(GetVillageHintToken(expectedBonus), $"Village plot {plotIndex + 1} bonus hint");
+    }
+
+    private static void ValidateVillageServerModeHint(IdlePrototypeController controller)
+    {
+        var backendBefore = GetPrivateField<bool>(controller, "backendGameplayEnabled");
+        try
+        {
+            SetPrivateField(controller, "backendGameplayEnabled", true);
+            InvokePrivate(controller, "RefreshVillageUi");
+            Canvas.ForceUpdateCanvases();
+
+            AssertVillageBonusHint("Server Mode:", "Village server-mode bonus hint");
+            AssertVillageBonusHint("lokal pausiert", "Village server-mode bonus hint");
+        }
+        finally
+        {
+            SetPrivateField(controller, "backendGameplayEnabled", backendBefore);
+            InvokePrivate(controller, "RefreshVillageUi");
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void AssertVillageBonusHint(string expected, string context)
+    {
+        var hintText = RequireObject("Village Hint", true).GetComponent<TMP_Text>();
+        if (hintText == null)
+        {
+            throw new InvalidOperationException("Village Hint is missing TMP_Text.");
+        }
+
+        RequireCopy(hintText.text, expected, context);
+        AssertTextFits(hintText, context);
+    }
+
+    private static string GetVillageHintToken(string expectedBonus)
+    {
+        if (expectedBonus.Contains("HP"))
+        {
+            return "HP";
+        }
+
+        if (expectedBonus.Contains("ATK"))
+        {
+            return "ATK";
+        }
+
+        if (expectedBonus.Contains("Gold/s"))
+        {
+            return "Gold/s";
+        }
+
+        return "Essence/s";
     }
 
     private static void ValidateBuiltVillagePlotArt(int plotIndex)
