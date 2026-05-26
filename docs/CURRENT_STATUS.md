@@ -128,6 +128,7 @@ Last updated: 2026-05-26
 - Backend Village build/upgrade actions now read cost, stable building ID, max level, and server-side Team ATK/HP bonus contribution through the catalog.
 - Local Campaign/Dungeon combat result bodies now use a server-style summary with Team HP, Enemy HP, Team ATK, Enemy DMG, damage dealt/taken, healing, crits, misses, and execute flags; Upgrade Clutter validates that summary shape.
 - Home Next Goal now follows the early loop more explicitly: push Campaign when Power is ready, otherwise suggest Gear drops/equip, Weapon/Armor/accessory/Hero upgrades, affordable Village build/upgrade, Gear Dungeon drops, Summon shards, or concrete Gold/Essence/Power farm gaps.
+- `docs/UNITY_TEST_STAND.md` now records the 2026-05-26 Mobile UX pass: Current Slice/C# checks cover the main portrait UI paths, while a real Android APK/emulator/device run remains open because the repo does not yet include a reproducible Android build/install helper.
 - `go test ./...`, `scripts/check-backend.cmd` against a temporary no-DB API on `http://localhost:18080`, `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` now pass for the current slice.
 
 ## Next Small Steps
@@ -135,4 +136,5 @@ Last updated: 2026-05-26
 1. Visually verify Home idle combat on device/editor: connected upper/lower map readability, foreground patrol spacing, reward tick pacing, and the stage-node info preview.
 2. Visually verify Village, Fast Rewards, Vanguard Oath/Summon result, and Paladin formation/fight presentation in Unity/emulator.
 3. Visually verify the 8-slot Hero Detail spacing in Unity/emulator, then continue the visible Hero/Gear polish pass behind `Mythwake/Validate Upgrade Clutter`.
-4. Continue Village backend-readiness by deciding how AFK-rate Village bonuses should affect server-authoritative AFK rewards, then expose that clearly in Server Mode UI.
+4. Add or run a reproducible Android build/install pass, then capture emulator/device checks for safe area, gesture navigation, load time, and performance on Home, Hero Detail, Gear, Village, Summon, and Fight.
+5. Continue Village backend-readiness by deciding how AFK-rate Village bonuses should affect server-authoritative AFK rewards, then expose that clearly in Server Mode UI.

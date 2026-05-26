@@ -171,6 +171,7 @@ Latest local gameplay/UI batch:
 - Multiple heroes/enemies can attack at the same time; combat is no longer an A -> B -> C alternating sequence.
 - Local Campaign/Dungeon fight result bodies now mirror the server combat summary shape more closely: Team HP, Enemy HP, Team ATK, Enemy DMG, dealt/taken damage, healing, crits, misses, and execute flags are shown consistently and covered by Upgrade Clutter validation.
 - Home Next Goal now points through the early loop in order: push Campaign when Power is ready, otherwise Gear drops/equip, Weapon/Armor/accessory/Hero upgrades, affordable Village build/upgrade, Gear Dungeon drops, Summon shards, or concrete Gold/Essence/Power farm gaps. Home validation checks the campaign-power hint path.
+- `docs/UNITY_TEST_STAND.md` records the 2026-05-26 Mobile UX pass. Batchmode Current Slice/C# validation covers the main portrait UI paths; an actual Android APK/emulator/device run is still open because this repo has no reproducible Android build/install helper yet.
 - Normal hits reduce only one target HP bar.
 - Fight UI now has bottom hero skill cards with portrait, per-character mana bar, ready glow, click-to-queue ultimate, and an AUTO toggle above the right side of the cards.
 - Character mana is per hero, not team-wide. Heroes start at 0, no longer gain passive timer mana, gain +2 mana on successful hits, and each hero has a different max mana.

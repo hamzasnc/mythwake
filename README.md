@@ -178,7 +178,7 @@ Backend:
   - `scripts/check-unity-current-slice.cmd`
 - Test planning docs:
   - `docs/ROADMAP.md`
-  - `docs/UNITY_TEST_STAND.md`
+  - `docs/UNITY_TEST_STAND.md` (includes the latest Mobile UX pass and open Android emulator/device follow-up)
 
 Changelog:
 - Prototype 0.2.131: Reordered and clarified the Home Next Goal hint around the early loop: push when Power is ready, then Gear, Weapon/Armor/accessory, Hero, Village, Gear Dungeon, Summon, or explicit farm gaps; Home validation now checks the campaign-power hint shape.

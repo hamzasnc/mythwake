@@ -16,6 +16,30 @@ The current internal test stand should prove that the core loop works with the G
 - Inspect PostgreSQL in Navicat after actions.
 - Confirm state survives backend restart and Unity restart.
 
+## Mobile UX Pass 2026-05-26
+
+Batchmode validation is green for the current mobile-portrait slice:
+
+- `scripts/check-unity-csharp.cmd` passes.
+- `scripts/check-unity-current-slice.cmd` passes.
+- `git diff --check` passes, with the usual LF/CRLF warnings on touched Markdown files.
+- Current Slice coverage includes Home map/idle combat touch targets, reward strip fit, unit/reward separation, popup exclusivity, Village scroll/build/detail flows, Dungeons map zoom/marker spacing, Fast Rewards copy/progress/close flows, Summon result slots and repeat buttons, Hero Detail/Gear spacing and localized text fit, Gear action labels, combat result summary shape, and Paladin formation/fight handoff checks.
+
+Mobile UX issues addressed in this continuation:
+
+- Home idle patrol middle lane was moved above the reward strip and guarded by validation.
+- Gear selected-rarity copy now distinguishes bag/equipped copies, and local Gear action result copy is localized.
+- Combat result bodies now show server-like HP/ATK/enemy damage/result fields.
+- Home Next Goal now auto-sizes and points through the early loop with Power and resource gaps.
+
+Not yet run in this pass:
+
+- A real Android APK/AAB build, emulator install, or physical-device run. The repo currently has an Android Build Profile, but no checked-in build/install helper script.
+- Manual safe-area checks for notches, Android gesture navigation, and status/navigation bar cutouts.
+- Device performance/load-time sampling on Home Map, Hero Detail, Gear, Village, Summon, and Fight.
+
+Next Android pass should either add a reproducible Unity Android build script or run the Android Build Profile manually, then record emulator/device screenshots for Home, Hero Detail, Gear, Village, Summon, and Fight.
+
 ## Server Mode Rules
 
 Server Mode should behave like the first real mobile-client path:
