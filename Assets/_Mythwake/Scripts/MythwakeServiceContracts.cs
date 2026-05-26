@@ -460,7 +460,11 @@ public struct MythwakeVillageBuildingDefinitionDto
     public int maxLevel;
     public int upgradeCostPerLevel;
     public string bonusType;
+    public string bonusLabel;
     public float bonusValuePerLevel;
+    public string bonusCurve;
+    public string upgradeCostFormula;
+    public string modeCompatibility;
 }
 
 [Serializable]

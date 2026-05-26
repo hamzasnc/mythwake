@@ -360,7 +360,11 @@ type VillageBuildingDefinition struct {
 	MaxLevel            int     `json:"maxLevel"`
 	UpgradeCostPerLevel int     `json:"upgradeCostPerLevel"`
 	BonusType           string  `json:"bonusType"`
+	BonusLabel          string  `json:"bonusLabel"`
 	BonusValuePerLevel  float64 `json:"bonusValuePerLevel"`
+	BonusCurve          string  `json:"bonusCurve"`
+	UpgradeCostFormula  string  `json:"upgradeCostFormula"`
+	ModeCompatibility   string  `json:"modeCompatibility"`
 }
 
 type ProgressionCostDefinition struct {

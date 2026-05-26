@@ -13,7 +13,7 @@ import (
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
-const SchemaVersion = 6
+const SchemaVersion = 7
 
 func Snapshot(apiVersion string) api.DefinitionSnapshot {
 	snapshot := api.DefinitionSnapshot{
@@ -287,7 +287,11 @@ func villageBuildingDefinitions() []api.VillageBuildingDefinition {
 			MaxLevel:            definition.MaxLevel,
 			UpgradeCostPerLevel: definition.UpgradeCostPerLevel,
 			BonusType:           definition.BonusType,
+			BonusLabel:          definition.BonusLabel,
 			BonusValuePerLevel:  definition.BonusValuePerLevel,
+			BonusCurve:          definition.BonusCurve,
+			UpgradeCostFormula:  definition.UpgradeCostFormula,
+			ModeCompatibility:   definition.ModeCompatibility,
 		})
 	}
 	return response

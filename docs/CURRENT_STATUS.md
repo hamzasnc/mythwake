@@ -5,8 +5,8 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.133`, save version `2`.
-- Backend API default version is `0.2.57`.
+- Unity client code is at Prototype `0.2.134`, save version `2`.
+- Backend API default version is `0.2.58`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
 - Client has moved beyond the older roadmap notes: Dungeons have their own map screen, Village has a scrollable map with 12 build plots, building art is imported, and Paladin/Ravik art plus combat presentation hooks exist.
@@ -17,7 +17,7 @@ Last updated: 2026-05-26
 - `README.md` and `docs/NEXT_CHAT_CONTEXT.md` were refreshed earlier for the Home idle combat/Village/Dungeons/Paladin state; the latest Home idle map layout is now tracked here and in `docs/NEXT_CHAT_CONTEXT.md`.
 - Parts of `docs/ROADMAP.md` still describe older batch goals and can be cleaned up later.
 - The note "split Dungeons into a real screen" is now first-pass done.
-- The note "make Fast Rewards real enough for testing" is now closer: local accumulation, 24h cap, Village rate bonuses, Server Mode/backend-authoritative popup copy, and server-side AFK Village bonus claims are in place. A real device/emulator visual pass is still open.
+- The note "make Fast Rewards real enough for testing" is now closer: local accumulation, 24h cap, Village rate bonuses, Server Mode/backend-authoritative popup copy, server-side AFK Village bonus claims, and editor-validator coverage for local/server Village bonus lines are in place. A real Android device/emulator pass is still open.
 
 ## Started This Pass
 
@@ -29,6 +29,8 @@ Last updated: 2026-05-26
 - Village building detail now shows both the current bonus and either the next upgrade's bonus or the max bonus, with validator coverage for the extra detail line.
 - Village now shows a compact hint-line summary for local Team ATK/HP and Fast Rewards rate bonuses, or a Server Mode note that local Village bonuses are paused while backend state stays authoritative.
 - Village building definitions now exist in backend/common/PostgreSQL shape and are exposed through `/definitions`; backend Village build/upgrade actions use the injected catalog for costs, IDs, max levels, and server-side Team ATK/HP bonuses.
+- Village balance definitions now carry editable admin-facing fields for bonus labels, bonus curve, upgrade cost formula, and local/server compatibility. PostgreSQL migration `0029_village_balance_admin_fields.sql` adds those columns plus `debug.v_common_village_building_balance` for Navicat/debug inspection.
+- The Unity local fallback now matches backend Village values: Team ATK +3/+4/+5 per level, Team HP +24/+28/+32 per level, Gold/s Fast Rewards +0.08/+0.11/+0.14 per level, and Essence/s Fast Rewards +0.05/+0.07/+0.09 per level.
 - Server Mode keeps client-side local Village bonuses paused so server-authoritative team stats and AFK rewards are not double-counted locally.
 - Backend AFK claims now apply catalog-driven Village `afk_gold_rate` and `afk_essence_rate` bonuses from built building definitions, using floor-per-claim additive rewards so the server owns the actual reward mutation.
 - Polished the Fast Rewards popup so local mode shows stored time, rate, Village bonus, and ready rewards, while Server Mode shows backend min/cap/rate/ready estimate.
@@ -127,17 +129,18 @@ Last updated: 2026-05-26
 - Moved local Village building names, textures, build costs, max levels, upgrade scaling, stable IDs, and placeholder bonus values into client-side building definitions as a bridge toward backend-owned Village balance.
 - Extended `Validate Village UI` so every 12x3 Village definition is checked for stable ID, build cost, max level, loaded texture, and expected bonus category.
 - Moved the same Village definition shape into backend/static definitions, `/definitions`, PostgreSQL migration `0028_village_building_definitions.sql`, and the injected backend balance catalog.
+- Extended the Village definition shape again with editable labels/curves/formulas/mode compatibility, exposed the fields through `/definitions`, and added the PostgreSQL debug view for balance/admin inspection.
 - Backend Village build/upgrade actions now read cost, stable building ID, max level, and server-side Team ATK/HP bonus contribution through the catalog.
 - Backend Village/AFK tests now cover valid build, invalid building option, insufficient Essence, upgrade cost, max-level lockout, demolish, snapshot state, and server-side AFK Gold/Essence rate bonuses from Village definitions.
 - Local Campaign/Dungeon combat result bodies now use a server-style summary with Team HP, Enemy HP, Team ATK, Enemy DMG, damage dealt/taken, healing, crits, misses, and execute flags; Upgrade Clutter validates that summary shape.
 - Home Next Goal now follows the early loop more explicitly: push Campaign when Power is ready, otherwise suggest Gear drops/equip, Weapon/Armor/accessory/Hero upgrades, affordable Village build/upgrade, Gear Dungeon drops, Summon shards, or concrete Gold/Essence/Power farm gaps.
 - `docs/UNITY_TEST_STAND.md` now records the 2026-05-26 Mobile UX pass: Current Slice/C# checks cover the main portrait UI paths, while a real Android APK/emulator/device run remains open because the repo does not yet include a reproducible Android build/install helper.
 - Added `Mythwake/Validate Fight Formation UI` and included it in `Mythwake/Validate Current Slice`; it checks campaign Formation swap, auto-next, visible Fight controls, AUTO/x2 toggles, HP/mana skill cards, ultimate queueing, result popup Continue flow, and dungeon fight focus chrome hiding.
-- `go test ./...`, `scripts/check-unity-csharp.cmd`, `scripts/check-unity-current-slice.cmd`, `scripts/check-backend.cmd -BaseUrl http://localhost:18081` against a temporary no-DB API, and `git diff --check` pass after the Village AFK bonus server pass.
+- `go test ./...`, `scripts/check-unity-csharp.cmd`, `scripts/check-unity-current-slice.cmd`, `scripts/check-backend.cmd -BaseUrl http://localhost:18081 -CheckUnauthorized` against a temporary no-DB API, and `git diff --check` pass after the Village balance/admin field pass.
 
 ## Next Small Steps
 
 1. Add or run a reproducible Android build/install pass, then capture emulator/device checks for safe area, gesture navigation, load time, and performance on Home, Hero Detail, Gear, Village, Summon, and Fight.
 2. Use a live Editor/emulator visual pass to compare the validator-backed Home/Village/Hero/Gear/Summon/Fight layouts against actual screenshots, especially safe-area and small-device readability.
-3. Continue Village backend-readiness by moving definition editing/admin tooling beyond static rows, and decide whether AFK-rate bonuses need caps, diminishing returns, or per-mode display labels before deeper balance tuning.
+3. Continue Village backend-readiness by deciding whether AFK-rate bonuses need caps/diminishing returns and whether the editable PostgreSQL rows should get a small admin UI or import/export workflow.
 4. Continue the visible Hero/Gear polish pass behind `Mythwake/Validate Upgrade Clutter` once the real item/inventory direction is selected.

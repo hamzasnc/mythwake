@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.133
+Prototype version: 0.2.134
 Local save version: 2
 
 Current prototype:
@@ -181,6 +181,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md` (includes the latest Mobile UX pass and open Android emulator/device follow-up)
 
 Changelog:
+- Prototype 0.2.134 / Backend 0.2.58: Added editable Village balance/admin fields (`bonusLabel`, `bonusCurve`, `upgradeCostFormula`, `modeCompatibility`) across backend definitions, `/definitions`, PostgreSQL migration `0029`, and the new `debug.v_common_village_building_balance` view; aligned the Unity local fallback balance with backend values and extended Village/Fast Rewards validators for definition labels, curves, max/cost copy, and local/server bonus display.
 - Prototype 0.2.133 / Backend 0.2.57: Server AFK claims now apply catalog-driven Village Gold/Essence rate bonuses from built buildings, Server Mode Fast Rewards shows the server-snapshot Village bonus line, and backend Village tests cover invalid building options, insufficient Essence, max-level upgrades, demolish, upgrade costs, snapshots, and AFK bonus claims.
 - Prototype 0.2.132: Added a dedicated Fight/Formation editor validator to the Current Slice, covering campaign formation swap, auto-next toggle, visible fight controls, AUTO/x2 toggles, HP/mana skill cards, ultimate queueing, result popup flow, and dungeon fight focus chrome hiding.
 - Prototype 0.2.131: Reordered and clarified the Home Next Goal hint around the early loop: push when Power is ready, then Gear, Weapon/Armor/accessory, Hero, Village, Gear Dungeon, Summon, or explicit farm gaps; Home validation now checks the campaign-power hint shape.

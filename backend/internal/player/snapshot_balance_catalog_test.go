@@ -143,7 +143,7 @@ func TestSnapshotBalanceCatalogUsesSnapshotCostsAndMetaRewards(t *testing.T) {
 			{AccessoryID: "accessory_only_drop", SlotID: "test_slot", RarityID: "test_rarity", DropWeight: 1, FuseTargetID: "accessory_next"},
 		},
 		VillageBuildings: []api.VillageBuildingDefinition{
-			{BuildingID: "village_custom", SlotIndex: 4, BuildingOptionIndex: 2, DisplayName: "Custom Village", BuildCost: 99, MaxLevel: 7, UpgradeCostPerLevel: 12, BonusType: balance.VillageBonusTeamHealth, BonusValuePerLevel: 31},
+			{BuildingID: "village_custom", SlotIndex: 4, BuildingOptionIndex: 2, DisplayName: "Custom Village", BuildCost: 99, MaxLevel: 7, UpgradeCostPerLevel: 12, BonusType: balance.VillageBonusTeamHealth, BonusLabel: "Custom HP", BonusValuePerLevel: 31, BonusCurve: "custom_curve", UpgradeCostFormula: "custom_formula", ModeCompatibility: "server_preview"},
 		},
 	})
 
@@ -197,11 +197,11 @@ func TestSnapshotBalanceCatalogUsesSnapshotCostsAndMetaRewards(t *testing.T) {
 		t.Fatalf("expected snapshot rarity definition, got %#v ok=%t", rarity, ok)
 	}
 	villageBuilding, ok := catalog.VillageBuildingDefinitionBySlotOption(4, 2)
-	if !ok || villageBuilding.ID != "village_custom" || villageBuilding.BuildCost != 99 || villageBuilding.MaxLevel != 7 || villageBuilding.BonusValuePerLevel != 31 {
+	if !ok || villageBuilding.ID != "village_custom" || villageBuilding.BuildCost != 99 || villageBuilding.MaxLevel != 7 || villageBuilding.BonusLabel != "Custom HP" || villageBuilding.BonusValuePerLevel != 31 {
 		t.Fatalf("expected snapshot village building by slot/option, got %#v ok=%t", villageBuilding, ok)
 	}
 	villageBuilding, ok = catalog.VillageBuildingDefinitionByID("village_custom")
-	if !ok || villageBuilding.UpgradeCostPerLevel != 12 || villageBuilding.BonusType != balance.VillageBonusTeamHealth {
+	if !ok || villageBuilding.UpgradeCostPerLevel != 12 || villageBuilding.BonusType != balance.VillageBonusTeamHealth || villageBuilding.BonusCurve != "custom_curve" || villageBuilding.UpgradeCostFormula != "custom_formula" || villageBuilding.ModeCompatibility != "server_preview" {
 		t.Fatalf("expected snapshot village building by id, got %#v ok=%t", villageBuilding, ok)
 	}
 }

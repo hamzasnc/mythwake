@@ -188,10 +188,26 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 			MaxLevel:            definition.MaxLevel,
 			UpgradeCostPerLevel: definition.UpgradeCostPerLevel,
 			BonusType:           definition.BonusType,
+			BonusLabel:          definition.BonusLabel,
 			BonusValuePerLevel:  definition.BonusValuePerLevel,
+			BonusCurve:          definition.BonusCurve,
+			UpgradeCostFormula:  definition.UpgradeCostFormula,
+			ModeCompatibility:   definition.ModeCompatibility,
 		}
 		if villageBuilding.ID == "" {
 			villageBuilding.ID = balance.VillageBuildingID(villageBuilding.SlotIndex, villageBuilding.BuildingOptionIndex)
+		}
+		if villageBuilding.BonusLabel == "" {
+			villageBuilding.BonusLabel = balance.VillageBonusLabel(villageBuilding.BonusType)
+		}
+		if villageBuilding.BonusCurve == "" {
+			villageBuilding.BonusCurve = balance.VillageBonusCurveLinearPerLevel
+		}
+		if villageBuilding.UpgradeCostFormula == "" {
+			villageBuilding.UpgradeCostFormula = balance.VillageUpgradeCostFormulaCurrentLevel
+		}
+		if villageBuilding.ModeCompatibility == "" {
+			villageBuilding.ModeCompatibility = balance.VillageModeCompatibilityLocalAndServer
 		}
 		catalog.villageBuildings = append(catalog.villageBuildings, villageBuilding)
 		catalog.villageBuildingsByID[villageBuilding.ID] = villageBuilding

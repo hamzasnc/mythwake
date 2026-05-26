@@ -28,6 +28,10 @@ const (
 	VillageBonusAFKGoldRate    = "afk_gold_rate"
 	VillageBonusAFKEssenceRate = "afk_essence_rate"
 
+	VillageBonusCurveLinearPerLevel        = "linear_per_level"
+	VillageUpgradeCostFormulaCurrentLevel  = "current_level * upgrade_cost_per_level"
+	VillageModeCompatibilityLocalAndServer = "local_and_server"
+
 	AFKMinClaimSeconds   = 60
 	AFKMaxClaimSeconds   = 24 * 60 * 60
 	AFKRewardTickSeconds = 60
@@ -165,7 +169,11 @@ type VillageBuildingDefinition struct {
 	MaxLevel            int
 	UpgradeCostPerLevel int
 	BonusType           string
+	BonusLabel          string
 	BonusValuePerLevel  float64
+	BonusCurve          string
+	UpgradeCostFormula  string
+	ModeCompatibility   string
 }
 
 type DailyMissionDefinition struct {
@@ -515,11 +523,30 @@ func buildVillageBuildingDefinitions() []VillageBuildingDefinition {
 				MaxLevel:            20,
 				UpgradeCostPerLevel: 5,
 				BonusType:           bonusType,
+				BonusLabel:          VillageBonusLabel(bonusType),
 				BonusValuePerLevel:  villageBonusValuePerLevel(bonusType, optionIndex),
+				BonusCurve:          VillageBonusCurveLinearPerLevel,
+				UpgradeCostFormula:  VillageUpgradeCostFormulaCurrentLevel,
+				ModeCompatibility:   VillageModeCompatibilityLocalAndServer,
 			})
 		}
 	}
 	return definitions
+}
+
+func VillageBonusLabel(bonusType string) string {
+	switch bonusType {
+	case VillageBonusTeamAttack:
+		return "Team ATK"
+	case VillageBonusTeamHealth:
+		return "Team HP"
+	case VillageBonusAFKGoldRate:
+		return "Gold/s Fast Rewards"
+	case VillageBonusAFKEssenceRate:
+		return "Essence/s Fast Rewards"
+	default:
+		return "Village bonus"
+	}
 }
 
 func villageBonusValuePerLevel(bonusType string, optionIndex int) float64 {

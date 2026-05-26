@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.133";
+    public const string PrototypeVersion = "0.2.134";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -478,7 +478,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int maxLevel;
         public int upgradeCostPerLevel;
         public VillageBonusType bonusType;
+        public string bonusLabel;
         public float bonusValuePerLevel;
+        public string bonusCurve;
+        public string upgradeCostFormula;
+        public string modeCompatibility;
 
         public VillageBuildingDefinition(int plotIndex, int optionIndex, string displayName, string textureName, VillageBonusType bonusType, float bonusValuePerLevel)
         {
@@ -491,7 +495,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             this.maxLevel = VillageBuildingMaxLevel;
             this.upgradeCostPerLevel = VillageBuildingUpgradeCostPerLevel;
             this.bonusType = bonusType;
+            this.bonusLabel = GetVillageBonusLabel(bonusType);
             this.bonusValuePerLevel = bonusValuePerLevel;
+            this.bonusCurve = VillageBonusCurveLinearPerLevel;
+            this.upgradeCostFormula = VillageUpgradeCostFormulaCurrentLevel;
+            this.modeCompatibility = VillageModeCompatibilityLocalAndServer;
         }
     }
 
@@ -731,10 +739,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int VillageBuildingBaseBuildCost = 5;
     private const int VillageBuildingOptionCostStep = 2;
     private const int VillageBuildingUpgradeCostPerLevel = 5;
-    private const int VillageAttackBonusBasePerLevel = 2;
-    private const int VillageHealthBonusBasePerLevel = 18;
+    private const int VillageAttackBonusBasePerLevel = 3;
+    private const int VillageHealthBonusBasePerLevel = 24;
     private const float VillageGoldRateBonusBasePerLevel = 0.08f;
-    private const float VillageEssenceRateBonusBasePerLevel = 0.04f;
+    private const float VillageEssenceRateBonusBasePerLevel = 0.05f;
+    private const string VillageBonusCurveLinearPerLevel = "linear_per_level";
+    private const string VillageUpgradeCostFormulaCurrentLevel = "current_level * upgrade_cost_per_level";
+    private const string VillageModeCompatibilityLocalAndServer = "local_and_server";
     private const string VillageUpgradeActionId = "village_upgrade";
     private static readonly string[] VillagePlotNames =
     {
@@ -16666,6 +16677,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private static string GetVillageBonusLabel(VillageBonusType bonusType)
+    {
+        switch (bonusType)
+        {
+            case VillageBonusType.TeamAttack:
+                return "Team ATK";
+            case VillageBonusType.TeamHealth:
+                return "Team HP";
+            case VillageBonusType.AfkGoldRate:
+                return "Gold/s Fast Rewards";
+            case VillageBonusType.AfkEssenceRate:
+                return "Essence/s Fast Rewards";
+            default:
+                return "Village bonus";
+        }
+    }
+
     private static VillageBuildingDefinition GetVillageBuildingDefinition(int plotIndex, int optionIndex)
     {
         plotIndex = Mathf.Clamp(plotIndex, 0, VillagePlotCount - 1);
@@ -16868,31 +16896,52 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static string GetVillageBuildingBonusValueText(int plotIndex, int optionIndex, int level)
     {
-        var attackBonus = GetVillageBuildingAttackBonus(plotIndex, optionIndex, level);
-        if (attackBonus > 0)
+        var definition = GetVillageBuildingDefinition(plotIndex, optionIndex);
+        var label = GetVillageBuildingBonusLabel(plotIndex, optionIndex);
+        var multiplier = Mathf.Max(1, level);
+        switch (definition.bonusType)
         {
-            return $"+{attackBonus} Team ATK";
+            case VillageBonusType.TeamAttack:
+            case VillageBonusType.TeamHealth:
+                return $"+{Mathf.RoundToInt(multiplier * definition.bonusValuePerLevel)} {label}";
+            case VillageBonusType.AfkGoldRate:
+            case VillageBonusType.AfkEssenceRate:
+                return $"+{FormatRate(multiplier * definition.bonusValuePerLevel)} {label}";
+            default:
+                return "in Vorbereitung";
         }
+    }
 
-        var healthBonus = GetVillageBuildingHealthBonus(plotIndex, optionIndex, level);
-        if (healthBonus > 0)
-        {
-            return $"+{healthBonus} Team HP";
-        }
+    private static string GetVillageBuildingBonusLabel(int plotIndex, int optionIndex)
+    {
+        var definition = GetVillageBuildingDefinition(plotIndex, optionIndex);
+        return string.IsNullOrWhiteSpace(definition.bonusLabel)
+            ? GetVillageBonusLabel(definition.bonusType)
+            : definition.bonusLabel;
+    }
 
-        var goldRateBonus = GetVillageBuildingGoldRateBonus(plotIndex, optionIndex, level);
-        if (goldRateBonus > 0f)
-        {
-            return $"+{FormatRate(goldRateBonus)} Gold/s Fast Rewards";
-        }
+    private static string GetVillageBuildingBonusCurve(int plotIndex, int optionIndex)
+    {
+        var definition = GetVillageBuildingDefinition(plotIndex, optionIndex);
+        return string.IsNullOrWhiteSpace(definition.bonusCurve)
+            ? VillageBonusCurveLinearPerLevel
+            : definition.bonusCurve;
+    }
 
-        var essenceRateBonus = GetVillageBuildingEssenceRateBonus(plotIndex, optionIndex, level);
-        if (essenceRateBonus > 0f)
-        {
-            return $"+{FormatRate(essenceRateBonus)} Essence/s Fast Rewards";
-        }
+    private static string GetVillageBuildingUpgradeCostFormula(int plotIndex, int optionIndex)
+    {
+        var definition = GetVillageBuildingDefinition(plotIndex, optionIndex);
+        return string.IsNullOrWhiteSpace(definition.upgradeCostFormula)
+            ? VillageUpgradeCostFormulaCurrentLevel
+            : definition.upgradeCostFormula;
+    }
 
-        return "in Vorbereitung";
+    private static string GetVillageBuildingModeCompatibility(int plotIndex, int optionIndex)
+    {
+        var definition = GetVillageBuildingDefinition(plotIndex, optionIndex);
+        return string.IsNullOrWhiteSpace(definition.modeCompatibility)
+            ? VillageModeCompatibilityLocalAndServer
+            : definition.modeCompatibility;
     }
 
     private static int GetVillageBuildingAttackBonus(int plotIndex, int optionIndex, int level)

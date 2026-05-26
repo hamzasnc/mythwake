@@ -187,6 +187,9 @@ func TestSnapshotCarriesCampaignAndAccessoryDefinitionData(t *testing.T) {
 		if definition.BonusType != balance.VillageBonusTeamAttack || definition.BonusValuePerLevel != 4 {
 			t.Fatalf("unexpected village building bonus definition: %#v", definition)
 		}
+		if definition.BonusLabel != "Team ATK" || definition.BonusCurve != balance.VillageBonusCurveLinearPerLevel || definition.UpgradeCostFormula != balance.VillageUpgradeCostFormulaCurrentLevel || definition.ModeCompatibility != balance.VillageModeCompatibilityLocalAndServer {
+			t.Fatalf("unexpected village building editable balance fields: %#v", definition)
+		}
 	}
 	if !foundVillage {
 		t.Fatal("expected village_building_02_option_02 definition")

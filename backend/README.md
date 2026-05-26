@@ -97,6 +97,7 @@ Current scope:
   - `debug.v_common_afk_reward_definition_overview`
   - `debug.v_common_reward_overview`
   - `debug.v_common_progression_cost_overview`
+  - `debug.v_common_village_building_balance`
   - `debug.v_common_meta_definition_overview`
   - `debug.v_common_combat_definition_overview`
 - Successful idempotent action results are stored in PostgreSQL before the materialized player-state flush.

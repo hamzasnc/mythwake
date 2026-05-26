@@ -152,8 +152,11 @@ func TestVillageBuildingDefinitions(t *testing.T) {
 	if definition.BonusType != VillageBonusTeamAttack || definition.BonusValuePerLevel != 4 {
 		t.Fatalf("unexpected village bonus definition: %#v", definition)
 	}
+	if definition.BonusLabel != "Team ATK" || definition.BonusCurve != VillageBonusCurveLinearPerLevel || definition.UpgradeCostFormula != VillageUpgradeCostFormulaCurrentLevel || definition.ModeCompatibility != VillageModeCompatibilityLocalAndServer {
+		t.Fatalf("unexpected village admin/editing fields: %#v", definition)
+	}
 	byID, ok := VillageBuildingDefinitionByID("village_building_03_option_03")
-	if !ok || byID.BonusType != VillageBonusAFKEssenceRate || byID.BonusValuePerLevel != 0.09 {
+	if !ok || byID.BonusType != VillageBonusAFKEssenceRate || byID.BonusLabel != "Essence/s Fast Rewards" || byID.BonusValuePerLevel != 0.09 {
 		t.Fatalf("unexpected village id definition: %#v ok=%v", byID, ok)
 	}
 	if VillageBuildingID(11, 2) != "village_building_12_option_03" {

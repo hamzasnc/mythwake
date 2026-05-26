@@ -272,7 +272,7 @@ try {
     $firstProcess = Start-Api
 
     $definitions = Invoke-Json -Path "/definitions"
-    Assert-Equal ([int]$definitions.schemaVersion) 5 "Definitions schema should include DB-owned AFK reward fields."
+    Assert-Equal ([int]$definitions.schemaVersion) 7 "Definitions schema should include editable Village balance fields."
     $starterHeroDefinitions = @($definitions.heroes | Where-Object { $_.starterOwned -eq $true })
     $astraDefinition = $definitions.heroes | Where-Object { $_.heroId -eq "hero_astra" } | Select-Object -First 1
     if (-not $astraDefinition -or [int]$astraDefinition.maxLevel -le 0 -or [int]$astraDefinition.baseAttack -le 0 -or [int]$astraDefinition.baseHealth -le 0) {
@@ -287,8 +287,12 @@ try {
         throw "Expected definitions to include starter accessory drop accessory_earrings_r0. Response: $($definitions | ConvertTo-Json -Depth 8)"
     }
     $afkDefinition = $definitions.afkRewards | Where-Object { $_.rewardId -eq "reward_afk_claim" } | Select-Object -First 1
-    if (-not $afkDefinition -or [int]$afkDefinition.minClaimSeconds -ne 60 -or [int]$afkDefinition.maxClaimSeconds -ne 21600 -or [int]$afkDefinition.tickSeconds -ne 60) {
+    if (-not $afkDefinition -or [int]$afkDefinition.minClaimSeconds -ne 60 -or [int]$afkDefinition.maxClaimSeconds -ne 86400 -or [int]$afkDefinition.tickSeconds -ne 60) {
         throw "Expected definitions to include DB-owned AFK reward settings. Response: $($definitions | ConvertTo-Json -Depth 8)"
+    }
+    $villageDefinition = $definitions.villageBuildingDefinitions | Where-Object { $_.buildingId -eq "village_building_02_option_02" } | Select-Object -First 1
+    if (-not $villageDefinition -or $villageDefinition.bonusLabel -ne "Team ATK" -or $villageDefinition.bonusCurve -ne "linear_per_level" -or $villageDefinition.upgradeCostFormula -ne "current_level * upgrade_cost_per_level" -or $villageDefinition.modeCompatibility -ne "local_and_server") {
+        throw "Expected definitions to include editable Village balance fields. Response: $($definitions | ConvertTo-Json -Depth 8)"
     }
     $stageOneDefinition = $definitions.campaignStages | Where-Object { [int]$_.stageNumber -eq 1 } | Select-Object -First 1
     if (-not $stageOneDefinition -or [int]$stageOneDefinition.enemyMaxHp -le 0 -or [int]$stageOneDefinition.enemyDamage -le 0) {

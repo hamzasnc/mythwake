@@ -523,7 +523,17 @@ func (store *DefinitionStore) villageBuildingDefinitions(ctx context.Context) ([
 			max_level,
 			upgrade_cost_per_level,
 			bonus_type,
-			bonus_value_per_level
+			COALESCE(NULLIF(bonus_label, ''), CASE bonus_type
+				WHEN 'team_attack' THEN 'Team ATK'
+				WHEN 'team_health' THEN 'Team HP'
+				WHEN 'afk_gold_rate' THEN 'Gold/s Fast Rewards'
+				WHEN 'afk_essence_rate' THEN 'Essence/s Fast Rewards'
+				ELSE 'Village bonus'
+			END),
+			bonus_value_per_level,
+			COALESCE(NULLIF(bonus_curve, ''), 'linear_per_level'),
+			COALESCE(NULLIF(upgrade_cost_formula, ''), 'current_level * upgrade_cost_per_level'),
+			COALESCE(NULLIF(mode_compatibility, ''), 'local_and_server')
 		FROM common.village_building_definitions
 		WHERE active = true
 		ORDER BY slot_index, building_option_index, id
@@ -546,7 +556,11 @@ func (store *DefinitionStore) villageBuildingDefinitions(ctx context.Context) ([
 			&definition.MaxLevel,
 			&definition.UpgradeCostPerLevel,
 			&definition.BonusType,
+			&definition.BonusLabel,
 			&definition.BonusValuePerLevel,
+			&definition.BonusCurve,
+			&definition.UpgradeCostFormula,
+			&definition.ModeCompatibility,
 		); err != nil {
 			return nil, err
 		}

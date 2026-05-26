@@ -86,6 +86,7 @@ public static class FastRewardsUiValidation
             throw new InvalidOperationException($"Fast Rewards local button label mismatch: '{localButtonLabel}'");
         }
 
+        ValidateLocalFastRewardsVillageBonusLine(controller, bodyText);
         ValidateLocalFastRewardsRedeemFlow(controller, popup, bodyText, progressText, progressFill, redeemButton);
         ValidateFastRewardsPopupExclusivity(controller, popup);
 
@@ -181,6 +182,42 @@ public static class FastRewardsUiValidation
         }
 
         RequireInactive("Home Idle Info Popup", "Fast Rewards should close the Home idle info popup.");
+    }
+
+    private static void ValidateLocalFastRewardsVillageBonusLine(IdlePrototypeController controller, TMP_Text bodyText)
+    {
+        InvokePrivate(controller, "EnsureVillageState");
+        var builtStates = GetPrivateField<bool[]>(controller, "villagePlotBuiltStates");
+        var buildingSelections = GetPrivateField<int[]>(controller, "villagePlotBuildingSelections");
+        var buildingLevels = GetPrivateField<int[]>(controller, "villagePlotBuildingLevels");
+        var builtBefore = (bool[])builtStates.Clone();
+        var selectionsBefore = (int[])buildingSelections.Clone();
+        var levelsBefore = (int[])buildingLevels.Clone();
+
+        try
+        {
+            SetPrivateField(controller, "backendGameplayEnabled", false);
+            SetPrivateField(controller, "afkRewardStoredSeconds", 7200f);
+            builtStates[2] = true;
+            buildingSelections[2] = 0;
+            buildingLevels[2] = 1;
+            builtStates[5] = true;
+            buildingSelections[5] = 0;
+            buildingLevels[5] = 1;
+            InvokePrivate(controller, "RefreshFastRewardsPopupUi");
+            Canvas.ForceUpdateCanvases();
+
+            RequireCopy(bodyText.text, $"Village bonus: +{0.08f:0.##} Gold/s   +{0.05f:0.##} Essence/s");
+            AssertTextFits(bodyText, "Fast Rewards local Village bonus copy");
+        }
+        finally
+        {
+            Array.Copy(builtBefore, builtStates, builtBefore.Length);
+            Array.Copy(selectionsBefore, buildingSelections, selectionsBefore.Length);
+            Array.Copy(levelsBefore, buildingLevels, levelsBefore.Length);
+            InvokePrivate(controller, "RefreshFastRewardsPopupUi");
+            Canvas.ForceUpdateCanvases();
+        }
     }
 
     private static void AssertLocalFastRewardsState(IdlePrototypeController controller, TMP_Text bodyText, TMP_Text progressText, Image progressFill, Button redeemButton, float storedSeconds, string expectedStoredLine, string expectedCapLine, string expectedReadyLine, string expectedProgressLine, float expectedProgressPercent, bool expectRedeemInteractable)

@@ -151,6 +151,31 @@ public static class VillageUiValidation
 
                 var bonusText = (string)InvokePrivateStatic("GetVillageBuildingBonusValueText", plot, option, 1);
                 RequireCopy(bonusText, expectedBonusToken, $"Village definition {id} bonus");
+                RequireCopy(bonusText, GetExpectedDefinitionBonusValue(plot, option), $"Village definition {id} bonus value");
+
+                var bonusLabel = (string)InvokePrivateStatic("GetVillageBuildingBonusLabel", plot, option);
+                if (bonusLabel != expectedBonusToken)
+                {
+                    throw new InvalidOperationException($"Village definition {id} bonus label mismatch: expected '{expectedBonusToken}', got '{bonusLabel}'.");
+                }
+
+                var bonusCurve = (string)InvokePrivateStatic("GetVillageBuildingBonusCurve", plot, option);
+                if (bonusCurve != "linear_per_level")
+                {
+                    throw new InvalidOperationException($"Village definition {id} bonus curve mismatch: {bonusCurve}");
+                }
+
+                var upgradeFormula = (string)InvokePrivateStatic("GetVillageBuildingUpgradeCostFormula", plot, option);
+                if (upgradeFormula != "current_level * upgrade_cost_per_level")
+                {
+                    throw new InvalidOperationException($"Village definition {id} upgrade formula mismatch: {upgradeFormula}");
+                }
+
+                var modeCompatibility = (string)InvokePrivateStatic("GetVillageBuildingModeCompatibility", plot, option);
+                if (modeCompatibility != "local_and_server")
+                {
+                    throw new InvalidOperationException($"Village definition {id} mode compatibility mismatch: {modeCompatibility}");
+                }
             }
         }
     }
@@ -173,6 +198,22 @@ public static class VillageUiValidation
                 return "Gold/s Fast Rewards";
             default:
                 return "Essence/s Fast Rewards";
+        }
+    }
+
+    private static string GetExpectedDefinitionBonusValue(int plotIndex, int optionIndex)
+    {
+        optionIndex = Mathf.Clamp(optionIndex, 0, 2);
+        switch (GetExpectedDefinitionBonusToken(plotIndex))
+        {
+            case "Team ATK":
+                return $"+{3 + optionIndex}";
+            case "Team HP":
+                return $"+{24 + (optionIndex * 4)}";
+            case "Gold/s Fast Rewards":
+                return $"+{0.08f + (optionIndex * 0.03f):0.##}";
+            default:
+                return $"+{0.05f + (optionIndex * 0.02f):0.##}";
         }
     }
 
