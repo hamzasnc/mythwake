@@ -31,6 +31,7 @@ Latest known pushed commit before the current continuation:
 - `36f4134 Mark campaign detail states`
 
 Current continuation:
+- Prototype `0.2.132` adds `Mythwake/Validate Fight Formation UI` and wires it into `Mythwake/Validate Current Slice`; the new validator covers campaign Formation swap, auto-next toggle, visible Fight controls, AUTO/x2 state, HP/mana skill cards, ultimate queueing, result-popup Continue flow, and dungeon fight focus chrome hiding.
 - Village building definitions now exist in backend/static definitions, `/definitions`, PostgreSQL migration `0028_village_building_definitions.sql`, and the injected backend balance catalog. Backend Village build/upgrade uses catalog costs, IDs, max level, and server-side Team ATK/HP bonuses; client Server Mode keeps local Village bonuses paused to avoid double counting.
 - Home idle patrol now keeps the middle hero/enemy lane clear of the reward strip, and `Validate Home Idle Combat` guards mobile touch target size, reward shelf fit, unit/reward separation, and loot-popup separation from the reward strip.
 - Village building data now has a client-side definition layer per plot/option: stable building ID, display name, texture, build cost, max level, upgrade cost-per-level, bonus type, and bonus value per level live together instead of being spread across local arrays/helpers.
@@ -116,7 +117,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.131`
+- Prototype `0.2.132`
 - Save version `2`
 
 Important Unity scripts:
@@ -144,7 +145,7 @@ Latest local gameplay/UI batch:
 - The Home idle validator also checks locked checkpoint detail Battle guards under direct invocation and verifies local campaign clear action results carry a non-empty Myth Essence reward payload.
 - The Home idle validator now also checks popup exclusivity between Fast Rewards, Patrol Info, and checkpoint details.
 - The Summon UI validator now checks visible result-slot text fit/art, hidden unused result cards, Auto-Summon toggle mark state, and result close flow.
-- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Dungeons map/zoom clamp/Formation entry and back navigation, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode; the latest batchmode Current Slice passed after this continuation.
+- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Dungeons map/zoom clamp/Formation entry and back navigation, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Home Idle Combat, Fight/Formation visible controls and result flow, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode; the latest batchmode Current Slice passed after this continuation.
 - Hero Detail now exposes all 2 equipment tracks plus all 6 accessory slots with armory background, visible starter Weapon/Armor training icons, and equipped-only accessory slot icon art. The localized main gear action shows Open Gear for starter Weapon/Armor training tracks and Equip Gear for accessory slots, starter Weapon/Armor slots and rows are labeled as training, empty accessory slots stay visually empty even when bag copies exist and after German refresh, accessory lists put owned copies above empty rows and higher rarity first inside each group with visible copy/tap-to-equip text, the selected equipment/accessory slot list opens instead of immediately leaving for Gear, the equipment list's Open Gear row navigates to the Gear screen, the validator keeps training slot/row wording through German refresh, and Remove Gear unequips accessories locally or through Server Mode via `/gear/accessories/unequip`.
 - Hero Detail and Gear equipment icon loading now has an Editor asset-path fallback plus blank-placeholder protection, so missing textures no longer appear as white RawImage blocks and the upgrade clutter validator catches hidden/white placeholder art, including equipped Hero Detail accessory icons after German refresh.
 - Hero Detail previous/next buttons have been pulled inward below the hero stage so they no longer collide with the lower gear slots; the upgrade clutter validator now checks that spacing.
@@ -635,8 +636,9 @@ Still rough:
 The next chat should continue in this order unless the user redirects:
 
 1. Visually verify the current slice in Unity/editor or on device.
-   - The latest batchmode Current Slice, Unity C# check, `go test ./...`, temporary no-DB `check-backend.cmd` on `http://localhost:18080`, and whitespace check passed after the backend Village definition pass.
-   - Verify the connected Home upper/lower map, Village, Fast Rewards, Vanguard Oath/Summon result, Paladin formation/fight pose, and spacing on editor/device.
+   - The latest batchmode Current Slice and Unity C# check passed after the Fight/Formation validator was added.
+   - `git diff --check` should be rerun before the next commit if docs/code change again.
+   - Verify the connected Home upper/lower map, Village, Fast Rewards, Vanguard Oath/Summon result, Paladin formation/fight pose, Fight controls, and spacing on editor/device.
 
 2. Finish the Home idle combat visual pass.
    - Verify the main campaign map and lower idle mini-map read as one continuous area.

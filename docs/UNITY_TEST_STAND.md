@@ -23,7 +23,7 @@ Batchmode validation is green for the current mobile-portrait slice:
 - `scripts/check-unity-csharp.cmd` passes.
 - `scripts/check-unity-current-slice.cmd` passes.
 - `git diff --check` passes, with the usual LF/CRLF warnings on touched Markdown files.
-- Current Slice coverage includes Home map/idle combat touch targets, reward strip fit, unit/reward separation, popup exclusivity, Village scroll/build/detail flows, Dungeons map zoom/marker spacing, Fast Rewards copy/progress/close flows, Summon result slots and repeat buttons, Hero Detail/Gear spacing and localized text fit, Gear action labels, combat result summary shape, and Paladin formation/fight handoff checks.
+- Current Slice coverage includes Home map/idle combat touch targets, reward strip fit, unit/reward separation, popup exclusivity, Village scroll/build/detail flows, Dungeons map zoom/marker spacing, Fast Rewards copy/progress/close flows, Summon result slots and repeat buttons, Hero Detail/Gear spacing and localized text fit, Gear action labels, combat result summary shape, Fight/Formation controls and result flow, and Paladin formation/fight handoff checks.
 
 Mobile UX issues addressed in this continuation:
 
@@ -31,6 +31,7 @@ Mobile UX issues addressed in this continuation:
 - Gear selected-rarity copy now distinguishes bag/equipped copies, and local Gear action result copy is localized.
 - Combat result bodies now show server-like HP/ATK/enemy damage/result fields.
 - Home Next Goal now auto-sizes and points through the early loop with Power and resource gaps.
+- Fight/Formation now has a dedicated validator for campaign Formation swap, auto-next, visible Fight controls, AUTO/x2, HP/mana skill cards, ultimate queueing, result Continue flow, and dungeon focus chrome hiding.
 
 Not yet run in this pass:
 

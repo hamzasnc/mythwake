@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.131`, save version `2`.
+- Unity client code is at Prototype `0.2.132`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -129,12 +129,12 @@ Last updated: 2026-05-26
 - Local Campaign/Dungeon combat result bodies now use a server-style summary with Team HP, Enemy HP, Team ATK, Enemy DMG, damage dealt/taken, healing, crits, misses, and execute flags; Upgrade Clutter validates that summary shape.
 - Home Next Goal now follows the early loop more explicitly: push Campaign when Power is ready, otherwise suggest Gear drops/equip, Weapon/Armor/accessory/Hero upgrades, affordable Village build/upgrade, Gear Dungeon drops, Summon shards, or concrete Gold/Essence/Power farm gaps.
 - `docs/UNITY_TEST_STAND.md` now records the 2026-05-26 Mobile UX pass: Current Slice/C# checks cover the main portrait UI paths, while a real Android APK/emulator/device run remains open because the repo does not yet include a reproducible Android build/install helper.
+- Added `Mythwake/Validate Fight Formation UI` and included it in `Mythwake/Validate Current Slice`; it checks campaign Formation swap, auto-next, visible Fight controls, AUTO/x2 toggles, HP/mana skill cards, ultimate queueing, result popup Continue flow, and dungeon fight focus chrome hiding.
 - `go test ./...`, `scripts/check-backend.cmd` against a temporary no-DB API on `http://localhost:18080`, `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` now pass for the current slice.
 
 ## Next Small Steps
 
-1. Visually verify Home idle combat on device/editor: connected upper/lower map readability, foreground patrol spacing, reward tick pacing, and the stage-node info preview.
-2. Visually verify Village, Fast Rewards, Vanguard Oath/Summon result, and Paladin formation/fight presentation in Unity/emulator.
-3. Visually verify the 8-slot Hero Detail spacing in Unity/emulator, then continue the visible Hero/Gear polish pass behind `Mythwake/Validate Upgrade Clutter`.
-4. Add or run a reproducible Android build/install pass, then capture emulator/device checks for safe area, gesture navigation, load time, and performance on Home, Hero Detail, Gear, Village, Summon, and Fight.
-5. Continue Village backend-readiness by deciding how AFK-rate Village bonuses should affect server-authoritative AFK rewards, then expose that clearly in Server Mode UI.
+1. Add or run a reproducible Android build/install pass, then capture emulator/device checks for safe area, gesture navigation, load time, and performance on Home, Hero Detail, Gear, Village, Summon, and Fight.
+2. Use a live Editor/emulator visual pass to compare the validator-backed Home/Village/Hero/Gear/Summon/Fight layouts against actual screenshots, especially safe-area and small-device readability.
+3. Continue Village backend-readiness by deciding how AFK-rate Village bonuses should affect server-authoritative AFK rewards, then expose that clearly in Server Mode UI.
+4. Continue the visible Hero/Gear polish pass behind `Mythwake/Validate Upgrade Clutter` once the real item/inventory direction is selected.
