@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.125";
+    public const string PrototypeVersion = "0.2.126";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -20227,7 +20227,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return new[]
         {
             new Vector2(-276, -64),
-            new Vector2(-168, -116),
+            new Vector2(-168, -84),
             new Vector2(-58, -64)
         };
     }
@@ -20237,7 +20237,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return new[]
         {
             new Vector2(276, -64),
-            new Vector2(168, -116),
+            new Vector2(168, -84),
             new Vector2(58, -64)
         };
     }

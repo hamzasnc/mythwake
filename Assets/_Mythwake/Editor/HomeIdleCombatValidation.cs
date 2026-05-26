@@ -151,13 +151,20 @@ public static class HomeIdleCombatValidation
         var idleText = RequireText(idleRoot, "Home Idle Combat Text");
         var rewardText = RequireText(idleRoot, "Home Idle Reward Text");
         var lootPopupText = RequireText(idleRoot, "Home Idle Loot Pop Text");
+        var rewardProgressRoot = GetPrivateField<Image>(controller, "homeIdleRewardFill").transform.parent.gameObject;
         RequireCopy(idleText.text, "Patrol");
         RequireCopy(rewardText.text, "Naechste");
         AssertTextFits(idleText, "Home Idle Combat Text");
         AssertTextFits(rewardText, "Home Idle Reward Text");
+        AssertInsideParent(idleRoot, rewardProgressRoot);
+        AssertMinimumSize(rewardProgressRoot, 600f, 44f);
+        AssertExtendsBehind(rewardProgressRoot, rewardText.gameObject);
+        AssertDoesNotOverlap(lootPopupText.gameObject, rewardProgressRoot);
         ValidateHomeIdleRewardProgressAndServerMode(controller, GetPrivateField<Image>(controller, "homeIdleRewardFill"), rewardText, lootPopupText);
 
         var infoButton = RequireButton("Home Idle Info Button");
+        AssertInsideParent(idleRoot, infoButton.gameObject);
+        AssertMinimumSize(infoButton.gameObject, 880f, 200f);
         infoButton.onClick.Invoke();
         Canvas.ForceUpdateCanvases();
         var infoPopup = RequireObject("Home Idle Info Popup", true);
@@ -180,8 +187,12 @@ public static class HomeIdleCombatValidation
 
         for (var i = 1; i <= 3; i++)
         {
-            RequireRawImageWithTexture($"Home Idle Hero {i}");
-            RequireRawImageWithTexture($"Home Idle Enemy {i}");
+            var heroImage = RequireRawImageWithTexture($"Home Idle Hero {i}");
+            var enemyImage = RequireRawImageWithTexture($"Home Idle Enemy {i}");
+            AssertInsideParent(idleRoot, heroImage.gameObject);
+            AssertInsideParent(idleRoot, enemyImage.gameObject);
+            AssertDoesNotOverlap(heroImage.gameObject, rewardProgressRoot);
+            AssertDoesNotOverlap(enemyImage.gameObject, rewardProgressRoot);
         }
 
         SetPrivateField(controller, "homeIdleRewardTimer", 0f);
@@ -216,6 +227,7 @@ public static class HomeIdleCombatValidation
 
             RequireCopy(lootPopupText.text, "Gold");
             RequireCopy(lootPopupText.text, "Essence");
+            AssertDoesNotOverlap(lootPopupText.gameObject, rewardProgressRoot);
             AssertTextFits(lootPopupText, "Home Idle Loot Pop Text");
             RequireCopy(rewardText.text, "Letzte");
             RequireCopy(rewardText.text, "Gold");
@@ -1450,6 +1462,22 @@ public static class HomeIdleCombatValidation
         }
 
         throw new InvalidOperationException($"{second.name} should match {first.name} width: first={firstRect.rect.width}, second={secondRect.rect.width}.");
+    }
+
+    private static void AssertMinimumSize(GameObject gameObject, float width, float height)
+    {
+        var rectTransform = gameObject.GetComponent<RectTransform>();
+        if (rectTransform == null)
+        {
+            throw new InvalidOperationException($"{gameObject.name} is missing a RectTransform.");
+        }
+
+        if (rectTransform.rect.width >= width && rectTransform.rect.height >= height)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException($"{gameObject.name} should be at least {width}x{height}, got {rectTransform.rect.width}x{rectTransform.rect.height}.");
     }
 
     private static void AssertExtendsBelow(GameObject background, GameObject foreground)

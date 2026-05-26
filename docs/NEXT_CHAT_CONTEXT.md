@@ -31,6 +31,7 @@ Latest known pushed commit before the current continuation:
 - `36f4134 Mark campaign detail states`
 
 Current continuation:
+- Home idle patrol now keeps the middle hero/enemy lane clear of the reward strip, and `Validate Home Idle Combat` guards mobile touch target size, reward shelf fit, unit/reward separation, and loot-popup separation from the reward strip.
 - Village building data now has a client-side definition layer per plot/option: stable building ID, display name, texture, build cost, max level, upgrade cost-per-level, bonus type, and bonus value per level live together instead of being spread across local arrays/helpers.
 - `Validate Village UI` now checks all 12x3 Village definitions for stable IDs, build costs, max level, loaded texture, and the expected placeholder bonus category while Server Mode still pauses local Village bonuses.
 - Prototype Builder Gear defaults now use `gear.selected_rarity` instead of the stale selected fuse-tier key, so `Validate Upgrade Clutter` and the full Current Slice no longer fail after a UI rebuild.
@@ -114,7 +115,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.125`
+- Prototype `0.2.126`
 - Save version `2`
 
 Important Unity scripts:
@@ -133,7 +134,7 @@ Latest local gameplay/UI batch:
 - The Home campaign map now uses `area_map_scorched_plains`, is a larger vertical ScrollRect with the checkpoints on the scrollable content, and has a connected lower idle mini-map background behind the patrol fight.
 - Latest Home layout pass imports the remaining `area_map_*` region images, keeps the main map pulled up under the resource bar, and extends the lower idle map background directly from the main map down behind heroes and monsters.
 - The current Home map viewport fills the marked play area behind side controls and the Battle button; the idle patrol is below the Battle button but sits on a same-width connected map image rather than a separate dark lane.
-- The Home lower idle patrol heroes and monsters are enlarged, and `Validate Home Idle Combat` now guards the connected upper/lower map layout, current-stage halos and target badges, selected-stage node halos, cleared-stage and locked-stage badges, boss-node badges, milestone bonus badges, stage-preview/detail state tint plus Boss/Bonus/Normal tags, stage-detail status badges/action states, stage-detail reward labels, path progress colors, progress-map region texture/UV sync across main/detail/idle maps, reward progress fill behavior, two-line local last/next reward summary copy, Server Mode local-reward blocking, Server Mode Patrol Info copy, stale loot popup clearing, active reward tick, and no automatic stage clear. `Validate Dungeons UI` also checks the runtime zoom control path.
+- The Home lower idle patrol heroes and monsters are enlarged, the middle lane now stays clear of the reward strip, and `Validate Home Idle Combat` now guards the connected upper/lower map layout, current-stage halos and target badges, selected-stage node halos, cleared-stage and locked-stage badges, boss-node badges, milestone bonus badges, stage-preview/detail state tint plus Boss/Bonus/Normal tags, stage-detail status badges/action states, stage-detail reward labels, path progress colors, progress-map region texture/UV sync across main/detail/idle maps, mobile touch target size, reward shelf fit, unit/reward separation, reward progress fill behavior, two-line local last/next reward summary copy, Server Mode local-reward blocking, Server Mode Patrol Info copy, stale loot popup clearing, active reward tick, and no automatic stage clear. `Validate Dungeons UI` also checks the runtime zoom control path.
 - Home idle combat now shows a short floating loot popup when the local active Gold/Myth Essence tick is granted, and the Home idle validator checks that it appears and fits.
 - The Home idle combat area is now tappable and opens a `Patrol Info` popup with current stage, enemy, last reward, next reward countdown, tick cadence, and no-auto-clear copy; the validator clicks it before and after a local reward tick.
 - Tapping a Home campaign checkpoint now opens a larger `Abschnitt Details` popup with map preview, enemy formation, completion reward row, and Battle/Close controls; `Validate Home Idle Combat` checks the popup and closes it.

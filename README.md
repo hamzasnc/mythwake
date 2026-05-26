@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.125
+Prototype version: 0.2.126
 Local save version: 2
 
 Current prototype:
@@ -82,6 +82,7 @@ Current prototype:
 - Gear screen accessory selection now shows the selected rarity plus copy count inline, uses selected-rarity localization keys, and accessory action labels are localized and covered by German refresh validation
 - Gear screen accessory inventory copy counts use a compact two-line summary with auto-sized text
 - Prototype UI builder now creates Gear controls in the current localized runtime layout with localized equipment names, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale Gear placeholder copy
+- Home idle patrol keeps the middle hero/enemy lane clear of the reward strip, and the Home idle validator now guards mobile touch target size plus unit/reward/loot-popup separation
 
 Backend:
 - Go API skeleton in `backend/`
@@ -177,6 +178,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.126: Tightened the Home idle patrol unit lane above the reward strip and extended Home Idle Combat validation for mobile touch target size, reward shelf fit, and unit/reward separation.
 - Prototype 0.2.125: Moved local Village building costs, max levels, textures, stable IDs, and placeholder bonuses behind client-side building definitions with validator coverage.
 - Prototype 0.2.124: Fixed the Prototype Builder Gear selected-rarity default so Current Slice validation no longer recreates stale selected fuse-tier copy.
 - Prototype 0.2.123: Renamed the Gear accessory selected-rarity localization key, guarded against stale fuse-tier copy, and kept the EN/DE selected-rarity summary validator coverage.
