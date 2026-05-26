@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.126
+Prototype version: 0.2.127
 Local save version: 2
 
 Current prototype:
@@ -66,6 +66,7 @@ Current prototype:
 - Village has a dedicated scrollable map with 12 build plots, building placement art, and built-building detail controls
 - Village buildings can be built, upgraded, and demolished locally and through Server Mode backend actions
 - Village building detail now shows current and next/max placeholder bonuses; the Village hint line summarizes local Team ATK/HP and Fast Rewards rate boosts or the Server Mode local-bonus pause while Server Mode stays backend-authoritative
+- Server definitions now include DB-ready Village building definitions for stable ID, plot/option, build cost, max level, upgrade cost, and bonus type/value
 - Campaign and dungeon fights now simulate win/loss with team HP and enemy damage
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
 - Hero shards add minor Attack and HP immediately
@@ -104,6 +105,7 @@ Backend:
 - Starter Weapon and Armor training levels persist in PostgreSQL and affect team power
 - Summon count, daily mission claims, and Battle Pass claims persist in PostgreSQL
 - Village building state and levels persist in PostgreSQL and are exposed through player snapshots
+- PostgreSQL now seeds common Village building definitions, and backend Village build/upgrade actions use the injected definition catalog for costs, IDs, max levels, and server-side Team ATK/HP bonuses
 - Claim and summon debug views are available for Navicat
 - PostgreSQL writes now sit behind a durable state cache wrapper
 - Critical server actions now use ledger write-behind by default, so the action/result is durable before success while materialized state can flush in batches
@@ -178,6 +180,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.127: Added backend/common/PostgreSQL Village building definitions, exposed them through `/definitions`, and routed backend Village build/upgrade plus Team ATK/HP bonuses through the injected catalog while Server Mode keeps client local bonuses paused.
 - Prototype 0.2.126: Tightened the Home idle patrol unit lane above the reward strip and extended Home Idle Combat validation for mobile touch target size, reward shelf fit, and unit/reward separation.
 - Prototype 0.2.125: Moved local Village building costs, max levels, textures, stable IDs, and placeholder bonuses behind client-side building definitions with validator coverage.
 - Prototype 0.2.124: Fixed the Prototype Builder Gear selected-rarity default so Current Slice validation no longer recreates stale selected fuse-tier copy.

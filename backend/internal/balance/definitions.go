@@ -23,6 +23,11 @@ const (
 	RewardAFKClaim             = "reward_afk_claim"
 	StarterGearDropAccessoryID = "accessory_earrings_r0"
 
+	VillageBonusTeamAttack     = "team_attack"
+	VillageBonusTeamHealth     = "team_health"
+	VillageBonusAFKGoldRate    = "afk_gold_rate"
+	VillageBonusAFKEssenceRate = "afk_essence_rate"
+
 	AFKMinClaimSeconds   = 60
 	AFKMaxClaimSeconds   = 24 * 60 * 60
 	AFKRewardTickSeconds = 60
@@ -148,6 +153,19 @@ type AccessoryDefinition struct {
 	HealthPerLevel int
 	DropWeight     int
 	FuseTargetID   string
+}
+
+type VillageBuildingDefinition struct {
+	ID                  string
+	SlotIndex           int
+	BuildingOptionIndex int
+	DisplayName         string
+	TextureName         string
+	BuildCost           int
+	MaxLevel            int
+	UpgradeCostPerLevel int
+	BonusType           string
+	BonusValuePerLevel  float64
 }
 
 type DailyMissionDefinition struct {
@@ -296,6 +314,8 @@ var accessoryDefinitions = []AccessoryDefinition{
 	{ID: "accessory_headgear_r4", SlotID: "headgear", RarityID: "r4", AttackPerLevel: 10, HealthPerLevel: 60, DropWeight: 2},
 }
 
+var villageBuildingDefinitions = buildVillageBuildingDefinitions()
+
 var dungeonDefinitions = map[string]DungeonDefinition{
 	DungeonGold: {
 		ID:                    DungeonGold,
@@ -435,6 +455,87 @@ var progressionCostDefinitions = []ProgressionCostDefinition{
 		AmountPerLevel: 0,
 		Formula:        "flat base_amount",
 	},
+}
+
+func buildVillageBuildingDefinitions() []VillageBuildingDefinition {
+	names := [][]string{
+		{"Rathaus", "Gildenhalle", "Ratssitz"},
+		{"Heldenkaserne", "Trainingsdojo", "Heldenhaus"},
+		{"Arkanportal", "Runentor", "Kristallobelisk"},
+		{"Schmiede", "Waffenkammer", "Schmelzwerk"},
+		{"Magierturm", "Observatorium", "Zauberbibliothek"},
+		{"Marktstaende", "Handelsposten", "Basarzelt"},
+		{"Lagerhaus", "Kornspeicher", "Vorratslager"},
+		{"Zimmererhof", "Bauwerkstatt", "Artefaktladen"},
+		{"Taverne", "Gasthaus", "Festhalle"},
+		{"Alchemielabor", "Kraeuterhuette", "Trankladen"},
+		{"Feldhof", "Tiergatter", "Obsthain"},
+		{"Schrein", "Wachturm", "Gartenhain"},
+	}
+	textures := [][]string{
+		{"VillageBuildings/village_building_01_option_01_town_hall", "VillageBuildings/village_building_01_option_02_guild_hall", "VillageBuildings/village_building_01_option_03_council_keep"},
+		{"VillageBuildings/village_building_02_option_01_hero_barracks", "VillageBuildings/village_building_02_option_02_training_dojo", "VillageBuildings/village_building_02_option_03_hero_lodge"},
+		{"VillageBuildings/village_building_03_option_01_arcane_portal", "VillageBuildings/village_building_03_option_02_rune_gate", "VillageBuildings/village_building_03_option_03_crystal_obelisk"},
+		{"VillageBuildings/village_building_04_option_01_blacksmith", "VillageBuildings/village_building_04_option_02_armory", "VillageBuildings/village_building_04_option_03_furnace_workshop"},
+		{"VillageBuildings/village_building_05_option_01_mage_tower", "VillageBuildings/village_building_05_option_02_observatory", "VillageBuildings/village_building_05_option_03_spell_library"},
+		{"VillageBuildings/village_building_06_option_01_market_stalls", "VillageBuildings/village_building_06_option_02_trade_post", "VillageBuildings/village_building_06_option_03_bazaar_tent"},
+		{"VillageBuildings/village_building_07_option_01_warehouse", "VillageBuildings/village_building_07_option_02_granary", "VillageBuildings/village_building_07_option_03_supply_depot"},
+		{"VillageBuildings/village_building_08_option_01_carpenter_yard", "VillageBuildings/village_building_08_option_02_builder_workshop", "VillageBuildings/village_building_08_option_03_artificer_shop"},
+		{"VillageBuildings/village_building_09_option_01_tavern", "VillageBuildings/village_building_09_option_02_inn", "VillageBuildings/village_building_09_option_03_feast_hall"},
+		{"VillageBuildings/village_building_10_option_01_alchemy_lab", "VillageBuildings/village_building_10_option_02_herbalist_hut", "VillageBuildings/village_building_10_option_03_potion_shop"},
+		{"VillageBuildings/village_building_11_option_01_crop_farm", "VillageBuildings/village_building_11_option_02_animal_pen", "VillageBuildings/village_building_11_option_03_orchard"},
+		{"VillageBuildings/village_building_12_option_01_shrine", "VillageBuildings/village_building_12_option_02_watchtower", "VillageBuildings/village_building_12_option_03_garden_grove"},
+	}
+	bonusTypes := []string{
+		VillageBonusTeamHealth,
+		VillageBonusTeamAttack,
+		VillageBonusAFKEssenceRate,
+		VillageBonusTeamAttack,
+		VillageBonusAFKEssenceRate,
+		VillageBonusAFKGoldRate,
+		VillageBonusAFKGoldRate,
+		VillageBonusTeamHealth,
+		VillageBonusTeamHealth,
+		VillageBonusAFKEssenceRate,
+		VillageBonusAFKGoldRate,
+		VillageBonusTeamAttack,
+	}
+
+	definitions := make([]VillageBuildingDefinition, 0, len(names)*3)
+	for slotIndex := range names {
+		for optionIndex := range names[slotIndex] {
+			bonusType := bonusTypes[slotIndex]
+			definitions = append(definitions, VillageBuildingDefinition{
+				ID:                  VillageBuildingID(slotIndex, optionIndex),
+				SlotIndex:           slotIndex,
+				BuildingOptionIndex: optionIndex,
+				DisplayName:         names[slotIndex][optionIndex],
+				TextureName:         textures[slotIndex][optionIndex],
+				BuildCost:           5 + (optionIndex * 2),
+				MaxLevel:            20,
+				UpgradeCostPerLevel: 5,
+				BonusType:           bonusType,
+				BonusValuePerLevel:  villageBonusValuePerLevel(bonusType, optionIndex),
+			})
+		}
+	}
+	return definitions
+}
+
+func villageBonusValuePerLevel(bonusType string, optionIndex int) float64 {
+	optionIndex = max(0, min(optionIndex, 2))
+	switch bonusType {
+	case VillageBonusTeamAttack:
+		return float64(3 + optionIndex)
+	case VillageBonusTeamHealth:
+		return float64(24 + (optionIndex * 4))
+	case VillageBonusAFKGoldRate:
+		return 0.08 + (float64(optionIndex) * 0.03)
+	case VillageBonusAFKEssenceRate:
+		return 0.05 + (float64(optionIndex) * 0.02)
+	default:
+		return 0
+	}
 }
 
 func DungeonDefinitionByID(dungeonID string) (DungeonDefinition, bool) {
@@ -614,6 +715,36 @@ func AccessoryDefinitionByID(accessoryID string) (AccessoryDefinition, bool) {
 	}
 
 	return AccessoryDefinition{}, false
+}
+
+func VillageBuildingDefinitions() []VillageBuildingDefinition {
+	definitions := make([]VillageBuildingDefinition, len(villageBuildingDefinitions))
+	copy(definitions, villageBuildingDefinitions)
+	return definitions
+}
+
+func VillageBuildingDefinitionByID(buildingID string) (VillageBuildingDefinition, bool) {
+	for _, definition := range villageBuildingDefinitions {
+		if definition.ID == buildingID {
+			return definition, true
+		}
+	}
+
+	return VillageBuildingDefinition{}, false
+}
+
+func VillageBuildingDefinitionBySlotOption(slotIndex int, buildingOptionIndex int) (VillageBuildingDefinition, bool) {
+	for _, definition := range villageBuildingDefinitions {
+		if definition.SlotIndex == slotIndex && definition.BuildingOptionIndex == buildingOptionIndex {
+			return definition, true
+		}
+	}
+
+	return VillageBuildingDefinition{}, false
+}
+
+func VillageBuildingID(slotIndex int, buildingOptionIndex int) string {
+	return fmt.Sprintf("village_building_%02d_option_%02d", slotIndex+1, buildingOptionIndex+1)
 }
 
 func DungeonRequiredPower(definition DungeonDefinition, floor int) int {

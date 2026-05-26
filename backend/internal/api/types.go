@@ -210,6 +210,7 @@ type DefinitionSnapshot struct {
 	AccessorySlots    []AccessorySlotDefinition    `json:"accessorySlots"`
 	AccessoryRarities []AccessoryRarityDefinition  `json:"accessoryRarities"`
 	Accessories       []AccessoryDefinition        `json:"accessories"`
+	VillageBuildings  []VillageBuildingDefinition  `json:"villageBuildingDefinitions"`
 	ProgressionCosts  []ProgressionCostDefinition  `json:"progressionCosts"`
 	SummonBanners     []SummonBannerDefinition     `json:"summonBanners"`
 	DailyMissions     []DailyMissionDefinition     `json:"dailyMissions"`
@@ -347,6 +348,19 @@ type AccessoryDefinition struct {
 	HealthPerLevel int    `json:"healthPerLevel"`
 	DropWeight     int    `json:"dropWeight"`
 	FuseTargetID   string `json:"fuseTargetId,omitempty"`
+}
+
+type VillageBuildingDefinition struct {
+	BuildingID          string  `json:"buildingId"`
+	SlotIndex           int     `json:"slotIndex"`
+	BuildingOptionIndex int     `json:"buildingOptionIndex"`
+	DisplayName         string  `json:"displayName"`
+	TextureName         string  `json:"textureName"`
+	BuildCost           int     `json:"buildCost"`
+	MaxLevel            int     `json:"maxLevel"`
+	UpgradeCostPerLevel int     `json:"upgradeCostPerLevel"`
+	BonusType           string  `json:"bonusType"`
+	BonusValuePerLevel  float64 `json:"bonusValuePerLevel"`
 }
 
 type ProgressionCostDefinition struct {

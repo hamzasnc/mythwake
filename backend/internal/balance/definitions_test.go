@@ -140,6 +140,27 @@ func TestProgressionCosts(t *testing.T) {
 	}
 }
 
+func TestVillageBuildingDefinitions(t *testing.T) {
+	definitions := VillageBuildingDefinitions()
+	if len(definitions) != 36 {
+		t.Fatalf("expected 36 village building definitions, got %d", len(definitions))
+	}
+	definition, ok := VillageBuildingDefinitionBySlotOption(1, 1)
+	if !ok || definition.ID != "village_building_02_option_02" || definition.BuildCost != 7 || definition.MaxLevel != 20 || definition.UpgradeCostPerLevel != 5 {
+		t.Fatalf("unexpected village slot/option definition: %#v ok=%v", definition, ok)
+	}
+	if definition.BonusType != VillageBonusTeamAttack || definition.BonusValuePerLevel != 4 {
+		t.Fatalf("unexpected village bonus definition: %#v", definition)
+	}
+	byID, ok := VillageBuildingDefinitionByID("village_building_03_option_03")
+	if !ok || byID.BonusType != VillageBonusAFKEssenceRate || byID.BonusValuePerLevel != 0.09 {
+		t.Fatalf("unexpected village id definition: %#v ok=%v", byID, ok)
+	}
+	if VillageBuildingID(11, 2) != "village_building_12_option_03" {
+		t.Fatalf("unexpected village id formatter: %s", VillageBuildingID(11, 2))
+	}
+}
+
 func TestDailyMissionDefinitions(t *testing.T) {
 	reward, ok := DailyMissionReward("daily_stage_clears_3")
 	if !ok {

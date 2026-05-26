@@ -53,6 +53,9 @@ func (store *DefinitionStore) Snapshot(ctx context.Context, apiVersion string) (
 	if snapshot.Accessories, err = store.accessoryDefinitions(ctx); err != nil {
 		return api.DefinitionSnapshot{}, err
 	}
+	if snapshot.VillageBuildings, err = store.villageBuildingDefinitions(ctx); err != nil {
+		return api.DefinitionSnapshot{}, err
+	}
 	if snapshot.ProgressionCosts, err = store.progressionCostDefinitions(ctx); err != nil {
 		return api.DefinitionSnapshot{}, err
 	}
@@ -501,6 +504,51 @@ func (store *DefinitionStore) accessoryDefinitions(ctx context.Context) ([]api.A
 		}
 		if fuseTargetID.Valid {
 			definition.FuseTargetID = fuseTargetID.String
+		}
+		response = append(response, definition)
+	}
+
+	return response, rows.Err()
+}
+
+func (store *DefinitionStore) villageBuildingDefinitions(ctx context.Context) ([]api.VillageBuildingDefinition, error) {
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT
+			id,
+			slot_index,
+			building_option_index,
+			display_name,
+			texture_name,
+			build_cost,
+			max_level,
+			upgrade_cost_per_level,
+			bonus_type,
+			bonus_value_per_level
+		FROM common.village_building_definitions
+		WHERE active = true
+		ORDER BY slot_index, building_option_index, id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	response := []api.VillageBuildingDefinition{}
+	for rows.Next() {
+		var definition api.VillageBuildingDefinition
+		if err := rows.Scan(
+			&definition.BuildingID,
+			&definition.SlotIndex,
+			&definition.BuildingOptionIndex,
+			&definition.DisplayName,
+			&definition.TextureName,
+			&definition.BuildCost,
+			&definition.MaxLevel,
+			&definition.UpgradeCostPerLevel,
+			&definition.BonusType,
+			&definition.BonusValuePerLevel,
+		); err != nil {
+			return nil, err
 		}
 		response = append(response, definition)
 	}

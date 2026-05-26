@@ -26,6 +26,9 @@ type BalanceCatalog interface {
 	AccessoryDefinitionByID(accessoryID string) (balance.AccessoryDefinition, bool)
 	AccessoryRarityDefinitionByID(rarityID string) (balance.AccessoryRarityDefinition, bool)
 	AccessoryLevelCost(accessoryID string, level int) int
+	VillageBuildingDefinitions() []balance.VillageBuildingDefinition
+	VillageBuildingDefinitionByID(buildingID string) (balance.VillageBuildingDefinition, bool)
+	VillageBuildingDefinitionBySlotOption(slotIndex int, buildingOptionIndex int) (balance.VillageBuildingDefinition, bool)
 	SummonCost(bannerID string) (int, bool)
 	SummonShardReward(bannerID string, summonCount int) (balance.SummonShardDrop, bool)
 	DailyMissionDefinitionByID(missionID string) (balance.DailyMissionDefinition, bool)
@@ -115,6 +118,18 @@ func (StaticBalanceCatalog) AccessoryRarityDefinitionByID(rarityID string) (bala
 
 func (StaticBalanceCatalog) AccessoryLevelCost(accessoryID string, level int) int {
 	return balance.AccessoryLevelCost(accessoryID, level)
+}
+
+func (StaticBalanceCatalog) VillageBuildingDefinitions() []balance.VillageBuildingDefinition {
+	return balance.VillageBuildingDefinitions()
+}
+
+func (StaticBalanceCatalog) VillageBuildingDefinitionByID(buildingID string) (balance.VillageBuildingDefinition, bool) {
+	return balance.VillageBuildingDefinitionByID(buildingID)
+}
+
+func (StaticBalanceCatalog) VillageBuildingDefinitionBySlotOption(slotIndex int, buildingOptionIndex int) (balance.VillageBuildingDefinition, bool) {
+	return balance.VillageBuildingDefinitionBySlotOption(slotIndex, buildingOptionIndex)
 }
 
 func (StaticBalanceCatalog) SummonCost(bannerID string) (int, bool) {

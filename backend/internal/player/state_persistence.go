@@ -2,8 +2,10 @@ package player
 
 import (
 	"context"
+	"math"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/balance"
 )
 
 func (service *Service) saveState(ctx context.Context, request ActionRequest, actionID string, reward api.Reward, delta api.Reward, result api.ActionResult) error {
@@ -145,9 +147,10 @@ func (service *Service) recalculatePower() {
 	heroAttack, heroHealth := service.heroStatTotals()
 	equipmentAttack, equipmentHealth, equipmentPower := service.equipmentStatBonuses()
 	accessoryAttack, accessoryHealth := service.accessoryStatBonuses()
+	villageAttack, villageHealth := service.villageStatBonuses()
 
-	teamAttack := heroAttack + equipmentAttack + accessoryAttack
-	teamHealth := heroHealth + equipmentHealth + accessoryHealth
+	teamAttack := heroAttack + equipmentAttack + accessoryAttack + villageAttack
+	teamHealth := heroHealth + equipmentHealth + accessoryHealth + villageHealth
 	power := teamAttack + (teamHealth / 10) + equipmentPower
 
 	service.state.TeamPower = power
@@ -187,6 +190,30 @@ func (service *Service) heroStatTotals() (int, int) {
 		ascension := clampHeroAscension(service.heroAscensions[heroID], definition.MaxAscension)
 		totalAttack += definition.BaseAttack + ((level - 1) * definition.AttackPerLevel) + (ascension * definition.AttackPerAscension)
 		totalHealth += definition.BaseHealth + ((level - 1) * definition.HealthPerLevel) + (ascension * definition.HealthPerAscension)
+	}
+
+	return totalAttack, totalHealth
+}
+
+func (service *Service) villageStatBonuses() (int, int) {
+	totalAttack := 0
+	totalHealth := 0
+	for slotIndex, building := range service.villageBuildings {
+		definition, ok := service.villageBuildingDefinitionForState(slotIndex, building)
+		if !ok {
+			continue
+		}
+		level := max(1, building.Level)
+		if definition.MaxLevel > 0 {
+			level = min(level, definition.MaxLevel)
+		}
+		bonus := int(math.Round(float64(level) * definition.BonusValuePerLevel))
+		switch definition.BonusType {
+		case balance.VillageBonusTeamAttack:
+			totalAttack += bonus
+		case balance.VillageBonusTeamHealth:
+			totalHealth += bonus
+		}
 	}
 
 	return totalAttack, totalHealth

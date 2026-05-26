@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.126";
+    public const string PrototypeVersion = "0.2.127";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -16720,7 +16720,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (backendGameplayEnabled)
         {
-            return "Server Mode: Village Boni lokal pausiert";
+            return "Server Mode: lokal pausiert, Server Snapshot autoritativ";
         }
 
         var attackBonus = GetVillageTeamAttackBonus();

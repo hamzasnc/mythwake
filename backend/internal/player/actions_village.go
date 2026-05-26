@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
@@ -35,25 +36,27 @@ func (actions villageActions) BuildVillageBuilding(ctx context.Context, request 
 		if !validVillageSlot(slotIndex) {
 			return actionFailure("invalid_village_slot", fmt.Sprintf("Unknown village slot: %d.", slotIndex))
 		}
-		if !validVillageBuildingOption(buildingOptionIndex) {
+		definition, foundDefinition := service.balanceCatalog.VillageBuildingDefinitionBySlotOption(slotIndex, buildingOptionIndex)
+		if !foundDefinition {
 			return actionFailure("invalid_village_building", fmt.Sprintf("Unknown village building option: %d.", buildingOptionIndex))
 		}
 		if _, exists := service.villageBuildings[slotIndex]; exists {
 			return actionFailure("village_slot_occupied", fmt.Sprintf("Village slot %d is already occupied.", slotIndex))
 		}
 
-		cost := villageBuildCost(buildingOptionIndex)
+		cost := max(0, definition.BuildCost)
 		if failure, ok := service.spendCurrency(economy.CurrencyMythEssence, cost); !ok {
 			return failure
 		}
 
 		service.villageBuildings[slotIndex] = api.VillageBuilding{
 			SlotIndex:           slotIndex,
-			BuildingID:          villageBuildingID(slotIndex, buildingOptionIndex),
+			BuildingID:          definition.ID,
 			BuildingOptionIndex: buildingOptionIndex,
 			Level:               1,
 		}
-		return actionSuccess(fmt.Sprintf("Built %s in village slot %d.", villageBuildingID(slotIndex, buildingOptionIndex), slotIndex), api.Reward{})
+		service.recalculatePower()
+		return actionSuccess(fmt.Sprintf("Built %s in village slot %d.", definition.ID, slotIndex), api.Reward{})
 	})
 }
 
@@ -79,6 +82,7 @@ func (actions villageActions) DemolishVillageBuilding(ctx context.Context, reque
 		}
 
 		delete(service.villageBuildings, slotIndex)
+		service.recalculatePower()
 		return actionSuccess(fmt.Sprintf("Demolished village slot %d.", slotIndex), api.Reward{})
 	})
 }
@@ -105,21 +109,39 @@ func (actions villageActions) UpgradeVillageBuilding(ctx context.Context, reques
 		if !exists {
 			return actionFailure("village_slot_empty", fmt.Sprintf("Village slot %d is empty.", slotIndex))
 		}
-		if building.Level >= villageBuildingMaxLevel {
+		definition, foundDefinition := service.villageBuildingDefinitionForState(slotIndex, building)
+		if !foundDefinition {
+			return actionFailure("invalid_village_building", fmt.Sprintf("Unknown village building %s.", building.BuildingID))
+		}
+		maxLevel := max(1, definition.MaxLevel)
+		if building.Level >= maxLevel {
 			return actionFailure("max_level", fmt.Sprintf("%s is already Lv. %d.", building.BuildingID, building.Level))
 		}
 
-		cost := villageUpgradeCost(building.Level)
+		cost := max(1, building.Level) * max(1, definition.UpgradeCostPerLevel)
 		if failure, ok := service.spendCurrency(economy.CurrencyMythEssence, cost); !ok {
 			return failure
 		}
 
 		building.Level++
+		building.BuildingID = definition.ID
+		building.BuildingOptionIndex = definition.BuildingOptionIndex
 		if normalized, ok := normalizeVillageBuildingState(slotIndex, building); ok {
 			service.villageBuildings[slotIndex] = normalized
 		}
+		service.recalculatePower()
 		return actionSuccess(fmt.Sprintf("%s reached Lv. %d.", building.BuildingID, building.Level), api.Reward{})
 	})
+}
+
+func (service *Service) villageBuildingDefinitionForState(slotIndex int, building api.VillageBuilding) (balance.VillageBuildingDefinition, bool) {
+	if building.BuildingID != "" {
+		if definition, ok := service.balanceCatalog.VillageBuildingDefinitionByID(building.BuildingID); ok {
+			return definition, true
+		}
+	}
+
+	return service.balanceCatalog.VillageBuildingDefinitionBySlotOption(slotIndex, building.BuildingOptionIndex)
 }
 
 func normalizeVillageBuildingState(slotIndex int, building api.VillageBuilding) (api.VillageBuilding, bool) {
@@ -158,5 +180,5 @@ func villageUpgradeCost(currentLevel int) int {
 }
 
 func villageBuildingID(slotIndex int, buildingOptionIndex int) string {
-	return fmt.Sprintf("village_building_%02d_option_%02d", slotIndex+1, buildingOptionIndex+1)
+	return balance.VillageBuildingID(slotIndex, buildingOptionIndex)
 }

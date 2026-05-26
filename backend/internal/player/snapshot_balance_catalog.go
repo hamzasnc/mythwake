@@ -24,6 +24,9 @@ type SnapshotBalanceCatalog struct {
 	summonBanners         map[string]api.SummonBannerDefinition
 	accessories           map[string]balance.AccessoryDefinition
 	accessoryRarities     map[string]balance.AccessoryRarityDefinition
+	villageBuildings      []balance.VillageBuildingDefinition
+	villageBuildingsByID  map[string]balance.VillageBuildingDefinition
+	villageBuildingsByKey map[string]balance.VillageBuildingDefinition
 	dailyMissions         []balance.DailyMissionDefinition
 	dailyMissionsByID     map[string]balance.DailyMissionDefinition
 	battlePassRewards     map[string]balance.BattlePassRewardDefinition
@@ -41,6 +44,8 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 		summonBanners:         map[string]api.SummonBannerDefinition{},
 		accessories:           map[string]balance.AccessoryDefinition{},
 		accessoryRarities:     map[string]balance.AccessoryRarityDefinition{},
+		villageBuildingsByID:  map[string]balance.VillageBuildingDefinition{},
+		villageBuildingsByKey: map[string]balance.VillageBuildingDefinition{},
 		dailyMissionsByID:     map[string]balance.DailyMissionDefinition{},
 		battlePassRewards:     map[string]balance.BattlePassRewardDefinition{},
 	}
@@ -171,6 +176,33 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 			FuseTargetID:   definition.FuseTargetID,
 		}
 	}
+
+	for _, definition := range snapshot.VillageBuildings {
+		villageBuilding := balance.VillageBuildingDefinition{
+			ID:                  definition.BuildingID,
+			SlotIndex:           definition.SlotIndex,
+			BuildingOptionIndex: definition.BuildingOptionIndex,
+			DisplayName:         definition.DisplayName,
+			TextureName:         definition.TextureName,
+			BuildCost:           definition.BuildCost,
+			MaxLevel:            definition.MaxLevel,
+			UpgradeCostPerLevel: definition.UpgradeCostPerLevel,
+			BonusType:           definition.BonusType,
+			BonusValuePerLevel:  definition.BonusValuePerLevel,
+		}
+		if villageBuilding.ID == "" {
+			villageBuilding.ID = balance.VillageBuildingID(villageBuilding.SlotIndex, villageBuilding.BuildingOptionIndex)
+		}
+		catalog.villageBuildings = append(catalog.villageBuildings, villageBuilding)
+		catalog.villageBuildingsByID[villageBuilding.ID] = villageBuilding
+		catalog.villageBuildingsByKey[villageBuildingKey(villageBuilding.SlotIndex, villageBuilding.BuildingOptionIndex)] = villageBuilding
+	}
+	sort.Slice(catalog.villageBuildings, func(left int, right int) bool {
+		if catalog.villageBuildings[left].SlotIndex == catalog.villageBuildings[right].SlotIndex {
+			return catalog.villageBuildings[left].BuildingOptionIndex < catalog.villageBuildings[right].BuildingOptionIndex
+		}
+		return catalog.villageBuildings[left].SlotIndex < catalog.villageBuildings[right].SlotIndex
+	})
 
 	for _, definition := range snapshot.DailyMissions {
 		mission := balance.DailyMissionDefinition{
@@ -429,6 +461,32 @@ func (catalog *SnapshotBalanceCatalog) AccessoryLevelCost(accessoryID string, le
 	return catalog.fallback.AccessoryLevelCost(accessoryID, level)
 }
 
+func (catalog *SnapshotBalanceCatalog) VillageBuildingDefinitions() []balance.VillageBuildingDefinition {
+	if len(catalog.villageBuildings) == 0 {
+		return catalog.fallback.VillageBuildingDefinitions()
+	}
+
+	definitions := make([]balance.VillageBuildingDefinition, len(catalog.villageBuildings))
+	copy(definitions, catalog.villageBuildings)
+	return definitions
+}
+
+func (catalog *SnapshotBalanceCatalog) VillageBuildingDefinitionByID(buildingID string) (balance.VillageBuildingDefinition, bool) {
+	if definition, ok := catalog.villageBuildingsByID[buildingID]; ok {
+		return definition, true
+	}
+
+	return catalog.fallback.VillageBuildingDefinitionByID(buildingID)
+}
+
+func (catalog *SnapshotBalanceCatalog) VillageBuildingDefinitionBySlotOption(slotIndex int, buildingOptionIndex int) (balance.VillageBuildingDefinition, bool) {
+	if definition, ok := catalog.villageBuildingsByKey[villageBuildingKey(slotIndex, buildingOptionIndex)]; ok {
+		return definition, true
+	}
+
+	return catalog.fallback.VillageBuildingDefinitionBySlotOption(slotIndex, buildingOptionIndex)
+}
+
 func (catalog *SnapshotBalanceCatalog) SummonCost(bannerID string) (int, bool) {
 	if definition, ok := catalog.summonBanners[bannerID]; ok {
 		return max(0, definition.CostAmount), true
@@ -496,6 +554,10 @@ func (catalog *SnapshotBalanceCatalog) BattlePassReward(rewardID string) (api.Re
 	}
 
 	return catalog.fallback.BattlePassReward(rewardID)
+}
+
+func villageBuildingKey(slotIndex int, buildingOptionIndex int) string {
+	return fmt.Sprintf("%d:%d", slotIndex, buildingOptionIndex)
 }
 
 func (catalog *SnapshotBalanceCatalog) primaryCampaign() (api.CampaignDefinition, bool) {

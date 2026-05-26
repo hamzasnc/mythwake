@@ -296,6 +296,7 @@ public static class VillageUiValidation
 
             AssertVillageBonusHint("Server Mode:", "Village server-mode bonus hint");
             AssertVillageBonusHint("lokal pausiert", "Village server-mode bonus hint");
+            AssertVillageBonusHint("Server Snapshot", "Village server-mode bonus hint");
         }
         finally
         {

@@ -264,6 +264,31 @@ func TestVillageDemolishFreesSlot(t *testing.T) {
 	}
 }
 
+func TestVillageTeamStatsUseDefinitionBonuses(t *testing.T) {
+	service := NewService()
+	service.state.MythEssence = 40
+	beforeAttack := service.state.TeamAttack
+
+	result := service.BuildVillageBuilding(1, 1)
+	if !result.Success {
+		t.Fatalf("expected village build to succeed, got %#v", result)
+	}
+	if service.state.TeamAttack != beforeAttack+4 {
+		t.Fatalf("expected definition attack bonus after build, before=%d after=%d", beforeAttack, service.state.TeamAttack)
+	}
+	if result.PlayerSnapshot.State.TeamAttack != service.state.TeamAttack {
+		t.Fatalf("expected snapshot team attack to match service state, got %#v", result.PlayerSnapshot.State)
+	}
+
+	result = service.UpgradeVillageBuilding(1)
+	if !result.Success {
+		t.Fatalf("expected village upgrade to succeed, got %#v", result)
+	}
+	if service.state.TeamAttack != beforeAttack+8 {
+		t.Fatalf("expected upgraded definition attack bonus, before=%d after=%d", beforeAttack, service.state.TeamAttack)
+	}
+}
+
 func TestVillageUpgradeSpendsEssenceAndPersistsLevel(t *testing.T) {
 	store := &fakeStateStore{}
 	service := NewService()

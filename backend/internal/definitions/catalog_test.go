@@ -65,6 +65,9 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if len(snapshot.Accessories) != 30 {
 		t.Fatalf("expected 30 accessory definitions, got %d", len(snapshot.Accessories))
 	}
+	if len(snapshot.VillageBuildings) != 36 {
+		t.Fatalf("expected 36 village building definitions, got %d", len(snapshot.VillageBuildings))
+	}
 	if len(snapshot.ProgressionCosts) == 0 {
 		t.Fatal("expected progression cost definitions")
 	}
@@ -170,6 +173,23 @@ func TestSnapshotCarriesCampaignAndAccessoryDefinitionData(t *testing.T) {
 	}
 	if !foundHeadgear {
 		t.Fatal("expected accessory_headgear_r0 definition")
+	}
+
+	var foundVillage bool
+	for _, definition := range snapshot.VillageBuildings {
+		if definition.BuildingID != "village_building_02_option_02" {
+			continue
+		}
+		foundVillage = true
+		if definition.SlotIndex != 1 || definition.BuildingOptionIndex != 1 || definition.BuildCost != 7 || definition.MaxLevel != 20 || definition.UpgradeCostPerLevel != 5 {
+			t.Fatalf("unexpected village building definition core values: %#v", definition)
+		}
+		if definition.BonusType != balance.VillageBonusTeamAttack || definition.BonusValuePerLevel != 4 {
+			t.Fatalf("unexpected village building bonus definition: %#v", definition)
+		}
+	}
+	if !foundVillage {
+		t.Fatal("expected village_building_02_option_02 definition")
 	}
 }
 

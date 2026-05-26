@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.126`, save version `2`.
+- Unity client code is at Prototype `0.2.127`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -28,7 +28,8 @@ Last updated: 2026-05-26
 - Added visible placeholder Village bonuses; local mode applies small Team ATK/HP or Fast Rewards rate boosts from built building type and level.
 - Village building detail now shows both the current bonus and either the next upgrade's bonus or the max bonus, with validator coverage for the extra detail line.
 - Village now shows a compact hint-line summary for local Team ATK/HP and Fast Rewards rate bonuses, or a Server Mode note that local Village bonuses are paused while backend state stays authoritative.
-- Kept Village bonuses local-only until a proper Village balance/definition pass, so Server Mode remains backend-authoritative.
+- Village building definitions now exist in backend/common/PostgreSQL shape and are exposed through `/definitions`; backend Village build/upgrade actions use the injected catalog for costs, IDs, max levels, and server-side Team ATK/HP bonuses.
+- Server Mode keeps client-side local Village bonuses paused so server-authoritative team stats are not double-counted locally.
 - Polished the Fast Rewards popup so local mode shows stored time, rate, Village bonus, and ready rewards, while Server Mode shows backend min/cap/rate/ready estimate.
 - Added an editor validation entry point for the Fast Rewards popup so local copy, 0s/capped 24h states, Server Mode fallback copy, redeem/claim labels, button state, text fit, and control bounds can be checked in Unity.
 - Fast Rewards now shows the remaining time before the 24h storage cap, gives the popup more text room, and the Fast Rewards validator checks normal, empty, and capped cap-left states.
@@ -121,11 +122,13 @@ Last updated: 2026-05-26
 - Fixed the Prototype Builder Gear selected-rarity default so it no longer references the stale selected fuse-tier localization key.
 - Moved local Village building names, textures, build costs, max levels, upgrade scaling, stable IDs, and placeholder bonus values into client-side building definitions as a bridge toward backend-owned Village balance.
 - Extended `Validate Village UI` so every 12x3 Village definition is checked for stable ID, build cost, max level, loaded texture, and expected bonus category.
-- `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` now pass for the current slice.
+- Moved the same Village definition shape into backend/static definitions, `/definitions`, PostgreSQL migration `0028_village_building_definitions.sql`, and the injected backend balance catalog.
+- Backend Village build/upgrade actions now read cost, stable building ID, max level, and server-side Team ATK/HP bonus contribution through the catalog.
+- `go test ./...`, `scripts/check-backend.cmd` against a temporary no-DB API on `http://localhost:18080`, `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` now pass for the current slice.
 
 ## Next Small Steps
 
 1. Visually verify Home idle combat on device/editor: connected upper/lower map readability, foreground patrol spacing, reward tick pacing, and the stage-node info preview.
 2. Visually verify Village, Fast Rewards, Vanguard Oath/Summon result, and Paladin formation/fight presentation in Unity/emulator.
 3. Visually verify the 8-slot Hero Detail spacing in Unity/emulator, then continue the visible Hero/Gear polish pass behind `Mythwake/Validate Upgrade Clutter`.
-4. Continue Village backend-readiness by moving the same definition shape into backend/common definitions, then expose it through `/definitions` before enabling Server Mode Village bonuses.
+4. Continue Village backend-readiness by deciding how AFK-rate Village bonuses should affect server-authoritative AFK rewards, then expose that clearly in Server Mode UI.

@@ -31,6 +31,7 @@ Latest known pushed commit before the current continuation:
 - `36f4134 Mark campaign detail states`
 
 Current continuation:
+- Village building definitions now exist in backend/static definitions, `/definitions`, PostgreSQL migration `0028_village_building_definitions.sql`, and the injected backend balance catalog. Backend Village build/upgrade uses catalog costs, IDs, max level, and server-side Team ATK/HP bonuses; client Server Mode keeps local Village bonuses paused to avoid double counting.
 - Home idle patrol now keeps the middle hero/enemy lane clear of the reward strip, and `Validate Home Idle Combat` guards mobile touch target size, reward shelf fit, unit/reward separation, and loot-popup separation from the reward strip.
 - Village building data now has a client-side definition layer per plot/option: stable building ID, display name, texture, build cost, max level, upgrade cost-per-level, bonus type, and bonus value per level live together instead of being spread across local arrays/helpers.
 - `Validate Village UI` now checks all 12x3 Village definitions for stable IDs, build costs, max level, loaded texture, and the expected placeholder bonus category while Server Mode still pauses local Village bonuses.
@@ -115,7 +116,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.126`
+- Prototype `0.2.127`
 - Save version `2`
 
 Important Unity scripts:
@@ -126,8 +127,8 @@ Latest local gameplay/UI batch:
 - Village now has a dedicated scrollable map screen opened from the bottom Village nav item, with 12 build plots and imported building art.
 - Village free plots open a build panel. Built plots open a building detail panel with level, next upgrade cost, available Myth Essence, visible HP/ATK/Fast Rewards bonus categories, `Aufwerten`, `Abreissen`, and `Schliessen`; the Village validator also checks the scrollable map/content wiring, all 12 plot buttons, loaded map/building art, build/detail close flows, built-plot hidden build marks, max-level upgrade lockout, and the Village bonus hint.
 - Village building upgrades spend Myth Essence locally and route through the existing backend Village upgrade action in Server Mode.
-- Village building details show current and next/max placeholder bonuses. In local mode, built building type and level apply small Team ATK/HP or Fast Rewards Gold/Essence rate boosts and the Village hint line summarizes the active totals. The local client now reads those placeholder costs/levels/bonuses from a per-building definition layer with stable IDs.
-- Village bonuses are intentionally local-only until the backend/common definition pass exposes equivalent Village definitions and authoritative Server Mode bonuses.
+- Village building details show current and next/max placeholder bonuses. In local mode, built building type and level apply small Team ATK/HP or Fast Rewards Gold/Essence rate boosts and the Village hint line summarizes the active totals. The client reads those costs/levels/bonuses from a per-building definition layer with stable IDs, and the backend now exposes the same definition shape through `/definitions`.
+- Server Mode pauses client-side local Village bonuses so local stats do not double-add over backend-authoritative snapshots. Backend Team ATK/HP Village bonuses are now catalog-driven; AFK-rate Village bonuses still need a server-authoritative reward-design pass.
 - Fast Rewards popup now separates local and Server Mode: local shows stored time, remaining cap time, rate, Village bonus, and ready rewards; Server Mode shows backend min/cap/rate, claim status, ready estimate, and notes that Village local bonuses do not modify server rewards yet.
 - A Unity editor validator now checks Fast Rewards popup controls, local copy, cap-left copy, progress bar fill/text, local redeem grant/reset/button-disable flow, 0s/capped 24h states, popup exclusivity, close flow, Server Mode fallback copy, disabled no-session fallback, waiting/ready server claim status, redeem/claim labels, text fit, and button bounds through `Mythwake/Validate Fast Rewards UI`.
 - Home now has a first AFK-Arena-style idle combat slice: the campaign map remains in the background with clickable stage-node info, while a foreground patrol fight animates three formation heroes against current-stage monsters and grants small active local Gold/Myth Essence ticks without changing `enemyLevel`.
@@ -630,7 +631,7 @@ Still rough:
 The next chat should continue in this order unless the user redirects:
 
 1. Visually verify the current slice in Unity/editor or on device.
-   - The latest batchmode Current Slice, Unity C# check, and whitespace check passed after the Prototype Builder Gear selected-rarity fix.
+   - The latest batchmode Current Slice, Unity C# check, `go test ./...`, temporary no-DB `check-backend.cmd` on `http://localhost:18080`, and whitespace check passed after the backend Village definition pass.
    - Verify the connected Home upper/lower map, Village, Fast Rewards, Vanguard Oath/Summon result, Paladin formation/fight pose, and spacing on editor/device.
 
 2. Finish the Home idle combat visual pass.
@@ -638,8 +639,8 @@ The next chat should continue in this order unless the user redirects:
    - Check foreground patrol spacing, reward tick pacing, stage-node preview readability, and Battle button overlap on editor/device.
    - Keep `Mythwake/Validate Home Idle Combat` updated if the Home layout shifts again.
 
-3. Finish the Village building test slice.
-   - Move the client-side Village definition shape into backend/common definitions and `/definitions`.
+3. Continue the Village building test slice.
+   - Decide how AFK-rate Village bonuses should affect server-authoritative AFK rewards.
    - Keep local and Server Mode state display in sync; do not apply local bonuses on top of server-authoritative stats.
    - Tune bonus values only after a visual/emulator pass.
 

@@ -13,7 +13,7 @@ import (
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
-const SchemaVersion = 5
+const SchemaVersion = 6
 
 func Snapshot(apiVersion string) api.DefinitionSnapshot {
 	snapshot := api.DefinitionSnapshot{
@@ -31,6 +31,7 @@ func Snapshot(apiVersion string) api.DefinitionSnapshot {
 		AccessorySlots:    accessorySlotDefinitions(),
 		AccessoryRarities: accessoryRarityDefinitions(),
 		Accessories:       accessoryDefinitions(),
+		VillageBuildings:  villageBuildingDefinitions(),
 		ProgressionCosts:  progressionCostDefinitions(),
 		SummonBanners:     summonBannerDefinitions(),
 		DailyMissions:     dailyMissionDefinitions(),
@@ -267,6 +268,26 @@ func accessoryDefinitions() []api.AccessoryDefinition {
 			HealthPerLevel: definition.HealthPerLevel,
 			DropWeight:     definition.DropWeight,
 			FuseTargetID:   definition.FuseTargetID,
+		})
+	}
+	return response
+}
+
+func villageBuildingDefinitions() []api.VillageBuildingDefinition {
+	definitions := balance.VillageBuildingDefinitions()
+	response := make([]api.VillageBuildingDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.VillageBuildingDefinition{
+			BuildingID:          definition.ID,
+			SlotIndex:           definition.SlotIndex,
+			BuildingOptionIndex: definition.BuildingOptionIndex,
+			DisplayName:         definition.DisplayName,
+			TextureName:         definition.TextureName,
+			BuildCost:           definition.BuildCost,
+			MaxLevel:            definition.MaxLevel,
+			UpgradeCostPerLevel: definition.UpgradeCostPerLevel,
+			BonusType:           definition.BonusType,
+			BonusValuePerLevel:  definition.BonusValuePerLevel,
 		})
 	}
 	return response

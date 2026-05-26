@@ -284,6 +284,7 @@ public struct MythwakeDefinitionSnapshotDto
     public MythwakeAccessorySlotDefinitionDto[] accessorySlots;
     public MythwakeAccessoryRarityDefinitionDto[] accessoryRarities;
     public MythwakeAccessoryDefinitionDto[] accessories;
+    public MythwakeVillageBuildingDefinitionDto[] villageBuildingDefinitions;
     public MythwakeProgressionCostDefinitionDto[] progressionCosts;
     public MythwakeSummonBannerDefinitionDto[] summonBanners;
     public MythwakeDailyMissionDefinitionDto[] dailyMissions;
@@ -445,6 +446,21 @@ public struct MythwakeAccessoryDefinitionDto
     public int healthPerLevel;
     public int dropWeight;
     public string fuseTargetId;
+}
+
+[Serializable]
+public struct MythwakeVillageBuildingDefinitionDto
+{
+    public string buildingId;
+    public int slotIndex;
+    public int buildingOptionIndex;
+    public string displayName;
+    public string textureName;
+    public int buildCost;
+    public int maxLevel;
+    public int upgradeCostPerLevel;
+    public string bonusType;
+    public float bonusValuePerLevel;
 }
 
 [Serializable]
