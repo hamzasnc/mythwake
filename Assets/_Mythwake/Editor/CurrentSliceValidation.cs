@@ -102,7 +102,7 @@ public static class MobileUxValidation
         InvokePrivate(controller, "RegisterNavigation");
         Canvas.ForceUpdateCanvases();
 
-        var canvasRect = ValidatePortraitCanvas();
+        var canvasRect = ValidatePortraitCanvas(controller);
         ValidateMobileChrome(controller, canvasRect);
         ValidateScreenNavigation(controller);
     }
@@ -132,50 +132,37 @@ public static class MobileUxValidation
         }
     }
 
-    private static RectTransform ValidatePortraitCanvas()
+    private static RectTransform ValidatePortraitCanvas(IdlePrototypeController controller)
     {
-        var canvases = Resources.FindObjectsOfTypeAll<Canvas>();
-        RectTransform rootCanvas = null;
-        var validScalerCount = 0;
-        for (var i = 0; i < canvases.Length; i++)
+        var topBarRoot = RequireObjectField<RectTransform>(controller, "topBarRoot");
+        var rootCanvas = topBarRoot.GetComponentInParent<Canvas>();
+        if (rootCanvas == null)
         {
-            var canvas = canvases[i];
-            if (canvas == null || !canvas.gameObject.scene.IsValid())
-            {
-                continue;
-            }
-
-            var scaler = canvas.GetComponent<CanvasScaler>();
-            if (scaler == null)
-            {
-                continue;
-            }
-
-            if (scaler.uiScaleMode != CanvasScaler.ScaleMode.ScaleWithScreenSize)
-            {
-                throw new InvalidOperationException($"{canvas.name} should use Scale With Screen Size.");
-            }
-
-            if (Mathf.Abs(scaler.referenceResolution.x - ReferenceWidth) > 0.1f || Mathf.Abs(scaler.referenceResolution.y - ReferenceHeight) > 0.1f)
-            {
-                throw new InvalidOperationException($"{canvas.name} should use 1080x1920 reference resolution, got {scaler.referenceResolution}.");
-            }
-
-            if (scaler.matchWidthOrHeight < 0.95f)
-            {
-                throw new InvalidOperationException($"{canvas.name} should match height for portrait layouts, got {scaler.matchWidthOrHeight:0.###}.");
-            }
-
-            validScalerCount++;
-            rootCanvas = canvas.GetComponent<RectTransform>();
+            throw new InvalidOperationException("Top bar should live under the portrait Prototype UI canvas.");
         }
 
-        if (validScalerCount == 0 || rootCanvas == null)
+        var scaler = rootCanvas.GetComponent<CanvasScaler>();
+        if (scaler == null)
         {
-            throw new InvalidOperationException("No portrait CanvasScaler found in SampleScene.");
+            throw new InvalidOperationException($"{rootCanvas.name} is missing CanvasScaler.");
         }
 
-        return rootCanvas;
+        if (scaler.uiScaleMode != CanvasScaler.ScaleMode.ScaleWithScreenSize)
+        {
+            throw new InvalidOperationException($"{rootCanvas.name} should use Scale With Screen Size.");
+        }
+
+        if (Mathf.Abs(scaler.referenceResolution.x - ReferenceWidth) > 0.1f || Mathf.Abs(scaler.referenceResolution.y - ReferenceHeight) > 0.1f)
+        {
+            throw new InvalidOperationException($"{rootCanvas.name} should use 1080x1920 reference resolution, got {scaler.referenceResolution}.");
+        }
+
+        if (scaler.matchWidthOrHeight < 0.95f)
+        {
+            throw new InvalidOperationException($"{rootCanvas.name} should match height for portrait layouts, got {scaler.matchWidthOrHeight:0.###}.");
+        }
+
+        return rootCanvas.GetComponent<RectTransform>();
     }
 
     private static void ValidateMobileChrome(IdlePrototypeController controller, RectTransform canvasRect)

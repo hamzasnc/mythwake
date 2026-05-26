@@ -25,7 +25,7 @@ Latest Android/device availability check:
 - `adb` is not available on PATH, but Unity's embedded Android SDK includes `C:\Program Files\Unity\Hub\Editor\6000.4.5f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe`.
 - Unity's embedded `adb devices -l` found no attached Android emulator or physical device.
 - No emulator executable was found in the Unity embedded SDK or `%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe`.
-- Unity batchmode Android/current-slice attempts are currently blocked because another Unity instance has `D:\Github\mythwake` open. Use the editor menu `Mythwake/Validate Current Slice` in the open editor, or close it before rerunning batchmode.
+- An earlier Unity batchmode attempt was blocked because another Unity instance had `D:\Github\mythwake` open. After rerun, `scripts/check-unity-current-slice.cmd` passes; only the real Android install/screenshot/performance pass remains blocked by missing device/emulator access.
 
 Mobile UX issues addressed in Prototype `0.2.135`:
 
@@ -39,7 +39,7 @@ Current validation state for the mobile-portrait slice:
 
 - `scripts/check-unity-csharp.cmd` passes.
 - `git diff --check` passes.
-- `scripts/check-unity-current-slice.cmd` previously passed for the Village balance/admin pass, but the latest Mobile UX rerun is blocked by the open Unity instance noted above.
+- `scripts/check-unity-current-slice.cmd` passes after the Mobile UX validator was narrowed to the actual runtime `Prototype UI` canvas.
 - Current Slice coverage includes Home map/idle combat touch targets, reward strip fit, unit/reward separation, popup exclusivity, Village scroll/build/detail flows, Dungeons map zoom/marker spacing, Fast Rewards copy/progress/close flows, Summon result slots and repeat buttons, Hero Detail/Gear spacing and localized text fit, Gear action labels, combat result summary shape, Fight/Formation controls and result flow, and Paladin formation/fight handoff checks.
 
 Mobile UX issues addressed in this continuation:
@@ -49,14 +49,24 @@ Mobile UX issues addressed in this continuation:
 - Combat result bodies now show server-like HP/ATK/enemy damage/result fields.
 - Home Next Goal now auto-sizes and points through the early loop with Power and resource gaps.
 - Fight/Formation now has a dedicated validator for campaign Formation swap, auto-next, visible Fight controls, AUTO/x2, HP/mana skill cards, ultimate queueing, result Continue flow, and dungeon focus chrome hiding.
+- Mobile UX validation now checks the runtime portrait canvas used by Topbar/Bottom Nav instead of failing on the old zero-scale legacy `Canvas` that remains in the scene.
 
 Not yet run in this pass:
 
 - A real Android APK/AAB build, emulator install, or physical-device run.
+- Real emulator/device screenshots for Home, Village/Fast Rewards, Hero Detail, Gear, Summon, and Fight.
 - Manual safe-area checks for notches, Android gesture navigation, and status/navigation bar cutouts.
 - Device performance/load-time sampling on Home Map, Hero Detail, Gear, Village, Summon, and Fight.
 
 Next Android pass should attach an emulator/device, add or run a reproducible Unity Android build/install path, then record screenshots for Home, Hero Detail, Gear, Village, Summon, and Fight.
+
+## Future Account Login Need
+
+The current guest/dev flow is useful for local server testing, but internal testers need durable accounts so each build does not feel like starting from zero again.
+
+- First durable login slice: Email + Password registration/login.
+- Later platform login slice: Google Login through Play Store / Google Play Services.
+- Google Login should wait until the simpler Email + Password path and backend account linking are stable.
 
 ## Server Mode Rules
 

@@ -28,11 +28,14 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `ad77a97 Add editable village balance fields`
+- `61c2589 Tighten mobile Android UX baseline`
 
 Current continuation:
+- Prototype `0.2.136` fixes the Mobile UX Current Slice validator so it targets the actual runtime `Prototype UI` canvas instead of the old zero-scale legacy scene `Canvas`; `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` pass after this fix.
+- A real Android screenshot/performance pass is still blocked: Unity embedded `adb` is available, but `adb devices -l` lists no emulator/physical device, no emulator executable exists in the checked SDK paths, and there is still no checked-in Android build/install helper.
+- Future account direction is now explicit: durable tester accounts need Email + Password registration/login first so testers do not restart from zero, and Google Login through Play Store / Google Play Services should come later. Do not build full Google Login yet.
 - Prototype `0.2.135` tightens the Android/mobile baseline by switching PlayerSettings to portrait 1080x1920, disabling landscape/upside-down autorotation and Android render-outside-safe-area, and adding `Mythwake/Validate Mobile UX` into Current Slice for portrait settings, CanvasScaler, version label fit, mobile nav touch targets, and core screen navigation.
-- A real Android device/emulator run is still blocked on this machine: Unity's embedded `adb` exists, but no device is attached, no emulator executable was found, there is no checked-in Android build/install helper, and batchmode Unity build/Current Slice attempts currently fail because another Unity instance has this project open.
+- A real Android device/emulator run is still blocked on this machine: Unity's embedded `adb` exists, but no device is attached, no emulator executable was found, and there is no checked-in Android build/install helper. The final batchmode Current Slice now passes.
 - Prototype `0.2.134` / Backend `0.2.58` adds editable Village balance/admin fields across static backend definitions, `/definitions`, PostgreSQL migration `0029_village_balance_admin_fields.sql`, and `debug.v_common_village_building_balance`; Unity local fallback values now match backend Village balance, and the Village/Fast Rewards validators check labels, curves, formulas, mode compatibility, and local/server bonus display.
 - Prototype `0.2.133` / Backend `0.2.57` makes Village AFK-rate bonuses server-authoritative for AFK claims: built Village definitions with `afk_gold_rate` and `afk_essence_rate` now add Gold/Essence during backend AFK reward claims, while Server Mode keeps local client bonuses paused to avoid double counting.
 - Prototype `0.2.132` adds `Mythwake/Validate Fight Formation UI` and wires it into `Mythwake/Validate Current Slice`; the validator covers campaign Formation swap, auto-next toggle, visible Fight controls, AUTO/x2 state, HP/mana skill cards, ultimate queueing, result-popup Continue flow, and dungeon fight focus chrome hiding.
@@ -41,7 +44,7 @@ Current continuation:
 - Village building data now has a client-side definition layer per plot/option: stable building ID, display name, texture, build cost, max level, upgrade cost-per-level, bonus type, bonus label, bonus curve, upgrade formula, mode compatibility, and bonus value per level live together instead of being spread across local arrays/helpers.
 - `Validate Village UI` now checks all 12x3 Village definitions for stable IDs, build costs, max level, loaded texture, expected bonus labels/values, linear bonus curve, upgrade formula, and local/server mode compatibility while Server Mode still pauses local Village bonuses.
 - Prototype Builder Gear defaults now use `gear.selected_rarity` instead of the stale selected fuse-tier key, so `Validate Upgrade Clutter` and the full Current Slice no longer fail after a UI rebuild.
-- `go test ./...`, `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `scripts/check-backend.cmd -BaseUrl http://localhost:18081 -CheckUnauthorized` passed on 2026-05-26 after the Village balance/admin field pass. In the Mobile UX pass, `scripts/check-unity-csharp.cmd` and `git diff --check` pass, while `scripts/check-unity-current-slice.cmd` is blocked by the open Unity instance.
+- `go test ./...`, `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `scripts/check-backend.cmd -BaseUrl http://localhost:18081 -CheckUnauthorized` passed on 2026-05-26 after the Village balance/admin field pass. In the final Mobile UX pass, `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` pass.
 - Village building detail now shows both current bonus and `Naechster Bonus` / `Max Bonus`, and `Validate Village UI` checks the extra detail line.
 - Fast Rewards now has a compact progress bar/status line under the popup copy. Local mode shows stored percent plus cap-left state, Server Mode shows synced timer progress plus wait/ready state, and `Validate Fast Rewards UI` checks progress text fit and fill percentages.
 - Dungeons map zoom buttons now register their listeners through the runtime zoom-control setup path, so `Validate Dungeons UI` can exercise zoom in/out and clamp behavior without relying on a separate startup listener path.
@@ -121,7 +124,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.135`
+- Prototype `0.2.136`
 - Save version `2`
 
 Important Unity scripts:
@@ -176,7 +179,7 @@ Latest local gameplay/UI batch:
 - Multiple heroes/enemies can attack at the same time; combat is no longer an A -> B -> C alternating sequence.
 - Local Campaign/Dungeon fight result bodies now mirror the server combat summary shape more closely: Team HP, Enemy HP, Team ATK, Enemy DMG, dealt/taken damage, healing, crits, misses, and execute flags are shown consistently and covered by Upgrade Clutter validation.
 - Home Next Goal now points through the early loop in order: push Campaign when Power is ready, otherwise Gear drops/equip, Weapon/Armor/accessory/Hero upgrades, affordable Village build/upgrade, Gear Dungeon drops, Summon shards, or concrete Gold/Essence/Power farm gaps. Home validation checks the campaign-power hint path.
-- `docs/UNITY_TEST_STAND.md` records the 2026-05-26 Mobile UX pass. Android PlayerSettings are now portrait-only/safe-area-friendlier and Current Slice includes a Mobile UX validator, but an actual Android APK/emulator/device run is still open because no device/emulator is attached and the open Unity editor blocks batchmode.
+- `docs/UNITY_TEST_STAND.md` records the 2026-05-26 Mobile UX pass. Android PlayerSettings are now portrait-only/safe-area-friendlier and Current Slice includes a Mobile UX validator, but an actual Android APK/emulator/device run is still open because no device/emulator is attached.
 - Normal hits reduce only one target HP bar.
 - Fight UI now has bottom hero skill cards with portrait, per-character mana bar, ready glow, click-to-queue ultimate, and an AUTO toggle above the right side of the cards.
 - Character mana is per hero, not team-wide. Heroes start at 0, no longer gain passive timer mana, gain +2 mana on successful hits, and each hero has a different max mana.
@@ -216,12 +219,12 @@ Latest backend combat direction:
 Latest verification notes:
 - `go test ./...` passes from `backend/`.
 - `scripts/check-unity-csharp.cmd` passes runtime/editor C# MSBuild checks through Unity's bundled .NET Framework references, with existing Unity serialization/Paladin JSON field warnings.
-- `scripts/check-unity-current-slice.cmd` previously passed after the Village balance/admin pass, but the latest Mobile UX rerun is blocked by an open Unity instance for this project.
+- `scripts/check-unity-current-slice.cmd` passes in Unity batchmode after the Mobile UX validator was narrowed to the runtime `Prototype UI` canvas.
 - `scripts/check-backend.cmd -BaseUrl http://localhost:18081` passed against a temporary no-DB API in the previous backend-affecting pass; the Mobile UX pass did not touch backend files.
 - `git diff --check` passes, with expected LF-to-CRLF warnings on touched Markdown files.
 - Direct `dotnet build` fails on this machine because .NET Framework 4.7.1 reference assemblies are not installed globally.
 - Plain MSBuild without `/p:LangVersion=latest` can fail because the generated Unity csproj still says C# 7.3 while current code uses newer syntax.
-- Unity batchmode validation command is prepared, the `.cmd` wrapper propagates PowerShell failures correctly, and full current-slice execution should be rerun after the open editor stops blocking batchmode.
+- Unity batchmode validation command is prepared, the `.cmd` wrapper propagates PowerShell failures correctly, and full current-slice execution passes from PowerShell when no editor instance has the project open.
   - Main local gameplay, UI runtime construction, backend mode switching, save/load, action handlers.
   - It is currently large/monolithic. Be careful with surgical edits.
 - `Assets/_Mythwake/Scripts/MythwakeBackendClient.cs`
@@ -602,9 +605,9 @@ Good next asset tasks:
 
 Future login methods:
 - Guest/dev currently exists.
-- Email login later.
-- Google login later.
-- Apple login later.
+- Email + Password registration/login is the next durable tester-account path so players do not restart from zero every test pass.
+- Google Login through Play Store / Google Play Services comes later, after the Email + Password slice is stable.
+- Apple login remains a later iOS/platform-provider follow-up.
 
 Keep account architecture flexible:
 - Account identity table should support multiple provider identities per player/account.
@@ -642,9 +645,9 @@ Still rough:
 The next chat should continue in this order unless the user redirects:
 
 1. Visually verify the current slice in Unity/editor or on device.
-   - The latest batchmode Current Slice and Unity C# check passed after the Fight/Formation validator was added.
+   - The latest batchmode Current Slice and Unity C# check passed after the Mobile UX runtime-canvas validator fix.
    - `git diff --check` should be rerun before the next commit if docs/code change again.
-   - Verify the connected Home upper/lower map, Village, Fast Rewards, Vanguard Oath/Summon result, Paladin formation/fight pose, Fight controls, and spacing on editor/device.
+   - The next missing test is a real Android emulator/device screenshot and performance pass for Home, Village/Fast Rewards, Hero Detail, Gear, Summon, and Fight.
 
 2. Finish the Home idle combat visual pass.
    - Verify the main campaign map and lower idle mini-map read as one continuous area.

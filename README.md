@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.135
+Prototype version: 0.2.136
 Local save version: 2
 
 Current prototype:
@@ -132,6 +132,7 @@ Backend:
 - Backend player service actions are split by domain files for campaign/dungeons, progression, gear, meta, snapshots, and persistence
 - Backend player actions now route through explicit domain action services for campaign, dungeons, hero progression, equipment, accessories, summons, and missions
 - Guest auth now issues real random session tokens, stores only token hashes when PostgreSQL is enabled, and has account identity tables shaped for guest, email, Google, and Apple login
+- Future tester accounts need durable registration/login so players do not restart from zero each test pass: first Email + Password, later Google Login through Play Store / Google Play Services. Google Login is a later system slice, not part of the current prototype pass.
 - Player state, flush, and gameplay mutations now require a valid Bearer session token and resolve the active player from that token
 - Logout now revokes the active session token server-side and clears the Unity cached session
 - Session validation can use Redis or memory through the read-through cache interface and a controlled PostgreSQL touch window
@@ -181,6 +182,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md` (includes the latest Mobile UX pass and open Android emulator/device follow-up)
 
 Changelog:
+- Prototype 0.2.136: Fixed the Mobile UX Current Slice validator so it targets the real portrait `Prototype UI` canvas instead of an old zero-scale legacy scene canvas, reran the full Current Slice successfully, and documented the blocked emulator/device screenshot and performance pass plus the future Email/Password and later Google Play Services login need.
 - Prototype 0.2.135: Tightened the mobile test baseline for Android by switching project defaults to portrait 1080x1920, disabling landscape/upside-down autorotation and render-outside-safe-area, and adding Mobile UX validation into Current Slice for portrait settings, CanvasScaler shape, version label fit, navigation touch targets, and core screen switching. A real emulator/device run remains blocked on this machine because no Android device/emulator is attached and the open Unity editor prevents batchmode validation/build attempts.
 - Prototype 0.2.134 / Backend 0.2.58: Added editable Village balance/admin fields (`bonusLabel`, `bonusCurve`, `upgradeCostFormula`, `modeCompatibility`) across backend definitions, `/definitions`, PostgreSQL migration `0029`, and the new `debug.v_common_village_building_balance` view; aligned the Unity local fallback balance with backend values and extended Village/Fast Rewards validators for definition labels, curves, max/cost copy, and local/server bonus display.
 - Prototype 0.2.133 / Backend 0.2.57: Server AFK claims now apply catalog-driven Village Gold/Essence rate bonuses from built buildings, Server Mode Fast Rewards shows the server-snapshot Village bonus line, and backend Village tests cover invalid building options, insufficient Essence, max-level upgrades, demolish, upgrade costs, snapshots, and AFK bonus claims.
