@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.123`, save version `2`.
+- Unity client code is at Prototype `0.2.124`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -117,11 +117,12 @@ Last updated: 2026-05-26
 - Added backend tests for service-level and HTTP-level Village upgrades.
 - Added migration `0026_afk_reward_24h_cap.sql` so existing PostgreSQL dev databases pick up the 24h AFK cap.
 - Refreshed `README.md` and `docs/NEXT_CHAT_CONTEXT.md` so the main handoff notes match the current pass.
-- Unity batch validation is currently blocked because this project is already open in another Unity instance; `scripts/check-unity-csharp.cmd` passes for runtime/editor C# checks with the Unity .NET Framework path override.
+- Fixed the Prototype Builder Gear selected-rarity default so it no longer references the stale selected fuse-tier localization key.
+- `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` now pass for the current slice.
 
 ## Next Small Steps
 
-1. Close the extra Unity project instance and run `.\scripts\check-unity-current-slice.cmd`, or run `Mythwake/Validate Current Slice` in the open editor, then fix any validator failures before continuing.
-2. Visually verify Home idle combat on device/editor: connected upper/lower map readability, foreground patrol spacing, reward tick pacing, and the stage-node info preview.
-3. Visually verify Village, Fast Rewards, Vanguard Oath/Summon result, and Paladin formation/fight presentation in Unity/emulator.
-4. Visually verify the 8-slot Hero Detail spacing in Unity/emulator, then continue the visible Hero/Gear polish pass behind `Mythwake/Validate Upgrade Clutter`.
+1. Visually verify Home idle combat on device/editor: connected upper/lower map readability, foreground patrol spacing, reward tick pacing, and the stage-node info preview.
+2. Visually verify Village, Fast Rewards, Vanguard Oath/Summon result, and Paladin formation/fight presentation in Unity/emulator.
+3. Visually verify the 8-slot Hero Detail spacing in Unity/emulator, then continue the visible Hero/Gear polish pass behind `Mythwake/Validate Upgrade Clutter`.
+4. Start the next small implementation package from Home idle combat polish or the Village definition/backend-readiness pass.

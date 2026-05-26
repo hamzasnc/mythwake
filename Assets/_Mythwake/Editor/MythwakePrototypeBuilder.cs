@@ -233,7 +233,7 @@ public static class MythwakePrototypeBuilder
         SetRect(accessorySummary.rectTransform, new Vector2(0, -674), new Vector2(760, 62), new Vector2(0.5f, 1f));
         ConfigureTextFit(accessorySummary, 15f, 22f);
 
-        var accessorySelected = CreateText("Accessory Selected Text", gearPanel.transform, $"{L("accessory.item_slot_earrings.name")}\n{L("ui.common.equipped")}: {L("ui.common.empty")}\n{Lf("gear.selected_fuse_tier", "R0")}", 22, FontStyles.Bold);
+        var accessorySelected = CreateText("Accessory Selected Text", gearPanel.transform, $"{L("accessory.item_slot_earrings.name")}\n{L("ui.common.equipped")}: {L("ui.common.empty")}\n{Lf("gear.selected_rarity", "R0")}", 22, FontStyles.Bold);
         SetRect(accessorySelected.rectTransform, new Vector2(0, -750), new Vector2(760, 70), new Vector2(0.5f, 1f));
         ConfigureTextFit(accessorySelected, 15f, 22f);
 

@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.123
+Prototype version: 0.2.124
 Local save version: 2
 
 Current prototype:
@@ -177,6 +177,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.124: Fixed the Prototype Builder Gear selected-rarity default so Current Slice validation no longer recreates stale selected fuse-tier copy.
 - Prototype 0.2.123: Renamed the Gear accessory selected-rarity localization key, guarded against stale fuse-tier copy, and kept the EN/DE selected-rarity summary validator coverage.
 - Prototype 0.2.122: Added selected-rarity copy count to the Gear accessory slot summary, renamed the old fuse-tier copy to selected rarity, and extended Upgrade Clutter validation for EN/DE copy fit.
 - Prototype 0.2.121: Added a Village bonus summary hint for local and Server Mode state, kept the widened detail body layout stable, and extended Village UI validation for the hint.

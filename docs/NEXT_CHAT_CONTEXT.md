@@ -31,6 +31,8 @@ Latest known pushed commit before the current continuation:
 - `36f4134 Mark campaign detail states`
 
 Current continuation:
+- Prototype Builder Gear defaults now use `gear.selected_rarity` instead of the stale selected fuse-tier key, so `Validate Upgrade Clutter` and the full Current Slice no longer fail after a UI rebuild.
+- `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` passed on 2026-05-26 after that fix.
 - Village building detail now shows both current bonus and `Naechster Bonus` / `Max Bonus`, and `Validate Village UI` checks the extra detail line.
 - Fast Rewards now has a compact progress bar/status line under the popup copy. Local mode shows stored percent plus cap-left state, Server Mode shows synced timer progress plus wait/ready state, and `Validate Fast Rewards UI` checks progress text fit and fill percentages.
 - Dungeons map zoom buttons now register their listeners through the runtime zoom-control setup path, so `Validate Dungeons UI` can exercise zoom in/out and clamp behavior without relying on a separate startup listener path.
@@ -110,7 +112,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.123`
+- Prototype `0.2.124`
 - Save version `2`
 
 Important Unity scripts:
@@ -624,9 +626,9 @@ Still rough:
 
 The next chat should continue in this order unless the user redirects:
 
-1. Run or manually trigger the current slice validation.
-   - Close the extra Unity project instance and run `.\scripts\check-unity-current-slice.cmd`, or use `Mythwake/Validate Current Slice` in the open editor.
-   - Then visually verify the connected Home upper/lower map, Village, Fast Rewards, Vanguard Oath/Summon result, Paladin formation/fight pose, and spacing on editor/device.
+1. Visually verify the current slice in Unity/editor or on device.
+   - The latest batchmode Current Slice, Unity C# check, and whitespace check passed after the Prototype Builder Gear selected-rarity fix.
+   - Verify the connected Home upper/lower map, Village, Fast Rewards, Vanguard Oath/Summon result, Paladin formation/fight pose, and spacing on editor/device.
 
 2. Finish the Home idle combat visual pass.
    - Verify the main campaign map and lower idle mini-map read as one continuous area.
