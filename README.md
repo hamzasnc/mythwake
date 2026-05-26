@@ -2,11 +2,12 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.136
+Prototype version: 0.2.137
 Local save version: 2
 
 Current prototype:
 - Android build profile
+- Reproducible Android APK batch build helper and portrait screenshot fallback helper
 - Simple portrait UI
 - Mobile app shell with Home, Village, Dungeons, Battle, Heroes, Gear, Summon, and Shop screens
 - First core loop: fight enemies, earn Myth Essence, upgrade heroes
@@ -177,11 +178,14 @@ Backend:
   - `scripts/check-postgres-e2e.cmd`
   - `scripts/check-unity-csharp.cmd`
   - `scripts/check-unity-current-slice.cmd`
+  - `scripts/build-android.cmd`
+  - `scripts/capture-portrait-screenshots.cmd`
 - Test planning docs:
   - `docs/ROADMAP.md`
   - `docs/UNITY_TEST_STAND.md` (includes the latest Mobile UX pass and open Android emulator/device follow-up)
 
 Changelog:
+- Prototype 0.2.137: Added reproducible Android APK and portrait screenshot batch helpers, produced `Builds/Android/Mythwake-0.2.137.apk` with Unity Android Build Support, captured 1080x1920 fallback screenshots for Home, Village/Fast Rewards, Hero Detail, Gear, Summon, Formation, and visible Fight, and fixed Ravik/Paladin preview rigs so their first visible frame applies the intended mobile scale instead of overfilling Fight/Formation. Real install, logcat, touch, safe-area, and FPS checks remain blocked until an Android emulator/device is attached.
 - Prototype 0.2.136: Fixed the Mobile UX Current Slice validator so it targets the real portrait `Prototype UI` canvas instead of an old zero-scale legacy scene canvas, reran the full Current Slice successfully, and documented the blocked emulator/device screenshot and performance pass plus the future Email/Password and later Google Play Services login need.
 - Prototype 0.2.135: Tightened the mobile test baseline for Android by switching project defaults to portrait 1080x1920, disabling landscape/upside-down autorotation and render-outside-safe-area, and adding Mobile UX validation into Current Slice for portrait settings, CanvasScaler shape, version label fit, navigation touch targets, and core screen switching. A real emulator/device run remains blocked on this machine because no Android device/emulator is attached and the open Unity editor prevents batchmode validation/build attempts.
 - Prototype 0.2.134 / Backend 0.2.58: Added editable Village balance/admin fields (`bonusLabel`, `bonusCurve`, `upgradeCostFormula`, `modeCompatibility`) across backend definitions, `/definitions`, PostgreSQL migration `0029`, and the new `debug.v_common_village_building_balance` view; aligned the Unity local fallback balance with backend values and extended Village/Fast Rewards validators for definition labels, curves, max/cost copy, and local/server bonus display.

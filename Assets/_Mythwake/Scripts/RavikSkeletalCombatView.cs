@@ -69,6 +69,8 @@ public sealed class RavikSkeletalCombatView : MonoBehaviour
         {
             gameObject.SetActive(true);
         }
+
+        ApplyPose(Clip.Idle, previewTopPosition, Time.unscaledTime, -99f, previewFacing, previewScale, Color.white, false, Vector2.zero, 0f);
     }
 
     public void Hide()

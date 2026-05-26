@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.136`, save version `2`.
+- Unity client code is at Prototype `0.2.137`, save version `2`.
 - Backend API default version is `0.2.58`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -17,7 +17,7 @@ Last updated: 2026-05-26
 - `README.md` and `docs/NEXT_CHAT_CONTEXT.md` were refreshed earlier for the Home idle combat/Village/Dungeons/Paladin state; the latest Home idle map layout is now tracked here and in `docs/NEXT_CHAT_CONTEXT.md`.
 - Parts of `docs/ROADMAP.md` still describe older batch goals and can be cleaned up later.
 - The note "split Dungeons into a real screen" is now first-pass done.
-- The note "make Fast Rewards real enough for testing" is now closer: local accumulation, 24h cap, Village rate bonuses, Server Mode/backend-authoritative popup copy, server-side AFK Village bonus claims, and editor-validator coverage for local/server Village bonus lines are in place. A real Android device/emulator pass is still open because no device/emulator is attached on this machine.
+- The note "make Fast Rewards real enough for testing" is now closer: local accumulation, 24h cap, Village rate bonuses, Server Mode/backend-authoritative popup copy, server-side AFK Village bonus claims, and editor-validator coverage for local/server Village bonus lines are in place. A reproducible Android APK build now succeeds locally, but real install/logcat/touch/performance checks are still open because no device/emulator is attached on this machine.
 - The next account-system gap is now explicit: testers need durable accounts so they do not restart from zero every pass. The planned path is Email + Password first, then Google Login through Play Store / Google Play Services later.
 
 ## Started This Pass
@@ -135,19 +135,26 @@ Last updated: 2026-05-26
 - Backend Village/AFK tests now cover valid build, invalid building option, insufficient Essence, upgrade cost, max-level lockout, demolish, snapshot state, and server-side AFK Gold/Essence rate bonuses from Village definitions.
 - Local Campaign/Dungeon combat result bodies now use a server-style summary with Team HP, Enemy HP, Team ATK, Enemy DMG, damage dealt/taken, healing, crits, misses, and execute flags; Upgrade Clutter validates that summary shape.
 - Home Next Goal now follows the early loop more explicitly: push Campaign when Power is ready, otherwise suggest Gear drops/equip, Weapon/Armor/accessory/Hero upgrades, affordable Village build/upgrade, Gear Dungeon drops, Summon shards, or concrete Gold/Essence/Power farm gaps.
-- `docs/UNITY_TEST_STAND.md` now records the 2026-05-26 Mobile UX pass: C# validation and Current Slice pass, while a real Android APK/emulator/device screenshot and performance run is still blocked locally by missing device/emulator access.
+- `docs/UNITY_TEST_STAND.md` now records the 2026-05-26 Mobile UX pass, the successful Android APK build helper pass, the portrait screenshot fallback pass, and the remaining real emulator/device install/performance blocker.
 - Added `Mythwake/Validate Fight Formation UI` and included it in `Mythwake/Validate Current Slice`; it checks campaign Formation swap, auto-next, visible Fight controls, AUTO/x2 toggles, HP/mana skill cards, ultimate queueing, result popup Continue flow, and dungeon fight focus chrome hiding.
 - Prototype `0.2.135` tightens the Android/mobile baseline: PlayerSettings now launch portrait at 1080x1920, disable landscape/upside-down autorotation, disable OS autorotation override, and stop Android rendering outside the safe area until runtime safe-area padding is added.
 - Added `Mythwake/Validate Mobile UX` and included it in `Mythwake/Validate Current Slice`; it checks Android portrait/safe-area settings, portrait CanvasScaler setup, version label fit, top/bottom chrome bounds, bottom-nav and side-nav touch target sizes, and navigation into Home, Village, Dungeons, Heroes, Gear, Summon, Shop, and Battle.
-- Android availability check on 2026-05-26 found Unity's embedded `adb`, but no attached device, no available emulator executable, and no checked-in Android build/install helper. An earlier Unity batchmode attempt was blocked by an open editor, but the final Current Slice rerun now passes after closing that conflict.
+- Android availability check on 2026-05-26 found Unity's embedded `adb`, Android SDK/NDK/OpenJDK, and a working Android APK batch build path, but no attached device and no available emulator executable. An earlier Unity batchmode attempt was blocked by an open editor, but later batchmode checks and screenshot capture run successfully.
 - Prototype `0.2.136` fixes the Mobile UX Current Slice guard so it validates the real runtime `Prototype UI` canvas, not the old zero-scale legacy `Canvas` in the scene.
 - `scripts/check-unity-current-slice.cmd` passes again after the Mobile UX validator fix. The pass covers Home, Village, Dungeons, Fast Rewards, Mobile UX, Summon, Upgrade Clutter, Home Idle Combat, Fight Formation, Paladin integration, and Paladin Spine handoff.
-- Android screenshot/performance pass on 2026-05-26 could not run: Unity embedded `adb` works, but no emulator/physical device is attached and no emulator executable exists in the checked SDK paths. No real screenshots or device FPS/load-time numbers were captured.
-- `go test ./...`, `scripts/check-unity-csharp.cmd`, `scripts/check-unity-current-slice.cmd`, `scripts/check-backend.cmd -BaseUrl http://localhost:18081 -CheckUnauthorized` against a temporary no-DB API, and `git diff --check` pass after the Village balance/admin field pass.
+- Prototype `0.2.137` adds `scripts/build-android.cmd` / `.ps1` and `scripts/capture-portrait-screenshots.cmd` / `.ps1` for repeatable Android APK creation and editor-batch portrait screenshot fallback capture.
+- Android Build Support, Unity embedded SDK, NDK, OpenJDK, and `adb` are present under `C:\Program Files\Unity\Hub\Editor\6000.4.5f1\Editor\Data\PlaybackEngines\AndroidPlayer`.
+- `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk` succeeds. The ignored local artifact is `Builds/Android/Mythwake-0.2.137.apk` at 164,140,446 bytes; Unity's cached build report logged about 00:01:35.
+- Unity embedded `adb devices -l` still lists no attached emulator/physical device, and no `emulator.exe` was found in the Unity embedded SDK or `%LOCALAPPDATA%\Android\Sdk\emulator`.
+- Because no Android target is attached, install/start/logcat/touch/safe-area/FPS checks are still blocked. The fallback screenshot pass captured 1080x1920 PNGs under ignored local artifact path `Builds/Android/portrait-screenshots/` for Home, Home stage detail, Home patrol info, Village, Fast Rewards, Hero Detail, Gear, Summon, Summon result, Formation, and visible Fight.
+- The fallback screenshot pass found that Ravik/Paladin skeletal previews could render oversized on the first visible Formation/Fight frame. `ShowPreview` now applies the pose immediately, and the Formation/Fight rig scales were reduced for the portrait layout so those heroes no longer swallow the enemy preview or fight readability.
+- Fallback visual observations: Home, Village/Fast Rewards, Hero Detail, Summon, Formation, and visible Fight are readable enough for the next device build. Gear remains the roughest screen visually because the showcase has a large empty panel/dead-space look and should be polished after the true Android run.
+- Latest client checks for Prototype `0.2.137`: `scripts/check-unity-csharp.cmd`, `scripts/check-unity-current-slice.cmd`, `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk`, `scripts/capture-portrait-screenshots.cmd -OutputDirectory Builds\Android\portrait-screenshots`, and `git diff --check` pass. `git diff --check` only reports LF-to-CRLF working-copy warnings for touched Markdown files, not whitespace errors.
+- Backend checks were not rerun in this Android pass because no backend files changed. Earlier `go test ./...` and `scripts/check-backend.cmd -BaseUrl http://localhost:18081 -CheckUnauthorized` against a temporary no-DB API passed after the Village balance/admin field pass.
 
 ## Next Small Steps
 
-1. Attach an Android emulator/device, add or run a reproducible Android build/install pass, then capture safe-area, gesture navigation, load time, screenshot, and performance checks on Home, Hero Detail, Gear, Village, Summon, and Fight.
+1. Attach an Android emulator/device, install `Builds/Android/Mythwake-0.2.137.apk` or rebuild with `scripts/build-android.cmd`, then capture real safe-area, gesture navigation, load time, logcat, screenshot, and performance checks on Home, Hero Detail, Gear, Village, Summon, and Fight.
 2. Plan the durable tester account slice: Email + Password registration/login first, Google Login through Play Store / Google Play Services later.
 3. Continue Village backend-readiness by deciding whether AFK-rate bonuses need caps/diminishing returns and whether the editable PostgreSQL rows should get a small admin UI or import/export workflow.
 4. Continue the visible Hero/Gear polish pass behind `Mythwake/Validate Upgrade Clutter` once the real item/inventory direction is selected.

@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using TMPro;
 using UnityEditor;
+using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
@@ -278,6 +279,362 @@ public static class MobileUxValidation
         }
 
         return value;
+    }
+
+    private static object InvokePrivate(object target, string methodName, params object[] args)
+    {
+        var method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        if (method == null)
+        {
+            throw new InvalidOperationException($"Missing private method: {methodName}");
+        }
+
+        return method.Invoke(target, args);
+    }
+
+    private static T FindSceneComponent<T>() where T : Component
+    {
+        var components = Resources.FindObjectsOfTypeAll<T>();
+        for (var i = 0; i < components.Length; i++)
+        {
+            var component = components[i];
+            if (component != null && component.gameObject.scene.IsValid())
+            {
+                return component;
+            }
+        }
+
+        return null;
+    }
+}
+
+public static class AndroidBuildAutomation
+{
+    private const string DefaultScenePath = "Assets/Scenes/SampleScene.unity";
+
+    [MenuItem("Mythwake/Build Android APK")]
+    public static void BuildAndroidApk()
+    {
+        try
+        {
+            var outputPath = GetBuildOutputPath();
+            var report = BuildAndroidApk(outputPath);
+            var summary = report.summary;
+            Debug.Log($"Android APK build succeeded: {summary.outputPath} ({summary.totalSize} bytes, {summary.totalTime}).");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+            EditorApplication.Exit(1);
+        }
+    }
+
+    private static BuildReport BuildAndroidApk(string outputPath)
+    {
+        var directory = Path.GetDirectoryName(outputPath);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            throw new InvalidOperationException($"Invalid Android output path: {outputPath}");
+        }
+
+        Directory.CreateDirectory(directory);
+        EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
+        EditorUserBuildSettings.buildAppBundle = false;
+
+        var scenes = GetEnabledScenes();
+        var options = new BuildPlayerOptions
+        {
+            scenes = scenes,
+            locationPathName = outputPath,
+            target = BuildTarget.Android,
+            targetGroup = BuildTargetGroup.Android,
+            options = BuildOptions.None
+        };
+
+        Debug.Log($"Building Android APK to {outputPath} with {scenes.Length} scene(s).");
+        var report = BuildPipeline.BuildPlayer(options);
+        var summary = report.summary;
+        if (summary.result != BuildResult.Succeeded)
+        {
+            throw new InvalidOperationException($"Android APK build failed: {summary.result} after {summary.totalTime}. Errors={summary.totalErrors}, warnings={summary.totalWarnings}.");
+        }
+
+        return report;
+    }
+
+    private static string[] GetEnabledScenes()
+    {
+        var configuredScenes = EditorBuildSettings.scenes;
+        var scenes = new System.Collections.Generic.List<string>();
+        for (var i = 0; i < configuredScenes.Length; i++)
+        {
+            var scene = configuredScenes[i];
+            if (scene != null && scene.enabled && !string.IsNullOrWhiteSpace(scene.path))
+            {
+                scenes.Add(scene.path);
+            }
+        }
+
+        if (scenes.Count == 0)
+        {
+            scenes.Add(DefaultScenePath);
+        }
+
+        return scenes.ToArray();
+    }
+
+    private static string GetBuildOutputPath()
+    {
+        var outputPath = GetCommandLineValue("-mythwakeAndroidOutput");
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            outputPath = Path.Combine("Builds", "Android", $"Mythwake-{IdlePrototypeController.PrototypeVersion}.apk");
+        }
+
+        if (Path.IsPathRooted(outputPath))
+        {
+            return outputPath;
+        }
+
+        var projectRoot = Directory.GetParent(Application.dataPath)?.FullName;
+        if (string.IsNullOrWhiteSpace(projectRoot))
+        {
+            throw new InvalidOperationException("Could not resolve Unity project root.");
+        }
+
+        return Path.GetFullPath(Path.Combine(projectRoot, outputPath));
+    }
+
+    private static string GetCommandLineValue(string name)
+    {
+        var args = Environment.GetCommandLineArgs();
+        for (var i = 0; i < args.Length - 1; i++)
+        {
+            if (string.Equals(args[i], name, StringComparison.OrdinalIgnoreCase))
+            {
+                return args[i + 1];
+            }
+        }
+
+        return null;
+    }
+}
+
+public static class PortraitScreenshotAutomation
+{
+    private const string ScenePath = "Assets/Scenes/SampleScene.unity";
+    private const int ScreenshotWidth = 1080;
+    private const int ScreenshotHeight = 1920;
+
+    [MenuItem("Mythwake/Capture Portrait Screenshot Set")]
+    public static void CapturePortraitScreenshotSet()
+    {
+        try
+        {
+            var outputDirectory = GetOutputDirectory();
+            Directory.CreateDirectory(outputDirectory);
+
+            EditorSceneManager.OpenScene(ScenePath);
+            var controller = FindSceneComponent<IdlePrototypeController>();
+            if (controller == null)
+            {
+                throw new InvalidOperationException("Missing IdlePrototypeController in SampleScene.");
+            }
+
+            InvokePrivate(controller, "EnsureRuntimeScreenLayout");
+            InvokePrivate(controller, "RegisterNavigation");
+            Canvas.ForceUpdateCanvases();
+
+            var canvas = RequireObjectField<RectTransform>(controller, "topBarRoot").GetComponentInParent<Canvas>();
+            if (canvas == null)
+            {
+                throw new InvalidOperationException("Could not find runtime UI canvas for portrait screenshots.");
+            }
+
+            CaptureState(outputDirectory, "01-home", controller, () => controller.ShowHome(), canvas);
+            CaptureState(outputDirectory, "02-home-stage-detail", controller, () =>
+            {
+                controller.ShowHome();
+                SetObjectField(controller, "selectedCampaignStage", GetObjectField<int>(controller, "enemyLevel"));
+                InvokePrivate(controller, "SetCampaignStageDetailPopupVisible", true);
+            }, canvas);
+            CaptureState(outputDirectory, "03-home-patrol-info", controller, () =>
+            {
+                controller.ShowHome();
+                InvokePrivate(controller, "SetHomeIdleInfoPopupVisible", true);
+            }, canvas);
+            CaptureState(outputDirectory, "04-village", controller, () => controller.ShowVillage(), canvas);
+            CaptureState(outputDirectory, "05-fast-rewards", controller, () =>
+            {
+                controller.ShowHome();
+                InvokePrivate(controller, "SetFastRewardsPopupVisible", true);
+            }, canvas);
+            CaptureState(outputDirectory, "06-hero-detail", controller, () =>
+            {
+                controller.ShowHeroes();
+                InvokePrivate(controller, "ShowHeroDetail", 0);
+            }, canvas);
+            CaptureState(outputDirectory, "07-gear", controller, () => controller.ShowGear(), canvas);
+            CaptureState(outputDirectory, "08-summon", controller, () => controller.ShowSummon(), canvas);
+            CaptureState(outputDirectory, "09-summon-result", controller, () =>
+            {
+                controller.ShowSummon();
+                InvokePrivate(controller, "ShowSummonResultPopup", new[] { 1, 0, 0, 0, 0 }, 1);
+            }, canvas);
+            CaptureState(outputDirectory, "10-fight-formation", controller, () => controller.ShowBattle(), canvas);
+            CaptureState(outputDirectory, "11-fight-visible", controller, () =>
+            {
+                controller.ShowBattle();
+                SetPrivateEnumField(controller, "battleFlowMode", "Fight");
+                InvokePrivate(controller, "ApplyBattleFlowVisibility");
+                InvokePrivate(controller, "RefreshFightArenaBackground", false);
+                InvokePrivate(controller, "PrepareFightAnimationTextures", 1, false, null);
+                InvokePrivate(controller, "InitializeFightSkillState");
+            }, canvas);
+
+            Debug.Log($"Portrait screenshot set captured to {outputDirectory}.");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+            EditorApplication.Exit(1);
+        }
+    }
+
+    private static void CaptureState(string outputDirectory, string fileName, IdlePrototypeController controller, Action setup, Canvas canvas)
+    {
+        setup();
+        InvokePrivate(controller, "RefreshUi");
+        Canvas.ForceUpdateCanvases();
+        CaptureCanvas(canvas, Path.Combine(outputDirectory, $"{fileName}.png"));
+    }
+
+    private static void CaptureCanvas(Canvas canvas, string path)
+    {
+        var oldRenderMode = canvas.renderMode;
+        var oldWorldCamera = canvas.worldCamera;
+        var oldPlaneDistance = canvas.planeDistance;
+        var oldActive = RenderTexture.active;
+
+        var cameraObject = new GameObject("Mythwake Portrait Screenshot Camera");
+        var camera = cameraObject.AddComponent<Camera>();
+        var renderTexture = new RenderTexture(ScreenshotWidth, ScreenshotHeight, 24, RenderTextureFormat.ARGB32);
+        var texture = new Texture2D(ScreenshotWidth, ScreenshotHeight, TextureFormat.RGB24, false);
+
+        try
+        {
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.02f, 0.025f, 0.035f, 1f);
+            camera.orthographic = true;
+            camera.orthographicSize = ScreenshotHeight * 0.5f;
+            camera.nearClipPlane = 0.1f;
+            camera.farClipPlane = 100f;
+            camera.transform.position = new Vector3(0f, 0f, -10f);
+            camera.targetTexture = renderTexture;
+
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = camera;
+            canvas.planeDistance = 10f;
+            Canvas.ForceUpdateCanvases();
+
+            camera.Render();
+            RenderTexture.active = renderTexture;
+            texture.ReadPixels(new Rect(0, 0, ScreenshotWidth, ScreenshotHeight), 0, 0);
+            texture.Apply();
+            File.WriteAllBytes(path, texture.EncodeToPNG());
+            Debug.Log($"Captured portrait screenshot: {path}");
+        }
+        finally
+        {
+            canvas.renderMode = oldRenderMode;
+            canvas.worldCamera = oldWorldCamera;
+            canvas.planeDistance = oldPlaneDistance;
+            RenderTexture.active = oldActive;
+            camera.targetTexture = null;
+            UnityEngine.Object.DestroyImmediate(texture);
+            UnityEngine.Object.DestroyImmediate(renderTexture);
+            UnityEngine.Object.DestroyImmediate(cameraObject);
+        }
+    }
+
+    private static string GetOutputDirectory()
+    {
+        var outputDirectory = GetCommandLineValue("-mythwakeScreenshotOutput");
+        if (string.IsNullOrWhiteSpace(outputDirectory))
+        {
+            outputDirectory = Path.Combine("Temp", "android-fallback-screenshots");
+        }
+
+        if (Path.IsPathRooted(outputDirectory))
+        {
+            return outputDirectory;
+        }
+
+        var projectRoot = Directory.GetParent(Application.dataPath)?.FullName;
+        if (string.IsNullOrWhiteSpace(projectRoot))
+        {
+            throw new InvalidOperationException("Could not resolve Unity project root.");
+        }
+
+        return Path.GetFullPath(Path.Combine(projectRoot, outputDirectory));
+    }
+
+    private static string GetCommandLineValue(string name)
+    {
+        var args = Environment.GetCommandLineArgs();
+        for (var i = 0; i < args.Length - 1; i++)
+        {
+            if (string.Equals(args[i], name, StringComparison.OrdinalIgnoreCase))
+            {
+                return args[i + 1];
+            }
+        }
+
+        return null;
+    }
+
+    private static T RequireObjectField<T>(object target, string fieldName) where T : UnityEngine.Object
+    {
+        var value = GetObjectField<T>(target, fieldName);
+        if (value == null)
+        {
+            throw new InvalidOperationException($"{fieldName} should not be null.");
+        }
+
+        return value;
+    }
+
+    private static T GetObjectField<T>(object target, string fieldName)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException($"Missing private field: {fieldName}");
+        }
+
+        return (T)field.GetValue(target);
+    }
+
+    private static void SetObjectField(object target, string fieldName, object value)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException($"Missing private field: {fieldName}");
+        }
+
+        field.SetValue(target, value);
+    }
+
+    private static void SetPrivateEnumField(object target, string fieldName, string enumName)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException($"Missing private field: {fieldName}");
+        }
+
+        field.SetValue(target, Enum.Parse(field.FieldType, enumName));
     }
 
     private static object InvokePrivate(object target, string methodName, params object[] args)

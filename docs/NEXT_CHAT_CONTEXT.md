@@ -28,14 +28,18 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `61c2589 Tighten mobile Android UX baseline`
+- `9d00e9c Validate final mobile current slice`
 
 Current continuation:
+- Prototype `0.2.137` adds a reproducible Android APK helper (`scripts/build-android.cmd`) and editor-batch portrait screenshot fallback helper (`scripts/capture-portrait-screenshots.cmd`).
+- `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk` succeeds with Unity Android Build Support; the ignored local APK artifact is `Builds/Android/Mythwake-0.2.137.apk` at 164,140,446 bytes, with the cached Unity build report logging about 00:01:35.
+- A real Android install/start/logcat/touch/performance pass is still blocked: Unity embedded `adb` is available, but `adb devices -l` lists no emulator/physical device and no `emulator.exe` exists in the checked Unity SDK or `%LOCALAPPDATA%\Android\Sdk\emulator` paths.
+- Fallback 1080x1920 screenshots were captured under ignored local artifact path `Builds\Android\portrait-screenshots\` for Home, Home stage detail, Home patrol info, Village, Fast Rewards, Hero Detail, Gear, Summon, Summon result, Formation, and visible Fight. Ravik/Paladin preview rigs now apply their preview pose immediately, and their Formation/Fight scales were reduced so the first visible frame no longer overfills the portrait fight area.
+- Latest Prototype `0.2.137` client checks pass: `scripts/check-unity-csharp.cmd`, `scripts/check-unity-current-slice.cmd`, `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk`, `scripts/capture-portrait-screenshots.cmd -OutputDirectory Builds\Android\portrait-screenshots`, and `git diff --check` with only LF-to-CRLF working-copy warnings for touched Markdown files.
 - Prototype `0.2.136` fixes the Mobile UX Current Slice validator so it targets the actual runtime `Prototype UI` canvas instead of the old zero-scale legacy scene `Canvas`; `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` pass after this fix.
-- A real Android screenshot/performance pass is still blocked: Unity embedded `adb` is available, but `adb devices -l` lists no emulator/physical device, no emulator executable exists in the checked SDK paths, and there is still no checked-in Android build/install helper.
 - Future account direction is now explicit: durable tester accounts need Email + Password registration/login first so testers do not restart from zero, and Google Login through Play Store / Google Play Services should come later. Do not build full Google Login yet.
 - Prototype `0.2.135` tightens the Android/mobile baseline by switching PlayerSettings to portrait 1080x1920, disabling landscape/upside-down autorotation and Android render-outside-safe-area, and adding `Mythwake/Validate Mobile UX` into Current Slice for portrait settings, CanvasScaler, version label fit, mobile nav touch targets, and core screen navigation.
-- A real Android device/emulator run is still blocked on this machine: Unity's embedded `adb` exists, but no device is attached, no emulator executable was found, and there is no checked-in Android build/install helper. The final batchmode Current Slice now passes.
+- A real Android device/emulator run is still blocked on this machine: Unity's embedded `adb` exists, but no device is attached and no emulator executable was found. The repo now has Android build and portrait screenshot fallback helpers, and the final batchmode Current Slice should be rerun after any further UI/code changes.
 - Prototype `0.2.134` / Backend `0.2.58` adds editable Village balance/admin fields across static backend definitions, `/definitions`, PostgreSQL migration `0029_village_balance_admin_fields.sql`, and `debug.v_common_village_building_balance`; Unity local fallback values now match backend Village balance, and the Village/Fast Rewards validators check labels, curves, formulas, mode compatibility, and local/server bonus display.
 - Prototype `0.2.133` / Backend `0.2.57` makes Village AFK-rate bonuses server-authoritative for AFK claims: built Village definitions with `afk_gold_rate` and `afk_essence_rate` now add Gold/Essence during backend AFK reward claims, while Server Mode keeps local client bonuses paused to avoid double counting.
 - Prototype `0.2.132` adds `Mythwake/Validate Fight Formation UI` and wires it into `Mythwake/Validate Current Slice`; the validator covers campaign Formation swap, auto-next toggle, visible Fight controls, AUTO/x2 state, HP/mana skill cards, ultimate queueing, result-popup Continue flow, and dungeon fight focus chrome hiding.
@@ -124,7 +128,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.136`
+- Prototype `0.2.137`
 - Save version `2`
 
 Important Unity scripts:
