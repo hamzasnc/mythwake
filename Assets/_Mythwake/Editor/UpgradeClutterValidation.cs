@@ -97,6 +97,40 @@ public static class UpgradeClutterValidation
         RequireNotUnderPanel(RequireButtonField(controller, "debugEssenceButton"), battlePanel, "Debug Essence Button");
         RequireNotUnderPanel(RequireButtonField(controller, "debugGemsButton"), battlePanel, "Debug Gems Button");
         RequireNotUnderPanel(RequireButtonField(controller, "debugAccessoryButton"), battlePanel, "Debug Accessory Button");
+        ValidateLocalCombatResultSummary(controller);
+    }
+
+    private static void ValidateLocalCombatResultSummary(IdlePrototypeController controller)
+    {
+        var resultType = controller.GetType().GetNestedType("CombatResult", BindingFlags.NonPublic);
+        if (resultType == null)
+        {
+            throw new InvalidOperationException("Missing local CombatResult type for result summary validation.");
+        }
+
+        var result = Activator.CreateInstance(resultType);
+        SetStructField(result, "won", true);
+        SetStructField(result, "executed", true);
+        SetStructField(result, "elapsedSeconds", 8);
+        SetStructField(result, "teamHpRemaining", 640);
+        SetStructField(result, "enemyHpRemaining", 0);
+        SetStructField(result, "damageDealt", 1200);
+        SetStructField(result, "damageTaken", 180);
+        SetStructField(result, "healingDone", 45);
+        SetStructField(result, "criticalHits", 3);
+        SetStructField(result, "missedHits", 1);
+
+        var summary = (string)InvokePrivate(controller, "FormatLocalCombatResult", result, 1200, 900, 55);
+        RequireTextFragment(summary, "HP 640/1200", "Local combat result should show team HP.");
+        RequireTextFragment(summary, "Enemy HP 0/900", "Local combat result should show enemy HP.");
+        RequireTextFragment(summary, "ATK", "Local combat result should show team attack.");
+        RequireTextFragment(summary, "Enemy DMG 55", "Local combat result should show enemy damage.");
+        RequireTextFragment(summary, "Dealt 1200", "Local combat result should show dealt damage.");
+        RequireTextFragment(summary, "Took 180", "Local combat result should show taken damage.");
+        RequireTextFragment(summary, "Heal 45", "Local combat result should show healing.");
+        RequireTextFragment(summary, "Crit 3", "Local combat result should show crit count.");
+        RequireTextFragment(summary, "Miss 1", "Local combat result should show miss count.");
+        RequireTextFragment(summary, "Execute", "Local combat result should show execute events.");
     }
 
     private static void ValidateHeroesScreen(IdlePrototypeController controller)
@@ -1153,6 +1187,25 @@ public static class UpgradeClutterValidation
         {
             throw new InvalidOperationException($"{message} Expected '{expectedText}', got '{text?.text}'.");
         }
+    }
+
+    private static void RequireTextFragment(string text, string expectedText, string message)
+    {
+        if (string.IsNullOrWhiteSpace(text) || !text.Contains(expectedText))
+        {
+            throw new InvalidOperationException($"{message} Expected '{expectedText}', got '{text}'.");
+        }
+    }
+
+    private static void SetStructField(object target, string fieldName, object value)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException($"Missing field {fieldName} on {target.GetType().Name}.");
+        }
+
+        field.SetValue(target, value);
     }
 
     private static void AssertSourceDoesNotContain(string source, string forbiddenText, string message)

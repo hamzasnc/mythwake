@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.129";
+    public const string PrototypeVersion = "0.2.130";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -2584,7 +2584,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (!result.won)
         {
-            var failMessage = $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {floor} failed after {result.elapsedSeconds}s\n{Tr("ui.common.enemy_hp")} {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
+            var failMessage = $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {floor} failed after {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(GearDungeonDefinition, floor))}";
             PlayCombatVisual(GearDungeonDefinition.dungeonId, $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} F{floor}", result, enemyHp);
             SetDungeonResult(failMessage);
             return CreateActionResult(false, "gear_dungeon_run", "combat_lost", failMessage);
@@ -2594,7 +2594,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         AddAccessoryInventory(accessory.slotIndex, accessory.rarityIndex, 1);
         gearDungeonFloor++;
 
-        var message = $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {floor} cleared in {result.elapsedSeconds}s\nDrop: {GetLocalizedAccessoryName(accessory.slotIndex, accessory.rarityIndex)}  HP {result.teamHpRemaining}/{GetTeamHealth()}";
+        var message = $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {floor} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(GearDungeonDefinition, floor))}\nDrop: {GetLocalizedAccessoryName(accessory.slotIndex, accessory.rarityIndex)}";
         PlayCombatVisual(GearDungeonDefinition.dungeonId, $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} F{floor}", result, enemyHp);
         SetDungeonResult(message);
         return CreateActionResult(true, "gear_dungeon_run", string.Empty, message);
@@ -4945,7 +4945,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
-            var winMessage = $"Campaign Stage {clearedStage} cleared in {result.elapsedSeconds}s\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}  Reward +{rewardText}";
+            var winMessage = $"Campaign Stage {clearedStage} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), stage.maxHp, GetCampaignEnemyDamage(clearedStage))}\nReward +{rewardText}";
             PlayCombatVisual("campaign", $"Campaign Stage {clearedStage}", result, stage.maxHp);
             SetDungeonResult(winMessage);
             return CreateActionResult(true, "campaign_fight", string.Empty, winMessage, ToRewardDto(clearReward));
@@ -4954,7 +4954,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             enemyMaxHp = stage.maxHp;
             enemyHp = enemyMaxHp;
-            var failMessage = $"Campaign Stage {stageNumber} failed after {result.elapsedSeconds}s\nEnemy HP {result.enemyHpRemaining}/{stage.maxHp}  {FormatCombatResult(result)}";
+            var failMessage = $"Campaign Stage {stageNumber} failed after {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), stage.maxHp, GetCampaignEnemyDamage(stageNumber))}";
             PlayCombatVisual("campaign", $"Campaign Stage {stageNumber}", result, stage.maxHp);
             SetDungeonResult(failMessage);
             return CreateActionResult(false, "campaign_fight", "combat_lost", failMessage);
@@ -5474,7 +5474,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var dungeonName = GetLocalizedDungeonName(dungeon.dungeonId);
         if (!result.won)
         {
-            var failMessage = $"{dungeonName} Floor {floor} failed after {result.elapsedSeconds}s\n{Tr("ui.common.enemy_hp")} {result.enemyHpRemaining}/{enemyHp}  {FormatCombatResult(result)}";
+            var failMessage = $"{dungeonName} Floor {floor} failed after {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(dungeon, floor))}";
             PlayCombatVisual(dungeon.dungeonId, $"{dungeonName} F{floor}", result, enemyHp);
             SetDungeonResult(failMessage);
             return CreateActionResult(false, $"{dungeon.dungeonId}_run", "combat_lost", failMessage);
@@ -5491,14 +5491,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             GrantCurrency(GoldCurrencyId, reward);
             goldDungeonFloor++;
             rewardDto = new MythwakeRewardDto { rewardId = $"reward_{dungeon.dungeonId}_floor_{floor}", gold = reward + bonusReward.gold };
-            message = $"{dungeonName} Floor {floor} cleared in {result.elapsedSeconds}s (+{reward} {GetLocalizedCurrencyName(GoldCurrencyId)})\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
+            message = $"{dungeonName} Floor {floor} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(dungeon, floor))}\nReward +{reward} {GetLocalizedCurrencyName(GoldCurrencyId)}{bonusText}";
         }
         else
         {
             GrantCurrency(MythEssenceCurrencyId, reward);
             essenceDungeonFloor++;
             rewardDto = new MythwakeRewardDto { rewardId = $"reward_{dungeon.dungeonId}_floor_{floor}", mythEssence = reward + bonusReward.mythEssence };
-            message = $"{dungeonName} Floor {floor} cleared in {result.elapsedSeconds}s (+{reward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)})\nHP {result.teamHpRemaining}/{GetTeamHealth()}  {FormatCombatResult(result)}{bonusText}";
+            message = $"{dungeonName} Floor {floor} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(dungeon, floor))}\nReward +{reward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}{bonusText}";
         }
 
         PlayCombatVisual(dungeon.dungeonId, $"{dungeonName} F{floor}", result, enemyHp);
@@ -5732,10 +5732,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return -1;
     }
 
-    private string FormatCombatResult(CombatResult result)
+    private string FormatLocalCombatResult(CombatResult result, int teamMaxHp, int enemyMaxHp, int enemyDamage)
     {
         var executeText = result.executed ? "  Execute" : string.Empty;
-        return $"DMG {result.damageDealt}  Took {result.damageTaken}  Heal {result.healingDone}  Crit {result.criticalHits}  Miss {result.missedHits}{executeText}";
+        return $"HP {result.teamHpRemaining}/{Mathf.Max(1, teamMaxHp)}  Enemy HP {result.enemyHpRemaining}/{Mathf.Max(1, enemyMaxHp)}\n" +
+               $"ATK {GetTeamDamage()}  Enemy DMG {Mathf.Max(1, enemyDamage)}  Dealt {result.damageDealt}  Took {result.damageTaken}  Heal {result.healingDone}  Crit {result.criticalHits}  Miss {result.missedHits}{executeText}";
     }
 
     private int GetGoldDungeonReward(int floor)

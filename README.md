@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.129
+Prototype version: 0.2.130
 Local save version: 2
 
 Current prototype:
@@ -67,7 +67,7 @@ Current prototype:
 - Village buildings can be built, upgraded, and demolished locally and through Server Mode backend actions
 - Village building detail now shows current and next/max placeholder bonuses; the Village hint line summarizes local Team ATK/HP and Fast Rewards rate boosts or the Server Mode local-bonus pause while Server Mode stays backend-authoritative
 - Server definitions now include DB-ready Village building definitions for stable ID, plot/option, build cost, max level, upgrade cost, and bonus type/value
-- Campaign and dungeon fights now simulate win/loss with team HP and enemy damage
+- Campaign and dungeon fights now simulate win/loss with team HP and enemy damage, and local result summaries mirror the server combat shape with team HP, enemy HP, team ATK, enemy damage, dealt/taken/heal/crit/miss details
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
 - Hero shards add minor Attack and HP immediately
 - Hero ascension consumes shards for larger saved stat upgrades
@@ -181,6 +181,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.130: Reworked local Campaign/Dungeon combat result summaries to mirror server-style HP/ATK/enemy damage/dealt/taken/heal/crit/miss fields and added validator coverage for the local summary shape.
 - Prototype 0.2.129: Localized local accessory equip/unequip/level/fuse action-result messages and added Gear validation that exercises the German action flow while restoring test state.
 - Prototype 0.2.128: Clarified Gear selected-rarity and equip action copy counts by showing bag copies alongside equipped copies, with Upgrade Clutter validation through EN/DE refresh paths.
 - Prototype 0.2.127: Added backend/common/PostgreSQL Village building definitions, exposed them through `/definitions`, and routed backend Village build/upgrade plus Team ATK/HP bonuses through the injected catalog while Server Mode keeps client local bonuses paused.
