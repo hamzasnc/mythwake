@@ -110,7 +110,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.122`
+- Prototype `0.2.123`
 - Save version `2`
 
 Important Unity scripts:
@@ -143,7 +143,7 @@ Latest local gameplay/UI batch:
 - Hero Detail and Gear equipment icon loading now has an Editor asset-path fallback plus blank-placeholder protection, so missing textures no longer appear as white RawImage blocks and the upgrade clutter validator catches hidden/white placeholder art, including equipped Hero Detail accessory icons after German refresh.
 - Hero Detail previous/next buttons have been pulled inward below the hero stage so they no longer collide with the lower gear slots; the upgrade clutter validator now checks that spacing.
 - Gear screen summary text and gear/accessory action controls were tightened into a clearer stacked layout below the showcase; the upgrade clutter validator now checks the controls do not overlap the showcase or each other.
-- Gear screen accessory action copy is localized for selected rarity, copy count, equip, level, empty, fuse, target tier, and floor labels; the upgrade clutter validator switches to German and checks the old English strings are gone plus the selected-rarity copy summary fits.
+- Gear screen accessory action copy is localized for selected rarity, copy count, equip, level, empty, fuse, target tier, and floor labels; the upgrade clutter validator switches to German, checks the old English/fuse-tier strings are gone, and confirms the selected-rarity copy summary fits.
 - Gear screen accessory inventory copy counts are compacted into a two-line summary, and the Gear text blocks use auto-sizing so localized layouts have room to breathe.
 - Backend action catalog now includes `accessory_unequip`, with Player and HTTP tests covering accessory removal and body validation.
 - Backend accessory definitions now include the sixth `headgear`/Helm slot and R0-R4 headgear item definitions in both the static snapshot and PostgreSQL migrations, so Server Mode matches the 6-slot client UI.

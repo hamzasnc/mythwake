@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.122";
+    public const string PrototypeVersion = "0.2.123";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -10365,7 +10365,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             accessorySelectedText.text =
                 $"{GetLocalizedAccessorySlotName(slot)}\n" +
                 $"{Tr("ui.common.equipped")}: {equippedText}\n" +
-                $"{TrFormat("gear.selected_fuse_tier", GetAccessoryRarityName(rarity))} | {Tr("ui.common.copies")} {GetAccessoryInventoryCount(slot, rarity)}";
+                $"{TrFormat("gear.selected_rarity", GetAccessoryRarityName(rarity))} | {Tr("ui.common.copies")} {GetAccessoryInventoryCount(slot, rarity)}";
         }
 
         if (accessoryInventoryText != null)

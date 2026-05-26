@@ -60,6 +60,7 @@ public static class UpgradeClutterValidation
         var source = builderScript.text;
         AssertSourceDoesNotContain(source, "Gear Dungeon Floor", "Prototype builder should not recreate old Gear Dungeon floor copy.");
         AssertSourceDoesNotContain(source, "Selected Fuse Tier", "Prototype builder should not recreate old selected fuse-tier copy.");
+        AssertSourceDoesNotContain(source, "selected_fuse_tier", "Prototype builder should not reference stale selected fuse-tier localization keys.");
         AssertSourceDoesNotContain(source, "Inventory Copies", "Prototype builder should not recreate old inventory copy layout.");
         AssertSourceDoesNotContain(source, "Equip Selected", "Prototype builder should not recreate old accessory equip button copy.");
         AssertSourceDoesNotContain(source, "\"Prev Slot\"", "Prototype builder should not recreate old slot navigation button copy.");
@@ -990,6 +991,7 @@ public static class UpgradeClutterValidation
             Canvas.ForceUpdateCanvases();
 
             AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessorySelectedText"), "Selected Fuse Tier", "Gear screen selected accessory text should localize fuse-tier copy.");
+            AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessorySelectedText"), "Fusionsstufe", "Gear screen selected accessory text should not describe selection as fuse tier.");
             AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryEquipText"), "Equip ", "Gear screen accessory equip button should localize action copy.");
             AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryLevelText"), "Level Equipped", "Gear screen accessory level button should localize action copy.");
             AssertTextDoesNotContain(RequireObjectField<TMP_Text>(controller, "accessoryLevelText"), "No item", "Gear screen accessory level button should localize empty copy.");
@@ -1029,6 +1031,7 @@ public static class UpgradeClutterValidation
 
             var selectedText = RequireObjectField<TMP_Text>(controller, "accessorySelectedText");
             AssertTextContains(selectedText, "R3", "Gear screen selected accessory summary should show the selected rarity.");
+            AssertTextContains(selectedText, GetLocalizedText(controller, "gear.selected_rarity").Replace("{0}", string.Empty).Trim(), "Gear screen selected accessory summary should use selected-rarity copy.");
             AssertTextContains(selectedText, $"{GetLocalizedText(controller, "ui.common.copies")} {originalCopies + addedCopies}", "Gear screen selected accessory summary should show selected-rarity copy count.");
             AssertTextFits(selectedText, selectedText.name, "Gear screen selected accessory summary");
         }
