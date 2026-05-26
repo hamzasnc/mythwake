@@ -921,17 +921,17 @@ public static class HomeIdleCombatValidation
             InvokePrivate(controller, "SetCampaignStageDetailPopupVisible", true);
             InvokePrivate(controller, "RefreshCampaignMapUi");
             Canvas.ForceUpdateCanvases();
-            ValidateCampaignStageDetailStateMarker("cleared", "OK");
+            ValidateCampaignStageDetailStateMarker("cleared", "OK", "Erledigt", false);
 
             SetPrivateField(controller, "selectedCampaignStage", 6);
             InvokePrivate(controller, "RefreshCampaignMapUi");
             Canvas.ForceUpdateCanvases();
-            ValidateCampaignStageDetailStateMarker("current", "ZIEL");
+            ValidateCampaignStageDetailStateMarker("current", "ZIEL", "Zur Formation", true);
 
             SetPrivateField(controller, "selectedCampaignStage", 8);
             InvokePrivate(controller, "RefreshCampaignMapUi");
             Canvas.ForceUpdateCanvases();
-            ValidateCampaignStageDetailStateMarker("locked", "LOCK");
+            ValidateCampaignStageDetailStateMarker("locked", "LOCK", "Gesperrt", false);
         }
         finally
         {
@@ -944,13 +944,14 @@ public static class HomeIdleCombatValidation
         }
     }
 
-    private static void ValidateCampaignStageDetailStateMarker(string state, string expectedBadge)
+    private static void ValidateCampaignStageDetailStateMarker(string state, string expectedBadge, string expectedActionLabel, bool shouldBeInteractable)
     {
         var detailPopup = RequireObject("Campaign Stage Detail Popup", true);
         var detailPanel = detailPopup.GetComponent<Image>();
         var detailAccent = RequireChildObject(detailPopup, "Stage Detail State Accent").GetComponent<Image>();
         var detailBadge = RequireChildObject(detailPopup, "Stage Detail State Badge").GetComponent<Image>();
         var detailBadgeText = RequireText(RequireChildObject(detailPopup, "Stage Detail State Badge"), "Stage Detail State Badge Text");
+        var actionButton = RequireButton("Stage Detail Battle Button");
 
         if (detailPanel == null || detailAccent == null || detailBadge == null)
         {
@@ -964,6 +965,56 @@ public static class HomeIdleCombatValidation
         if (detailAccent.raycastTarget || detailBadge.raycastTarget || detailBadgeText.raycastTarget)
         {
             throw new InvalidOperationException($"Campaign stage detail {state} status marker should not intercept input.");
+        }
+
+        ValidateCampaignStageDetailActionButton(actionButton, state, expectedActionLabel, shouldBeInteractable);
+    }
+
+    private static void ValidateCampaignStageDetailActionButton(Button actionButton, string state, string expectedLabel, bool shouldBeInteractable)
+    {
+        if (actionButton.interactable != shouldBeInteractable)
+        {
+            throw new InvalidOperationException($"Campaign stage detail {state} action interactable expected {shouldBeInteractable}, got {actionButton.interactable}.");
+        }
+
+        var label = actionButton.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (label == null)
+        {
+            throw new InvalidOperationException("Campaign stage detail action button should have a label.");
+        }
+
+        RequireCopy(label.text, expectedLabel);
+        AssertTextFits(label, $"Campaign stage detail {state} action label");
+
+        var image = actionButton.GetComponent<Image>();
+        if (image == null)
+        {
+            throw new InvalidOperationException("Campaign stage detail action button should have an image.");
+        }
+
+        if (state == "current")
+        {
+            if (image.color.g < 0.6f || image.color.b < 0.7f || image.color.r > 0.2f)
+            {
+                throw new InvalidOperationException($"Current campaign stage detail action should read as active cyan, got {image.color}.");
+            }
+
+            return;
+        }
+
+        if (state == "cleared")
+        {
+            if (image.color.g <= image.color.r || image.color.g <= image.color.b || image.color.a < 0.75f)
+            {
+                throw new InvalidOperationException($"Cleared campaign stage detail action should read as completed green, got {image.color}.");
+            }
+
+            return;
+        }
+
+        if (image.color.b <= image.color.r || image.color.b <= image.color.g || image.color.a < 0.65f)
+        {
+            throw new InvalidOperationException($"Locked campaign stage detail action should read as disabled blue-gray, got {image.color}.");
         }
     }
 

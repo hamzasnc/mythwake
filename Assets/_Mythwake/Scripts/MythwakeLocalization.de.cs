@@ -141,7 +141,7 @@ public static partial class MythwakeLocalization
         { "dungeon.default_result", "Dungeons sind die aktive Quelle für Ressourcen." },
         { "dungeon.progress_line", "Fortschritt: <color=#F8E85A>{0}/{1}</color>   Etage {2}" },
         { "dungeon.meta.reward", "{0} | Empf. {1} | +{2} {3}" },
-        { "dungeon.meta.drop", "{0} | Empf. {1} | Ausrüstungsbeute" },
+        { "dungeon.meta.drop", "{0} | Empf. {1} | Drop: Ausrüstung" },
         { "dungeon.preview.reward", "{0} F{1}  Empf. {2}\nBoss-HP {3}  +{4} {5}" },
         { "dungeon.preview.drop", "{0} F{1}  Empf. {2}\nBoss-HP {3}  Ausrüstungsbeute" },
         { "dungeon.reward.drop", "Belohnung: zufällige Ausrüstungsbeute" },

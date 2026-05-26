@@ -28,9 +28,16 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `32b523b Tint campaign stage preview states`
+- `36f4134 Mark campaign detail states`
 
 Current continuation:
+- Dungeons map zoom buttons now register their listeners through the runtime zoom-control setup path, so `Validate Dungeons UI` can exercise zoom in/out and clamp behavior without relying on a separate startup listener path.
+- Dungeons map markers now normalize and immediately refresh reused title/progress/detail text fields, and Gear dungeon details explicitly label accessory drops, so `Validate Dungeons UI` can inspect marker labels reliably even when scene text fields already existed.
+- Dungeons run buttons now use idempotent runtime listener registration, so Gold/Essence/Gear marker clicks keep their Formation routes and back-navigation coverage after runtime map setup refreshes the screen.
+- Home campaign stage-detail action buttons now switch label and color by state: `Zur Formation` for the current target, `Erledigt` for cleared stages, and `Gesperrt` for locked stages; `Validate Home Idle Combat` checks label, fit, color, and interactability.
+- Home stage-detail reward rows and the connected campaign-map-to-idle strip were tightened for Current Slice: reward copy fits, the map extends behind the Battle button, and the idle root stays inside the generated Home root with the reward text as a direct overlay child.
+- Summon result popup controls now re-register through the runtime popup setup path, keeping close/repeat/max buttons and the Auto-Summon checkbox mark reliable when the result popup already exists.
+- Gear/Hero runtime UI was stabilized for Upgrade Clutter: the Hero Detail armory background is opaque/non-intercepting, accessory candidates sort owned copies before empty rows, Gear opening ensures the runtime showcase exists, and multi-line Gear action labels auto-fit.
 - Home campaign stage-detail popups now mirror the checkpoint state with a tinted panel, a non-intercepting side accent, and an OK/ZIEL/LOCK badge; `Validate Home Idle Combat` checks cleared/current/locked detail popups.
 - Home campaign stage previews now tint the panel and show a non-intercepting state accent for cleared/current/locked selections; `Validate Home Idle Combat` checks the three preview states.
 - Home campaign current nodes now show a small ZIEL badge in addition to the current halo; `Validate Home Idle Combat` checks current/cleared/locked target-badge separation and input passthrough.
@@ -101,7 +108,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.117`
+- Prototype `0.2.118`
 - Save version `2`
 
 Important Unity scripts:
@@ -120,7 +127,7 @@ Latest local gameplay/UI batch:
 - The Home campaign map now uses `area_map_scorched_plains`, is a larger vertical ScrollRect with the checkpoints on the scrollable content, and has a connected lower idle mini-map background behind the patrol fight.
 - Latest Home layout pass imports the remaining `area_map_*` region images, keeps the main map pulled up under the resource bar, and extends the lower idle map background directly from the main map down behind heroes and monsters.
 - The current Home map viewport fills the marked play area behind side controls and the Battle button; the idle patrol is below the Battle button but sits on a same-width connected map image rather than a separate dark lane.
-- The Home lower idle patrol heroes and monsters are enlarged, and `Validate Home Idle Combat` now guards the connected upper/lower map layout, current-stage halos and target badges, selected-stage node halos, cleared-stage and locked-stage badges, boss-node badges, milestone bonus badges, stage-preview/detail state tint plus Boss/Bonus/Normal tags, stage-detail status badges, stage-detail reward labels, path progress colors, progress-map region texture/UV sync across main/detail/idle maps, reward progress fill behavior, two-line local last/next reward summary copy, Server Mode local-reward blocking, Server Mode Patrol Info copy, stale loot popup clearing, active reward tick, and no automatic stage clear.
+- The Home lower idle patrol heroes and monsters are enlarged, and `Validate Home Idle Combat` now guards the connected upper/lower map layout, current-stage halos and target badges, selected-stage node halos, cleared-stage and locked-stage badges, boss-node badges, milestone bonus badges, stage-preview/detail state tint plus Boss/Bonus/Normal tags, stage-detail status badges/action states, stage-detail reward labels, path progress colors, progress-map region texture/UV sync across main/detail/idle maps, reward progress fill behavior, two-line local last/next reward summary copy, Server Mode local-reward blocking, Server Mode Patrol Info copy, stale loot popup clearing, active reward tick, and no automatic stage clear. `Validate Dungeons UI` also checks the runtime zoom control path.
 - Home idle combat now shows a short floating loot popup when the local active Gold/Myth Essence tick is granted, and the Home idle validator checks that it appears and fits.
 - The Home idle combat area is now tappable and opens a `Patrol Info` popup with current stage, enemy, last reward, next reward countdown, tick cadence, and no-auto-clear copy; the validator clicks it before and after a local reward tick.
 - Tapping a Home campaign checkpoint now opens a larger `Abschnitt Details` popup with map preview, enemy formation, completion reward row, and Battle/Close controls; `Validate Home Idle Combat` checks the popup and closes it.
@@ -129,7 +136,7 @@ Latest local gameplay/UI batch:
 - The Home idle validator also checks locked checkpoint detail Battle guards under direct invocation and verifies local campaign clear action results carry a non-empty Myth Essence reward payload.
 - The Home idle validator now also checks popup exclusivity between Fast Rewards, Patrol Info, and checkpoint details.
 - The Summon UI validator now checks visible result-slot text fit/art, hidden unused result cards, Auto-Summon toggle mark state, and result close flow.
-- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Dungeons map/zoom clamp/Formation entry and back navigation, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode. Batchmode execution is currently blocked while the project is already open in another Unity instance.
+- Unity editor validators now cover Village map/build/detail/upgrade/demolish, Dungeons map/zoom clamp/Formation entry and back navigation, Fast Rewards, Summon/Vanguard Oath, Upgrade Clutter, Home Idle Combat, Paladin integration, and Paladin Spine handoff. `Mythwake/Validate Current Slice` runs them together, and `scripts/check-unity-current-slice.cmd` runs the same check in Unity batchmode; the latest batchmode Current Slice passed after this continuation.
 - Hero Detail now exposes all 2 equipment tracks plus all 6 accessory slots with armory background, visible starter Weapon/Armor training icons, and equipped-only accessory slot icon art. The localized main gear action shows Open Gear for starter Weapon/Armor training tracks and Equip Gear for accessory slots, starter Weapon/Armor slots and rows are labeled as training, empty accessory slots stay visually empty even when bag copies exist and after German refresh, accessory lists put owned copies above empty rows and higher rarity first inside each group with visible copy/tap-to-equip text, the selected equipment/accessory slot list opens instead of immediately leaving for Gear, the equipment list's Open Gear row navigates to the Gear screen, the validator keeps training slot/row wording through German refresh, and Remove Gear unequips accessories locally or through Server Mode via `/gear/accessories/unequip`.
 - Hero Detail and Gear equipment icon loading now has an Editor asset-path fallback plus blank-placeholder protection, so missing textures no longer appear as white RawImage blocks and the upgrade clutter validator catches hidden/white placeholder art, including equipped Hero Detail accessory icons after German refresh.
 - Hero Detail previous/next buttons have been pulled inward below the hero stage so they no longer collide with the lower gear slots; the upgrade clutter validator now checks that spacing.

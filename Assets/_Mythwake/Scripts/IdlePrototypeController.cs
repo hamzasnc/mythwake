@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.117";
+    public const string PrototypeVersion = "0.2.118";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -660,8 +660,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static readonly Vector2 DungeonMapViewportSize = new Vector2(1000f, 970f);
     private static readonly Vector2 DungeonWorldMapSize = new Vector2(1760f, 1320f);
     private static readonly Vector2 HomeCampaignMapViewportPosition = new Vector2(0f, -10f);
-    private static readonly Vector2 HomeCampaignMapViewportSize = new Vector2(1040f, 1190f);
+    private static readonly Vector2 HomeCampaignMapViewportSize = new Vector2(1040f, 1211f);
     private static readonly Vector2 HomeCampaignMapContentSize = new Vector2(1040f, 1900f);
+    private static readonly Vector2 HomeIdleCombatPanelPosition = new Vector2(0f, -1221f);
+    private static readonly Vector2 HomeIdleCombatPanelSize = new Vector2(1040f, 279f);
     private static readonly HomeProgressMapDefinition[] HomeProgressMaps =
     {
         new HomeProgressMapDefinition("area_map_scorched_plains", 1),
@@ -1616,30 +1618,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             fightButton.onClick.AddListener(Fight);
         }
 
-        if (goldDungeonButton != null)
-        {
-            goldDungeonButton.onClick.AddListener(RunGoldDungeon);
-        }
-
-        if (essenceDungeonButton != null)
-        {
-            essenceDungeonButton.onClick.AddListener(RunEssenceDungeon);
-        }
-
-        if (gearDungeonButton != null)
-        {
-            gearDungeonButton.onClick.AddListener(RunGearDungeon);
-        }
-
-        if (dungeonMapZoomInButton != null)
-        {
-            dungeonMapZoomInButton.onClick.AddListener(ZoomDungeonMapIn);
-        }
-
-        if (dungeonMapZoomOutButton != null)
-        {
-            dungeonMapZoomOutButton.onClick.AddListener(ZoomDungeonMapOut);
-        }
+        RegisterDungeonButtonListeners();
 
         if (upgradeButton != null)
         {
@@ -1861,20 +1840,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             fightButton.onClick.RemoveListener(Fight);
         }
 
-        if (goldDungeonButton != null)
-        {
-            goldDungeonButton.onClick.RemoveListener(RunGoldDungeon);
-        }
-
-        if (essenceDungeonButton != null)
-        {
-            essenceDungeonButton.onClick.RemoveListener(RunEssenceDungeon);
-        }
-
-        if (gearDungeonButton != null)
-        {
-            gearDungeonButton.onClick.RemoveListener(RunGearDungeon);
-        }
+        UnregisterDungeonButtonListeners();
 
         if (dungeonMapZoomInButton != null)
         {
@@ -2131,6 +2097,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         ShowScreen(AppScreen.Gear);
+        EnsureRuntimeArtUi();
+        RefreshRuntimeArtUi();
     }
 
     public void ShowSummon()
@@ -9184,10 +9152,29 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void RegisterSummonResultButtons()
     {
-        if (summonResultCloseButton != null) summonResultCloseButton.onClick.AddListener(HideSummonResultPopup);
-        if (summonResultTenButton != null) summonResultTenButton.onClick.AddListener(SummonResultTen);
-        if (summonResultMaxButton != null) summonResultMaxButton.onClick.AddListener(SummonResultMax);
-        if (summonAutoToggleButton != null) summonAutoToggleButton.onClick.AddListener(ToggleSummonAuto);
+        if (summonResultCloseButton != null)
+        {
+            summonResultCloseButton.onClick.RemoveListener(HideSummonResultPopup);
+            summonResultCloseButton.onClick.AddListener(HideSummonResultPopup);
+        }
+
+        if (summonResultTenButton != null)
+        {
+            summonResultTenButton.onClick.RemoveListener(SummonResultTen);
+            summonResultTenButton.onClick.AddListener(SummonResultTen);
+        }
+
+        if (summonResultMaxButton != null)
+        {
+            summonResultMaxButton.onClick.RemoveListener(SummonResultMax);
+            summonResultMaxButton.onClick.AddListener(SummonResultMax);
+        }
+
+        if (summonAutoToggleButton != null)
+        {
+            summonAutoToggleButton.onClick.RemoveListener(ToggleSummonAuto);
+            summonAutoToggleButton.onClick.AddListener(ToggleSummonAuto);
+        }
     }
 
     private void UnregisterSummonResultButtons()
@@ -13907,8 +13894,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void EnsureRuntimeSummonResultPopup()
     {
-        if (summonPanel == null || summonResultPopupRoot != null)
+        if (summonPanel == null)
         {
+            return;
+        }
+
+        if (summonResultPopupRoot != null)
+        {
+            RegisterSummonResultButtons();
             return;
         }
 
@@ -13973,6 +13966,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         summonResultMaxCostText = CreateSummonResultButtonCostText(summonResultMaxButton.transform, "Cost");
 
         summonResultPopupRoot.gameObject.SetActive(false);
+        RegisterSummonResultButtons();
+        RefreshSummonAutoToggle();
     }
 
     private void CreateSummonCarouselCard(int cardIndex, Vector2 anchoredPosition, Vector2 size)
@@ -14198,7 +14193,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         homeCampaignMapImage.raycastTarget = false;
 
         CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Top Fade", new Vector2(0, -14), new Vector2(1010, 34), new Color(0.02f, 0.025f, 0.035f, 0.42f));
-        CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Bottom Fade", new Vector2(0, -1166), new Vector2(1010, 46), new Color(0.02f, 0.025f, 0.035f, 0.56f));
+        CreateRuntimePanel(homeCampaignMapRoot, "Campaign Map Bottom Fade", new Vector2(0, -1187), new Vector2(1010, 46), new Color(0.02f, 0.025f, 0.035f, 0.56f));
 
         var nodePositions = GetCampaignMapNodePositions();
         campaignPathSegmentImages = new Image[Mathf.Max(0, nodePositions.Length - 1)];
@@ -14248,17 +14243,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", new Vector2(0, -1200), new Vector2(1040, 318), new Color(0.02f, 0.025f, 0.035f, 0.78f));
+        homeIdleCombatRoot = CreateRuntimePanel(homeActionRoot, "Home Idle Combat Root", HomeIdleCombatPanelPosition, HomeIdleCombatPanelSize, new Color(0.02f, 0.025f, 0.035f, 0.78f));
         homeIdleCombatRoot.SetAsFirstSibling();
         homeIdleCombatRoot.gameObject.AddComponent<RectMask2D>();
 
-        homeIdleCombatMapImage = CreateRuntimeRawImage(homeIdleCombatRoot, "Home Idle Mini Map Background", LoadRuntimeTexture(GetSelectedHomeProgressMapTextureName()), Vector2.zero, new Vector2(1040, 318), new Vector2(0.5f, 1f));
+        homeIdleCombatMapImage = CreateRuntimeRawImage(homeIdleCombatRoot, "Home Idle Mini Map Background", LoadRuntimeTexture(GetSelectedHomeProgressMapTextureName()), Vector2.zero, HomeIdleCombatPanelSize, new Vector2(0.5f, 1f));
         homeIdleCombatMapImage.uvRect = GetHomeIdleCombatMapUvRect(enemyLevel);
         homeIdleCombatMapImage.color = new Color(1f, 1f, 1f, 0.74f);
         homeIdleCombatMapImage.raycastTarget = false;
         homeIdleCombatMapImage.transform.SetAsFirstSibling();
 
-        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Map Dim", Vector2.zero, new Vector2(1040, 318), new Color(0.01f, 0.014f, 0.024f, 0.35f));
+        CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Map Dim", Vector2.zero, HomeIdleCombatPanelSize, new Color(0.01f, 0.014f, 0.024f, 0.35f));
         CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Top Shade", new Vector2(0, -48), new Vector2(680, 30), new Color(0.015f, 0.018f, 0.026f, 0.32f));
         CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Ground", new Vector2(0, -178), new Vector2(650, 38), new Color(0.33f, 0.24f, 0.16f, 0.38f));
         var clashGlow = CreateRuntimePanel(homeIdleCombatRoot, "Idle Combat Clash Glow", new Vector2(0, -130), new Vector2(72, 72), new Color(1f, 0.73f, 0.26f, 0.22f));
@@ -14309,7 +14304,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             rewardBack.sizeDelta = new Vector2(620f, 44f);
         }
 
-        homeIdleRewardText = CreateRuntimeText(homeIdleRewardFill.transform.parent, "Home Idle Reward Text", string.Empty, 16, Vector2.zero, new Vector2(596, 40));
+        homeIdleRewardText = CreateRuntimeText(homeIdleCombatRoot, "Home Idle Reward Text", string.Empty, 16, new Vector2(0, -204), new Vector2(596, 40));
         homeIdleRewardText.fontStyle = FontStyles.Bold;
         homeIdleRewardText.enableAutoSizing = true;
         homeIdleRewardText.fontSizeMin = 11;
@@ -14875,14 +14870,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         for (var i = 0; i < campaignStageDetailRewardIcons.Length; i++)
         {
             var x = -238f + i * 238f;
-            CreateRuntimePanel(campaignStageDetailPopupRoot, $"Stage Detail Reward Frame {i + 1}", new Vector2(x, -608), new Vector2(188, 86), new Color(0.18f, 0.095f, 0.045f, 0.86f));
+            CreateRuntimePanel(campaignStageDetailPopupRoot, $"Stage Detail Reward Frame {i + 1}", new Vector2(x, -608), new Vector2(188, 94), new Color(0.18f, 0.095f, 0.045f, 0.86f));
             campaignStageDetailRewardIcons[i] = CreateRuntimeRawImage(campaignStageDetailPopupRoot, $"Stage Detail Reward Icon {i + 1}", null, new Vector2(x - 56, -626), new Vector2(42, 54), new Vector2(0.5f, 1f));
             campaignStageDetailRewardIcons[i].raycastTarget = false;
-            campaignStageDetailRewardTexts[i] = CreateRuntimeText(campaignStageDetailPopupRoot, $"Stage Detail Reward Text {i + 1}", string.Empty, 18, new Vector2(x + 26, -631), new Vector2(112, 54));
+            campaignStageDetailRewardTexts[i] = CreateRuntimeText(campaignStageDetailPopupRoot, $"Stage Detail Reward Text {i + 1}", string.Empty, 16, new Vector2(x + 26, -631), new Vector2(112, 64));
             campaignStageDetailRewardTexts[i].alignment = TextAlignmentOptions.Left;
             campaignStageDetailRewardTexts[i].enableAutoSizing = true;
-            campaignStageDetailRewardTexts[i].fontSizeMin = 12;
-            campaignStageDetailRewardTexts[i].fontSizeMax = 18;
+            campaignStageDetailRewardTexts[i].fontSizeMin = 9;
+            campaignStageDetailRewardTexts[i].fontSizeMax = 16;
             campaignStageDetailRewardTexts[i].textWrappingMode = TextWrappingModes.Normal;
             campaignStageDetailRewardTexts[i].raycastTarget = false;
         }
@@ -15662,7 +15657,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var backgroundImage = CreateRuntimeRawImage(heroDetailRoot, "Hero Detail Armory Background", armoryBackground, Vector2.zero, new Vector2(860, 1340), new Vector2(0.5f, 1f));
             backgroundImage.transform.SetAsFirstSibling();
-            backgroundImage.color = new Color(1f, 1f, 1f, 0.84f);
+            backgroundImage.color = Color.white;
+            backgroundImage.raycastTarget = false;
         }
         else
         {
@@ -16822,6 +16818,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             GearDungeonMapPosition,
             new Color(0.18f, 0.86f, 0.95f, 0.96f));
 
+        RegisterDungeonButtonListeners();
+
         if (runtimeDungeonResultText == null)
         {
             runtimeDungeonResultText = CreateRuntimeText(dungeonsPanel.transform, "Dungeon Result Text", "Dungeons are the active resource source.", 22, new Vector2(0, -1018), new Vector2(760, 52));
@@ -16926,6 +16924,62 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             dungeonMapZoomOutButton = CreateRuntimeButton(dungeonsPanel.transform, "Dungeon Map Zoom Out", "-", 434f, -300f, 62f, 62f);
             StyleDungeonMapZoomButton(dungeonMapZoomOutButton);
+        }
+
+        RegisterDungeonMapZoomButtonListeners();
+    }
+
+    private void RegisterDungeonMapZoomButtonListeners()
+    {
+        if (dungeonMapZoomInButton != null)
+        {
+            dungeonMapZoomInButton.onClick.RemoveListener(ZoomDungeonMapIn);
+            dungeonMapZoomInButton.onClick.AddListener(ZoomDungeonMapIn);
+        }
+
+        if (dungeonMapZoomOutButton != null)
+        {
+            dungeonMapZoomOutButton.onClick.RemoveListener(ZoomDungeonMapOut);
+            dungeonMapZoomOutButton.onClick.AddListener(ZoomDungeonMapOut);
+        }
+    }
+
+    private void RegisterDungeonButtonListeners()
+    {
+        if (goldDungeonButton != null)
+        {
+            goldDungeonButton.onClick.RemoveListener(RunGoldDungeon);
+            goldDungeonButton.onClick.AddListener(RunGoldDungeon);
+        }
+
+        if (essenceDungeonButton != null)
+        {
+            essenceDungeonButton.onClick.RemoveListener(RunEssenceDungeon);
+            essenceDungeonButton.onClick.AddListener(RunEssenceDungeon);
+        }
+
+        if (gearDungeonButton != null)
+        {
+            gearDungeonButton.onClick.RemoveListener(RunGearDungeon);
+            gearDungeonButton.onClick.AddListener(RunGearDungeon);
+        }
+    }
+
+    private void UnregisterDungeonButtonListeners()
+    {
+        if (goldDungeonButton != null)
+        {
+            goldDungeonButton.onClick.RemoveListener(RunGoldDungeon);
+        }
+
+        if (essenceDungeonButton != null)
+        {
+            essenceDungeonButton.onClick.RemoveListener(RunEssenceDungeon);
+        }
+
+        if (gearDungeonButton != null)
+        {
+            gearDungeonButton.onClick.RemoveListener(RunGearDungeon);
         }
     }
 
@@ -17032,6 +17086,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             titleText.transform.SetParent(button.transform, false);
         }
 
+        titleText.name = "Dungeon Set Title";
         StyleDungeonMapMarkerTitle(titleText);
 
         if (progressText == null)
@@ -17043,6 +17098,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             progressText.transform.SetParent(button.transform, false);
         }
 
+        progressText.name = "Dungeon Set Progress";
         StyleDungeonMapMarkerProgress(progressText);
 
         if (detailText == null)
@@ -17054,7 +17110,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             detailText.transform.SetParent(button.transform, false);
         }
 
+        detailText.name = "Dungeon Set Detail";
         StyleDungeonMapMarkerDetail(detailText);
+
+        var definition = ResolveDungeonDefinition(dungeonId);
+        RefreshDungeonCardUi(definition, GetDungeonFloor(dungeonId), titleText, progressText, detailText);
     }
 
     private static RectTransform EnsureRuntimePanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 rectSize, Color color)
@@ -17857,6 +17917,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         ConfigureRuntimeTextFit(accessorySummaryText, 15f, 22f);
         ConfigureRuntimeTextFit(accessorySelectedText, 15f, 22f);
         ConfigureRuntimeTextFit(accessoryInventoryText, 15f, 22f);
+        ConfigureRuntimeButtonLabelFit(weaponUpgradeButton, 10f, 16f);
+        ConfigureRuntimeButtonLabelFit(armorUpgradeButton, 10f, 16f);
+        ConfigureRuntimeButtonLabelFit(accessoryEquipButton, 9f, 15f);
+        ConfigureRuntimeButtonLabelFit(accessoryLevelButton, 9f, 15f);
+        ConfigureRuntimeButtonLabelFit(accessoryFuseButton, 9f, 15f);
     }
 
     private void LayoutSummonScreen()
@@ -17979,6 +18044,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         text.fontSizeMin = minSize;
         text.fontSizeMax = maxSize;
         text.textWrappingMode = TextWrappingModes.Normal;
+    }
+
+    private static void ConfigureRuntimeButtonLabelFit(Button button, float minSize, float maxSize)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        var text = button.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (text == null)
+        {
+            return;
+        }
+
+        text.enableAutoSizing = true;
+        text.fontSizeMin = minSize;
+        text.fontSizeMax = maxSize;
+        text.textWrappingMode = TextWrappingModes.Normal;
+        text.alignment = TextAlignmentOptions.Center;
+        StretchRuntime(text.rectTransform, new Vector2(10f, 4f));
     }
 
     private static void SetComponentActive(Component component, bool active)
@@ -18348,7 +18434,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return 0;
         }
 
-        return equipped ? 1 : 2;
+        return 1;
     }
 
     private void SetHeroDetailGearOptionRow(Button optionButton, int rowIndex)
@@ -19093,6 +19179,43 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return isLocked ? new Color(0.88f, 0.93f, 1f) : new Color(0.09f, 0.055f, 0.025f);
     }
 
+    private static string GetCampaignStageDetailActionLabel(bool isCleared, bool isCurrent, bool isLocked)
+    {
+        if (isCurrent)
+        {
+            return "Zur Formation";
+        }
+
+        if (isCleared)
+        {
+            return "Erledigt";
+        }
+
+        return isLocked ? "Gesperrt" : "Battle";
+    }
+
+    private static Color GetCampaignStageDetailActionButtonColor(bool isCleared, bool isCurrent, bool isLocked)
+    {
+        if (isCurrent)
+        {
+            return new Color(0.1f, 0.72f, 0.82f, 0.96f);
+        }
+
+        if (isCleared)
+        {
+            return new Color(0.12f, 0.42f, 0.28f, 0.88f);
+        }
+
+        return isLocked
+            ? new Color(0.12f, 0.14f, 0.2f, 0.78f)
+            : new Color(0.2f, 0.16f, 0.12f, 0.9f);
+    }
+
+    private static Color GetCampaignStageDetailActionTextColor(bool isLocked)
+    {
+        return isLocked ? new Color(0.68f, 0.74f, 0.86f) : Color.white;
+    }
+
     private void RefreshCampaignStageDetailPopupUi()
     {
         if (campaignStageDetailPopupRoot == null || !campaignStageDetailPopupRoot.gameObject.activeSelf)
@@ -19190,8 +19313,30 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             RefreshCampaignStageDetailRewardSlot(2, GetCurrencyIconTexture("gold_coin"), "Patrol\nseparat");
         }
 
-        SetButtonInteractable(campaignStageDetailBattleButton, isCurrent && !campaignFightInProgress && !backendRequestInProgress && !backendLifecycleFlushInProgress);
-        SetButtonLabel(campaignStageDetailBattleButton, isCurrent ? "Battle" : isCleared ? "Cleared" : "Locked");
+        var canStartStage = isCurrent && !campaignFightInProgress && !backendRequestInProgress && !backendLifecycleFlushInProgress;
+        SetButtonInteractable(campaignStageDetailBattleButton, canStartStage);
+        SetButtonLabel(campaignStageDetailBattleButton, GetCampaignStageDetailActionLabel(isCleared, isCurrent, isLocked));
+        RefreshCampaignStageDetailActionButtonVisual(isCleared, isCurrent, isLocked);
+    }
+
+    private void RefreshCampaignStageDetailActionButtonVisual(bool isCleared, bool isCurrent, bool isLocked)
+    {
+        if (campaignStageDetailBattleButton == null)
+        {
+            return;
+        }
+
+        var image = campaignStageDetailBattleButton.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = GetCampaignStageDetailActionButtonColor(isCleared, isCurrent, isLocked);
+        }
+
+        var text = campaignStageDetailBattleButton.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (text != null)
+        {
+            text.color = GetCampaignStageDetailActionTextColor(isLocked);
+        }
     }
 
     private void RefreshCampaignStageDetailRewardSlot(int index, Texture2D icon, string label)

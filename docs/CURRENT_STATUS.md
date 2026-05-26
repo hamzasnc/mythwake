@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.117`, save version `2`.
+- Unity client code is at Prototype `0.2.118`, save version `2`.
 - Backend API default version is `0.2.56`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -47,6 +47,8 @@ Last updated: 2026-05-26
 - Home campaign current nodes now show a small ZIEL badge in addition to the current halo, and the Home idle validator checks that cleared and locked nodes do not inherit the target marker.
 - Home campaign stage previews now tint the panel and show a non-intercepting state accent for cleared/current/locked selections, with Home idle validator coverage.
 - Home campaign stage-detail popups now mirror that status treatment with a tinted panel, a non-intercepting side accent, and an OK/ZIEL/LOCK badge, with Home idle validator coverage for cleared/current/locked popups.
+- Home campaign stage-detail action buttons now switch label and color by state: `Zur Formation` for the current target, `Erledigt` for cleared stages, and `Gesperrt` for locked stages, with Home idle validator coverage.
+- Home campaign stage-detail reward labels and the connected main-map-to-idle transition now have stricter fit/layout coverage so reward copy, Battle button coverage, and the lower idle strip stay inside the generated Home root.
 - Home campaign boss nodes now show a visible Boss badge, and the Home idle validator checks boss and non-boss badge state.
 - Home campaign non-boss milestone nodes now show a visible Bonus badge while boss milestones keep the Boss badge, with Home idle validator coverage.
 - Home campaign stage previews now include Boss/Bonus/Normal tags plus compact special-reward hints, with Home idle validator coverage for preview copy and fit.
@@ -76,7 +78,11 @@ Last updated: 2026-05-26
 - Extended the Fast Rewards validator to cover Home popup exclusivity, close-button behavior, and disabled Server Mode fallback claims when no backend session is available.
 - Extended the Home idle validator to cover popup exclusivity between Fast Rewards, Patrol Info, and checkpoint details.
 - Extended the Summon validator to cover visible result-slot text fit/art, hidden unused result cards, Auto-Summon toggle mark state, and result close flow.
+- Summon result popup buttons now register through the runtime result-popup setup path, keeping repeat pulls, close, and Auto-Summon checkbox refresh valid even when the popup already exists.
 - Added a dedicated Dungeons UI validator and included it in Current Slice; it checks the world-map viewport, map art, pan/scroll handlers, zoom controls and clamps, all three dungeon markers, marker spacing/text/art fit, and Gold/Essence/Gear Formation entry plus back-navigation flows.
+- Dungeons map zoom buttons now register their listeners through the runtime zoom-control setup path so the Dungeons validator can exercise zoom in/out and clamps reliably.
+- Dungeons map markers now normalize and immediately refresh their title/progress/detail labels even when reusing existing scene text fields, and Gear dungeon details now explicitly label accessory drops.
+- Dungeons run buttons now use idempotent runtime listener registration so Gold/Essence/Gear marker clicks keep their Formation routes and back-flow coverage after the map setup path runs.
 - Polished the Hero Detail gear slice: it now exposes all 2 equipment tracks plus all 6 accessory slots, `Equip Gear` opens the selected gear list for equipment and accessories, and `Remove Gear` can unequip accessories locally or through the Server Mode backend action.
 - Added validator coverage for the Hero Detail gear list popup so equipment slots open the inline list first and only the list's `Open Gear` row navigates to the Gear screen.
 - Added contextual Hero Detail gear action labels so equipment slots show `Open Gear` while accessory slots keep `Equip Gear`.
@@ -88,10 +94,12 @@ Last updated: 2026-05-26
 - Empty Hero Detail accessory slots now stay visually empty until gear is equipped, even when bag copies exist; owned copies remain prioritized inside the accessory list, and the validator checks empty-slot labels/icons including after German language refresh.
 - Hero Detail accessory option lists now put owned, equippable copies above empty rows and keep higher rarity first inside those groups, so empty slots stay clean while the picker still surfaces useful copies; the validator locks that ordering and the copy/tap-to-equip text.
 - Hero Detail now renders the new armory background plus visible starter Weapon/Armor training icons and equipped accessory slot icon art, and the upgrade clutter validator checks that active art loads through normal and German-refresh paths, empty accessory slots stay blank, everything fits, and icons do not intercept slot input.
+- Hero Detail armory art is opaque and non-intercepting, and accessory option rows now keep owned copies before empty candidate rows while preserving higher-rarity ordering inside each group.
 - Hero Detail now labels starter Weapon/Armor slots and rows as training tracks instead of claiming they are equipped item instances; the validator guards both slot and row wording in the normal and German refresh paths.
 - Hero Detail and Gear runtime equipment icons now use an Editor asset-path fallback when `Resources.Load` is stale, hide missing-texture RawImage placeholders instead of showing white blocks, and the validator rejects hidden/white-placeholder icon art.
 - Hero Detail previous/next buttons now sit outside the gear-slot columns, and the upgrade clutter validator checks they do not overlap any of the 8 gear slots.
 - Gear screen runtime showcase art now uses the new equipment icon set, and the upgrade clutter validator checks the hero, weapon, armor, headgear, gloves, boots, and accessory images for loaded textures, fit, and input passthrough.
+- Gear opening now ensures the runtime showcase is created before validation refreshes it, and multi-line Gear action labels auto-size so localized controls do not overflow their buttons.
 - Gear screen runtime showcase copy now names all visible equipment slots from the title area, and the upgrade clutter validator checks that the full label fits without overlapping the icon rows.
 - Gear screen summary text and upgrade/accessory controls now have clearer vertical spacing below the showcase, and the upgrade clutter validator checks those controls do not overlap the showcase or each other.
 - Gear screen accessory action copy is now localized for selected fuse tier, equip, level, empty, fuse, target tier, and floor labels, with German refresh coverage in the upgrade clutter validator.

@@ -141,7 +141,7 @@ public static partial class MythwakeLocalization
         { "dungeon.default_result", "Dungeons are the active resource source." },
         { "dungeon.progress_line", "Progress: <color=#F8E85A>{0}/{1}</color>   Floor {2}" },
         { "dungeon.meta.reward", "{0} | Rec {1} | +{2} {3}" },
-        { "dungeon.meta.drop", "{0} | Rec {1} | Accessory drop" },
+        { "dungeon.meta.drop", "{0} | Rec {1} | Drop: Accessory" },
         { "dungeon.preview.reward", "{0} F{1}  Rec {2}\nBoss HP {3}  +{4} {5}" },
         { "dungeon.preview.drop", "{0} F{1}  Rec {2}\nBoss HP {3}  Accessory drop" },
         { "dungeon.reward.drop", "Reward: random accessory drop" },
