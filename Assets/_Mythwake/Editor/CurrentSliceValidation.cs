@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public static class CurrentSliceValidation
@@ -79,7 +80,7 @@ public static class MobileUxValidation
         try
         {
             ValidateMobileUx();
-            Debug.Log("Mobile UX validated: Android portrait settings, safe-area rendering, portrait CanvasScaler, bottom navigation targets, version label, and core screen navigation are present.");
+            Debug.Log("Mobile UX validated: Android portrait settings, safe-area rendering, portrait CanvasScaler, EventSystem/InputSystem UI stack, non-blocking FPS overlay, bottom navigation targets, version label, and core screen navigation are present.");
         }
         catch (Exception ex)
         {
@@ -99,11 +100,15 @@ public static class MobileUxValidation
             throw new InvalidOperationException("Missing IdlePrototypeController in SampleScene.");
         }
 
+        InvokePrivate(controller, "EnsureRuntimeInputStack");
         InvokePrivate(controller, "EnsureRuntimeScreenLayout");
+        InvokePrivate(controller, "EnsureRuntimeInputStack");
+        InvokePrivate(controller, "EnsureRuntimePerformanceOverlay");
         InvokePrivate(controller, "RegisterNavigation");
         Canvas.ForceUpdateCanvases();
 
         var canvasRect = ValidatePortraitCanvas(controller);
+        ValidateRuntimeInputStack(controller, canvasRect);
         ValidateMobileChrome(controller, canvasRect);
         ValidateScreenNavigation(controller);
     }
@@ -164,6 +169,78 @@ public static class MobileUxValidation
         }
 
         return rootCanvas.GetComponent<RectTransform>();
+    }
+
+    private static void ValidateRuntimeInputStack(IdlePrototypeController controller, RectTransform canvasRect)
+    {
+        var rootCanvas = canvasRect != null ? canvasRect.GetComponent<Canvas>() : null;
+        if (rootCanvas == null)
+        {
+            throw new InvalidOperationException("Runtime UI should have a root Canvas for Android input.");
+        }
+
+        if (rootCanvas.GetComponent<GraphicRaycaster>() == null)
+        {
+            throw new InvalidOperationException($"{rootCanvas.name} is missing GraphicRaycaster, so Android UI buttons cannot receive pointer hits.");
+        }
+
+        var eventSystem = FindSceneComponent<EventSystem>();
+        if (eventSystem == null)
+        {
+            throw new InvalidOperationException("Scene is missing an EventSystem for Android UI input.");
+        }
+
+        var activeModules = 0;
+        var hasInputSystemModule = false;
+        var hasEnabledLegacyModule = false;
+        var modules = eventSystem.GetComponents<BaseInputModule>();
+        for (var i = 0; i < modules.Length; i++)
+        {
+            var module = modules[i];
+            if (module == null || !module.enabled)
+            {
+                continue;
+            }
+
+            activeModules++;
+            var typeName = module.GetType().FullName ?? module.GetType().Name;
+            hasInputSystemModule |= typeName.Contains("InputSystemUIInputModule");
+            hasEnabledLegacyModule |= typeName.Contains("StandaloneInputModule");
+            if (typeName.Contains("InputSystemUIInputModule"))
+            {
+                var actionsProperty = module.GetType().GetProperty("actionsAsset");
+                var actionsAsset = actionsProperty != null ? actionsProperty.GetValue(module) as UnityEngine.Object : null;
+                if (actionsAsset == null)
+                {
+                    throw new InvalidOperationException("InputSystemUIInputModule should have an actions asset/default actions assigned for Android touch.");
+                }
+            }
+        }
+
+        if (activeModules == 0)
+        {
+            throw new InvalidOperationException("EventSystem has no enabled UI input module.");
+        }
+
+        var projectSettings = File.ReadAllText(ProjectSettingsPath);
+        if (projectSettings.Contains("  activeInputHandler: 1") && !hasInputSystemModule)
+        {
+            throw new InvalidOperationException("Project uses the new Input System only, so the EventSystem needs an enabled InputSystemUIInputModule.");
+        }
+
+        if (projectSettings.Contains("  activeInputHandler: 1") && hasEnabledLegacyModule)
+        {
+            throw new InvalidOperationException("StandaloneInputModule should be disabled when Android uses the new Input System only.");
+        }
+
+        var performanceOverlay = RequireObjectField<TMP_Text>(controller, "performanceOverlayText");
+        if (performanceOverlay.raycastTarget)
+        {
+            throw new InvalidOperationException("Runtime FPS overlay must not intercept Android button touches.");
+        }
+
+        AssertInsideCanvas(canvasRect, performanceOverlay.rectTransform, "Runtime FPS overlay");
+        AssertTextFits(performanceOverlay, "Runtime FPS overlay");
     }
 
     private static void ValidateMobileChrome(IdlePrototypeController controller, RectTransform canvasRect)

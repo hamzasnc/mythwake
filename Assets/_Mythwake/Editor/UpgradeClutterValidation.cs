@@ -788,6 +788,14 @@ public static class UpgradeClutterValidation
                 throw new InvalidOperationException($"{gearSlot.name} should stay directly inside {heroDetailRoot.name}.");
             }
 
+            var heroDetailRect = RequireRectTransform(heroDetailRoot);
+            var gearSlotBounds = GetLocalBounds(gearSlot);
+            const float edgeMargin = 56f;
+            if (gearSlotBounds.Left < -heroDetailRect.rect.width * 0.5f + edgeMargin || gearSlotBounds.Right > heroDetailRect.rect.width * 0.5f - edgeMargin)
+            {
+                throw new InvalidOperationException($"{gearSlot.name} should keep at least {edgeMargin:0.#}px side margin inside Hero Detail for mobile safe tapping. Left={gearSlotBounds.Left:0.#}, right={gearSlotBounds.Right:0.#}.");
+            }
+
             for (var otherIndex = i + 1; otherIndex < expectedGearSlotCount; otherIndex++)
             {
                 AssertNoOverlap(gearSlot, gearSlots[otherIndex].gameObject, 4f, "Hero Detail gear slot spacing");

@@ -4,6 +4,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem.UI;
+#endif
 
 public static class MythwakePrototypeBuilder
 {
@@ -473,14 +476,43 @@ public static class MythwakePrototypeBuilder
 
     private static void EnsureEventSystem()
     {
-        if (Object.FindAnyObjectByType<EventSystem>() != null)
+        var eventSystem = Object.FindAnyObjectByType<EventSystem>();
+        if (eventSystem == null)
         {
-            return;
+            var eventSystemObject = new GameObject("EventSystem");
+            eventSystem = eventSystemObject.AddComponent<EventSystem>();
         }
 
-        var eventSystem = new GameObject("EventSystem");
-        eventSystem.AddComponent<EventSystem>();
-        eventSystem.AddComponent<StandaloneInputModule>();
+        eventSystem.sendNavigationEvents = true;
+        eventSystem.pixelDragThreshold = Mathf.Max(eventSystem.pixelDragThreshold, 10);
+
+#if ENABLE_INPUT_SYSTEM
+        var inputSystemModule = eventSystem.GetComponent<InputSystemUIInputModule>();
+        if (inputSystemModule == null)
+        {
+            inputSystemModule = eventSystem.gameObject.AddComponent<InputSystemUIInputModule>();
+        }
+
+        if (inputSystemModule.actionsAsset == null)
+        {
+            inputSystemModule.AssignDefaultActions();
+        }
+
+        inputSystemModule.enabled = true;
+        var modules = eventSystem.GetComponents<BaseInputModule>();
+        for (var i = 0; i < modules.Length; i++)
+        {
+            if (modules[i] != null && modules[i] != inputSystemModule)
+            {
+                modules[i].enabled = false;
+            }
+        }
+#else
+        if (eventSystem.GetComponent<BaseInputModule>() == null)
+        {
+            eventSystem.gameObject.AddComponent<StandaloneInputModule>();
+        }
+#endif
     }
 
     private static Image CreatePanel(string name, Transform parent, Color color)

@@ -16,7 +16,7 @@ public static class FastRewardsUiValidation
         try
         {
             ValidateFastRewardsUi();
-            Debug.Log("Fast Rewards UI validated: popup controls, local/capped copy, cap-left copy, local redeem reset, popup exclusivity, close flow, reward button state, and Server Mode claim timing copy are present.");
+            Debug.Log("Fast Rewards UI validated: popup controls, modal touch blocker, local/capped copy, cap-left copy, local redeem reset, popup exclusivity, close flow, reward button state, and Server Mode claim timing copy are present.");
         }
         catch (Exception ex)
         {
@@ -40,6 +40,13 @@ public static class FastRewardsUiValidation
         controller.ShowHome();
         Canvas.ForceUpdateCanvases();
 
+        var blocker = RequireObject("Fast Rewards Touch Blocker", false);
+        var blockerImage = blocker.GetComponent<Image>();
+        if (blockerImage == null || !blockerImage.raycastTarget)
+        {
+            throw new InvalidOperationException("Fast Rewards Touch Blocker must have a raycast-target Image to prevent click-through under the modal.");
+        }
+
         var popup = RequireObject("Fast Rewards Popup", false);
         var body = RequireObject("Fast Rewards Body", false);
         var progressRoot = RequireObject("Fast Rewards Progress", false);
@@ -60,6 +67,7 @@ public static class FastRewardsUiValidation
         InvokePrivate(controller, "ShowFastRewardsPopup");
         Canvas.ForceUpdateCanvases();
 
+        RequireActive("Fast Rewards Touch Blocker");
         RequireActive("Fast Rewards Popup");
         var bodyText = RequireText(body, "Fast Rewards Body");
         var localBodyText = bodyText.text;
@@ -161,6 +169,11 @@ public static class FastRewardsUiValidation
 
         closeButton.onClick.Invoke();
         Canvas.ForceUpdateCanvases();
+        if (blocker.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Fast Rewards touch blocker should close with the popup.");
+        }
+
         if (popup.activeInHierarchy)
         {
             throw new InvalidOperationException("Fast Rewards popup should close from its close button.");

@@ -5,10 +5,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem.UI;
+#endif
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.138";
+    public const string PrototypeVersion = "0.2.139";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -797,6 +800,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int DebugGoldAmount = 500;
     private const int DebugGemAmount = 30;
     private const int DebugEssenceAmount = 250;
+    private const float PerformanceOverlayUpdateInterval = 0.5f;
 
     private static readonly string[] SaveKeys =
     {
@@ -1252,6 +1256,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text topGoldAmountText;
     private TMP_Text topPlayerNameText;
     private TMP_Text topPowerText;
+    private TMP_Text performanceOverlayText;
+    private float performanceOverlayTimer;
+    private int performanceOverlayFrames;
+    private float performanceOverlayFrameTimeMs;
     private TMP_Text heroEssenceAmountText;
     private RawImage topGemIconImage;
     private RawImage topGoldIconImage;
@@ -1387,6 +1395,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RectTransform homeRightShortcutShadow;
     private bool homeShortcutsExpanded;
     private RectTransform inventoryPopupRoot;
+    private RectTransform fastRewardsPopupBlocker;
     private RectTransform fastRewardsPopupRoot;
     private RectTransform inventoryGridRoot;
     private RectTransform inventoryDetailRoot;
@@ -1610,6 +1619,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void Awake()
     {
+        EnsureRuntimeInputStack();
         LoadLanguagePreference();
         LoadProgress();
         autoAttackEnabled = false;
@@ -1621,6 +1631,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureRuntimeDebugUi();
         EnsureRuntimeBackendUi();
         EnsureRuntimeScreenLayout();
+        EnsureRuntimeInputStack();
+        EnsureRuntimePerformanceOverlay();
         EnsureRuntimeArtUi();
         RegisterNavigation();
         RegisterHeroButtons();
@@ -1816,6 +1828,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void Update()
     {
+        TickPerformanceOverlay();
+
         if (runtimeArt != null)
         {
             runtimeArt.Tick(Time.unscaledDeltaTime);
@@ -2208,6 +2222,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetFastRewardsPopupVisible(false);
     }
 
+    private void SetFastRewardsPopupObjectsVisible(bool isVisible)
+    {
+        if (fastRewardsPopupBlocker != null)
+        {
+            fastRewardsPopupBlocker.gameObject.SetActive(isVisible);
+        }
+
+        if (fastRewardsPopupRoot != null)
+        {
+            fastRewardsPopupRoot.gameObject.SetActive(isVisible);
+        }
+    }
+
     private void ShowChatPopup()
     {
         SetChatPopupVisible(true);
@@ -2322,8 +2349,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             autoContinueFightCoroutine = null;
         }
 
+        if (activeFightCoroutine != null)
+        {
+            StopCoroutine(activeFightCoroutine);
+            activeFightCoroutine = null;
+        }
+
         fightCancelRequested = false;
         campaignFightInProgress = false;
+        SetProjectilesVisible(fightHeroProjectileImages, false);
+        SetProjectilesVisible(fightEnemyProjectileImages, false);
+        SetRawImagesVisible(fightHeroFxImages, false);
+        HideRavikSkeletalViews(fightHeroSkeletalViews);
+        HidePaladinSkeletalViews(fightHeroPaladinViews);
         if (battleTargetMode == BattleTargetMode.Campaign)
         {
             selectedCampaignStage = Mathf.Max(1, enemyLevel);
@@ -6031,6 +6069,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         campaignFightInProgress = false;
         SetBattleFlowMode(BattleFlowMode.Result);
+        if (fightResultRoot != null)
+        {
+            fightResultRoot.SetAsLastSibling();
+        }
 
         if (fightResultTitleText != null)
         {
@@ -6046,9 +6088,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (fightContinueButton != null)
         {
             fightContinueButton.interactable = true;
+            fightContinueButton.transform.SetAsLastSibling();
         }
 
         RefreshGameplayInteractivity();
+        SetButtonInteractable(fightContinueButton, true);
         QueueAutoContinueFight(success);
     }
 
@@ -13693,6 +13737,63 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return "Player";
     }
 
+    private void EnsureRuntimeInputStack()
+    {
+        var eventSystem = EventSystem.current;
+        if (eventSystem == null)
+        {
+            eventSystem = FindAnyObjectByType<EventSystem>();
+        }
+
+        if (eventSystem == null)
+        {
+            var eventSystemObject = new GameObject("EventSystem");
+            eventSystem = eventSystemObject.AddComponent<EventSystem>();
+        }
+
+        eventSystem.sendNavigationEvents = true;
+        eventSystem.pixelDragThreshold = Mathf.Max(eventSystem.pixelDragThreshold, 10);
+
+#if ENABLE_INPUT_SYSTEM
+        var inputSystemModule = eventSystem.GetComponent<InputSystemUIInputModule>();
+        if (inputSystemModule == null)
+        {
+            inputSystemModule = eventSystem.gameObject.AddComponent<InputSystemUIInputModule>();
+        }
+
+        if (inputSystemModule.actionsAsset == null)
+        {
+            inputSystemModule.AssignDefaultActions();
+        }
+
+        inputSystemModule.enabled = true;
+
+        var modules = eventSystem.GetComponents<BaseInputModule>();
+        for (var i = 0; i < modules.Length; i++)
+        {
+            if (modules[i] != null && modules[i] != inputSystemModule)
+            {
+                modules[i].enabled = false;
+            }
+        }
+#else
+        if (eventSystem.GetComponent<BaseInputModule>() == null)
+        {
+            eventSystem.gameObject.AddComponent<StandaloneInputModule>();
+        }
+#endif
+
+        var canvases = Resources.FindObjectsOfTypeAll<Canvas>();
+        for (var i = 0; i < canvases.Length; i++)
+        {
+            var canvas = canvases[i];
+            if (canvas != null && canvas.gameObject.scene.IsValid() && canvas.GetComponent<GraphicRaycaster>() == null)
+            {
+                canvas.gameObject.AddComponent<GraphicRaycaster>();
+            }
+        }
+    }
+
     private void EnsureRuntimeBackendClient()
     {
         if (backendClient != null)
@@ -13840,6 +13941,50 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetComponentActive(homeGoldText, false);
         SetComponentActive(gemsText, false);
         SetComponentActive(mythEssenceText, false);
+    }
+
+    private void EnsureRuntimePerformanceOverlay()
+    {
+        if (performanceOverlayText != null || topBarRoot == null)
+        {
+            return;
+        }
+
+        performanceOverlayText = CreateRuntimeText(topBarRoot, "Runtime Performance Overlay", "FPS -- | -- ms", 16, new Vector2(228, -132), new Vector2(300, 26));
+        performanceOverlayText.alignment = TextAlignmentOptions.Right;
+        performanceOverlayText.color = new Color(0.72f, 0.95f, 1f, 0.72f);
+        performanceOverlayText.enableAutoSizing = true;
+        performanceOverlayText.fontSizeMin = 12;
+        performanceOverlayText.fontSizeMax = 16;
+        performanceOverlayText.textWrappingMode = TextWrappingModes.NoWrap;
+        performanceOverlayText.raycastTarget = false;
+        performanceOverlayText.transform.SetAsLastSibling();
+    }
+
+    private void TickPerformanceOverlay()
+    {
+        if (performanceOverlayText == null)
+        {
+            return;
+        }
+
+        var deltaTime = Mathf.Max(Time.unscaledDeltaTime, 0.0001f);
+        performanceOverlayTimer += deltaTime;
+        performanceOverlayFrames++;
+        performanceOverlayFrameTimeMs = Mathf.Lerp(performanceOverlayFrameTimeMs <= 0f ? deltaTime * 1000f : performanceOverlayFrameTimeMs, deltaTime * 1000f, 0.18f);
+
+        if (performanceOverlayTimer < PerformanceOverlayUpdateInterval)
+        {
+            return;
+        }
+
+        var fps = performanceOverlayFrames / Mathf.Max(performanceOverlayTimer, 0.0001f);
+        performanceOverlayText.text = $"FPS {fps:0} | {performanceOverlayFrameTimeMs:0.0} ms";
+        performanceOverlayText.color = fps < 45f
+            ? new Color(1f, 0.72f, 0.34f, 0.8f)
+            : new Color(0.72f, 0.95f, 1f, 0.72f);
+        performanceOverlayTimer = 0f;
+        performanceOverlayFrames = 0;
     }
 
     private void EnsureRuntimeScreenBackdrops()
@@ -14030,9 +14175,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        summonResultPopupRoot = CreateRuntimePanel(summonPanel.transform, "Summon Result Popup", new Vector2(0, -140), new Vector2(900, 1040), new Color(0.01f, 0.01f, 0.014f, 0.92f));
+        summonResultPopupRoot = CreateRuntimePanel(summonPanel.transform, "Summon Result Popup", new Vector2(0, -150), new Vector2(900, 940), new Color(0.01f, 0.01f, 0.014f, 0.92f));
         summonResultPopupRoot.SetAsLastSibling();
-        CreateRuntimePanel(summonResultPopupRoot, "Result Parchment", new Vector2(0, -455), new Vector2(820, 740), new Color(0.15f, 0.09f, 0.055f, 0.98f));
+        CreateRuntimePanel(summonResultPopupRoot, "Result Parchment", new Vector2(0, -410), new Vector2(820, 680), new Color(0.15f, 0.09f, 0.055f, 0.98f));
         CreateRuntimePanel(summonResultPopupRoot, "Result Header Glow", new Vector2(0, -70), new Vector2(640, 12), new Color(1f, 0.75f, 0.23f, 0.95f));
         summonResultPopupTitleText = CreateRuntimeText(summonResultPopupRoot, "Result Title", Tr("summon.result.title"), 34, new Vector2(0, -36), new Vector2(760, 58));
         summonResultPopupTitleText.fontStyle = FontStyles.Bold;
@@ -14048,24 +14193,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             var row = i < 3 ? 0 : 1;
             var column = row == 0 ? i : i - 3;
             var x = row == 0 ? -260f + (column * 260f) : -130f + (column * 260f);
-            var y = row == 0 ? -175f : -445f;
-            var card = CreateRuntimePanel(summonResultPopupRoot, $"Result Hero Card {i + 1}", new Vector2(x, y), new Vector2(205, 244), new Color(0.62f, 0.26f, 0.12f, 0.96f));
+            var y = row == 0 ? -124f : -360f;
+            var card = CreateRuntimePanel(summonResultPopupRoot, $"Result Hero Card {i + 1}", new Vector2(x, y), new Vector2(205, 226), new Color(0.62f, 0.26f, 0.12f, 0.96f));
             summonResultHeroFrames[i] = card.GetComponent<Image>();
             CreateRuntimePanel(card, "Inner Glow", new Vector2(0, -118), new Vector2(188, 18), new Color(1f, 0.72f, 0.28f, 0.5f));
-            summonResultHeroImages[i] = CreateRuntimeRawImage(card, "Hero", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -14), new Vector2(150, 150), new Vector2(0.5f, 1f));
-            summonResultHeroNameTexts[i] = CreateRuntimeText(card, "Name", string.Empty, 19, new Vector2(0, -166), new Vector2(178, 28));
+            summonResultHeroImages[i] = CreateRuntimeRawImage(card, "Hero", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -12), new Vector2(142, 142), new Vector2(0.5f, 1f));
+            summonResultHeroNameTexts[i] = CreateRuntimeText(card, "Name", string.Empty, 19, new Vector2(0, -154), new Vector2(178, 28));
             summonResultHeroNameTexts[i].fontStyle = FontStyles.Bold;
             summonResultHeroNameTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
             summonResultHeroNameTexts[i].enableAutoSizing = true;
             summonResultHeroNameTexts[i].fontSizeMin = 13;
             summonResultHeroNameTexts[i].fontSizeMax = 19;
-            summonResultHeroCountTexts[i] = CreateRuntimeText(card, "Draw Count", string.Empty, 30, new Vector2(0, -202), new Vector2(178, 38));
+            summonResultHeroCountTexts[i] = CreateRuntimeText(card, "Draw Count", string.Empty, 30, new Vector2(0, -188), new Vector2(178, 34));
             summonResultHeroCountTexts[i].fontStyle = FontStyles.Bold;
             summonResultHeroCountTexts[i].color = Color.white;
             card.gameObject.SetActive(false);
         }
 
-        summonAutoToggleButton = CreateRuntimeButton(summonResultPopupRoot, "Auto Summon Toggle", string.Empty, 0, -742, 330, 58);
+        summonAutoToggleButton = CreateRuntimeButton(summonResultPopupRoot, "Auto Summon Toggle", string.Empty, 0, -666, 330, 58);
         var autoLabel = summonAutoToggleButton.transform.Find("Label");
         if (autoLabel != null)
         {
@@ -14082,9 +14227,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         summonAutoToggleText.fontStyle = FontStyles.Bold;
         summonAutoToggleText.color = new Color(1f, 0.86f, 0.28f);
 
-        summonResultTenButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Ten", "x10", -270, -850, 265, 96);
-        summonResultMaxButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Max", "x300", 270, -850, 265, 96);
-        summonResultCloseButton = CreateRuntimeButton(summonResultPopupRoot, "Result Close", "X", 0, -850, 86, 86);
+        summonResultTenButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Ten", "x10", -270, -778, 265, 90);
+        summonResultMaxButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Max", "x300", 270, -778, 265, 90);
+        summonResultCloseButton = CreateRuntimeButton(summonResultPopupRoot, "Result Close", "X", 0, -778, 86, 86);
         CreateRuntimeRawImage(summonResultTenButton.transform, "Gem Icon", GetCurrencyIconTexture("mythic_gem"), new Vector2(-92, -58), new Vector2(20, 27), new Vector2(0.5f, 1f));
         CreateRuntimeRawImage(summonResultMaxButton.transform, "Gem Icon", GetCurrencyIconTexture("mythic_gem"), new Vector2(-92, -58), new Vector2(20, 27), new Vector2(0.5f, 1f));
         summonResultTenCostText = CreateSummonResultButtonCostText(summonResultTenButton.transform, "Cost");
@@ -14601,9 +14746,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         formationTeamText.fontSizeMin = 15;
         formationTeamText.fontSizeMax = 23;
 
-        var arena = CreateRuntimePanel(formationRoot, "Formation Arena Preview", new Vector2(0, -235), new Vector2(820, 410), new Color(0.03f, 0.045f, 0.07f, 0.88f));
-        CreateLayeredRuntimeBackground(arena, new Vector2(820, 410), 0.62f);
-        formationArenaBackgroundImage = CreateRuntimeRawImage(arena, "Formation Dungeon Battle Map", null, Vector2.zero, new Vector2(820, 410), new Vector2(0.5f, 1f));
+        var arena = CreateRuntimePanel(formationRoot, "Formation Arena Preview", new Vector2(0, -228), new Vector2(840, 454), new Color(0.03f, 0.045f, 0.07f, 0.88f));
+        CreateLayeredRuntimeBackground(arena, new Vector2(840, 454), 0.62f);
+        formationArenaBackgroundImage = CreateRuntimeRawImage(arena, "Formation Dungeon Battle Map", null, Vector2.zero, new Vector2(840, 454), new Vector2(0.5f, 1f));
         formationArenaBackgroundImage.color = new Color(1f, 1f, 1f, 0.82f);
         formationArenaBackgroundImage.gameObject.SetActive(false);
 
@@ -14619,7 +14764,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var slotObject = new GameObject($"Formation Slot {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
             slotObject.transform.SetParent(arena, false);
-            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), heroPositions[i] + new Vector2(0, 4), new Vector2(158, 172), new Vector2(0.5f, 1f));
+            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), heroPositions[i] + new Vector2(0, 4), new Vector2(148, 160), new Vector2(0.5f, 1f));
 
             var slotFrame = slotObject.GetComponent<Image>();
             slotFrame.color = new Color(0.1f, 0.13f, 0.2f, 0.62f);
@@ -14631,12 +14776,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             slotButton.onClick.AddListener(() => SelectFormationSlot(capturedSlot));
             formationSlotButtons[i] = slotButton;
 
-            formationHeroImages[i] = CreateRuntimeRawImage(arena, $"Formation Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(124, 124), new Vector2(0.5f, 1f));
+            formationHeroImages[i] = CreateRuntimeRawImage(arena, $"Formation Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(112, 112), new Vector2(0.5f, 1f));
             formationHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
             formationHeroImages[i].raycastTarget = false;
-            formationHeroSkeletalViews[i] = RavikSkeletalCombatView.Create(arena, $"Formation Ravik Skeletal View {i + 1}", heroPositions[i], 0.26f);
-            formationHeroPaladinViews[i] = PaladinSkeletalCombatView.Create(arena, $"Formation Paladin Skeletal View {i + 1}", heroPositions[i], 0.3f);
-            formationHeroTexts[i] = CreateRuntimeText(arena, $"Formation Hero Label {i + 1}", string.Empty, 16, heroPositions[i] + new Vector2(0, -112), new Vector2(126, 26));
+            formationHeroSkeletalViews[i] = RavikSkeletalCombatView.Create(arena, $"Formation Ravik Skeletal View {i + 1}", heroPositions[i], 0.21f);
+            formationHeroPaladinViews[i] = PaladinSkeletalCombatView.Create(arena, $"Formation Paladin Skeletal View {i + 1}", heroPositions[i], 0.25f);
+            formationHeroTexts[i] = CreateRuntimeText(arena, $"Formation Hero Label {i + 1}", string.Empty, 16, heroPositions[i] + new Vector2(0, -104), new Vector2(118, 26));
             formationHeroTexts[i].fontStyle = FontStyles.Bold;
             formationHeroTexts[i].enableAutoSizing = true;
             formationHeroTexts[i].fontSizeMin = 12;
@@ -14644,17 +14789,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             formationHeroTexts[i].raycastTarget = false;
         }
 
-        formationEnemyImage = CreateRuntimeRawImage(arena, "Formation Enemy", LoadCombatTexture("enemy_rat", "idle", 0, "enemy_campaign"), new Vector2(260, -164), new Vector2(150, 150), new Vector2(0.5f, 1f));
+        formationEnemyImage = CreateRuntimeRawImage(arena, "Formation Enemy", LoadCombatTexture("enemy_rat", "idle", 0, "enemy_campaign"), new Vector2(346, -44), new Vector2(132, 132), new Vector2(0.5f, 1f));
         formationEnemyImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale("enemy_rat"), 1f, 1f);
-        formationEnemyText = CreateRuntimeText(formationRoot, "Formation Enemy Text", string.Empty, 23, new Vector2(0, -675), new Vector2(780, 82));
+        formationEnemyText = CreateRuntimeText(formationRoot, "Formation Enemy Text", string.Empty, 23, new Vector2(0, -716), new Vector2(780, 82));
         formationEnemyText.enableAutoSizing = true;
         formationEnemyText.fontSizeMin = 16;
         formationEnemyText.fontSizeMax = 23;
 
-        formationHintText = CreateRuntimeText(formationRoot, "Formation Hint", $"Confirm starts a visible {DefaultCombatDurationSeconds}s combat sim.", 20, new Vector2(0, -770), new Vector2(760, 40));
+        formationHintText = CreateRuntimeText(formationRoot, "Formation Hint", $"Confirm starts a visible {DefaultCombatDurationSeconds}s combat sim.", 20, new Vector2(0, -804), new Vector2(760, 40));
         formationHintText.color = new Color(0.78f, 0.84f, 0.92f);
 
-        formationAutoContinueButton = CreateRuntimeButton(formationRoot, "Formation Auto Continue Toggle", string.Empty, 0, -835, 560, 50);
+        formationAutoContinueButton = CreateRuntimeButton(formationRoot, "Formation Auto Continue Toggle", string.Empty, 0, -864, 560, 50);
         var autoContinueButtonImage = formationAutoContinueButton.GetComponent<Image>();
         if (autoContinueButtonImage != null)
         {
@@ -14673,8 +14818,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         formationAutoContinueText.raycastTarget = false;
         RefreshFormationAutoContinueToggle();
 
-        formationBackButton = CreateRuntimeButton(formationRoot, "Formation Back Button", "Back", -225, -900, 210, 62);
-        formationConfirmButton = CreateRuntimeButton(formationRoot, "Formation Confirm Button", "Confirm", 135, -900, 330, 70);
+        formationBackButton = CreateRuntimeButton(formationRoot, "Formation Back Button", "Back", -225, -930, 210, 62);
+        formationConfirmButton = CreateRuntimeButton(formationRoot, "Formation Confirm Button", "Confirm", 135, -930, 330, 70);
     }
 
     private void EnsureRuntimeFightUi()
@@ -14911,6 +15056,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         inventoryPopupRoot.gameObject.SetActive(false);
         RefreshInventoryPopupUi();
 
+        fastRewardsPopupBlocker = CreateRuntimePanel(homeActionRoot, "Fast Rewards Touch Blocker", new Vector2(0, -700), new Vector2(1060, 1460), new Color(0f, 0f, 0f, 0.12f));
+        var fastRewardsBlockerImage = fastRewardsPopupBlocker.GetComponent<Image>();
+        if (fastRewardsBlockerImage != null)
+        {
+            fastRewardsBlockerImage.raycastTarget = true;
+        }
+
         fastRewardsPopupRoot = CreateRuntimePopup(homeActionRoot, "Fast Rewards Popup", new Vector2(0, -350), new Vector2(760, 500), "Fast Rewards");
         fastRewardsPopupText = CreateRuntimeText(fastRewardsPopupRoot, "Fast Rewards Body", string.Empty, 22, new Vector2(0, -96), new Vector2(660, 224));
         fastRewardsPopupText.alignment = TextAlignmentOptions.Center;
@@ -14934,6 +15086,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         fastRewardsProgressText.raycastTarget = false;
         fastRewardsRedeemButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Redeem Button", "Redeem", -120, -425, 210, 58);
         fastRewardsCloseButton = CreateRuntimeButton(fastRewardsPopupRoot, "Fast Rewards Close Button", "Close", 145, -425, 160, 58);
+        fastRewardsPopupBlocker.gameObject.SetActive(false);
         fastRewardsPopupRoot.gameObject.SetActive(false);
 
         chatPopupRoot = CreateRuntimePopup(homeActionRoot, "Chat Popup", new Vector2(-210, -590), new Vector2(560, 240), "Chat");
@@ -15832,7 +15985,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var leftSide = i < 4;
             var row = leftSide ? i : i - 4;
-            var slotRoot = CreateRuntimePanel(heroDetailRoot, $"Hero Detail Gear Slot {i + 1}", new Vector2((leftSide ? -1f : 1f) * 340f, -178f - row * 122f), new Vector2(106, 106), new Color(0.07f, 0.035f, 0.025f, 0.92f));
+            var slotRoot = CreateRuntimePanel(heroDetailRoot, $"Hero Detail Gear Slot {i + 1}", new Vector2((leftSide ? -1f : 1f) * 314f, -178f - row * 122f), new Vector2(104, 106), new Color(0.07f, 0.035f, 0.025f, 0.92f));
             heroDetailGearSlotFrames[i] = slotRoot.GetComponent<Image>();
             heroDetailGearSlotFrames[i].raycastTarget = true;
             heroDetailGearSlotButtons[i] = slotRoot.gameObject.AddComponent<Button>();
@@ -15868,8 +16021,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroDetailResourceText.fontSizeMax = 20;
         heroDetailResourceText.textWrappingMode = TextWrappingModes.NoWrap;
 
-        heroDetailPreviousButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Previous Button", "<", -245, -618, 64, 66);
-        heroDetailNextButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Next Button", ">", 245, -618, 64, 66);
+        heroDetailPreviousButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Previous Button", "<", -190, -618, 64, 66);
+        heroDetailNextButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Next Button", ">", 190, -618, 64, 66);
         heroDetailRemoveGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Remove Gear Button", "Remove Gear", -250, -1018, 210, 62);
         heroDetailLevelButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Level Button", "Level Up", 0, -1022, 260, 74);
         heroDetailEquipGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Equip Gear Button", "Equip Gear", 250, -1018, 210, 62);
@@ -18379,7 +18532,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         MoveUiElement(summonResultText, summonResultBoxRoot != null ? summonResultBoxRoot.gameObject : summonPanel, new Vector2(0, -10), new Vector2(700, 50));
         MoveUiElement(summonCountText, summonCountChipRoot != null ? summonCountChipRoot.gameObject : summonPanel, new Vector2(4, -11), new Vector2(176, 32));
         MoveUiElement(summonRatesText, summonRatesBoxRoot != null ? summonRatesBoxRoot.gameObject : summonPanel, new Vector2(0, -22), new Vector2(470, 84));
-        MoveUiElement(summonResultPopupRoot, summonPanel, new Vector2(0, -140), new Vector2(900, 1040));
+        MoveUiElement(summonResultPopupRoot, summonPanel, new Vector2(0, -150), new Vector2(900, 940));
     }
 
     private void LayoutShopScreen()
@@ -20298,7 +20451,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var enemyTextureName = isDungeon ? GetDungeonBossTextureName(dungeon.dungeonId) : GetCampaignEnemyTextureName(stageNumber, 0);
             formationEnemyImage.texture = LoadCombatTexture(enemyTextureName, "idle", 0, "enemy_campaign");
-            formationEnemyImage.rectTransform.sizeDelta = isDungeon ? new Vector2(176, 176) : new Vector2(150, 150);
+            formationEnemyImage.rectTransform.sizeDelta = isDungeon ? new Vector2(154, 154) : new Vector2(132, 132);
             formationEnemyImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale(enemyTextureName), 1f, 1f);
         }
 
@@ -20485,13 +20638,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(-330, -250),
-            new Vector2(-230, -132),
-            new Vector2(-128, -260),
-            new Vector2(-22, -142),
-            new Vector2(86, -258),
-            new Vector2(190, -154),
-            new Vector2(300, -244)
+            new Vector2(-316, -300),
+            new Vector2(-214, -136),
+            new Vector2(-104, -312),
+            new Vector2(6, -144),
+            new Vector2(116, -308),
+            new Vector2(220, -154),
+            new Vector2(308, -286)
         };
     }
 
@@ -20556,7 +20709,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             if (fastRewardsPopupRoot != null)
             {
-                fastRewardsPopupRoot.gameObject.SetActive(false);
+                SetFastRewardsPopupObjectsVisible(false);
             }
 
             if (chatPopupRoot != null)
@@ -20591,7 +20744,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        fastRewardsPopupRoot.gameObject.SetActive(isVisible);
+        SetFastRewardsPopupObjectsVisible(isVisible);
         if (isVisible)
         {
             if (inventoryPopupRoot != null)
@@ -20619,6 +20772,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 campaignStageDetailPopupRoot.gameObject.SetActive(false);
             }
 
+            if (fastRewardsPopupBlocker != null)
+            {
+                fastRewardsPopupBlocker.SetAsLastSibling();
+            }
+
             fastRewardsPopupRoot.SetAsLastSibling();
             RefreshFastRewardsPopupUi();
         }
@@ -20641,7 +20799,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             if (fastRewardsPopupRoot != null)
             {
-                fastRewardsPopupRoot.gameObject.SetActive(false);
+                SetFastRewardsPopupObjectsVisible(false);
             }
 
             if (managementPopupRoot != null)
@@ -20683,7 +20841,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (fastRewardsPopupRoot != null)
         {
-            fastRewardsPopupRoot.gameObject.SetActive(false);
+            SetFastRewardsPopupObjectsVisible(false);
         }
 
         if (chatPopupRoot != null)
@@ -20725,7 +20883,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (fastRewardsPopupRoot != null)
         {
-            fastRewardsPopupRoot.gameObject.SetActive(false);
+            SetFastRewardsPopupObjectsVisible(false);
         }
 
         if (chatPopupRoot != null)
@@ -20767,7 +20925,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (fastRewardsPopupRoot != null)
         {
-            fastRewardsPopupRoot.gameObject.SetActive(false);
+            SetFastRewardsPopupObjectsVisible(false);
         }
 
         if (chatPopupRoot != null)
@@ -21899,6 +22057,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         text.alignment = TextAlignmentOptions.Center;
         text.color = Color.white;
         text.textWrappingMode = TextWrappingModes.Normal;
+        text.raycastTarget = false;
         return text;
     }
 
@@ -21926,6 +22085,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         text.alignment = TextAlignmentOptions.Center;
         text.color = Color.white;
         text.textWrappingMode = TextWrappingModes.Normal;
+        text.raycastTarget = false;
         StretchRuntime(text.rectTransform, new Vector2(16, 8));
 
         return button;

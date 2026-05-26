@@ -5,7 +5,7 @@ Last updated: 2026-05-26
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.138`, save version `2`.
+- Unity client code is at Prototype `0.2.139`, save version `2`.
 - Backend API default version is `0.2.58`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -161,10 +161,19 @@ Last updated: 2026-05-26
 - Filtered MuMu Logcat found no Mythwake/Unity `Exception`, `NullReference`, `FATAL`, `ANR`, or missing-asset errors. Remaining warnings were emulator/Android environment noise (`vold`, Google Play Services background starts, MuMu `opengl-gc`, telephony service null). `dumpsys gfxinfo` did not expose detailed Unity frame timing, so FPS is currently a visual 60 Hz observation instead of profiler data. Rough memory after the pass: `TOTAL PSS` about `396 MB`.
 - MuMu UX observations: Home/Village/Fast Rewards/Hero/Gear/Summon/Fight are touchable and readable. Gear's compact card layout holds up on the Android target. Remaining visual follow-ups are Summon result's large dark one-pull repeat area, dense Formation slot/character presentation, Hero Detail's right-side guide line, and watching Result Continue responsiveness after very short early fights.
 - The MuMu pass also fixed the `EquipmentIcons.meta` YAML warning and hardened `scripts/check-unity-current-slice.ps1` so Unity's benign NamedPipe shutdown IOException no longer turns an otherwise successful Current Slice into a false failure. `scripts/check-unity-current-slice.cmd` passes after that correction.
+- Prototype `0.2.139` addresses the Android/emulator button blocker class directly: runtime startup now ensures an `EventSystem`, `InputSystemUIInputModule` with default actions, enabled `GraphicRaycaster`s on runtime canvases, and disabled incompatible legacy input modules when the project is in new-Input-System mode. Runtime TMP labels are non-raycast by default, so generated text cannot steal button touches.
+- Added a small runtime FPS overlay under the top bar. It is non-raycast/non-blocking, updates every 0.5s, and showed MuMu around `29-30 FPS` / `33-35 ms` on the checked screens.
+- Fast Rewards now has a separate modal touch blocker. A real MuMu retest confirmed that tapping Battle while the Fast Rewards popup is open no longer clicks through; Close remains responsive.
+- Mobile polish in `0.2.139`: Summon result popup spacing is tighter, Formation's enemy preview no longer sits on top of the right hero slots, Hero Detail gear slots/prev-next spacing have a larger side margin, and Result Continue stops leftover fight coroutines/FX before returning Home.
+- MuMuPlayer touch-polish pass for Prototype `0.2.139`: APK `Builds\Android\Mythwake-0.2.139-mumu.apk` built, installed, launched, and stayed focused on `emulator-5554` (`SM_F946B`, Android `12`, `1080x1920`, `280 dpi`). Cold launch reported Android `am start -W` `TotalTime 881 ms`; host stopwatch was about `0.92s` until launch command return, followed by a short UI settle wait.
+- Real MuMu screenshots for this pass are stored in `docs/screenshots/android/2026-05-26-touch-polish-final/`. Covered: Home/FPS, stage preview, Fast Rewards and modal block test, Formation, Fight Result, Result Continue back to Home, Village map, Rathaus detail, free plot build panel, Heroes, Hero Detail, accessory and Weapon gear lists, Gear showcase, and Summon. The Summon result popup was not captured because the emulator save had only `20` summon currency while the single pull cost was `35`.
+- Filtered Logcat after the touch-polish pass found no Mythwake/Unity `Exception`, `NullReference`, `FATAL`, `ANR`, EventSystem/InputSystem, or missing-asset errors. Remaining observed noise was emulator renderer spam: `TimeStats: RenderEngineTimes are already at its maximum size[64]`.
+- Physical Android device/notch/gesture safe-area testing remains open; only MuMu was attached in this pass.
 
 ## Next Small Steps
 
-1. Repeat the MuMu pass on a physical Android phone for real notch/gesture safe-area behavior, then compare against `docs/screenshots/android/2026-05-26-mumu/`.
+1. Repeat the MuMu pass on a physical Android phone for real notch/gesture safe-area behavior, then compare against `docs/screenshots/android/2026-05-26-touch-polish-final/`.
 2. Plan the durable tester account slice: Email + Password registration/login first, Google Login through Play Store / Google Play Services later.
-3. Add a small runtime FPS/profiler overlay or profiler capture path because MuMu `gfxinfo` does not provide useful Unity frame buckets.
-4. Polish the next visible mobile rough spots: Summon result one-pull spacing, Formation density, Hero Detail edge line, and Result Continue responsiveness after very short fights.
+3. Add a richer profiler capture path because the runtime FPS overlay is now present, but MuMu `gfxinfo` still does not provide useful Unity frame buckets.
+4. Re-test Summon result spacing after granting enough summon currency in a clean tester save, and capture the Result popup on-device.
+5. Capture the full Home stage-detail popup in the next coordinate/device pass; this pass verified stage preview plus Battle/Formation flow.

@@ -31,6 +31,14 @@ Latest known pushed commit before the current continuation:
 - `e12d6b9 Polish Gear mobile layout`
 
 Current continuation:
+- Prototype `0.2.139` fixes the Android/emulator button-blocker class and adds the mobile touch-polish pass. Runtime startup now ensures an `EventSystem`, `InputSystemUIInputModule` with default actions, enabled runtime `GraphicRaycaster`s, and disabled incompatible legacy modules under the new Input System. Generated TMP labels are non-raycast by default, so text cannot steal touches from buttons.
+- A small runtime FPS overlay now appears under the top bar. It is non-blocking and showed MuMu around `29-30 FPS` / `33-35 ms` on Home, Village, Hero/Gear, Summon, Formation, and Result.
+- Fast Rewards now has a modal touch blocker. In MuMu, tapping Battle while the popup was open left Fast Rewards open, confirming no more click-through to underlying Home controls.
+- Mobile polish in this continuation: Summon result popup spacing tightened, Formation enemy preview moved out of the right hero-slot cluster, Hero Detail gear/previous-next side spacing improved, and Result Continue now stops leftover fight coroutine/FX state before returning Home.
+- `Builds\Android\Mythwake-0.2.139-mumu.apk` built, installed, and launched in MuMuPlayer (`emulator-5554`, model `SM_F946B`, Android `12`, `1080x1920`, `280 dpi`). Cold launch reported Android `am start -W` `TotalTime 881 ms`, with host stopwatch about `0.92s` until launch command return.
+- Real screenshots and QA notes for this pass are under `docs/screenshots/android/2026-05-26-touch-polish-final/`. Covered: Home/FPS, stage preview, Fast Rewards modal block, Formation, Fight Result, Result Continue, Village map/detail/build panel, Heroes, Hero Detail, Hero gear lists, Gear showcase, and Summon. Summon result popup still needs a clean save or granted summon currency; this emulator save had `20` currency versus `35` cost.
+- Filtered Logcat showed no Mythwake/Unity `Exception`, `NullReference`, `FATAL`, `ANR`, EventSystem/InputSystem, or missing-asset errors. Remaining visible noise was MuMu/Android renderer spam: `TimeStats: RenderEngineTimes are already at its maximum size[64]`.
+- A physical Android phone pass remains open for real notch/gesture safe area; only MuMu was attached.
 - Prototype `0.2.138` now has a real MuMuPlayer Android pass. MuMu was detected as `emulator-5554` on Android `12`, `1080x1920`, `280 dpi`, `60 Hz`; `Builds\Android\Mythwake-0.2.138-mumu.apk` installed and launched successfully.
 - After the final metadata-fix rebuild/reinstall, `am start -W` reported cold `TotalTime 715 ms` and the host stopwatch measured about `0.76s` until the launch command returned. The Unity Activity stayed focused in portrait.
 - Real MuMu screenshots, filtered Logcat, `gfxinfo`, and memory notes live under `docs/screenshots/android/2026-05-26-mumu/`; the set covers Home, Home stage detail, Patrol Info, Village, Village build/detail, Fast Rewards, Hero Detail, Hero Detail gear list, Gear, Summon, Summon result, Formation, Fight, and Result.
@@ -138,7 +146,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.138`
+- Prototype `0.2.139`
 - Save version `2`
 
 Important Unity scripts:
