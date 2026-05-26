@@ -1017,6 +1017,9 @@ public static class UpgradeClutterValidation
         var originalSlot = RequireField<int>(controller, "selectedAccessorySlot");
         var originalRarity = RequireField<int>(controller, "selectedAccessoryRarity");
         var originalCopies = (int)InvokePrivate(controller, "GetAccessoryInventoryCount", slot, rarity);
+        var heroIndex = (int)InvokePrivate(controller, "GetSelectedHeroIndex");
+        var originalEquippedRarity = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, slot);
+        var originalEquippedLevel = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryLevel", heroIndex, slot);
         var addedInventoryCopies = false;
 
         try
@@ -1024,16 +1027,24 @@ public static class UpgradeClutterValidation
             SetPrivateField(controller, "selectedAccessorySlot", slot);
             SetPrivateField(controller, "selectedAccessoryRarity", rarity);
             InvokePrivate(controller, "AddAccessoryInventory", slot, rarity, addedCopies);
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, slot, rarity, 1);
             addedInventoryCopies = true;
             InvokePrivate(controller, "RefreshUi");
             controller.ShowGear();
             Canvas.ForceUpdateCanvases();
 
             var selectedText = RequireObjectField<TMP_Text>(controller, "accessorySelectedText");
+            var equippedCopies = (int)InvokePrivate(controller, "CountEquippedAccessoryCopies", slot, rarity);
             AssertTextContains(selectedText, "R3", "Gear screen selected accessory summary should show the selected rarity.");
             AssertTextContains(selectedText, GetLocalizedText(controller, "gear.selected_rarity").Replace("{0}", string.Empty).Trim(), "Gear screen selected accessory summary should use selected-rarity copy.");
             AssertTextContains(selectedText, $"{GetLocalizedText(controller, "ui.common.copies")} {originalCopies + addedCopies}", "Gear screen selected accessory summary should show selected-rarity copy count.");
+            AssertTextContains(selectedText, $"{GetLocalizedText(controller, "ui.common.equipped")} {equippedCopies}", "Gear screen selected accessory summary should show equipped copy count.");
             AssertTextFits(selectedText, selectedText.name, "Gear screen selected accessory summary");
+
+            var equipText = RequireObjectField<TMP_Text>(controller, "accessoryEquipText");
+            AssertTextContains(equipText, $"{GetLocalizedText(controller, "ui.common.copies")} {originalCopies + addedCopies}", "Gear screen equip action should show selected-rarity bag copies.");
+            AssertTextContains(equipText, $"{GetLocalizedText(controller, "ui.common.equipped")} {equippedCopies}", "Gear screen equip action should show equipped copies.");
+            AssertTextFits(equipText, equipText.name, "Gear screen equip action");
         }
         finally
         {
@@ -1042,6 +1053,7 @@ public static class UpgradeClutterValidation
                 InvokePrivate(controller, "AddAccessoryInventory", slot, rarity, -addedCopies);
             }
 
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, slot, originalEquippedRarity, originalEquippedLevel);
             SetPrivateField(controller, "selectedAccessorySlot", originalSlot);
             SetPrivateField(controller, "selectedAccessoryRarity", originalRarity);
             InvokePrivate(controller, "RefreshUi");

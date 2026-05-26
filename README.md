@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.127
+Prototype version: 0.2.128
 Local save version: 2
 
 Current prototype:
@@ -80,7 +80,7 @@ Current prototype:
 - Hero Detail shows all equipment/accessory slots, keeps starter Weapon/Armor training icons visible, only renders accessory icon art once gear is equipped, keeps empty accessory slots visually empty even when bag copies exist, keeps previous/next navigation clear of the gear-slot columns, uses localized contextual gear action labels, prioritizes owned copies in accessory slot lists, and supports accessory removal locally and in Server Mode
 - Hero Detail labels starter Weapon/Armor slots and rows as training tracks instead of claiming they are equipped item instances
 - Gear screen keeps equipment summaries, accessory text, and gear action controls stacked below the showcase with validator coverage for spacing
-- Gear screen accessory selection now shows the selected rarity plus copy count inline, uses selected-rarity localization keys, and accessory action labels are localized and covered by German refresh validation
+- Gear screen accessory selection now shows the selected rarity plus bag/equipped copy counts inline, uses selected-rarity localization keys, and accessory action labels are localized and covered by German refresh validation
 - Gear screen accessory inventory copy counts use a compact two-line summary with auto-sized text
 - Prototype UI builder now creates Gear controls in the current localized runtime layout with localized equipment names, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale Gear placeholder copy
 - Home idle patrol keeps the middle hero/enemy lane clear of the reward strip, and the Home idle validator now guards mobile touch target size plus unit/reward/loot-popup separation
@@ -180,6 +180,7 @@ Backend:
   - `docs/UNITY_TEST_STAND.md`
 
 Changelog:
+- Prototype 0.2.128: Clarified Gear selected-rarity and equip action copy counts by showing bag copies alongside equipped copies, with Upgrade Clutter validation through EN/DE refresh paths.
 - Prototype 0.2.127: Added backend/common/PostgreSQL Village building definitions, exposed them through `/definitions`, and routed backend Village build/upgrade plus Team ATK/HP bonuses through the injected catalog while Server Mode keeps client local bonuses paused.
 - Prototype 0.2.126: Tightened the Home idle patrol unit lane above the reward strip and extended Home Idle Combat validation for mobile touch target size, reward shelf fit, and unit/reward separation.
 - Prototype 0.2.125: Moved local Village building costs, max levels, textures, stable IDs, and placeholder bonuses behind client-side building definitions with validator coverage.

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.127";
+    public const string PrototypeVersion = "0.2.128";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -10360,7 +10360,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             accessorySelectedText.text =
                 $"{GetLocalizedAccessorySlotName(slot)}\n" +
                 $"{Tr("ui.common.equipped")}: {equippedText}\n" +
-                $"{TrFormat("gear.selected_rarity", GetAccessoryRarityName(rarity))} | {Tr("ui.common.copies")} {GetAccessoryInventoryCount(slot, rarity)}";
+                $"{TrFormat("gear.selected_rarity", GetAccessoryRarityName(rarity))} | {GetAccessoryCopyStateText(slot, rarity)}";
         }
 
         if (accessoryInventoryText != null)
@@ -10370,7 +10370,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (accessoryEquipText != null)
         {
-            accessoryEquipText.text = $"{TrFormat("gear.equip_rarity", GetAccessoryRarityName(rarity))}\n{Tr("ui.common.copies")} {GetAccessoryInventoryCount(slot, rarity)}";
+            accessoryEquipText.text = $"{TrFormat("gear.equip_rarity", GetAccessoryRarityName(rarity))}\n{GetAccessoryCopyStateText(slot, rarity)}";
         }
 
         if (accessoryLevelText != null)
@@ -10445,6 +10445,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return text;
+    }
+
+    private string GetAccessoryCopyStateText(int slot, int rarity)
+    {
+        return $"{Tr("ui.common.copies")} {GetAccessoryInventoryCount(slot, rarity)} | {Tr("ui.common.equipped")} {CountEquippedAccessoryCopies(slot, rarity)}";
     }
 
     private bool HasAccessoryCopiesToEquip()
