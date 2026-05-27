@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.145";
+    public const string PrototypeVersion = "0.2.146";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -13825,7 +13825,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             androidStandaloneModule = eventSystem.gameObject.AddComponent<StandaloneInputModule>();
         }
 
-        androidStandaloneModule.enabled = true;
+        androidStandaloneModule.enabled = false;
+
+        var mumuInputModule = eventSystem.GetComponent<MythwakeMuMuInputModule>();
+        if (mumuInputModule == null)
+        {
+            mumuInputModule = eventSystem.gameObject.AddComponent<MythwakeMuMuInputModule>();
+        }
+
+        mumuInputModule.enabled = true;
 #else
         var inputSystemModule = eventSystem.GetComponent<InputSystemUIInputModule>();
         if (inputSystemModule == null)

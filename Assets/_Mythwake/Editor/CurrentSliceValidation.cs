@@ -315,8 +315,13 @@ public static class MobileUxValidation
 
         var controllerSource = File.ReadAllText(ControllerPath);
         RequireSourceFragment(controllerSource, "UNITY_ANDROID && !UNITY_EDITOR", "Runtime input setup should switch Android builds to the legacy UI module for MuMu desktop mouse input.");
-        RequireSourceFragment(controllerSource, "androidStandaloneModule.enabled = true", "Runtime input setup should enable StandaloneInputModule on Android.");
+        RequireSourceFragment(controllerSource, "androidStandaloneModule.enabled = false", "Runtime input setup should disable StandaloneInputModule on Android because MuMu mouse Y arrives inverted.");
+        RequireSourceFragment(controllerSource, "MythwakeMuMuInputModule", "Runtime input setup should enable the MuMu-corrected UI input module on Android.");
         RequireSourceFragment(controllerSource, "androidInputSystemModule.enabled = false", "Runtime input setup should disable InputSystemUIInputModule on Android so MuMu does not use shifted mouse coordinates.");
+
+        var mumuInputSource = File.ReadAllText("Assets/_Mythwake/Scripts/MythwakeMuMuInputModule.cs");
+        RequireSourceFragment(mumuInputSource, "Screen.height - rawPosition.y", "MuMu UI input should flip Android mouse Y before Unity UI raycasts.");
+        RequireSourceFragment(mumuInputSource, "Input.touchCount", "MuMu UI input module should keep normal Android touch support while correcting desktop mouse Y.");
 
         var performanceOverlay = RequireObjectField<TMP_Text>(controller, "performanceOverlayText");
         if (performanceOverlay.raycastTarget)

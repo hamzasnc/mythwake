@@ -5,7 +5,7 @@ Last updated: 2026-05-27
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.145`, save version `2`.
+- Unity client code is at Prototype `0.2.146`, save version `2`.
 - Backend API default version is `0.2.58`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -21,6 +21,7 @@ Last updated: 2026-05-27
 - The next account-system gap is now explicit: testers need durable accounts so they do not restart from zero every pass. The planned path is Email + Password first, then Google Login through Play Store / Google Play Services later.
 - Follow-up MuMuPlayer testing found that forcing Unity to render outside Android safe areas made desktop mouse clicks land high above the visible buttons in MuMu. Prototype `0.2.144` keeps rendering inside the safe viewport, removes cutout/layout-behind-system-bar flags, and preserves the explicit launcher Activity intent filter.
 - Prototype `0.2.145` switches Android runtime UI input to `StandaloneInputModule` with both Unity input backends enabled, because MuMu desktop mouse coordinates can be shifted when routed through `InputSystemUIInputModule`.
+- Prototype `0.2.146` replaces the Android UI module with `MythwakeMuMuInputModule`, which flips MuMu's desktop mouse Y coordinate before Unity UI raycasts. The Gyazo repro showed top clicks triggering bottom controls, matching an inverted Y coordinate rather than a layout-only issue.
 
 ## Started This Pass
 
