@@ -2,10 +2,11 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.139
+Prototype version: 0.2.144
 Local save version: 2
 
 Current prototype:
+- MuMuPlayer Android builds keep rendering inside the safe viewport while hiding system bars, so emulator mouse clicks line up with the visible Unity UI.
 - Android build profile
 - Reproducible Android APK batch build helper and portrait screenshot fallback helper
 - Simple portrait UI

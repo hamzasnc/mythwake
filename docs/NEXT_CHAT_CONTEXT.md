@@ -31,6 +31,7 @@ Latest known pushed commit before the current continuation:
 - `e12d6b9 Polish Gear mobile layout`
 
 Current continuation:
+- Prototype `0.2.144` fixes the MuMuPlayer mouse-coordinate drift shown in the Gyazo repro: Unity no longer renders outside Android safe areas and the fullscreen helper no longer lays the view behind system bars/cutouts. The app still hides system bars and keeps the explicit `MAIN`/`LAUNCHER` GameActivity intent filter, but MuMu should now map desktop clicks to the visible button positions instead of high above them.
 - Prototype `0.2.141` fixes the follow-up MuMuPlayer pointer-coordinate drift. Android now uses a fullscreen GameActivity manifest/theme override, a native `MythwakeFullscreen` helper re-applied on launch/resume/focus/inset changes, and full viewport rendering via `androidRenderOutsideSafeArea`.
 - `Builds\Android\Mythwake-0.2.141-mumu.apk` built, installed, and launched in MuMuPlayer (`emulator-5554`, model `SM_F946B`, Android `12`, `1080x1920`, `280 dpi`). Cold launch reported Android `am start -W` `TotalTime 795 ms`.
 - `dumpsys window` reported `ITYPE_STATUS_BAR ... visible=false`; real visible-coordinate taps opened Village, Summon, and Battle Formation. Evidence lives under `docs/screenshots/android/2026-05-27-mumu-touch-fix/`.

@@ -126,7 +126,7 @@ public static class MobileUxValidation
         RequireProjectSetting(projectSettings, "allowedAutorotateToLandscapeRight", "0", "Landscape-right autorotation should stay disabled.");
         RequireProjectSetting(projectSettings, "allowedAutorotateToLandscapeLeft", "0", "Landscape-left autorotation should stay disabled.");
         RequireProjectSetting(projectSettings, "useOSAutorotation", "0", "OS autorotation should not override the portrait test layout.");
-        RequireProjectSetting(projectSettings, "androidRenderOutsideSafeArea", "1", "Android should render across the full MuMu viewport so emulator pointer coordinates match visible UI.");
+        RequireProjectSetting(projectSettings, "androidRenderOutsideSafeArea", "0", "Android should keep rendering inside the safe viewport so MuMu mouse coordinates match visible UI.");
         RequireProjectSetting(projectSettings, "androidStartInFullscreen", "1", "Android should request fullscreen at launch so emulator mouse coordinates match the Unity viewport.");
         RequireProjectSetting(projectSettings, "androidFullscreenMode", "1", "Android fullscreen mode should stay enabled for the mobile test build.");
         RequireProjectSetting(projectSettings, "uIRequiresFullScreen", "1", "Android/iOS should require fullscreen for stable tester input mapping.");
@@ -163,6 +163,7 @@ public static class MobileUxValidation
         RequireSourceFragment(styles, "MythwakeFullscreenGameActivityTheme", "Android library should define the fullscreen GameActivity theme.");
         RequireSourceFragment(styles, "BaseUnityGameActivityTheme", "Android fullscreen theme should inherit Unity's AppCompat GameActivity base theme.");
         RequireSourceFragment(styles, "android:windowFullscreen", "Android fullscreen theme should request hidden status bars before Unity renders.");
+        RequireMissingSourceFragment(styles, "windowLayoutInDisplayCutoutMode", "Android theme should not force cutout rendering because MuMu mouse coordinates can drift from the visible UI.");
         ValidateAndroidFullscreenHelper();
     }
 
@@ -175,10 +176,14 @@ public static class MobileUxValidation
 
         var helper = File.ReadAllText(AndroidFullscreenHelperPath);
         RequireSourceFragment(helper, "SYSTEM_UI_FLAG_IMMERSIVE_STICKY", "Android fullscreen helper should request sticky immersive mode.");
+        RequireSourceFragment(helper, "setDecorFitsSystemWindows(true)", "Android fullscreen helper should keep the Unity view inside MuMu's safe input viewport.");
         RequireSourceFragment(helper, "WindowInsetsController", "Android fullscreen helper should hide API 30+ system bars through WindowInsetsController.");
         RequireSourceFragment(helper, "setOnSystemUiVisibilityChangeListener", "Android fullscreen helper should re-apply fullscreen when MuMu restores system UI.");
         RequireSourceFragment(helper, "setOnApplyWindowInsetsListener(null)", "Android fullscreen helper should avoid an inset reapply loop that can keep MuMu from opening cleanly.");
         RequireSourceFragment(helper, "postDelayed", "Android fullscreen helper should retry after launch because GameActivity/MuMu can restore bars during startup.");
+        RequireMissingSourceFragment(helper, "SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN", "Android fullscreen helper should not lay Unity behind system bars because MuMu can keep stale mouse coordinates.");
+        RequireMissingSourceFragment(helper, "SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION", "Android fullscreen helper should not lay Unity behind the navigation bar because MuMu can keep stale mouse coordinates.");
+        RequireMissingSourceFragment(helper, "LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES", "Android fullscreen helper should not force cutout rendering in MuMu.");
     }
 
     private static void ValidateAndroidImmersiveModeHook()
@@ -195,6 +200,14 @@ public static class MobileUxValidation
         if (!source.Contains(fragment))
         {
             throw new InvalidOperationException($"{message} Missing source fragment '{fragment}'.");
+        }
+    }
+
+    private static void RequireMissingSourceFragment(string source, string fragment, string message)
+    {
+        if (source.Contains(fragment))
+        {
+            throw new InvalidOperationException($"{message} Unexpected source fragment '{fragment}'.");
         }
     }
 

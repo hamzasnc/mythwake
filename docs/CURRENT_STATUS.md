@@ -1,11 +1,11 @@
 # Mythwake Current Status
 
-Last updated: 2026-05-26
+Last updated: 2026-05-27
 
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.139`, save version `2`.
+- Unity client code is at Prototype `0.2.144`, save version `2`.
 - Backend API default version is `0.2.58`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -19,6 +19,7 @@ Last updated: 2026-05-26
 - The note "split Dungeons into a real screen" is now first-pass done.
 - The note "make Fast Rewards real enough for testing" is now closer: local accumulation, 24h cap, Village rate bonuses, Server Mode/backend-authoritative popup copy, server-side AFK Village bonus claims, and editor-validator coverage for local/server Village bonus lines are in place. A reproducible Android APK build succeeds locally, and the first real MuMuPlayer install/start/screenshot/logcat pass is now captured.
 - The next account-system gap is now explicit: testers need durable accounts so they do not restart from zero every pass. The planned path is Email + Password first, then Google Login through Play Store / Google Play Services later.
+- Follow-up MuMuPlayer testing found that forcing Unity to render outside Android safe areas made desktop mouse clicks land high above the visible buttons in MuMu. Prototype `0.2.144` keeps rendering inside the safe viewport, removes cutout/layout-behind-system-bar flags, and preserves the explicit launcher Activity intent filter.
 
 ## Started This Pass
 
