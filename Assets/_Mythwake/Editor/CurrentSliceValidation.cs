@@ -71,6 +71,10 @@ public static class MobileUxValidation
 {
     private const string ScenePath = "Assets/Scenes/SampleScene.unity";
     private const string ProjectSettingsPath = "ProjectSettings/ProjectSettings.asset";
+    private const string ControllerPath = "Assets/_Mythwake/Scripts/IdlePrototypeController.cs";
+    private const string AndroidManifestPath = "Assets/Plugins/Android/AndroidManifest.xml";
+    private const string AndroidFullscreenStylesPath = "Assets/Plugins/Android/MythwakeFullscreen.androidlib/res/values/styles.xml";
+    private const string AndroidFullscreenHelperPath = "Assets/Plugins/Android/MythwakeFullscreen.androidlib/src/main/java/com/mythwake/fullscreen/MythwakeFullscreen.java";
     private const float ReferenceWidth = 1080f;
     private const float ReferenceHeight = 1920f;
 
@@ -122,11 +126,74 @@ public static class MobileUxValidation
         RequireProjectSetting(projectSettings, "allowedAutorotateToLandscapeRight", "0", "Landscape-right autorotation should stay disabled.");
         RequireProjectSetting(projectSettings, "allowedAutorotateToLandscapeLeft", "0", "Landscape-left autorotation should stay disabled.");
         RequireProjectSetting(projectSettings, "useOSAutorotation", "0", "OS autorotation should not override the portrait test layout.");
-        RequireProjectSetting(projectSettings, "androidRenderOutsideSafeArea", "0", "Android should not render outside the safe area until runtime safe-area padding exists.");
+        RequireProjectSetting(projectSettings, "androidRenderOutsideSafeArea", "1", "Android should render across the full MuMu viewport so emulator pointer coordinates match visible UI.");
+        RequireProjectSetting(projectSettings, "androidStartInFullscreen", "1", "Android should request fullscreen at launch so emulator mouse coordinates match the Unity viewport.");
+        RequireProjectSetting(projectSettings, "androidFullscreenMode", "1", "Android fullscreen mode should stay enabled for the mobile test build.");
+        RequireProjectSetting(projectSettings, "uIRequiresFullScreen", "1", "Android/iOS should require fullscreen for stable tester input mapping.");
+        RequireProjectSetting(projectSettings, "uIStatusBarHidden", "1", "Android status bar should be hidden for stable tester input mapping.");
         RequireProjectSetting(projectSettings, "defaultScreenWidth", "1080", "Default Game View width should match the portrait reference canvas.");
         RequireProjectSetting(projectSettings, "defaultScreenHeight", "1920", "Default Game View height should match the portrait reference canvas.");
         RequireProjectSetting(projectSettings, "androidDefaultWindowWidth", "1080", "Android freeform width should match the portrait reference canvas.");
         RequireProjectSetting(projectSettings, "androidDefaultWindowHeight", "1920", "Android freeform height should match the portrait reference canvas.");
+        ValidateAndroidFullscreenManifest();
+        ValidateAndroidImmersiveModeHook();
+    }
+
+    private static void ValidateAndroidFullscreenManifest()
+    {
+        if (!File.Exists(AndroidManifestPath))
+        {
+            throw new InvalidOperationException("Android fullscreen manifest override is missing, so MuMu/system bars can shift emulator pointer coordinates.");
+        }
+
+        var manifest = File.ReadAllText(AndroidManifestPath);
+        RequireSourceFragment(manifest, "UnityPlayerGameActivity", "Android manifest should target Unity GameActivity.");
+        RequireSourceFragment(manifest, "android:immersive=\"true\"", "Android GameActivity should request immersive behavior before Unity renders.");
+        RequireSourceFragment(manifest, "@style/MythwakeFullscreenGameActivityTheme", "Android GameActivity should start with the Mythwake fullscreen AppCompat theme before Unity renders.");
+        RequireSourceFragment(manifest, "tools:replace=\"android:theme\"", "Android manifest should explicitly replace Unity's default GameActivity theme.");
+
+        if (!File.Exists(AndroidFullscreenStylesPath))
+        {
+            throw new InvalidOperationException("Android fullscreen theme library is missing, so MuMu/system bars can shift emulator pointer coordinates.");
+        }
+
+        var styles = File.ReadAllText(AndroidFullscreenStylesPath);
+        RequireSourceFragment(styles, "MythwakeFullscreenGameActivityTheme", "Android library should define the fullscreen GameActivity theme.");
+        RequireSourceFragment(styles, "BaseUnityGameActivityTheme", "Android fullscreen theme should inherit Unity's AppCompat GameActivity base theme.");
+        RequireSourceFragment(styles, "android:windowFullscreen", "Android fullscreen theme should request hidden status bars before Unity renders.");
+        ValidateAndroidFullscreenHelper();
+    }
+
+    private static void ValidateAndroidFullscreenHelper()
+    {
+        if (!File.Exists(AndroidFullscreenHelperPath))
+        {
+            throw new InvalidOperationException("Android fullscreen helper is missing, so MuMu/system bars can restore shifted pointer coordinates after launch.");
+        }
+
+        var helper = File.ReadAllText(AndroidFullscreenHelperPath);
+        RequireSourceFragment(helper, "SYSTEM_UI_FLAG_IMMERSIVE_STICKY", "Android fullscreen helper should request sticky immersive mode.");
+        RequireSourceFragment(helper, "WindowInsetsController", "Android fullscreen helper should hide API 30+ system bars through WindowInsetsController.");
+        RequireSourceFragment(helper, "setOnSystemUiVisibilityChangeListener", "Android fullscreen helper should re-apply fullscreen when MuMu restores system UI.");
+        RequireSourceFragment(helper, "setOnApplyWindowInsetsListener", "Android fullscreen helper should re-apply fullscreen when GameActivity receives inset changes.");
+        RequireSourceFragment(helper, "postDelayed", "Android fullscreen helper should retry after launch because GameActivity/MuMu can restore bars during startup.");
+    }
+
+    private static void ValidateAndroidImmersiveModeHook()
+    {
+        var controllerSource = File.ReadAllText(ControllerPath);
+        RequireSourceFragment(controllerSource, "EnsureAndroidImmersiveMode();", "IdlePrototypeController should apply Android immersive fullscreen at startup/resume/focus.");
+        RequireSourceFragment(controllerSource, "MythwakeFullscreen", "IdlePrototypeController should call the Android fullscreen helper so MuMu/system bars do not shift pointer coordinates.");
+        RequireSourceFragment(controllerSource, "OnApplicationFocus", "Android immersive fullscreen should be re-applied when the app regains focus.");
+        RequireSourceFragment(controllerSource, "ReapplyAndroidImmersiveModeRoutine", "Android immersive fullscreen should be re-applied after first frame because emulators can restore system bars during launch.");
+    }
+
+    private static void RequireSourceFragment(string source, string fragment, string message)
+    {
+        if (!source.Contains(fragment))
+        {
+            throw new InvalidOperationException($"{message} Missing source fragment '{fragment}'.");
+        }
     }
 
     private static void RequireProjectSetting(string source, string key, string value, string message)

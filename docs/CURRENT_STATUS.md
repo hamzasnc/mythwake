@@ -169,10 +169,13 @@ Last updated: 2026-05-26
 - Real MuMu screenshots for this pass are stored in `docs/screenshots/android/2026-05-26-touch-polish-final/`. Covered: Home/FPS, stage preview, Fast Rewards and modal block test, Formation, Fight Result, Result Continue back to Home, Village map, Rathaus detail, free plot build panel, Heroes, Hero Detail, accessory and Weapon gear lists, Gear showcase, and Summon. The Summon result popup was not captured because the emulator save had only `20` summon currency while the single pull cost was `35`.
 - Filtered Logcat after the touch-polish pass found no Mythwake/Unity `Exception`, `NullReference`, `FATAL`, `ANR`, EventSystem/InputSystem, or missing-asset errors. Remaining observed noise was emulator renderer spam: `TimeStats: RenderEngineTimes are already at its maximum size[64]`.
 - Physical Android device/notch/gesture safe-area testing remains open; only MuMu was attached in this pass.
+- Prototype `0.2.141` fixes the follow-up MuMuPlayer pointer-coordinate drift: Android now has a fullscreen GameActivity manifest/theme override, a native `MythwakeFullscreen` helper that re-applies immersive fullscreen after launch/resume/focus/inset changes, and `androidRenderOutsideSafeArea` enabled so the Unity viewport fills the emulator display.
+- APK `Builds\Android\Mythwake-0.2.141-mumu.apk` built, installed, and launched in MuMuPlayer (`emulator-5554`, Android `12`, `1080x1920`, `280 dpi`). Cold launch reported `TotalTime 795 ms`. `dumpsys window` reported `ITYPE_STATUS_BAR ... visible=false` with app bounds `1080x1920`.
+- Real tap checks on visible coordinates opened Village, Summon, and Battle Formation. Evidence screenshots and notes are under `docs/screenshots/android/2026-05-27-mumu-touch-fix/`.
 
 ## Next Small Steps
 
-1. Repeat the MuMu pass on a physical Android phone for real notch/gesture safe-area behavior, then compare against `docs/screenshots/android/2026-05-26-touch-polish-final/`.
+1. Repeat the MuMu/fullscreen pass on a physical Android phone for real notch/gesture safe-area behavior, then compare against `docs/screenshots/android/2026-05-27-mumu-touch-fix/`.
 2. Plan the durable tester account slice: Email + Password registration/login first, Google Login through Play Store / Google Play Services later.
 3. Add a richer profiler capture path because the runtime FPS overlay is now present, but MuMu `gfxinfo` still does not provide useful Unity frame buckets.
 4. Re-test Summon result spacing after granting enough summon currency in a clean tester save, and capture the Result popup on-device.

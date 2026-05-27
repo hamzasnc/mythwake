@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.139";
+    public const string PrototypeVersion = "0.2.141";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1619,6 +1619,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void Awake()
     {
+        EnsureAndroidImmersiveMode();
         EnsureRuntimeInputStack();
         LoadLanguagePreference();
         LoadProgress();
@@ -1645,6 +1646,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RegisterDungeonButtonListeners();
+        StartCoroutine(ReapplyAndroidImmersiveModeRoutine());
 
         if (upgradeButton != null)
         {
@@ -4819,7 +4821,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
+        EnsureAndroidImmersiveMode();
         ClaimBackendOfflineRewardsOnResume();
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (hasFocus)
+        {
+            EnsureAndroidImmersiveMode();
+        }
     }
 
     private void OnApplicationQuit()
@@ -13735,6 +13746,52 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return "Player";
+    }
+
+    private IEnumerator ReapplyAndroidImmersiveModeRoutine()
+    {
+        yield return null;
+        EnsureAndroidImmersiveMode();
+
+        yield return new WaitForSecondsRealtime(0.25f);
+        EnsureAndroidImmersiveMode();
+
+        yield return new WaitForSecondsRealtime(0.75f);
+        EnsureAndroidImmersiveMode();
+
+        yield return new WaitForSecondsRealtime(1.5f);
+        EnsureAndroidImmersiveMode();
+
+        yield return new WaitForSecondsRealtime(2.5f);
+        EnsureAndroidImmersiveMode();
+    }
+
+    private void EnsureAndroidImmersiveMode()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        Screen.fullScreen = true;
+
+        try
+        {
+            using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            {
+                var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+                if (activity == null)
+                {
+                    return;
+                }
+
+                using (var fullscreen = new AndroidJavaClass("com.mythwake.fullscreen.MythwakeFullscreen"))
+                {
+                    fullscreen.CallStatic("apply", activity);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"Android immersive fullscreen setup failed: {ex.Message}");
+        }
+#endif
     }
 
     private void EnsureRuntimeInputStack()
