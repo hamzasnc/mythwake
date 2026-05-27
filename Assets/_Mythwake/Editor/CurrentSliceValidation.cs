@@ -320,8 +320,9 @@ public static class MobileUxValidation
         RequireSourceFragment(controllerSource, "androidInputSystemModule.enabled = false", "Runtime input setup should disable InputSystemUIInputModule on Android so MuMu does not use shifted mouse coordinates.");
 
         var mumuInputSource = File.ReadAllText("Assets/_Mythwake/Scripts/MythwakeMuMuInputModule.cs");
-        RequireSourceFragment(mumuInputSource, "Screen.height - rawPosition.y", "MuMu UI input should flip Android mouse Y before Unity UI raycasts.");
-        RequireSourceFragment(mumuInputSource, "Input.touchCount", "MuMu UI input module should keep normal Android touch support while correcting desktop mouse Y.");
+        RequireSourceFragment(mumuInputSource, "GetCorrectedPosition", "MuMu UI input should normalize Android pointer coordinates before Unity UI raycasts.");
+        RequireSourceFragment(mumuInputSource, "Screen.height - rawPosition.y", "MuMu UI input should flip Android pointer Y before Unity UI raycasts.");
+        RequireSourceFragment(mumuInputSource, "Input.touchCount", "MuMu UI input module should correct the MuMu desktop pointer path even when Android surfaces it as touch.");
 
         var performanceOverlay = RequireObjectField<TMP_Text>(controller, "performanceOverlayText");
         if (performanceOverlay.raycastTarget)
@@ -350,6 +351,7 @@ public static class MobileUxValidation
         var bottomNavRoot = RequireObjectField<RectTransform>(controller, "bottomNavRoot");
         AssertInsideCanvas(canvasRect, topBarRoot, "Top bar");
         AssertInsideCanvas(canvasRect, bottomNavRoot, "Bottom navigation");
+        AssertBottomAnchored(bottomNavRoot, "Bottom navigation");
 
         AssertButtonTarget(controller, "homeTabButton", 84f, 56f);
         AssertButtonTarget(controller, "battleTabButton", 84f, 56f);
@@ -418,6 +420,23 @@ public static class MobileUxValidation
         if (bounds.min.x < -halfWidth - tolerance || bounds.max.x > halfWidth + tolerance || bounds.min.y < -halfHeight - tolerance || bounds.max.y > halfHeight + tolerance)
         {
             throw new InvalidOperationException($"{context} should stay inside the portrait canvas. Bounds min={bounds.min}, max={bounds.max}.");
+        }
+    }
+
+    private static void AssertBottomAnchored(RectTransform rect, string context)
+    {
+        if (rect == null)
+        {
+            throw new InvalidOperationException($"{context} is missing RectTransform.");
+        }
+
+        const float tolerance = 0.01f;
+        if (Mathf.Abs(rect.anchorMin.x - 0.5f) > tolerance || Mathf.Abs(rect.anchorMax.x - 0.5f) > tolerance ||
+            Mathf.Abs(rect.anchorMin.y) > tolerance || Mathf.Abs(rect.anchorMax.y) > tolerance ||
+            Mathf.Abs(rect.pivot.x - 0.5f) > tolerance || Mathf.Abs(rect.pivot.y) > tolerance ||
+            Mathf.Abs(rect.anchoredPosition.x) > tolerance || Mathf.Abs(rect.anchoredPosition.y) > tolerance)
+        {
+            throw new InvalidOperationException($"{context} should be hard-anchored to the bottom center of the portrait canvas.");
         }
     }
 

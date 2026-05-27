@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.146";
+    public const string PrototypeVersion = "0.2.147";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -18172,7 +18172,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             bottomNavRoot = tabParent.GetComponent<RectTransform>();
             if (bottomNavRoot != null)
             {
-                bottomNavRoot.sizeDelta = artBottomNavRoot != null ? new Vector2(1080, 256) : new Vector2(860, 118);
+                var navSize = artBottomNavRoot != null ? new Vector2(1080, 256) : new Vector2(860, 118);
+                SetRuntimeRect(bottomNavRoot, Vector2.zero, navSize, new Vector2(0.5f, 0f));
             }
 
             var navImage = tabParent.GetComponent<Image>();

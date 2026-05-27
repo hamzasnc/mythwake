@@ -9,6 +9,13 @@ public sealed class MythwakeMuMuInputModule : PointerInputModule
 
     public override void Process()
     {
+        var hasMouseButton = Input.mousePresent && (Input.GetMouseButton(0) || Input.GetMouseButtonDown(0) || Input.GetMouseButtonUp(0));
+        if (hasMouseButton)
+        {
+            ProcessMousePointer();
+            return;
+        }
+
         var touchCount = Input.touchCount;
         if (touchCount > 0)
         {
@@ -21,7 +28,12 @@ public sealed class MythwakeMuMuInputModule : PointerInputModule
             return;
         }
 
-        var pointerData = GetCorrectedMousePointerData();
+        ProcessMousePointer();
+    }
+
+    private void ProcessMousePointer()
+    {
+        var pointerData = GetMousePointerData();
         ProcessMove(pointerData);
         ProcessDrag(pointerData);
 
@@ -59,17 +71,16 @@ public sealed class MythwakeMuMuInputModule : PointerInputModule
         }
     }
 
-    private PointerEventData GetCorrectedMousePointerData()
+    private PointerEventData GetMousePointerData()
     {
         GetPointerData(MousePointerId, out mousePointerData, true);
 
-        var rawPosition = (Vector2)Input.mousePosition;
-        var correctedPosition = new Vector2(rawPosition.x, Screen.height - rawPosition.y);
+        var position = GetCorrectedPosition(Input.mousePosition);
 
         mousePointerData.pointerId = MousePointerId;
         mousePointerData.button = PointerEventData.InputButton.Left;
-        mousePointerData.delta = correctedPosition - mousePointerData.position;
-        mousePointerData.position = correctedPosition;
+        mousePointerData.delta = position - mousePointerData.position;
+        mousePointerData.position = position;
         mousePointerData.scrollDelta = Input.mouseScrollDelta;
 
         eventSystem.RaycastAll(mousePointerData, m_RaycastResultCache);
@@ -85,7 +96,7 @@ public sealed class MythwakeMuMuInputModule : PointerInputModule
 
         GetPointerData(touch.fingerId, out var pointerData, true);
 
-        var position = touch.position;
+        var position = GetCorrectedPosition(touch.position);
         pointerData.pointerId = touch.fingerId;
         pointerData.button = PointerEventData.InputButton.Left;
         pointerData.delta = pressed ? Vector2.zero : position - pointerData.position;
@@ -96,6 +107,12 @@ public sealed class MythwakeMuMuInputModule : PointerInputModule
         pointerData.pointerCurrentRaycast = FindFirstRaycast(m_RaycastResultCache);
         m_RaycastResultCache.Clear();
         return pointerData;
+    }
+
+    private static Vector2 GetCorrectedPosition(Vector2 rawPosition)
+    {
+        // MuMu can surface desktop clicks as top-left pointer positions, even on the touch path.
+        return new Vector2(rawPosition.x, Screen.height - rawPosition.y);
     }
 
     private void ProcessMousePress(PointerEventData pointerData)

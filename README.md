@@ -2,11 +2,11 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.146
+Prototype version: 0.2.147
 Local save version: 2
 
 Current prototype:
-- MuMuPlayer Android builds use a corrected UI input module that flips MuMu's inverted desktop mouse Y coordinate before Unity button raycasts.
+- MuMuPlayer Android builds hard-anchor the bottom navigation and normalize the MuMu desktop pointer Y before Unity button raycasts, including the emulator path that can be surfaced as touch.
 - Android build profile
 - Reproducible Android APK batch build helper and portrait screenshot fallback helper
 - Simple portrait UI
