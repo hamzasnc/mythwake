@@ -149,6 +149,8 @@ public static class MobileUxValidation
         var manifest = File.ReadAllText(AndroidManifestPath);
         RequireSourceFragment(manifest, "UnityPlayerGameActivity", "Android manifest should target Unity GameActivity.");
         RequireSourceFragment(manifest, "android:immersive=\"true\"", "Android GameActivity should request immersive behavior before Unity renders.");
+        RequireSourceFragment(manifest, "android.intent.action.MAIN", "Android GameActivity should remain launchable from MuMu's launcher.");
+        RequireSourceFragment(manifest, "android.intent.category.LAUNCHER", "Android GameActivity should expose a launcher icon in MuMu.");
         RequireSourceFragment(manifest, "@style/MythwakeFullscreenGameActivityTheme", "Android GameActivity should start with the Mythwake fullscreen AppCompat theme before Unity renders.");
         RequireSourceFragment(manifest, "tools:replace=\"android:theme\"", "Android manifest should explicitly replace Unity's default GameActivity theme.");
 
@@ -175,7 +177,7 @@ public static class MobileUxValidation
         RequireSourceFragment(helper, "SYSTEM_UI_FLAG_IMMERSIVE_STICKY", "Android fullscreen helper should request sticky immersive mode.");
         RequireSourceFragment(helper, "WindowInsetsController", "Android fullscreen helper should hide API 30+ system bars through WindowInsetsController.");
         RequireSourceFragment(helper, "setOnSystemUiVisibilityChangeListener", "Android fullscreen helper should re-apply fullscreen when MuMu restores system UI.");
-        RequireSourceFragment(helper, "setOnApplyWindowInsetsListener", "Android fullscreen helper should re-apply fullscreen when GameActivity receives inset changes.");
+        RequireSourceFragment(helper, "setOnApplyWindowInsetsListener(null)", "Android fullscreen helper should avoid an inset reapply loop that can keep MuMu from opening cleanly.");
         RequireSourceFragment(helper, "postDelayed", "Android fullscreen helper should retry after launch because GameActivity/MuMu can restore bars during startup.");
     }
 

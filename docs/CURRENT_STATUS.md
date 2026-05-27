@@ -172,6 +172,8 @@ Last updated: 2026-05-26
 - Prototype `0.2.141` fixes the follow-up MuMuPlayer pointer-coordinate drift: Android now has a fullscreen GameActivity manifest/theme override, a native `MythwakeFullscreen` helper that re-applies immersive fullscreen after launch/resume/focus/inset changes, and `androidRenderOutsideSafeArea` enabled so the Unity viewport fills the emulator display.
 - APK `Builds\Android\Mythwake-0.2.141-mumu.apk` built, installed, and launched in MuMuPlayer (`emulator-5554`, Android `12`, `1080x1920`, `280 dpi`). Cold launch reported `TotalTime 795 ms`. `dumpsys window` reported `ITYPE_STATUS_BAR ... visible=false` with app bounds `1080x1920`.
 - Real tap checks on visible coordinates opened Village, Summon, and Battle Formation. Evidence screenshots and notes are under `docs/screenshots/android/2026-05-27-mumu-touch-fix/`.
+- Prototype `0.2.142` removes the fullscreen helper's recursive inset-listener reapply path after MuMu/GameActivity could spam `WINDOW_INSETS_CHANGED` during launch. Fullscreen is still re-applied through bounded startup retries, focus, and system-UI visibility changes.
+- Prototype `0.2.143` restores the explicit Android `MAIN`/`LAUNCHER` intent filter on `UnityPlayerGameActivity`, so MuMuPlayer can open the APK from its launcher/app icon instead of only through direct ADB activity starts.
 
 ## Next Small Steps
 

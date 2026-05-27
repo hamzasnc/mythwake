@@ -44,13 +44,7 @@ public final class MythwakeFullscreen {
             }
         });
 
-        decorView.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
-            @Override
-            public WindowInsets onApplyWindowInsets(View view, WindowInsets insets) {
-                postApply(activity, view, 120L);
-                return insets;
-            }
-        });
+        decorView.setOnApplyWindowInsetsListener(null);
     }
 
     private static void scheduleReapply(final Activity activity) {

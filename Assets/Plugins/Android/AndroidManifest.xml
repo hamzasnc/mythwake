@@ -5,6 +5,11 @@
         <activity android:name="com.unity3d.player.UnityPlayerGameActivity"
                   android:immersive="true"
                   android:theme="@style/MythwakeFullscreenGameActivityTheme"
-                  tools:replace="android:theme" />
+                  tools:replace="android:theme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>
