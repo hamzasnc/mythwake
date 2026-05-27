@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.144";
+    public const string PrototypeVersion = "0.2.145";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -13812,6 +13812,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         eventSystem.pixelDragThreshold = Mathf.Max(eventSystem.pixelDragThreshold, 10);
 
 #if ENABLE_INPUT_SYSTEM
+#if UNITY_ANDROID && !UNITY_EDITOR
+        var androidInputSystemModule = eventSystem.GetComponent<InputSystemUIInputModule>();
+        if (androidInputSystemModule != null)
+        {
+            androidInputSystemModule.enabled = false;
+        }
+
+        var androidStandaloneModule = eventSystem.GetComponent<StandaloneInputModule>();
+        if (androidStandaloneModule == null)
+        {
+            androidStandaloneModule = eventSystem.gameObject.AddComponent<StandaloneInputModule>();
+        }
+
+        androidStandaloneModule.enabled = true;
+#else
         var inputSystemModule = eventSystem.GetComponent<InputSystemUIInputModule>();
         if (inputSystemModule == null)
         {
@@ -13833,6 +13848,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 modules[i].enabled = false;
             }
         }
+#endif
 #else
         if (eventSystem.GetComponent<BaseInputModule>() == null)
         {

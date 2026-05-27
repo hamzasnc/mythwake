@@ -274,7 +274,6 @@ public static class MobileUxValidation
 
         var activeModules = 0;
         var hasInputSystemModule = false;
-        var hasEnabledLegacyModule = false;
         var modules = eventSystem.GetComponents<BaseInputModule>();
         for (var i = 0; i < modules.Length; i++)
         {
@@ -287,7 +286,6 @@ public static class MobileUxValidation
             activeModules++;
             var typeName = module.GetType().FullName ?? module.GetType().Name;
             hasInputSystemModule |= typeName.Contains("InputSystemUIInputModule");
-            hasEnabledLegacyModule |= typeName.Contains("StandaloneInputModule");
             if (typeName.Contains("InputSystemUIInputModule"))
             {
                 var actionsProperty = module.GetType().GetProperty("actionsAsset");
@@ -305,15 +303,20 @@ public static class MobileUxValidation
         }
 
         var projectSettings = File.ReadAllText(ProjectSettingsPath);
-        if (projectSettings.Contains("  activeInputHandler: 1") && !hasInputSystemModule)
+        if (!projectSettings.Contains("  activeInputHandler: 2"))
         {
-            throw new InvalidOperationException("Project uses the new Input System only, so the EventSystem needs an enabled InputSystemUIInputModule.");
+            throw new InvalidOperationException("Project should allow both input backends so Android/MuMu can use legacy UI input while editor tooling keeps Input System support.");
         }
 
-        if (projectSettings.Contains("  activeInputHandler: 1") && hasEnabledLegacyModule)
+        if (!hasInputSystemModule)
         {
-            throw new InvalidOperationException("StandaloneInputModule should be disabled when Android uses the new Input System only.");
+            throw new InvalidOperationException("EventSystem should keep an InputSystemUIInputModule for editor/default tooling.");
         }
+
+        var controllerSource = File.ReadAllText(ControllerPath);
+        RequireSourceFragment(controllerSource, "UNITY_ANDROID && !UNITY_EDITOR", "Runtime input setup should switch Android builds to the legacy UI module for MuMu desktop mouse input.");
+        RequireSourceFragment(controllerSource, "androidStandaloneModule.enabled = true", "Runtime input setup should enable StandaloneInputModule on Android.");
+        RequireSourceFragment(controllerSource, "androidInputSystemModule.enabled = false", "Runtime input setup should disable InputSystemUIInputModule on Android so MuMu does not use shifted mouse coordinates.");
 
         var performanceOverlay = RequireObjectField<TMP_Text>(controller, "performanceOverlayText");
         if (performanceOverlay.raycastTarget)
