@@ -47,7 +47,7 @@ public static class MythwakePrototypeBuilder
         var scaler = root.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1080, 1920);
-        scaler.matchWidthOrHeight = 1f;
+        scaler.matchWidthOrHeight = 0f;
 
         root.AddComponent<GraphicRaycaster>();
 

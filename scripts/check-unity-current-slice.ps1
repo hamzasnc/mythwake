@@ -27,6 +27,10 @@ if (-not [string]::IsNullOrWhiteSpace($logDirectory) -and -not (Test-Path -Liter
 $arguments = @(
     "-batchmode",
     "-quit",
+    "-screen-width",
+    "1080",
+    "-screen-height",
+    "1920",
     "-projectPath",
     $ProjectPath,
     "-executeMethod",

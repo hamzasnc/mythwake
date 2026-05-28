@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.159";
+    public const string PrototypeVersion = "0.2.160";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -14179,6 +14179,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void EnsureRuntimeScreenLayout()
     {
+#if UNITY_EDITOR
+        EnsureEditorPortraitValidationCanvas();
+#endif
         EnsureRuntimeTopBar();
         EnsureRuntimeDungeonsPanel();
         EnsureRuntimeVillagePanel();
@@ -14208,6 +14211,64 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         LayoutPrototypeTools();
         ApplyAfkInspiredTextSkin();
     }
+
+#if UNITY_EDITOR
+    private void EnsureEditorPortraitValidationCanvas()
+    {
+        if (!Application.isBatchMode || homePanel == null)
+        {
+            return;
+        }
+
+        var canvas = homePanel.GetComponentInParent<Canvas>();
+        if (canvas == null)
+        {
+            return;
+        }
+
+        var scaler = canvas.GetComponent<CanvasScaler>();
+        if (scaler != null)
+        {
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1080f, 1920f);
+            scaler.matchWidthOrHeight = 0f;
+        }
+
+        var cameraObject = GameObject.Find("Mythwake Portrait Validation Camera");
+        var camera = cameraObject != null ? cameraObject.GetComponent<Camera>() : null;
+        if (camera == null)
+        {
+            cameraObject = new GameObject("Mythwake Portrait Validation Camera");
+            cameraObject.hideFlags = HideFlags.HideAndDontSave;
+            camera = cameraObject.AddComponent<Camera>();
+        }
+
+        var renderTexture = camera.targetTexture;
+        if (renderTexture == null || renderTexture.width != 1080 || renderTexture.height != 1920)
+        {
+            if (renderTexture != null)
+            {
+                renderTexture.Release();
+            }
+
+            renderTexture = new RenderTexture(1080, 1920, 24, RenderTextureFormat.ARGB32);
+            renderTexture.hideFlags = HideFlags.HideAndDontSave;
+            camera.targetTexture = renderTexture;
+        }
+
+        camera.clearFlags = CameraClearFlags.SolidColor;
+        camera.backgroundColor = Color.black;
+        camera.orthographic = true;
+        camera.orthographicSize = 960f;
+        camera.nearClipPlane = 0.1f;
+        camera.farClipPlane = 100f;
+        camera.transform.position = new Vector3(0f, 0f, -10f);
+
+        canvas.renderMode = RenderMode.ScreenSpaceCamera;
+        canvas.worldCamera = camera;
+        canvas.planeDistance = 10f;
+    }
+#endif
 
     private void EnsureRuntimeTopBar()
     {

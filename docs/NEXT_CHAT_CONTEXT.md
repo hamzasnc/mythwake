@@ -31,6 +31,7 @@ Latest known pushed commit before the 0.2.159 continuation:
 - `24b2ab4 Rework battle formation mockup`
 
 Current continuation:
+- Prototype `0.2.160` fixes the physical Android tall-phone clipping seen on REDMAGIC screenshots. The saved Prototype UI canvas and `MythwakePrototypeBuilder` now use width-matched `CanvasScaler` portrait scaling (`matchWidthOrHeight = 0`) instead of matching height. This prevents the 1080 reference width from becoming wider than narrow/tall phone screens, so side shortcuts, top resources, fight controls, skill cards, and bottom nav should stay visible. Mobile UX validation now rejects height-matched scaling for this prototype.
 - Prototype `0.2.159` is the early 20-30 minute tester-loop pass. It keeps the existing systems but makes guidance clearer: Home `Next Goal` is localized, resource gaps can route to Gold/Essence Dungeon when team power is enough, campaign/dungeon result popups append a short `Next:` action, Summon results explain immediate shard stats plus later Ascend, and Tank role damage reduction now uses the stable lowercase role ID. A new `Mythwake/Validate Early Game Loop` validator is wired into Current Slice and checks fresh-save Home guidance, first campaign clears, Gold/Essence/Gear Dungeon floor 1, Hero level-up, first Village build, first Gear drop/equip, starter Summon, and EN/DE resource-gap guidance. `docs/INTERNAL_TESTBUILD_CHECKLIST.md` is the guided small-group tester route and also records the future Email + Password first, Google Play login later account need.
 - Prototype `0.2.158` is the latest Battle Formation mockup pass. Formation now fills the screen under the top bar with a VS/stage header, violet Hollow Spire arena background, deployed heroes in the arena, a bottom deployed-hero bench, five persistent formation preset buttons, UP/ALL/role filter buttons, `Begin Battle` for one fight, and `Auto Battle` for auto-next looping until stopped or defeated. Dungeons/Home/Fight Formation validators were updated to check the new header/stage/preset/bench/filter structure. Editor fallback screenshot check used `Builds\Android\portrait-screenshots-formation-mockup\10-fight-formation.png`.
 - Prototype `0.2.157` is the latest targeted Summon/Formation/Fight mobile polish pass. `Builds\Android\Mythwake-0.2.157-mumu.apk` builds, installs, launches in MuMuPlayer, and visible-coordinate taps verified Summon main/result/close, Formation select/swap/Confirm, Fight entry, Result Continue, and Home return. Latest cold launch reported Android `am start -W` `TotalTime 882 ms` / `WaitTime 883 ms`, with host stopwatch `940 ms`. Runtime FPS overlay showed about `30 FPS | 33.3 ms`; filtered Logcat found no app crash, ANR, Unity exception, `NullReference`, or missing-asset error. Remaining notable lines are MuMu/Android environment noise plus one non-fatal Unity `APP_CMD_LOW_MEMORY` signal.
@@ -136,7 +137,7 @@ Reference feel:
 Design intent:
 - Mobile portrait first.
 - Designer can work around 1080 x 1920 as a safe reference canvas.
-- iPhone screenshots may be 1284 x 2778, but Unity UI should scale from 1080 x 1920 via CanvasScaler.
+- iPhone/Android tall-phone screenshots may be much taller than 1080 x 1920; Unity UI should scale from 1080 x 1920 by matching width so side chrome is never cropped.
 - Current UI should avoid overlapping text and should be immediately usable on phone/emulator.
 
 Engineering standard:
@@ -270,7 +271,7 @@ Latest backend combat direction:
 Latest verification notes:
 - `go test ./...` passes from `backend/`.
 - `scripts/check-unity-csharp.cmd` passes runtime/editor C# MSBuild checks through Unity's bundled .NET Framework references, with existing Unity serialization/Paladin JSON field warnings.
-- `scripts/check-unity-current-slice.cmd` passes in Unity batchmode after the 0.2.159 Early Game Loop validator was added to the slice.
+- `scripts/check-unity-current-slice.cmd` passes in Unity batchmode after the 0.2.159 Early Game Loop validator was added to the slice. Rerun it after the 0.2.160 width-matched CanvasScaler change.
 - `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.157-mumu.apk` passes; the ignored APK installs and launches in MuMuPlayer.
 - `scripts/check-backend.cmd -BaseUrl http://localhost:18081` passed against a temporary no-DB API in the previous backend-affecting pass; the Mobile UX pass did not touch backend files.
 - `git diff --check` passes after the 0.2.159 code/doc updates.

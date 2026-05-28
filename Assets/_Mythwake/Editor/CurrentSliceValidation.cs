@@ -86,7 +86,7 @@ public static class MobileUxValidation
         try
         {
             ValidateMobileUx();
-            Debug.Log("Mobile UX validated: Android portrait settings, safe-area rendering, portrait CanvasScaler, EventSystem UI stack, non-blocking FPS overlay, bottom navigation targets/raycasts, version label, and core screen navigation are present.");
+            Debug.Log("Mobile UX validated: Android portrait settings, safe-area rendering, width-matched portrait CanvasScaler, EventSystem UI stack, non-blocking FPS overlay, bottom navigation targets/raycasts, version label, and core screen navigation are present.");
         }
         catch (Exception ex)
         {
@@ -248,9 +248,9 @@ public static class MobileUxValidation
             throw new InvalidOperationException($"{rootCanvas.name} should use 1080x1920 reference resolution, got {scaler.referenceResolution}.");
         }
 
-        if (scaler.matchWidthOrHeight < 0.95f)
+        if (scaler.matchWidthOrHeight > 0.05f)
         {
-            throw new InvalidOperationException($"{rootCanvas.name} should match height for portrait layouts, got {scaler.matchWidthOrHeight:0.###}.");
+            throw new InvalidOperationException($"{rootCanvas.name} should match width for narrow/tall Android phones so side chrome is not cropped, got {scaler.matchWidthOrHeight:0.###}.");
         }
 
         return rootCanvas.GetComponent<RectTransform>();
