@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.158
+Prototype version: 0.2.159
 Local save version: 2
 
 Current prototype:
@@ -55,7 +55,7 @@ Current prototype:
 - Gear Dungeon drops random accessory copies
 - Three copies of the same slot and rarity can be fused into the next rarity
 - Hero upgrades use Myth Essence and are saved locally
-- Home screen shows a Next Goal hint for the current progression bottleneck, including campaign power readiness, Gear drops, Hero/Gear/Village upgrades, Summon value, and concrete farm gaps
+- Home screen shows a localized Next Goal hint for the current progression bottleneck, including campaign power readiness, Gear drops, Hero/Gear/Village upgrades, Summon value, and concrete Gold/Essence dungeon farm routes
 - Campaign stages now use named enemy data with HP and progression-only clears
 - Campaign and dungeon scaling now create clearer upgrade walls with recommended power labels
 - First balance pass tunes Campaign pressure, dungeon rewards, summon pacing, daily missions, and offline reward caps for the early loop
@@ -70,15 +70,17 @@ Current prototype:
 - Village building detail now shows current and next/max definition bonuses; the Village hint line summarizes local Team ATK/HP and Fast Rewards rate boosts or the Server Mode local-bonus pause while Server Mode stays backend-authoritative
 - Server definitions now include DB-ready Village building definitions for stable ID, plot/option, build cost, max level, upgrade cost, and bonus type/value
 - Campaign and dungeon fights now simulate win/loss with team HP and enemy damage, and local result summaries mirror the server combat shape with team HP, enemy HP, team ATK, enemy damage, dealt/taken/heal/crit/miss details
+- Campaign and dungeon result popups append a short next-step line so early testers know where to go after a win or loss
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
 - Hero shards add minor Attack and HP immediately
+- Summon result copy now explains that shards give small stats immediately and enough duplicates unlock Ascend
 - Hero ascension consumes shards for larger saved stat upgrades
 - Daily missions track battles, stage clears, and summons
 - Daily mission claims reward Gold, Gems, Myth Essence, and reset by UTC day
 - Mission Track XP is earned from daily mission claims
 - Mission Track rewards can be claimed in the Shop tab
 - Ravik and Paladin art/combat preview hooks exist, including Paladin Spine handoff validation tooling
-- Unity editor validation covers the current gameplay/UI slice, including Android portrait/safe-area player settings, portrait CanvasScaler/navigation touch targets, runtime EventSystem UI stack, button center raycasts, bottom-nav click mappings, non-blocking FPS overlay, Home current-stage halos and target badges, Home selected-stage node markers, Home cleared-stage badges, Home locked-stage badges, Home boss-node badges, Home milestone bonus badges, Home stage-preview/detail state tint plus Boss/Bonus/Normal tags, Home stage-detail status badges and action states, Home stage-detail reward labels, Home connected map/button fit, Home path progress colors, Home map region texture/UV sync, Home reward progress/server guards, Home popup exclusivity, Village map/build/detail close flows, Dungeons map/zoom control/clamp/marker spacing/Formation back flows, Fast Rewards modal touch blocker/progress bar/popup exclusivity/close/fallback claim state, Summon result close/auto-toggle/slot-fit states, Upgrade Clutter, Gear showcase art/action-label fit, visible Weapon/Armor training icons, equipped-only Hero Detail accessory icons, empty Hero Detail accessory slots, Hero Detail gear spacing/click mappings/list-state/localization/label-list fit, Fight/Formation visible-control checks, and Paladin handoff checks
+- Unity editor validation covers the current gameplay/UI slice, including Android portrait/safe-area player settings, portrait CanvasScaler/navigation touch targets, runtime EventSystem UI stack, button center raycasts, bottom-nav click mappings, non-blocking FPS overlay, Home current-stage halos and target badges, Home selected-stage node markers, Home cleared-stage badges, Home locked-stage badges, Home boss-node badges, Home milestone bonus badges, Home stage-preview/detail state tint plus Boss/Bonus/Normal tags, Home stage-detail status badges and action states, Home stage-detail reward labels, Home connected map/button fit, Home path progress colors, Home map region texture/UV sync, Home reward progress/server guards, Home popup exclusivity, Village map/build/detail close flows, Dungeons map/zoom control/clamp/marker spacing/Formation back flows, Fast Rewards modal touch blocker/progress bar/popup exclusivity/close/fallback claim state, Summon result close/auto-toggle/slot-fit states, Upgrade Clutter, Gear showcase art/action-label fit, visible Weapon/Armor training icons, equipped-only Hero Detail accessory icons, empty Hero Detail accessory slots, Hero Detail gear spacing/click mappings/list-state/localization/label-list fit, Fight/Formation visible-control checks, Early Game Loop fresh-save progression checks, and Paladin handoff checks
 - Hero Detail shows all equipment/accessory slots, keeps starter Weapon/Armor training icons visible, only renders accessory icon art once gear is equipped, keeps empty accessory slots visually empty even when bag copies exist, keeps previous/next navigation clear of the gear-slot columns, uses localized contextual gear action labels, prioritizes owned copies in accessory slot lists, and supports accessory removal locally and in Server Mode
 - Hero Detail labels starter Weapon/Armor slots and rows as training tracks instead of claiming they are equipped item instances
 - Gear screen keeps equipment summaries, accessory text, and gear action controls stacked below the showcase with validator coverage for spacing
@@ -190,6 +192,7 @@ Backend:
   - `scripts/capture-portrait-screenshots.cmd`
 - Test planning docs:
   - `docs/ROADMAP.md`
+  - `docs/INTERNAL_TESTBUILD_CHECKLIST.md`
   - `docs/UNITY_TEST_STAND.md` (includes the latest Mobile UX pass and open Android emulator/device follow-up)
   - `docs/screenshots/ANDROID_FALLBACK_2026-05-26.md`
   - `docs/screenshots/android/2026-05-26-mumu/README.md`
@@ -200,6 +203,7 @@ Backend:
   - `docs/screenshots/android/2026-05-28-summon-formation-fight-polish/README.md`
 
 Changelog:
+- Prototype 0.2.159: Polished the early 20-30 minute tester loop without adding a new system. Home Next Goal is now localized and routes resource gaps to Gold/Essence dungeons, campaign/dungeon results append a `Next:` action, Summon results explain immediate shard value and future Ascend, Tank role damage reduction now uses the stable role ID, and a new Early Game Loop validator covers fresh-save guidance, first campaign clears, resource dungeons, Gear drop/equip, Village build, starter Summon, and EN/DE Next Goal routing. Added `docs/INTERNAL_TESTBUILD_CHECKLIST.md` for small internal tester runs and future account-login feedback.
 - Prototype 0.2.158: Reworked Battle Formation toward the provided mobile mockup. Formation now fills the screen under the top bar with a VS/stage arena, uses the violet Hollow Spire background, shows deployed heroes both in the arena and in a bottom bench, adds five persistent formation preset slots, adds UP/ALL/role filter controls, separates one-run `Begin Battle` from looping `Auto Battle`, and extends Dungeons/Home/Fight Formation validators for the new header/stage/preset/bench/filter structure.
 - Prototype 0.2.157: Polished Summon Result, Formation, Fight controls, and Result Continue for the next targeted mobile tester build. `Builds\Android\Mythwake-0.2.157-mumu.apk` builds, installs, launches in MuMuPlayer, and the latest cold launch reported `TotalTime 882 ms` / host stopwatch `940 ms`. Real screenshots are under `docs/screenshots/android/2026-05-28-summon-formation-fight-polish/`; filtered Logcat found no app crash, ANR, Unity exception, `NullReference`, or missing-asset error. Runtime FPS overlay showed about `30 FPS | 33.3 ms` on the emulator, and physical Android safe-area testing remains open.
 - Prototype 0.2.156: Added a focused mobile polish follow-up on top of the full `0.2.155` MuMu pass. `Builds\Android\Mythwake-0.2.156-mumu.apk` builds, installs, launches in MuMuPlayer, and cold launch reported `TotalTime 949 ms` / host stopwatch `1002 ms`. Summon Result now centers one-pull results and uses a modal blocker so the carousel/offer behind it cannot receive touches; Formation keeps labels above skeletal previews and slightly reduces Paladin's Formation scale; the runtime FPS overlay can now be toggled from Management -> Options. Follow-up screenshots are under `docs/screenshots/android/2026-05-28-mobile-polish-followup/`; filtered Logcat still has no app crash, ANR, Unity exception, `NullReference`, or missing-asset error. Physical Android safe-area testing remains open.

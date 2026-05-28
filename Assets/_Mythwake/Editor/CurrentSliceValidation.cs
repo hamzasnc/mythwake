@@ -25,10 +25,11 @@ public static class CurrentSliceValidation
             RunPrivateValidator(typeof(UpgradeClutterValidation), "ValidateUpgradeClutter", "Upgrade Clutter");
             RunPrivateValidator(typeof(HomeIdleCombatValidation), "ValidateHomeIdleCombatUi", "Home Idle Combat");
             RunPrivateValidator(typeof(FightFormationValidation), "ValidateFightFormationUi", "Fight Formation UI");
+            RunPrivateValidator(typeof(EarlyGameLoopValidation), "ValidateEarlyGameLoop", "Early Game Loop");
             RunValidator("Paladin Integration", PaladinSpineValidation.RunPaladinIntegrationValidation);
             RunValidator("Paladin Spine Handoff", PaladinSpineValidation.RunPaladinSpineValidation);
 
-            Debug.Log("Current Mythwake slice validated: Village, Dungeons, Fast Rewards, Mobile UX, Summon, Upgrade Clutter, Home Idle Combat, Fight Formation UI, Paladin integration, and Paladin Spine handoff.");
+            Debug.Log("Current Mythwake slice validated: Village, Dungeons, Fast Rewards, Mobile UX, Summon, Upgrade Clutter, Home Idle Combat, Fight Formation UI, Early Game Loop, Paladin integration, and Paladin Spine handoff.");
         }
         catch (Exception ex)
         {

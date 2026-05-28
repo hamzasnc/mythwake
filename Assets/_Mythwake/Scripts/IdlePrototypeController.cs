@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.158";
+    public const string PrototypeVersion = "0.2.159";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -2707,7 +2707,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (!result.won)
         {
-            var failMessage = $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {floor} failed after {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(GearDungeonDefinition, floor))}";
+            var failMessage = $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {floor} failed after {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(GearDungeonDefinition, floor))}{FormatNextGoalResultLine()}";
             PlayCombatVisual(GearDungeonDefinition.dungeonId, $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} F{floor}", result, enemyHp);
             SetDungeonResult(failMessage);
             return CreateActionResult(false, "gear_dungeon_run", "combat_lost", failMessage);
@@ -2717,7 +2717,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         AddAccessoryInventory(accessory.slotIndex, accessory.rarityIndex, 1);
         gearDungeonFloor++;
 
-        var message = $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {floor} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(GearDungeonDefinition, floor))}\nDrop: {GetLocalizedAccessoryName(accessory.slotIndex, accessory.rarityIndex)}";
+        var message = $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} Floor {floor} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(GearDungeonDefinition, floor))}\nDrop: {GetLocalizedAccessoryName(accessory.slotIndex, accessory.rarityIndex)}{FormatNextGoalResultLine()}";
         PlayCombatVisual(GearDungeonDefinition.dungeonId, $"{GetLocalizedDungeonName(GearDungeonDefinition.dungeonId)} F{floor}", result, enemyHp);
         SetDungeonResult(message);
         return CreateActionResult(true, "gear_dungeon_run", string.Empty, message);
@@ -3292,6 +3292,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var message = count == 1
             ? $"{GetLocalizedHeroRarityName(hero.rarityId)} pull: {GetLocalizedHeroName(hero)}\n+{shardTotals[lastHeroIndex]} shards"
             : BuildSummonPackResultMessage(count, totalShards, shardTotals);
+        message = $"{message}\n{Tr("summon.result.shard_hint")}";
         PlaySummonVisual(lastHeroIndex, count == 1 ? $"{GetLocalizedHeroRarityName(hero.rarityId)} {GetLocalizedHeroName(hero)}" : $"Summon x{count}");
         SetSummonResult(message);
         if (showResultPopup)
@@ -5077,7 +5078,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             dailyStageClearCount++;
             enemyMaxHp = GetStageMaxHp(enemyLevel);
             enemyHp = enemyMaxHp;
-            var winMessage = $"Campaign Stage {clearedStage} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), stage.maxHp, GetCampaignEnemyDamage(clearedStage))}\nReward +{rewardText}";
+            var winMessage = $"Campaign Stage {clearedStage} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), stage.maxHp, GetCampaignEnemyDamage(clearedStage))}\nReward +{rewardText}{FormatNextGoalResultLine()}";
             PlayCombatVisual("campaign", $"Campaign Stage {clearedStage}", result, stage.maxHp);
             SetDungeonResult(winMessage);
             return CreateActionResult(true, "campaign_fight", string.Empty, winMessage, ToRewardDto(clearReward));
@@ -5086,7 +5087,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             enemyMaxHp = stage.maxHp;
             enemyHp = enemyMaxHp;
-            var failMessage = $"Campaign Stage {stageNumber} failed after {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), stage.maxHp, GetCampaignEnemyDamage(stageNumber))}";
+            var failMessage = $"Campaign Stage {stageNumber} failed after {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), stage.maxHp, GetCampaignEnemyDamage(stageNumber))}{FormatNextGoalResultLine()}";
             PlayCombatVisual("campaign", $"Campaign Stage {stageNumber}", result, stage.maxHp);
             SetDungeonResult(failMessage);
             return CreateActionResult(false, "campaign_fight", "combat_lost", failMessage);
@@ -5613,7 +5614,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var dungeonName = GetLocalizedDungeonName(dungeon.dungeonId);
         if (!result.won)
         {
-            var failMessage = $"{dungeonName} Floor {floor} failed after {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(dungeon, floor))}";
+            var failMessage = $"{dungeonName} Floor {floor} failed after {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(dungeon, floor))}{FormatNextGoalResultLine()}";
             PlayCombatVisual(dungeon.dungeonId, $"{dungeonName} F{floor}", result, enemyHp);
             SetDungeonResult(failMessage);
             return CreateActionResult(false, $"{dungeon.dungeonId}_run", "combat_lost", failMessage);
@@ -5630,14 +5631,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             GrantCurrency(GoldCurrencyId, reward);
             goldDungeonFloor++;
             rewardDto = new MythwakeRewardDto { rewardId = $"reward_{dungeon.dungeonId}_floor_{floor}", gold = reward + bonusReward.gold };
-            message = $"{dungeonName} Floor {floor} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(dungeon, floor))}\nReward +{reward} {GetLocalizedCurrencyName(GoldCurrencyId)}{bonusText}";
+            message = $"{dungeonName} Floor {floor} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(dungeon, floor))}\nReward +{reward} {GetLocalizedCurrencyName(GoldCurrencyId)}{bonusText}{FormatNextGoalResultLine()}";
         }
         else
         {
             GrantCurrency(MythEssenceCurrencyId, reward);
             essenceDungeonFloor++;
             rewardDto = new MythwakeRewardDto { rewardId = $"reward_{dungeon.dungeonId}_floor_{floor}", mythEssence = reward + bonusReward.mythEssence };
-            message = $"{dungeonName} Floor {floor} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(dungeon, floor))}\nReward +{reward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}{bonusText}";
+            message = $"{dungeonName} Floor {floor} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetDungeonEnemyDamage(dungeon, floor))}\nReward +{reward} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}{bonusText}{FormatNextGoalResultLine()}";
         }
 
         PlayCombatVisual(dungeon.dungeonId, $"{dungeonName} F{floor}", result, enemyHp);
@@ -10439,7 +10440,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         nextGoalText.fontSizeMax = 26;
         nextGoalText.fontSize = 26;
         nextGoalText.textWrappingMode = TextWrappingModes.Normal;
-        nextGoalText.text = $"Next Goal\n{GetNextGoalText()}";
+        nextGoalText.text = $"{Tr("home.next_goal.title")}\n{GetNextGoalText()}";
     }
 
     private string GetNextGoalText()
@@ -10457,59 +10458,78 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (teamPower >= stagePower)
         {
-            return $"Push Campaign Stage {enemyLevel} ({powerState})";
+            return TrFormat("home.next_goal.push_campaign", enemyLevel, powerState);
         }
 
         if (HasAccessoryCopiesToEquip())
         {
-            return $"Equip Gear drops, then retry Stage {enemyLevel} ({powerState})";
+            return TrFormat("home.next_goal.equip_drops", enemyLevel, powerState);
         }
 
         if (gold >= weaponCost && weaponCost <= armorCost)
         {
-            return $"Upgrade Weapon for ATK ({FormatCompactNumber(gold)}/{FormatCompactNumber(weaponCost)} Gold)";
+            return TrFormat("home.next_goal.upgrade_weapon", FormatCompactNumber(gold), FormatCompactNumber(weaponCost), GetLocalizedCurrencyName(GoldCurrencyId));
         }
 
         if (gold >= armorCost)
         {
-            return $"Upgrade Armor for HP ({FormatCompactNumber(gold)}/{FormatCompactNumber(armorCost)} Gold)";
+            return TrFormat("home.next_goal.upgrade_armor", FormatCompactNumber(gold), FormatCompactNumber(armorCost), GetLocalizedCurrencyName(GoldCurrencyId));
         }
 
         var accessorySlot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
         if (equippedAccessoryRarities[accessorySlot] >= 0 && gold >= GetAccessoryLevelCost(accessorySlot))
         {
-            return $"Level equipped accessory ({FormatCompactNumber(gold)}/{FormatCompactNumber(GetAccessoryLevelCost(accessorySlot))} Gold)";
+            return TrFormat("home.next_goal.level_accessory", FormatCompactNumber(gold), FormatCompactNumber(GetAccessoryLevelCost(accessorySlot)), GetLocalizedCurrencyName(GoldCurrencyId));
         }
 
         if (mythEssence >= heroCost)
         {
-            return $"Level {GetHeroDefinition(selectedHeroIndex).name} ({FormatCompactNumber(mythEssence)}/{FormatCompactNumber(heroCost)} Essence)";
+            return TrFormat("home.next_goal.level_hero", GetLocalizedHeroName(selectedHeroIndex), FormatCompactNumber(mythEssence), FormatCompactNumber(heroCost), GetLocalizedCurrencyName(MythEssenceCurrencyId));
         }
 
         if (TryGetAffordableVillageUpgradeGoal(out var villageUpgradeName, out var villageUpgradeCost))
         {
-            return $"Upgrade Village {villageUpgradeName} ({FormatCompactNumber(mythEssence)}/{FormatCompactNumber(villageUpgradeCost)} Essence)";
+            return TrFormat("home.next_goal.upgrade_village", villageUpgradeName, FormatCompactNumber(mythEssence), FormatCompactNumber(villageUpgradeCost), GetLocalizedCurrencyName(MythEssenceCurrencyId));
         }
 
         if (TryGetAffordableVillageBuildGoal(out var villageBuildName, out var villageBuildCost))
         {
-            return $"Build Village {villageBuildName} ({FormatCompactNumber(mythEssence)}/{FormatCompactNumber(villageBuildCost)} Essence)";
+            return TrFormat("home.next_goal.build_village", villageBuildName, FormatCompactNumber(mythEssence), FormatCompactNumber(villageBuildCost), GetLocalizedCurrencyName(MythEssenceCurrencyId));
+        }
+
+        var goldFloor = Mathf.Max(1, goldDungeonFloor);
+        var goldDungeonPower = GetDungeonRecommendedPower(GoldDungeonDefinition, goldFloor);
+        if (gold < Mathf.Min(weaponCost, armorCost) && teamPower >= goldDungeonPower)
+        {
+            return TrFormat("home.next_goal.run_gold", goldFloor, FormatCompactNumber(teamPower), FormatCompactNumber(goldDungeonPower));
+        }
+
+        var essenceFloor = Mathf.Max(1, essenceDungeonFloor);
+        var essenceDungeonPower = GetDungeonRecommendedPower(EssenceDungeonDefinition, essenceFloor);
+        if (mythEssence < heroCost && teamPower >= essenceDungeonPower)
+        {
+            return TrFormat("home.next_goal.run_essence", essenceFloor, FormatCompactNumber(teamPower), FormatCompactNumber(essenceDungeonPower));
         }
 
         if (teamPower >= gearPower)
         {
-            return $"Run Gear Dungeon F{gearFloor} for drops (Power {FormatCompactNumber(teamPower)}/{FormatCompactNumber(gearPower)})";
+            return TrFormat("home.next_goal.run_gear", gearFloor, FormatCompactNumber(teamPower), FormatCompactNumber(gearPower));
         }
 
         if (gems >= summonCost)
         {
-            return $"Summon x1 for shards ({FormatCompactNumber(gems)}/{FormatCompactNumber(summonCost)} Gems)";
+            return TrFormat("home.next_goal.summon", FormatCompactNumber(gems), FormatCompactNumber(summonCost), GetLocalizedCurrencyName(GemsCurrencyId));
         }
 
         var goldGap = Mathf.Max(0, Mathf.Min(weaponCost, armorCost) - gold);
         var essenceGap = Mathf.Max(0, heroCost - mythEssence);
         var powerGap = Mathf.Max(0, stagePower - teamPower);
-        return $"Farm loop: +{FormatCompactNumber(powerGap)} Power, {FormatCompactNumber(goldGap)} Gold, {FormatCompactNumber(essenceGap)} Essence";
+        return TrFormat("home.next_goal.farm_loop", FormatCompactNumber(powerGap), FormatCompactNumber(goldGap), GetLocalizedCurrencyName(GoldCurrencyId), FormatCompactNumber(essenceGap), GetLocalizedCurrencyName(MythEssenceCurrencyId));
+    }
+
+    private string FormatNextGoalResultLine()
+    {
+        return $"\n{TrFormat("home.next_goal.result_prefix", GetNextGoalText())}";
     }
 
     private bool TryGetAffordableVillageBuildGoal(out string buildingName, out int buildCost)
@@ -13057,7 +13077,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private float GetTankDamageReductionRate()
     {
-        return Mathf.Min(0.5f, CountHeroesWithRole("Tank") * TankDamageReductionRate);
+        return Mathf.Min(0.5f, CountHeroesWithRole(TankRoleId) * TankDamageReductionRate);
     }
 
     private int GetSupportHealPerSecond(int maxTeamHealth)
