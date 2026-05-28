@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.160";
+    public const string PrototypeVersion = "0.2.161";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -694,6 +694,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const float HomeIdleRewardRateMultiplier = 0.28f;
     private const float HomeIdleLootPopupSeconds = 1.45f;
     private const string HomeCampaignMapTextureName = "area_map_scorched_plains";
+    private const float ReferencePortraitHeight = 1920f;
+    private const float RuntimeContentChromeHeight = 410f;
+    private const float ArtContentBottomClearance = 12f;
     private const int HomeProgressMapStagesPerCard = 10;
     private const float FightUltimateCinematicSeconds = 0.9f;
     private const float FightUltimateWorldSlowScale = 0.18f;
@@ -18722,6 +18725,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             homeActionRoot.SetAsLastSibling();
         }
+
+        if (homeIdleCombatRoot != null && homeActionRoot != null)
+        {
+            var idleSize = GetTallPhoneHomeIdlePanelSize();
+            MoveUiElement(homeIdleCombatRoot, homeActionRoot.gameObject, HomeIdleCombatPanelPosition, idleSize);
+            SetNamedChildRuntimeRect(homeIdleCombatRoot, "Home Idle Mini Map Background", Vector2.zero, idleSize, new Vector2(0.5f, 1f));
+            SetNamedChildRuntimeRect(homeIdleCombatRoot, "Idle Combat Map Dim", Vector2.zero, idleSize, new Vector2(0.5f, 1f));
+            MoveUiElement(homeIdleInfoButton, homeIdleCombatRoot.gameObject, Vector2.zero, new Vector2(920f, idleSize.y));
+        }
     }
 
     private void LayoutVillageScreen()
@@ -18731,13 +18743,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
+        var villageViewportSize = GetTallPhoneVillageMapViewportSize();
+        var villageContentSize = GetTallPhoneScrollableMapContentSize(VillageMapSize, villageViewportSize);
         MoveUiElement(villageHeaderText, villagePanel, new Vector2(0f, -112f), new Vector2(760f, 54f));
         MoveUiElement(villageHintText, villagePanel, new Vector2(0f, -154f), new Vector2(940f, 36f));
-        MoveUiElement(villageMapViewportRoot, villagePanel, VillageMapPosition, VillageMapFrameSize);
+        MoveUiElement(villageMapViewportRoot, villagePanel, VillageMapPosition, villageViewportSize);
         if (villageMapRoot != null && villageMapViewportRoot != null)
         {
             villageMapRoot.SetParent(villageMapViewportRoot, false);
-            SetRuntimeRect(villageMapRoot, villageMapRoot.anchoredPosition, VillageMapSize, new Vector2(0.5f, 1f));
+            SetRuntimeRect(villageMapRoot, villageMapRoot.anchoredPosition, villageContentSize, new Vector2(0.5f, 1f));
         }
 
         if (villageMapScrollRect != null)
@@ -18748,7 +18762,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (villageMapImage != null)
         {
-            SetRuntimeRect(villageMapImage.rectTransform, Vector2.zero, VillageMapSize, new Vector2(0.5f, 1f));
+            SetRuntimeRect(villageMapImage.rectTransform, Vector2.zero, villageContentSize, new Vector2(0.5f, 1f));
         }
 
         if (villagePlotButtons != null)
@@ -18841,6 +18855,80 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (fightRoot != null)
         {
             fightRoot.SetAsLastSibling();
+        }
+    }
+
+    private float GetRuntimeCanvasHeight()
+    {
+        RectTransform canvasRect = null;
+        var canvas = topBarRoot != null ? topBarRoot.GetComponentInParent<Canvas>() : null;
+        if (canvas == null && homePanel != null)
+        {
+            canvas = homePanel.GetComponentInParent<Canvas>();
+        }
+
+        if (canvas != null)
+        {
+            canvasRect = canvas.GetComponent<RectTransform>();
+        }
+
+        var canvasHeight = canvasRect != null ? canvasRect.rect.height : 0f;
+        if (canvasHeight <= 0f && Screen.width > 0)
+        {
+            canvasHeight = Screen.height * (1080f / Screen.width);
+        }
+
+        return Mathf.Max(ReferencePortraitHeight, canvasHeight);
+    }
+
+    private float GetRuntimeContentPanelHeight(GameObject panel)
+    {
+        var rect = panel != null ? panel.GetComponent<RectTransform>() : null;
+        var panelHeight = rect != null ? rect.rect.height : 0f;
+        if (panelHeight <= 0f)
+        {
+            panelHeight = GetRuntimeCanvasHeight() - RuntimeContentChromeHeight;
+        }
+
+        return Mathf.Max(ReferencePortraitHeight - RuntimeContentChromeHeight, panelHeight);
+    }
+
+    private float GetContentPanelBottomY(GameObject panel)
+    {
+        return -GetRuntimeContentPanelHeight(panel) + ArtContentBottomClearance;
+    }
+
+    private float GetTallPhoneHeightToPanelBottom(GameObject panel, float topY, float minHeight)
+    {
+        return Mathf.Max(minHeight, topY - GetContentPanelBottomY(panel));
+    }
+
+    private Vector2 GetTallPhoneVillageMapViewportSize()
+    {
+        return new Vector2(VillageMapFrameSize.x, GetTallPhoneHeightToPanelBottom(villagePanel, VillageMapPosition.y, VillageMapFrameSize.y));
+    }
+
+    private Vector2 GetTallPhoneHomeIdlePanelSize()
+    {
+        return new Vector2(HomeIdleCombatPanelSize.x, GetTallPhoneHeightToPanelBottom(homePanel, HomeIdleCombatPanelPosition.y, HomeIdleCombatPanelSize.y));
+    }
+
+    private static Vector2 GetTallPhoneScrollableMapContentSize(Vector2 baseSize, Vector2 viewportSize)
+    {
+        return new Vector2(baseSize.x, Mathf.Max(baseSize.y, viewportSize.y + 80f));
+    }
+
+    private static void SetNamedChildRuntimeRect(RectTransform parent, string childName, Vector2 anchoredPosition, Vector2 size, Vector2 anchor)
+    {
+        if (parent == null)
+        {
+            return;
+        }
+
+        var child = parent.Find(childName) as RectTransform;
+        if (child != null)
+        {
+            SetRuntimeRect(child, anchoredPosition, size, anchor);
         }
     }
 
