@@ -197,6 +197,17 @@ public static partial class MythwakeLocalization
         { "summon.banner.hero_shard_vanguard.promo", "Higher Epic chance for frontline teams" },
         { "summon.banner.hero_shard_mystic.name", "Mystic Bloom" },
         { "summon.banner.hero_shard_mystic.promo", "Better Legendary odds for support and mages" },
-        { "summon.result.title", "Summon Results" }
+        { "summon.result.title", "Summon Results" },
+        { "summon.result.title_count", "Summon x{0} Result" },
+        { "summon.result.summary.single", "{0} x{1} | +{2} shards" },
+        { "summon.result.summary.multi", "{0} heroes in x{1} | +{2} shards" },
+        { "summon.result.summary.empty", "Summon x{0} completed" },
+        { "summon.result.auto", "Auto-Summon" },
+        { "summon.result.auto_remaining", "Auto-Summon {0}" },
+        { "formation.auto_next", "Auto next after win (skills AUTO)" },
+        { "formation.hint.swap", "Tap a highlighted slot to swap heroes." },
+        { "formation.hint.server", "Server Mode resolves rewards, then plays the visible fight." },
+        { "formation.hint.dungeon", "Tap slots to swap. Confirm starts one boss fight." },
+        { "formation.hint.campaign", "Tap slots to swap. Confirm starts a visible {0}s fight." }
     };
 }

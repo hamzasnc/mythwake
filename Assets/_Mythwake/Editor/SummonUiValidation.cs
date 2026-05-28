@@ -108,6 +108,7 @@ public static class SummonUiValidation
         }
 
         var resultTitle = GetPrivateField<TMP_Text>(controller, "summonResultPopupTitleText");
+        var resultSummary = GetPrivateField<TMP_Text>(controller, "summonResultSummaryText");
         var resultNames = GetPrivateField<TMP_Text[]>(controller, "summonResultHeroNameTexts");
         var resultCounts = GetPrivateField<TMP_Text[]>(controller, "summonResultHeroCountTexts");
         var resultImages = GetPrivateField<RawImage[]>(controller, "summonResultHeroImages");
@@ -121,14 +122,17 @@ public static class SummonUiValidation
         var resultCloseButton = GetPrivateField<Button>(controller, "summonResultCloseButton");
 
         RequireCopy(resultTitle.text, "Summon x10 Result");
+        RequireCopy(resultSummary.text, "Paladin x3");
+        RequireCopy(resultSummary.text, "+3 shards");
         RequireResultSlot(resultNames, resultCounts, resultImages, 0, "Paladin", "x3", PaladinHeroId);
         ValidateSummonResultSlots(resultNames, resultCounts, resultImages, 1);
         AssertCenteredResultCard(resultNames[0], "Single-result summon card");
         RequireCopy(autoToggleText.text, "Auto-Summon");
         AssertTextFits(resultTitle, "Summon result title");
+        AssertTextFits(resultSummary, "Summon result summary");
         AssertTextFits(autoToggleText, "Summon auto toggle label");
         ValidateSummonAutoToggle(autoToggleButton, autoToggleMark, autoToggleText);
-        ValidateSummonResultMobileLayout(resultRoot.gameObject, resultTenButton, resultMaxButton, resultCloseButton, autoToggleButton, resultNames);
+        ValidateSummonResultMobileLayout(resultRoot.gameObject, resultTitle, resultSummary, resultTenButton, resultMaxButton, resultCloseButton, autoToggleButton, resultNames);
 
         if (GetButtonLabel(resultTenButton) != "x10" || GetButtonLabel(resultMaxButton) != "x300")
         {
@@ -145,6 +149,7 @@ public static class SummonUiValidation
         InvokePrivate(controller, "RefreshUi");
         Canvas.ForceUpdateCanvases();
         AssertResultRepeatButtons(resultTenButton, resultMaxButton, resultTenCost, resultMaxCost, "315", "9450", true, false, "Summon result x10-only gem state");
+        ValidateSummonResultGermanTextFit(controller, drawCounts, resultTitle, resultSummary, autoToggleText);
 
         resultCloseButton.onClick.Invoke();
         Canvas.ForceUpdateCanvases();
@@ -157,6 +162,21 @@ public static class SummonUiValidation
         {
             throw new InvalidOperationException("Summon result modal blocker should hide with the result popup.");
         }
+    }
+
+    private static void ValidateSummonResultGermanTextFit(IdlePrototypeController controller, int[] drawCounts, TMP_Text resultTitle, TMP_Text resultSummary, TMP_Text autoToggleText)
+    {
+        SetPrivateEnumField(controller, "language", "German");
+        InvokePrivate(controller, "ShowSummonResultPopup", drawCounts, 10);
+        Canvas.ForceUpdateCanvases();
+
+        RequireCopy(resultTitle.text, "Beschwörung x10");
+        RequireCopy(resultSummary.text, "Paladin x3");
+        RequireCopy(resultSummary.text, "Splitter");
+        RequireCopy(autoToggleText.text, "Auto-Beschwörung");
+        AssertTextFits(resultTitle, "Summon result German title");
+        AssertTextFits(resultSummary, "Summon result German summary");
+        AssertTextFits(autoToggleText, "Summon result German auto toggle");
     }
 
     private static int FindHeroIndex(string heroId)
@@ -306,16 +326,19 @@ public static class SummonUiValidation
         }
     }
 
-    private static void ValidateSummonResultMobileLayout(GameObject resultPopup, Button tenButton, Button maxButton, Button closeButton, Button autoToggleButton, TMP_Text[] resultNames)
+    private static void ValidateSummonResultMobileLayout(GameObject resultPopup, TMP_Text resultTitle, TMP_Text resultSummary, Button tenButton, Button maxButton, Button closeButton, Button autoToggleButton, TMP_Text[] resultNames)
     {
         AssertMinimumSize(tenButton.gameObject, 240f, 70f, "Summon result x10 repeat button");
         AssertMinimumSize(maxButton.gameObject, 240f, 70f, "Summon result x300 repeat button");
         AssertMinimumSize(closeButton.gameObject, 70f, 70f, "Summon result close button");
-        AssertMinimumSize(autoToggleButton.gameObject, 320f, 50f, "Summon result auto toggle");
+        AssertMinimumSize(autoToggleButton.gameObject, 340f, 54f, "Summon result auto toggle");
         AssertInsideParent(resultPopup, tenButton.gameObject);
         AssertInsideParent(resultPopup, maxButton.gameObject);
         AssertInsideParent(resultPopup, closeButton.gameObject);
         AssertInsideParent(resultPopup, autoToggleButton.gameObject);
+        AssertInsideParent(resultPopup, resultTitle.gameObject);
+        AssertInsideParent(resultPopup, resultSummary.gameObject);
+        AssertNoOverlap(resultTitle.gameObject, resultSummary.gameObject, 2f, "Summon result title/summary spacing");
         AssertNoOverlap(tenButton.gameObject, closeButton.gameObject, 10f, "Summon result repeat/close controls");
         AssertNoOverlap(maxButton.gameObject, closeButton.gameObject, 10f, "Summon result repeat/close controls");
         AssertNoOverlap(autoToggleButton.gameObject, tenButton.gameObject, 10f, "Summon result auto/repeat controls");
@@ -335,6 +358,7 @@ public static class SummonUiValidation
             }
 
             AssertInsideParent(resultPopup, card);
+            AssertNoOverlap(resultSummary.gameObject, card, 12f, "Summon result summary/card spacing");
             AssertNoOverlap(card, autoToggleButton.gameObject, 12f, "Summon result card/control spacing");
         }
     }
@@ -538,6 +562,17 @@ public static class SummonUiValidation
         }
 
         field.SetValue(target, value);
+    }
+
+    private static void SetPrivateEnumField(object target, string fieldName, string enumValueName)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException($"Missing private enum field: {fieldName}");
+        }
+
+        field.SetValue(target, Enum.Parse(field.FieldType, enumValueName));
     }
 
     private static Array GetStaticArray(Type type, string fieldName)

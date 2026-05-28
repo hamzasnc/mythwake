@@ -74,10 +74,15 @@ public static class FightFormationValidation
         AssertTextFits(enemy, "Formation enemy text");
         AssertTextFits(hint, "Formation hint");
         AssertTextFits(autoLabel, "Formation auto label");
-        AssertMinimumSize(confirm.gameObject, 300f, 60f, "Formation confirm button");
-        AssertMinimumSize(back.gameObject, 190f, 54f, "Formation back button");
-        AssertMinimumSize(autoToggle.gameObject, 520f, 48f, "Formation auto toggle");
+        AssertMinimumSize(confirm.gameObject, 330f, 68f, "Formation confirm button");
+        AssertMinimumSize(back.gameObject, 210f, 60f, "Formation back button");
+        AssertMinimumSize(autoToggle.gameObject, 550f, 54f, "Formation auto toggle");
         AssertInsideParent(formationRoot, enemyImage.gameObject);
+        AssertNoOverlap(enemy.gameObject, hint.gameObject, 4f, "Formation enemy/hint spacing");
+        AssertNoOverlap(hint.gameObject, autoToggle.gameObject, 4f, "Formation hint/auto spacing");
+        AssertNoOverlap(autoToggle.gameObject, confirm.gameObject, 8f, "Formation auto/confirm spacing");
+        AssertNoOverlap(autoToggle.gameObject, back.gameObject, 8f, "Formation auto/back spacing");
+        AssertNoOverlap(back.gameObject, confirm.gameObject, 16f, "Formation action button spacing");
         if (!confirm.interactable || !back.interactable)
         {
             throw new InvalidOperationException("Formation confirm/back buttons should be interactable.");
@@ -104,6 +109,7 @@ public static class FightFormationValidation
             }
 
             AssertInsideParent(formationRoot, slotButtons[i].gameObject);
+            AssertMinimumSize(slotButtons[i].gameObject, 146f, 156f, $"Formation slot {i + 1}");
             AssertTextFits(heroLabels[i], $"Formation hero label {i + 1}");
             if (heroImages[i].gameObject.activeSelf && heroImages[i].texture == null)
             {
@@ -122,6 +128,9 @@ public static class FightFormationValidation
         {
             throw new InvalidOperationException("Tapping Formation slot 1 should select it for swap.");
         }
+
+        RequireCopy(hint.text, "highlighted", "Formation selected-slot hint");
+        AssertTextFits(hint, "Formation selected-slot hint");
 
         slotButtons[1].onClick.Invoke();
         Canvas.ForceUpdateCanvases();
@@ -150,6 +159,25 @@ public static class FightFormationValidation
         {
             throw new InvalidOperationException("Formation auto toggle should disable cleanly and clear the checkbox mark.");
         }
+
+        ValidateFormationGermanTextFit(controller, header, hint, autoLabel);
+    }
+
+    private static void ValidateFormationGermanTextFit(IdlePrototypeController controller, TMP_Text header, TMP_Text hint, TMP_Text autoLabel)
+    {
+        SetPrivateEnumField(controller, "language", "German");
+        InvokePrivate(controller, "RefreshFormationUi");
+        Canvas.ForceUpdateCanvases();
+
+        RequireCopy(header.text, "Formation", "German Formation header");
+        RequireCopy(hint.text, "Confirm", "German Formation hint");
+        RequireCopy(autoLabel.text, "Auto-weiter", "German Formation auto label");
+        AssertTextFits(header, "German Formation header");
+        AssertTextFits(hint, "German Formation hint");
+        AssertTextFits(autoLabel, "German Formation auto label");
+        SetPrivateEnumField(controller, "language", "English");
+        InvokePrivate(controller, "RefreshFormationUi");
+        Canvas.ForceUpdateCanvases();
     }
 
     private static void ValidateCampaignFightControls(IdlePrototypeController controller)
@@ -177,9 +205,12 @@ public static class FightFormationValidation
         AssertTextFits(vs, "Fight VS text");
         AssertTextFits(timer, "Fight timer");
         AssertTextFits(status, "Fight status");
-        AssertMinimumSize(end.gameObject, 120f, 52f, "Fight End button");
-        AssertMinimumSize(auto.gameObject, 88f, 52f, "Fight AUTO button");
-        AssertMinimumSize(speed.gameObject, 76f, 52f, "Fight x2 button");
+        AssertMinimumSize(end.gameObject, 160f, 58f, "Fight End button");
+        AssertMinimumSize(auto.gameObject, 110f, 56f, "Fight AUTO button");
+        AssertMinimumSize(speed.gameObject, 92f, 56f, "Fight x2 button");
+        AssertNoOverlap(status.gameObject, auto.gameObject, 6f, "Fight status/control spacing");
+        AssertNoOverlap(status.gameObject, speed.gameObject, 6f, "Fight status/control spacing");
+        AssertNoOverlap(auto.gameObject, speed.gameObject, 8f, "Fight AUTO/x2 spacing");
         RequireCopy(autoText, "AUTO", "Fight AUTO button");
         RequireCopy(speedText, "x2", "Fight x2 button");
 
@@ -253,6 +284,11 @@ public static class FightFormationValidation
             {
                 throw new InvalidOperationException($"Fight skill card {i + 1} should have portrait art.");
             }
+
+            for (var otherIndex = i + 1; otherIndex < skillButtons.Length; otherIndex++)
+            {
+                AssertNoOverlap(skillButtons[i].gameObject, skillButtons[otherIndex].gameObject, 4f, "Fight skill card spacing");
+            }
         }
     }
 
@@ -325,6 +361,9 @@ public static class FightFormationValidation
         AssertInsideParent(fightRoot, resultRoot);
         AssertTextFits(title, "Fight result title");
         AssertTextFits(body, "Fight result body");
+        AssertMinimumSize(continueButton.gameObject, 280f, 62f, "Fight continue button");
+        AssertInsideParent(resultRoot, continueButton.gameObject);
+        AssertNoOverlap(body.gameObject, continueButton.gameObject, 8f, "Fight result body/Continue spacing");
         if (!continueButton.interactable)
         {
             throw new InvalidOperationException("Fight continue button should be interactable on result popup.");

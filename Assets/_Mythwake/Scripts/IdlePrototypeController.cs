@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.156";
+    public const string PrototypeVersion = "0.2.157";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1520,6 +1520,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Image[] summonResultHeroFrames;
     private TMP_Text summonResultTenCostText;
     private TMP_Text summonResultMaxCostText;
+    private TMP_Text summonResultSummaryText;
     private RectTransform summonCountChipRoot;
     private RectTransform summonRatesBoxRoot;
     private RectTransform summonCarouselRoot;
@@ -2541,7 +2542,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (formationAutoContinueText != null)
         {
-            formationAutoContinueText.text = "Auto next after win (skills AUTO)";
+            formationAutoContinueText.text = Tr("formation.auto_next");
             formationAutoContinueText.color = autoContinueFightsEnabled
                 ? new Color(0.84f, 1f, 0.9f)
                 : new Color(0.78f, 0.84f, 0.92f);
@@ -13551,7 +13552,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         summonResultPopupRoot.SetAsLastSibling();
         if (summonResultPopupTitleText != null)
         {
-            summonResultPopupTitleText.text = pullCount <= 1 ? Tr("summon.result.title") : $"Summon x{pullCount} Result";
+            summonResultPopupTitleText.text = GetSummonResultTitle(pullCount);
+        }
+
+        if (summonResultSummaryText != null)
+        {
+            summonResultSummaryText.text = BuildSummonResultSummary(drawCounts, pullCount);
         }
 
         var slotIndex = 0;
@@ -13602,6 +13608,51 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         LayoutSummonResultVisibleSlots(slotIndex);
         RefreshSummonAutoToggle();
         RefreshUi();
+    }
+
+    private string GetSummonResultTitle(int pullCount)
+    {
+        return pullCount <= 1
+            ? Tr("summon.result.title")
+            : TrFormat("summon.result.title_count", Mathf.Clamp(pullCount, 1, MaxSummonPullCount));
+    }
+
+    private string BuildSummonResultSummary(int[] drawCounts, int pullCount)
+    {
+        var uniqueHeroCount = 0;
+        var totalDraws = 0;
+        var totalShards = 0;
+        var onlyHeroName = string.Empty;
+        var onlyHeroDraws = 0;
+        var onlyHeroShards = 0;
+        for (var heroIndex = 0; heroIndex < HeroDefinitions.Length; heroIndex++)
+        {
+            var drawCount = drawCounts != null && heroIndex < drawCounts.Length ? drawCounts[heroIndex] : 0;
+            if (drawCount <= 0)
+            {
+                continue;
+            }
+
+            uniqueHeroCount++;
+            totalDraws += drawCount;
+            var heroShards = drawCount * GetSummonShardReward(heroIndex);
+            totalShards += heroShards;
+            onlyHeroName = GetLocalizedHeroName(heroIndex);
+            onlyHeroDraws = drawCount;
+            onlyHeroShards = heroShards;
+        }
+
+        if (uniqueHeroCount <= 0)
+        {
+            return TrFormat("summon.result.summary.empty", Mathf.Clamp(pullCount, 1, MaxSummonPullCount));
+        }
+
+        if (uniqueHeroCount == 1)
+        {
+            return TrFormat("summon.result.summary.single", onlyHeroName, onlyHeroDraws, onlyHeroShards);
+        }
+
+        return TrFormat("summon.result.summary.multi", uniqueHeroCount, totalDraws, totalShards);
     }
 
     private void ShowBackendSummonResultPopup(string message, int pullCount)
@@ -13656,17 +13707,67 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 continue;
             }
 
+            StyleSummonResultSlot(visibleIndex, visibleSlotCount);
             rect.anchoredPosition = GetSummonResultSlotPosition(visibleIndex, visibleSlotCount);
             visibleIndex++;
+        }
+    }
+
+    private void StyleSummonResultSlot(int slotIndex, int visibleSlotCount)
+    {
+        if (summonResultHeroFrames == null || slotIndex < 0 || slotIndex >= summonResultHeroFrames.Length || summonResultHeroFrames[slotIndex] == null)
+        {
+            return;
+        }
+
+        var singleResult = visibleSlotCount <= 1;
+        var roomyRow = visibleSlotCount <= 3;
+        var cardSize = singleResult ? new Vector2(240f, 250f) : roomyRow ? new Vector2(206f, 216f) : new Vector2(184f, 202f);
+        var heroSize = singleResult ? new Vector2(156f, 150f) : roomyRow ? new Vector2(134f, 132f) : new Vector2(118f, 118f);
+        var nameY = singleResult ? -164f : roomyRow ? -146f : -138f;
+        var countY = singleResult ? -202f : roomyRow ? -178f : -166f;
+        var frameRect = summonResultHeroFrames[slotIndex].GetComponent<RectTransform>();
+        SetRuntimeRect(frameRect, frameRect.anchoredPosition, cardSize, new Vector2(0.5f, 1f));
+
+        var innerGlow = summonResultHeroFrames[slotIndex].transform.Find("Inner Glow")?.GetComponent<RectTransform>();
+        if (innerGlow != null)
+        {
+            SetRuntimeRect(innerGlow, new Vector2(0f, -cardSize.y + 98f), new Vector2(cardSize.x - 20f, 16f), new Vector2(0.5f, 1f));
+        }
+
+        if (summonResultHeroImages != null && slotIndex < summonResultHeroImages.Length && summonResultHeroImages[slotIndex] != null)
+        {
+            SetRuntimeRect(summonResultHeroImages[slotIndex].rectTransform, new Vector2(0f, -12f), heroSize, new Vector2(0.5f, 1f));
+        }
+
+        if (summonResultHeroNameTexts != null && slotIndex < summonResultHeroNameTexts.Length && summonResultHeroNameTexts[slotIndex] != null)
+        {
+            var nameText = summonResultHeroNameTexts[slotIndex];
+            SetRuntimeRect(nameText.rectTransform, new Vector2(0f, nameY), new Vector2(cardSize.x - 22f, singleResult ? 34f : 28f), new Vector2(0.5f, 1f));
+            nameText.fontSizeMin = singleResult ? 14 : 12;
+            nameText.fontSizeMax = singleResult ? 21 : 18;
+        }
+
+        if (summonResultHeroCountTexts != null && slotIndex < summonResultHeroCountTexts.Length && summonResultHeroCountTexts[slotIndex] != null)
+        {
+            var countText = summonResultHeroCountTexts[slotIndex];
+            SetRuntimeRect(countText.rectTransform, new Vector2(0f, countY), new Vector2(cardSize.x - 22f, singleResult ? 38f : 34f), new Vector2(0.5f, 1f));
+            countText.fontSizeMin = singleResult ? 18 : 16;
+            countText.fontSizeMax = singleResult ? 30 : 26;
         }
     }
 
     private static Vector2 GetSummonResultSlotPosition(int visibleIndex, int visibleSlotCount)
     {
         visibleSlotCount = Mathf.Clamp(visibleSlotCount, 1, HeroCount);
+        if (visibleSlotCount == 1)
+        {
+            return new Vector2(0f, -174f);
+        }
+
         if (visibleSlotCount <= 3)
         {
-            return new Vector2((visibleIndex - (visibleSlotCount - 1) * 0.5f) * 250f, -206f);
+            return new Vector2((visibleIndex - (visibleSlotCount - 1) * 0.5f) * 258f, -188f);
         }
 
         var firstRowCount = visibleSlotCount <= 4 ? 2 : Mathf.CeilToInt(visibleSlotCount * 0.5f);
@@ -13735,8 +13836,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (summonAutoToggleText != null)
         {
             summonAutoToggleText.text = summonAutoRunning
-                ? $"Auto-Summon {summonAutoRemainingPulls}"
-                : "Auto-Summon";
+                ? TrFormat("summon.result.auto_remaining", summonAutoRemainingPulls)
+                : Tr("summon.result.auto");
         }
     }
 
@@ -14353,7 +14454,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             blockerImage.raycastTarget = true;
         }
 
-        summonResultPopupRoot = CreateRuntimePanel(summonPanel.transform, "Summon Result Popup", new Vector2(0, -150), new Vector2(880, 820), new Color(0.01f, 0.01f, 0.014f, 0.99f));
+        summonResultPopupRoot = CreateRuntimePanel(summonPanel.transform, "Summon Result Popup", new Vector2(0, -150), new Vector2(880, 840), new Color(0.01f, 0.01f, 0.014f, 0.99f));
         summonResultPopupRoot.SetAsLastSibling();
         var popupImage = summonResultPopupRoot.GetComponent<Image>();
         if (popupImage != null)
@@ -14361,12 +14462,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             popupImage.raycastTarget = true;
         }
 
-        CreateRuntimePanel(summonResultPopupRoot, "Result Parchment", new Vector2(0, -112), new Vector2(810, 470), new Color(0.15f, 0.09f, 0.055f, 1f));
-        CreateRuntimePanel(summonResultPopupRoot, "Result Controls Backplate", new Vector2(0, -594), new Vector2(810, 180), new Color(0.12f, 0.07f, 0.045f, 1f));
+        CreateRuntimePanel(summonResultPopupRoot, "Result Parchment", new Vector2(0, -112), new Vector2(810, 466), new Color(0.15f, 0.09f, 0.055f, 1f));
+        CreateRuntimePanel(summonResultPopupRoot, "Result Controls Backplate", new Vector2(0, -592), new Vector2(810, 184), new Color(0.12f, 0.07f, 0.045f, 1f));
         CreateRuntimePanel(summonResultPopupRoot, "Result Header Glow", new Vector2(0, -70), new Vector2(620, 12), new Color(1f, 0.75f, 0.23f, 0.95f));
         summonResultPopupTitleText = CreateRuntimeText(summonResultPopupRoot, "Result Title", Tr("summon.result.title"), 34, new Vector2(0, -36), new Vector2(760, 58));
         summonResultPopupTitleText.fontStyle = FontStyles.Bold;
         summonResultPopupTitleText.color = new Color(1f, 0.86f, 0.28f);
+        summonResultPopupTitleText.enableAutoSizing = true;
+        summonResultPopupTitleText.fontSizeMin = 24;
+        summonResultPopupTitleText.fontSizeMax = 34;
+        summonResultPopupTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        summonResultSummaryText = CreateRuntimeText(summonResultPopupRoot, "Result Summary", string.Empty, 21, new Vector2(0, -98), new Vector2(760, 30));
+        summonResultSummaryText.fontStyle = FontStyles.Bold;
+        summonResultSummaryText.color = new Color(0.74f, 1f, 0.94f);
+        summonResultSummaryText.enableAutoSizing = true;
+        summonResultSummaryText.fontSizeMin = 14;
+        summonResultSummaryText.fontSizeMax = 21;
+        summonResultSummaryText.textWrappingMode = TextWrappingModes.NoWrap;
 
         summonResultHeroImages = new RawImage[HeroCount];
         summonResultHeroNameTexts = new TMP_Text[HeroCount];
@@ -14398,22 +14511,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             card.gameObject.SetActive(false);
         }
 
-        summonAutoToggleButton = CreateRuntimeButton(summonResultPopupRoot, "Auto Summon Toggle", string.Empty, 0, -594, 330, 54);
+        summonAutoToggleButton = CreateRuntimeButton(summonResultPopupRoot, "Auto Summon Toggle", string.Empty, 0, -594, 350, 56);
         var autoLabel = summonAutoToggleButton.transform.Find("Label");
         if (autoLabel != null)
         {
             autoLabel.gameObject.SetActive(false);
         }
 
-        var checkbox = CreateRuntimePanel(summonAutoToggleButton.transform, "Checkbox", new Vector2(-130, -9), new Vector2(34, 34), new Color(0.04f, 0.025f, 0.02f, 0.92f));
+        var checkbox = CreateRuntimePanel(summonAutoToggleButton.transform, "Checkbox", new Vector2(-140, -10), new Vector2(36, 36), new Color(0.04f, 0.025f, 0.02f, 0.92f));
         summonAutoCheckboxImage = checkbox.GetComponent<Image>();
-        summonAutoCheckboxMarkText = CreateRuntimeText(checkbox, "Mark", string.Empty, 26, new Vector2(0, -1), new Vector2(32, 32));
+        summonAutoCheckboxMarkText = CreateRuntimeText(checkbox, "Mark", string.Empty, 26, new Vector2(0, -1), new Vector2(34, 34));
         summonAutoCheckboxMarkText.fontStyle = FontStyles.Bold;
         summonAutoCheckboxMarkText.color = new Color(0.05f, 0.03f, 0.01f);
-        summonAutoToggleText = CreateRuntimeText(summonAutoToggleButton.transform, "Auto Text", "Auto-Summon", 26, new Vector2(38, -9), new Vector2(240, 38));
+        summonAutoToggleText = CreateRuntimeText(summonAutoToggleButton.transform, "Auto Text", "Auto-Summon", 25, new Vector2(34, -9), new Vector2(260, 38));
         summonAutoToggleText.alignment = TextAlignmentOptions.Left;
         summonAutoToggleText.fontStyle = FontStyles.Bold;
         summonAutoToggleText.color = new Color(1f, 0.86f, 0.28f);
+        summonAutoToggleText.enableAutoSizing = true;
+        summonAutoToggleText.fontSizeMin = 15;
+        summonAutoToggleText.fontSizeMax = 25;
+        summonAutoToggleText.textWrappingMode = TextWrappingModes.NoWrap;
 
         summonResultTenButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Ten", "x10", -264, -674, 250, 76);
         summonResultMaxButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Max", "x300", 264, -674, 250, 76);
@@ -14953,7 +15070,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var slotObject = new GameObject($"Formation Slot {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
             slotObject.transform.SetParent(arena, false);
-            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), heroPositions[i] + new Vector2(0, 4), new Vector2(136, 148), new Vector2(0.5f, 1f));
+            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), heroPositions[i] + new Vector2(0, 4), new Vector2(150, 160), new Vector2(0.5f, 1f));
 
             var slotFrame = slotObject.GetComponent<Image>();
             slotFrame.color = new Color(0.1f, 0.13f, 0.2f, 0.62f);
@@ -14965,41 +15082,44 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             slotButton.onClick.AddListener(() => SelectFormationSlot(capturedSlot));
             formationSlotButtons[i] = slotButton;
 
-            formationHeroImages[i] = CreateRuntimeRawImage(arena, $"Formation Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(98, 98), new Vector2(0.5f, 1f));
+            formationHeroImages[i] = CreateRuntimeRawImage(arena, $"Formation Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(104, 104), new Vector2(0.5f, 1f));
             formationHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
             formationHeroImages[i].raycastTarget = false;
             formationHeroSkeletalViews[i] = RavikSkeletalCombatView.Create(arena, $"Formation Ravik Skeletal View {i + 1}", heroPositions[i], 0.18f);
             formationHeroPaladinViews[i] = PaladinSkeletalCombatView.Create(arena, $"Formation Paladin Skeletal View {i + 1}", heroPositions[i], 0.18f);
-            formationHeroTexts[i] = CreateRuntimeText(arena, $"Formation Hero Label {i + 1}", string.Empty, 15, heroPositions[i] + new Vector2(0, -96), new Vector2(126, 28));
+            formationHeroTexts[i] = CreateRuntimeText(arena, $"Formation Hero Label {i + 1}", string.Empty, 16, heroPositions[i] + new Vector2(0, -106), new Vector2(140, 30));
             formationHeroTexts[i].fontStyle = FontStyles.Bold;
             formationHeroTexts[i].enableAutoSizing = true;
             formationHeroTexts[i].fontSizeMin = 12;
-            formationHeroTexts[i].fontSizeMax = 15;
+            formationHeroTexts[i].fontSizeMax = 16;
             formationHeroTexts[i].raycastTarget = false;
         }
 
         formationEnemyImage = CreateRuntimeRawImage(arena, "Formation Enemy", LoadCombatTexture("enemy_rat", "idle", 0, "enemy_campaign"), new Vector2(374, -36), new Vector2(90, 90), new Vector2(0.5f, 1f));
         formationEnemyImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale("enemy_rat"), 1f, 1f);
-        formationEnemyText = CreateRuntimeText(formationRoot, "Formation Enemy Text", string.Empty, 23, new Vector2(0, -716), new Vector2(780, 82));
+        formationEnemyText = CreateRuntimeText(formationRoot, "Formation Enemy Text", string.Empty, 22, new Vector2(0, -690), new Vector2(780, 76));
         formationEnemyText.enableAutoSizing = true;
         formationEnemyText.fontSizeMin = 16;
-        formationEnemyText.fontSizeMax = 23;
+        formationEnemyText.fontSizeMax = 22;
 
-        formationHintText = CreateRuntimeText(formationRoot, "Formation Hint", $"Confirm starts a visible {DefaultCombatDurationSeconds}s combat sim.", 20, new Vector2(0, -804), new Vector2(760, 40));
+        formationHintText = CreateRuntimeText(formationRoot, "Formation Hint", TrFormat("formation.hint.campaign", DefaultCombatDurationSeconds), 20, new Vector2(0, -780), new Vector2(760, 42));
         formationHintText.color = new Color(0.78f, 0.84f, 0.92f);
+        formationHintText.enableAutoSizing = true;
+        formationHintText.fontSizeMin = 14;
+        formationHintText.fontSizeMax = 20;
 
-        formationAutoContinueButton = CreateRuntimeButton(formationRoot, "Formation Auto Continue Toggle", string.Empty, 0, -862, 520, 54);
+        formationAutoContinueButton = CreateRuntimeButton(formationRoot, "Formation Auto Continue Toggle", string.Empty, 0, -842, 560, 58);
         var autoContinueButtonImage = formationAutoContinueButton.GetComponent<Image>();
         if (autoContinueButtonImage != null)
         {
             autoContinueButtonImage.color = new Color(0.04f, 0.055f, 0.075f, 0.74f);
         }
 
-        formationAutoContinueBox = CreateRuntimePanel(formationAutoContinueButton.transform, "Checkbox", new Vector2(-230, -10), new Vector2(32, 32), new Color(0.04f, 0.055f, 0.08f, 0.96f)).GetComponent<Image>();
-        formationAutoContinueMarkText = CreateRuntimeText(formationAutoContinueButton.transform, "Checkbox Mark", string.Empty, 23, new Vector2(-230, -10), new Vector2(32, 32));
+        formationAutoContinueBox = CreateRuntimePanel(formationAutoContinueButton.transform, "Checkbox", new Vector2(-250, -11), new Vector2(34, 34), new Color(0.04f, 0.055f, 0.08f, 0.96f)).GetComponent<Image>();
+        formationAutoContinueMarkText = CreateRuntimeText(formationAutoContinueButton.transform, "Checkbox Mark", string.Empty, 23, new Vector2(-250, -10), new Vector2(34, 34));
         formationAutoContinueMarkText.fontStyle = FontStyles.Bold;
         formationAutoContinueMarkText.raycastTarget = false;
-        formationAutoContinueText = CreateRuntimeText(formationAutoContinueButton.transform, "Auto Continue Label", "Auto next after win (skills AUTO)", 19, new Vector2(26, -8), new Vector2(440, 38));
+        formationAutoContinueText = CreateRuntimeText(formationAutoContinueButton.transform, "Auto Continue Label", Tr("formation.auto_next"), 19, new Vector2(24, -9), new Vector2(480, 40));
         formationAutoContinueText.alignment = TextAlignmentOptions.Left;
         formationAutoContinueText.enableAutoSizing = true;
         formationAutoContinueText.fontSizeMin = 14;
@@ -15007,8 +15127,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         formationAutoContinueText.raycastTarget = false;
         RefreshFormationAutoContinueToggle();
 
-        formationBackButton = CreateRuntimeButton(formationRoot, "Formation Back Button", "Back", -225, -930, 210, 62);
-        formationConfirmButton = CreateRuntimeButton(formationRoot, "Formation Confirm Button", "Confirm", 135, -930, 330, 70);
+        formationBackButton = CreateRuntimeButton(formationRoot, "Formation Back Button", "Back", -225, -920, 220, 64);
+        formationConfirmButton = CreateRuntimeButton(formationRoot, "Formation Confirm Button", "Confirm", 140, -920, 340, 72);
     }
 
     private void EnsureRuntimeFightUi()
@@ -15028,11 +15148,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         fightVsText.fontStyle = FontStyles.Bold;
         fightTimerText = CreateRuntimeText(fightRoot, "Fight Timer Text", FormatFightTimer(DefaultCombatDurationSeconds), 25, new Vector2(0, -184), new Vector2(320, 42));
         fightTimerText.fontStyle = FontStyles.Bold;
-        fightStatusText = CreateRuntimeText(fightRoot, "Fight Status Text", "Ready", 23, new Vector2(0, -930), new Vector2(820, 58));
+        fightStatusText = CreateRuntimeText(fightRoot, "Fight Status Text", "Ready", 23, new Vector2(0, -888), new Vector2(820, 52));
         fightStatusText.enableAutoSizing = true;
         fightStatusText.fontSizeMin = 16;
         fightStatusText.fontSizeMax = 23;
-        fightEndButton = CreateRuntimeButton(fightRoot, "Fight End Button", "End Fight", -386, -842, 142, 58);
+        fightEndButton = CreateRuntimeButton(fightRoot, "Fight End Button", "End Fight", -374, -832, 170, 62);
         var fightEndButtonImage = fightEndButton.GetComponent<Image>();
         if (fightEndButtonImage != null)
         {
@@ -15104,13 +15224,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             fightFloatingTexts[i].gameObject.SetActive(false);
         }
 
-        fightResultRoot = CreateRuntimePopup(fightRoot, "Campaign Fight Result Popup", new Vector2(0, -360), new Vector2(760, 360), "Result");
+        fightResultRoot = CreateRuntimePopup(fightRoot, "Campaign Fight Result Popup", new Vector2(0, -360), new Vector2(780, 394), "Result");
         fightResultTitleText = fightResultRoot.Find("Title").GetComponent<TMP_Text>();
-        fightResultBodyText = CreateRuntimeText(fightResultRoot, "Result Body", string.Empty, 22, new Vector2(0, -105), new Vector2(660, 150));
+        fightResultBodyText = CreateRuntimeText(fightResultRoot, "Result Body", string.Empty, 22, new Vector2(0, -102), new Vector2(690, 178));
         fightResultBodyText.enableAutoSizing = true;
         fightResultBodyText.fontSizeMin = 15;
         fightResultBodyText.fontSizeMax = 22;
-        fightContinueButton = CreateRuntimeButton(fightResultRoot, "Fight Continue Button", "Continue", 0, -286, 240, 62);
+        fightContinueButton = CreateRuntimeButton(fightResultRoot, "Fight Continue Button", "Continue", 0, -316, 300, 66);
         fightResultRoot.gameObject.SetActive(false);
     }
 
@@ -15125,13 +15245,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         fightSkillNameTexts = new TMP_Text[HeroCount];
         fightSkillManaTexts = new TMP_Text[HeroCount];
 
-        const float spacing = 154f;
+        const float spacing = 152f;
         var startX = -((HeroCount - 1) * spacing * 0.5f);
         for (var i = 0; i < HeroCount; i++)
         {
             var cardObject = new GameObject($"Fight Skill Card {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
             cardObject.transform.SetParent(fightRoot, false);
-            SetRuntimeRect(cardObject.GetComponent<RectTransform>(), new Vector2(startX + spacing * i, -1048), new Vector2(132, 180), new Vector2(0.5f, 1f));
+            SetRuntimeRect(cardObject.GetComponent<RectTransform>(), new Vector2(startX + spacing * i, -1044), new Vector2(136, 184), new Vector2(0.5f, 1f));
 
             var backplate = cardObject.GetComponent<Image>();
             backplate.color = new Color(0.07f, 0.09f, 0.13f, 0.96f);
@@ -15148,18 +15268,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             portrait.raycastTarget = false;
             fightSkillPortraits[i] = portrait;
 
-            fightSkillHpFills[i] = CreateRuntimeHealthFill(cardObject.transform, "HP Back", new Vector2(0, -114), 104, new Color(0.16f, 0.78f, 0.33f, 0.96f));
+            fightSkillHpFills[i] = CreateRuntimeHealthFill(cardObject.transform, "HP Back", new Vector2(0, -114), 108, new Color(0.16f, 0.78f, 0.33f, 0.96f));
             var hpBack = fightSkillHpFills[i].transform.parent.GetComponent<RectTransform>();
             if (hpBack != null)
             {
-                hpBack.sizeDelta = new Vector2(104, 13);
+                hpBack.sizeDelta = new Vector2(108, 13);
             }
 
-            fightSkillHpTexts[i] = CreateRuntimeText(fightSkillHpFills[i].transform.parent, "HP Text", "100%", 10, Vector2.zero, new Vector2(98, 13));
+            fightSkillHpTexts[i] = CreateRuntimeText(fightSkillHpFills[i].transform.parent, "HP Text", "100%", 10, Vector2.zero, new Vector2(102, 13));
             fightSkillHpTexts[i].fontStyle = FontStyles.Bold;
             fightSkillHpTexts[i].raycastTarget = false;
 
-            var manaBack = CreateRuntimePanel(cardObject.transform, "Mana Back", new Vector2(0, -132), new Vector2(104, 14), new Color(0.02f, 0.025f, 0.04f, 0.94f));
+            var manaBack = CreateRuntimePanel(cardObject.transform, "Mana Back", new Vector2(0, -132), new Vector2(108, 14), new Color(0.02f, 0.025f, 0.04f, 0.94f));
             var manaFillObject = new GameObject("Mana Fill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             manaFillObject.transform.SetParent(manaBack, false);
             var manaFillRect = manaFillObject.GetComponent<RectTransform>();
@@ -15171,7 +15291,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             fightSkillManaFills[i].color = new Color(0.16f, 0.68f, 1f, 0.96f);
             fightSkillManaFills[i].raycastTarget = false;
 
-            fightSkillNameTexts[i] = CreateRuntimeText(cardObject.transform, "Name", GetHeroDefinition(i).name, 16, new Vector2(0, -150), new Vector2(118, 24));
+            fightSkillNameTexts[i] = CreateRuntimeText(cardObject.transform, "Name", GetHeroDefinition(i).name, 16, new Vector2(0, -150), new Vector2(122, 24));
             fightSkillNameTexts[i].fontStyle = FontStyles.Bold;
             fightSkillNameTexts[i].enableAutoSizing = true;
             fightSkillNameTexts[i].fontSizeMin = 11;
@@ -15179,7 +15299,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             fightSkillNameTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
             fightSkillNameTexts[i].raycastTarget = false;
 
-            fightSkillManaTexts[i] = CreateRuntimeText(cardObject.transform, "Mana", "0/100", 14, new Vector2(0, -168), new Vector2(118, 22));
+            fightSkillManaTexts[i] = CreateRuntimeText(cardObject.transform, "Mana", "0/100", 14, new Vector2(0, -170), new Vector2(122, 22));
             fightSkillManaTexts[i].color = new Color(0.74f, 0.9f, 1f);
             fightSkillManaTexts[i].enableAutoSizing = true;
             fightSkillManaTexts[i].fontSizeMin = 10;
@@ -15188,15 +15308,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             fightSkillManaTexts[i].raycastTarget = false;
         }
 
-        fightAutoSkillButton = CreateRuntimeButton(fightRoot, "Fight Auto Skill Button", "AUTO", 316, -966, 96, 56);
+        fightAutoSkillButton = CreateRuntimeButton(fightRoot, "Fight Auto Skill Button", "AUTO", 303, -958, 116, 60);
         fightAutoSkillButton.onClick.AddListener(ToggleFightAutoSkills);
         fightAutoSkillButtonText = fightAutoSkillButton.GetComponentInChildren<TMP_Text>();
+        StyleFightControlButtonText(fightAutoSkillButtonText);
         RefreshFightAutoSkillButton();
 
-        fightSpeedButton = CreateRuntimeButton(fightRoot, "Fight Speed Button", "x2", 424, -966, 82, 56);
+        fightSpeedButton = CreateRuntimeButton(fightRoot, "Fight Speed Button", "x2", 429, -958, 98, 60);
         fightSpeedButton.onClick.AddListener(ToggleFightSpeed);
         fightSpeedButtonText = fightSpeedButton.GetComponentInChildren<TMP_Text>();
+        StyleFightControlButtonText(fightSpeedButtonText);
         RefreshFightSpeedButton();
+    }
+
+    private static void StyleFightControlButtonText(TMP_Text label)
+    {
+        if (label == null)
+        {
+            return;
+        }
+
+        label.enableAutoSizing = true;
+        label.fontSizeMin = 12;
+        label.fontSizeMax = 20;
+        label.textWrappingMode = TextWrappingModes.Normal;
+        label.lineSpacing = -8f;
     }
 
     private void EnsureRuntimeHomePopups()
@@ -18723,7 +18859,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         MoveUiElement(summonResultText, summonResultBoxRoot != null ? summonResultBoxRoot.gameObject : summonPanel, new Vector2(0, -10), new Vector2(700, 50));
         MoveUiElement(summonCountText, summonCountChipRoot != null ? summonCountChipRoot.gameObject : summonPanel, new Vector2(4, -11), new Vector2(176, 32));
         MoveUiElement(summonRatesText, summonRatesBoxRoot != null ? summonRatesBoxRoot.gameObject : summonPanel, new Vector2(0, -22), new Vector2(470, 84));
-        MoveUiElement(summonResultPopupRoot, summonPanel, new Vector2(0, -150), new Vector2(880, 820));
+        MoveUiElement(summonResultPopupRoot, summonPanel, new Vector2(0, -150), new Vector2(880, 840));
     }
 
     private void LayoutShopScreen()
@@ -20590,8 +20726,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 formationSlotFrames[slotIndex].color = isSelected
                     ? new Color(1f, 0.74f, 0.18f, 0.95f)
                     : isSwapTarget
-                        ? new Color(0.22f, 0.72f, 1f, 0.82f)
-                        : new Color(0.1f, 0.13f, 0.2f, 0.62f);
+                        ? new Color(0.22f, 0.72f, 1f, 0.86f)
+                        : new Color(0.08f, 0.11f, 0.18f, 0.72f);
+            }
+
+            if (formationHeroTexts != null && slotIndex < formationHeroTexts.Length && formationHeroTexts[slotIndex] != null)
+            {
+                formationHeroTexts[slotIndex].color = isSelected
+                    ? new Color(1f, 0.91f, 0.44f)
+                    : isSwapTarget
+                        ? new Color(0.72f, 0.94f, 1f)
+                        : Color.white;
             }
 
             if (formationSlotButtons != null && slotIndex < formationSlotButtons.Length)
@@ -20661,11 +20806,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                     formationHeroImages[slotIndex].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
                     if (useRavikRig)
                     {
-                        formationHeroSkeletalViews[slotIndex].ShowPreview(formationHeroImages[slotIndex].rectTransform.anchoredPosition, GetHeroFacingScale(heroIndex), 1f);
+                        formationHeroSkeletalViews[slotIndex].ShowPreview(GetFormationSkeletalPreviewPosition(heroIndex, formationHeroImages[slotIndex].rectTransform.anchoredPosition), GetHeroFacingScale(heroIndex), 1f);
                     }
                     if (usePaladinRig)
                     {
-                        formationHeroPaladinViews[slotIndex].ShowPreview(formationHeroImages[slotIndex].rectTransform.anchoredPosition, GetHeroFacingScale(heroIndex), 1f);
+                        formationHeroPaladinViews[slotIndex].ShowPreview(GetFormationSkeletalPreviewPosition(heroIndex, formationHeroImages[slotIndex].rectTransform.anchoredPosition), GetHeroFacingScale(heroIndex), 1f);
                     }
                 }
 
@@ -20700,17 +20845,32 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             if (selectedFormationSlotIndex >= 0)
             {
-                formationHintText.text = "Tippe eine leuchtende Position, um die Helden zu tauschen.";
+                formationHintText.text = Tr("formation.hint.swap");
             }
             else
             {
                 formationHintText.text = backendGameplayEnabled
-                    ? "Server Mode resolves rewards, then plays the visible fight."
+                    ? Tr("formation.hint.server")
                     : isDungeon
-                        ? "Confirm starts a single-boss dungeon fight."
-                        : $"Confirm starts a visible {DefaultCombatDurationSeconds}s combat sim.";
+                        ? Tr("formation.hint.dungeon")
+                        : TrFormat("formation.hint.campaign", DefaultCombatDurationSeconds);
             }
         }
+    }
+
+    private Vector2 GetFormationSkeletalPreviewPosition(int heroIndex, Vector2 slotTopPosition)
+    {
+        if (IsRavikHero(heroIndex))
+        {
+            return slotTopPosition + new Vector2(0f, 68f);
+        }
+
+        if (IsPaladinHero(heroIndex))
+        {
+            return slotTopPosition + new Vector2(0f, 46f);
+        }
+
+        return slotTopPosition;
     }
 
     private void SelectVisibleCampaignStage(int nodeIndex)

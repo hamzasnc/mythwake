@@ -197,6 +197,17 @@ public static partial class MythwakeLocalization
         { "summon.banner.hero_shard_vanguard.promo", "Höhere epische Chance für Frontteams" },
         { "summon.banner.hero_shard_mystic.name", "Mystische Blüte" },
         { "summon.banner.hero_shard_mystic.promo", "Bessere legendäre Chancen für Unterstützung und Magier" },
-        { "summon.result.title", "Beschwörungsergebnisse" }
+        { "summon.result.title", "Beschwörungsergebnis" },
+        { "summon.result.title_count", "Beschwörung x{0}" },
+        { "summon.result.summary.single", "{0} x{1} | +{2} Splitter" },
+        { "summon.result.summary.multi", "{0} Helden in x{1} | +{2} Splitter" },
+        { "summon.result.summary.empty", "Beschwörung x{0} abgeschlossen" },
+        { "summon.result.auto", "Auto-Beschwörung" },
+        { "summon.result.auto_remaining", "Auto-Beschwörung {0}" },
+        { "formation.auto_next", "Auto-weiter nach Sieg (Skills AUTO)" },
+        { "formation.hint.swap", "Leuchtenden Slot zum Tauschen antippen." },
+        { "formation.hint.server", "Server-Modus berechnet Belohnungen und zeigt dann den Kampf." },
+        { "formation.hint.dungeon", "Slots tauschen, dann Confirm für den Bosskampf." },
+        { "formation.hint.campaign", "Slots tauschen, dann Confirm für sichtbaren {0}s-Kampf." }
     };
 }
