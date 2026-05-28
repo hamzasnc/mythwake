@@ -205,9 +205,14 @@ public static partial class MythwakeLocalization
         { "summon.result.auto", "Auto-Beschwörung" },
         { "summon.result.auto_remaining", "Auto-Beschwörung {0}" },
         { "formation.auto_next", "Auto-weiter nach Sieg (Skills AUTO)" },
+        { "formation.auto_battle", "Auto-Kampf" },
+        { "formation.begin_battle", "Kampf starten" },
+        { "formation.deployed", "Aufgestellte Helden" },
+        { "formation.player_power", "Deine Kraft" },
+        { "formation.enemy_power", "Gegnerkraft" },
         { "formation.hint.swap", "Leuchtenden Slot zum Tauschen antippen." },
         { "formation.hint.server", "Server-Modus berechnet Belohnungen und zeigt dann den Kampf." },
-        { "formation.hint.dungeon", "Slots tauschen, dann Confirm für den Bosskampf." },
-        { "formation.hint.campaign", "Slots tauschen, dann Confirm für sichtbaren {0}s-Kampf." }
+        { "formation.hint.dungeon", "Kampf starten spielt einmal. Auto-Kampf laeuft weiter bis Stopp oder Niederlage." },
+        { "formation.hint.campaign", "Kampf starten spielt einmal. Auto-Kampf laeuft weiter bis Stopp oder Niederlage." }
     };
 }

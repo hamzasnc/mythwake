@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.157";
+    public const string PrototypeVersion = "0.2.158";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -598,6 +598,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int[] heroShards;
         public int[] heroAscensions;
         public int[] formationSlotHeroIndices;
+        public int selectedFormationPresetIndex;
+        public int[] formationPresetHeroIndices;
         public bool autoContinueFightsEnabled;
         public int[] heroWeaponLevels;
         public int[] heroArmorLevels;
@@ -666,6 +668,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const string EpicRarityId = "epic";
     private const string LegendaryRarityId = "legendary";
     private const int HeroCount = 7;
+    private const int FormationPresetCount = 5;
+    private const int FormationFilterCount = 7;
+    private const string FormationBackgroundTextureName = "area_map_hollow_spire_obsidian_vault";
     private const int DailyMissionCount = 3;
     private const int BattlePassRewardCount = 5;
     private const int AccessorySlotCount = 6;
@@ -850,6 +855,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         new HeroDefinition("hero_paladin", "Paladin", TankRoleId, "Tank", EpicRarityId, "Epic", 17, 5, 210, 38, 5, 25, 15, 12, 74, 9, 89, 21),
         new HeroDefinition("hero_ravik", "Ravik", MageRoleId, "Mage", EpicRarityId, "Epic", 24, 7, 118, 22, 1, 25, 15, 12, 70, 17, 91, 7)
     };
+
+    private static readonly string[] FormationFilterLabels = { "UP", "ALL", "W", "T", "M", "R", "S" };
+    private static readonly string[] FormationFilterRoleIds = { "up", "all", WarriorRoleId, TankRoleId, MageRoleId, RangerRoleId, SupportRoleId };
 
     private static readonly string[] CampaignEnemyCombatTextureNames =
     {
@@ -1543,17 +1551,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RectTransform fightRoot;
     private RectTransform fightResultRoot;
     private TMP_Text formationHeaderText;
+    private TMP_Text formationStageText;
     private TMP_Text formationEnemyText;
     private TMP_Text formationTeamText;
     private TMP_Text formationHintText;
     private RawImage formationArenaBackgroundImage;
     private RawImage formationEnemyImage;
+    private Button[] formationPresetButtons;
+    private Image[] formationPresetFrames;
+    private TMP_Text[] formationPresetTexts;
     private Button[] formationSlotButtons;
     private Image[] formationSlotFrames;
     private RawImage[] formationHeroImages;
     private RavikSkeletalCombatView[] formationHeroSkeletalViews;
     private PaladinSkeletalCombatView[] formationHeroPaladinViews;
     private TMP_Text[] formationHeroTexts;
+    private Button[] formationBenchButtons;
+    private Image[] formationBenchFrames;
+    private RawImage[] formationBenchHeroImages;
+    private TMP_Text[] formationBenchHeroTexts;
+    private Button[] formationFilterButtons;
+    private Image[] formationFilterFrames;
+    private TMP_Text[] formationFilterTexts;
     private Button formationAutoContinueButton;
     private Image formationAutoContinueBox;
     private TMP_Text formationAutoContinueMarkText;
@@ -1561,6 +1580,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button formationConfirmButton;
     private Button formationBackButton;
     private int[] formationSlotHeroIndices;
+    private int[] formationPresetHeroIndices;
+    private int selectedFormationPresetIndex;
+    private int selectedFormationFilterIndex = 1;
     private int selectedFormationSlotIndex = -1;
     private bool autoContinueFightsEnabled;
     private Coroutine autoContinueFightCoroutine;
@@ -2488,6 +2510,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         StartTrackedFightCoroutine(PlayLocalCampaignFightRoutine());
     }
 
+    private void StartSingleBattleFromFormation()
+    {
+        autoContinueFightsEnabled = false;
+        fightAutoSkillsEnabled = false;
+        RefreshFormationAutoContinueToggle();
+        RefreshFightAutoSkillButton();
+        SaveProgress();
+        StartCampaignFightFromFormation();
+    }
+
+    private void StartAutoBattleFromFormation()
+    {
+        autoContinueFightsEnabled = true;
+        fightAutoSkillsEnabled = true;
+        RefreshFormationAutoContinueToggle();
+        RefreshFightAutoSkillButton();
+        SaveProgress();
+        StartCampaignFightFromFormation();
+    }
+
     private void StartDungeonFightFromFormation()
     {
         selectedDungeonId = ResolveDungeonDefinition(selectedDungeonId).dungeonId;
@@ -2542,10 +2584,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (formationAutoContinueText != null)
         {
-            formationAutoContinueText.text = Tr("formation.auto_next");
+            formationAutoContinueText.text = Tr("formation.auto_battle");
             formationAutoContinueText.color = autoContinueFightsEnabled
-                ? new Color(0.84f, 1f, 0.9f)
-                : new Color(0.78f, 0.84f, 0.92f);
+                ? new Color(1f, 0.94f, 0.62f)
+                : Color.white;
+        }
+
+        var autoImage = formationAutoContinueButton != null ? formationAutoContinueButton.GetComponent<Image>() : null;
+        if (autoImage != null)
+        {
+            autoImage.color = autoContinueFightsEnabled
+                ? new Color(0.56f, 0.28f, 0.06f, 0.98f)
+                : new Color(0.73f, 0.52f, 0.22f, 0.98f);
         }
     }
 
@@ -5203,6 +5253,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureDailyMissionClaims();
         EnsureBattlePassRewardClaims();
         EnsureFormationOrder();
+        EnsureFormationPresets();
+        SaveActiveFormationPreset();
 
         return new PrototypeSaveData
         {
@@ -5235,6 +5287,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroShards = CopyIntArray(heroShards, HeroCount, 0),
             heroAscensions = CopyIntArray(heroAscensions, HeroCount, 0),
             formationSlotHeroIndices = CopyIntArray(this.formationSlotHeroIndices, HeroCount, -1),
+            selectedFormationPresetIndex = selectedFormationPresetIndex,
+            formationPresetHeroIndices = CopyIntArray(formationPresetHeroIndices, FormationPresetCount * HeroCount, -1),
             autoContinueFightsEnabled = this.autoContinueFightsEnabled,
             heroWeaponLevels = CopyIntArray(heroWeaponLevels, HeroCount, StarterEquipmentLevel),
             heroArmorLevels = CopyIntArray(heroArmorLevels, HeroCount, StarterEquipmentLevel),
@@ -5278,6 +5332,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroShards = CopyIntArray(data.heroShards, HeroCount, 0);
         heroAscensions = CopyIntArray(data.heroAscensions, HeroCount, 0);
         formationSlotHeroIndices = CopyIntArray(data.formationSlotHeroIndices, HeroCount, -1);
+        selectedFormationPresetIndex = Mathf.Clamp(data.selectedFormationPresetIndex, 0, FormationPresetCount - 1);
+        formationPresetHeroIndices = data.formationPresetHeroIndices == null ? null : CopyIntArray(data.formationPresetHeroIndices, FormationPresetCount * HeroCount, -1);
         autoContinueFightsEnabled = data.autoContinueFightsEnabled;
         fightAutoSkillsEnabled = autoContinueFightsEnabled;
         heroWeaponLevels = data.heroWeaponLevels == null ? null : CopyIntArray(data.heroWeaponLevels, HeroCount, StarterEquipmentLevel);
@@ -5286,6 +5342,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroEquippedAccessoryLevels = data.heroEquippedAccessoryLevels == null ? null : CopyIntArray(data.heroEquippedAccessoryLevels, HeroCount * AccessorySlotCount, 0);
 
         EnsureFormationOrder();
+        EnsureFormationPresets();
         equippedAccessoryRarities = CopyIntArray(data.equippedAccessoryRarities, AccessorySlotCount, -1);
         equippedAccessoryLevels = CopyIntArray(data.equippedAccessoryLevels, AccessorySlotCount, 0);
         accessoryInventory = CopyIntArray(data.accessoryInventory, AccessorySlotCount * AccessoryRarityCount, 0);
@@ -7384,15 +7441,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        if (!useDungeonBattleMap)
-        {
-            formationArenaBackgroundImage.texture = null;
-            formationArenaBackgroundImage.uvRect = new Rect(0f, 0f, 1f, 1f);
-            formationArenaBackgroundImage.gameObject.SetActive(false);
-            return;
-        }
-
-        var texture = LoadRuntimeTexture(GetSelectedDungeonBattleMapTextureName());
+        var texture = LoadRuntimeTexture(useDungeonBattleMap ? GetSelectedDungeonBattleMapTextureName() : FormationBackgroundTextureName);
         formationArenaBackgroundImage.texture = texture;
         formationArenaBackgroundImage.gameObject.SetActive(texture != null);
         if (texture == null)
@@ -7403,13 +7452,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         texture.filterMode = FilterMode.Bilinear;
         texture.wrapMode = TextureWrapMode.Clamp;
         var rect = formationArenaBackgroundImage.rectTransform;
-        rect.sizeDelta = new Vector2(820f, 410f);
+        rect.sizeDelta = new Vector2(960f, 850f);
         rect.anchoredPosition = Vector2.zero;
 
         var textureAspect = texture.width / (float)Mathf.Max(1, texture.height);
-        const float previewAspect = 820f / 410f;
+        const float previewAspect = 960f / 850f;
         var cropHeight = Mathf.Clamp01(textureAspect / previewAspect);
-        var cropY = Mathf.Clamp(0.36f, 0f, 1f - cropHeight);
+        var cropY = Mathf.Clamp(useDungeonBattleMap ? 0.36f : 0.2f, 0f, 1f - cropHeight);
         formationArenaBackgroundImage.uvRect = new Rect(0f, cropY, 1f, cropHeight);
     }
 
@@ -8595,9 +8644,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonInteractable(homeBeginButton, canInteract && selectedCampaignStage == enemyLevel);
         SetButtonInteractable(formationConfirmButton, canInteract && canConfirmFormation);
         SetButtonInteractable(formationBackButton, canInteract);
-        SetButtonInteractable(formationAutoContinueButton, canInteract);
+        SetButtonInteractable(formationAutoContinueButton, canInteract && canConfirmFormation);
         SetButtonInteractable(fightEndButton, campaignFightInProgress || battleFlowMode == BattleFlowMode.Fight);
         SetButtonsInteractable(formationSlotButtons, canInteract);
+        SetButtonsInteractable(formationBenchButtons, canInteract);
+        SetButtonsInteractable(formationPresetButtons, canInteract);
+        SetButtonsInteractable(formationFilterButtons, !busy);
         SetButtonsInteractable(campaignStageButtons, canInteract);
         SetButtonInteractable(goldDungeonButton, canInteract);
         SetButtonInteractable(essenceDungeonButton, canInteract);
@@ -9461,7 +9513,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (formationConfirmButton != null)
         {
-            formationConfirmButton.onClick.AddListener(StartCampaignFightFromFormation);
+            formationConfirmButton.onClick.AddListener(StartSingleBattleFromFormation);
         }
 
         if (formationBackButton != null)
@@ -9471,7 +9523,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (formationAutoContinueButton != null)
         {
-            formationAutoContinueButton.onClick.AddListener(ToggleFormationAutoContinue);
+            formationAutoContinueButton.onClick.AddListener(StartAutoBattleFromFormation);
         }
 
         if (fightContinueButton != null)
@@ -9734,7 +9786,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (formationConfirmButton != null)
         {
-            formationConfirmButton.onClick.RemoveListener(StartCampaignFightFromFormation);
+            formationConfirmButton.onClick.RemoveListener(StartSingleBattleFromFormation);
         }
 
         if (formationBackButton != null)
@@ -9744,7 +9796,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (formationAutoContinueButton != null)
         {
-            formationAutoContinueButton.onClick.RemoveListener(ToggleFormationAutoContinue);
+            formationAutoContinueButton.onClick.RemoveListener(StartAutoBattleFromFormation);
         }
 
         if (fightContinueButton != null)
@@ -15035,28 +15087,52 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void EnsureRuntimeFormationUi()
     {
         var rootObject = new GameObject("Campaign Formation Root", typeof(RectTransform));
-        rootObject.transform.SetParent(battlePanel.transform, false);
+        rootObject.transform.SetParent(battlePanel != null && battlePanel.transform.parent != null ? battlePanel.transform.parent : battlePanel.transform, false);
         formationRoot = rootObject.GetComponent<RectTransform>();
         StretchRuntime(formationRoot, Vector2.zero);
 
-        var backdrop = CreateRuntimePanel(formationRoot, "Formation Backdrop", new Vector2(0, -150), new Vector2(880, 940), new Color(0.06f, 0.045f, 0.055f, 0.96f));
-        CreateLayeredRuntimeBackground(backdrop, new Vector2(880, 940), 0.52f);
+        var backdrop = CreateRuntimePanel(formationRoot, "Formation Backdrop", new Vector2(0, -96), new Vector2(960, 1510), new Color(0.055f, 0.036f, 0.032f, 0.94f));
+        CreateLayeredRuntimeBackground(backdrop, new Vector2(960, 1510), 0.38f);
 
-        formationHeaderText = CreateRuntimeText(formationRoot, "Formation Header", "Formation", 34, new Vector2(0, -118), new Vector2(780, 50));
+        var arena = CreateRuntimePanel(formationRoot, "Formation Arena Preview", new Vector2(0, -188), new Vector2(960, 850), new Color(0.03f, 0.035f, 0.055f, 0.92f));
+        formationArenaBackgroundImage = CreateRuntimeRawImage(arena, "Formation Dungeon Battle Map", null, Vector2.zero, new Vector2(960, 850), new Vector2(0.5f, 1f));
+        formationArenaBackgroundImage.color = new Color(1f, 1f, 1f, 0.92f);
+
+        var vsPlate = CreateRuntimePanel(formationRoot, "Formation VS Plate", new Vector2(0, -102), new Vector2(300, 82), new Color(0.03f, 0.035f, 0.045f, 0.82f));
+        vsPlate.localRotation = Quaternion.Euler(0f, 0f, 0f);
+        formationHeaderText = CreateRuntimeText(formationRoot, "Formation Header", "VS", 52, new Vector2(0, -112), new Vector2(210, 78));
         formationHeaderText.fontStyle = FontStyles.Bold;
+        formationHeaderText.color = new Color(1f, 0.82f, 0.28f);
+        formationHeaderText.textWrappingMode = TextWrappingModes.NoWrap;
 
-        formationTeamText = CreateRuntimeText(formationRoot, "Formation Team Power", string.Empty, 23, new Vector2(0, -172), new Vector2(780, 40));
-        formationTeamText.color = new Color(0.78f, 0.91f, 1f);
+        formationTeamText = CreateRuntimeText(formationRoot, "Formation Team Power", string.Empty, 24, new Vector2(-312, -112), new Vector2(270, 76));
+        formationTeamText.color = new Color(1f, 0.86f, 0.42f);
         formationTeamText.fontStyle = FontStyles.Bold;
         formationTeamText.enableAutoSizing = true;
         formationTeamText.fontSizeMin = 15;
-        formationTeamText.fontSizeMax = 23;
+        formationTeamText.fontSizeMax = 24;
 
-        var arena = CreateRuntimePanel(formationRoot, "Formation Arena Preview", new Vector2(0, -228), new Vector2(840, 454), new Color(0.03f, 0.045f, 0.07f, 0.88f));
-        CreateLayeredRuntimeBackground(arena, new Vector2(840, 454), 0.62f);
-        formationArenaBackgroundImage = CreateRuntimeRawImage(arena, "Formation Dungeon Battle Map", null, Vector2.zero, new Vector2(840, 454), new Vector2(0.5f, 1f));
-        formationArenaBackgroundImage.color = new Color(1f, 1f, 1f, 0.82f);
-        formationArenaBackgroundImage.gameObject.SetActive(false);
+        formationEnemyText = CreateRuntimeText(formationRoot, "Formation Enemy Text", string.Empty, 24, new Vector2(312, -112), new Vector2(270, 76));
+        formationEnemyText.color = new Color(1f, 0.86f, 0.42f);
+        formationEnemyText.fontStyle = FontStyles.Bold;
+        formationEnemyText.enableAutoSizing = true;
+        formationEnemyText.fontSizeMin = 15;
+        formationEnemyText.fontSizeMax = 24;
+
+        formationStageText = CreateRuntimeText(formationRoot, "Formation Stage Text", string.Empty, 30, new Vector2(0, -194), new Vector2(560, 38));
+        formationStageText.fontStyle = FontStyles.Bold;
+        formationStageText.enableAutoSizing = true;
+        formationStageText.fontSizeMin = 18;
+        formationStageText.fontSizeMax = 30;
+        formationStageText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        CreateRuntimePanel(formationRoot, "Formation Objective Banner", new Vector2(0, -242), new Vector2(860, 50), new Color(0.03f, 0.025f, 0.03f, 0.62f));
+        formationHintText = CreateRuntimeText(formationRoot, "Formation Hint", TrFormat("formation.hint.campaign", DefaultCombatDurationSeconds), 24, new Vector2(0, -246), new Vector2(820, 42));
+        formationHintText.color = Color.white;
+        formationHintText.fontStyle = FontStyles.Bold;
+        formationHintText.enableAutoSizing = true;
+        formationHintText.fontSizeMin = 15;
+        formationHintText.fontSizeMax = 24;
 
         EnsureFormationOrder();
         formationSlotButtons = new Button[HeroCount];
@@ -15070,10 +15146,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var slotObject = new GameObject($"Formation Slot {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
             slotObject.transform.SetParent(arena, false);
-            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), heroPositions[i] + new Vector2(0, 4), new Vector2(150, 160), new Vector2(0.5f, 1f));
+            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), heroPositions[i] + new Vector2(0, 4), new Vector2(136, 150), new Vector2(0.5f, 1f));
 
             var slotFrame = slotObject.GetComponent<Image>();
-            slotFrame.color = new Color(0.1f, 0.13f, 0.2f, 0.62f);
+            slotFrame.color = new Color(0.06f, 0.07f, 0.09f, 0.28f);
             formationSlotFrames[i] = slotFrame;
 
             var slotButton = slotObject.GetComponent<Button>();
@@ -15082,12 +15158,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             slotButton.onClick.AddListener(() => SelectFormationSlot(capturedSlot));
             formationSlotButtons[i] = slotButton;
 
-            formationHeroImages[i] = CreateRuntimeRawImage(arena, $"Formation Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(104, 104), new Vector2(0.5f, 1f));
+            formationHeroImages[i] = CreateRuntimeRawImage(arena, $"Formation Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(108, 108), new Vector2(0.5f, 1f));
             formationHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
             formationHeroImages[i].raycastTarget = false;
-            formationHeroSkeletalViews[i] = RavikSkeletalCombatView.Create(arena, $"Formation Ravik Skeletal View {i + 1}", heroPositions[i], 0.18f);
-            formationHeroPaladinViews[i] = PaladinSkeletalCombatView.Create(arena, $"Formation Paladin Skeletal View {i + 1}", heroPositions[i], 0.18f);
-            formationHeroTexts[i] = CreateRuntimeText(arena, $"Formation Hero Label {i + 1}", string.Empty, 16, heroPositions[i] + new Vector2(0, -106), new Vector2(140, 30));
+            formationHeroSkeletalViews[i] = RavikSkeletalCombatView.Create(arena, $"Formation Ravik Skeletal View {i + 1}", heroPositions[i], 0.22f);
+            formationHeroPaladinViews[i] = PaladinSkeletalCombatView.Create(arena, $"Formation Paladin Skeletal View {i + 1}", heroPositions[i], 0.26f);
+            CreateRuntimePanel(arena, $"Formation Hero Label Back {i + 1}", heroPositions[i] + new Vector2(0, -102), new Vector2(126, 28), new Color(0.02f, 0.018f, 0.015f, 0.82f));
+            formationHeroTexts[i] = CreateRuntimeText(arena, $"Formation Hero Label {i + 1}", string.Empty, 16, heroPositions[i] + new Vector2(0, -106), new Vector2(118, 24));
             formationHeroTexts[i].fontStyle = FontStyles.Bold;
             formationHeroTexts[i].enableAutoSizing = true;
             formationHeroTexts[i].fontSizeMin = 12;
@@ -15095,40 +15172,120 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             formationHeroTexts[i].raycastTarget = false;
         }
 
-        formationEnemyImage = CreateRuntimeRawImage(arena, "Formation Enemy", LoadCombatTexture("enemy_rat", "idle", 0, "enemy_campaign"), new Vector2(374, -36), new Vector2(90, 90), new Vector2(0.5f, 1f));
+        formationEnemyImage = CreateRuntimeRawImage(arena, "Formation Enemy", LoadCombatTexture("enemy_rat", "idle", 0, "enemy_campaign"), new Vector2(414, -92), new Vector2(110, 110), new Vector2(0.5f, 1f));
         formationEnemyImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale("enemy_rat"), 1f, 1f);
-        formationEnemyText = CreateRuntimeText(formationRoot, "Formation Enemy Text", string.Empty, 22, new Vector2(0, -690), new Vector2(780, 76));
-        formationEnemyText.enableAutoSizing = true;
-        formationEnemyText.fontSizeMin = 16;
-        formationEnemyText.fontSizeMax = 22;
 
-        formationHintText = CreateRuntimeText(formationRoot, "Formation Hint", TrFormat("formation.hint.campaign", DefaultCombatDurationSeconds), 20, new Vector2(0, -780), new Vector2(760, 42));
-        formationHintText.color = new Color(0.78f, 0.84f, 0.92f);
-        formationHintText.enableAutoSizing = true;
-        formationHintText.fontSizeMin = 14;
-        formationHintText.fontSizeMax = 20;
-
-        formationAutoContinueButton = CreateRuntimeButton(formationRoot, "Formation Auto Continue Toggle", string.Empty, 0, -842, 560, 58);
-        var autoContinueButtonImage = formationAutoContinueButton.GetComponent<Image>();
-        if (autoContinueButtonImage != null)
+        var presetRail = CreateRuntimePanel(formationRoot, "Formation Preset Rail", new Vector2(0, -1030), new Vector2(960, 86), new Color(0.23f, 0.105f, 0.045f, 0.96f));
+        CreateRuntimePanel(presetRail, "Formation Preset Divider", new Vector2(0, -40), new Vector2(900, 6), new Color(0.78f, 0.58f, 0.26f, 0.92f));
+        formationPresetButtons = new Button[FormationPresetCount];
+        formationPresetFrames = new Image[FormationPresetCount];
+        formationPresetTexts = new TMP_Text[FormationPresetCount];
+        for (var i = 0; i < FormationPresetCount; i++)
         {
-            autoContinueButtonImage.color = new Color(0.04f, 0.055f, 0.075f, 0.74f);
+            var presetButton = CreateRuntimeButton(formationRoot, $"Formation Preset {i + 1}", $"{i + 1}", -240 + (i * 120), -1032, 72, 72);
+            presetButton.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            var image = presetButton.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = new Color(0.25f, 0.105f, 0.035f, 0.98f);
+            }
+
+            var label = presetButton.GetComponentInChildren<TMP_Text>();
+            if (label != null)
+            {
+                label.transform.localRotation = Quaternion.Euler(0f, 0f, -45f);
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                formationPresetTexts[i] = label;
+            }
+
+            var capturedPreset = i;
+            presetButton.onClick.AddListener(() => SelectFormationPreset(capturedPreset));
+            formationPresetButtons[i] = presetButton;
+            formationPresetFrames[i] = image;
         }
 
-        formationAutoContinueBox = CreateRuntimePanel(formationAutoContinueButton.transform, "Checkbox", new Vector2(-250, -11), new Vector2(34, 34), new Color(0.04f, 0.055f, 0.08f, 0.96f)).GetComponent<Image>();
-        formationAutoContinueMarkText = CreateRuntimeText(formationAutoContinueButton.transform, "Checkbox Mark", string.Empty, 23, new Vector2(-250, -10), new Vector2(34, 34));
-        formationAutoContinueMarkText.fontStyle = FontStyles.Bold;
-        formationAutoContinueMarkText.raycastTarget = false;
-        formationAutoContinueText = CreateRuntimeText(formationAutoContinueButton.transform, "Auto Continue Label", Tr("formation.auto_next"), 19, new Vector2(24, -9), new Vector2(480, 40));
-        formationAutoContinueText.alignment = TextAlignmentOptions.Left;
-        formationAutoContinueText.enableAutoSizing = true;
-        formationAutoContinueText.fontSizeMin = 14;
-        formationAutoContinueText.fontSizeMax = 20;
-        formationAutoContinueText.raycastTarget = false;
-        RefreshFormationAutoContinueToggle();
+        var bench = CreateRuntimePanel(formationRoot, "Formation Hero Bench", new Vector2(0, -1122), new Vector2(920, 220), new Color(0.77f, 0.58f, 0.31f, 0.96f));
+        var benchTitle = CreateRuntimeText(bench, "Title", Tr("formation.deployed"), 21, new Vector2(-360, -18), new Vector2(180, 30));
+        benchTitle.alignment = TextAlignmentOptions.Left;
+        benchTitle.fontStyle = FontStyles.Bold;
+        benchTitle.color = new Color(0.16f, 0.085f, 0.035f);
+        formationBenchButtons = new Button[HeroCount];
+        formationBenchFrames = new Image[HeroCount];
+        formationBenchHeroImages = new RawImage[HeroCount];
+        formationBenchHeroTexts = new TMP_Text[HeroCount];
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var card = CreateRuntimeButton(bench, $"Formation Bench Hero {i + 1}", string.Empty, -390 + (i * 130), -52, 112, 150);
+            var cardImage = card.GetComponent<Image>();
+            if (cardImage != null)
+            {
+                cardImage.color = new Color(0.08f, 0.075f, 0.06f, 0.88f);
+            }
 
-        formationBackButton = CreateRuntimeButton(formationRoot, "Formation Back Button", "Back", -225, -920, 220, 64);
-        formationConfirmButton = CreateRuntimeButton(formationRoot, "Formation Confirm Button", "Confirm", 140, -920, 340, 72);
+            var capturedSlot = i;
+            card.onClick.AddListener(() => SelectFormationSlot(capturedSlot));
+            formationBenchButtons[i] = card;
+            formationBenchFrames[i] = cardImage;
+            formationBenchHeroImages[i] = CreateRuntimeRawImage(card.transform, "Portrait", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -38), new Vector2(72, 72), new Vector2(0.5f, 1f));
+            formationBenchHeroImages[i].raycastTarget = false;
+            formationBenchHeroTexts[i] = CreateRuntimeText(card.transform, "Name", string.Empty, 14, new Vector2(0, -108), new Vector2(98, 38));
+            formationBenchHeroTexts[i].fontStyle = FontStyles.Bold;
+            formationBenchHeroTexts[i].enableAutoSizing = true;
+            formationBenchHeroTexts[i].fontSizeMin = 10;
+            formationBenchHeroTexts[i].fontSizeMax = 14;
+            formationBenchHeroTexts[i].raycastTarget = false;
+        }
+
+        var filterBar = CreateRuntimePanel(formationRoot, "Formation Filter Bar", new Vector2(0, -1354), new Vector2(960, 78), new Color(0.23f, 0.105f, 0.045f, 0.98f));
+        formationFilterButtons = new Button[FormationFilterCount];
+        formationFilterFrames = new Image[FormationFilterCount];
+        formationFilterTexts = new TMP_Text[FormationFilterCount];
+        for (var i = 0; i < FormationFilterCount; i++)
+        {
+            var filterButton = CreateRuntimeButton(filterBar, $"Formation Filter {FormationFilterLabels[i]}", FormationFilterLabels[i], -360 + (i * 120), -10, 82, 58);
+            var image = filterButton.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = new Color(0.075f, 0.055f, 0.04f, 0.95f);
+            }
+
+            var label = filterButton.GetComponentInChildren<TMP_Text>();
+            if (label != null)
+            {
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                formationFilterTexts[i] = label;
+            }
+
+            var capturedFilter = i;
+            filterButton.onClick.AddListener(() => SelectFormationFilter(capturedFilter));
+            formationFilterButtons[i] = filterButton;
+            formationFilterFrames[i] = image;
+        }
+
+        formationBackButton = CreateRuntimeButton(formationRoot, "Formation Back Button", "<", -438, -1476, 112, 86);
+        formationAutoContinueButton = CreateRuntimeButton(formationRoot, "Formation Auto Continue Toggle", Tr("formation.auto_battle"), -148, -1476, 330, 86);
+        formationConfirmButton = CreateRuntimeButton(formationRoot, "Formation Confirm Button", Tr("formation.begin_battle"), 238, -1476, 350, 86);
+        formationAutoContinueBox = null;
+        formationAutoContinueMarkText = null;
+        formationAutoContinueText = formationAutoContinueButton.GetComponentInChildren<TMP_Text>();
+        if (formationAutoContinueText != null)
+        {
+            formationAutoContinueText.name = "Auto Battle Label";
+        }
+
+        var backImage = formationBackButton.GetComponent<Image>();
+        if (backImage != null)
+        {
+            backImage.color = new Color(0.25f, 0.105f, 0.035f, 0.98f);
+        }
+
+        var confirmImage = formationConfirmButton.GetComponent<Image>();
+        if (confirmImage != null)
+        {
+            confirmImage.color = new Color(0.05f, 0.64f, 0.74f, 0.98f);
+        }
+
+        RefreshFormationAutoContinueToggle();
     }
 
     private void EnsureRuntimeFightUi()
@@ -20634,6 +20791,124 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void EnsureFormationPresets()
+    {
+        EnsureFormationOrder();
+        selectedFormationPresetIndex = Mathf.Clamp(selectedFormationPresetIndex, 0, FormationPresetCount - 1);
+        if (formationPresetHeroIndices == null || formationPresetHeroIndices.Length != FormationPresetCount * HeroCount)
+        {
+            formationPresetHeroIndices = new int[FormationPresetCount * HeroCount];
+            for (var presetIndex = 0; presetIndex < FormationPresetCount; presetIndex++)
+            {
+                WriteDefaultFormationPreset(presetIndex);
+            }
+
+            SaveActiveFormationPreset();
+            return;
+        }
+
+        for (var presetIndex = 0; presetIndex < FormationPresetCount; presetIndex++)
+        {
+            RepairFormationPreset(presetIndex);
+        }
+    }
+
+    private void WriteDefaultFormationPreset(int presetIndex)
+    {
+        var offset = Mathf.Clamp(presetIndex, 0, FormationPresetCount - 1) * HeroCount;
+        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        {
+            formationPresetHeroIndices[offset + slotIndex] = slotIndex;
+        }
+    }
+
+    private void RepairFormationPreset(int presetIndex)
+    {
+        var offset = Mathf.Clamp(presetIndex, 0, FormationPresetCount - 1) * HeroCount;
+        var usedHeroes = new bool[HeroCount];
+        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        {
+            var heroIndex = formationPresetHeroIndices[offset + slotIndex];
+            if (heroIndex < 0 || heroIndex >= HeroCount || usedHeroes[heroIndex])
+            {
+                formationPresetHeroIndices[offset + slotIndex] = -1;
+                continue;
+            }
+
+            usedHeroes[heroIndex] = true;
+        }
+
+        var nextMissingHero = 0;
+        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        {
+            if (formationPresetHeroIndices[offset + slotIndex] >= 0)
+            {
+                continue;
+            }
+
+            while (nextMissingHero < HeroCount && usedHeroes[nextMissingHero])
+            {
+                nextMissingHero++;
+            }
+
+            formationPresetHeroIndices[offset + slotIndex] = nextMissingHero < HeroCount ? nextMissingHero : slotIndex;
+            if (nextMissingHero < HeroCount)
+            {
+                usedHeroes[nextMissingHero] = true;
+            }
+        }
+    }
+
+    private void SaveActiveFormationPreset()
+    {
+        if (formationPresetHeroIndices == null || formationPresetHeroIndices.Length != FormationPresetCount * HeroCount)
+        {
+            return;
+        }
+
+        EnsureFormationOrder();
+        var offset = Mathf.Clamp(selectedFormationPresetIndex, 0, FormationPresetCount - 1) * HeroCount;
+        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        {
+            formationPresetHeroIndices[offset + slotIndex] = formationSlotHeroIndices[slotIndex];
+        }
+    }
+
+    private void LoadFormationPreset(int presetIndex)
+    {
+        EnsureFormationPresets();
+        selectedFormationPresetIndex = Mathf.Clamp(presetIndex, 0, FormationPresetCount - 1);
+        var offset = selectedFormationPresetIndex * HeroCount;
+        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        {
+            formationSlotHeroIndices[slotIndex] = formationPresetHeroIndices[offset + slotIndex];
+        }
+
+        selectedFormationSlotIndex = -1;
+        EnsureFormationOrder();
+    }
+
+    private void SelectFormationPreset(int presetIndex)
+    {
+        if (campaignFightInProgress || backendRequestInProgress || backendLifecycleFlushInProgress)
+        {
+            return;
+        }
+
+        EnsureFormationPresets();
+        SaveActiveFormationPreset();
+        LoadFormationPreset(presetIndex);
+        SaveProgress();
+        RefreshFormationUi();
+        RefreshGameplayInteractivity();
+    }
+
+    private void SelectFormationFilter(int filterIndex)
+    {
+        selectedFormationFilterIndex = Mathf.Clamp(filterIndex, 0, FormationFilterCount - 1);
+        RefreshFormationBenchUi();
+    }
+
     private int FindFormationSlotForHero(int heroIndex)
     {
         EnsureFormationOrder();
@@ -20672,6 +20947,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             formationSlotHeroIndices[selectedFormationSlotIndex] = formationSlotHeroIndices[slotIndex];
             formationSlotHeroIndices[slotIndex] = heroIndex;
             selectedFormationSlotIndex = -1;
+            SaveActiveFormationPreset();
             SaveProgress();
         }
 
@@ -20707,6 +20983,119 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return heroPositions;
+    }
+
+    private void RefreshFormationPresetUi()
+    {
+        if (formationPresetFrames == null)
+        {
+            return;
+        }
+
+        for (var presetIndex = 0; presetIndex < formationPresetFrames.Length; presetIndex++)
+        {
+            var selected = presetIndex == selectedFormationPresetIndex;
+            if (formationPresetFrames[presetIndex] != null)
+            {
+                formationPresetFrames[presetIndex].color = selected
+                    ? new Color(0.06f, 0.62f, 0.72f, 0.98f)
+                    : new Color(0.25f, 0.105f, 0.035f, 0.98f);
+            }
+
+            if (formationPresetTexts != null && presetIndex < formationPresetTexts.Length && formationPresetTexts[presetIndex] != null)
+            {
+                formationPresetTexts[presetIndex].text = (presetIndex + 1).ToString();
+                formationPresetTexts[presetIndex].color = selected
+                    ? Color.white
+                    : new Color(1f, 0.84f, 0.55f);
+            }
+        }
+    }
+
+    private void RefreshFormationBenchUi()
+    {
+        if (formationBenchButtons == null)
+        {
+            return;
+        }
+
+        EnsureFormationOrder();
+        selectedFormationFilterIndex = Mathf.Clamp(selectedFormationFilterIndex, 0, FormationFilterCount - 1);
+        for (var slotIndex = 0; slotIndex < formationBenchButtons.Length; slotIndex++)
+        {
+            var heroIndex = formationSlotHeroIndices[Mathf.Clamp(slotIndex, 0, formationSlotHeroIndices.Length - 1)];
+            var selected = selectedFormationSlotIndex == slotIndex;
+            var filterMatch = DoesHeroMatchFormationFilter(heroIndex);
+            var alpha = filterMatch ? 1f : 0.42f;
+            if (formationBenchFrames != null && slotIndex < formationBenchFrames.Length && formationBenchFrames[slotIndex] != null)
+            {
+                formationBenchFrames[slotIndex].color = selected
+                    ? new Color(0.38f, 0.2f, 0.95f, 0.98f)
+                    : filterMatch
+                        ? new Color(0.08f, 0.075f, 0.06f, 0.88f)
+                        : new Color(0.05f, 0.05f, 0.05f, 0.62f);
+            }
+
+            if (formationBenchHeroImages != null && slotIndex < formationBenchHeroImages.Length && formationBenchHeroImages[slotIndex] != null)
+            {
+                formationBenchHeroImages[slotIndex].texture = LoadCombatTexture(GetHeroTextureName(heroIndex), "idle", 0, GetHeroTextureName(heroIndex));
+                formationBenchHeroImages[slotIndex].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
+                formationBenchHeroImages[slotIndex].color = new Color(1f, 1f, 1f, alpha);
+            }
+
+            if (formationBenchHeroTexts != null && slotIndex < formationBenchHeroTexts.Length && formationBenchHeroTexts[slotIndex] != null)
+            {
+                formationBenchHeroTexts[slotIndex].text = $"{GetLocalizedHeroName(heroIndex)}\n{Tr("ui.common.level_short")} {heroLevels[heroIndex]}";
+                formationBenchHeroTexts[slotIndex].color = selected
+                    ? new Color(1f, 0.94f, 0.4f)
+                    : new Color(1f, 1f, 1f, alpha);
+            }
+        }
+
+        if (formationFilterFrames == null)
+        {
+            return;
+        }
+
+        for (var filterIndex = 0; filterIndex < formationFilterFrames.Length; filterIndex++)
+        {
+            var selected = filterIndex == selectedFormationFilterIndex;
+            if (formationFilterFrames[filterIndex] != null)
+            {
+                formationFilterFrames[filterIndex].color = selected
+                    ? new Color(0.1f, 0.62f, 0.44f, 0.98f)
+                    : new Color(0.075f, 0.055f, 0.04f, 0.95f);
+            }
+
+            if (formationFilterTexts != null && filterIndex < formationFilterTexts.Length && formationFilterTexts[filterIndex] != null)
+            {
+                formationFilterTexts[filterIndex].text = FormationFilterLabels[filterIndex];
+                formationFilterTexts[filterIndex].color = selected
+                    ? Color.white
+                    : new Color(1f, 0.82f, 0.42f);
+            }
+        }
+    }
+
+    private bool DoesHeroMatchFormationFilter(int heroIndex)
+    {
+        EnsureHeroLevels();
+        EnsureHeroShards();
+        heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
+        selectedFormationFilterIndex = Mathf.Clamp(selectedFormationFilterIndex, 0, FormationFilterCount - 1);
+        var filterId = FormationFilterRoleIds[selectedFormationFilterIndex];
+        if (filterId == "all")
+        {
+            return true;
+        }
+
+        if (filterId == "up")
+        {
+            return (!IsHeroLevelMax(heroIndex) && mythEssence >= GetHeroUpgradeCost(heroIndex))
+                || heroShards[heroIndex] >= GetHeroAscensionCost(heroIndex);
+        }
+
+        return string.Equals(GetHeroDefinition(heroIndex).roleId, filterId, StringComparison.Ordinal);
     }
 
     private void RefreshFormationSlotHighlights()
@@ -20764,31 +21153,34 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (formationHeaderText != null)
         {
-            formationHeaderText.text = isDungeon
-                ? $"{GetLocalizedDungeonName(dungeon.dungeonId)} F{dungeonFloor} {Tr("ui.common.formation")}"
-                : $"{Tr("ui.common.stage")} {stageNumber} {Tr("ui.common.formation")}";
+            formationHeaderText.text = "VS";
+        }
+
+        if (formationStageText != null)
+        {
+            formationStageText.text = isDungeon
+                ? $"{GetLocalizedDungeonName(dungeon.dungeonId)} F{dungeonFloor}"
+                : $"{Tr("ui.common.stage")}: {GetCampaignStageLabel(stageNumber)}";
         }
 
         if (formationTeamText != null)
         {
-            formationTeamText.text = $"{Tr("ui.common.power")} {FormatCompactNumber(GetTeamPower())}   ATK {FormatCompactNumber(GetTeamDamage())}   HP {FormatCompactNumber(GetTeamHealth())}   Crit {GetTeamCritChancePercent()}%   Acc {GetTeamAccuracyPercent()}%   DEF {GetTeamDefense()}";
+            formationTeamText.text = $"{Tr("formation.player_power")}\n{FormatCompactNumber(GetTeamPower())}";
         }
 
         if (formationEnemyText != null)
         {
             formationEnemyText.text = isDungeon
-                ? $"{GetLocalizedDungeonBossName(dungeon.dungeonId)}\n" +
-                  $"{Tr("ui.common.recommended_power")} {FormatCompactNumber(GetDungeonRecommendedPower(dungeon, dungeonFloor))}   {Tr("ui.common.boss_hp")} {FormatCompactNumber(GetDungeonEnemyHp(dungeon, dungeonFloor))}   Damage {FormatCompactNumber(GetDungeonEnemyDamage(dungeon, dungeonFloor))}\n" +
-                  FormatDungeonFormationRewardLine(dungeon, dungeonFloor)
-                : $"{stage.enemyName}\n" +
-                  $"{Tr("ui.common.recommended_power")} {FormatCompactNumber(GetStageRecommendedPower(stageNumber))}   HP {FormatCompactNumber(stage.maxHp)}   Damage {FormatCompactNumber(GetCampaignEnemyDamage(stageNumber))}";
+                ? $"{Tr("formation.enemy_power")}\n{FormatCompactNumber(GetDungeonRecommendedPower(dungeon, dungeonFloor))}"
+                : $"{Tr("formation.enemy_power")}\n{FormatCompactNumber(GetStageRecommendedPower(stageNumber))}";
         }
 
         if (formationEnemyImage != null)
         {
             var enemyTextureName = isDungeon ? GetDungeonBossTextureName(dungeon.dungeonId) : GetCampaignEnemyTextureName(stageNumber, 0);
             formationEnemyImage.texture = LoadCombatTexture(enemyTextureName, "idle", 0, "enemy_campaign");
-            formationEnemyImage.rectTransform.sizeDelta = isDungeon ? new Vector2(154, 154) : new Vector2(132, 132);
+            formationEnemyImage.rectTransform.anchoredPosition = isDungeon ? new Vector2(410, -70) : new Vector2(414, -92);
+            formationEnemyImage.rectTransform.sizeDelta = isDungeon ? new Vector2(144, 144) : new Vector2(110, 110);
             formationEnemyImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale(enemyTextureName), 1f, 1f);
         }
 
@@ -20840,6 +21232,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         RefreshFormationSlotHighlights();
         RefreshFormationAutoContinueToggle();
+        RefreshFormationPresetUi();
+        RefreshFormationBenchUi();
+        SetButtonLabel(formationConfirmButton, Tr("formation.begin_battle"));
+        SetButtonLabel(formationBackButton, "<");
 
         if (formationHintText != null)
         {
@@ -20991,13 +21387,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(-260, -144),
-            new Vector2(0, -144),
-            new Vector2(260, -144),
-            new Vector2(-315, -322),
-            new Vector2(-105, -322),
-            new Vector2(105, -322),
-            new Vector2(315, -322)
+            new Vector2(-372, -594),
+            new Vector2(-318, -318),
+            new Vector2(-182, -636),
+            new Vector2(-26, -480),
+            new Vector2(136, -636),
+            new Vector2(272, -326),
+            new Vector2(372, -590)
         };
     }
 

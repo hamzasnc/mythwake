@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.157
+Prototype version: 0.2.158
 Local save version: 2
 
 Current prototype:
@@ -91,6 +91,7 @@ Current prototype:
 - Targeted Android polish captures for localized Summon Result summaries, Formation density/swap hints, Fight controls, and Result Continue are under `docs/screenshots/android/2026-05-28-summon-formation-fight-polish/`
 - Summon Result now has a localized pull summary, larger one-pull cards, wider auto-summon controls, and EN/DE validator coverage for summary/repeat-button text fit.
 - Formation and Fight controls have roomier mobile touch targets, clearer swap/auto-next copy, less skeletal preview label overlap, and stricter validator coverage for slot/button/result Continue spacing.
+- Battle Formation now follows the new mockup direction: VS arena preview, five saved formation presets, deployed-hero bench, UP/ALL/role filters, a one-fight `Begin Battle`, and an `Auto Battle` start that keeps auto-next enabled until stopped or defeated.
 - Prototype UI builder now creates Gear controls in the current localized runtime layout with localized equipment names, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale Gear placeholder copy
 - Home idle patrol keeps the middle hero/enemy lane clear of the reward strip, and the Home idle validator now guards mobile touch target size plus unit/reward/loot-popup separation
 
@@ -199,6 +200,7 @@ Backend:
   - `docs/screenshots/android/2026-05-28-summon-formation-fight-polish/README.md`
 
 Changelog:
+- Prototype 0.2.158: Reworked Battle Formation toward the provided mobile mockup. Formation now fills the screen under the top bar with a VS/stage arena, uses the violet Hollow Spire background, shows deployed heroes both in the arena and in a bottom bench, adds five persistent formation preset slots, adds UP/ALL/role filter controls, separates one-run `Begin Battle` from looping `Auto Battle`, and extends Dungeons/Home/Fight Formation validators for the new header/stage/preset/bench/filter structure.
 - Prototype 0.2.157: Polished Summon Result, Formation, Fight controls, and Result Continue for the next targeted mobile tester build. `Builds\Android\Mythwake-0.2.157-mumu.apk` builds, installs, launches in MuMuPlayer, and the latest cold launch reported `TotalTime 882 ms` / host stopwatch `940 ms`. Real screenshots are under `docs/screenshots/android/2026-05-28-summon-formation-fight-polish/`; filtered Logcat found no app crash, ANR, Unity exception, `NullReference`, or missing-asset error. Runtime FPS overlay showed about `30 FPS | 33.3 ms` on the emulator, and physical Android safe-area testing remains open.
 - Prototype 0.2.156: Added a focused mobile polish follow-up on top of the full `0.2.155` MuMu pass. `Builds\Android\Mythwake-0.2.156-mumu.apk` builds, installs, launches in MuMuPlayer, and cold launch reported `TotalTime 949 ms` / host stopwatch `1002 ms`. Summon Result now centers one-pull results and uses a modal blocker so the carousel/offer behind it cannot receive touches; Formation keeps labels above skeletal previews and slightly reduces Paladin's Formation scale; the runtime FPS overlay can now be toggled from Management -> Options. Follow-up screenshots are under `docs/screenshots/android/2026-05-28-mobile-polish-followup/`; filtered Logcat still has no app crash, ANR, Unity exception, `NullReference`, or missing-asset error. Physical Android safe-area testing remains open.
 - Prototype 0.2.155: Repeated the MuMuPlayer Android mobile testbuild polish pass with `Builds\Android\Mythwake-0.2.155-mumu.apk`, cold launch `TotalTime 781 ms` / host stopwatch `809 ms`, real 1080x1920 screenshots under `docs/screenshots/android/2026-05-28-mobile-testbuild-pass/`, runtime FPS overlay around `30 FPS | 33.3 ms`, portrait bounds `1080x1920` with hidden status bar, and no app crashes/Unity exceptions in filtered Logcat (one MuMu `EGL_BAD_ATTRIBUTE` renderer line only). Polished Summon Result spacing/controls, Formation slot density/auto-next/enemy preview, Hero Detail gear-slot right margin/right-edge scrim, and immediate Result Continue cleanup; physical Android device safe-area testing remains open.

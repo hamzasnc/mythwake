@@ -55,38 +55,42 @@ public static class FightFormationValidation
 
         var formationRoot = RequireObject("Campaign Formation Root", true);
         var header = RequireText(formationRoot, "Formation Header");
+        var stageText = RequireText(formationRoot, "Formation Stage Text");
         var team = RequireText(formationRoot, "Formation Team Power");
         var enemy = RequireText(formationRoot, "Formation Enemy Text");
         var hint = RequireText(formationRoot, "Formation Hint");
         var confirm = RequireButton("Formation Confirm Button");
         var back = RequireButton("Formation Back Button");
         var autoToggle = RequireButton("Formation Auto Continue Toggle");
-        var autoLabel = RequireText(autoToggle.gameObject, "Auto Continue Label");
-        var autoMark = RequireText(autoToggle.gameObject, "Checkbox Mark");
+        var autoLabel = autoToggle.GetComponentInChildren<TMP_Text>(includeInactive: true);
         var enemyImage = RequireRawImageWithTexture("Formation Enemy");
 
-        RequireCopy(header.text, "Formation", "Formation header");
-        RequireCopy(team.text, "Power", "Formation team power");
-        RequireCopy(enemy.text, "Damage", "Formation enemy text");
-        RequireCopy(hint.text, "Confirm", "Formation hint");
+        RequireCopy(header.text, "VS", "Formation header");
+        RequireCopy(stageText.text, "Stage", "Formation stage text");
+        RequireCopy(team.text, "Player", "Formation team power");
+        RequireCopy(enemy.text, "Enemy", "Formation enemy text");
+        RequireCopy(hint.text, "Begin Battle", "Formation hint");
         AssertTextFits(header, "Formation header");
+        AssertTextFits(stageText, "Formation stage text");
         AssertTextFits(team, "Formation team power");
         AssertTextFits(enemy, "Formation enemy text");
         AssertTextFits(hint, "Formation hint");
         AssertTextFits(autoLabel, "Formation auto label");
-        AssertMinimumSize(confirm.gameObject, 330f, 68f, "Formation confirm button");
-        AssertMinimumSize(back.gameObject, 210f, 60f, "Formation back button");
-        AssertMinimumSize(autoToggle.gameObject, 550f, 54f, "Formation auto toggle");
+        AssertMinimumSize(confirm.gameObject, 330f, 80f, "Formation confirm button");
+        AssertMinimumSize(back.gameObject, 100f, 80f, "Formation back button");
+        AssertMinimumSize(autoToggle.gameObject, 320f, 80f, "Formation auto battle button");
         AssertInsideParent(formationRoot, enemyImage.gameObject);
-        AssertNoOverlap(enemy.gameObject, hint.gameObject, 4f, "Formation enemy/hint spacing");
-        AssertNoOverlap(hint.gameObject, autoToggle.gameObject, 4f, "Formation hint/auto spacing");
-        AssertNoOverlap(autoToggle.gameObject, confirm.gameObject, 8f, "Formation auto/confirm spacing");
-        AssertNoOverlap(autoToggle.gameObject, back.gameObject, 8f, "Formation auto/back spacing");
-        AssertNoOverlap(back.gameObject, confirm.gameObject, 16f, "Formation action button spacing");
+        AssertNoOverlap(header.gameObject, stageText.gameObject, 4f, "Formation VS/stage spacing");
+        AssertNoOverlap(hint.gameObject, autoToggle.gameObject, 20f, "Formation hint/action spacing");
+        AssertNoOverlap(autoToggle.gameObject, confirm.gameObject, 16f, "Formation auto/begin spacing");
+        AssertNoOverlap(back.gameObject, autoToggle.gameObject, 16f, "Formation back/auto spacing");
         if (!confirm.interactable || !back.interactable)
         {
             throw new InvalidOperationException("Formation confirm/back buttons should be interactable.");
         }
+
+        ValidateFormationPresets(controller);
+        ValidateFormationBenchAndFilters(controller, formationRoot);
 
         var slotButtons = GetPrivateField<Button[]>(controller, "formationSlotButtons");
         var slotFrames = GetPrivateField<Image[]>(controller, "formationSlotFrames");
@@ -109,7 +113,7 @@ public static class FightFormationValidation
             }
 
             AssertInsideParent(formationRoot, slotButtons[i].gameObject);
-            AssertMinimumSize(slotButtons[i].gameObject, 146f, 156f, $"Formation slot {i + 1}");
+            AssertMinimumSize(slotButtons[i].gameObject, 132f, 146f, $"Formation slot {i + 1}");
             AssertTextFits(heroLabels[i], $"Formation hero label {i + 1}");
             if (heroImages[i].gameObject.activeSelf && heroImages[i].texture == null)
             {
@@ -145,34 +149,87 @@ public static class FightFormationValidation
             throw new InvalidOperationException("Formation selection should clear after a successful swap.");
         }
 
-        autoToggle.onClick.Invoke();
-        Canvas.ForceUpdateCanvases();
-        if (!GetPrivateField<bool>(controller, "autoContinueFightsEnabled") || autoMark.text != "X" || !autoLabel.text.Contains("AUTO"))
-        {
-            throw new InvalidOperationException("Formation auto toggle should enable auto-continue and show a checkbox mark.");
-        }
+        RequireCopy(GetButtonLabel(autoToggle), "Auto Battle", "Formation Auto Battle button");
+        RequireCopy(GetButtonLabel(confirm), "Begin Battle", "Formation Begin Battle button");
+        AssertTextFits(autoLabel, "Formation auto label");
 
-        AssertTextFits(autoLabel, "Formation auto label enabled");
-        autoToggle.onClick.Invoke();
-        Canvas.ForceUpdateCanvases();
-        if (GetPrivateField<bool>(controller, "autoContinueFightsEnabled") || !string.IsNullOrEmpty(autoMark.text))
-        {
-            throw new InvalidOperationException("Formation auto toggle should disable cleanly and clear the checkbox mark.");
-        }
-
-        ValidateFormationGermanTextFit(controller, header, hint, autoLabel);
+        ValidateFormationGermanTextFit(controller, header, stageText, hint, autoLabel, confirm);
     }
 
-    private static void ValidateFormationGermanTextFit(IdlePrototypeController controller, TMP_Text header, TMP_Text hint, TMP_Text autoLabel)
+    private static void ValidateFormationPresets(IdlePrototypeController controller)
+    {
+        var presetButtons = GetPrivateField<Button[]>(controller, "formationPresetButtons");
+        var presetTexts = GetPrivateField<TMP_Text[]>(controller, "formationPresetTexts");
+        RequireArray(presetButtons, 5, "formation preset buttons");
+        RequireArray(presetTexts, 5, "formation preset labels");
+        for (var i = 0; i < presetButtons.Length; i++)
+        {
+            AssertMinimumSize(presetButtons[i].gameObject, 68f, 68f, $"Formation preset {i + 1}");
+            RequireCopy(presetTexts[i].text, (i + 1).ToString(), $"Formation preset {i + 1} label");
+            AssertTextFits(presetTexts[i], $"Formation preset {i + 1} label");
+        }
+
+        presetButtons[1].onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        if (GetPrivateField<int>(controller, "selectedFormationPresetIndex") != 1)
+        {
+            throw new InvalidOperationException("Formation preset 2 should become active after tapping it.");
+        }
+
+        presetButtons[0].onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        if (GetPrivateField<int>(controller, "selectedFormationPresetIndex") != 0)
+        {
+            throw new InvalidOperationException("Formation preset 1 should become active after tapping it.");
+        }
+    }
+
+    private static void ValidateFormationBenchAndFilters(IdlePrototypeController controller, GameObject formationRoot)
+    {
+        var benchButtons = GetPrivateField<Button[]>(controller, "formationBenchButtons");
+        var benchImages = GetPrivateField<RawImage[]>(controller, "formationBenchHeroImages");
+        var benchTexts = GetPrivateField<TMP_Text[]>(controller, "formationBenchHeroTexts");
+        var filterButtons = GetPrivateField<Button[]>(controller, "formationFilterButtons");
+        var filterTexts = GetPrivateField<TMP_Text[]>(controller, "formationFilterTexts");
+        RequireArray(benchButtons, 7, "formation bench buttons");
+        RequireArray(benchImages, 7, "formation bench portraits");
+        RequireArray(benchTexts, 7, "formation bench labels");
+        RequireArray(filterButtons, 7, "formation filter buttons");
+        RequireArray(filterTexts, 7, "formation filter labels");
+
+        for (var i = 0; i < benchButtons.Length; i++)
+        {
+            AssertInsideParent(formationRoot, benchButtons[i].gameObject);
+            AssertMinimumSize(benchButtons[i].gameObject, 108f, 146f, $"Formation bench hero {i + 1}");
+            AssertTextFits(benchTexts[i], $"Formation bench hero {i + 1}");
+            if (benchImages[i].texture == null)
+            {
+                throw new InvalidOperationException($"Formation bench hero {i + 1} should show deployed hero art.");
+            }
+        }
+
+        RequireCopy(filterTexts[0].text, "UP", "Formation UP filter");
+        RequireCopy(filterTexts[1].text, "ALL", "Formation ALL filter");
+        for (var i = 0; i < filterButtons.Length; i++)
+        {
+            AssertMinimumSize(filterButtons[i].gameObject, 78f, 54f, $"Formation filter {i + 1}");
+            AssertTextFits(filterTexts[i], $"Formation filter {i + 1}");
+        }
+    }
+
+    private static void ValidateFormationGermanTextFit(IdlePrototypeController controller, TMP_Text header, TMP_Text stageText, TMP_Text hint, TMP_Text autoLabel, Button confirm)
     {
         SetPrivateEnumField(controller, "language", "German");
         InvokePrivate(controller, "RefreshFormationUi");
         Canvas.ForceUpdateCanvases();
 
-        RequireCopy(header.text, "Formation", "German Formation header");
-        RequireCopy(hint.text, "Confirm", "German Formation hint");
-        RequireCopy(autoLabel.text, "Auto-weiter", "German Formation auto label");
+        RequireCopy(header.text, "VS", "German Formation header");
+        RequireCopy(stageText.text, "Stufe", "German Formation stage text");
+        RequireCopy(hint.text, "Kampf starten", "German Formation hint");
+        RequireCopy(autoLabel.text, "Auto-Kampf", "German Formation auto label");
+        RequireCopy(GetButtonLabel(confirm), "Kampf starten", "German Formation begin label");
         AssertTextFits(header, "German Formation header");
+        AssertTextFits(stageText, "German Formation stage text");
         AssertTextFits(hint, "German Formation hint");
         AssertTextFits(autoLabel, "German Formation auto label");
         SetPrivateEnumField(controller, "language", "English");
@@ -384,9 +441,11 @@ public static class FightFormationValidation
 
         var formationRoot = RequireObject("Campaign Formation Root", true);
         var header = RequireText(formationRoot, "Formation Header");
+        var stageText = RequireText(formationRoot, "Formation Stage Text");
         var topBar = RequireObject("Mythwake Top Resource Bar", false);
         var bottomNav = RequireObject("Mythwake Art Bottom Navbar", false);
-        RequireCopy(header.text, "Gold", "Dungeon formation header");
+        RequireCopy(header.text, "VS", "Dungeon formation header");
+        RequireCopy(stageText.text, "Gold", "Dungeon formation stage text");
         if (topBar.activeInHierarchy || bottomNav.activeInHierarchy)
         {
             throw new InvalidOperationException("Dungeon fight focus should hide top and bottom navigation chrome while Formation is active.");

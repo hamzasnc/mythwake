@@ -1268,8 +1268,11 @@ public static class HomeIdleCombatValidation
 
         var formationRoot = RequireObject("Campaign Formation Root", true);
         var formationHeader = RequireText(formationRoot, "Formation Header");
-        RequireCopy(formationHeader.text, "Formation");
+        var formationStage = RequireText(formationRoot, "Formation Stage Text");
+        RequireCopy(formationHeader.text, "VS");
+        RequireCopy(formationStage.text, "Stage");
         AssertTextFits(formationHeader, "Formation Header");
+        AssertTextFits(formationStage, "Formation Stage Text");
 
         controller.ShowHome();
         Canvas.ForceUpdateCanvases();

@@ -205,9 +205,14 @@ public static partial class MythwakeLocalization
         { "summon.result.auto", "Auto-Summon" },
         { "summon.result.auto_remaining", "Auto-Summon {0}" },
         { "formation.auto_next", "Auto next after win (skills AUTO)" },
+        { "formation.auto_battle", "Auto Battle" },
+        { "formation.begin_battle", "Begin Battle" },
+        { "formation.deployed", "Deployed Heroes" },
+        { "formation.player_power", "Player Power" },
+        { "formation.enemy_power", "Enemy Power" },
         { "formation.hint.swap", "Tap a highlighted slot to swap heroes." },
         { "formation.hint.server", "Server Mode resolves rewards, then plays the visible fight." },
-        { "formation.hint.dungeon", "Tap slots to swap. Confirm starts one boss fight." },
-        { "formation.hint.campaign", "Tap slots to swap. Confirm starts a visible {0}s fight." }
-    };
+        { "formation.hint.dungeon", "Begin Battle fights once. Auto Battle keeps pushing until you stop or lose." },
+        { "formation.hint.campaign", "Begin Battle fights once. Auto Battle keeps pushing until you stop or lose." }
+      };
 }

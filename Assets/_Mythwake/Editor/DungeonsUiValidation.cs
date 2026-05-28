@@ -209,13 +209,15 @@ public static class DungeonsUiValidation
 
         var formationRoot = RequireObject("Campaign Formation Root", true);
         var formationHeader = RequireText(formationRoot, "Formation Header");
+        var formationStage = RequireText(formationRoot, "Formation Stage Text");
         var formationEnemy = RequireText(formationRoot, "Formation Enemy Text");
         var confirmButton = RequireButton("Formation Confirm Button");
 
-        RequireCopy(formationHeader.text, expectedHeader, $"{markerName} Formation header");
-        RequireCopy(formationEnemy.text, "Boss", $"{markerName} Formation enemy");
-        RequireCopy(formationEnemy.text, "Damage", $"{markerName} Formation enemy");
+        RequireCopy(formationHeader.text, "VS", $"{markerName} Formation header");
+        RequireCopy(formationStage.text, expectedHeader, $"{markerName} Formation stage");
+        RequireCopy(formationEnemy.text, "Enemy", $"{markerName} Formation enemy");
         AssertTextFits(formationHeader, $"{markerName} Formation header");
+        AssertTextFits(formationStage, $"{markerName} Formation stage");
         AssertTextFits(formationEnemy, $"{markerName} Formation enemy");
 
         if (!confirmButton.interactable)
