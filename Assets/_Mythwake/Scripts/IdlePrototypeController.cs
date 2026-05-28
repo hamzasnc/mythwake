@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.161";
+    public const string PrototypeVersion = "0.2.162";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -2408,6 +2408,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (battleTargetMode == BattleTargetMode.Campaign)
         {
             selectedCampaignStage = Mathf.Max(1, enemyLevel);
+            SetDefaultDungeonResult();
         }
 
         selectedFormationSlotIndex = -1;
@@ -4240,7 +4241,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             campaignFightInProgress = false;
             SetBattleFlowMode(BattleFlowMode.Formation);
-            SetDungeonResult($"Server request failed: {error}");
             FinishBackendRequest($"Server request failed: {error}");
             return;
         }
@@ -4272,7 +4272,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             ShowCampaignFightResult(result.success, "Campaign Result", message);
         }
 
-        SetDungeonResult(message);
         FinishBackendRequest($"Server action: {FormatBackendActionOutcome(result)}  {result.actionId}{FormatBackendRevisionSuffix(result)}");
     }
 
@@ -5083,7 +5082,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             enemyHp = enemyMaxHp;
             var winMessage = $"Campaign Stage {clearedStage} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), stage.maxHp, GetCampaignEnemyDamage(clearedStage))}\nReward +{rewardText}{FormatNextGoalResultLine()}";
             PlayCombatVisual("campaign", $"Campaign Stage {clearedStage}", result, stage.maxHp);
-            SetDungeonResult(winMessage);
             return CreateActionResult(true, "campaign_fight", string.Empty, winMessage, ToRewardDto(clearReward));
         }
         else
@@ -5092,7 +5090,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             enemyHp = enemyMaxHp;
             var failMessage = $"Campaign Stage {stageNumber} failed after {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), stage.maxHp, GetCampaignEnemyDamage(stageNumber))}{FormatNextGoalResultLine()}";
             PlayCombatVisual("campaign", $"Campaign Stage {stageNumber}", result, stage.maxHp);
-            SetDungeonResult(failMessage);
             return CreateActionResult(false, "campaign_fight", "combat_lost", failMessage);
         }
     }
@@ -8263,6 +8260,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             runtimeDungeonResultText.text = result;
         }
+    }
+
+    private void SetDefaultDungeonResult()
+    {
+        SetDungeonResult(Tr("dungeon.default_result"));
     }
 
     private string Tr(string key)

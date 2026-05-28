@@ -426,11 +426,21 @@ public static class FightFormationValidation
             throw new InvalidOperationException("Fight continue button should be interactable on result popup.");
         }
 
+        InvokePrivate(controller, "SetDungeonResult", "Campaign Stage leaked result should not appear on Dungeons.");
         continueButton.onClick.Invoke();
         Canvas.ForceUpdateCanvases();
         if (resultRoot.activeInHierarchy)
         {
             throw new InvalidOperationException("Fight result popup should close after Continue returns to the previous screen.");
+        }
+
+        controller.ShowDungeons();
+        Canvas.ForceUpdateCanvases();
+        var dungeonsPanel = RequireObject("Dungeons Panel", true);
+        var dungeonResult = RequireText(dungeonsPanel, "Dungeon Result Text");
+        if (dungeonResult.text.Contains("Campaign Stage"))
+        {
+            throw new InvalidOperationException("Campaign fight result text should not leak onto the Dungeons screen after Continue.");
         }
     }
 

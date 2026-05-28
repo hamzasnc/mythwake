@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.161
+Prototype version: 0.2.162
 Local save version: 2
 
 Current prototype:
@@ -203,6 +203,7 @@ Backend:
   - `docs/screenshots/android/2026-05-28-summon-formation-fight-polish/README.md`
 
 Changelog:
+- Prototype 0.2.162: Prepared Tester Build 0 with APK `Builds/Android/Mythwake-0.2.162-tester-build-0.apk`, Android/MuMu smoke screenshots under `docs/screenshots/android/2026-05-28-tester-build-0/`, `docs/TESTER_BUILD_0.md` for tester flow/questions/known issues, and a fix so Campaign Result text no longer leaks onto the Dungeons screen after Continue.
 - Prototype 0.2.161: Keeps the width-matched phone-safe Canvas scaling from 0.2.160, but expands the large Home patrol/map imagery and Village map viewport dynamically on very tall Android phones so the bottom half does not fall back to empty dark canvas space.
 - Prototype 0.2.160: Fixed real-device side clipping on tall/narrow Android phones by switching the runtime Prototype UI CanvasScaler and UI builder from height-matched to width-matched portrait scaling. The Mobile UX validator now rejects height-matched scaling so top bar, side shortcuts, fight controls, skill cards, and bottom navigation stay inside the visible phone width.
 - Prototype 0.2.159: Polished the early 20-30 minute tester loop without adding a new system. Home Next Goal is now localized and routes resource gaps to Gold/Essence dungeons, campaign/dungeon results append a `Next:` action, Summon results explain immediate shard value and future Ascend, Tank role damage reduction now uses the stable role ID, and a new Early Game Loop validator covers fresh-save guidance, first campaign clears, resource dungeons, Gear drop/equip, Village build, starter Summon, and EN/DE Next Goal routing. Added `docs/INTERNAL_TESTBUILD_CHECKLIST.md` for small internal tester runs and future account-login feedback.
