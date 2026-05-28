@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.155";
+    public const string PrototypeVersion = "0.2.156";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -652,6 +652,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const string BattlePassClaimedKeyPrefix = "Mythwake.Prototype.BattlePass.Claimed.";
     private const string BackendGameplayEnabledKey = "Mythwake.Backend.GameplayEnabled";
     private const string LanguagePreferenceKey = "Mythwake.Prototype.Language";
+    private const string PerformanceOverlayPreferenceKey = "Mythwake.Prototype.PerformanceOverlay";
     private const string GoldCurrencyId = "gold";
     private const string GemsCurrencyId = "gems";
     private const string MythEssenceCurrencyId = "myth_essence";
@@ -1260,6 +1261,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private float performanceOverlayTimer;
     private int performanceOverlayFrames;
     private float performanceOverlayFrameTimeMs;
+    private bool performanceOverlayVisible = true;
     private TMP_Text heroEssenceAmountText;
     private RawImage topGemIconImage;
     private RawImage topGoldIconImage;
@@ -1275,6 +1277,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button managementSupportButton;
     private Button managementAboutButton;
     private Button managementLanguageToggleButton;
+    private Button managementPerformanceToggleButton;
     private TMP_Text managementTitleText;
     private TMP_Text managementDetailTitleText;
     private TMP_Text managementDetailBodyText;
@@ -1501,6 +1504,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button summonTenButton;
     private RawImage[] summonOfferHeroImages;
     private RectTransform summonResultBoxRoot;
+    private RectTransform summonResultModalBlockerRoot;
     private RectTransform summonResultPopupRoot;
     private TMP_Text summonResultPopupTitleText;
     private TMP_Text summonAutoToggleText;
@@ -1622,6 +1626,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureAndroidImmersiveMode();
         EnsureRuntimeInputStack();
         LoadLanguagePreference();
+        LoadPerformanceOverlayPreference();
         LoadProgress();
         autoAttackEnabled = false;
         selectedCampaignStage = Mathf.Max(1, enemyLevel);
@@ -8238,6 +8243,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshUi();
     }
 
+    private void LoadPerformanceOverlayPreference()
+    {
+        performanceOverlayVisible = PlayerPrefs.GetInt(PerformanceOverlayPreferenceKey, performanceOverlayVisible ? 1 : 0) == 1;
+    }
+
+    private void SavePerformanceOverlayPreference()
+    {
+        PlayerPrefs.SetInt(PerformanceOverlayPreferenceKey, performanceOverlayVisible ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+
+    private void TogglePerformanceOverlay()
+    {
+        performanceOverlayVisible = !performanceOverlayVisible;
+        SavePerformanceOverlayPreference();
+        RefreshPerformanceOverlayVisibility();
+        RefreshManagementPopupUi();
+    }
+
     private string GetLocalizedCurrencyName(string currencyId)
     {
         var key = $"currency.{currencyId}.name";
@@ -9369,6 +9393,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             managementLanguageToggleButton.onClick.AddListener(ToggleLanguage);
         }
 
+        if (managementPerformanceToggleButton != null)
+        {
+            managementPerformanceToggleButton.onClick.AddListener(TogglePerformanceOverlay);
+        }
+
         if (homeShortcutToggleButton != null)
         {
             homeShortcutToggleButton.onClick.AddListener(ToggleHomeShortcuts);
@@ -9635,6 +9664,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (managementLanguageToggleButton != null)
         {
             managementLanguageToggleButton.onClick.RemoveListener(ToggleLanguage);
+        }
+
+        if (managementPerformanceToggleButton != null)
+        {
+            managementPerformanceToggleButton.onClick.RemoveListener(TogglePerformanceOverlay);
         }
 
         if (homeShortcutToggleButton != null)
@@ -13507,6 +13541,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
+        if (summonResultModalBlockerRoot != null)
+        {
+            summonResultModalBlockerRoot.gameObject.SetActive(true);
+            summonResultModalBlockerRoot.SetAsLastSibling();
+        }
+
         summonResultPopupRoot.gameObject.SetActive(true);
         summonResultPopupRoot.SetAsLastSibling();
         if (summonResultPopupTitleText != null)
@@ -13559,6 +13599,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
         }
 
+        LayoutSummonResultVisibleSlots(slotIndex);
         RefreshSummonAutoToggle();
         RefreshUi();
     }
@@ -13593,6 +13634,52 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         ShowSummonResultPopup(drawCounts, Mathf.Clamp(pullCount, 1, MaxSummonPullCount));
     }
 
+    private void LayoutSummonResultVisibleSlots(int visibleSlotCount)
+    {
+        if (summonResultHeroFrames == null || visibleSlotCount <= 0)
+        {
+            return;
+        }
+
+        var visibleIndex = 0;
+        for (var i = 0; i < summonResultHeroFrames.Length; i++)
+        {
+            var frame = summonResultHeroFrames[i];
+            if (frame == null || !frame.gameObject.activeSelf)
+            {
+                continue;
+            }
+
+            var rect = frame.GetComponent<RectTransform>();
+            if (rect == null)
+            {
+                continue;
+            }
+
+            rect.anchoredPosition = GetSummonResultSlotPosition(visibleIndex, visibleSlotCount);
+            visibleIndex++;
+        }
+    }
+
+    private static Vector2 GetSummonResultSlotPosition(int visibleIndex, int visibleSlotCount)
+    {
+        visibleSlotCount = Mathf.Clamp(visibleSlotCount, 1, HeroCount);
+        if (visibleSlotCount <= 3)
+        {
+            return new Vector2((visibleIndex - (visibleSlotCount - 1) * 0.5f) * 250f, -206f);
+        }
+
+        var firstRowCount = visibleSlotCount <= 4 ? 2 : Mathf.CeilToInt(visibleSlotCount * 0.5f);
+        firstRowCount = Mathf.Clamp(firstRowCount, 2, 4);
+        var secondRowCount = visibleSlotCount - firstRowCount;
+        var row = visibleIndex < firstRowCount ? 0 : 1;
+        var rowIndex = row == 0 ? visibleIndex : visibleIndex - firstRowCount;
+        var rowCount = row == 0 ? firstRowCount : secondRowCount;
+        var x = (rowIndex - (rowCount - 1) * 0.5f) * 210f;
+        var y = row == 0 ? -138f : -352f;
+        return new Vector2(x, y);
+    }
+
     private static int ExtractBackendSummonCount(string message, string heroId)
     {
         if (string.IsNullOrWhiteSpace(message) || string.IsNullOrWhiteSpace(heroId))
@@ -13623,6 +13710,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (summonResultPopupRoot != null)
         {
             summonResultPopupRoot.gameObject.SetActive(false);
+        }
+
+        if (summonResultModalBlockerRoot != null)
+        {
+            summonResultModalBlockerRoot.gameObject.SetActive(false);
         }
     }
 
@@ -14028,11 +14120,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         performanceOverlayText.textWrappingMode = TextWrappingModes.NoWrap;
         performanceOverlayText.raycastTarget = false;
         performanceOverlayText.transform.SetAsLastSibling();
+        RefreshPerformanceOverlayVisibility();
     }
 
     private void TickPerformanceOverlay()
     {
-        if (performanceOverlayText == null)
+        if (performanceOverlayText == null || !performanceOverlayVisible)
         {
             return;
         }
@@ -14054,6 +14147,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             : new Color(0.72f, 0.95f, 1f, 0.72f);
         performanceOverlayTimer = 0f;
         performanceOverlayFrames = 0;
+    }
+
+    private void RefreshPerformanceOverlayVisibility()
+    {
+        if (performanceOverlayText != null)
+        {
+            performanceOverlayText.gameObject.SetActive(performanceOverlayVisible);
+        }
     }
 
     private void EnsureRuntimeScreenBackdrops()
@@ -14121,14 +14222,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         managementDetailTitleText.color = new Color(1f, 0.88f, 0.58f);
         managementDetailTitleText.textWrappingMode = TextWrappingModes.NoWrap;
 
-        managementDetailBodyText = CreateRuntimeText(detailPanel, "Detail Body", string.Empty, 21, new Vector2(0, -98), new Vector2(348, 210));
+        managementDetailBodyText = CreateRuntimeText(detailPanel, "Detail Body", string.Empty, 21, new Vector2(0, -98), new Vector2(348, 150));
         managementDetailBodyText.alignment = TextAlignmentOptions.TopLeft;
         managementDetailBodyText.enableAutoSizing = true;
         managementDetailBodyText.fontSizeMin = 15;
         managementDetailBodyText.fontSizeMax = 21;
         managementDetailBodyText.color = new Color(0.82f, 0.9f, 1f);
 
-        managementLanguageToggleButton = CreateRuntimeButton(detailPanel, "Management Language Toggle", string.Empty, 0, -338, 290, 58);
+        managementLanguageToggleButton = CreateRuntimeButton(detailPanel, "Management Language Toggle", string.Empty, 0, -270, 290, 54);
+        managementPerformanceToggleButton = CreateRuntimeButton(detailPanel, "Management Performance Toggle", string.Empty, 0, -336, 290, 54);
         managementPopupRoot.gameObject.SetActive(false);
     }
 
@@ -14244,10 +14346,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        summonResultPopupRoot = CreateRuntimePanel(summonPanel.transform, "Summon Result Popup", new Vector2(0, -150), new Vector2(880, 820), new Color(0.01f, 0.01f, 0.014f, 0.94f));
+        summonResultModalBlockerRoot = CreateRuntimePanel(summonPanel.transform, "Summon Result Modal Blocker", new Vector2(0, 0), new Vector2(1080, 1540), new Color(0.01f, 0.01f, 0.014f, 0.68f));
+        var blockerImage = summonResultModalBlockerRoot.GetComponent<Image>();
+        if (blockerImage != null)
+        {
+            blockerImage.raycastTarget = true;
+        }
+
+        summonResultPopupRoot = CreateRuntimePanel(summonPanel.transform, "Summon Result Popup", new Vector2(0, -150), new Vector2(880, 820), new Color(0.01f, 0.01f, 0.014f, 0.99f));
         summonResultPopupRoot.SetAsLastSibling();
-        CreateRuntimePanel(summonResultPopupRoot, "Result Parchment", new Vector2(0, -112), new Vector2(810, 470), new Color(0.15f, 0.09f, 0.055f, 0.98f));
-        CreateRuntimePanel(summonResultPopupRoot, "Result Controls Backplate", new Vector2(0, -594), new Vector2(810, 180), new Color(0.12f, 0.07f, 0.045f, 0.96f));
+        var popupImage = summonResultPopupRoot.GetComponent<Image>();
+        if (popupImage != null)
+        {
+            popupImage.raycastTarget = true;
+        }
+
+        CreateRuntimePanel(summonResultPopupRoot, "Result Parchment", new Vector2(0, -112), new Vector2(810, 470), new Color(0.15f, 0.09f, 0.055f, 1f));
+        CreateRuntimePanel(summonResultPopupRoot, "Result Controls Backplate", new Vector2(0, -594), new Vector2(810, 180), new Color(0.12f, 0.07f, 0.045f, 1f));
         CreateRuntimePanel(summonResultPopupRoot, "Result Header Glow", new Vector2(0, -70), new Vector2(620, 12), new Color(1f, 0.75f, 0.23f, 0.95f));
         summonResultPopupTitleText = CreateRuntimeText(summonResultPopupRoot, "Result Title", Tr("summon.result.title"), 34, new Vector2(0, -36), new Vector2(760, 58));
         summonResultPopupTitleText.fontStyle = FontStyles.Bold;
@@ -14308,6 +14423,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         summonResultTenCostText = CreateSummonResultButtonCostText(summonResultTenButton.transform, "Cost");
         summonResultMaxCostText = CreateSummonResultButtonCostText(summonResultMaxButton.transform, "Cost");
 
+        summonResultModalBlockerRoot.gameObject.SetActive(false);
         summonResultPopupRoot.gameObject.SetActive(false);
         RegisterSummonResultButtons();
         RefreshSummonAutoToggle();
@@ -14853,7 +14969,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             formationHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
             formationHeroImages[i].raycastTarget = false;
             formationHeroSkeletalViews[i] = RavikSkeletalCombatView.Create(arena, $"Formation Ravik Skeletal View {i + 1}", heroPositions[i], 0.18f);
-            formationHeroPaladinViews[i] = PaladinSkeletalCombatView.Create(arena, $"Formation Paladin Skeletal View {i + 1}", heroPositions[i], 0.21f);
+            formationHeroPaladinViews[i] = PaladinSkeletalCombatView.Create(arena, $"Formation Paladin Skeletal View {i + 1}", heroPositions[i], 0.18f);
             formationHeroTexts[i] = CreateRuntimeText(arena, $"Formation Hero Label {i + 1}", string.Empty, 15, heroPositions[i] + new Vector2(0, -96), new Vector2(126, 28));
             formationHeroTexts[i].fontStyle = FontStyles.Bold;
             formationHeroTexts[i].enableAutoSizing = true;
@@ -20572,6 +20688,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 if (formationHeroTexts != null && slotIndex < formationHeroTexts.Length && formationHeroTexts[slotIndex] != null)
                 {
                     formationHeroTexts[slotIndex].text = $"{GetLocalizedHeroName(heroIndex)} {Tr("ui.common.level_short")} {heroLevels[heroIndex]}";
+                    formationHeroTexts[slotIndex].transform.SetAsLastSibling();
                 }
             }
         }
@@ -21114,6 +21231,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 SetButtonLabel(managementLanguageToggleButton, Tr("management.language.switch"));
             }
         }
+
+        if (managementPerformanceToggleButton != null)
+        {
+            var showPerformanceAction = selectedManagementMenuMode == ManagementMenuMode.Options;
+            managementPerformanceToggleButton.gameObject.SetActive(showPerformanceAction);
+            if (showPerformanceAction)
+            {
+                SetButtonLabel(
+                    managementPerformanceToggleButton,
+                    performanceOverlayVisible ? Tr("management.performance.hide") : Tr("management.performance.show"));
+            }
+        }
     }
 
     private void RefreshManagementButton(Button button, ManagementMenuMode mode)
@@ -21175,7 +21304,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 return TrFormat(
                     "management.options.body",
                     GetCurrentLanguageLabel(),
-                    backendGameplayEnabled ? Tr("management.backend.server") : Tr("management.backend.local"));
+                    backendGameplayEnabled ? Tr("management.backend.server") : Tr("management.backend.local"),
+                    GetPerformanceOverlayLabel());
             case ManagementMenuMode.Account:
                 return TrFormat("management.account.body", "local-player", saveVersion, GetDailyDateKey());
             case ManagementMenuMode.Support:
@@ -21196,6 +21326,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private string GetCurrentLanguageLabel()
     {
         return language == MythwakeLanguage.German ? Tr("language.german") : Tr("language.english");
+    }
+
+    private string GetPerformanceOverlayLabel()
+    {
+        return performanceOverlayVisible ? Tr("management.performance.on") : Tr("management.performance.off");
     }
 
     private void RefreshFastRewardsPopupUi()

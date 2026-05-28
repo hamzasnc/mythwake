@@ -90,9 +90,21 @@ public static class SummonUiValidation
         Canvas.ForceUpdateCanvases();
 
         var resultRoot = GetPrivateField<RectTransform>(controller, "summonResultPopupRoot");
+        var resultBlocker = GetPrivateField<RectTransform>(controller, "summonResultModalBlockerRoot");
         if (resultRoot == null || !resultRoot.gameObject.activeInHierarchy)
         {
             throw new InvalidOperationException("Summon result popup should be active after showing a Paladin result.");
+        }
+
+        if (resultBlocker == null || !resultBlocker.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Summon result popup should show a modal blocker behind the result controls.");
+        }
+
+        var blockerImage = resultBlocker.GetComponent<Image>();
+        if (blockerImage == null || !blockerImage.raycastTarget)
+        {
+            throw new InvalidOperationException("Summon result modal blocker should intercept touches behind the result popup.");
         }
 
         var resultTitle = GetPrivateField<TMP_Text>(controller, "summonResultPopupTitleText");
@@ -111,6 +123,7 @@ public static class SummonUiValidation
         RequireCopy(resultTitle.text, "Summon x10 Result");
         RequireResultSlot(resultNames, resultCounts, resultImages, 0, "Paladin", "x3", PaladinHeroId);
         ValidateSummonResultSlots(resultNames, resultCounts, resultImages, 1);
+        AssertCenteredResultCard(resultNames[0], "Single-result summon card");
         RequireCopy(autoToggleText.text, "Auto-Summon");
         AssertTextFits(resultTitle, "Summon result title");
         AssertTextFits(autoToggleText, "Summon auto toggle label");
@@ -138,6 +151,11 @@ public static class SummonUiValidation
         if (resultRoot.gameObject.activeInHierarchy)
         {
             throw new InvalidOperationException("Summon result popup should close from its close button.");
+        }
+
+        if (resultBlocker.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Summon result modal blocker should hide with the result popup.");
         }
     }
 
@@ -318,6 +336,20 @@ public static class SummonUiValidation
 
             AssertInsideParent(resultPopup, card);
             AssertNoOverlap(card, autoToggleButton.gameObject, 12f, "Summon result card/control spacing");
+        }
+    }
+
+    private static void AssertCenteredResultCard(TMP_Text resultName, string context)
+    {
+        var card = resultName != null && resultName.transform.parent != null ? resultName.transform.parent.GetComponent<RectTransform>() : null;
+        if (card == null)
+        {
+            throw new InvalidOperationException($"{context} is missing its result card RectTransform.");
+        }
+
+        if (Mathf.Abs(card.anchoredPosition.x) > 3f)
+        {
+            throw new InvalidOperationException($"{context} should be centered for one-pull results, got x={card.anchoredPosition.x}.");
         }
     }
 
