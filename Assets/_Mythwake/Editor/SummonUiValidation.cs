@@ -115,6 +115,7 @@ public static class SummonUiValidation
         AssertTextFits(resultTitle, "Summon result title");
         AssertTextFits(autoToggleText, "Summon auto toggle label");
         ValidateSummonAutoToggle(autoToggleButton, autoToggleMark, autoToggleText);
+        ValidateSummonResultMobileLayout(resultRoot.gameObject, resultTenButton, resultMaxButton, resultCloseButton, autoToggleButton, resultNames);
 
         if (GetButtonLabel(resultTenButton) != "x10" || GetButtonLabel(resultMaxButton) != "x300")
         {
@@ -285,6 +286,97 @@ public static class SummonUiValidation
         {
             throw new InvalidOperationException($"{context}: {expectedLabel} button interactable mismatch. Expected {expectedInteractable}, got {button.interactable}.");
         }
+    }
+
+    private static void ValidateSummonResultMobileLayout(GameObject resultPopup, Button tenButton, Button maxButton, Button closeButton, Button autoToggleButton, TMP_Text[] resultNames)
+    {
+        AssertMinimumSize(tenButton.gameObject, 240f, 70f, "Summon result x10 repeat button");
+        AssertMinimumSize(maxButton.gameObject, 240f, 70f, "Summon result x300 repeat button");
+        AssertMinimumSize(closeButton.gameObject, 70f, 70f, "Summon result close button");
+        AssertMinimumSize(autoToggleButton.gameObject, 320f, 50f, "Summon result auto toggle");
+        AssertInsideParent(resultPopup, tenButton.gameObject);
+        AssertInsideParent(resultPopup, maxButton.gameObject);
+        AssertInsideParent(resultPopup, closeButton.gameObject);
+        AssertInsideParent(resultPopup, autoToggleButton.gameObject);
+        AssertNoOverlap(tenButton.gameObject, closeButton.gameObject, 10f, "Summon result repeat/close controls");
+        AssertNoOverlap(maxButton.gameObject, closeButton.gameObject, 10f, "Summon result repeat/close controls");
+        AssertNoOverlap(autoToggleButton.gameObject, tenButton.gameObject, 10f, "Summon result auto/repeat controls");
+        AssertNoOverlap(autoToggleButton.gameObject, maxButton.gameObject, 10f, "Summon result auto/repeat controls");
+
+        for (var i = 0; resultNames != null && i < resultNames.Length; i++)
+        {
+            if (resultNames[i] == null)
+            {
+                continue;
+            }
+
+            var card = resultNames[i].transform.parent == null ? null : resultNames[i].transform.parent.gameObject;
+            if (card == null || !card.activeInHierarchy)
+            {
+                continue;
+            }
+
+            AssertInsideParent(resultPopup, card);
+            AssertNoOverlap(card, autoToggleButton.gameObject, 12f, "Summon result card/control spacing");
+        }
+    }
+
+    private static void AssertMinimumSize(GameObject gameObject, float width, float height, string context)
+    {
+        var rect = gameObject.GetComponent<RectTransform>();
+        if (rect == null)
+        {
+            throw new InvalidOperationException($"{context} is missing a RectTransform.");
+        }
+
+        if (rect.rect.width < width || rect.rect.height < height)
+        {
+            throw new InvalidOperationException($"{context} should be at least {width}x{height}, got {rect.rect.width}x{rect.rect.height}.");
+        }
+    }
+
+    private static void AssertNoOverlap(GameObject first, GameObject second, float padding, string context)
+    {
+        var firstBounds = GetLocalBounds(first);
+        var secondBounds = GetLocalBounds(second);
+        if (firstBounds.Left < secondBounds.Right + padding
+            && firstBounds.Right > secondBounds.Left - padding
+            && firstBounds.Top > secondBounds.Bottom - padding
+            && firstBounds.Bottom < secondBounds.Top + padding)
+        {
+            throw new InvalidOperationException($"{context}: {first.name} overlaps {second.name}.");
+        }
+    }
+
+    private static LocalBounds GetLocalBounds(GameObject gameObject)
+    {
+        var rect = gameObject.GetComponent<RectTransform>();
+        if (rect == null)
+        {
+            throw new InvalidOperationException($"{gameObject.name} is missing a RectTransform.");
+        }
+
+        var left = rect.anchoredPosition.x - rect.rect.width * rect.pivot.x;
+        var right = left + rect.rect.width;
+        var top = rect.anchoredPosition.y + rect.rect.height * (1f - rect.pivot.y);
+        var bottom = top - rect.rect.height;
+        return new LocalBounds(left, right, top, bottom);
+    }
+
+    private readonly struct LocalBounds
+    {
+        public LocalBounds(float left, float right, float top, float bottom)
+        {
+            Left = left;
+            Right = right;
+            Top = top;
+            Bottom = bottom;
+        }
+
+        public float Left { get; }
+        public float Right { get; }
+        public float Top { get; }
+        public float Bottom { get; }
     }
 
     private static void AssertInsideParent(GameObject parent, GameObject child)

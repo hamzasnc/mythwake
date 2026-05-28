@@ -109,6 +109,11 @@ public static class FightFormationValidation
             {
                 throw new InvalidOperationException($"Formation hero {i + 1} should have loaded art when RawImage fallback is visible.");
             }
+
+            for (var otherIndex = i + 1; otherIndex < slotButtons.Length; otherIndex++)
+            {
+                AssertNoOverlap(slotButtons[i].gameObject, slotButtons[otherIndex].gameObject, 6f, "Formation mobile slot spacing");
+            }
         }
 
         slotButtons[0].onClick.Invoke();
@@ -537,6 +542,50 @@ public static class FightFormationValidation
         {
             throw new InvalidOperationException($"{context} should be at least {width}x{height}, got {rect.rect.width}x{rect.rect.height}.");
         }
+    }
+
+    private static void AssertNoOverlap(GameObject first, GameObject second, float padding, string context)
+    {
+        var firstBounds = GetLocalBounds(first);
+        var secondBounds = GetLocalBounds(second);
+        if (firstBounds.Left < secondBounds.Right + padding
+            && firstBounds.Right > secondBounds.Left - padding
+            && firstBounds.Top > secondBounds.Bottom - padding
+            && firstBounds.Bottom < secondBounds.Top + padding)
+        {
+            throw new InvalidOperationException($"{context}: {first.name} overlaps {second.name}.");
+        }
+    }
+
+    private static LocalBounds GetLocalBounds(GameObject gameObject)
+    {
+        var rect = gameObject.GetComponent<RectTransform>();
+        if (rect == null)
+        {
+            throw new InvalidOperationException($"{gameObject.name} is missing a RectTransform.");
+        }
+
+        var left = rect.anchoredPosition.x - rect.rect.width * rect.pivot.x;
+        var right = left + rect.rect.width;
+        var top = rect.anchoredPosition.y + rect.rect.height * (1f - rect.pivot.y);
+        var bottom = top - rect.rect.height;
+        return new LocalBounds(left, right, top, bottom);
+    }
+
+    private readonly struct LocalBounds
+    {
+        public LocalBounds(float left, float right, float top, float bottom)
+        {
+            Left = left;
+            Right = right;
+            Top = top;
+            Bottom = bottom;
+        }
+
+        public float Left { get; }
+        public float Right { get; }
+        public float Top { get; }
+        public float Bottom { get; }
     }
 
     private static void AssertFillPercentBetween(Image fill, float min, float max, string context)

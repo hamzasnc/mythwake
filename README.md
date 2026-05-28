@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.154
+Prototype version: 0.2.155
 Local save version: 2
 
 Current prototype:
@@ -86,7 +86,7 @@ Current prototype:
 - Local accessory equip, unequip, level, and fuse action-result messages now use EN/DE localization keys and are covered by Gear validation
 - Gear screen accessory inventory copy counts use a compact two-line summary with auto-sized text
 - Gear screen now uses compact dark Training and Accessory sections, explicit Slot/Rarity nav labels, stronger text contrast, and validator coverage so it no longer falls back to the oversized empty parchment block
-- MuMuPlayer Android pass can install and launch the current APK, with real 1080x1920 screenshots, filtered Logcat, runtime FPS overlay notes, and first performance observations captured under `docs/screenshots/android/2026-05-26-mumu/` and `docs/screenshots/android/2026-05-26-touch-polish-final/`
+- MuMuPlayer Android pass can install and launch the current APK, with real 1080x1920 screenshots, filtered Logcat, runtime FPS overlay notes, visible-coordinate touch checks, and performance observations captured under `docs/screenshots/android/2026-05-26-mumu/`, `docs/screenshots/android/2026-05-26-touch-polish-final/`, and `docs/screenshots/android/2026-05-28-mobile-testbuild-pass/`
 - Prototype UI builder now creates Gear controls in the current localized runtime layout with localized equipment names, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale Gear placeholder copy
 - Home idle patrol keeps the middle hero/enemy lane clear of the reward strip, and the Home idle validator now guards mobile touch target size plus unit/reward/loot-popup separation
 
@@ -190,8 +190,10 @@ Backend:
   - `docs/screenshots/android/2026-05-26-mumu/README.md`
   - `docs/screenshots/android/2026-05-26-touch-polish-final/README.md`
   - `docs/screenshots/android/2026-05-27-mumu-touch-fix/README.md`
+  - `docs/screenshots/android/2026-05-28-mobile-testbuild-pass/README.md`
 
 Changelog:
+- Prototype 0.2.155: Repeated the MuMuPlayer Android mobile testbuild polish pass with `Builds\Android\Mythwake-0.2.155-mumu.apk`, cold launch `TotalTime 781 ms` / host stopwatch `809 ms`, real 1080x1920 screenshots under `docs/screenshots/android/2026-05-28-mobile-testbuild-pass/`, runtime FPS overlay around `30 FPS | 33.3 ms`, portrait bounds `1080x1920` with hidden status bar, and no app crashes/Unity exceptions in filtered Logcat (one MuMu `EGL_BAD_ATTRIBUTE` renderer line only). Polished Summon Result spacing/controls, Formation slot density/auto-next/enemy preview, Hero Detail gear-slot right margin/right-edge scrim, and immediate Result Continue cleanup; physical Android device safe-area testing remains open.
 - Prototype 0.2.154: Removed the reintroduced MuMu X-coordinate mirror after live testing showed Y was fixed but left/right was inverted. Android is kept in normal portrait through PlayerSettings/manifest (`screenOrientation=portrait` / generated `screenOrientation=1`), the runtime uses Unity's standard `InputSystemUIInputModule` with no custom MuMu pointer module, and validation rejects hand-rolled pointer transforms. `Builds\Android\Mythwake-0.2.154-mumu.apk` builds, installs, launches in MuMuPlayer, ADB visible-coordinate taps verified left Heroes and right Summon, and the Hero Detail Bracelet tap opens `Bracelet Gear` rather than Gloves.
 - Prototype 0.2.149: Removed the custom `MythwakeMuMuInputModule` pointer transform after broader wrong-button handling showed it could route visible taps to neighboring controls (for example Bracelet selecting Gloves). Android builds now use Unity's legacy `StandaloneInputModule` directly, Hero Detail gear slot 8 is wired, the center Campaign/Home nav hit layer is raycastable, and validation now checks bottom-nav click mappings, button hit targets, and every Hero Detail gear-slot click-to-list mapping. `Builds\Android\Mythwake-0.2.149-mumu.apk` builds, installs, launches in MuMuPlayer, and real taps verified Heroes/Village/Dungeons/Summon/Home plus Bracelet opening `Bracelet Gear`.
 - Prototype 0.2.148: Corrected the MuMu desktop-pointer normalization for mirrored left/right bottom-nav hits by flipping X together with Y on the MuMu pointer path, while leaving normal Android touch coordinates unchanged when no mouse pointer is present. `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.148-mumu.apk` passes; no emulator was attached for install/host-click verification on this machine.

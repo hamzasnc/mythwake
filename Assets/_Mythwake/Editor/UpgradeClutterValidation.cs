@@ -772,6 +772,14 @@ public static class UpgradeClutterValidation
 
     private static void ValidateHeroDetailGearLayout(GameObject heroDetailRoot, Button[] gearSlots, int expectedGearSlotCount)
     {
+        var rightEdgeScrim = RequireSceneObject("Hero Detail Right Edge Scrim");
+        RequireInsidePanel(heroDetailRoot, rightEdgeScrim);
+        var rightEdgeScrimImage = rightEdgeScrim.GetComponent<Image>();
+        if (rightEdgeScrimImage == null || rightEdgeScrimImage.raycastTarget)
+        {
+            throw new InvalidOperationException("Hero Detail right-edge scrim should be visible without intercepting gear-slot taps.");
+        }
+
         var guardedObjects = new[]
         {
             RequireSceneObject("Hero Detail Stage"),
@@ -796,7 +804,7 @@ public static class UpgradeClutterValidation
 
             var heroDetailRect = RequireRectTransform(heroDetailRoot);
             var gearSlotBounds = GetLocalBounds(gearSlot);
-            const float edgeMargin = 56f;
+            const float edgeMargin = 88f;
             if (gearSlotBounds.Left < -heroDetailRect.rect.width * 0.5f + edgeMargin || gearSlotBounds.Right > heroDetailRect.rect.width * 0.5f - edgeMargin)
             {
                 throw new InvalidOperationException($"{gearSlot.name} should keep at least {edgeMargin:0.#}px side margin inside Hero Detail for mobile safe tapping. Left={gearSlotBounds.Left:0.#}, right={gearSlotBounds.Right:0.#}.");

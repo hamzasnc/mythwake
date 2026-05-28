@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.154";
+    public const string PrototypeVersion = "0.2.155";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -2357,6 +2357,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             activeFightCoroutine = null;
         }
 
+        if (fightContinueButton != null)
+        {
+            fightContinueButton.interactable = false;
+        }
+
+        if (fightResultRoot != null)
+        {
+            fightResultRoot.gameObject.SetActive(false);
+        }
+
         fightCancelRequested = false;
         campaignFightInProgress = false;
         SetProjectilesVisible(fightHeroProjectileImages, false);
@@ -2515,7 +2525,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             formationAutoContinueBox.color = autoContinueFightsEnabled
                 ? new Color(0.12f, 0.82f, 0.58f, 0.98f)
-                : new Color(0.04f, 0.055f, 0.08f, 0.96f);
+                : new Color(0.13f, 0.19f, 0.25f, 0.96f);
         }
 
         if (formationAutoContinueMarkText != null)
@@ -14234,10 +14244,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        summonResultPopupRoot = CreateRuntimePanel(summonPanel.transform, "Summon Result Popup", new Vector2(0, -150), new Vector2(900, 940), new Color(0.01f, 0.01f, 0.014f, 0.92f));
+        summonResultPopupRoot = CreateRuntimePanel(summonPanel.transform, "Summon Result Popup", new Vector2(0, -150), new Vector2(880, 820), new Color(0.01f, 0.01f, 0.014f, 0.94f));
         summonResultPopupRoot.SetAsLastSibling();
-        CreateRuntimePanel(summonResultPopupRoot, "Result Parchment", new Vector2(0, -410), new Vector2(820, 680), new Color(0.15f, 0.09f, 0.055f, 0.98f));
-        CreateRuntimePanel(summonResultPopupRoot, "Result Header Glow", new Vector2(0, -70), new Vector2(640, 12), new Color(1f, 0.75f, 0.23f, 0.95f));
+        CreateRuntimePanel(summonResultPopupRoot, "Result Parchment", new Vector2(0, -112), new Vector2(810, 470), new Color(0.15f, 0.09f, 0.055f, 0.98f));
+        CreateRuntimePanel(summonResultPopupRoot, "Result Controls Backplate", new Vector2(0, -594), new Vector2(810, 180), new Color(0.12f, 0.07f, 0.045f, 0.96f));
+        CreateRuntimePanel(summonResultPopupRoot, "Result Header Glow", new Vector2(0, -70), new Vector2(620, 12), new Color(1f, 0.75f, 0.23f, 0.95f));
         summonResultPopupTitleText = CreateRuntimeText(summonResultPopupRoot, "Result Title", Tr("summon.result.title"), 34, new Vector2(0, -36), new Vector2(760, 58));
         summonResultPopupTitleText.fontStyle = FontStyles.Bold;
         summonResultPopupTitleText.color = new Color(1f, 0.86f, 0.28f);
@@ -14251,25 +14262,28 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var row = i < 3 ? 0 : 1;
             var column = row == 0 ? i : i - 3;
-            var x = row == 0 ? -260f + (column * 260f) : -130f + (column * 260f);
-            var y = row == 0 ? -124f : -360f;
-            var card = CreateRuntimePanel(summonResultPopupRoot, $"Result Hero Card {i + 1}", new Vector2(x, y), new Vector2(205, 226), new Color(0.62f, 0.26f, 0.12f, 0.96f));
+            var x = row == 0 ? -250f + (column * 250f) : -125f + (column * 250f);
+            var y = row == 0 ? -124f : -338f;
+            var card = CreateRuntimePanel(summonResultPopupRoot, $"Result Hero Card {i + 1}", new Vector2(x, y), new Vector2(192, 202), new Color(0.62f, 0.26f, 0.12f, 0.96f));
             summonResultHeroFrames[i] = card.GetComponent<Image>();
-            CreateRuntimePanel(card, "Inner Glow", new Vector2(0, -118), new Vector2(188, 18), new Color(1f, 0.72f, 0.28f, 0.5f));
-            summonResultHeroImages[i] = CreateRuntimeRawImage(card, "Hero", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -12), new Vector2(142, 142), new Vector2(0.5f, 1f));
-            summonResultHeroNameTexts[i] = CreateRuntimeText(card, "Name", string.Empty, 19, new Vector2(0, -154), new Vector2(178, 28));
+            CreateRuntimePanel(card, "Inner Glow", new Vector2(0, -104), new Vector2(176, 16), new Color(1f, 0.72f, 0.28f, 0.5f));
+            summonResultHeroImages[i] = CreateRuntimeRawImage(card, "Hero", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -10), new Vector2(128, 128), new Vector2(0.5f, 1f));
+            summonResultHeroNameTexts[i] = CreateRuntimeText(card, "Name", string.Empty, 18, new Vector2(0, -138), new Vector2(172, 28));
             summonResultHeroNameTexts[i].fontStyle = FontStyles.Bold;
             summonResultHeroNameTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
             summonResultHeroNameTexts[i].enableAutoSizing = true;
             summonResultHeroNameTexts[i].fontSizeMin = 13;
-            summonResultHeroNameTexts[i].fontSizeMax = 19;
-            summonResultHeroCountTexts[i] = CreateRuntimeText(card, "Draw Count", string.Empty, 30, new Vector2(0, -188), new Vector2(178, 34));
+            summonResultHeroNameTexts[i].fontSizeMax = 18;
+            summonResultHeroCountTexts[i] = CreateRuntimeText(card, "Draw Count", string.Empty, 26, new Vector2(0, -166), new Vector2(172, 34));
             summonResultHeroCountTexts[i].fontStyle = FontStyles.Bold;
+            summonResultHeroCountTexts[i].enableAutoSizing = true;
+            summonResultHeroCountTexts[i].fontSizeMin = 16;
+            summonResultHeroCountTexts[i].fontSizeMax = 26;
             summonResultHeroCountTexts[i].color = Color.white;
             card.gameObject.SetActive(false);
         }
 
-        summonAutoToggleButton = CreateRuntimeButton(summonResultPopupRoot, "Auto Summon Toggle", string.Empty, 0, -666, 330, 58);
+        summonAutoToggleButton = CreateRuntimeButton(summonResultPopupRoot, "Auto Summon Toggle", string.Empty, 0, -594, 330, 54);
         var autoLabel = summonAutoToggleButton.transform.Find("Label");
         if (autoLabel != null)
         {
@@ -14286,11 +14300,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         summonAutoToggleText.fontStyle = FontStyles.Bold;
         summonAutoToggleText.color = new Color(1f, 0.86f, 0.28f);
 
-        summonResultTenButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Ten", "x10", -270, -778, 265, 90);
-        summonResultMaxButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Max", "x300", 270, -778, 265, 90);
-        summonResultCloseButton = CreateRuntimeButton(summonResultPopupRoot, "Result Close", "X", 0, -778, 86, 86);
-        CreateRuntimeRawImage(summonResultTenButton.transform, "Gem Icon", GetCurrencyIconTexture("mythic_gem"), new Vector2(-92, -58), new Vector2(20, 27), new Vector2(0.5f, 1f));
-        CreateRuntimeRawImage(summonResultMaxButton.transform, "Gem Icon", GetCurrencyIconTexture("mythic_gem"), new Vector2(-92, -58), new Vector2(20, 27), new Vector2(0.5f, 1f));
+        summonResultTenButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Ten", "x10", -264, -674, 250, 76);
+        summonResultMaxButton = CreateRuntimeButton(summonResultPopupRoot, "Result Summon Max", "x300", 264, -674, 250, 76);
+        summonResultCloseButton = CreateRuntimeButton(summonResultPopupRoot, "Result Close", "X", 0, -674, 74, 74);
+        CreateRuntimeRawImage(summonResultTenButton.transform, "Gem Icon", GetCurrencyIconTexture("mythic_gem"), new Vector2(-88, -49), new Vector2(18, 25), new Vector2(0.5f, 1f));
+        CreateRuntimeRawImage(summonResultMaxButton.transform, "Gem Icon", GetCurrencyIconTexture("mythic_gem"), new Vector2(-88, -49), new Vector2(18, 25), new Vector2(0.5f, 1f));
         summonResultTenCostText = CreateSummonResultButtonCostText(summonResultTenButton.transform, "Cost");
         summonResultMaxCostText = CreateSummonResultButtonCostText(summonResultMaxButton.transform, "Cost");
 
@@ -14390,11 +14404,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static TMP_Text CreateSummonResultButtonCostText(Transform parent, string name)
     {
-        var text = CreateRuntimeText(parent, name, string.Empty, 25, new Vector2(-24, -58), new Vector2(140, 34));
+        var text = CreateRuntimeText(parent, name, string.Empty, 23, new Vector2(-24, -49), new Vector2(134, 30));
         text.alignment = TextAlignmentOptions.Left;
         text.fontStyle = FontStyles.Bold;
         text.fontSizeMin = 16;
-        text.fontSizeMax = 25;
+        text.fontSizeMax = 23;
         text.enableAutoSizing = true;
         text.color = Color.white;
         text.outlineColor = new Color(0.12f, 0.06f, 0.02f, 1f);
@@ -14792,8 +14806,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         formationRoot = rootObject.GetComponent<RectTransform>();
         StretchRuntime(formationRoot, Vector2.zero);
 
-        var backdrop = CreateRuntimePanel(formationRoot, "Formation Backdrop", new Vector2(0, -150), new Vector2(880, 1120), new Color(0.06f, 0.045f, 0.055f, 0.96f));
-        CreateLayeredRuntimeBackground(backdrop, new Vector2(880, 1120), 0.52f);
+        var backdrop = CreateRuntimePanel(formationRoot, "Formation Backdrop", new Vector2(0, -150), new Vector2(880, 940), new Color(0.06f, 0.045f, 0.055f, 0.96f));
+        CreateLayeredRuntimeBackground(backdrop, new Vector2(880, 940), 0.52f);
 
         formationHeaderText = CreateRuntimeText(formationRoot, "Formation Header", "Formation", 34, new Vector2(0, -118), new Vector2(780, 50));
         formationHeaderText.fontStyle = FontStyles.Bold;
@@ -14823,7 +14837,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var slotObject = new GameObject($"Formation Slot {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
             slotObject.transform.SetParent(arena, false);
-            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), heroPositions[i] + new Vector2(0, 4), new Vector2(148, 160), new Vector2(0.5f, 1f));
+            SetRuntimeRect(slotObject.GetComponent<RectTransform>(), heroPositions[i] + new Vector2(0, 4), new Vector2(136, 148), new Vector2(0.5f, 1f));
 
             var slotFrame = slotObject.GetComponent<Image>();
             slotFrame.color = new Color(0.1f, 0.13f, 0.2f, 0.62f);
@@ -14835,20 +14849,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             slotButton.onClick.AddListener(() => SelectFormationSlot(capturedSlot));
             formationSlotButtons[i] = slotButton;
 
-            formationHeroImages[i] = CreateRuntimeRawImage(arena, $"Formation Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(112, 112), new Vector2(0.5f, 1f));
+            formationHeroImages[i] = CreateRuntimeRawImage(arena, $"Formation Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(98, 98), new Vector2(0.5f, 1f));
             formationHeroImages[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
             formationHeroImages[i].raycastTarget = false;
-            formationHeroSkeletalViews[i] = RavikSkeletalCombatView.Create(arena, $"Formation Ravik Skeletal View {i + 1}", heroPositions[i], 0.21f);
-            formationHeroPaladinViews[i] = PaladinSkeletalCombatView.Create(arena, $"Formation Paladin Skeletal View {i + 1}", heroPositions[i], 0.25f);
-            formationHeroTexts[i] = CreateRuntimeText(arena, $"Formation Hero Label {i + 1}", string.Empty, 16, heroPositions[i] + new Vector2(0, -104), new Vector2(118, 26));
+            formationHeroSkeletalViews[i] = RavikSkeletalCombatView.Create(arena, $"Formation Ravik Skeletal View {i + 1}", heroPositions[i], 0.18f);
+            formationHeroPaladinViews[i] = PaladinSkeletalCombatView.Create(arena, $"Formation Paladin Skeletal View {i + 1}", heroPositions[i], 0.21f);
+            formationHeroTexts[i] = CreateRuntimeText(arena, $"Formation Hero Label {i + 1}", string.Empty, 15, heroPositions[i] + new Vector2(0, -96), new Vector2(126, 28));
             formationHeroTexts[i].fontStyle = FontStyles.Bold;
             formationHeroTexts[i].enableAutoSizing = true;
             formationHeroTexts[i].fontSizeMin = 12;
-            formationHeroTexts[i].fontSizeMax = 16;
+            formationHeroTexts[i].fontSizeMax = 15;
             formationHeroTexts[i].raycastTarget = false;
         }
 
-        formationEnemyImage = CreateRuntimeRawImage(arena, "Formation Enemy", LoadCombatTexture("enemy_rat", "idle", 0, "enemy_campaign"), new Vector2(346, -44), new Vector2(132, 132), new Vector2(0.5f, 1f));
+        formationEnemyImage = CreateRuntimeRawImage(arena, "Formation Enemy", LoadCombatTexture("enemy_rat", "idle", 0, "enemy_campaign"), new Vector2(374, -36), new Vector2(90, 90), new Vector2(0.5f, 1f));
         formationEnemyImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale("enemy_rat"), 1f, 1f);
         formationEnemyText = CreateRuntimeText(formationRoot, "Formation Enemy Text", string.Empty, 23, new Vector2(0, -716), new Vector2(780, 82));
         formationEnemyText.enableAutoSizing = true;
@@ -14858,18 +14872,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         formationHintText = CreateRuntimeText(formationRoot, "Formation Hint", $"Confirm starts a visible {DefaultCombatDurationSeconds}s combat sim.", 20, new Vector2(0, -804), new Vector2(760, 40));
         formationHintText.color = new Color(0.78f, 0.84f, 0.92f);
 
-        formationAutoContinueButton = CreateRuntimeButton(formationRoot, "Formation Auto Continue Toggle", string.Empty, 0, -864, 560, 50);
+        formationAutoContinueButton = CreateRuntimeButton(formationRoot, "Formation Auto Continue Toggle", string.Empty, 0, -862, 520, 54);
         var autoContinueButtonImage = formationAutoContinueButton.GetComponent<Image>();
         if (autoContinueButtonImage != null)
         {
-            autoContinueButtonImage.color = new Color(0.02f, 0.025f, 0.04f, 0.4f);
+            autoContinueButtonImage.color = new Color(0.04f, 0.055f, 0.075f, 0.74f);
         }
 
-        formationAutoContinueBox = CreateRuntimePanel(formationAutoContinueButton.transform, "Checkbox", new Vector2(-250, 0), new Vector2(34, 34), new Color(0.04f, 0.055f, 0.08f, 0.96f)).GetComponent<Image>();
-        formationAutoContinueMarkText = CreateRuntimeText(formationAutoContinueButton.transform, "Checkbox Mark", string.Empty, 24, new Vector2(-250, 0), new Vector2(34, 34));
+        formationAutoContinueBox = CreateRuntimePanel(formationAutoContinueButton.transform, "Checkbox", new Vector2(-230, -10), new Vector2(32, 32), new Color(0.04f, 0.055f, 0.08f, 0.96f)).GetComponent<Image>();
+        formationAutoContinueMarkText = CreateRuntimeText(formationAutoContinueButton.transform, "Checkbox Mark", string.Empty, 23, new Vector2(-230, -10), new Vector2(32, 32));
         formationAutoContinueMarkText.fontStyle = FontStyles.Bold;
         formationAutoContinueMarkText.raycastTarget = false;
-        formationAutoContinueText = CreateRuntimeText(formationAutoContinueButton.transform, "Auto Continue Label", "Auto next after win (skills AUTO)", 20, new Vector2(34, 0), new Vector2(470, 38));
+        formationAutoContinueText = CreateRuntimeText(formationAutoContinueButton.transform, "Auto Continue Label", "Auto next after win (skills AUTO)", 19, new Vector2(26, -8), new Vector2(440, 38));
         formationAutoContinueText.alignment = TextAlignmentOptions.Left;
         formationAutoContinueText.enableAutoSizing = true;
         formationAutoContinueText.fontSizeMin = 14;
@@ -16010,6 +16024,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             backgroundImage.transform.SetAsFirstSibling();
             backgroundImage.color = Color.white;
             backgroundImage.raycastTarget = false;
+            CreateRuntimePanel(heroDetailRoot, "Hero Detail Right Edge Scrim", new Vector2(338, -8), new Vector2(24, 1310), new Color(0.025f, 0.018f, 0.014f, 0.94f));
         }
         else
         {
@@ -16044,7 +16059,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var leftSide = i < 4;
             var row = leftSide ? i : i - 4;
-            var slotRoot = CreateRuntimePanel(heroDetailRoot, $"Hero Detail Gear Slot {i + 1}", new Vector2((leftSide ? -1f : 1f) * 314f, -178f - row * 122f), new Vector2(104, 106), new Color(0.07f, 0.035f, 0.025f, 0.92f));
+            var slotRoot = CreateRuntimePanel(heroDetailRoot, $"Hero Detail Gear Slot {i + 1}", new Vector2((leftSide ? -1f : 1f) * 288f, -178f - row * 122f), new Vector2(104, 106), new Color(0.07f, 0.035f, 0.025f, 0.92f));
             heroDetailGearSlotFrames[i] = slotRoot.GetComponent<Image>();
             heroDetailGearSlotFrames[i].raycastTarget = true;
             heroDetailGearSlotButtons[i] = slotRoot.gameObject.AddComponent<Button>();
@@ -16080,8 +16095,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroDetailResourceText.fontSizeMax = 20;
         heroDetailResourceText.textWrappingMode = TextWrappingModes.NoWrap;
 
-        heroDetailPreviousButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Previous Button", "<", -190, -618, 64, 66);
-        heroDetailNextButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Next Button", ">", 190, -618, 64, 66);
+        heroDetailPreviousButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Previous Button", "<", -170, -618, 64, 66);
+        heroDetailNextButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Next Button", ">", 170, -618, 64, 66);
         heroDetailRemoveGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Remove Gear Button", "Remove Gear", -250, -1018, 210, 62);
         heroDetailLevelButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Level Button", "Level Up", 0, -1022, 260, 74);
         heroDetailEquipGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Equip Gear Button", "Equip Gear", 250, -1018, 210, 62);
@@ -18592,7 +18607,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         MoveUiElement(summonResultText, summonResultBoxRoot != null ? summonResultBoxRoot.gameObject : summonPanel, new Vector2(0, -10), new Vector2(700, 50));
         MoveUiElement(summonCountText, summonCountChipRoot != null ? summonCountChipRoot.gameObject : summonPanel, new Vector2(4, -11), new Vector2(176, 32));
         MoveUiElement(summonRatesText, summonRatesBoxRoot != null ? summonRatesBoxRoot.gameObject : summonPanel, new Vector2(0, -22), new Vector2(470, 84));
-        MoveUiElement(summonResultPopupRoot, summonPanel, new Vector2(0, -150), new Vector2(900, 940));
+        MoveUiElement(summonResultPopupRoot, summonPanel, new Vector2(0, -150), new Vector2(880, 820));
     }
 
     private void LayoutShopScreen()
@@ -20699,13 +20714,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         return new[]
         {
-            new Vector2(-316, -300),
-            new Vector2(-214, -136),
-            new Vector2(-104, -312),
-            new Vector2(6, -144),
-            new Vector2(116, -308),
-            new Vector2(220, -154),
-            new Vector2(308, -286)
+            new Vector2(-260, -144),
+            new Vector2(0, -144),
+            new Vector2(260, -144),
+            new Vector2(-315, -322),
+            new Vector2(-105, -322),
+            new Vector2(105, -322),
+            new Vector2(315, -322)
         };
     }
 
