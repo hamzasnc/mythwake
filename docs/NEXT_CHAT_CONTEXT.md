@@ -1,6 +1,6 @@
 # Mythwake Next Chat Context
 
-Last updated: 2026-05-26
+Last updated: 2026-05-28
 
 This file is meant to be pasted/read first in a new Codex chat so the project can continue without re-explaining everything.
 
@@ -28,9 +28,12 @@ Important Git rule:
 - Pushes/commits should use account/author `xMiepsen <160346173+xMiepsen@users.noreply.github.com>`.
 
 Latest known pushed commit before the current continuation:
-- `e12d6b9 Polish Gear mobile layout`
+- `21be210 Fix MuMu pointer hit alignment`
 
 Current continuation:
+- Prototype `0.2.154` is the current Android input fix. A reintroduced MuMu X-coordinate mirror was removed again because live testing showed Y was fixed but left/right became inverted. Android now keeps normal portrait through PlayerSettings/manifest (`screenOrientation=portrait`, generated `screenOrientation=1`) and uses Unity's standard `InputSystemUIInputModule` with no custom MuMu pointer module. `Builds\Android\Mythwake-0.2.154-mumu.apk` builds, installs, launches in MuMuPlayer, ADB visible-coordinate taps verified left Heroes and right Summon, and Hero Detail Bracelet opens `Bracelet Gear` instead of Gloves.
+- Prototype `0.2.149` supersedes the custom MuMu pointer-normalization attempt. The Android runtime input path now uses Unity's legacy `StandaloneInputModule` directly again, `MythwakeMuMuInputModule` is removed, Hero Detail gear slot 8 is wired, the transparent Campaign/Home nav hit layer is made raycastable, and validation now checks bottom-nav click mappings, active button hit targets, and every Hero Detail gear-slot click-to-list mapping so cases like Bracelet selecting Gloves fail in editor before a build. `Builds\Android\Mythwake-0.2.149-mumu.apk` builds, installs, launches in MuMuPlayer, and real taps verified Heroes/Village/Dungeons/Summon/Home plus Bracelet opening `Bracelet Gear`.
+- Prototype `0.2.148` fixes the follow-up report that the bottom navigation now behaves mirrored left/right in MuMu. `MythwakeMuMuInputModule` now normalizes MuMu desktop-pointer X together with Y, and gates the touch-path correction behind `Input.mousePresent` so normal physical Android touches are not mirrored. Android APK build passed for `Builds\Android\Mythwake-0.2.148-mumu.apk`; no emulator was attached for install/host-click verification on this machine.
 - Prototype `0.2.147` keeps Unity's original GameActivity, hard-anchors the art bottom navigation to the bottom center of the portrait canvas, and has `MythwakeMuMuInputModule` normalize the MuMu desktop pointer Y before raycasting, including emulator events that are surfaced as touch. This targets the red-X screenshot where bottom-nav hitboxes registered high above the visible art.
 - Prototype `0.2.146` adds `MythwakeMuMuInputModule` for Android builds. It disables the normal Unity UI modules on Android and flips MuMu's desktop mouse Y coordinate before raycasting buttons, because the latest Gyazo repro showed clicks near the top triggering bottom-nav actions and visible bottom clicks landing in empty space.
 - Prototype `0.2.145` changes Android runtime UI input to the legacy `StandaloneInputModule` while ProjectSettings allow both input backends. This is meant to fix the remaining MuMuPlayer desktop-mouse offset where visible button clicks did nothing but clicks far above the buttons triggered them through `InputSystemUIInputModule`.
@@ -155,7 +158,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.139`
+- Prototype `0.2.154`
 - Save version `2`
 
 Important Unity scripts:

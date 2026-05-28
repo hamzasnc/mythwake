@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using TMPro;
@@ -84,7 +85,7 @@ public static class MobileUxValidation
         try
         {
             ValidateMobileUx();
-            Debug.Log("Mobile UX validated: Android portrait settings, safe-area rendering, portrait CanvasScaler, EventSystem/InputSystem UI stack, non-blocking FPS overlay, bottom navigation targets, version label, and core screen navigation are present.");
+            Debug.Log("Mobile UX validated: Android portrait settings, safe-area rendering, portrait CanvasScaler, EventSystem UI stack, non-blocking FPS overlay, bottom navigation targets/raycasts, version label, and core screen navigation are present.");
         }
         catch (Exception ex)
         {
@@ -120,12 +121,12 @@ public static class MobileUxValidation
     private static void ValidateAndroidPlayerSettings()
     {
         var projectSettings = File.ReadAllText(ProjectSettingsPath);
-        RequireProjectSetting(projectSettings, "defaultScreenOrientation", "1", "Android should launch in portrait for the mobile-first prototype.");
+        RequireProjectSetting(projectSettings, "defaultScreenOrientation", "0", "Android should use autorotation constrained to normal portrait for the mobile-first prototype.");
         RequireProjectSetting(projectSettings, "allowedAutorotateToPortrait", "1", "Portrait autorotation should stay enabled.");
         RequireProjectSetting(projectSettings, "allowedAutorotateToPortraitUpsideDown", "0", "Upside-down portrait should stay disabled for tester builds.");
         RequireProjectSetting(projectSettings, "allowedAutorotateToLandscapeRight", "0", "Landscape-right autorotation should stay disabled.");
         RequireProjectSetting(projectSettings, "allowedAutorotateToLandscapeLeft", "0", "Landscape-left autorotation should stay disabled.");
-        RequireProjectSetting(projectSettings, "useOSAutorotation", "0", "OS autorotation should not override the portrait test layout.");
+        RequireProjectSetting(projectSettings, "useOSAutorotation", "1", "OS autorotation should be constrained by the allowed portrait-only settings.");
         RequireProjectSetting(projectSettings, "androidRenderOutsideSafeArea", "0", "Android should keep rendering inside the safe viewport so MuMu mouse coordinates match visible UI.");
         RequireProjectSetting(projectSettings, "androidStartInFullscreen", "1", "Android should request fullscreen at launch so emulator mouse coordinates match the Unity viewport.");
         RequireProjectSetting(projectSettings, "androidFullscreenMode", "1", "Android fullscreen mode should stay enabled for the mobile test build.");
@@ -149,10 +150,11 @@ public static class MobileUxValidation
         var manifest = File.ReadAllText(AndroidManifestPath);
         RequireSourceFragment(manifest, "UnityPlayerGameActivity", "Android manifest should target Unity GameActivity.");
         RequireSourceFragment(manifest, "android:immersive=\"true\"", "Android GameActivity should request immersive behavior before Unity renders.");
+        RequireSourceFragment(manifest, "android:screenOrientation=\"portrait\"", "Android GameActivity should explicitly lock normal portrait so phones do not launch upside down.");
         RequireSourceFragment(manifest, "android.intent.action.MAIN", "Android GameActivity should remain launchable from MuMu's launcher.");
         RequireSourceFragment(manifest, "android.intent.category.LAUNCHER", "Android GameActivity should expose a launcher icon in MuMu.");
         RequireSourceFragment(manifest, "@style/MythwakeFullscreenGameActivityTheme", "Android GameActivity should start with the Mythwake fullscreen AppCompat theme before Unity renders.");
-        RequireSourceFragment(manifest, "tools:replace=\"android:theme\"", "Android manifest should explicitly replace Unity's default GameActivity theme.");
+        RequireSourceFragment(manifest, "tools:replace=\"android:screenOrientation,android:theme\"", "Android manifest should explicitly replace Unity's generated reverse-portrait orientation and default GameActivity theme.");
 
         if (!File.Exists(AndroidFullscreenStylesPath))
         {
@@ -303,9 +305,9 @@ public static class MobileUxValidation
         }
 
         var projectSettings = File.ReadAllText(ProjectSettingsPath);
-        if (!projectSettings.Contains("  activeInputHandler: 2"))
+        if (!projectSettings.Contains("  activeInputHandler: 1"))
         {
-            throw new InvalidOperationException("Project should allow both input backends so Android/MuMu can use legacy UI input while editor tooling keeps Input System support.");
+            throw new InvalidOperationException("Project should use the Input System backend so Android/MuMu host mouse and touch share Unity's standard pointer path.");
         }
 
         if (!hasInputSystemModule)
@@ -314,15 +316,11 @@ public static class MobileUxValidation
         }
 
         var controllerSource = File.ReadAllText(ControllerPath);
-        RequireSourceFragment(controllerSource, "UNITY_ANDROID && !UNITY_EDITOR", "Runtime input setup should switch Android builds to the legacy UI module for MuMu desktop mouse input.");
-        RequireSourceFragment(controllerSource, "androidStandaloneModule.enabled = false", "Runtime input setup should disable StandaloneInputModule on Android because MuMu mouse Y arrives inverted.");
-        RequireSourceFragment(controllerSource, "MythwakeMuMuInputModule", "Runtime input setup should enable the MuMu-corrected UI input module on Android.");
-        RequireSourceFragment(controllerSource, "androidInputSystemModule.enabled = false", "Runtime input setup should disable InputSystemUIInputModule on Android so MuMu does not use shifted mouse coordinates.");
-
-        var mumuInputSource = File.ReadAllText("Assets/_Mythwake/Scripts/MythwakeMuMuInputModule.cs");
-        RequireSourceFragment(mumuInputSource, "GetCorrectedPosition", "MuMu UI input should normalize Android pointer coordinates before Unity UI raycasts.");
-        RequireSourceFragment(mumuInputSource, "Screen.height - rawPosition.y", "MuMu UI input should flip Android pointer Y before Unity UI raycasts.");
-        RequireSourceFragment(mumuInputSource, "Input.touchCount", "MuMu UI input module should correct the MuMu desktop pointer path even when Android surfaces it as touch.");
+        RequireSourceFragment(controllerSource, "inputSystemModule.enabled = true", "Runtime input setup should enable Unity's standard InputSystemUIInputModule for Android/MuMu pointer input.");
+        RequireSourceFragment(controllerSource, "inputSystemModule.AssignDefaultActions()", "Runtime input setup should assign default UI actions so Android/MuMu pointer devices can drive buttons.");
+        RequireMissingSourceFragment(controllerSource, "androidStandaloneModule", "Runtime input setup should not force a separate Android UI input module when the real issue is reverse portrait orientation.");
+        RequireMissingSourceFragment(controllerSource, "MythwakeMuMuInputModule", "Runtime input setup should not use a hand-rolled MuMu pointer transform because it can route visible buttons to neighboring controls.");
+        RequireMissingSourceFragment(controllerSource, "MythwakeAndroidPointerInputModule", "Runtime input setup should not mirror pointer coordinates because the Android activity must launch in normal portrait.");
 
         var performanceOverlay = RequireObjectField<TMP_Text>(controller, "performanceOverlayText");
         if (performanceOverlay.raycastTarget)
@@ -377,6 +375,45 @@ public static class MobileUxValidation
         ValidateScreen(controller, "Summon", controller.ShowSummon, "summonPanel");
         ValidateScreen(controller, "Shop", controller.ShowShop, "shopPanel");
         ValidateScreen(controller, "Battle", controller.ShowBattle, "battlePanel");
+
+        ValidateNavigationButtonClick(controller, "homeTabButton", "Home tab", "homePanel");
+        ValidateNavigationButtonClick(controller, "battleTabButton", "Battle tab", "battlePanel");
+        ValidateNavigationButtonClick(controller, "dungeonsTabButton", "Dungeons tab", "dungeonsPanel");
+        ValidateNavigationButtonClick(controller, "heroesTabButton", "Heroes tab", "heroesPanel");
+        ValidateNavigationButtonClick(controller, "gearTabButton", "Gear tab", "gearPanel");
+        ValidateNavigationButtonClick(controller, "summonTabButton", "Summon tab", "summonPanel");
+        ValidateNavigationButtonClick(controller, "shopTabButton", "Shop tab", "shopPanel");
+        ValidateNavigationButtonClick(controller, "campaignNavButton", "Campaign nav", "homePanel", requireActive: true);
+        ValidateNavigationButtonClick(controller, "villageNavButton", "Village nav", "villagePanel", requireActive: true);
+        ValidateNavigationButtonClick(controller, "dungeonsNavButton", "Dungeons nav", "dungeonsPanel", requireActive: true);
+        ValidateNavigationButtonClick(controller, "heroesNavButton", "Heroes nav", "heroesPanel", requireActive: true);
+        ValidateNavigationButtonClick(controller, "summonNavButton", "Summon nav", "summonPanel", requireActive: true);
+    }
+
+    private static void ValidateNavigationButtonClick(IdlePrototypeController controller, string buttonField, string label, string panelField, bool requireActive = false)
+    {
+        controller.ShowHome();
+        Canvas.ForceUpdateCanvases();
+
+        var button = RequireObjectField<Button>(controller, buttonField);
+        if (!button.gameObject.activeInHierarchy)
+        {
+            if (requireActive)
+            {
+                throw new InvalidOperationException($"{label} should be active for mobile navigation.");
+            }
+
+            return;
+        }
+
+        button.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+
+        var panel = RequireObjectField<GameObject>(controller, panelField);
+        if (!panel.activeInHierarchy)
+        {
+            throw new InvalidOperationException($"{label} should open {panelField}.");
+        }
     }
 
     private static void ValidateScreen(IdlePrototypeController controller, string label, Action showAction, string panelField)
@@ -404,6 +441,102 @@ public static class MobileUxValidation
         {
             throw new InvalidOperationException($"{fieldName} touch target too small: {rect.rect.width:0.#}x{rect.rect.height:0.#}, expected at least {minWidth:0.#}x{minHeight:0.#}.");
         }
+
+        AssertButtonCenterRaycast(button, fieldName);
+    }
+
+    private static void AssertButtonCenterRaycast(Button button, string context)
+    {
+        if (button == null || !button.gameObject.activeInHierarchy)
+        {
+            return;
+        }
+
+        var eventSystem = EventSystem.current ?? FindSceneComponent<EventSystem>();
+        if (eventSystem == null)
+        {
+            throw new InvalidOperationException($"{context} cannot be raycast-tested because the scene has no EventSystem.");
+        }
+
+        var rect = button.GetComponent<RectTransform>();
+        var canvas = button.GetComponentInParent<Canvas>();
+        var camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+        var screenPosition = RectTransformUtility.WorldToScreenPoint(camera, rect.TransformPoint(rect.rect.center));
+        var pointerData = new PointerEventData(eventSystem) { position = screenPosition };
+        var results = new List<RaycastResult>();
+        eventSystem.RaycastAll(pointerData, results);
+        if (results.Count == 0)
+        {
+            AssertButtonHasRaycastableTarget(button, context);
+            return;
+        }
+
+        Button firstButton = null;
+        for (var i = 0; i < results.Count; i++)
+        {
+            var hitButton = results[i].gameObject.GetComponentInParent<Button>();
+            if (hitButton == null)
+            {
+                continue;
+            }
+
+            if (firstButton == null)
+            {
+                firstButton = hitButton;
+            }
+
+            if (hitButton == button)
+            {
+                return;
+            }
+        }
+
+        var firstHitName = results.Count > 0 ? results[0].gameObject.name : "<none>";
+        var firstButtonName = firstButton != null ? firstButton.name : "<none>";
+        throw new InvalidOperationException($"{context} center raycast should hit its own button. First hit={firstHitName}, first button={firstButtonName}.");
+    }
+
+    private static void AssertButtonHasRaycastableTarget(Button button, string context)
+    {
+        var target = button.targetGraphic;
+        if (target == null)
+        {
+            throw new InvalidOperationException($"{context} should have a target graphic for pointer hits.");
+        }
+
+        if (!target.raycastTarget)
+        {
+            throw new InvalidOperationException($"{context} target graphic should accept pointer raycasts.");
+        }
+
+        if (target.color.a <= 0f)
+        {
+            throw new InvalidOperationException($"{context} target graphic is fully transparent and can be culled before raycasts.");
+        }
+
+        var buttonRect = button.GetComponent<RectTransform>();
+        var targetRect = target.GetComponent<RectTransform>();
+        if (buttonRect == null || targetRect == null)
+        {
+            throw new InvalidOperationException($"{context} is missing RectTransform data for pointer-hit validation.");
+        }
+
+        var center = buttonRect.TransformPoint(buttonRect.rect.center);
+        if (!WorldPointInsideRect(targetRect, center))
+        {
+            throw new InvalidOperationException($"{context} target graphic should cover the button center.");
+        }
+    }
+
+    private static bool WorldPointInsideRect(RectTransform rect, Vector3 worldPoint)
+    {
+        var corners = new Vector3[4];
+        rect.GetWorldCorners(corners);
+        var minX = Mathf.Min(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+        var maxX = Mathf.Max(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+        var minY = Mathf.Min(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
+        var maxY = Mathf.Max(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
+        return worldPoint.x >= minX && worldPoint.x <= maxX && worldPoint.y >= minY && worldPoint.y <= maxY;
     }
 
     private static void AssertInsideCanvas(RectTransform canvasRect, RectTransform child, string context)

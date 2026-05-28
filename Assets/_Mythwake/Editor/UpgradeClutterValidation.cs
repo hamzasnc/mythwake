@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public static class UpgradeClutterValidation
@@ -40,7 +42,9 @@ public static class UpgradeClutterValidation
 
         InvokePrivate(controller, "EnsureRuntimeDebugUi");
         InvokePrivate(controller, "EnsureRuntimeScreenLayout");
+        InvokePrivate(controller, "EnsureRuntimeInputStack");
         InvokePrivate(controller, "RegisterNavigation");
+        InvokePrivate(controller, "RegisterHeroDetailGearButtons");
         Canvas.ForceUpdateCanvases();
 
         ValidateBattleScreen(controller);
@@ -179,11 +183,13 @@ public static class UpgradeClutterValidation
             }
 
             RequireInsidePanel(heroDetailRoot.gameObject, gearSlots[i].gameObject);
+            AssertButtonCenterRaycast(gearSlots[i], $"Hero detail gear slot {i + 1}");
         }
 
         ValidateHeroDetailEquipmentArt(controller, heroDetailRoot.gameObject, gearSlots, expectedGearSlotCount);
         ValidateHeroDetailEquipmentSlotLabels(controller, gearSlots);
         ValidateHeroDetailGearLayout(heroDetailRoot.gameObject, gearSlots, expectedGearSlotCount);
+        ValidateHeroDetailGearSlotClickMappings(controller, gearSlots, expectedGearSlotCount);
         ValidateHeroDetailEmptyAccessorySlot(controller, gearSlots);
 
         InvokePrivate(controller, "OpenSelectedHeroDetailGearOptions");
@@ -808,6 +814,34 @@ public static class UpgradeClutterValidation
         }
     }
 
+    private static void ValidateHeroDetailGearSlotClickMappings(IdlePrototypeController controller, Button[] gearSlots, int expectedGearSlotCount)
+    {
+        for (var i = 0; i < expectedGearSlotCount; i++)
+        {
+            var button = gearSlots[i];
+            if (button == null)
+            {
+                throw new InvalidOperationException($"Hero detail gear slot {i + 1} is missing its button.");
+            }
+
+            button.onClick.Invoke();
+            Canvas.ForceUpdateCanvases();
+
+            var selectedSlot = RequireField<int>(controller, "selectedHeroDetailGearSlotIndex");
+            if (selectedSlot != i)
+            {
+                throw new InvalidOperationException($"Hero detail gear slot {i + 1} should select slot index {i}, but selected {selectedSlot}.");
+            }
+
+            if (i >= 2)
+            {
+                var gearListTitle = RequireObjectField<TMP_Text>(controller, "heroDetailGearListTitleText");
+                var expectedSlotName = (string)InvokePrivate(controller, "GetLocalizedAccessorySlotName", i - 2);
+                AssertTextContains(gearListTitle, expectedSlotName, $"Hero detail gear slot {i + 1} should open the {expectedSlotName} gear list.");
+            }
+        }
+    }
+
     private static void ValidateHeroDetailGearListLayout(GameObject heroDetailRoot, GameObject gearListRoot, Button gearListCloseButton, Button[] gearOptionButtons)
     {
         RequireInsidePanel(heroDetailRoot, gearListRoot);
@@ -1060,6 +1094,7 @@ public static class UpgradeClutterValidation
             var button = controls[i].GetComponent<Button>();
             if (button != null)
             {
+                AssertButtonCenterRaycast(button, $"{button.name} center hit target");
                 AssertButtonTextFits(button, "Gear screen control button text");
             }
 
@@ -1368,6 +1403,105 @@ public static class UpgradeClutterValidation
         {
             throw new InvalidOperationException($"{context}: {first.name} overlaps {second.name}. First left={firstBounds.Left}, right={firstBounds.Right}, top={firstBounds.Top}, bottom={firstBounds.Bottom}; second left={secondBounds.Left}, right={secondBounds.Right}, top={secondBounds.Top}, bottom={secondBounds.Bottom}.");
         }
+    }
+
+    private static void AssertButtonCenterRaycast(Button button, string context)
+    {
+        if (button == null || !button.gameObject.activeInHierarchy)
+        {
+            return;
+        }
+
+        var eventSystem = EventSystem.current ?? FindSceneComponent<EventSystem>();
+        if (eventSystem == null)
+        {
+            throw new InvalidOperationException($"{context} cannot be raycast-tested because the scene has no EventSystem.");
+        }
+
+        var rect = button.GetComponent<RectTransform>();
+        if (rect == null)
+        {
+            throw new InvalidOperationException($"{context} is missing a RectTransform.");
+        }
+
+        var canvas = button.GetComponentInParent<Canvas>();
+        var camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+        var screenPosition = RectTransformUtility.WorldToScreenPoint(camera, rect.TransformPoint(rect.rect.center));
+        var pointerData = new PointerEventData(eventSystem) { position = screenPosition };
+        var results = new List<RaycastResult>();
+        eventSystem.RaycastAll(pointerData, results);
+        if (results.Count == 0)
+        {
+            AssertButtonHasRaycastableTarget(button, context);
+            return;
+        }
+
+        Button firstButton = null;
+        for (var i = 0; i < results.Count; i++)
+        {
+            var hitButton = results[i].gameObject.GetComponentInParent<Button>();
+            if (hitButton == null)
+            {
+                continue;
+            }
+
+            if (firstButton == null)
+            {
+                firstButton = hitButton;
+            }
+
+            if (hitButton == button)
+            {
+                return;
+            }
+        }
+
+        var firstHitName = results.Count > 0 ? results[0].gameObject.name : "<none>";
+        var firstButtonName = firstButton != null ? firstButton.name : "<none>";
+        throw new InvalidOperationException($"{context} center raycast should hit its own button. First hit={firstHitName}, first button={firstButtonName}.");
+    }
+
+    private static void AssertButtonHasRaycastableTarget(Button button, string context)
+    {
+        var target = button.targetGraphic;
+        if (target == null)
+        {
+            throw new InvalidOperationException($"{context} should have a target graphic for pointer hits.");
+        }
+
+        if (!target.raycastTarget)
+        {
+            throw new InvalidOperationException($"{context} target graphic should accept pointer raycasts.");
+        }
+
+        if (target.color.a <= 0f)
+        {
+            throw new InvalidOperationException($"{context} target graphic is fully transparent and can be culled before raycasts.");
+        }
+
+        var buttonRect = button.GetComponent<RectTransform>();
+        var targetRect = target.GetComponent<RectTransform>();
+        if (buttonRect == null || targetRect == null)
+        {
+            throw new InvalidOperationException($"{context} is missing RectTransform data for pointer-hit validation.");
+        }
+
+        var center = buttonRect.TransformPoint(buttonRect.rect.center);
+        if (!WorldPointInsideRect(targetRect, center))
+        {
+            throw new InvalidOperationException($"{context} target graphic should cover the button center.");
+        }
+    }
+
+    private static bool WorldPointInsideRect(RectTransform rect, Vector3 worldPoint)
+    {
+        var corners = new Vector3[4];
+        rect.GetWorldCorners(corners);
+        var minX = Mathf.Min(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+        var maxX = Mathf.Max(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+        var minY = Mathf.Min(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
+        var maxY = Mathf.Max(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
+        return worldPoint.x >= minX && worldPoint.x <= maxX && worldPoint.y >= minY && worldPoint.y <= maxY;
     }
 
     private static RectTransform RequireRectTransform(GameObject gameObject)

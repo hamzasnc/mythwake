@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.147";
+    public const string PrototypeVersion = "0.2.154";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -8772,6 +8772,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (heroDetailGearSlotButtons.Length > 4 && heroDetailGearSlotButtons[4] != null) heroDetailGearSlotButtons[4].onClick.AddListener(ShowHeroDetailGearSlot4);
             if (heroDetailGearSlotButtons.Length > 5 && heroDetailGearSlotButtons[5] != null) heroDetailGearSlotButtons[5].onClick.AddListener(ShowHeroDetailGearSlot5);
             if (heroDetailGearSlotButtons.Length > 6 && heroDetailGearSlotButtons[6] != null) heroDetailGearSlotButtons[6].onClick.AddListener(ShowHeroDetailGearSlot6);
+            if (heroDetailGearSlotButtons.Length > 7 && heroDetailGearSlotButtons[7] != null) heroDetailGearSlotButtons[7].onClick.AddListener(ShowHeroDetailGearSlot7);
         }
 
         if (heroDetailGearOptionButtons != null && heroDetailGearOptionButtons.Length > 0)
@@ -8800,6 +8801,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (heroDetailGearSlotButtons.Length > 4 && heroDetailGearSlotButtons[4] != null) heroDetailGearSlotButtons[4].onClick.RemoveListener(ShowHeroDetailGearSlot4);
             if (heroDetailGearSlotButtons.Length > 5 && heroDetailGearSlotButtons[5] != null) heroDetailGearSlotButtons[5].onClick.RemoveListener(ShowHeroDetailGearSlot5);
             if (heroDetailGearSlotButtons.Length > 6 && heroDetailGearSlotButtons[6] != null) heroDetailGearSlotButtons[6].onClick.RemoveListener(ShowHeroDetailGearSlot6);
+            if (heroDetailGearSlotButtons.Length > 7 && heroDetailGearSlotButtons[7] != null) heroDetailGearSlotButtons[7].onClick.RemoveListener(ShowHeroDetailGearSlot7);
         }
 
         if (heroDetailGearOptionButtons != null && heroDetailGearOptionButtons.Length > 0)
@@ -13812,29 +13814,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         eventSystem.pixelDragThreshold = Mathf.Max(eventSystem.pixelDragThreshold, 10);
 
 #if ENABLE_INPUT_SYSTEM
-#if UNITY_ANDROID && !UNITY_EDITOR
-        var androidInputSystemModule = eventSystem.GetComponent<InputSystemUIInputModule>();
-        if (androidInputSystemModule != null)
-        {
-            androidInputSystemModule.enabled = false;
-        }
-
-        var androidStandaloneModule = eventSystem.GetComponent<StandaloneInputModule>();
-        if (androidStandaloneModule == null)
-        {
-            androidStandaloneModule = eventSystem.gameObject.AddComponent<StandaloneInputModule>();
-        }
-
-        androidStandaloneModule.enabled = false;
-
-        var mumuInputModule = eventSystem.GetComponent<MythwakeMuMuInputModule>();
-        if (mumuInputModule == null)
-        {
-            mumuInputModule = eventSystem.gameObject.AddComponent<MythwakeMuMuInputModule>();
-        }
-
-        mumuInputModule.enabled = true;
-#else
         var inputSystemModule = eventSystem.GetComponent<InputSystemUIInputModule>();
         if (inputSystemModule == null)
         {
@@ -13856,7 +13835,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 modules[i].enabled = false;
             }
         }
-#endif
 #else
         if (eventSystem.GetComponent<BaseInputModule>() == null)
         {
@@ -18973,6 +18951,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void ShowHeroDetailGearSlot4() => ShowHeroDetailGearSlot(4);
     private void ShowHeroDetailGearSlot5() => ShowHeroDetailGearSlot(5);
     private void ShowHeroDetailGearSlot6() => ShowHeroDetailGearSlot(6);
+    private void ShowHeroDetailGearSlot7() => ShowHeroDetailGearSlot(7);
 
     private void ShowHeroDetailGearSlot(int slotIndex)
     {
@@ -21812,7 +21791,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetRuntimeRect(buttonObject.GetComponent<RectTransform>(), anchoredPosition, rectSize, new Vector2(0.5f, 0.5f));
 
         var image = buttonObject.GetComponent<Image>();
-        image.color = new Color(1f, 1f, 1f, 0f);
+        image.color = new Color(1f, 1f, 1f, 0.001f);
+        image.raycastTarget = true;
 
         var button = buttonObject.GetComponent<Button>();
         button.targetGraphic = image;
