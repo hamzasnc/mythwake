@@ -67,6 +67,7 @@ public static class HomeIdleCombatValidation
         }
 
         RequireCopy(previewText.text, "Abschnitt");
+        RequireCopy(previewText.text, "Ziel:");
         RequireCopy(previewText.text, "Idle sammelt nur kleine Beute");
         AssertTextFits(previewText, "Campaign Stage Preview Text");
 

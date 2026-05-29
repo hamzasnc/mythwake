@@ -1,6 +1,6 @@
 # Mythwake Internal Testbuild Checklist
 
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
 Use this checklist for small 20-30 minute internal feedback runs. The goal is not final balance yet; testers should be able to understand the early loop, notice what feels rewarding, and report where the prototype feels confusing or stuck.
 
@@ -49,6 +49,14 @@ Use this checklist for small 20-30 minute internal feedback runs. The goal is no
 - Did `Continue`, `Begin Battle`, `Auto Battle`, and `Close` react immediately?
 - Did any text feel too small, cut off, or hidden behind another UI element?
 - Did any screen feel too dense for phone portrait?
+
+## Build 0.1 Focus Addendum
+
+- On Formation, confirm the enemy power/stage area is readable without the FPS overlay covering it.
+- On Dungeons, read the flow hint and check whether Gold, Essence, and Gear routes are understandable.
+- On Hero Detail and Gear, inspect empty slots, equipped items, missing copies, and fuse requirements; disabled buttons should explain why they cannot be used.
+- On Home, check whether the current-stage preview's `Ziel:` line makes the next route clearer.
+- Keep watching Result `Continue`, auto-next, and longer fights for delayed or surprising behavior.
 
 ## Future Account Need
 

@@ -1,6 +1,8 @@
 # Mythwake Tester Build 0
 
-Last updated: 2026-05-28
+Last updated: 2026-05-29
+
+Superseded for handoff by `docs/TESTER_BUILD_0_1.md` and Prototype `0.2.163`. Keep this file as the original Build 0 evidence and tester-flow baseline.
 
 ## Build
 

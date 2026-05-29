@@ -1,6 +1,6 @@
 # Mythwake Next Chat Context
 
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
 This file is meant to be pasted/read first in a new Codex chat so the project can continue without re-explaining everything.
 
@@ -31,7 +31,8 @@ Latest known pushed commit before the 0.2.159 continuation:
 - `24b2ab4 Rework battle formation mockup`
 
 Current continuation:
-- Prototype `0.2.162` prepares Tester Build 0. APK `Builds\Android\Mythwake-0.2.162-tester-build-0.apk` builds, installs, and launches in MuMuPlayer; latest cold launch after reinstall reported `TotalTime 847 ms` / `WaitTime 849 ms`, and a fresh-save Summon capture launch reported `TotalTime 950 ms` / `WaitTime 958 ms`. Real screenshots for Home, Stage Detail, Formation, Fight, Result, save/reload, Hero Detail, Gear list, Dungeons, Village, Fast Rewards, Summon, and Summon Result live under `docs/screenshots/android/2026-05-28-tester-build-0/`. Filtered Logcat found no crash/ANR/Unity exception/missing-asset error, and the runtime FPS overlay showed about `29-30 FPS | 33.3-33.5 ms`. `docs/TESTER_BUILD_0.md` is the guided internal tester doc with flow, feedback questions, known issues, and pass criteria. A Campaign Result leak onto Dungeons after Continue was fixed and covered in Fight Formation validation.
+- Prototype `0.2.163` prepares Tester Build 0.1 from the Build 0 review. The short priority/QA handoff is `docs/TESTER_BUILD_0_1.md`. The code changes are intentionally small: Formation hides the runtime FPS overlay, Gear/Hero disabled and copy-state labels are clearer, Dungeons default/future/flow labels are localized and validated, and Home current-stage preview starts with `Ziel:`. `scripts/check-unity-csharp.cmd` and `scripts/check-unity-current-slice.cmd` pass after these code changes. APK `Builds\Android\Mythwake-0.2.163-tester-build-0.1.apk` builds, installs, and launches in MuMuPlayer with cold `TotalTime 995 ms` / `WaitTime 999 ms`; screenshots and filtered Logcat are under `docs/screenshots/android/2026-05-29-tester-build-0-1/`.
+- Prototype `0.2.162` prepared Tester Build 0. APK `Builds\Android\Mythwake-0.2.162-tester-build-0.apk` builds, installs, and launches in MuMuPlayer; latest cold launch after reinstall reported `TotalTime 847 ms` / `WaitTime 849 ms`, and a fresh-save Summon capture launch reported `TotalTime 950 ms` / `WaitTime 958 ms`. Real screenshots for Home, Stage Detail, Formation, Fight, Result, save/reload, Hero Detail, Gear list, Dungeons, Village, Fast Rewards, Summon, and Summon Result live under `docs/screenshots/android/2026-05-28-tester-build-0/`. Filtered Logcat found no crash/ANR/Unity exception/missing-asset error, and the runtime FPS overlay showed about `29-30 FPS | 33.3-33.5 ms`. `docs/TESTER_BUILD_0.md` is the guided internal tester doc with flow, feedback questions, known issues, and pass criteria. A Campaign Result leak onto Dungeons after Continue was fixed and covered in Fight Formation validation.
 - Prototype `0.2.161` keeps the 0.2.160 width-matched CanvasScaler fix, then fills the exposed tall-phone vertical room with art again. Home dynamically extends the lower patrol/map image area to the top of the art navbar, and Village dynamically extends its map viewport/content height so REDMAGIC-style tall phones do not show a large empty dark band below the map.
 - Prototype `0.2.160` fixes the physical Android tall-phone clipping seen on REDMAGIC screenshots. The saved Prototype UI canvas and `MythwakePrototypeBuilder` now use width-matched `CanvasScaler` portrait scaling (`matchWidthOrHeight = 0`) instead of matching height. This prevents the 1080 reference width from becoming wider than narrow/tall phone screens, so side shortcuts, top resources, fight controls, skill cards, and bottom nav should stay visible. Mobile UX validation now rejects height-matched scaling for this prototype.
 - Prototype `0.2.159` is the early 20-30 minute tester-loop pass. It keeps the existing systems but makes guidance clearer: Home `Next Goal` is localized, resource gaps can route to Gold/Essence Dungeon when team power is enough, campaign/dungeon result popups append a short `Next:` action, Summon results explain immediate shard stats plus later Ascend, and Tank role damage reduction now uses the stable lowercase role ID. A new `Mythwake/Validate Early Game Loop` validator is wired into Current Slice and checks fresh-save Home guidance, first campaign clears, Gold/Essence/Gear Dungeon floor 1, Hero level-up, first Village build, first Gear drop/equip, starter Summon, and EN/DE resource-gap guidance. `docs/INTERNAL_TESTBUILD_CHECKLIST.md` is the guided small-group tester route and also records the future Email + Password first, Google Play login later account need.
@@ -170,7 +171,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.156`
+- Prototype `0.2.163`
 - Save version `2`
 
 Important Unity scripts:

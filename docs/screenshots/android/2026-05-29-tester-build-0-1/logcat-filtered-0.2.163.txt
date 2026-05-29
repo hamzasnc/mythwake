@@ -1,0 +1,102 @@
+05-29 22:35:18.937 I/ActivityManager( 1291): Force stopping com.DefaultCompany.Mythwake appid=10055 user=0: from pid 3777
+05-29 22:35:18.974 I/ActivityTaskManager( 1291): START u0 {flg=0x10000000 cmp=com.DefaultCompany.Mythwake/com.unity3d.player.UnityPlayerGameActivity} from uid 2000, pid 3782
+05-29 22:35:18.977 I/ActivityTaskManager( 1291): [KeepAlive] disabled for com.DefaultCompany.Mythwake
+05-29 22:35:19.031 I/Zygote  ( 3785): fakeProductInfoIfNeed callded! com.DefaultCompany.Mythwake
+05-29 22:35:19.032 I/Zygote  ( 3785): fake Product info com.DefaultCompany.Mythwake not matched any pattern
+05-29 22:35:19.032 I/Zygote  ( 3785): fakeProductInfoFromProperties callded! com.DefaultCompany.Mythwake
+05-29 22:35:19.032 I/ActivityManager( 1291): Start proc 3785:com.DefaultCompany.Mythwake/u0a55 for pre-top-activity {com.DefaultCompany.Mythwake/com.unity3d.player.UnityPlayerGameActivity}
+05-29 22:35:19.119 V/libnb   ( 3785): enter native_bridge2_initialize /data/user/0/com.DefaultCompany.Mythwake/code_cache arm64
+05-29 22:35:19.131 W/HP      ( 3785): x_initialize private_dir:/data/user/0/com.DefaultCompany.Mythwake/code_cache instruction_set:arm64 getMethodShorty:0x766c79b3c340 ret:1
+05-29 22:35:19.181 D/RecentTaskMonitor( 1291): VAddressShellNotifier#notifyOpenTab :{"uri":"player\/tab","need_response":false,"params":{"id":"task:78","displayId":0,"userId":0,"name":"Mythwake","originName":"Mythwake","packageName":"com.DefaultCompany.Mythwake","launcher":false,"newTask":true,"icon":"iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARzQklUCAgICHwIZIgAAAKISURBVEiJvZY9SCNREMd\/u1yq+BFMY6xtYrGIKIedNgp3pWCZRgiIrWAjdiIIEpQUlpZiY6GF2okEQW2iaBHRDbvRlRwSP2I+cPfNNedV2SQe5gZe9d78\/2\/mPzPvAXwHMoB88foF\/ATItgD8Y+U1QAEarTHR\/jC1zPRWggN8a+ZQJBJhenqap6cnXl9f6evrI5FIYFlWUyS+IgWDQYnFYpLJZMTzPFldXZWFhQXxPE9M05R4PC6hUKiR0LU3hoaG5OrqSjzPExGRarUqU1NTMjExIcViUURElFJiWZaMjIx8jiAUCsnZ2ZlUq1URETk4OBDDMETXddF1XXp7e2V7e1uUUuK6rhwfH0s4HK5JUFMDXdd5e3vj8vKSnp4eotEo4+Pj5PN5XNdldHSU\/v5+7u7uuLi44OHhwTf\/viJrmoZSiuvra9ra2pifn2d2dhalFB0dHaRSKe7v7wkEAmiafxs1LNO5uTk2NjZIp9O8vLzgOA67u7tsbm6ysrLC+\/t7Xf+6ZSoiOI7D2toa+\/v7JJNJcrkciUSC8\/NzwuEwIvX71DcCESGXy1EoFBARbm5uqFQquK7L7e0tIkKpVMK2bZRSn4ugXC6ztLSEbdvMzMxweHjIyckJIvL3xoZhMDw8zNbWFu3t7ZTL5ZoEvrNocHCQxcVFurq6cF2XVCrFwMAAtm2TTqcxDINAIEClUmF9fZ3T09PPEQB0d3ezvLxMNBpF0zQ8z8M0TZRSf\/VJJpNks1nfFDWcpsFgkLGxMWKxGJFIBNM0KRQK7OzscHR0RLFYrOfemODDOjs7mZycpFQqsbe3x+PjYzNuzRP8q33Ze6DrtaH+SwROC\/GfAX4AFl\/\/o3gG4r8B6Yqxr4NR+7wAAAAASUVORK5CYII=","canChangeAppOrientation":false,"canReceiveFile":false,"pid":3785,"uid":10055,"action":"open"}}
+05-29 22:35:19.362 V/GraphicsEnvironment( 3785): ANGLE Developer option for 'com.DefaultCompany.Mythwake' set to: 'default'
+05-29 22:35:19.362 V/GraphicsEnvironment( 3785): ANGLE GameManagerService for com.DefaultCompany.Mythwake: false
+05-29 22:35:19.501 D/nemuinit( 1058): start name: vapi, operation: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, id: 34
+05-29 22:35:19.502 D/nemuinit( 1058): Proxy: use callback: 1291, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: 
+05-29 22:35:19.502 D/nemuinit( 1058): start name: vapi, operation: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, id: 35
+05-29 22:35:19.502 D/nemuinit( 1058): Proxy: use callback: 1480, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: 
+05-29 22:35:19.502 D/nemuinit( 1058): start name: vapi, operation: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, id: 37
+05-29 22:35:19.502 D/nemuinit( 1058): start name: vapi, operation: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, id: 39
+05-29 22:35:19.502 D/nemuinit( 1058): Proxy: use callback: 1291, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: 
+05-29 22:35:19.502 D/nemuinit( 1058): start name: vapi, operation: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, id: 41
+05-29 22:35:19.502 D/nemuinit( 1058): Proxy: use callback: 1291, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: 
+05-29 22:35:19.503 D/nemuinit( 1058): Proxy: use callback: 1480, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: 
+05-29 22:35:19.503 D/nemuinit( 1058): Proxy: use callback: 1480, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: 
+05-29 22:35:19.503 D/nemuinit( 1058): Proxy: use callback: 1443, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: {"errcode":0,"message":"OK"}
+05-29 22:35:19.503 D/nemuinit( 1058): Proxy: use callback: 1443, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: {"errcode":0,"message":"OK"}
+05-29 22:35:19.503 D/nemuinit( 1058): Proxy: use callback: 1443, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: {"errcode":0,"message":"OK"}
+05-29 22:35:19.503 D/nemuinit( 1058): Proxy: use callback: 1291, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: 
+05-29 22:35:19.503 D/nemuinit( 1058): Proxy: use callback: 1480, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: 
+05-29 22:35:19.503 D/nemuinit( 1058): Proxy: use callback: 1291, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: 
+05-29 22:35:19.503 D/nemuinit( 1058): Proxy: use callback: 1443, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: {"errcode":0,"message":"OK"}
+05-29 22:35:19.503 D/nemuinit( 1058): Proxy: use callback: 1480, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: 
+05-29 22:35:19.504 D/nemuinit( 1058): Proxy: use callback: 1443, handleNemuInitMessage, name: vapi, params: {"uri":"/tools/inputdevice","method":"POST","params":{"action":"set_input_device_list","device":8,"packageName":"com.DefaultCompany.Mythwake","pid":3785,"uid":10055}}, res: {"errcode":0,"message":"OK"}
+05-29 22:35:19.818 V/Unity   ( 3785): Context Type: GameActivity
+05-29 22:35:19.833 I/Unity   ( 3785): UnityApplication::CreateInstance
+05-29 22:35:19.833 I/Unity   ( 3785): GameActivity Package Version '4.4.0'
+05-29 22:35:19.834 I/Unity   ( 3785): Starting Game Loop
+05-29 22:35:19.839 I/Unity   ( 3785): Handle cmd APP_CMD_START(11)
+05-29 22:35:19.843 I/Unity   ( 3785): Handle cmd APP_CMD_RESUME(12)
+05-29 22:35:19.877 I/Unity   ( 3785): Handle cmd APP_CMD_WINDOW_INSETS_CHANGED(17)
+05-29 22:35:19.878 D/NewFileUpdater( 1443): onOpenNewTask focusPkgName set to com.DefaultCompany.Mythwake
+05-29 22:35:19.878 D/Watchdog( 1443): ignore events AppLaunch: {"app_name":"Mythwake","app_package":"com.DefaultCompany.Mythwake","event_duration":0,"failure_reason":"","status_code":0}
+05-29 22:35:19.881 D/Watchdog( 1443): upload event: {"architecture":"x86_64","channel":"gw-overseas12","country":"de-DE","engine":"NEMUX","fchannel":"gw-overseas12","language":"de","mpid":"0","package":"mumu","product":"MuMu5.0","product_version":"5.28.0.3580","usage":"1","uuid":"200b0ca6-512e-4113-bdcc-9c28e4919d18","version":"5.28.0.3580","x":{"app_name":"Mythwake","app_package":"com.DefaultCompany.Mythwake","app_version_code":1,"app_version_name":"1.0","error":{"code":0,"msg":"ok"},"extra":{"NB":"{\"NB_MD5\":\"72CB84348C02A65BC980B18257B7699A\",\"NB_NAME\":\"libhoudini.so\",\"NB_64BIT\":\"true\",\"NB_STATUS\":\"1\",\"RunningArchitecture\":\"arm64-v8a\"}","amp_name":"Mythwake","ampid":0,"is_remote_control":0},"token":"04e14352-5848-40df-8e47-58c2a51884c1"}}	type: LaunchAPP	sign: DibhZM5oI2bRYeHvsKqq5vQoYAg=	uid: 1000	json:{"app_name":"Mythwake","app_package":"com.DefaultCompany.Mythwake","app_version_code":1,"app_version_name":"1.0","error":{"code":0,"msg":"ok"},"extra":{"NB":"{\"NB_MD5\":\"72CB84348C02A65BC980B18257B7699A\",\"NB_NAME\":\"libhoudini.so\",\"NB_64BIT\":\"true\",\"NB_STATUS\":\"1\",\"RunningArchitecture\":\"arm64-v8a\"}","amp_name":"Mythwake","ampid":0,"is_remote_control":0},"token":"04e14352-5848-40df-8e47-58c2a51884c1"}
+05-29 22:35:19.887 I/Unity   ( 3785): Handle cmd APP_CMD_WINDOW_INSETS_CHANGED(17)
+05-29 22:35:19.888 I/Unity   ( 3785): Handle cmd APP_CMD_CONTENT_RECT_CHANGED(5)
+05-29 22:35:19.889 I/Unity   ( 3785): Handle cmd APP_CMD_INIT_WINDOW(1)
+05-29 22:35:19.918 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@4.0::IMapper/default": error code: 0x20
+05-29 22:35:19.918 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@3.0::IMapper/default": error code: 0x20
+05-29 22:35:19.919 I/Unity   ( 3785): MemoryManager: Using 'Dynamic Heap' Allocator.
+05-29 22:35:19.923 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.allocator@4.0::IAllocator/default": error code: 0x20
+05-29 22:35:19.926 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.allocator@3.0::IAllocator/default": error code: 0x20
+05-29 22:35:19.959 I/ompany.Mythwake( 3785): type=1400 audit(0.0:4680): avc: denied { use } for path="/dev/ashmem4daa3637-0e0a-4482-85fd-213287289ebc" dev="tmpfs" ino=12593 scontext=u:r:init:s0 tcontext=u:r:untrusted_app:s0:c55,c256,c512,c768 tclass=fd permissive=1 app=com.DefaultCompany.Mythwake
+05-29 22:35:19.969 W/system_server( 1291): Failed to determine oat file name for dex location /data/app/~~TGL4B7pJ3O4LcyRnpCSBqw==/com.DefaultCompany.Mythwake-nHU0d6YDM5Zj4rrwFy-odQ==/base.apk: Dalvik cache directory does not exist
+05-29 22:35:19.969 I/ActivityTaskManager( 1291): Displayed com.DefaultCompany.Mythwake/com.unity3d.player.UnityPlayerGameActivity: +995ms
+05-29 22:35:19.984 I/Unity   ( 3785): SystemInfo CPU = x86-64 SSE3 SSE4.1 SSE4.2 AVX, Cores = 4, Memory = 5949mb
+05-29 22:35:19.984 I/Unity   ( 3785): SystemInfo ARM big.LITTLE configuration: 4 big (mask: 0xf), 0 little (mask: 0x0)
+05-29 22:35:19.984 I/Unity   ( 3785): ApplicationInfo 'com.DefaultCompany.Mythwake', Version '1.0', Min API Level '25', Target API Level '36'
+05-29 22:35:19.984 I/Unity   ( 3785): Built from '6000.4/staging' branch, Version '6000.4.5f1 (cc83ebd631f8)', Build type 'Release', Scripting Backend 'il2cpp', CPU 'arm64-v8a', Stripping 'Enabled'
+05-29 22:35:19.985 I/Unity   ( 3785): Device Model 'Samsung SM-F946B', OS 'Android OS 12 (API 32)'
+05-29 22:35:20.131 W/InputManager-JNI( 1291): Input channel object 'b2a03a0 Splash Screen com.DefaultCompany.Mythwake (client)' was disposed without first being removed with the input manager!
+05-29 22:35:20.355 I/Unity   ( 3785): Company Name: DefaultCompany
+05-29 22:35:20.355 I/Unity   ( 3785): Product Name: Mythwake
+05-29 22:35:20.386 D/vulkan  ( 3785): searching for layers in '/data/app/~~TGL4B7pJ3O4LcyRnpCSBqw==/com.DefaultCompany.Mythwake-nHU0d6YDM5Zj4rrwFy-odQ==/lib/arm64'
+05-29 22:35:20.386 D/vulkan  ( 3785): searching for layers in '/data/app/~~TGL4B7pJ3O4LcyRnpCSBqw==/com.DefaultCompany.Mythwake-nHU0d6YDM5Zj4rrwFy-odQ==/base.apk!/lib/arm64-v8a'
+05-29 22:35:20.390 E/EGL_emulation( 3785): tid 3817: eglGetConfigAttrib(1034): error 0x3004 (EGL_BAD_ATTRIBUTE)
+05-29 22:35:21.046 W/NewFileUpdater( 1443): MSG_GET_PACKAGE_TAG_INFO, no available new tag for: com.DefaultCompany.Mythwake, workingTag: 12.2053
+05-29 22:35:21.248 I/Unity   ( 3785):     HasWindow = 1, HasFocus = 0
+05-29 22:35:21.248 I/Unity   ( 3785): Handle cmd APP_CMD_WINDOW_RESIZED(3)
+05-29 22:35:21.248 I/Unity   ( 3785): Handle cmd APP_CMD_WINDOW_REDRAW_NEEDED(4)
+05-29 22:35:21.248 I/Unity   ( 3785): Handle cmd APP_CMD_GAINED_FOCUS(7)
+05-29 22:35:21.248 I/Unity   ( 3785): Handle cmd APP_CMD_WINDOW_INSETS_CHANGED(17)
+05-29 22:35:21.249 I/Unity   ( 3785): Handle cmd APP_CMD_WINDOW_INSETS_CHANGED(17)
+05-29 22:35:21.249 I/Unity   ( 3785): Handle cmd APP_CMD_WINDOW_INSETS_CHANGED(17)
+05-29 22:35:21.335 I/Unity   ( 3785): Handle cmd APP_CMD_WINDOW_RESIZED(3)
+05-29 22:35:21.341 I/Unity   ( 3785): Handle cmd APP_CMD_WINDOW_REDRAW_NEEDED(4)
+05-29 22:35:21.341 I/Unity   ( 3785): Handle cmd APP_CMD_CONTENT_RECT_CHANGED(5)
+05-29 22:35:21.351 I/Unity   ( 3785): Handle cmd APP_CMD_WINDOW_INSETS_CHANGED(17)
+05-29 22:35:21.423 I/ActivityTaskManager( 1291): Fully drawn com.DefaultCompany.Mythwake/com.unity3d.player.UnityPlayerGameActivity: +2s450ms
+05-29 22:35:21.423 W/system_server( 1291): Failed to determine oat file name for dex location /data/app/~~TGL4B7pJ3O4LcyRnpCSBqw==/com.DefaultCompany.Mythwake-nHU0d6YDM5Zj4rrwFy-odQ==/base.apk: Dalvik cache directory does not exist
+05-29 22:35:22.000 E/TaskPersister( 1291): File error accessing recents directory (directory doesn't exist?).
+05-29 22:35:33.799 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@4.0::IMapper/default": error code: 0x20
+05-29 22:35:33.802 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@3.0::IMapper/default": error code: 0x20
+05-29 22:35:53.068 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@4.0::IMapper/default": error code: 0x20
+05-29 22:35:53.071 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@3.0::IMapper/default": error code: 0x20
+05-29 22:36:00.009 I/Thread-4( 3785): type=1400 audit(0.0:4749): avc: denied { ioctl } for path="/dev/vaddress" dev="tmpfs" ino=1295 ioctlcmd=0x4c19 scontext=u:r:untrusted_app:s0:c55,c256,c512,c768 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1 app=com.DefaultCompany.Mythwake
+05-29 22:36:12.003 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@4.0::IMapper/default": error code: 0x20
+05-29 22:36:12.006 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@3.0::IMapper/default": error code: 0x20
+05-29 22:36:52.833 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@4.0::IMapper/default": error code: 0x20
+05-29 22:36:52.835 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@3.0::IMapper/default": error code: 0x20
+05-29 22:37:20.614 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@4.0::IMapper/default": error code: 0x20
+05-29 22:37:20.616 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@3.0::IMapper/default": error code: 0x20
+05-29 22:37:46.711 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@4.0::IMapper/default": error code: 0x20
+05-29 22:37:46.712 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@3.0::IMapper/default": error code: 0x20
+05-29 22:38:17.573 W/BatteryExternalStatsWorker( 1291): error reading modem stats:ERROR_INVALID_INFO_RECEIVED
+05-29 22:38:19.951 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@4.0::IMapper/default": error code: 0x20
+05-29 22:38:19.956 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@3.0::IMapper/default": error code: 0x20
+05-29 22:40:52.902 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@4.0::IMapper/default": error code: 0x20
+05-29 22:40:52.904 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@3.0::IMapper/default": error code: 0x20
+05-29 22:42:04.730 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@4.0::IMapper/default": error code: 0x20
+05-29 22:42:04.732 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@3.0::IMapper/default": error code: 0x20
+05-29 22:42:44.359 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@4.0::IMapper/default": error code: 0x20
+05-29 22:42:44.362 W/libc    ( 1046): Unable to set property "ctl.interface_start" to "android.hardware.graphics.mapper@3.0::IMapper/default": error code: 0x20
+05-29 22:43:17.578 W/BatteryExternalStatsWorker( 1291): error reading modem stats:ERROR_INVALID_INFO_RECEIVED

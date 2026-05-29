@@ -69,6 +69,11 @@ public static class DungeonsUiValidation
 
         var resultText = RequireText(dungeonsPanel, "Dungeon Result Text");
         AssertTextFits(resultText, "Dungeon Result Text");
+        var flowHintRoot = RequireObject("Dungeon Flow Hint", true);
+        var flowHint = RequireText(flowHintRoot, "Dungeon Flow Hint Text");
+        RequireCopy(flowHint.text, "Formation", "Dungeon flow hint");
+        AssertTextFits(flowHint, "Dungeon flow hint");
+        ValidateDungeonsLanguageRefresh(controller);
 
         ValidateDungeonFormationEntry(controller, "Gold Dungeon Selector Card", "gold_dungeon", "Gold Vault", "Gold");
         ValidateDungeonFormationEntry(controller, "Essence Dungeon Selector Card", "essence_dungeon", "Essence Grove", "Essence");
@@ -80,6 +85,32 @@ public static class DungeonsUiValidation
         {
             throw new InvalidOperationException("Dungeons panel should remain reachable after validating Formation entry flows.");
         }
+    }
+
+    private static void ValidateDungeonsLanguageRefresh(IdlePrototypeController controller)
+    {
+        SetPrivateField(controller, "language", MythwakeLanguage.German);
+        InvokePrivate(controller, "RefreshUi");
+        controller.ShowDungeons();
+        Canvas.ForceUpdateCanvases();
+
+        var dungeonsPanel = RequireObject("Dungeons Panel", true);
+        var resultText = RequireText(dungeonsPanel, "Dungeon Result Text");
+        var flowHintRoot = RequireObject("Dungeon Flow Hint", true);
+        var flowHint = RequireText(flowHintRoot, "Dungeon Flow Hint Text");
+        RequireCopy(resultText.text, "Dungeons sind", "German Dungeon Result Text");
+        RequireCopy(flowHint.text, "Formation", "German Dungeon flow hint");
+        if (flowHint.text.Contains("Select"))
+        {
+            throw new InvalidOperationException("German Dungeon flow hint should not keep the old English Select copy.");
+        }
+
+        AssertTextFits(resultText, "German Dungeon Result Text");
+        AssertTextFits(flowHint, "German Dungeon flow hint");
+        SetPrivateField(controller, "language", MythwakeLanguage.English);
+        InvokePrivate(controller, "RefreshUi");
+        controller.ShowDungeons();
+        Canvas.ForceUpdateCanvases();
     }
 
     private static void ValidateDungeonSelectorCard(GameObject selectorCards, string cardName, string expectedTitle, string expectedProgress, string expectedDetail, string expectedBannerTexture, string expectedIconTexture)

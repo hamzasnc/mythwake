@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.162";
+    public const string PrototypeVersion = "0.2.163";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -10033,6 +10033,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 artBottomNavRoot.SetAsLastSibling();
             }
         }
+
+        RefreshPerformanceOverlayVisibility();
     }
 
     private void SetPanel(GameObject panel, bool isVisible)
@@ -10701,7 +10703,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (accessoryEquipText != null)
         {
-            accessoryEquipText.text = $"{TrFormat("gear.equip_rarity", GetAccessoryRarityName(rarity))}\n{GetAccessoryCopyStateText(slot, rarity)}";
+            var selectedIsEquipped = GetHeroEquippedAccessoryRarity(heroIndex, slot) == rarity;
+            var copies = GetAccessoryInventoryCount(slot, rarity);
+            var actionLabel = selectedIsEquipped
+                ? Tr("ui.common.equipped")
+                : copies > 0
+                    ? TrFormat("gear.equip_rarity", GetAccessoryRarityName(rarity))
+                    : Tr("ui.common.no_copy");
+            accessoryEquipText.text = $"{actionLabel}\n{GetAccessoryCopyStateText(slot, rarity)}";
         }
 
         if (accessoryLevelText != null)
@@ -10709,7 +10718,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             var equippedRarity = GetHeroEquippedAccessoryRarity(heroIndex, slot);
             accessoryLevelText.text = equippedRarity < 0
                 ? $"{Tr("gear.level_equipped")}\n{Tr("gear.no_item")}"
-                : $"{Tr("gear.level_equipped")}\n{GetAccessoryLevelCost(slot)} {GetLocalizedCurrencyName(GoldCurrencyId)}";
+                : GetHeroEquippedAccessoryLevel(heroIndex, slot) >= GetAccessoryMaxLevel(equippedRarity)
+                    ? $"{Tr("gear.level_equipped")}\n{Tr("ui.common.max")} {Tr("ui.common.level_short")} {GetAccessoryMaxLevel(equippedRarity)}"
+                    : $"{Tr("gear.level_equipped")}\n{GetAccessoryLevelCost(slot)} {GetLocalizedCurrencyName(GoldCurrencyId)}";
         }
 
         if (accessoryFuseText != null)
@@ -10719,7 +10730,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             var nextTier = string.IsNullOrEmpty(accessory.fuseTargetAccessoryId)
                 ? Tr("ui.common.max")
                 : GetAccessoryRarityName(GetAccessoryDefinitionById(accessory.fuseTargetAccessoryId).rarityIndex);
-            accessoryFuseText.text = $"{TrFormat("gear.fuse_rarity", fuseCost, GetAccessoryRarityName(rarity))}\n{TrFormat("gear.fuse_into", nextTier)}";
+            var ownedCopies = GetAccessoryInventoryCount(slot, rarity);
+            if (string.IsNullOrEmpty(accessory.fuseTargetAccessoryId))
+            {
+                accessoryFuseText.text = $"{Tr("ui.common.max")}\n{GetAccessoryRarityName(rarity)}";
+            }
+            else if (ownedCopies < fuseCost)
+            {
+                accessoryFuseText.text = $"{TrFormat("gear.fuse_need_copies", fuseCost)}\n{TrFormat("gear.fuse_into", nextTier)}";
+            }
+            else
+            {
+                accessoryFuseText.text = $"{TrFormat("gear.fuse_rarity", fuseCost, GetAccessoryRarityName(rarity))}\n{TrFormat("gear.fuse_into", nextTier)}";
+            }
         }
     }
 
@@ -13169,6 +13192,18 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             dungeonResultText.text = Tr("dungeon.default_result");
         }
+
+        if (runtimeDungeonResultText != null && IsDefaultDungeonResultText(runtimeDungeonResultText.text))
+        {
+            runtimeDungeonResultText.text = Tr("dungeon.default_result");
+        }
+    }
+
+    private static bool IsDefaultDungeonResultText(string text)
+    {
+        return string.IsNullOrWhiteSpace(text)
+            || text == MythwakeLocalization.Text(MythwakeLanguage.English, "dungeon.default_result")
+            || text == MythwakeLocalization.Text(MythwakeLanguage.German, "dungeon.default_result");
     }
 
     private void RefreshDungeonSelectorCardUi(DungeonDefinition dungeon, int floor, TMP_Text titleText, TMP_Text progressText, TMP_Text detailText)
@@ -13199,12 +13234,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (progressText != null)
         {
-            progressText.text = "Locked";
+            progressText.text = Tr("dungeon.future_locked");
         }
 
         if (detailText != null)
         {
-            detailText.text = "Future dungeon";
+            detailText.text = Tr("dungeon.future_detail");
         }
     }
 
@@ -13279,7 +13314,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (dungeonFlowHintText != null)
         {
-            dungeonFlowHintText.text = $"Select {GetDungeonSelectorTitle(dungeon.dungeonId)}, enter Formation, clear Floor {floor}, then use rewards for upgrades.";
+            dungeonFlowHintText.text = TrFormat("dungeon.flow_hint", GetDungeonSelectorTitle(dungeon.dungeonId), floor);
         }
     }
 
@@ -14695,8 +14730,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (performanceOverlayText != null)
         {
-            performanceOverlayText.gameObject.SetActive(performanceOverlayVisible);
+            performanceOverlayText.gameObject.SetActive(performanceOverlayVisible && !ShouldHidePerformanceOverlayForCurrentScreen());
         }
+    }
+
+    private bool ShouldHidePerformanceOverlayForCurrentScreen()
+    {
+        return activeScreen == AppScreen.Battle && battleFlowMode == BattleFlowMode.Formation;
     }
 
     private void EnsureRuntimeScreenBackdrops()
@@ -18197,7 +18237,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (runtimeDungeonResultText == null)
         {
-            runtimeDungeonResultText = CreateRuntimeText(dungeonsPanel.transform, "Dungeon Result Text", "Dungeons are the active resource source.", 22, new Vector2(0, -1018), new Vector2(760, 52));
+            runtimeDungeonResultText = CreateRuntimeText(dungeonsPanel.transform, "Dungeon Result Text", Tr("dungeon.default_result"), 22, new Vector2(0, -1018), new Vector2(760, 52));
         }
 
         runtimeDungeonResultText.alignment = TextAlignmentOptions.Center;
@@ -20769,9 +20809,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void RefreshHeroDetailGearActionButtons(bool canManageHeroes)
     {
         SetButtonLabel(heroDetailEquipGearButton, GetHeroDetailEquipGearButtonLabel());
-        SetButtonLabel(heroDetailRemoveGearButton, Tr("ui.common.remove_gear"));
+        var canRemove = canManageHeroes && CanRemoveSelectedHeroDetailAccessory();
+        SetButtonLabel(heroDetailRemoveGearButton, canRemove ? Tr("ui.common.remove_gear") : Tr("gear.no_item"));
         SetButtonInteractable(heroDetailEquipGearButton, canManageHeroes);
-        SetButtonInteractable(heroDetailRemoveGearButton, canManageHeroes && CanRemoveSelectedHeroDetailAccessory());
+        SetButtonInteractable(heroDetailRemoveGearButton, canRemove);
     }
 
     private string GetHeroDetailEquipGearButtonLabel()
@@ -21289,7 +21330,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var specialNote = GetCampaignStagePreviewSpecialNote(stageNumber);
         var requiredPower = GetStageRecommendedPower(stageNumber);
         var fightLine = isCurrent
-            ? "Battle -> Formation; Idle sammelt nur kleine Beute."
+            ? "Ziel: Battle -> Formation; Idle sammelt nur kleine Beute."
             : isCleared
                 ? "Replay spaeter."
                 : "Erst aktuellen Abschnitt abschliessen.";

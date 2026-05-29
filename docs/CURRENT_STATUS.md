@@ -1,11 +1,11 @@
 # Mythwake Current Status
 
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.162`, save version `2`.
+- Unity client code is at Prototype `0.2.163`, save version `2`.
 - Backend API default version is `0.2.58`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -32,6 +32,7 @@ Last updated: 2026-05-28
 - Prototype `0.2.160` fixes the real REDMAGIC-style tall-phone clipping reported from physical Android screenshots. The Prototype UI canvas and builder now match the 1080x1920 reference by width instead of height, so very tall/narrow devices get extra vertical room instead of cropping the left/right chrome. Mobile UX validation now requires width-matched portrait scaling to keep top resources, side shortcuts, fight controls, skill cards, and bottom navigation inside the visible phone width.
 - Prototype `0.2.161` keeps that phone-safe width matching but fills the newly exposed tall-phone vertical room with art again. Home extends the lower patrol/map image area to the top of the art navbar, and Village extends its map viewport/content height dynamically so the village image fills down toward the navbar instead of leaving a dark empty band.
 - Prototype `0.2.162` is Tester Build 0 preparation. APK `Builds\Android\Mythwake-0.2.162-tester-build-0.apk` builds, installs, and launches in MuMuPlayer. Android smoke covered Home, Stage Detail, Formation, Fight, Result, save/reload, Hero Detail, Gear list, Dungeons, Village, Fast Rewards, Summon, and Summon Result; screenshots are under `docs/screenshots/android/2026-05-28-tester-build-0/`. Cold launch after reinstall reported `TotalTime 847 ms`; fresh-save Summon capture launch reported `TotalTime 950 ms`; FPS overlay showed about `29-30 FPS | 33.3-33.5 ms`; filtered Logcat found no app crash/ANR/Unity exception/missing-asset error. The pass also fixed a blocker where Campaign Result text could leak onto the Dungeons screen after Continue, and `docs/TESTER_BUILD_0.md` now gives testers a guided flow, feedback questions, and known issues.
+- Prototype `0.2.163` prepares Tester Build 0.1 from the first Build 0 review. It keeps the hard-blocker fixes, hides the runtime FPS overlay on Formation so enemy power/stage copy stays readable, clarifies Gear/Hero empty/equipped/fuse disabled labels, localizes Dungeons default/future/flow copy, and makes the Home current-stage preview read as a `Ziel:` route. `docs/TESTER_BUILD_0_1.md` is the short priority list for Blocker, schwer verstaendlich, UI/UX stoerend, Balance/Progression, and spaeter items. `scripts/check-unity-csharp.cmd` and `scripts/check-unity-current-slice.cmd` pass after the code changes. APK `Builds\Android\Mythwake-0.2.163-tester-build-0.1.apk` builds, installs, and launches in MuMuPlayer; cold launch reported `TotalTime 995 ms`, and screenshots/logcat live under `docs/screenshots/android/2026-05-29-tester-build-0-1/`.
 - Prototype `0.2.154` removes the reintroduced MuMu X-coordinate mirror after live testing showed Y was fixed but left/right was inverted. Android builds now keep normal portrait orientation through PlayerSettings/manifest while using Unity's standard `InputSystemUIInputModule` with no custom MuMu pointer module. `Builds\Android\Mythwake-0.2.154-mumu.apk` builds, installs, launches in MuMuPlayer, generated `screenOrientation=1`, ADB visible-coordinate taps verified left Heroes and right Summon, and Hero Detail Bracelet opens `Bracelet Gear` instead of Gloves.
 - Prototype `0.2.149` removes the hand-rolled MuMu pointer-coordinate transform again after the broader wrong-button report showed visible taps could route to neighboring controls. Android builds now use Unity's legacy `StandaloneInputModule` directly, the missing Hero Detail gear slot 8 listener is wired, the center Campaign/Home nav hit layer is raycastable, and editor validation checks bottom-nav click mappings, active button hit targets, and every Hero Detail gear-slot click-to-list mapping. `Builds\Android\Mythwake-0.2.149-mumu.apk` builds, installs, launches in MuMuPlayer, and real taps verified Heroes/Village/Dungeons/Summon/Home plus Bracelet opening `Bracelet Gear`.
 
@@ -192,8 +193,8 @@ Last updated: 2026-05-28
 
 ## Next Small Steps
 
-1. Hand `Builds\Android\Mythwake-0.2.162-tester-build-0.apk` to 2-5 internal testers with `docs/TESTER_BUILD_0.md`.
-2. Re-test the 0.2.162 APK on the REDMAGIC phone and confirm top bar/side chrome stay inside the width while Home and Village art fill the extra vertical space down to the navbar.
-3. Plan the durable tester account slice: Email + Password registration/login first, Google Login through Play Store / Google Play Services later.
-4. Add a richer profiler capture path because the runtime FPS overlay is now present, but MuMu `gfxinfo` still does not provide useful Unity frame buckets.
+1. Hand `Builds\Android\Mythwake-0.2.163-tester-build-0.1.apk` to 2-5 internal testers with `docs/TESTER_BUILD_0_1.md`.
+2. Re-test the 0.2.163 APK on the REDMAGIC phone and confirm top bar/side chrome stay inside the width while Home and Village art fill the extra vertical space down to the navbar.
+3. Keep Build 0.2 focused on feedback-driven fixes: Result Continue/auto-next stress, high-currency Summon x10/x300, and any tester-reported dead buttons or unreadable screens.
+4. Plan the durable tester account slice: Email + Password registration/login first, Google Login through Play Store / Google Play Services later.
 5. Do a small balance pass only after checklist feedback: decide where the first intentional wall should be, and tune early Campaign/Dungeon/Village numbers around that wall.

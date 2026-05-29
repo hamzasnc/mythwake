@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.162
+Prototype version: 0.2.163
 Local save version: 2
 
 Current prototype:
@@ -88,7 +88,7 @@ Current prototype:
 - Local accessory equip, unequip, level, and fuse action-result messages now use EN/DE localization keys and are covered by Gear validation
 - Gear screen accessory inventory copy counts use a compact two-line summary with auto-sized text
 - Gear screen now uses compact dark Training and Accessory sections, explicit Slot/Rarity nav labels, stronger text contrast, and validator coverage so it no longer falls back to the oversized empty parchment block
-- MuMuPlayer Android pass can install and launch the current APK, with real 1080x1920 screenshots, filtered Logcat, runtime FPS overlay notes, visible-coordinate touch checks, and performance observations captured under `docs/screenshots/android/2026-05-26-mumu/`, `docs/screenshots/android/2026-05-26-touch-polish-final/`, and `docs/screenshots/android/2026-05-28-mobile-testbuild-pass/`
+- MuMuPlayer Android pass can install and launch the current APK, with real 1080x1920 screenshots, filtered Logcat, runtime FPS overlay notes, visible-coordinate touch checks, and performance observations captured under `docs/screenshots/android/2026-05-26-mumu/`, `docs/screenshots/android/2026-05-26-touch-polish-final/`, `docs/screenshots/android/2026-05-28-mobile-testbuild-pass/`, and `docs/screenshots/android/2026-05-29-tester-build-0-1/`
 - Follow-up Android polish captures for the Summon Result modal, FPS overlay toggle, Formation label pass, and Result Continue are under `docs/screenshots/android/2026-05-28-mobile-polish-followup/`
 - Targeted Android polish captures for localized Summon Result summaries, Formation density/swap hints, Fight controls, and Result Continue are under `docs/screenshots/android/2026-05-28-summon-formation-fight-polish/`
 - Summon Result now has a localized pull summary, larger one-pull cards, wider auto-summon controls, and EN/DE validator coverage for summary/repeat-button text fit.
@@ -96,6 +96,7 @@ Current prototype:
 - Battle Formation now follows the new mockup direction: VS arena preview, five saved formation presets, deployed-hero bench, UP/ALL/role filters, a one-fight `Begin Battle`, and an `Auto Battle` start that keeps auto-next enabled until stopped or defeated.
 - Prototype UI builder now creates Gear controls in the current localized runtime layout with localized equipment names, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale Gear placeholder copy
 - Home idle patrol keeps the middle hero/enemy lane clear of the reward strip, and the Home idle validator now guards mobile touch target size plus unit/reward/loot-popup separation
+- Tester Build 0.1 polish hides the FPS overlay on Formation, clarifies Gear/Hero empty/equipped/fuse action states, localizes Dungeons flow/default labels, adds a clearer Home `Ziel:` route line, and extends validators for those tester feedback points
 
 Backend:
 - Go API skeleton in `backend/`
@@ -193,6 +194,7 @@ Backend:
 - Test planning docs:
   - `docs/ROADMAP.md`
   - `docs/INTERNAL_TESTBUILD_CHECKLIST.md`
+  - `docs/TESTER_BUILD_0_1.md`
   - `docs/UNITY_TEST_STAND.md` (includes the latest Mobile UX pass and open Android emulator/device follow-up)
   - `docs/screenshots/ANDROID_FALLBACK_2026-05-26.md`
   - `docs/screenshots/android/2026-05-26-mumu/README.md`
@@ -201,8 +203,10 @@ Backend:
   - `docs/screenshots/android/2026-05-28-mobile-testbuild-pass/README.md`
   - `docs/screenshots/android/2026-05-28-mobile-polish-followup/README.md`
   - `docs/screenshots/android/2026-05-28-summon-formation-fight-polish/README.md`
+  - `docs/screenshots/android/2026-05-29-tester-build-0-1/README.md`
 
 Changelog:
+- Prototype 0.2.163: Prepared Tester Build 0.1 polish from the first tester-build review. Formation now hides the runtime FPS overlay, Gear/Hero disabled and copy states are clearer, Dungeons default/flow labels are localized, Home current-stage preview starts with `Ziel:`, and editor validators cover these mobile/tester feedback points. APK `Builds/Android/Mythwake-0.2.163-tester-build-0.1.apk` builds, installs, and launches in MuMuPlayer with cold `TotalTime 995 ms`; screenshots/logcat live under `docs/screenshots/android/2026-05-29-tester-build-0-1/`.
 - Prototype 0.2.162: Prepared Tester Build 0 with APK `Builds/Android/Mythwake-0.2.162-tester-build-0.apk`, Android/MuMu smoke screenshots under `docs/screenshots/android/2026-05-28-tester-build-0/`, `docs/TESTER_BUILD_0.md` for tester flow/questions/known issues, and a fix so Campaign Result text no longer leaks onto the Dungeons screen after Continue.
 - Prototype 0.2.161: Keeps the width-matched phone-safe Canvas scaling from 0.2.160, but expands the large Home patrol/map imagery and Village map viewport dynamically on very tall Android phones so the bottom half does not fall back to empty dark canvas space.
 - Prototype 0.2.160: Fixed real-device side clipping on tall/narrow Android phones by switching the runtime Prototype UI CanvasScaler and UI builder from height-matched to width-matched portrait scaling. The Mobile UX validator now rejects height-matched scaling so top bar, side shortcuts, fight controls, skill cards, and bottom navigation stay inside the visible phone width.

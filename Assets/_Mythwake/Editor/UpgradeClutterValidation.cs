@@ -386,7 +386,7 @@ public static class UpgradeClutterValidation
 
             ValidateHeroDetailEquipmentSlotLabels(controller, gearSlots);
             AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.open_gear_short"), "Hero detail equipment action should refresh when language changes.");
-            AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.remove_gear"), "Hero detail remove action should refresh when language changes.");
+            AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "gear.no_item"), "Hero detail equipment remove action should explain that no accessory is selected.");
             AssertHeroDetailEquipmentTrackCopy(controller, gearOptionButtons[0]);
             AssertHeroDetailGearListTextFits(gearListRoot.gameObject, gearOptionButtons, "Hero detail German equipment list");
 
@@ -405,6 +405,7 @@ public static class UpgradeClutterValidation
 
             AssertHeroDetailEmptyAccessorySlotState(controller, gearSlots, emptyGearSlotIndex, "Hero detail German empty accessory slot");
             AssertButtonLabel(equipGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "ui.common.equip_gear"), "Hero detail empty accessory action should stay localized after language changes.");
+            AssertButtonLabel(removeGearButton, MythwakeLocalization.Text(MythwakeLanguage.German, "gear.no_item"), "Hero detail empty accessory remove action should explain that no item is equipped.");
         }
         finally
         {
@@ -902,6 +903,7 @@ public static class UpgradeClutterValidation
         ValidateGearScreenPolishLayout(controller, gearPanel);
         ValidateGearScreenControlLayout(controller, gearPanel);
         ValidateGearScreenSelectedAccessorySummary(controller);
+        ValidateGearScreenDisabledActionCopy(controller);
         ValidateGearActionResultLocalization(controller);
         ValidateGearScreenLanguageRefresh(controller, gearPanel);
     }
@@ -1196,6 +1198,58 @@ public static class UpgradeClutterValidation
                 InvokePrivate(controller, "AddAccessoryInventory", slot, rarity, -addedCopies);
             }
 
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, slot, originalEquippedRarity, originalEquippedLevel);
+            SetPrivateField(controller, "selectedAccessorySlot", originalSlot);
+            SetPrivateField(controller, "selectedAccessoryRarity", originalRarity);
+            InvokePrivate(controller, "RefreshUi");
+            controller.ShowGear();
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    private static void ValidateGearScreenDisabledActionCopy(IdlePrototypeController controller)
+    {
+        const int slot = 2;
+        const int rarity = 0;
+        var originalSlot = RequireField<int>(controller, "selectedAccessorySlot");
+        var originalRarity = RequireField<int>(controller, "selectedAccessoryRarity");
+        var originalCopies = (int)InvokePrivate(controller, "GetAccessoryInventoryCount", slot, rarity);
+        var heroIndex = (int)InvokePrivate(controller, "GetSelectedHeroIndex");
+        var originalEquippedRarity = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, slot);
+        var originalEquippedLevel = (int)InvokePrivate(controller, "GetHeroEquippedAccessoryLevel", heroIndex, slot);
+
+        try
+        {
+            SetPrivateField(controller, "selectedAccessorySlot", slot);
+            SetPrivateField(controller, "selectedAccessoryRarity", rarity);
+            InvokePrivate(controller, "AddAccessoryInventory", slot, rarity, -originalCopies);
+            InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, slot, -1, 0);
+            InvokePrivate(controller, "RefreshUi");
+            controller.ShowGear();
+            Canvas.ForceUpdateCanvases();
+
+            var equipButton = RequireButtonField(controller, "accessoryEquipButton");
+            var levelButton = RequireButtonField(controller, "accessoryLevelButton");
+            var fuseButton = RequireButtonField(controller, "accessoryFuseButton");
+            var equipText = RequireObjectField<TMP_Text>(controller, "accessoryEquipText");
+            var levelText = RequireObjectField<TMP_Text>(controller, "accessoryLevelText");
+            var fuseText = RequireObjectField<TMP_Text>(controller, "accessoryFuseText");
+
+            if (equipButton.interactable || levelButton.interactable || fuseButton.interactable)
+            {
+                throw new InvalidOperationException("Gear empty accessory actions should all be disabled when no copy is owned or equipped.");
+            }
+
+            AssertTextContains(equipText, GetLocalizedText(controller, "ui.common.no_copy"), "Gear empty equip action should explain that no copy is owned.");
+            AssertTextContains(levelText, GetLocalizedText(controller, "gear.no_item"), "Gear empty level action should explain that no item is equipped.");
+            AssertTextContains(fuseText, GetLocalizedText(controller, "gear.fuse_need_copies").Replace("{0}", "3"), "Gear empty fuse action should show the copy requirement.");
+            AssertTextFits(equipText, equipText.name, "Gear empty equip action");
+            AssertTextFits(levelText, levelText.name, "Gear empty level action");
+            AssertTextFits(fuseText, fuseText.name, "Gear empty fuse action");
+        }
+        finally
+        {
+            InvokePrivate(controller, "AddAccessoryInventory", slot, rarity, originalCopies);
             InvokePrivate(controller, "SetHeroEquippedAccessory", heroIndex, slot, originalEquippedRarity, originalEquippedLevel);
             SetPrivateField(controller, "selectedAccessorySlot", originalSlot);
             SetPrivateField(controller, "selectedAccessoryRarity", originalRarity);

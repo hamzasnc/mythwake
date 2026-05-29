@@ -65,6 +65,7 @@ public static partial class MythwakeLocalization
         { "gear.no_item", "No item" },
         { "gear.fuse_rarity", "Fuse {0}x {1}" },
         { "gear.fuse_into", "Into {0}" },
+        { "gear.fuse_need_copies", "Need {0} copies" },
 
         { "currency.gold.name", "Gold" },
         { "currency.gems.name", "Gems" },
@@ -157,6 +158,9 @@ public static partial class MythwakeLocalization
         { "dungeon.gear_dungeon.set", "Iron Armory Set" },
         { "dungeon.gear_dungeon.boss", "Iron Hound" },
         { "dungeon.default_result", "Dungeons are the active resource source." },
+        { "dungeon.flow_hint", "Select {0}, enter Formation, clear Floor {1}, then spend rewards on upgrades." },
+        { "dungeon.future_locked", "Locked" },
+        { "dungeon.future_detail", "Future dungeon" },
         { "dungeon.progress_line", "Progress: <color=#F8E85A>{0}/{1}</color>   Floor {2}" },
         { "dungeon.meta.reward", "{0} | Rec {1} | +{2} {3}" },
         { "dungeon.meta.drop", "{0} | Rec {1} | Drop: Accessory" },

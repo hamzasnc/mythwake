@@ -36,6 +36,7 @@ public static class FightFormationValidation
         }
 
         InvokePrivate(controller, "EnsureRuntimeScreenLayout");
+        InvokePrivate(controller, "EnsureRuntimePerformanceOverlay");
         InvokePrivate(controller, "RegisterNavigation");
         SetPrivateField(controller, "backendGameplayEnabled", false);
         SetPrivateField(controller, "autoContinueFightsEnabled", false);
@@ -64,6 +65,7 @@ public static class FightFormationValidation
         var autoToggle = RequireButton("Formation Auto Continue Toggle");
         var autoLabel = autoToggle.GetComponentInChildren<TMP_Text>(includeInactive: true);
         var enemyImage = RequireRawImageWithTexture("Formation Enemy");
+        var performanceOverlay = RequireObject("Runtime Performance Overlay", false);
 
         RequireCopy(header.text, "VS", "Formation header");
         RequireCopy(stageText.text, "Stage", "Formation stage text");
@@ -80,6 +82,11 @@ public static class FightFormationValidation
         AssertMinimumSize(back.gameObject, 100f, 80f, "Formation back button");
         AssertMinimumSize(autoToggle.gameObject, 320f, 80f, "Formation auto battle button");
         AssertInsideParent(formationRoot, enemyImage.gameObject);
+        if (performanceOverlay.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Performance overlay should hide during Campaign Formation so it does not overlap Enemy Power.");
+        }
+
         AssertNoOverlap(header.gameObject, stageText.gameObject, 4f, "Formation VS/stage spacing");
         AssertNoOverlap(hint.gameObject, autoToggle.gameObject, 20f, "Formation hint/action spacing");
         AssertNoOverlap(autoToggle.gameObject, confirm.gameObject, 16f, "Formation auto/begin spacing");

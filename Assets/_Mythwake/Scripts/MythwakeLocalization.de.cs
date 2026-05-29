@@ -65,6 +65,7 @@ public static partial class MythwakeLocalization
         { "gear.no_item", "Kein Item" },
         { "gear.fuse_rarity", "{0}x {1} fusionieren" },
         { "gear.fuse_into", "Zu {0}" },
+        { "gear.fuse_need_copies", "Brauche {0} Kopien" },
 
         { "currency.gold.name", "Gold" },
         { "currency.gems.name", "Edelsteine" },
@@ -157,6 +158,9 @@ public static partial class MythwakeLocalization
         { "dungeon.gear_dungeon.set", "Eiserne Waffenkammer" },
         { "dungeon.gear_dungeon.boss", "Eisenhund" },
         { "dungeon.default_result", "Dungeons sind die aktive Quelle für Ressourcen." },
+        { "dungeon.flow_hint", "{0} waehlen, Formation oeffnen, Etage {1} clearen, dann Rewards in Upgrades stecken." },
+        { "dungeon.future_locked", "Gesperrt" },
+        { "dungeon.future_detail", "Spaeterer Dungeon" },
         { "dungeon.progress_line", "Fortschritt: <color=#F8E85A>{0}/{1}</color>   Etage {2}" },
         { "dungeon.meta.reward", "{0} | Empf. {1} | +{2} {3}" },
         { "dungeon.meta.drop", "{0} | Empf. {1} | Drop: Ausrüstung" },
