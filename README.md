@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.163
+Prototype version: 0.2.164
 Local save version: 2
 
 Current prototype:
@@ -97,6 +97,7 @@ Current prototype:
 - Prototype UI builder now creates Gear controls in the current localized runtime layout with localized equipment names, runtime Gear navigation uses compact arrow labels, and the upgrade clutter validator rejects stale Gear placeholder copy
 - Home idle patrol keeps the middle hero/enemy lane clear of the reward strip, and the Home idle validator now guards mobile touch target size plus unit/reward/loot-popup separation
 - Tester Build 0.1 polish hides the FPS overlay on Formation, clarifies Gear/Hero empty/equipped/fuse action states, localizes Dungeons flow/default labels, adds a clearer Home `Ziel:` route line, and extends validators for those tester feedback points
+- Android tester builds now use the Mythwake launcher icon from `Assets/_Mythwake/Branding/Mythwake_icon_launcher.png` instead of Unity's default app icon, with Mobile UX validation covering the PlayerSettings icon references
 
 Backend:
 - Go API skeleton in `backend/`
@@ -204,8 +205,10 @@ Backend:
   - `docs/screenshots/android/2026-05-28-mobile-polish-followup/README.md`
   - `docs/screenshots/android/2026-05-28-summon-formation-fight-polish/README.md`
   - `docs/screenshots/android/2026-05-29-tester-build-0-1/README.md`
+  - `docs/screenshots/android/2026-05-29-tester-build-0-1-icon/README.md`
 
 Changelog:
+- Prototype 0.2.164: Upgrades Tester Build 0.1 for the current solo-tester handoff while keeping the later multi-tester path explicit. Android PlayerSettings now use `Mythwake_icon_transparent.png` as the launcher icon via `Assets/_Mythwake/Branding/Mythwake_icon_launcher.png`, Mobile UX validation checks the icon wiring, and `docs/TESTER_BUILD_0_1.md` now includes solo install/test steps plus future multi-tester account requirements. APK `Builds/Android/Mythwake-0.2.164-tester-build-0.1.apk` builds, installs, launches in MuMuPlayer, and smoke screenshots/logcat live under `docs/screenshots/android/2026-05-29-tester-build-0-1-icon/`. Replacing/disabling the Unity startup splash logo caused a MuMu launch crash during the experiment, so only the launcher icon is changed in this stable tester build.
 - Prototype 0.2.163: Prepared Tester Build 0.1 polish from the first tester-build review. Formation now hides the runtime FPS overlay, Gear/Hero disabled and copy states are clearer, Dungeons default/flow labels are localized, Home current-stage preview starts with `Ziel:`, and editor validators cover these mobile/tester feedback points. APK `Builds/Android/Mythwake-0.2.163-tester-build-0.1.apk` builds, installs, and launches in MuMuPlayer with cold `TotalTime 995 ms`; screenshots/logcat live under `docs/screenshots/android/2026-05-29-tester-build-0-1/`.
 - Prototype 0.2.162: Prepared Tester Build 0 with APK `Builds/Android/Mythwake-0.2.162-tester-build-0.apk`, Android/MuMu smoke screenshots under `docs/screenshots/android/2026-05-28-tester-build-0/`, `docs/TESTER_BUILD_0.md` for tester flow/questions/known issues, and a fix so Campaign Result text no longer leaks onto the Dungeons screen after Continue.
 - Prototype 0.2.161: Keeps the width-matched phone-safe Canvas scaling from 0.2.160, but expands the large Home patrol/map imagery and Village map viewport dynamically on very tall Android phones so the bottom half does not fall back to empty dark canvas space.

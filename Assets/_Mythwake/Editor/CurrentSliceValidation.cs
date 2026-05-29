@@ -77,6 +77,8 @@ public static class MobileUxValidation
     private const string AndroidManifestPath = "Assets/Plugins/Android/AndroidManifest.xml";
     private const string AndroidFullscreenStylesPath = "Assets/Plugins/Android/MythwakeFullscreen.androidlib/res/values/styles.xml";
     private const string AndroidFullscreenHelperPath = "Assets/Plugins/Android/MythwakeFullscreen.androidlib/src/main/java/com/mythwake/fullscreen/MythwakeFullscreen.java";
+    private const string AndroidLauncherIconPath = "Assets/_Mythwake/Branding/Mythwake_icon_launcher.png";
+    private const string AndroidLauncherIconGuid = "e4a4f8593c1e42d0ba29e5183e83e026";
     private const float ReferenceWidth = 1080f;
     private const float ReferenceHeight = 1920f;
 
@@ -86,7 +88,7 @@ public static class MobileUxValidation
         try
         {
             ValidateMobileUx();
-            Debug.Log("Mobile UX validated: Android portrait settings, safe-area rendering, width-matched portrait CanvasScaler, EventSystem UI stack, non-blocking FPS overlay, bottom navigation targets/raycasts, version label, and core screen navigation are present.");
+            Debug.Log("Mobile UX validated: Android portrait settings, app icon, safe-area rendering, width-matched portrait CanvasScaler, EventSystem UI stack, non-blocking FPS overlay, bottom navigation targets/raycasts, version label, and core screen navigation are present.");
         }
         catch (Exception ex)
         {
@@ -137,8 +139,39 @@ public static class MobileUxValidation
         RequireProjectSetting(projectSettings, "defaultScreenHeight", "1920", "Default Game View height should match the portrait reference canvas.");
         RequireProjectSetting(projectSettings, "androidDefaultWindowWidth", "1080", "Android freeform width should match the portrait reference canvas.");
         RequireProjectSetting(projectSettings, "androidDefaultWindowHeight", "1920", "Android freeform height should match the portrait reference canvas.");
+        ValidateAndroidAppIcon(projectSettings);
         ValidateAndroidFullscreenManifest();
         ValidateAndroidImmersiveModeHook();
+    }
+
+    private static void ValidateAndroidAppIcon(string projectSettings)
+    {
+        if (!File.Exists(AndroidLauncherIconPath))
+        {
+            throw new InvalidOperationException($"Android launcher icon asset is missing: {AndroidLauncherIconPath}.");
+        }
+
+        var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(AndroidLauncherIconPath);
+        if (icon == null)
+        {
+            throw new InvalidOperationException($"Android launcher icon asset could not be loaded: {AndroidLauncherIconPath}.");
+        }
+
+        if (icon.width != icon.height)
+        {
+            throw new InvalidOperationException($"Android launcher icon should be square, got {icon.width}x{icon.height}.");
+        }
+
+        var guid = AssetDatabase.AssetPathToGUID(AndroidLauncherIconPath);
+        if (!string.Equals(guid, AndroidLauncherIconGuid, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"Android launcher icon GUID changed. Expected {AndroidLauncherIconGuid}, got {guid}.");
+        }
+
+        if (!projectSettings.Contains("m_BuildTarget: Android") || CountOccurrences(projectSettings, AndroidLauncherIconGuid) < 18)
+        {
+            throw new InvalidOperationException("Android PlayerSettings should reference the Mythwake launcher icon for every generated Android icon size.");
+        }
     }
 
     private static void ValidateAndroidFullscreenManifest()
@@ -221,6 +254,19 @@ public static class MobileUxValidation
         {
             throw new InvalidOperationException($"{message} Expected '{expected.Trim()}'.");
         }
+    }
+
+    private static int CountOccurrences(string source, string fragment)
+    {
+        var count = 0;
+        var index = 0;
+        while ((index = source.IndexOf(fragment, index, StringComparison.OrdinalIgnoreCase)) >= 0)
+        {
+            count++;
+            index += fragment.Length;
+        }
+
+        return count;
     }
 
     private static RectTransform ValidatePortraitCanvas(IdlePrototypeController controller)
