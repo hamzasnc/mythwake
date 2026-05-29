@@ -1236,7 +1236,35 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private bool hasBackendDefinitions;
     private MythwakeRuntimeArtPresenter runtimeArt;
     private TMP_Text dungeonsHeaderText;
+    private TMP_Text dungeonsSubtitleText;
     private TMP_Text runtimeDungeonResultText;
+    private RectTransform dungeonSelectorPanelRoot;
+    private RectTransform dungeonSelectorCardsRoot;
+    private RectTransform dungeonDetailRoot;
+    private RectTransform dungeonFloorListRoot;
+    private RectTransform dungeonFlowHintRoot;
+    private TMP_Text dungeonSelectorTitleText;
+    private TMP_Text dungeonDetailTitleText;
+    private TMP_Text dungeonDetailMetaText;
+    private TMP_Text dungeonDetailRewardsText;
+    private TMP_Text dungeonFlowHintText;
+    private RawImage dungeonDetailBannerImage;
+    private RawImage dungeonDetailBossImage;
+    private Button dungeonDetailRunButton;
+    private TMP_Text dungeonDetailRunButtonText;
+    private Button shardRiftDungeonButton;
+    private Button ancientTowerDungeonButton;
+    private TMP_Text shardRiftDungeonTitleText;
+    private TMP_Text shardRiftDungeonProgressText;
+    private TMP_Text shardRiftDungeonText;
+    private TMP_Text ancientTowerDungeonTitleText;
+    private TMP_Text ancientTowerDungeonProgressText;
+    private TMP_Text ancientTowerDungeonText;
+    private Button[] dungeonFloorButtons;
+    private Image[] dungeonFloorAccentImages;
+    private TMP_Text[] dungeonFloorTitleTexts;
+    private TMP_Text[] dungeonFloorStatusTexts;
+    private TMP_Text[] dungeonFloorActionTexts;
     private RawImage goldDungeonBannerImage;
     private RawImage essenceDungeonBannerImage;
     private RawImage gearDungeonBannerImage;
@@ -8660,6 +8688,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonInteractable(goldDungeonButton, canInteract);
         SetButtonInteractable(essenceDungeonButton, canInteract);
         SetButtonInteractable(gearDungeonButton, canInteract);
+        SetButtonInteractable(dungeonDetailRunButton, canInteract);
+        SetButtonInteractable(shardRiftDungeonButton, false);
+        SetButtonInteractable(ancientTowerDungeonButton, false);
+        RefreshDungeonFloorListUi();
         GateButton(upgradeButton, canInteract);
         GateButton(heroUpgradeButton, canManageHeroes);
         GateButton(heroAscendButton, canManageHeroes);
@@ -13121,13 +13153,189 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void RefreshDungeonUi()
     {
-        RefreshDungeonCardUi(GoldDungeonDefinition, goldDungeonFloor, goldDungeonTitleText, goldDungeonProgressText, goldDungeonText);
-        RefreshDungeonCardUi(EssenceDungeonDefinition, essenceDungeonFloor, essenceDungeonTitleText, essenceDungeonProgressText, essenceDungeonText);
-        RefreshDungeonCardUi(GearDungeonDefinition, gearDungeonFloor, gearDungeonTitleText, gearDungeonProgressText, gearDungeonText);
+        selectedDungeonId = ResolveDungeonDefinition(selectedDungeonId).dungeonId;
+        RefreshDungeonSelectorCardUi(GoldDungeonDefinition, goldDungeonFloor, goldDungeonTitleText, goldDungeonProgressText, goldDungeonText);
+        RefreshDungeonSelectorCardUi(EssenceDungeonDefinition, essenceDungeonFloor, essenceDungeonTitleText, essenceDungeonProgressText, essenceDungeonText);
+        RefreshDungeonSelectorCardUi(GearDungeonDefinition, gearDungeonFloor, gearDungeonTitleText, gearDungeonProgressText, gearDungeonText);
+        RefreshFutureDungeonCardUi(shardRiftDungeonTitleText, shardRiftDungeonProgressText, shardRiftDungeonText, "Shard Rift");
+        RefreshFutureDungeonCardUi(ancientTowerDungeonTitleText, ancientTowerDungeonProgressText, ancientTowerDungeonText, "Ancient Tower");
+        RefreshDungeonSelectorState(goldDungeonButton, GoldDungeonDefinition.dungeonId, new Color(0.96f, 0.68f, 0.22f, 0.96f));
+        RefreshDungeonSelectorState(essenceDungeonButton, EssenceDungeonDefinition.dungeonId, new Color(0.55f, 0.34f, 1f, 0.96f));
+        RefreshDungeonSelectorState(gearDungeonButton, GearDungeonDefinition.dungeonId, new Color(0.18f, 0.86f, 0.95f, 0.96f));
+        RefreshDungeonDetailUi();
+        RefreshDungeonFloorListUi();
 
         if (dungeonResultText != null && string.IsNullOrWhiteSpace(dungeonResultText.text))
         {
             dungeonResultText.text = Tr("dungeon.default_result");
+        }
+    }
+
+    private void RefreshDungeonSelectorCardUi(DungeonDefinition dungeon, int floor, TMP_Text titleText, TMP_Text progressText, TMP_Text detailText)
+    {
+        floor = Mathf.Max(1, floor);
+        if (titleText != null)
+        {
+            titleText.text = GetDungeonSelectorTitle(dungeon.dungeonId);
+        }
+
+        if (progressText != null)
+        {
+            progressText.text = $"{Tr("ui.common.floor")} {floor}";
+        }
+
+        if (detailText != null)
+        {
+            detailText.text = FormatDungeonRewardSummary(dungeon, floor);
+        }
+    }
+
+    private void RefreshFutureDungeonCardUi(TMP_Text titleText, TMP_Text progressText, TMP_Text detailText, string fallbackTitle)
+    {
+        if (titleText != null)
+        {
+            titleText.text = fallbackTitle;
+        }
+
+        if (progressText != null)
+        {
+            progressText.text = "Locked";
+        }
+
+        if (detailText != null)
+        {
+            detailText.text = "Future dungeon";
+        }
+    }
+
+    private void RefreshDungeonSelectorState(Button button, string dungeonId, Color accentColor)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        var selected = selectedDungeonId == ResolveDungeonDefinition(dungeonId).dungeonId;
+        var image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            image.sprite = null;
+            image.type = Image.Type.Simple;
+            image.color = selected
+                ? new Color(Mathf.Clamp01(accentColor.r * 0.34f), Mathf.Clamp01(accentColor.g * 0.34f), Mathf.Clamp01(accentColor.b * 0.34f), 0.98f)
+                : new Color(0.026f, 0.028f, 0.04f, 0.92f);
+        }
+
+        var accent = button.transform.Find("Selector Card Accent")?.GetComponent<Image>();
+        if (accent != null)
+        {
+            accent.color = selected ? Color.white : accentColor;
+            SetRuntimeRect(accent.rectTransform, new Vector2(0f, -6f), new Vector2(selected ? 150f : 146f, selected ? 8f : 5f), new Vector2(0.5f, 1f));
+        }
+    }
+
+    private void RefreshDungeonDetailUi()
+    {
+        var dungeon = ResolveDungeonDefinition(selectedDungeonId);
+        var floor = GetDungeonFloor(dungeon.dungeonId);
+        var bannerTexture = LoadRuntimeTexture(GetDungeonBannerTextureName(dungeon.dungeonId));
+        if (dungeonDetailBannerImage != null)
+        {
+            dungeonDetailBannerImage.texture = bannerTexture;
+            dungeonDetailBannerImage.color = bannerTexture != null ? Color.white : new Color(1f, 1f, 1f, 0.08f);
+        }
+
+        if (dungeonDetailBossImage != null)
+        {
+            var bossTextureName = GetDungeonBossTextureName(dungeon.dungeonId);
+            dungeonDetailBossImage.texture = LoadCombatTexture(bossTextureName, "idle", 0, bossTextureName);
+            dungeonDetailBossImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale(bossTextureName), 1f, 1f);
+        }
+
+        if (dungeonDetailTitleText != null)
+        {
+            dungeonDetailTitleText.text = GetDungeonSelectorTitle(dungeon.dungeonId);
+        }
+
+        if (dungeonDetailMetaText != null)
+        {
+            dungeonDetailMetaText.text = $"{GetLocalizedDungeonSetTitle(dungeon.dungeonId)}\n{GetLocalizedDungeonBossName(dungeon.dungeonId)} | Rec {FormatCompactNumber(GetDungeonRecommendedPowerForUi(dungeon, floor))}";
+        }
+
+        if (dungeonDetailRewardsText != null)
+        {
+            dungeonDetailRewardsText.text = $"{FormatDungeonPreview(dungeon, floor)}\n{FormatDungeonRewardSummary(dungeon, floor)}";
+        }
+
+        if (dungeonDetailRunButtonText != null)
+        {
+            dungeonDetailRunButtonText.text = $"Start F{floor}";
+        }
+
+        if (dungeonDetailRunButton != null)
+        {
+            dungeonDetailRunButton.interactable = CanStartDungeonRun();
+        }
+
+        if (dungeonFlowHintText != null)
+        {
+            dungeonFlowHintText.text = $"Select {GetDungeonSelectorTitle(dungeon.dungeonId)}, enter Formation, clear Floor {floor}, then use rewards for upgrades.";
+        }
+    }
+
+    private void RefreshDungeonFloorListUi()
+    {
+        if (dungeonFloorButtons == null || dungeonFloorTitleTexts == null || dungeonFloorStatusTexts == null || dungeonFloorActionTexts == null)
+        {
+            return;
+        }
+
+        var dungeon = ResolveDungeonDefinition(selectedDungeonId);
+        var currentFloor = GetDungeonFloor(dungeon.dungeonId);
+        var firstFloor = currentFloor <= 2 ? 1 : currentFloor - 2;
+        for (var i = 0; i < dungeonFloorButtons.Length; i++)
+        {
+            var floor = firstFloor + i;
+            var isCleared = floor < currentFloor;
+            var isReady = floor == currentFloor;
+            var isLocked = floor > currentFloor;
+
+            if (dungeonFloorTitleTexts[i] != null)
+            {
+                dungeonFloorTitleTexts[i].text = $"{Tr("ui.common.floor")} {floor}";
+                dungeonFloorTitleTexts[i].color = isReady ? new Color(1f, 0.93f, 0.62f) : Color.white;
+            }
+
+            if (dungeonFloorStatusTexts[i] != null)
+            {
+                dungeonFloorStatusTexts[i].text = isCleared ? "Cleared" : isReady ? "Ready" : "Locked";
+                dungeonFloorStatusTexts[i].color = isCleared
+                    ? new Color(0.48f, 0.95f, 0.72f)
+                    : isReady
+                        ? new Color(0.35f, 0.95f, 1f)
+                        : new Color(0.62f, 0.64f, 0.72f);
+            }
+
+            if (dungeonFloorActionTexts[i] != null)
+            {
+                dungeonFloorActionTexts[i].text = isCleared
+                    ? "OK"
+                    : isReady
+                        ? $"Enter | Rec {FormatCompactNumber(GetDungeonRecommendedPowerForUi(dungeon, floor))}"
+                        : $"Rec {FormatCompactNumber(GetDungeonRecommendedPowerForUi(dungeon, floor))}";
+                dungeonFloorActionTexts[i].color = isReady ? new Color(1f, 0.94f, 0.72f) : new Color(0.78f, 0.86f, 0.92f);
+            }
+
+            if (dungeonFloorAccentImages != null && i < dungeonFloorAccentImages.Length && dungeonFloorAccentImages[i] != null)
+            {
+                dungeonFloorAccentImages[i].color = isCleared
+                    ? new Color(0.2f, 0.8f, 0.46f, 0.82f)
+                    : isReady
+                        ? GetDungeonAccentColor(dungeon.dungeonId)
+                        : new Color(0.36f, 0.36f, 0.42f, 0.76f);
+            }
+
+            dungeonFloorButtons[i].interactable = isReady && CanStartDungeonRun();
         }
     }
 
@@ -13179,6 +13387,101 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return TrFormat("dungeon.meta.drop", bossName, localRequiredPower);
+    }
+
+    private bool CanStartDungeonRun()
+    {
+        return !backendRequestInProgress && !backendLifecycleFlushInProgress && !campaignFightInProgress;
+    }
+
+    private string GetDungeonSelectorTitle(string dungeonId)
+    {
+        var resolvedId = ResolveDungeonDefinition(dungeonId).dungeonId;
+        var key = $"dungeon.{resolvedId}.selector";
+        var localized = Tr(key);
+        if (localized != key)
+        {
+            return localized;
+        }
+
+        if (resolvedId == EssenceDungeonDefinition.dungeonId)
+        {
+            return "Essence Grove";
+        }
+
+        if (resolvedId == GearDungeonDefinition.dungeonId)
+        {
+            return "Gear Forge";
+        }
+
+        return "Gold Vault";
+    }
+
+    private static string GetDungeonBannerTextureName(string dungeonId)
+    {
+        if (dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return "essence_dungeon_set_banner";
+        }
+
+        if (dungeonId == GearDungeonDefinition.dungeonId)
+        {
+            return "gear_dungeon_set_banner";
+        }
+
+        return "gold_dungeon_set_banner";
+    }
+
+    private static Color GetDungeonAccentColor(string dungeonId)
+    {
+        if (dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return new Color(0.55f, 0.34f, 1f, 0.94f);
+        }
+
+        if (dungeonId == GearDungeonDefinition.dungeonId)
+        {
+            return new Color(0.18f, 0.86f, 0.95f, 0.94f);
+        }
+
+        return new Color(0.96f, 0.68f, 0.22f, 0.94f);
+    }
+
+    private int GetDungeonRecommendedPowerForUi(DungeonDefinition dungeon, int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        if (UseBackendDefinitionView() && TryGetBackendDungeonDefinition(dungeon.dungeonId, out var backendDefinition))
+        {
+            return GetBackendDungeonRequiredPower(backendDefinition, floor);
+        }
+
+        return GetDungeonRecommendedPower(dungeon, floor);
+    }
+
+    private string FormatDungeonRewardSummary(DungeonDefinition dungeon, int floor)
+    {
+        floor = Mathf.Max(1, floor);
+        if (UseBackendDefinitionView() && TryGetBackendDungeonDefinition(dungeon.dungeonId, out var backendDefinition))
+        {
+            if (string.IsNullOrWhiteSpace(backendDefinition.rewardCurrencyId))
+            {
+                return Tr("dungeon.reward.drop");
+            }
+
+            return TrFormat("dungeon.reward.currency", GetBackendDungeonRewardAmount(backendDefinition, floor), GetLocalizedCurrencyName(backendDefinition.rewardCurrencyId));
+        }
+
+        if (dungeon.dungeonId == GoldDungeonDefinition.dungeonId)
+        {
+            return TrFormat("dungeon.reward.currency", GetGoldDungeonReward(floor), GetLocalizedCurrencyName(dungeon.rewardCurrencyId));
+        }
+
+        if (dungeon.dungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            return TrFormat("dungeon.reward.currency", GetEssenceDungeonReward(floor), GetLocalizedCurrencyName(dungeon.rewardCurrencyId));
+        }
+
+        return Tr("dungeon.reward.drop");
     }
 
     private static string GetDungeonSetTitle(string dungeonId)
@@ -17878,37 +18181,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             dungeonsHeaderText.color = new Color(1f, 0.9f, 0.68f);
         }
 
-        EnsureRuntimeDungeonWorldMap();
-        EnsureRuntimeDungeonMapMarker(
-            ref goldDungeonButton,
-            ref goldDungeonTitleText,
-            ref goldDungeonProgressText,
-            ref goldDungeonText,
-            "Gold Dungeon Map Marker",
-            "dungeon_portal",
-            GoldDungeonDefinition.dungeonId,
-            GoldDungeonMapPosition,
-            new Color(0.96f, 0.68f, 0.22f, 0.96f));
-        EnsureRuntimeDungeonMapMarker(
-            ref essenceDungeonButton,
-            ref essenceDungeonTitleText,
-            ref essenceDungeonProgressText,
-            ref essenceDungeonText,
-            "Essence Dungeon Map Marker",
-            "dungeon_essence",
-            EssenceDungeonDefinition.dungeonId,
-            EssenceDungeonMapPosition,
-            new Color(0.53f, 0.36f, 1f, 0.96f));
-        EnsureRuntimeDungeonMapMarker(
-            ref gearDungeonButton,
-            ref gearDungeonTitleText,
-            ref gearDungeonProgressText,
-            ref gearDungeonText,
-            "Gear Dungeon Map Marker",
-            "dungeon_fire",
-            GearDungeonDefinition.dungeonId,
-            GearDungeonMapPosition,
-            new Color(0.18f, 0.86f, 0.95f, 0.96f));
+        if (dungeonsSubtitleText == null)
+        {
+            dungeonsSubtitleText = CreateRuntimeText(dungeonsPanel.transform, "Dungeons Subtitle", "Choose a dungeon, inspect the next floor, then enter Formation.", 20, new Vector2(0, -176), new Vector2(840, 34));
+            dungeonsSubtitleText.fontStyle = FontStyles.Bold;
+            dungeonsSubtitleText.color = new Color(0.74f, 0.9f, 1f);
+            dungeonsSubtitleText.enableAutoSizing = true;
+            dungeonsSubtitleText.fontSizeMin = 14;
+            dungeonsSubtitleText.fontSizeMax = 20;
+        }
+
+        EnsureRuntimeDungeonSelectorScreen();
 
         RegisterDungeonButtonListeners();
 
@@ -17925,6 +18208,572 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         runtimeDungeonResultText.fontStyle = FontStyles.Bold;
         runtimeDungeonResultText.outlineColor = new Color(0.02f, 0.018f, 0.014f, 1f);
         runtimeDungeonResultText.outlineWidth = 0.16f;
+        RefreshDungeonUi();
+    }
+
+    private void EnsureRuntimeDungeonSelectorScreen()
+    {
+        if (dungeonsPanel == null)
+        {
+            return;
+        }
+
+        HideRuntimeDungeonWorldMap();
+
+        dungeonSelectorPanelRoot = EnsureRuntimePanel(dungeonsPanel.transform, "Dungeon Selector Panel", new Vector2(0f, -224f), new Vector2(940f, 1046f), new Color(0.035f, 0.038f, 0.058f, 0.97f));
+        EnsureRuntimePanel(dungeonSelectorPanelRoot, "Dungeon Selector Header Rail", new Vector2(0f, -18f), new Vector2(900f, 66f), new Color(0.16f, 0.075f, 0.035f, 0.94f));
+        EnsureRuntimePanel(dungeonSelectorPanelRoot, "Dungeon Selector Header Trim", new Vector2(0f, -78f), new Vector2(900f, 5f), new Color(0.86f, 0.56f, 0.22f, 0.92f));
+
+        if (dungeonSelectorTitleText == null)
+        {
+            dungeonSelectorTitleText = CreateRuntimeText(dungeonSelectorPanelRoot, "Dungeon Selector Title", "Dungeon Selector", 27, new Vector2(0f, -28f), new Vector2(820f, 42f));
+        }
+
+        StyleDungeonPanelTitle(dungeonSelectorTitleText);
+
+        dungeonSelectorCardsRoot = EnsureRuntimePanel(dungeonSelectorPanelRoot, "Dungeon Selector Cards", new Vector2(0f, -108f), new Vector2(890f, 166f), new Color(0.012f, 0.018f, 0.032f, 0.54f));
+        EnsureRuntimeDungeonSelectorCard(
+            ref goldDungeonButton,
+            ref goldDungeonTitleText,
+            ref goldDungeonProgressText,
+            ref goldDungeonText,
+            "Gold Dungeon Selector Card",
+            "gold_dungeon_set_banner",
+            "dungeon_portal",
+            GoldDungeonDefinition.dungeonId,
+            new Color(0.96f, 0.68f, 0.22f, 0.96f),
+            locked: false);
+        EnsureRuntimeDungeonSelectorCard(
+            ref essenceDungeonButton,
+            ref essenceDungeonTitleText,
+            ref essenceDungeonProgressText,
+            ref essenceDungeonText,
+            "Essence Dungeon Selector Card",
+            "essence_dungeon_set_banner",
+            "dungeon_essence",
+            EssenceDungeonDefinition.dungeonId,
+            new Color(0.55f, 0.34f, 1f, 0.96f),
+            locked: false);
+        EnsureRuntimeDungeonSelectorCard(
+            ref gearDungeonButton,
+            ref gearDungeonTitleText,
+            ref gearDungeonProgressText,
+            ref gearDungeonText,
+            "Gear Dungeon Selector Card",
+            "gear_dungeon_set_banner",
+            "dungeon_fire",
+            GearDungeonDefinition.dungeonId,
+            new Color(0.18f, 0.86f, 0.95f, 0.96f),
+            locked: false);
+        EnsureRuntimeFutureDungeonSelectorCard(
+            ref shardRiftDungeonButton,
+            ref shardRiftDungeonTitleText,
+            ref shardRiftDungeonProgressText,
+            ref shardRiftDungeonText,
+            "Shard Rift Dungeon Selector Card",
+            "dungeon_essence",
+            "Shard Rift",
+            new Color(0.74f, 0.34f, 1f, 0.6f));
+        EnsureRuntimeFutureDungeonSelectorCard(
+            ref ancientTowerDungeonButton,
+            ref ancientTowerDungeonTitleText,
+            ref ancientTowerDungeonProgressText,
+            ref ancientTowerDungeonText,
+            "Ancient Tower Dungeon Selector Card",
+            "dungeon_portal",
+            "Ancient Tower",
+            new Color(1f, 0.58f, 0.24f, 0.62f));
+
+        dungeonDetailRoot = EnsureRuntimePanel(dungeonSelectorPanelRoot, "Dungeon Detail Panel", new Vector2(-144f, -304f), new Vector2(602f, 586f), new Color(0.025f, 0.03f, 0.046f, 0.97f));
+        EnsureRuntimePanel(dungeonDetailRoot, "Dungeon Detail Top Trim", new Vector2(0f, -8f), new Vector2(566f, 5f), new Color(0.86f, 0.56f, 0.22f, 0.9f));
+        EnsureRuntimePanel(dungeonDetailRoot, "Dungeon Detail Banner Shade", new Vector2(0f, -152f), new Vector2(560f, 244f), new Color(0.02f, 0.018f, 0.018f, 0.42f));
+        if (dungeonDetailBannerImage == null)
+        {
+            dungeonDetailBannerImage = CreateRuntimeRawImage(dungeonDetailRoot, "Dungeon Detail Banner", LoadRuntimeTexture("gold_dungeon_set_banner"), new Vector2(0f, -42f), new Vector2(560f, 246f), new Vector2(0.5f, 1f));
+        }
+
+        EnsureRuntimePanel(dungeonDetailRoot, "Dungeon Detail Info Plate", new Vector2(0f, -330f), new Vector2(560f, 172f), new Color(0.07f, 0.042f, 0.026f, 0.92f));
+        if (dungeonDetailBossImage == null)
+        {
+            dungeonDetailBossImage = CreateRuntimeRawImage(dungeonDetailRoot, "Dungeon Detail Boss Preview", LoadCombatTexture("enemy_gold", "idle", 0, "enemy_gold"), new Vector2(192f, -238f), new Vector2(136f, 136f), new Vector2(0.5f, 1f));
+        }
+
+        if (dungeonDetailTitleText == null)
+        {
+            dungeonDetailTitleText = CreateRuntimeText(dungeonDetailRoot, "Dungeon Detail Title", string.Empty, 31, new Vector2(-72f, -314f), new Vector2(392f, 46f));
+        }
+
+        StyleDungeonDetailTitle(dungeonDetailTitleText);
+
+        if (dungeonDetailMetaText == null)
+        {
+            dungeonDetailMetaText = CreateRuntimeText(dungeonDetailRoot, "Dungeon Detail Meta", string.Empty, 20, new Vector2(-72f, -360f), new Vector2(392f, 64f));
+        }
+
+        StyleDungeonDetailMeta(dungeonDetailMetaText);
+
+        if (dungeonDetailRewardsText == null)
+        {
+            dungeonDetailRewardsText = CreateRuntimeText(dungeonDetailRoot, "Dungeon Detail Rewards", string.Empty, 19, new Vector2(0f, -438f), new Vector2(532f, 64f));
+        }
+
+        StyleDungeonDetailRewards(dungeonDetailRewardsText);
+
+        if (dungeonDetailRunButton == null)
+        {
+            dungeonDetailRunButton = CreateRuntimeButton(dungeonDetailRoot, "Dungeon Run Button", "Run", 0f, -516f, 312f, 66f);
+            dungeonDetailRunButtonText = dungeonDetailRunButton.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        }
+
+        StyleDungeonRunButton(dungeonDetailRunButton);
+        dungeonDetailRunButtonText = dungeonDetailRunButton.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        StyleDungeonRunButtonLabel(dungeonDetailRunButtonText);
+
+        dungeonFloorListRoot = EnsureRuntimePanel(dungeonSelectorPanelRoot, "Dungeon Floor List", new Vector2(324f, -304f), new Vector2(274f, 586f), new Color(0.024f, 0.028f, 0.044f, 0.97f));
+        EnsureRuntimePanel(dungeonFloorListRoot, "Dungeon Floor Header", new Vector2(0f, -8f), new Vector2(238f, 5f), new Color(0.31f, 0.94f, 0.92f, 0.78f));
+        EnsureRuntimeFloorEntries();
+
+        dungeonFlowHintRoot = EnsureRuntimePanel(dungeonSelectorPanelRoot, "Dungeon Flow Hint", new Vector2(0f, -934f), new Vector2(884f, 88f), new Color(0.04f, 0.028f, 0.026f, 0.94f));
+        EnsureRuntimePanel(dungeonFlowHintRoot, "Dungeon Flow Hint Accent", new Vector2(0f, -7f), new Vector2(846f, 4f), new Color(0.86f, 0.56f, 0.22f, 0.9f));
+        if (dungeonFlowHintText == null)
+        {
+            dungeonFlowHintText = CreateRuntimeText(dungeonFlowHintRoot, "Dungeon Flow Hint Text", string.Empty, 20, new Vector2(0f, -22f), new Vector2(808f, 52f));
+        }
+
+        StyleDungeonFlowHint(dungeonFlowHintText);
+    }
+
+    private void HideRuntimeDungeonWorldMap()
+    {
+        if (dungeonMapViewportRoot != null)
+        {
+            dungeonMapViewportRoot.gameObject.SetActive(false);
+        }
+
+        if (dungeonWorldMapRoot != null)
+        {
+            dungeonWorldMapRoot.gameObject.SetActive(false);
+        }
+
+        SetComponentActive(dungeonMapZoomInButton, false);
+        SetComponentActive(dungeonMapZoomOutButton, false);
+    }
+
+    private void EnsureRuntimeDungeonSelectorCard(
+        ref Button button,
+        ref TMP_Text titleText,
+        ref TMP_Text progressText,
+        ref TMP_Text detailText,
+        string cardName,
+        string bannerTextureName,
+        string iconTextureName,
+        string dungeonId,
+        Color accentColor,
+        bool locked)
+    {
+        EnsureRuntimeDungeonSelectorCard(
+            ref button,
+            ref titleText,
+            ref progressText,
+            ref detailText,
+            cardName,
+            bannerTextureName,
+            iconTextureName,
+            GetDungeonSelectorTitle(dungeonId),
+            string.Empty,
+            string.Empty,
+            accentColor,
+            locked);
+
+        var definition = ResolveDungeonDefinition(dungeonId);
+        RefreshDungeonSelectorCardUi(definition, GetDungeonFloor(dungeonId), titleText, progressText, detailText);
+    }
+
+    private void EnsureRuntimeFutureDungeonSelectorCard(
+        ref Button button,
+        ref TMP_Text titleText,
+        ref TMP_Text progressText,
+        ref TMP_Text detailText,
+        string cardName,
+        string iconTextureName,
+        string title,
+        Color accentColor)
+    {
+        EnsureRuntimeDungeonSelectorCard(
+            ref button,
+            ref titleText,
+            ref progressText,
+            ref detailText,
+            cardName,
+            "gear_dungeon_set_banner",
+            iconTextureName,
+            title,
+            "Locked",
+            "Future dungeon",
+            accentColor,
+            locked: true);
+    }
+
+    private void EnsureRuntimeDungeonSelectorCard(
+        ref Button button,
+        ref TMP_Text titleText,
+        ref TMP_Text progressText,
+        ref TMP_Text detailText,
+        string cardName,
+        string bannerTextureName,
+        string iconTextureName,
+        string title,
+        string progress,
+        string detail,
+        Color accentColor,
+        bool locked)
+    {
+        if (dungeonSelectorCardsRoot == null)
+        {
+            return;
+        }
+
+        if (button == null)
+        {
+            button = CreateRuntimeButton(dungeonSelectorCardsRoot, cardName, string.Empty, 0f, 0f, 160f, 146f);
+        }
+        else
+        {
+            button.transform.SetParent(dungeonSelectorCardsRoot, false);
+            button.name = cardName;
+        }
+
+        SetRuntimeRect(button.GetComponent<RectTransform>(), Vector2.zero, new Vector2(160f, 146f), new Vector2(0.5f, 1f));
+        StyleDungeonSelectorCardButton(button, accentColor, locked);
+        HideChildObjects(button.transform);
+
+        EnsureRuntimePanel(button.transform, "Selector Card Back", new Vector2(0f, -2f), new Vector2(154f, 142f), new Color(0.028f, 0.024f, 0.028f, locked ? 0.74f : 0.96f));
+        EnsureRuntimePanel(button.transform, "Selector Card Accent", new Vector2(0f, -6f), new Vector2(146f, 5f), accentColor);
+        var banner = EnsureRuntimeChildRawImage(button.transform, "Selector Banner", LoadRuntimeTexture(bannerTextureName), new Vector2(0f, -14f), new Vector2(142f, 54f));
+        banner.color = locked ? new Color(0.45f, 0.45f, 0.5f, 0.68f) : new Color(1f, 1f, 1f, 0.92f);
+        EnsureRuntimePanel(button.transform, "Selector Banner Shade", new Vector2(0f, -46f), new Vector2(142f, 28f), new Color(0f, 0f, 0f, locked ? 0.58f : 0.34f));
+
+        var icon = EnsureRuntimeChildRawImage(button.transform, "Dungeon Selector Icon", LoadRuntimeTexture(iconTextureName), new Vector2(-50f, -52f), new Vector2(42f, 42f));
+        icon.color = locked ? new Color(0.6f, 0.6f, 0.66f, 0.72f) : Color.white;
+
+        titleText = EnsureRuntimeChildText(button.transform, "Dungeon Set Title", title, 18, new Vector2(20f, -54f), new Vector2(108f, 28f));
+        StyleDungeonSelectorTitle(titleText, locked);
+        progressText = EnsureRuntimeChildText(button.transform, "Dungeon Set Progress", progress, 15, new Vector2(0f, -86f), new Vector2(134f, 22f));
+        StyleDungeonSelectorProgress(progressText, locked);
+        detailText = EnsureRuntimeChildText(button.transform, "Dungeon Set Detail", detail, 13, new Vector2(0f, -111f), new Vector2(136f, 24f));
+        StyleDungeonSelectorDetail(detailText, locked);
+
+        button.interactable = !locked;
+    }
+
+    private void EnsureRuntimeFloorEntries()
+    {
+        if (dungeonFloorListRoot == null)
+        {
+            return;
+        }
+
+        var title = EnsureRuntimeChildText(dungeonFloorListRoot, "Dungeon Floor List Title", "Floors", 22, new Vector2(0f, -28f), new Vector2(232f, 34f));
+        title.fontStyle = FontStyles.Bold;
+        title.color = new Color(1f, 0.9f, 0.68f);
+        title.enableAutoSizing = true;
+        title.fontSizeMin = 15;
+        title.fontSizeMax = 22;
+        title.textWrappingMode = TextWrappingModes.NoWrap;
+
+        if (dungeonFloorButtons == null || dungeonFloorButtons.Length != 4)
+        {
+            dungeonFloorButtons = new Button[4];
+            dungeonFloorAccentImages = new Image[4];
+            dungeonFloorTitleTexts = new TMP_Text[4];
+            dungeonFloorStatusTexts = new TMP_Text[4];
+            dungeonFloorActionTexts = new TMP_Text[4];
+        }
+
+        for (var i = 0; i < dungeonFloorButtons.Length; i++)
+        {
+            var y = -76f - i * 122f;
+            if (dungeonFloorButtons[i] == null)
+            {
+                dungeonFloorButtons[i] = CreateRuntimeButton(dungeonFloorListRoot, $"Dungeon Floor Entry {i + 1}", string.Empty, 0f, y, 236f, 108f);
+            }
+            else
+            {
+                dungeonFloorButtons[i].transform.SetParent(dungeonFloorListRoot, false);
+                dungeonFloorButtons[i].name = $"Dungeon Floor Entry {i + 1}";
+                SetRuntimeRect(dungeonFloorButtons[i].GetComponent<RectTransform>(), new Vector2(0f, y), new Vector2(236f, 108f), new Vector2(0.5f, 1f));
+            }
+
+            StyleDungeonFloorButton(dungeonFloorButtons[i]);
+            HideChildObjects(dungeonFloorButtons[i].transform);
+
+            dungeonFloorAccentImages[i] = EnsureRuntimePanel(dungeonFloorButtons[i].transform, "Floor Accent", new Vector2(-110f, -6f), new Vector2(8f, 92f), new Color(0.28f, 0.86f, 0.98f, 0.74f)).GetComponent<Image>();
+            dungeonFloorTitleTexts[i] = EnsureRuntimeChildText(dungeonFloorButtons[i].transform, "Floor Title", string.Empty, 18, new Vector2(12f, -16f), new Vector2(184f, 26f));
+            dungeonFloorStatusTexts[i] = EnsureRuntimeChildText(dungeonFloorButtons[i].transform, "Floor Status", string.Empty, 15, new Vector2(12f, -46f), new Vector2(184f, 24f));
+            dungeonFloorActionTexts[i] = EnsureRuntimeChildText(dungeonFloorButtons[i].transform, "Floor Action", string.Empty, 16, new Vector2(12f, -74f), new Vector2(184f, 24f));
+            StyleDungeonFloorText(dungeonFloorTitleTexts[i], 18);
+            StyleDungeonFloorText(dungeonFloorStatusTexts[i], 15);
+            StyleDungeonFloorText(dungeonFloorActionTexts[i], 16);
+        }
+    }
+
+    private static TMP_Text EnsureRuntimeChildText(Transform parent, string name, string value, int size, Vector2 anchoredPosition, Vector2 rectSize)
+    {
+        var text = parent.Find(name)?.GetComponent<TMP_Text>();
+        if (text == null)
+        {
+            text = CreateRuntimeText(parent, name, value, size, anchoredPosition, rectSize);
+        }
+        else
+        {
+            text.gameObject.SetActive(true);
+            text.text = value;
+            text.fontSize = size;
+            SetRuntimeRect(text.rectTransform, anchoredPosition, rectSize, new Vector2(0.5f, 1f));
+        }
+
+        return text;
+    }
+
+    private static RawImage EnsureRuntimeChildRawImage(Transform parent, string name, Texture texture, Vector2 anchoredPosition, Vector2 rectSize)
+    {
+        var rawImage = parent.Find(name)?.GetComponent<RawImage>();
+        if (rawImage == null)
+        {
+            rawImage = CreateRuntimeRawImage(parent, name, texture, anchoredPosition, rectSize, new Vector2(0.5f, 1f));
+        }
+        else
+        {
+            rawImage.gameObject.SetActive(true);
+            rawImage.texture = texture;
+            SetRuntimeRect(rawImage.rectTransform, anchoredPosition, rectSize, new Vector2(0.5f, 1f));
+        }
+
+        return rawImage;
+    }
+
+    private static void StyleDungeonPanelTitle(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(1f, 0.9f, 0.68f);
+        text.fontStyle = FontStyles.Bold;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 18;
+        text.fontSizeMax = 27;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.outlineColor = new Color(0.08f, 0.035f, 0.012f, 0.95f);
+        text.outlineWidth = 0.18f;
+    }
+
+    private static void StyleDungeonSelectorCardButton(Button button, Color accentColor, bool locked)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        var image = button.GetComponent<Image>();
+        if (image == null)
+        {
+            return;
+        }
+
+        image.sprite = null;
+        image.type = Image.Type.Simple;
+        image.color = locked
+            ? new Color(0.025f, 0.025f, 0.035f, 0.68f)
+            : new Color(Mathf.Clamp01(accentColor.r * 0.18f), Mathf.Clamp01(accentColor.g * 0.18f), Mathf.Clamp01(accentColor.b * 0.18f), 0.92f);
+        image.raycastTarget = true;
+        button.targetGraphic = image;
+    }
+
+    private static void StyleDungeonSelectorTitle(TMP_Text text, bool locked)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = locked ? new Color(0.72f, 0.72f, 0.76f, 0.86f) : new Color(1f, 0.91f, 0.68f);
+        text.fontStyle = FontStyles.Bold;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 12;
+        text.fontSizeMax = 18;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.outlineColor = new Color(0.04f, 0.025f, 0.012f, 0.96f);
+        text.outlineWidth = 0.13f;
+    }
+
+    private static void StyleDungeonSelectorProgress(TMP_Text text, bool locked)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = locked ? new Color(0.6f, 0.62f, 0.68f, 0.86f) : new Color(0.75f, 0.92f, 1f);
+        text.fontStyle = FontStyles.Bold;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 11;
+        text.fontSizeMax = 15;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+    }
+
+    private static void StyleDungeonSelectorDetail(TMP_Text text, bool locked)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = locked ? new Color(0.55f, 0.56f, 0.62f, 0.86f) : new Color(0.92f, 0.9f, 0.8f);
+        text.fontStyle = FontStyles.Bold;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 10;
+        text.fontSizeMax = 13;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+    }
+
+    private static void StyleDungeonDetailTitle(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(1f, 0.9f, 0.66f);
+        text.fontStyle = FontStyles.Bold;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 20;
+        text.fontSizeMax = 31;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.outlineColor = new Color(0.08f, 0.035f, 0.012f, 0.95f);
+        text.outlineWidth = 0.16f;
+    }
+
+    private static void StyleDungeonDetailMeta(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(0.76f, 0.92f, 1f);
+        text.fontStyle = FontStyles.Bold;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 14;
+        text.fontSizeMax = 20;
+        text.textWrappingMode = TextWrappingModes.Normal;
+    }
+
+    private static void StyleDungeonDetailRewards(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+        text.fontStyle = FontStyles.Bold;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 13;
+        text.fontSizeMax = 19;
+        text.textWrappingMode = TextWrappingModes.Normal;
+    }
+
+    private static void StyleDungeonRunButton(Button button)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        var image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            image.sprite = null;
+            image.color = new Color(0.03f, 0.66f, 0.82f, 0.98f);
+            image.raycastTarget = true;
+            button.targetGraphic = image;
+        }
+    }
+
+    private static void StyleDungeonRunButtonLabel(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.fontSize = 27;
+        text.fontSizeMin = 16;
+        text.fontSizeMax = 27;
+        text.enableAutoSizing = true;
+        text.fontStyle = FontStyles.Bold;
+        text.color = Color.white;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.outlineColor = new Color(0.02f, 0.05f, 0.06f, 0.95f);
+        text.outlineWidth = 0.18f;
+    }
+
+    private static void StyleDungeonFloorButton(Button button)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        var image = button.GetComponent<Image>();
+        if (image != null)
+        {
+            image.sprite = null;
+            image.color = new Color(0.045f, 0.056f, 0.082f, 0.94f);
+            image.raycastTarget = true;
+            button.targetGraphic = image;
+        }
+    }
+
+    private static void StyleDungeonFloorText(TMP_Text text, int maxSize)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+        text.fontStyle = FontStyles.Bold;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 11;
+        text.fontSizeMax = maxSize;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+    }
+
+    private static void StyleDungeonFlowHint(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(0.82f, 0.94f, 1f);
+        text.fontStyle = FontStyles.Bold;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 14;
+        text.fontSizeMax = 20;
+        text.textWrappingMode = TextWrappingModes.Normal;
     }
 
     private void EnsureRuntimeDungeonWorldMap()
@@ -18041,19 +18890,42 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (goldDungeonButton != null)
         {
             goldDungeonButton.onClick.RemoveListener(RunGoldDungeon);
-            goldDungeonButton.onClick.AddListener(RunGoldDungeon);
+            goldDungeonButton.onClick.RemoveListener(SelectGoldDungeonForPreview);
+            goldDungeonButton.onClick.AddListener(SelectGoldDungeonForPreview);
         }
 
         if (essenceDungeonButton != null)
         {
             essenceDungeonButton.onClick.RemoveListener(RunEssenceDungeon);
-            essenceDungeonButton.onClick.AddListener(RunEssenceDungeon);
+            essenceDungeonButton.onClick.RemoveListener(SelectEssenceDungeonForPreview);
+            essenceDungeonButton.onClick.AddListener(SelectEssenceDungeonForPreview);
         }
 
         if (gearDungeonButton != null)
         {
             gearDungeonButton.onClick.RemoveListener(RunGearDungeon);
-            gearDungeonButton.onClick.AddListener(RunGearDungeon);
+            gearDungeonButton.onClick.RemoveListener(SelectGearDungeonForPreview);
+            gearDungeonButton.onClick.AddListener(SelectGearDungeonForPreview);
+        }
+
+        if (dungeonDetailRunButton != null)
+        {
+            dungeonDetailRunButton.onClick.RemoveListener(RunSelectedDungeon);
+            dungeonDetailRunButton.onClick.AddListener(RunSelectedDungeon);
+        }
+
+        if (dungeonFloorButtons != null)
+        {
+            for (var i = 0; i < dungeonFloorButtons.Length; i++)
+            {
+                if (dungeonFloorButtons[i] == null)
+                {
+                    continue;
+                }
+
+                dungeonFloorButtons[i].onClick.RemoveListener(RunSelectedDungeon);
+                dungeonFloorButtons[i].onClick.AddListener(RunSelectedDungeon);
+            }
         }
     }
 
@@ -18062,17 +18934,72 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (goldDungeonButton != null)
         {
             goldDungeonButton.onClick.RemoveListener(RunGoldDungeon);
+            goldDungeonButton.onClick.RemoveListener(SelectGoldDungeonForPreview);
         }
 
         if (essenceDungeonButton != null)
         {
             essenceDungeonButton.onClick.RemoveListener(RunEssenceDungeon);
+            essenceDungeonButton.onClick.RemoveListener(SelectEssenceDungeonForPreview);
         }
 
         if (gearDungeonButton != null)
         {
             gearDungeonButton.onClick.RemoveListener(RunGearDungeon);
+            gearDungeonButton.onClick.RemoveListener(SelectGearDungeonForPreview);
         }
+
+        if (dungeonDetailRunButton != null)
+        {
+            dungeonDetailRunButton.onClick.RemoveListener(RunSelectedDungeon);
+        }
+
+        if (dungeonFloorButtons != null)
+        {
+            for (var i = 0; i < dungeonFloorButtons.Length; i++)
+            {
+                if (dungeonFloorButtons[i] != null)
+                {
+                    dungeonFloorButtons[i].onClick.RemoveListener(RunSelectedDungeon);
+                }
+            }
+        }
+    }
+
+    private void SelectGoldDungeonForPreview()
+    {
+        SelectDungeonForPreview(GoldDungeonDefinition.dungeonId);
+    }
+
+    private void SelectEssenceDungeonForPreview()
+    {
+        SelectDungeonForPreview(EssenceDungeonDefinition.dungeonId);
+    }
+
+    private void SelectGearDungeonForPreview()
+    {
+        SelectDungeonForPreview(GearDungeonDefinition.dungeonId);
+    }
+
+    private void SelectDungeonForPreview(string dungeonId)
+    {
+        if (campaignFightInProgress)
+        {
+            return;
+        }
+
+        selectedDungeonId = ResolveDungeonDefinition(dungeonId).dungeonId;
+        RefreshDungeonUi();
+    }
+
+    private void RunSelectedDungeon()
+    {
+        if (campaignFightInProgress)
+        {
+            return;
+        }
+
+        ShowDungeonFormation(selectedDungeonId);
     }
 
     private static void StyleDungeonMapZoomButton(Button button)
@@ -18941,46 +19868,58 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        MoveUiElement(dungeonsHeaderText, dungeonsPanel, new Vector2(0, -132), new Vector2(860, 54));
-        MoveUiElement(dungeonMapViewportRoot, dungeonsPanel, DungeonMapViewportPosition, DungeonMapViewportSize);
-        if (dungeonMapViewportRoot != null)
-        {
-            dungeonMapViewportRoot.SetAsFirstSibling();
-        }
-
-        if (dungeonWorldMapRoot != null)
-        {
-            dungeonWorldMapRoot.SetParent(dungeonMapViewportRoot, false);
-            SetRuntimeRect(dungeonWorldMapRoot, dungeonWorldMapRoot.anchoredPosition, DungeonWorldMapSize, new Vector2(0.5f, 1f));
-            SetDungeonMapPosition(dungeonWorldMapRoot.anchoredPosition);
-        }
-
-        MoveUiElement(goldDungeonButton, dungeonWorldMapRoot != null ? dungeonWorldMapRoot.gameObject : dungeonsPanel, GoldDungeonMapPosition, new Vector2(360, 230));
-        MoveUiElement(essenceDungeonButton, dungeonWorldMapRoot != null ? dungeonWorldMapRoot.gameObject : dungeonsPanel, EssenceDungeonMapPosition, new Vector2(360, 230));
-        MoveUiElement(gearDungeonButton, dungeonWorldMapRoot != null ? dungeonWorldMapRoot.gameObject : dungeonsPanel, GearDungeonMapPosition, new Vector2(360, 230));
-        MoveUiElement(dungeonMapZoomInButton, dungeonsPanel, new Vector2(434f, -228f), new Vector2(62f, 62f));
-        MoveUiElement(dungeonMapZoomOutButton, dungeonsPanel, new Vector2(434f, -300f), new Vector2(62f, 62f));
-        MoveUiElement(runtimeDungeonResultText, dungeonsPanel, new Vector2(0, -1092), new Vector2(820, 62));
-        ApplyDungeonCardsButtonSkin();
+        HideRuntimeDungeonWorldMap();
+        MoveUiElement(dungeonsHeaderText, dungeonsPanel, new Vector2(0, -130), new Vector2(860, 48));
+        MoveUiElement(dungeonsSubtitleText, dungeonsPanel, new Vector2(0, -176), new Vector2(840, 34));
+        MoveUiElement(dungeonSelectorPanelRoot, dungeonsPanel, new Vector2(0f, -224f), new Vector2(940f, 1046f));
+        MoveUiElement(dungeonSelectorTitleText, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(0f, -28f), new Vector2(820f, 42f));
+        MoveUiElement(dungeonSelectorCardsRoot, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(0f, -108f), new Vector2(890f, 166f));
+        LayoutDungeonSelectorCard(goldDungeonButton, -352f);
+        LayoutDungeonSelectorCard(essenceDungeonButton, -176f);
+        LayoutDungeonSelectorCard(gearDungeonButton, 0f);
+        LayoutDungeonSelectorCard(shardRiftDungeonButton, 176f);
+        LayoutDungeonSelectorCard(ancientTowerDungeonButton, 352f);
+        MoveUiElement(dungeonDetailRoot, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(-144f, -304f), new Vector2(602f, 586f));
+        MoveUiElement(dungeonFloorListRoot, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(324f, -304f), new Vector2(274f, 586f));
+        MoveUiElement(dungeonFlowHintRoot, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(0f, -934f), new Vector2(884f, 88f));
+        MoveUiElement(runtimeDungeonResultText, dungeonsPanel, new Vector2(0, -1296), new Vector2(820, 58));
         if (dungeonsHeaderText != null)
         {
             dungeonsHeaderText.transform.SetAsLastSibling();
         }
 
-        if (dungeonMapZoomInButton != null)
+        if (dungeonsSubtitleText != null)
         {
-            dungeonMapZoomInButton.transform.SetAsLastSibling();
+            dungeonsSubtitleText.transform.SetAsLastSibling();
         }
 
-        if (dungeonMapZoomOutButton != null)
+        if (dungeonSelectorPanelRoot != null)
         {
-            dungeonMapZoomOutButton.transform.SetAsLastSibling();
+            dungeonSelectorPanelRoot.SetAsLastSibling();
         }
 
         if (runtimeDungeonResultText != null)
         {
             runtimeDungeonResultText.transform.SetAsLastSibling();
         }
+    }
+
+    private void LayoutDungeonSelectorCard(Button button, float xPosition)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        MoveUiElement(button, dungeonSelectorCardsRoot != null ? dungeonSelectorCardsRoot.gameObject : dungeonsPanel, new Vector2(xPosition, -12f), new Vector2(160f, 146f));
+        SetNamedChildRuntimeRect(button.GetComponent<RectTransform>(), "Selector Card Back", new Vector2(0f, -2f), new Vector2(154f, 142f), new Vector2(0.5f, 1f));
+        SetNamedChildRuntimeRect(button.GetComponent<RectTransform>(), "Selector Card Accent", new Vector2(0f, -6f), new Vector2(146f, 5f), new Vector2(0.5f, 1f));
+        SetNamedChildRuntimeRect(button.GetComponent<RectTransform>(), "Selector Banner", new Vector2(0f, -14f), new Vector2(142f, 54f), new Vector2(0.5f, 1f));
+        SetNamedChildRuntimeRect(button.GetComponent<RectTransform>(), "Selector Banner Shade", new Vector2(0f, -46f), new Vector2(142f, 28f), new Vector2(0.5f, 1f));
+        SetNamedChildRuntimeRect(button.GetComponent<RectTransform>(), "Dungeon Selector Icon", new Vector2(-50f, -52f), new Vector2(42f, 42f), new Vector2(0.5f, 1f));
+        SetNamedChildRuntimeRect(button.GetComponent<RectTransform>(), "Dungeon Set Title", new Vector2(20f, -54f), new Vector2(108f, 28f), new Vector2(0.5f, 1f));
+        SetNamedChildRuntimeRect(button.GetComponent<RectTransform>(), "Dungeon Set Progress", new Vector2(0f, -86f), new Vector2(134f, 22f), new Vector2(0.5f, 1f));
+        SetNamedChildRuntimeRect(button.GetComponent<RectTransform>(), "Dungeon Set Detail", new Vector2(0f, -111f), new Vector2(136f, 24f), new Vector2(0.5f, 1f));
     }
 
     private void LayoutHeroesScreen()
@@ -22334,9 +23273,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         HideLegacyRuntimeDungeonTower();
         runtimeArt.ApplyButtonStyle(
             fightButton,
-            goldDungeonButton,
-            essenceDungeonButton,
-            gearDungeonButton,
             upgradeButton,
             heroUpgradeButton,
             heroAscendButton,
@@ -22399,7 +23335,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         runtimeArt.ApplyButtonStyle(dailyMissionButtons);
         runtimeArt.ApplyButtonStyle(battlePassRewardButtons);
         runtimeArt.ApplyButtonStyle("ui_button_blue", fightButton, homeBeginButton);
-        ApplyDungeonCardsButtonSkin();
+        StyleDungeonRunButton(dungeonDetailRunButton);
+        RefreshDungeonUi();
     }
 
     private void EnsureRuntimeDebugUi()
