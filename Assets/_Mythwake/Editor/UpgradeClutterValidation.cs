@@ -42,6 +42,7 @@ public static class UpgradeClutterValidation
 
         InvokePrivate(controller, "EnsureRuntimeDebugUi");
         InvokePrivate(controller, "EnsureRuntimeScreenLayout");
+        InvokePrivate(controller, "EnsureRuntimeBackendUi");
         InvokePrivate(controller, "EnsureRuntimeInputStack");
         InvokePrivate(controller, "RegisterNavigation");
         InvokePrivate(controller, "RegisterHeroDetailGearButtons");
@@ -1393,6 +1394,49 @@ public static class UpgradeClutterValidation
         RequireToolButtonInPanel(controller, "debugEssenceButton", shopPanel);
         RequireToolButtonInPanel(controller, "debugGemsButton", shopPanel);
         RequireToolButtonInPanel(controller, "debugAccessoryButton", shopPanel);
+        ValidateBackendAccountPanel(controller, shopPanel);
+    }
+
+    private static void ValidateBackendAccountPanel(IdlePrototypeController controller, GameObject shopPanel)
+    {
+        InvokePrivate(controller, "RefreshBackendUi");
+
+        var backendStatus = RequireObjectField<TMP_Text>(controller, "backendStatusText");
+        RequireInsidePanel(shopPanel, backendStatus.gameObject);
+        if (!backendStatus.text.Contains("Mode ") || (!backendStatus.text.Contains("Email") && !backendStatus.text.Contains("Guest") && !backendStatus.text.Contains("Account")))
+        {
+            throw new InvalidOperationException($"Backend status should expose account/session mode. Got '{backendStatus.text}'.");
+        }
+        AssertTextFits(backendStatus, backendStatus.name, "Backend status copy");
+
+        var emailInput = RequireObjectField<TMP_InputField>(controller, "backendEmailInput");
+        var passwordInput = RequireObjectField<TMP_InputField>(controller, "backendPasswordInput");
+        RequireInsidePanel(shopPanel, emailInput.gameObject);
+        RequireInsidePanel(shopPanel, passwordInput.gameObject);
+        RequireInputPlaceholder(emailInput, "email@example.com", "Backend email input");
+        RequireInputPlaceholder(passwordInput, "password", "Backend password input");
+
+        var registerButton = RequireButtonField(controller, "backendEmailRegisterButton");
+        var loginButton = RequireButtonField(controller, "backendEmailLoginButton");
+        var logoutButton = RequireButtonField(controller, "backendLogoutButton");
+        var guestButton = RequireButtonField(controller, "backendLoginButton");
+        RequireToolButtonInPanel(controller, "backendEmailRegisterButton", shopPanel);
+        RequireToolButtonInPanel(controller, "backendEmailLoginButton", shopPanel);
+        RequireToolButtonInPanel(controller, "backendLogoutButton", shopPanel);
+        AssertButtonLabel(registerButton, "Register", "Backend email register button should keep tester-facing copy.");
+        AssertButtonLabel(loginButton, "Login", "Backend email login button should keep tester-facing copy.");
+        AssertButtonLabel(logoutButton, "Logout", "Backend logout button should keep tester-facing copy.");
+        AssertButtonLabel(guestButton, "Guest", "Backend guest button should stay available.");
+    }
+
+    private static void RequireInputPlaceholder(TMP_InputField input, string expected, string label)
+    {
+        if (!(input.placeholder is TMP_Text placeholderText) || !string.Equals(placeholderText.text, expected, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"{label} placeholder should be '{expected}'.");
+        }
+
+        AssertTextFits(placeholderText, input.name, $"{label} placeholder");
     }
 
     private static void RequireToolButtonInPanel(IdlePrototypeController controller, string fieldName, GameObject panel)

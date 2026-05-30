@@ -18,6 +18,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     private readonly Dictionary<string, string> pendingActionKeys = new Dictionary<string, string>();
     private string cachedSessionToken;
     private string cachedPlayerId;
+    private string cachedAccountKind;
     private long cachedStateRevision = -1;
     private MythwakeServerClockDto lastServerClock;
     private DateTime lastServerClockUtc;
@@ -25,10 +26,13 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     private bool hasServerClock;
     private const string SessionTokenCacheKey = "Mythwake.Backend.SessionToken";
     private const string PlayerIdCacheKey = "Mythwake.Backend.PlayerId";
+    private const string AccountKindCacheKey = "Mythwake.Backend.AccountKind";
     private const string StateRevisionCacheKey = "Mythwake.Backend.StateRevision";
     private const string DefinitionsJsonCacheKey = "Mythwake.Backend.Definitions.Json";
     private const string DefinitionsETagCacheKey = "Mythwake.Backend.Definitions.ETag";
     private const string DefinitionsContentHashCacheKey = "Mythwake.Backend.Definitions.ContentHash";
+    private const string AccountKindGuest = "guest";
+    private const string AccountKindEmail = "email";
 
     public string BaseUrl
     {
@@ -62,7 +66,22 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         }
     }
 
+    public string AccountKind
+    {
+        get
+        {
+            if (cachedAccountKind == null)
+            {
+                cachedAccountKind = PlayerPrefs.GetString(AccountKindCacheKey, string.Empty);
+            }
+
+            return cachedAccountKind;
+        }
+    }
+
     public bool HasSession => !string.IsNullOrWhiteSpace(SessionToken);
+    public bool IsEmailAccount => string.Equals(AccountKind, AccountKindEmail, StringComparison.OrdinalIgnoreCase);
+    public bool IsGuestAccount => string.Equals(AccountKind, AccountKindGuest, StringComparison.OrdinalIgnoreCase);
     public bool HasServerClock => hasServerClock;
     public long StateRevision
     {
@@ -82,9 +101,11 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     {
         cachedSessionToken = string.Empty;
         cachedPlayerId = string.Empty;
+        cachedAccountKind = string.Empty;
         cachedStateRevision = 0;
         PlayerPrefs.DeleteKey(SessionTokenCacheKey);
         PlayerPrefs.DeleteKey(PlayerIdCacheKey);
+        PlayerPrefs.DeleteKey(AccountKindCacheKey);
         PlayerPrefs.DeleteKey(StateRevisionCacheKey);
         PlayerPrefs.Save();
     }
@@ -113,7 +134,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         {
             if (success)
             {
-                StoreSession(response);
+                StoreSession(response, AccountKindGuest);
                 StoreStateRevision(response.playerSnapshot);
             }
 
@@ -349,7 +370,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         {
             if (success)
             {
-                StoreSession(response);
+                StoreSession(response, AccountKindEmail);
                 StoreStateRevision(response.playerSnapshot);
             }
 
@@ -449,6 +470,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         var requestError = string.Empty;
         var responseCode = 0L;
         var responseData = default(T);
+        var hadEmailSession = IsEmailAccount;
 
         yield return SendJsonWithStatus<T>(createRequest(), (success, error, statusCode, data) =>
         {
@@ -465,6 +487,12 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         }
 
         ClearSession();
+        if (hadEmailSession)
+        {
+            completed?.Invoke(false, "Email session expired. Please login again.", default(T));
+            yield break;
+        }
+
         loginSuccess = false;
         loginError = string.Empty;
         yield return GuestAuth((success, error, _) =>
@@ -774,10 +802,11 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     private const long httpStatusNotModified = 304;
     private const long httpStatusUnauthorized = 401;
 
-    private void StoreSession(MythwakeGuestAuthResponseDto response)
+    private void StoreSession(MythwakeGuestAuthResponseDto response, string accountKind)
     {
         cachedSessionToken = response.sessionToken ?? string.Empty;
         cachedPlayerId = response.playerId ?? string.Empty;
+        cachedAccountKind = string.IsNullOrWhiteSpace(accountKind) ? string.Empty : accountKind;
 
         if (string.IsNullOrWhiteSpace(cachedSessionToken))
         {
@@ -789,6 +818,10 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(cachedPlayerId))
         {
             PlayerPrefs.SetString(PlayerIdCacheKey, cachedPlayerId);
+        }
+        if (!string.IsNullOrWhiteSpace(cachedAccountKind))
+        {
+            PlayerPrefs.SetString(AccountKindCacheKey, cachedAccountKind);
         }
         PlayerPrefs.Save();
     }

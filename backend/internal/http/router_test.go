@@ -702,6 +702,25 @@ func TestEmailRegisterRejectsDuplicateEmail(t *testing.T) {
 	}
 }
 
+func TestEmailRegisterRejectsInvalidEmail(t *testing.T) {
+	handler := newTestHandler()
+
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/auth/email/register", strings.NewReader(`{"email":"not-an-email","password":"tester-password-1"}`))
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected invalid email status 400, got %d", response.Code)
+	}
+
+	var body api.ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode invalid email response: %v", err)
+	}
+	if body.ErrorCode != "invalid_email" {
+		t.Fatalf("expected invalid email error, got %#v", body)
+	}
+}
+
 func TestEmailLoginRejectsWrongPassword(t *testing.T) {
 	handler := newTestHandler()
 

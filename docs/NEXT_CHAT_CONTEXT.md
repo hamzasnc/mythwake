@@ -31,6 +31,7 @@ Latest known pushed commit before the 0.2.159 continuation:
 - `24b2ab4 Rework battle formation mockup`
 
 Current continuation:
+- Prototype `0.2.166` / Backend `0.2.59` makes the durable tester-account slice testable from Unity. The Shop Backend panel now has Email/Password inputs plus Register, Login, and Logout. Email Register/Login store the normal Bearer session, cache the account kind as Email, enable Server Mode, call `/client/bootstrap`, and apply the returned server player snapshot. Logout clears the cached session and turns Server Mode off without deleting account progress. Guest auth still works for smoke/dev, while Email-session `401`s ask the tester to login again instead of silently creating a fresh Guest player. Upgrade Clutter / Current Slice validation covers the Account panel labels, placeholders, status copy, and text fit. APK `Builds\Android\Mythwake-0.2.166-email-login.apk` builds, installs, and cold-launches in MuMuPlayer with `TotalTime 747 ms` / `WaitTime 749 ms`.
 - Prototype `0.2.165` / Backend `0.2.59` starts the durable tester-account slice. Backend Email + Password auth now has `POST /auth/email/register` and `POST /auth/email/login`, stores salted PBKDF2-SHA256 password hashes in `account.player_email_credentials` via migration `0030_email_password_auth.sql`, and issues the same Bearer session/player snapshot response shape as Guest auth. Unity has Email register/login client helpers plus clearer Backend/Account copy: `Guest`, `Dev Reset`, Local/Server mode, Guest Session status, and visible Player ID. `docs/TESTER_ACCOUNTS.md` documents why testers can start at zero, how Guest/Email/Google fit together, and the next Unity UI step.
 - Prototype `0.2.164` is the improved Tester Build 0.1 handoff for the current solo tester while keeping later multi-tester needs explicit. APK `Builds\Android\Mythwake-0.2.164-tester-build-0.1.apk` builds and installs in MuMuPlayer. The launcher app icon now uses `Mythwake_icon_transparent.png` through `Assets/_Mythwake/Branding/Mythwake_icon_launcher.png`; `Mythwake_logo_transparent.png` remains better suited for future splash/about branding because it is wide and text-heavy at small icon sizes. MuMu smoke covered launcher icon, Home, Formation, Fight Result/Continue, Hero Detail, Gear popup, Summon, Summon Result via debug Gems, and save/reload; screenshots/logcat are under `docs/screenshots/android/2026-05-29-tester-build-0-1-icon/`. Mobile UX validation now checks Android PlayerSettings icon wiring. Replacing/disabling the Unity startup splash logo caused a MuMu launch crash during the experiment and was rolled back, so only the launcher icon is changed in this stable build.
 - Prototype `0.2.163` prepares Tester Build 0.1 from the Build 0 review. The short priority/QA handoff is `docs/TESTER_BUILD_0_1.md`. The code changes are intentionally small: Formation hides the runtime FPS overlay, Gear/Hero disabled and copy-state labels are clearer, Dungeons default/future/flow labels are localized and validated, and Home current-stage preview starts with `Ziel:`. `scripts/check-unity-csharp.cmd` and `scripts/check-unity-current-slice.cmd` pass after these code changes. APK `Builds\Android\Mythwake-0.2.163-tester-build-0.1.apk` builds, installs, and launches in MuMuPlayer with cold `TotalTime 995 ms` / `WaitTime 999 ms`; screenshots and filtered Logcat are under `docs/screenshots/android/2026-05-29-tester-build-0-1/`.
@@ -82,7 +83,7 @@ Current continuation:
 - Fallback 1080x1920 screenshots were captured under ignored local artifact path `Builds\Android\portrait-screenshots\` for Home, Home stage detail, Home patrol info, Village, Fast Rewards, Hero Detail, Gear, Summon, Summon result, Formation, and visible Fight. Ravik/Paladin preview rigs now apply their preview pose immediately, and their Formation/Fight scales were reduced so the first visible frame no longer overfills the portrait fight area.
 - Latest Prototype `0.2.137` client checks pass: `scripts/check-unity-csharp.cmd`, `scripts/check-unity-current-slice.cmd`, `scripts/build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.137.apk`, `scripts/capture-portrait-screenshots.cmd -OutputDirectory Builds\Android\portrait-screenshots`, and `git diff --check` with only LF-to-CRLF working-copy warnings for touched Markdown files.
 - Prototype `0.2.136` fixes the Mobile UX Current Slice validator so it targets the actual runtime `Prototype UI` canvas instead of the old zero-scale legacy scene `Canvas`; `scripts/check-unity-current-slice.cmd`, `scripts/check-unity-csharp.cmd`, and `git diff --check` pass after this fix.
-- Future account direction is now partially implemented: durable tester accounts have backend Email + Password registration/login, but still need a Unity UI flow before testers can use it in builds. Google Login through Play Store / Google Play Services should come later. Do not build full Google Login yet.
+- Future account direction is now partially implemented end to end: durable tester accounts have backend Email + Password registration/login and a small Unity Backend-panel UI. Google Login through Play Store / Google Play Services should come later. Do not build full Google Login yet.
 - Prototype `0.2.135` tightens the Android/mobile baseline by switching PlayerSettings to portrait 1080x1920, disabling landscape/upside-down autorotation and Android render-outside-safe-area, and adding `Mythwake/Validate Mobile UX` into Current Slice for portrait settings, CanvasScaler, version label fit, mobile nav touch targets, and core screen navigation.
 - A physical Android phone pass is still open for notch/gesture safe area and touch feel outside MuMu. The repo now has Android build, MuMu screenshot, and portrait screenshot fallback helpers, and the final batchmode Current Slice should be rerun after any further UI/code changes.
 - Prototype `0.2.134` / Backend `0.2.58` adds editable Village balance/admin fields across static backend definitions, `/definitions`, PostgreSQL migration `0029_village_balance_admin_fields.sql`, and `debug.v_common_village_building_balance`; Unity local fallback values now match backend Village balance, and the Village/Fast Rewards validators check labels, curves, formulas, mode compatibility, and local/server bonus display.
@@ -173,7 +174,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.165`
+- Prototype `0.2.166`
 - Save version `2`
 
 Important Unity scripts:
@@ -663,8 +664,9 @@ Good next asset tasks:
 ## Account/Auth Plan
 
 Future login methods:
-- Guest/dev currently exists.
-- Email + Password registration/login now exists in the backend; the next account step is a small Unity UI flow for testers.
+- Guest/dev currently exists and remains useful for smoke tests.
+- Email + Password registration/login now exists in the backend and in the Unity Backend-panel MVP.
+- Next account step: decide Guest-to-Email linking rules, then add password reset/email verification and eventually a proper first-run account screen.
 - Google Login through Play Store / Google Play Services comes later, after the Email + Password slice is stable.
 - Apple login remains a later iOS/platform-provider follow-up.
 

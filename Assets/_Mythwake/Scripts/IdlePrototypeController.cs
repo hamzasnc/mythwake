@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.165";
+    public const string PrototypeVersion = "0.2.166";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1089,6 +1089,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private TMP_Text backendStatusText;
     [SerializeField] private Button backendHealthButton;
     [SerializeField] private Button backendLoginButton;
+    [SerializeField] private TMP_InputField backendEmailInput;
+    [SerializeField] private TMP_InputField backendPasswordInput;
+    [SerializeField] private Button backendEmailRegisterButton;
+    [SerializeField] private Button backendEmailLoginButton;
+    [SerializeField] private Button backendLogoutButton;
     [SerializeField] private Button backendSyncButton;
     [SerializeField] private Button backendAfkButton;
     [SerializeField] private Button backendClockButton;
@@ -1847,6 +1852,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             backendLoginButton.onClick.AddListener(LoginBackend);
         }
 
+        if (backendEmailRegisterButton != null)
+        {
+            backendEmailRegisterButton.onClick.AddListener(RegisterBackendEmail);
+        }
+
+        if (backendEmailLoginButton != null)
+        {
+            backendEmailLoginButton.onClick.AddListener(LoginBackendEmail);
+        }
+
+        if (backendLogoutButton != null)
+        {
+            backendLogoutButton.onClick.AddListener(LogoutBackendSession);
+        }
+
         if (backendSyncButton != null)
         {
             backendSyncButton.onClick.AddListener(SyncBackendState);
@@ -2079,6 +2099,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendLoginButton != null)
         {
             backendLoginButton.onClick.RemoveListener(LoginBackend);
+        }
+
+        if (backendEmailRegisterButton != null)
+        {
+            backendEmailRegisterButton.onClick.RemoveListener(RegisterBackendEmail);
+        }
+
+        if (backendEmailLoginButton != null)
+        {
+            backendEmailLoginButton.onClick.RemoveListener(LoginBackendEmail);
+        }
+
+        if (backendLogoutButton != null)
+        {
+            backendLogoutButton.onClick.RemoveListener(LogoutBackendSession);
         }
 
         if (backendSyncButton != null)
@@ -3609,6 +3644,153 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         StartCoroutine(backendClient.GuestAuth(OnBackendLogin));
     }
 
+    public void RegisterBackendEmail()
+    {
+        EnsureRuntimeBackendClient();
+        if (backendClient == null)
+        {
+            SetBackendStatus("Email register failed: backend client unavailable.");
+            RefreshBackendUi();
+            return;
+        }
+
+        StartBackendEmailAuth("Backend: registering email account...", "Email register", backendClient.EmailRegister);
+    }
+
+    public void LoginBackendEmail()
+    {
+        EnsureRuntimeBackendClient();
+        if (backendClient == null)
+        {
+            SetBackendStatus("Email login failed: backend client unavailable.");
+            RefreshBackendUi();
+            return;
+        }
+
+        StartBackendEmailAuth("Backend: logging in email account...", "Email login", backendClient.EmailLogin);
+    }
+
+    public void LogoutBackendSession()
+    {
+        EnsureRuntimeBackendClient();
+        if (backendClient == null || !backendClient.HasSession)
+        {
+            backendClient?.ClearSession();
+            SetBackendGameplayEnabled(false);
+            SetBackendStatus("Logout: no active backend session. Server Mode off.");
+            RefreshUi();
+            RefreshBackendUi();
+            return;
+        }
+
+        if (!TryStartBackendRequest("Backend: logging out..."))
+        {
+            return;
+        }
+
+        StartCoroutine(backendClient.Logout(OnBackendLogout));
+    }
+
+    private void StartBackendEmailAuth(string requestStatus, string resultLabel, Func<string, string, Action<bool, string, MythwakeGuestAuthResponseDto>, IEnumerator> authCall)
+    {
+        var email = ReadBackendEmail();
+        var password = ReadBackendPassword();
+        if (!ValidateBackendEmailInputs(email, password, out var validationError))
+        {
+            SetBackendStatus(validationError);
+            RefreshBackendUi();
+            return;
+        }
+
+        if (!TryStartBackendRequest(requestStatus))
+        {
+            return;
+        }
+
+        StartCoroutine(BackendEmailAuthRoutine(resultLabel, email, password, authCall));
+    }
+
+    private IEnumerator BackendEmailAuthRoutine(string resultLabel, string email, string password, Func<string, string, Action<bool, string, MythwakeGuestAuthResponseDto>, IEnumerator> authCall)
+    {
+        var authSuccess = false;
+        var authError = string.Empty;
+        var authResponse = default(MythwakeGuestAuthResponseDto);
+        yield return authCall(email, password, (success, error, response) =>
+        {
+            authSuccess = success;
+            authError = error;
+            authResponse = response;
+        });
+
+        if (backendPasswordInput != null)
+        {
+            backendPasswordInput.text = string.Empty;
+        }
+
+        if (!authSuccess)
+        {
+            FinishBackendRequest($"{resultLabel} failed: {authError}");
+            yield break;
+        }
+
+        SetBackendGameplayEnabled(true);
+        if (authResponse.playerSnapshot.state.campaignStage > 0)
+        {
+            ApplyBackendSnapshot(authResponse.playerSnapshot);
+        }
+
+        var bootstrapSuccess = false;
+        var bootstrapError = string.Empty;
+        var bootstrap = default(MythwakeClientBootstrapDto);
+        yield return backendClient.GetClientBootstrap((success, error, response) =>
+        {
+            bootstrapSuccess = success;
+            bootstrapError = error;
+            bootstrap = response;
+        });
+
+        if (bootstrapSuccess)
+        {
+            backendDefinitions = bootstrap.definitions;
+            hasBackendDefinitions = !string.IsNullOrWhiteSpace(bootstrap.definitions.contentHash);
+            ApplyBackendSnapshot(bootstrap.playerSnapshot);
+            RefreshUi();
+            FinishBackendRequest($"{resultLabel}: {GetAccountPlayerId()}  Email Account  Server Mode");
+            yield break;
+        }
+
+        RefreshUi();
+        FinishBackendRequest($"{resultLabel}: {GetAccountPlayerId()}  Email Account  Bootstrap failed: {bootstrapError}");
+    }
+
+    private string ReadBackendEmail()
+    {
+        return backendEmailInput != null ? (backendEmailInput.text ?? string.Empty).Trim() : string.Empty;
+    }
+
+    private string ReadBackendPassword()
+    {
+        return backendPasswordInput != null ? backendPasswordInput.text ?? string.Empty : string.Empty;
+    }
+
+    private static bool ValidateBackendEmailInputs(string email, string password, out string validationError)
+    {
+        if (string.IsNullOrWhiteSpace(email) || email.IndexOf('@') <= 0 || email.LastIndexOf('@') != email.IndexOf('@') || !email.Substring(email.IndexOf('@') + 1).Contains("."))
+        {
+            validationError = "Email login: enter a valid email address.";
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(password) || password.Length < 8)
+        {
+            validationError = "Email login: password must be at least 8 characters.";
+            return false;
+        }
+
+        validationError = string.Empty;
+        return true;
+    }
+
     public void SyncBackendState()
     {
         if (!TryStartBackendRequest("Backend: syncing player snapshot..."))
@@ -4180,6 +4362,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         FinishBackendRequest($"Guest session login failed: {error}");
+    }
+
+    private void OnBackendLogout(bool success, string error)
+    {
+        if (success)
+        {
+            SetBackendGameplayEnabled(false);
+            SetDungeonResult("Backend session logged out.\nEmail progress remains on the server; login again to restore it.");
+            RefreshUi();
+            FinishBackendRequest("Logout: session cleared. Server Mode off.");
+            return;
+        }
+
+        FinishBackendRequest($"Logout failed: {error}");
     }
 
     private void OnBackendSnapshot(bool success, string error, MythwakePlayerSnapshotDto snapshot)
@@ -14494,7 +14690,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var panelObject = new GameObject("Backend Sync Panel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         panelObject.transform.SetParent(shopPanel.transform, false);
-        SetRuntimeRect(panelObject.GetComponent<RectTransform>(), new Vector2(0, -1215), new Vector2(860, 210), new Vector2(0.5f, 1f));
+        SetRuntimeRect(panelObject.GetComponent<RectTransform>(), new Vector2(0, -1088), new Vector2(860, 360), new Vector2(0.5f, 1f));
 
         var panelImage = panelObject.GetComponent<Image>();
         panelImage.color = new Color(0.1f, 0.13f, 0.2f, 0.96f);
@@ -14508,15 +14704,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendStatusText.fontSizeMin = 16;
         backendStatusText.fontSizeMax = 22;
 
-        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -384, -154, 86, 54);
-        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Guest", -288, -154, 86, 54);
-        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "Sync", -192, -154, 86, 54);
-        backendAfkButton = CreateRuntimeButton(panelObject.transform, "Backend AFK Button", "AFK", -96, -154, 86, 54);
-        backendClockButton = CreateRuntimeButton(panelObject.transform, "Backend Clock Button", "Clock", 0, -154, 86, 54);
-        backendDefinitionsButton = CreateRuntimeButton(panelObject.transform, "Backend Definitions Button", "Defs", 96, -154, 86, 54);
-        backendSmokeButton = CreateRuntimeButton(panelObject.transform, "Backend Smoke Button", "Smoke", 192, -154, 86, 54);
-        backendResetButton = CreateRuntimeButton(panelObject.transform, "Backend Reset Button", "Dev Reset", 288, -154, 86, 54);
-        backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 384, -154, 86, 54);
+        backendEmailInput = CreateRuntimeInputField(panelObject.transform, "Backend Email Input", "email@example.com", -218, -150, 400, 48, false);
+        backendPasswordInput = CreateRuntimeInputField(panelObject.transform, "Backend Password Input", "password", 218, -150, 400, 48, true);
+        backendEmailRegisterButton = CreateRuntimeButton(panelObject.transform, "Backend Email Register Button", "Register", -190, -214, 150, 52);
+        backendEmailLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Email Login Button", "Login", -20, -214, 150, 52);
+        backendLogoutButton = CreateRuntimeButton(panelObject.transform, "Backend Logout Button", "Logout", 150, -214, 150, 52);
+
+        backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -384, -292, 86, 54);
+        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Guest", -288, -292, 86, 54);
+        backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "Sync", -192, -292, 86, 54);
+        backendAfkButton = CreateRuntimeButton(panelObject.transform, "Backend AFK Button", "AFK", -96, -292, 86, 54);
+        backendClockButton = CreateRuntimeButton(panelObject.transform, "Backend Clock Button", "Clock", 0, -292, 86, 54);
+        backendDefinitionsButton = CreateRuntimeButton(panelObject.transform, "Backend Definitions Button", "Defs", 96, -292, 86, 54);
+        backendSmokeButton = CreateRuntimeButton(panelObject.transform, "Backend Smoke Button", "Smoke", 192, -292, 86, 54);
+        backendResetButton = CreateRuntimeButton(panelObject.transform, "Backend Reset Button", "Dev Reset", 288, -292, 86, 54);
+        backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 384, -292, 86, 54);
         backendModeText = backendModeButton.GetComponentInChildren<TMP_Text>();
     }
 
@@ -20206,16 +20408,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var backendPanel = backendStatusText != null && backendStatusText.transform.parent != null
             ? backendStatusText.transform.parent.GetComponent<RectTransform>()
             : null;
-        MoveUiElement(backendPanel, shopPanel, new Vector2(0, -735), new Vector2(820, 200));
+        MoveUiElement(backendPanel, shopPanel, new Vector2(0, -735), new Vector2(860, 360));
     }
 
     private void LayoutPrototypeTools()
     {
-        MoveUiElement(resetButton, shopPanel, new Vector2(0, -965), new Vector2(300, 58));
-        MoveUiElement(debugGoldButton, shopPanel, new Vector2(-315, -1036), new Vector2(150, 50));
-        MoveUiElement(debugEssenceButton, shopPanel, new Vector2(-105, -1036), new Vector2(150, 50));
-        MoveUiElement(debugGemsButton, shopPanel, new Vector2(105, -1036), new Vector2(150, 50));
-        MoveUiElement(debugAccessoryButton, shopPanel, new Vector2(315, -1036), new Vector2(150, 50));
+        MoveUiElement(resetButton, shopPanel, new Vector2(0, -1125), new Vector2(300, 58));
+        MoveUiElement(debugGoldButton, shopPanel, new Vector2(-315, -1196), new Vector2(150, 50));
+        MoveUiElement(debugEssenceButton, shopPanel, new Vector2(-105, -1196), new Vector2(150, 50));
+        MoveUiElement(debugGemsButton, shopPanel, new Vector2(105, -1196), new Vector2(150, 50));
+        MoveUiElement(debugAccessoryButton, shopPanel, new Vector2(315, -1196), new Vector2(150, 50));
     }
 
     private void ApplyAfkInspiredTextSkin()
@@ -23020,7 +23222,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                     saveVersion,
                     GetDailyDateKey(),
                     backendGameplayEnabled ? Tr("management.backend.server") : Tr("management.backend.local"),
-                    backendClient != null && backendClient.HasSession ? Tr("management.session.guest") : Tr("management.session.none"));
+                    GetAccountSessionLabel());
             case ManagementMenuMode.Support:
                 return Tr("management.support.body");
             case ManagementMenuMode.About:
@@ -23348,6 +23550,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             shopTabButton,
             backendHealthButton,
             backendLoginButton,
+            backendEmailRegisterButton,
+            backendEmailLoginButton,
+            backendLogoutButton,
             backendSyncButton,
             backendAfkButton,
             backendClockButton,
@@ -23906,7 +24111,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private string BackendSessionLabel()
     {
         var mode = backendGameplayEnabled ? "Server" : "Local";
-        var sessionLabel = backendClient != null && backendClient.HasSession ? $"Mode {mode}  Guest Session: {backendClient.PlayerId}" : $"Mode {mode}  Guest Session: none  Email: ready";
+        var sessionLabel = $"Mode {mode}  Account: none  Email: ready";
+        if (backendClient != null && backendClient.HasSession)
+        {
+            var account = backendClient.IsEmailAccount ? "Email Account" : "Guest Session";
+            sessionLabel = $"Mode {mode}  {account}: {backendClient.PlayerId}";
+        }
         if (backendStateRevision > 0)
         {
             sessionLabel = $"{sessionLabel}  Rev {backendStateRevision}";
@@ -23930,6 +24140,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return "local-player";
     }
 
+    private string GetAccountSessionLabel()
+    {
+        if (backendClient == null || !backendClient.HasSession)
+        {
+            return Tr("management.session.none");
+        }
+
+        return backendClient.IsEmailAccount ? Tr("management.session.email") : Tr("management.session.guest");
+    }
+
     private void SetBackendButtonsInteractable(bool interactable)
     {
         if (backendHealthButton != null)
@@ -23940,6 +24160,31 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (backendLoginButton != null)
         {
             backendLoginButton.interactable = interactable;
+        }
+
+        if (backendEmailInput != null)
+        {
+            backendEmailInput.interactable = interactable;
+        }
+
+        if (backendPasswordInput != null)
+        {
+            backendPasswordInput.interactable = interactable;
+        }
+
+        if (backendEmailRegisterButton != null)
+        {
+            backendEmailRegisterButton.interactable = interactable;
+        }
+
+        if (backendEmailLoginButton != null)
+        {
+            backendEmailLoginButton.interactable = interactable;
+        }
+
+        if (backendLogoutButton != null)
+        {
+            backendLogoutButton.interactable = interactable && backendClient != null && backendClient.HasSession;
         }
 
         if (backendSyncButton != null)
@@ -23992,6 +24237,58 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         text.textWrappingMode = TextWrappingModes.Normal;
         text.raycastTarget = false;
         return text;
+    }
+
+    private static TMP_InputField CreateRuntimeInputField(Transform parent, string name, string placeholder, float xPosition, float yPosition, float width, float height, bool password)
+    {
+        var inputObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(TMP_InputField));
+        inputObject.transform.SetParent(parent, false);
+        SetRuntimeRect(inputObject.GetComponent<RectTransform>(), new Vector2(xPosition, yPosition), new Vector2(width, height), new Vector2(0.5f, 1f));
+
+        var image = inputObject.GetComponent<Image>();
+        image.color = new Color(0.93f, 0.97f, 1f, 0.96f);
+
+        var textAreaObject = new GameObject("Text Area", typeof(RectTransform), typeof(RectMask2D));
+        textAreaObject.transform.SetParent(inputObject.transform, false);
+        StretchRuntime(textAreaObject.GetComponent<RectTransform>(), new Vector2(12, 6));
+
+        var placeholderObject = new GameObject("Placeholder", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        placeholderObject.transform.SetParent(textAreaObject.transform, false);
+        var placeholderText = placeholderObject.GetComponent<TextMeshProUGUI>();
+        placeholderText.text = placeholder;
+        placeholderText.fontSize = 21;
+        placeholderText.fontSizeMin = 15;
+        placeholderText.fontSizeMax = 21;
+        placeholderText.enableAutoSizing = true;
+        placeholderText.alignment = TextAlignmentOptions.MidlineLeft;
+        placeholderText.color = new Color(0.22f, 0.29f, 0.39f, 0.72f);
+        placeholderText.raycastTarget = false;
+        StretchRuntime(placeholderText.rectTransform, Vector2.zero);
+
+        var textObject = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(textAreaObject.transform, false);
+        var text = textObject.GetComponent<TextMeshProUGUI>();
+        text.text = string.Empty;
+        text.fontSize = 21;
+        text.fontSizeMin = 15;
+        text.fontSizeMax = 21;
+        text.enableAutoSizing = true;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.color = new Color(0.08f, 0.12f, 0.18f);
+        text.raycastTarget = false;
+        StretchRuntime(text.rectTransform, Vector2.zero);
+
+        var input = inputObject.GetComponent<TMP_InputField>();
+        input.targetGraphic = image;
+        input.textViewport = textAreaObject.GetComponent<RectTransform>();
+        input.textComponent = text;
+        input.placeholder = placeholderText;
+        input.lineType = TMP_InputField.LineType.SingleLine;
+        input.contentType = password ? TMP_InputField.ContentType.Password : TMP_InputField.ContentType.EmailAddress;
+        input.characterLimit = password ? 128 : 96;
+        input.caretColor = new Color(0.08f, 0.12f, 0.18f);
+        input.selectionColor = new Color(0.2f, 0.45f, 0.85f, 0.32f);
+        return input;
     }
 
     private static Button CreateRuntimeButton(Transform parent, string name, string label, float xPosition, float yPosition, float width, float height)
