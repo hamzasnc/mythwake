@@ -7,21 +7,28 @@ Last updated: 2026-05-30
 Mythwake currently has two state modes:
 
 - Local Mode stores a single local prototype save on the device through PlayerPrefs. The main save is a versioned JSON blob at `Mythwake.Prototype.SaveJson`; older scalar PlayerPrefs keys are migrated on load.
-- Server Mode stores gameplay state under the backend `player_id`. The Unity client caches the Bearer session token, `player_id`, state revision, and definition cache in PlayerPrefs, then reuses `/client/bootstrap` on startup.
+- Server Mode stores gameplay state under the backend `player_id`. The Unity client caches the Bearer session token, `player_id`, state revision, and definition cache in PlayerPrefs, then reuses `/client/bootstrap` when the Account Start screen continues a cached server session.
 
 Guest auth already creates a real backend player and a random session token. With PostgreSQL enabled, the server stores only the session token hash and persists player state in normalized `player.*` tables plus the snapshot/action-result recovery path. With no database, Guest auth is only runtime memory and is not durable across API restarts.
 
-Email + Password auth now exists on the backend and is exposed in the Unity Shop -> Backend panel:
+Email + Password auth now exists on the backend and is exposed in two Unity places:
+
+- The runtime Account Start screen shown before Home.
+- The Shop -> Backend panel for smoke/dev testing.
 
 - `POST /auth/email/register`
 - `POST /auth/email/login`
 - Email field
 - Password field
+- Startscreen `Continue`
+- Startscreen `Play as Guest`
+- Startscreen `Email Login`
+- Startscreen `Register`
 - `Register`
 - `Login`
 - `Logout`
 
-Both endpoints issue the same Bearer session shape as Guest auth. Passwords are stored as salted PBKDF2-SHA256 hashes in `account.player_email_credentials`; raw passwords are never stored. After Register/Login, Unity caches the session, marks it as an Email Account, enables Server Mode, calls `/client/bootstrap`, and applies the returned player snapshot. Logout clears the cached session and turns Server Mode off, but it does not delete the account's server progress.
+Both endpoints issue the same Bearer session shape as Guest auth. Passwords are stored as salted PBKDF2-SHA256 hashes in `account.player_email_credentials`; raw passwords are never stored. After Register/Login, Unity caches the session, marks it as an Email Account, enables Server Mode, calls `/client/bootstrap`, and applies the returned player snapshot. The Account Start screen's `Continue` button restores a cached server session through `/client/bootstrap`; if no server session exists but a local save exists, it continues the local save without touching server progress. Logout clears the cached session, turns Server Mode off, and returns to the Account Start screen, but it does not delete the account's server progress.
 
 Google Login is intentionally not implemented in this slice. It should be added later through the Play Store / Google Play Services provider flow once the Email + Password path and account-linking rules are stable.
 
@@ -43,7 +50,7 @@ Normal app restarts should not reset progress when the same PlayerPrefs save or 
 Short term:
 
 - Keep Guest Session persistence from resetting unnecessarily.
-- Make Local Mode, Server Mode, Guest Session, Email Account, Player ID, and reset/logout actions visible enough for testers.
+- Make Local Mode, Server Mode, Guest Session, Email Account, Player ID, and reset/logout actions visible enough for testers on the Account Start screen and Backend panel.
 - Keep reset/dev reset actions deliberate and clearly named.
 
 Medium term:
@@ -85,13 +92,15 @@ Backend PostgreSQL:
 
 - For local-only APK feedback, do not clear app data unless a fresh run is intended.
 - For Server Mode feedback, keep the backend on PostgreSQL and use Email Register/Login when progress must survive app-data clears or installs on another device.
+- On the Account Start screen, use `Continue` when a cached Email/Guest session or local save should be preserved.
+- `Play as Guest` creates or refreshes a Guest backend session when the backend is reachable; if it cannot reach the backend, the client starts local guest mode instead.
 - Logout clears only the cached session. Login again with the same Email + Password to restore the same server `player_id`.
 - Treat `Dev Reset` as a destructive server-player reset for the active tester account.
 - If a tester reports "I started at zero", capture whether they were in Local or Server Mode, whether status showed Guest or Email Account, the visible Player ID, whether app data was cleared, and whether the backend was restarted without PostgreSQL.
 
 ## Open Risks
 
-- The Unity Email UI is intentionally MVP-only inside the Backend panel, not a polished first-run login screen.
+- The Account Start screen is still an MVP runtime flow, not a polished final login screen.
 - Existing Guest accounts are not automatically linked to email accounts.
 - Password reset, email verification, account deletion, and provider-link conflict rules are not implemented.
 - Google Login needs a platform-provider token validation design and should not be faked client-side.
@@ -99,7 +108,8 @@ Backend PostgreSQL:
 
 ## Next Technical Step
 
-- Use APK `Builds\Android\Mythwake-0.2.166-email-login.apk` for the first Email UI smoke; it has been built, installed, and cold-launched in MuMuPlayer.
-- Exercise Register -> Server Mode progress -> app restart -> cached session bootstrap -> Logout -> Login -> same Player ID/progress against a PostgreSQL-backed API.
+- Use APK `Builds\Android\Mythwake-0.2.167-startscreen.apk` for the first Account Start smoke.
+- Exercise Startscreen Register -> Server Mode progress -> app restart -> cached session Continue -> Logout -> Login -> same Player ID/progress against a PostgreSQL-backed API.
+- Exercise `Play as Guest` from the Account Start screen and confirm Guest auth still reaches a server `player_id`.
 - Decide Guest-to-Email linking behavior before asking testers to make meaningful progress as Guest.
 - Keep Google Play login for a later provider-token validation slice.

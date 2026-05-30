@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.166
+Prototype version: 0.2.167
 Local save version: 2
 
 Current prototype:
@@ -11,6 +11,7 @@ Current prototype:
 - Reproducible Android APK batch build helper and portrait screenshot fallback helper
 - Simple portrait UI
 - Mobile app shell with Home, Village, Dungeons, Battle, Heroes, Gear, Summon, and Shop screens
+- Runtime Account Start screen appears before Home and shows local-save presence, backend session/account state, Local/Server mode, Player ID, Continue, Play as Guest, Email Login, Register, and a Google Login later hint
 - First core loop: fight enemies, earn Myth Essence, upgrade heroes
 - Auto attack while the app is open
 - Local save data via a versioned JSON blob stored in PlayerPrefs
@@ -27,8 +28,8 @@ Current prototype:
 - Server Mode upgrade buttons now respect backend max-level/max-ascension caps and AFK timing definitions
 - Local and backend AFK reward caps are aligned at 24 hours
 - Fast Rewards popup separates local stored rewards from Server Mode backend-authoritative AFK claim timing and server-snapshot Village AFK bonuses
-- Server Mode preference persists across Unity restarts and reboots through `/client/bootstrap`
-- Email account sessions are cached like existing backend sessions; after Register/Login the client bootstraps the server player snapshot and keeps Server Mode active
+- Cached Server Mode sessions persist across Unity restarts and are restored from the Account Start screen through `/client/bootstrap`
+- Email account sessions are cached like existing backend sessions; after Register/Login from the Start screen or Backend panel the client bootstraps the server player snapshot and keeps Server Mode active
 - Server Mode blocks local debug grants/reset so PostgreSQL remains the authoritative test source
 - Gameplay buttons are gated while backend requests are in flight to avoid accidental double actions
 - Backend panel includes a `Smoke` action that runs a compact server-backed Campaign/Dungeon/Gear/Progression/Summon/Daily/Mission Track/AFK/Flush test sequence
@@ -81,7 +82,7 @@ Current prototype:
 - Mission Track XP is earned from daily mission claims
 - Mission Track rewards can be claimed in the Shop tab
 - Ravik and Paladin art/combat preview hooks exist, including Paladin Spine handoff validation tooling
-- Unity editor validation covers the current gameplay/UI slice, including Android portrait/safe-area player settings, width-matched portrait CanvasScaler/navigation touch targets, runtime EventSystem UI stack, button center raycasts, bottom-nav click mappings, non-blocking FPS overlay, Home current-stage halos and target badges, Home selected-stage node markers, Home cleared-stage badges, Home locked-stage badges, Home boss-node badges, Home milestone bonus badges, Home stage-preview/detail state tint plus Boss/Bonus/Normal tags, Home stage-detail status badges and action states, Home stage-detail reward labels, Home connected map/button fit, Home path progress colors, Home map region texture/UV sync, Home reward progress/server guards, Home popup exclusivity, Village map/build/detail close flows, Dungeons map/zoom control/clamp/marker spacing/Formation back flows, Fast Rewards modal touch blocker/progress bar/popup exclusivity/close/fallback claim state, Summon result close/auto-toggle/slot-fit states, Upgrade Clutter, Gear showcase art/action-label fit, visible Weapon/Armor training icons, equipped-only Hero Detail accessory icons, empty Hero Detail accessory slots, Hero Detail gear spacing/click mappings/list-state/localization/label-list fit, Fight/Formation visible-control checks, Early Game Loop fresh-save progression checks, and Paladin handoff checks
+- Unity editor validation covers the current gameplay/UI slice, including Android portrait/safe-area player settings, width-matched portrait CanvasScaler/navigation touch targets, runtime EventSystem UI stack, button center raycasts, bottom-nav click mappings, Account Start overlay/buttons/email-panel/status text fit, non-blocking FPS overlay, Home current-stage halos and target badges, Home selected-stage node markers, Home cleared-stage badges, Home locked-stage badges, Home boss-node badges, Home milestone bonus badges, Home stage-preview/detail state tint plus Boss/Bonus/Normal tags, Home stage-detail status badges and action states, Home stage-detail reward labels, Home connected map/button fit, Home path progress colors, Home map region texture/UV sync, Home reward progress/server guards, Home popup exclusivity, Village map/build/detail close flows, Dungeons map/zoom control/clamp/marker spacing/Formation back flows, Fast Rewards modal touch blocker/progress bar/popup exclusivity/close/fallback claim state, Summon result close/auto-toggle/slot-fit states, Upgrade Clutter, Gear showcase art/action-label fit, visible Weapon/Armor training icons, equipped-only Hero Detail accessory icons, empty Hero Detail accessory slots, Hero Detail gear spacing/click mappings/list-state/localization/label-list fit, Fight/Formation visible-control checks, Early Game Loop fresh-save progression checks, and Paladin handoff checks
 - Hero Detail shows all equipment/accessory slots, keeps starter Weapon/Armor training icons visible, only renders accessory icon art once gear is equipped, keeps empty accessory slots visually empty even when bag copies exist, keeps previous/next navigation clear of the gear-slot columns, uses localized contextual gear action labels, prioritizes owned copies in accessory slot lists, and supports accessory removal locally and in Server Mode
 - Hero Detail labels starter Weapon/Armor slots and rows as training tracks instead of claiming they are equipped item instances
 - Gear screen keeps equipment summaries, accessory text, and gear action controls stacked below the showcase with validator coverage for spacing
@@ -212,6 +213,7 @@ Backend:
   - `docs/screenshots/android/2026-05-29-tester-build-0-1-icon/README.md`
 
 Changelog:
+- Prototype 0.2.167: Added a first runtime Account Start screen before Home. It shows whether a local save exists, whether a server session is cached, the active Local/Server mode, Player ID/status, and buttons for Continue, Play as Guest, Email Login, Register, plus a Google Login later hint. Continue restores cached Email/Guest sessions through `/client/bootstrap` or falls back to local saves, Email Login/Register reuse the existing secure backend Email auth, Play as Guest keeps Guest auth working with a local fallback if the backend is unavailable, Logout returns to the Start screen without deleting account progress, and the new Account Start validator is included in Current Slice.
 - Prototype 0.2.166: Added the first testable Unity Email + Password account flow in the Shop Backend panel: email/password inputs, Register, Login, Logout, visible Guest/Email Account status, Player ID/session revision display, and post-auth `/client/bootstrap` so the server player state is applied immediately. Unity now stores the backend account kind with the cached session, keeps Email sessions from silently falling back to Guest after a `401`, clears the cached session on Logout without deleting account progress, and the Current Slice validator checks the Account panel labels/placeholders/text fit. Backend HTTP tests now explicitly cover invalid email errors. APK `Builds/Android/Mythwake-0.2.166-email-login.apk` builds, installs, and cold-launches in MuMuPlayer.
 - Prototype 0.2.165 / Backend 0.2.59: Added the first functional Email + Password backend slice with `POST /auth/email/register` and `POST /auth/email/login`, PBKDF2 password hashes in PostgreSQL migration `0030_email_password_auth.sql`, duplicate-email and wrong-password tests, and Bearer sessions that resolve the same per-player state as Guest auth. Unity now has email auth client helpers, clearer Backend panel labels (`Guest`, `Dev Reset`), and Account/Backend copy that exposes Local/Server mode, Guest Session status, and Player ID. Added `docs/TESTER_ACCOUNTS.md` for multi-tester persistence rules, reset risks, and the later Google Play login path.
 - Prototype 0.2.164: Upgrades Tester Build 0.1 for the current solo-tester handoff while keeping the later multi-tester path explicit. Android PlayerSettings now use `Mythwake_icon_transparent.png` as the launcher icon via `Assets/_Mythwake/Branding/Mythwake_icon_launcher.png`, Mobile UX validation checks the icon wiring, and `docs/TESTER_BUILD_0_1.md` now includes solo install/test steps plus future multi-tester account requirements. APK `Builds/Android/Mythwake-0.2.164-tester-build-0.1.apk` builds, installs, launches in MuMuPlayer, and smoke screenshots/logcat live under `docs/screenshots/android/2026-05-29-tester-build-0-1-icon/`. Replacing/disabling the Unity startup splash logo caused a MuMu launch crash during the experiment, so only the launcher icon is changed in this stable tester build.

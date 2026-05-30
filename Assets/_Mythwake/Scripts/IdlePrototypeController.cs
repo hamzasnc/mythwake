@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.166";
+    public const string PrototypeVersion = "0.2.167";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1102,6 +1102,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private Button backendResetButton;
     [SerializeField] private Button backendModeButton;
     [SerializeField] private TMP_Text backendModeText;
+    private RectTransform accountStartRoot;
+    private TMP_Text accountStartTitleText;
+    private TMP_Text accountStartSubtitleText;
+    private TMP_Text accountStartStatusText;
+    private TMP_Text accountStartGoogleHintText;
+    private TMP_Text accountStartVersionText;
+    private Button accountStartContinueButton;
+    private Button accountStartGuestButton;
+    private Button accountStartEmailLoginButton;
+    private Button accountStartEmailRegisterButton;
+    private RectTransform accountStartEmailPanelRoot;
+    private TMP_Text accountStartEmailTitleText;
+    private TMP_Text accountStartEmailStatusText;
+    private TMP_InputField accountStartEmailInput;
+    private TMP_InputField accountStartPasswordInput;
+    private Button accountStartEmailSubmitButton;
+    private Button accountStartEmailBackButton;
+    private bool accountStartVisible;
+    private bool accountStartEmailRegisterMode;
+    private bool accountStartButtonsRegistered;
+    private string accountStartMessage = string.Empty;
 
     [Header("UI")]
     [SerializeField] private string playerDisplayName = "Player";
@@ -1696,10 +1717,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureRuntimeDebugUi();
         EnsureRuntimeBackendUi();
         EnsureRuntimeScreenLayout();
+        EnsureRuntimeAccountStartScreen();
         EnsureRuntimeInputStack();
         EnsureRuntimePerformanceOverlay();
         EnsureRuntimeArtUi();
         RegisterNavigation();
+        RegisterAccountStartButtons();
         RegisterHeroButtons();
         RegisterDailyMissionButtons();
         RegisterBattlePassRewardButtons();
@@ -1904,7 +1927,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         RefreshUi();
         ShowScreen(activeScreen);
-        PreparePersistedBackendGameplayMode();
+        ShowAccountStartScreen();
     }
 
     private void Update()
@@ -1914,6 +1937,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (runtimeArt != null)
         {
             runtimeArt.Tick(Time.unscaledDeltaTime);
+        }
+
+        if (accountStartVisible)
+        {
+            return;
         }
 
         TickAfkRewards(Time.deltaTime);
@@ -2152,6 +2180,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         UnregisterNavigation();
+        UnregisterAccountStartButtons();
         UnregisterHeroButtons();
         UnregisterDailyMissionButtons();
         UnregisterBattlePassRewardButtons();
@@ -3680,6 +3709,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             SetBackendStatus("Logout: no active backend session. Server Mode off.");
             RefreshUi();
             RefreshBackendUi();
+            ShowAccountStartScreen(Tr("account.start.status.logged_out"));
             return;
         }
 
@@ -4336,6 +4366,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendRequestInProgress = true;
         SetBackendStatus(status);
         RefreshBackendUi();
+        RefreshAccountStartUi();
         RefreshGameplayInteractivity();
         return true;
     }
@@ -4372,6 +4403,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             SetDungeonResult("Backend session logged out.\nEmail progress remains on the server; login again to restore it.");
             RefreshUi();
             FinishBackendRequest("Logout: session cleared. Server Mode off.");
+            ShowAccountStartScreen(Tr("account.start.status.logged_out"));
             return;
         }
 
@@ -8824,6 +8856,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshGameplayInteractivity();
+        RefreshAccountStartUi();
     }
 
     private void RefreshRuntimeArtUi()
@@ -10228,6 +10261,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 artBottomNavRoot.SetAsLastSibling();
             }
+        }
+
+        if (accountStartVisible && accountStartRoot != null)
+        {
+            accountStartRoot.SetAsLastSibling();
         }
 
         RefreshPerformanceOverlayVisibility();
@@ -14720,6 +14758,570 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendResetButton = CreateRuntimeButton(panelObject.transform, "Backend Reset Button", "Dev Reset", 288, -292, 86, 54);
         backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 384, -292, 86, 54);
         backendModeText = backendModeButton.GetComponentInChildren<TMP_Text>();
+    }
+
+    private void EnsureRuntimeAccountStartScreen()
+    {
+        if (accountStartRoot != null)
+        {
+            return;
+        }
+
+        var canvas = topBarRoot != null ? topBarRoot.GetComponentInParent<Canvas>() : null;
+        var parent = canvas != null
+            ? canvas.transform
+            : homePanel != null && homePanel.transform.parent != null
+                ? homePanel.transform.parent
+                : transform;
+
+        var rootObject = new GameObject("Account Start Screen", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        rootObject.transform.SetParent(parent, false);
+        accountStartRoot = rootObject.GetComponent<RectTransform>();
+        accountStartRoot.anchorMin = Vector2.zero;
+        accountStartRoot.anchorMax = Vector2.one;
+        accountStartRoot.pivot = new Vector2(0.5f, 0.5f);
+        accountStartRoot.offsetMin = Vector2.zero;
+        accountStartRoot.offsetMax = Vector2.zero;
+
+        var rootImage = rootObject.GetComponent<Image>();
+        rootImage.color = new Color(0.015f, 0.02f, 0.032f, 0.99f);
+        rootImage.raycastTarget = true;
+
+        CreateLayeredRuntimeBackground(accountStartRoot, new Vector2(1080f, 1920f), 0.24f);
+        var scrim = CreateRuntimePanel(accountStartRoot, "Account Start Scrim", Vector2.zero, new Vector2(1080f, 1920f), new Color(0.01f, 0.012f, 0.02f, 0.66f));
+        scrim.anchorMin = new Vector2(0.5f, 0.5f);
+        scrim.anchorMax = new Vector2(0.5f, 0.5f);
+
+        var body = CreateRuntimePanel(accountStartRoot, "Account Start Body", new Vector2(0, -150), new Vector2(880, 1180), new Color(0.035f, 0.048f, 0.072f, 0.88f));
+        CreateRuntimePanel(body, "Account Start Top Accent", new Vector2(0, -10), new Vector2(820, 5), new Color(0.26f, 0.86f, 0.94f, 0.78f));
+        CreateRuntimePanel(body, "Account Start Bottom Accent", new Vector2(0, -1160), new Vector2(820, 5), new Color(0.86f, 0.58f, 0.24f, 0.78f));
+
+        accountStartTitleText = CreateRuntimeText(accountStartRoot, "Account Start Title", "Mythwake", 68, new Vector2(0, -208), new Vector2(860, 96));
+        accountStartTitleText.fontStyle = FontStyles.Bold;
+        accountStartTitleText.color = new Color(1f, 0.88f, 0.55f);
+        accountStartTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        accountStartSubtitleText = CreateRuntimeText(accountStartRoot, "Account Start Subtitle", string.Empty, 24, new Vector2(0, -310), new Vector2(790, 82));
+        accountStartSubtitleText.color = new Color(0.78f, 0.92f, 1f);
+        ConfigureRuntimeTextFit(accountStartSubtitleText, 17f, 24f);
+
+        accountStartStatusText = CreateRuntimeText(accountStartRoot, "Account Start Status", string.Empty, 22, new Vector2(0, -432), new Vector2(790, 172));
+        accountStartStatusText.color = new Color(0.92f, 0.96f, 1f);
+        ConfigureRuntimeTextFit(accountStartStatusText, 15f, 22f);
+
+        accountStartContinueButton = CreateRuntimeButton(accountStartRoot, "Account Start Continue Button", "Continue", 0, -648, 680, 78);
+        accountStartGuestButton = CreateRuntimeButton(accountStartRoot, "Account Start Guest Button", "Play as Guest", 0, -748, 680, 78);
+        accountStartEmailLoginButton = CreateRuntimeButton(accountStartRoot, "Account Start Email Login Button", "Email Login", 0, -848, 680, 78);
+        accountStartEmailRegisterButton = CreateRuntimeButton(accountStartRoot, "Account Start Email Register Button", "Register", 0, -948, 680, 78);
+        ConfigureRuntimeButtonLabelFit(accountStartContinueButton, 15f, 24f);
+        ConfigureRuntimeButtonLabelFit(accountStartGuestButton, 15f, 24f);
+        ConfigureRuntimeButtonLabelFit(accountStartEmailLoginButton, 15f, 24f);
+        ConfigureRuntimeButtonLabelFit(accountStartEmailRegisterButton, 15f, 24f);
+
+        accountStartGoogleHintText = CreateRuntimeText(accountStartRoot, "Account Start Google Hint", string.Empty, 20, new Vector2(0, -1068), new Vector2(790, 56));
+        accountStartGoogleHintText.color = new Color(0.78f, 0.86f, 0.95f);
+        ConfigureRuntimeTextFit(accountStartGoogleHintText, 14f, 20f);
+
+        accountStartVersionText = CreateRuntimeText(accountStartRoot, "Account Start Version", string.Empty, 16, new Vector2(0, -1148), new Vector2(790, 34));
+        accountStartVersionText.color = new Color(0.58f, 0.68f, 0.8f);
+        accountStartVersionText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        accountStartEmailPanelRoot = CreateRuntimePanel(accountStartRoot, "Account Start Email Panel", new Vector2(0, -406), new Vector2(820, 650), new Color(0.025f, 0.032f, 0.046f, 0.99f));
+        accountStartEmailPanelRoot.GetComponent<Image>().raycastTarget = true;
+        CreateRuntimePanel(accountStartEmailPanelRoot, "Account Start Email Accent", new Vector2(0, -10), new Vector2(760, 5), new Color(0.26f, 0.86f, 0.94f, 0.82f));
+        accountStartEmailTitleText = CreateRuntimeText(accountStartEmailPanelRoot, "Account Start Email Title", string.Empty, 32, new Vector2(0, -48), new Vector2(720, 54));
+        accountStartEmailTitleText.fontStyle = FontStyles.Bold;
+        accountStartEmailTitleText.color = new Color(1f, 0.88f, 0.55f);
+        accountStartEmailTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        accountStartEmailStatusText = CreateRuntimeText(accountStartEmailPanelRoot, "Account Start Email Status", string.Empty, 20, new Vector2(0, -116), new Vector2(700, 78));
+        accountStartEmailStatusText.color = new Color(0.86f, 0.94f, 1f);
+        ConfigureRuntimeTextFit(accountStartEmailStatusText, 14f, 20f);
+
+        accountStartEmailInput = CreateRuntimeInputField(accountStartEmailPanelRoot, "Account Start Email Input", "email@example.com", 0, -228, 640, 58, false);
+        accountStartPasswordInput = CreateRuntimeInputField(accountStartEmailPanelRoot, "Account Start Password Input", "password", 0, -310, 640, 58, true);
+        accountStartEmailSubmitButton = CreateRuntimeButton(accountStartEmailPanelRoot, "Account Start Email Submit Button", "Login", -176, -428, 300, 70);
+        accountStartEmailBackButton = CreateRuntimeButton(accountStartEmailPanelRoot, "Account Start Email Back Button", "Back", 176, -428, 300, 70);
+        ConfigureRuntimeButtonLabelFit(accountStartEmailSubmitButton, 15f, 23f);
+        ConfigureRuntimeButtonLabelFit(accountStartEmailBackButton, 15f, 23f);
+
+        SetComponentActive(accountStartEmailPanelRoot, false);
+        SetComponentActive(accountStartRoot, false);
+    }
+
+    private void RegisterAccountStartButtons()
+    {
+        if (accountStartButtonsRegistered)
+        {
+            return;
+        }
+
+        accountStartButtonsRegistered = true;
+        if (accountStartContinueButton != null)
+        {
+            accountStartContinueButton.onClick.AddListener(ContinueFromAccountStartScreen);
+        }
+
+        if (accountStartGuestButton != null)
+        {
+            accountStartGuestButton.onClick.AddListener(PlayAsGuestFromAccountStartScreen);
+        }
+
+        if (accountStartEmailLoginButton != null)
+        {
+            accountStartEmailLoginButton.onClick.AddListener(OpenAccountStartEmailLogin);
+        }
+
+        if (accountStartEmailRegisterButton != null)
+        {
+            accountStartEmailRegisterButton.onClick.AddListener(OpenAccountStartEmailRegister);
+        }
+
+        if (accountStartEmailSubmitButton != null)
+        {
+            accountStartEmailSubmitButton.onClick.AddListener(SubmitAccountStartEmail);
+        }
+
+        if (accountStartEmailBackButton != null)
+        {
+            accountStartEmailBackButton.onClick.AddListener(CloseAccountStartEmailPanel);
+        }
+    }
+
+    private void UnregisterAccountStartButtons()
+    {
+        if (!accountStartButtonsRegistered)
+        {
+            return;
+        }
+
+        accountStartButtonsRegistered = false;
+        if (accountStartContinueButton != null)
+        {
+            accountStartContinueButton.onClick.RemoveListener(ContinueFromAccountStartScreen);
+        }
+
+        if (accountStartGuestButton != null)
+        {
+            accountStartGuestButton.onClick.RemoveListener(PlayAsGuestFromAccountStartScreen);
+        }
+
+        if (accountStartEmailLoginButton != null)
+        {
+            accountStartEmailLoginButton.onClick.RemoveListener(OpenAccountStartEmailLogin);
+        }
+
+        if (accountStartEmailRegisterButton != null)
+        {
+            accountStartEmailRegisterButton.onClick.RemoveListener(OpenAccountStartEmailRegister);
+        }
+
+        if (accountStartEmailSubmitButton != null)
+        {
+            accountStartEmailSubmitButton.onClick.RemoveListener(SubmitAccountStartEmail);
+        }
+
+        if (accountStartEmailBackButton != null)
+        {
+            accountStartEmailBackButton.onClick.RemoveListener(CloseAccountStartEmailPanel);
+        }
+    }
+
+    private void ShowAccountStartScreen(string message = null)
+    {
+        EnsureRuntimeBackendClient();
+        EnsureRuntimeAccountStartScreen();
+        accountStartVisible = true;
+        if (message != null)
+        {
+            accountStartMessage = message;
+        }
+
+        SetComponentActive(accountStartRoot, true);
+        SetComponentActive(accountStartEmailPanelRoot, false);
+        RefreshAccountStartUi();
+        accountStartRoot.SetAsLastSibling();
+    }
+
+    private void HideAccountStartScreen()
+    {
+        accountStartVisible = false;
+        SetComponentActive(accountStartEmailPanelRoot, false);
+        SetComponentActive(accountStartRoot, false);
+    }
+
+    private void ContinueFromAccountStartScreen()
+    {
+        EnsureRuntimeBackendClient();
+        if (backendClient != null && backendClient.HasSession)
+        {
+            SetBackendGameplayEnabled(true);
+            accountStartMessage = Tr("account.start.status.continuing");
+            if (!TryStartBackendRequest("Server: continuing saved session..."))
+            {
+                RefreshAccountStartUi();
+                return;
+            }
+
+            RefreshAccountStartUi();
+            StartCoroutine(AccountStartBootstrapRoutine("Continue", GetAccountStartSessionKindLabel(), enterOnBootstrapFailure: false));
+            return;
+        }
+
+        if (HasLocalSaveData())
+        {
+            SetBackendGameplayEnabled(false);
+            SetBackendStatus("Local save: continued from start screen.");
+            EnterGameFromAccountStartScreen(Tr("account.start.local_continue_result"));
+            return;
+        }
+
+        accountStartMessage = Tr("account.start.status.no_continue");
+        RefreshAccountStartUi();
+    }
+
+    private void PlayAsGuestFromAccountStartScreen()
+    {
+        EnsureRuntimeBackendClient();
+        accountStartMessage = Tr("account.start.status.guest_starting");
+        if (!TryStartBackendRequest("Backend: guest session login..."))
+        {
+            RefreshAccountStartUi();
+            return;
+        }
+
+        RefreshAccountStartUi();
+        StartCoroutine(AccountStartGuestRoutine());
+    }
+
+    private IEnumerator AccountStartGuestRoutine()
+    {
+        var authSuccess = false;
+        var authError = string.Empty;
+        var authResponse = default(MythwakeGuestAuthResponseDto);
+        yield return backendClient.GuestAuth((success, error, response) =>
+        {
+            authSuccess = success;
+            authError = error;
+            authResponse = response;
+        });
+
+        if (!authSuccess)
+        {
+            SetBackendGameplayEnabled(false);
+            accountStartMessage = TrFormat("account.start.status.guest_failed", authError);
+            FinishBackendRequest($"Guest session login failed: {authError}");
+            SetBackendStatus($"Guest local fallback: {authError}");
+            EnterGameFromAccountStartScreen(Tr("account.start.local_guest_result"));
+            yield break;
+        }
+
+        SetBackendGameplayEnabled(true);
+        if (authResponse.playerSnapshot.state.campaignStage > 0)
+        {
+            ApplyBackendSnapshot(authResponse.playerSnapshot);
+        }
+
+        yield return AccountStartBootstrapRoutine("Guest session", "Guest Session", enterOnBootstrapFailure: true);
+    }
+
+    private void OpenAccountStartEmailLogin()
+    {
+        OpenAccountStartEmailPanel(registerMode: false);
+    }
+
+    private void OpenAccountStartEmailRegister()
+    {
+        OpenAccountStartEmailPanel(registerMode: true);
+    }
+
+    private void OpenAccountStartEmailPanel(bool registerMode)
+    {
+        accountStartEmailRegisterMode = registerMode;
+        if (accountStartPasswordInput != null)
+        {
+            accountStartPasswordInput.text = string.Empty;
+        }
+
+        if (accountStartEmailStatusText != null)
+        {
+            accountStartEmailStatusText.text = Tr(registerMode ? "account.start.email.status.register" : "account.start.email.status.login");
+        }
+
+        SetComponentActive(accountStartEmailPanelRoot, true);
+        RefreshAccountStartUi();
+        accountStartEmailPanelRoot.SetAsLastSibling();
+    }
+
+    private void CloseAccountStartEmailPanel()
+    {
+        SetComponentActive(accountStartEmailPanelRoot, false);
+        if (accountStartPasswordInput != null)
+        {
+            accountStartPasswordInput.text = string.Empty;
+        }
+
+        RefreshAccountStartUi();
+    }
+
+    private void SubmitAccountStartEmail()
+    {
+        EnsureRuntimeBackendClient();
+        if (backendClient == null)
+        {
+            SetAccountStartEmailStatus("Email login failed: backend client unavailable.");
+            return;
+        }
+
+        var email = accountStartEmailInput != null ? (accountStartEmailInput.text ?? string.Empty).Trim() : string.Empty;
+        var password = accountStartPasswordInput != null ? accountStartPasswordInput.text ?? string.Empty : string.Empty;
+        if (!ValidateBackendEmailInputs(email, password, out var validationError))
+        {
+            SetAccountStartEmailStatus(validationError);
+            return;
+        }
+
+        var requestStatus = accountStartEmailRegisterMode ? "Backend: registering email account..." : "Backend: logging in email account...";
+        var resultLabel = accountStartEmailRegisterMode ? "Email register" : "Email login";
+        if (!TryStartBackendRequest(requestStatus))
+        {
+            SetAccountStartEmailStatus(Tr("account.start.email.status.busy"));
+            return;
+        }
+
+        SetAccountStartEmailStatus(Tr("account.start.email.status.working"));
+        Func<string, string, Action<bool, string, MythwakeGuestAuthResponseDto>, IEnumerator> authCall = accountStartEmailRegisterMode
+            ? backendClient.EmailRegister
+            : backendClient.EmailLogin;
+        StartCoroutine(AccountStartEmailAuthRoutine(resultLabel, email, password, authCall));
+    }
+
+    private IEnumerator AccountStartEmailAuthRoutine(string resultLabel, string email, string password, Func<string, string, Action<bool, string, MythwakeGuestAuthResponseDto>, IEnumerator> authCall)
+    {
+        var authSuccess = false;
+        var authError = string.Empty;
+        var authResponse = default(MythwakeGuestAuthResponseDto);
+        yield return authCall(email, password, (success, error, response) =>
+        {
+            authSuccess = success;
+            authError = error;
+            authResponse = response;
+        });
+
+        if (accountStartPasswordInput != null)
+        {
+            accountStartPasswordInput.text = string.Empty;
+        }
+
+        if (!authSuccess)
+        {
+            var errorText = $"{resultLabel} failed: {authError}";
+            accountStartMessage = errorText;
+            SetAccountStartEmailStatus(errorText);
+            FinishBackendRequest(errorText);
+            yield break;
+        }
+
+        SetBackendGameplayEnabled(true);
+        if (authResponse.playerSnapshot.state.campaignStage > 0)
+        {
+            ApplyBackendSnapshot(authResponse.playerSnapshot);
+        }
+
+        SetComponentActive(accountStartEmailPanelRoot, false);
+        yield return AccountStartBootstrapRoutine(resultLabel, "Email Account", enterOnBootstrapFailure: true);
+    }
+
+    private IEnumerator AccountStartBootstrapRoutine(string resultLabel, string accountLabel, bool enterOnBootstrapFailure)
+    {
+        var bootstrapSuccess = false;
+        var bootstrapError = string.Empty;
+        var bootstrap = default(MythwakeClientBootstrapDto);
+        yield return backendClient.GetClientBootstrap((success, error, response) =>
+        {
+            bootstrapSuccess = success;
+            bootstrapError = error;
+            bootstrap = response;
+        });
+
+        if (bootstrapSuccess)
+        {
+            backendDefinitions = bootstrap.definitions;
+            hasBackendDefinitions = !string.IsNullOrWhiteSpace(bootstrap.definitions.contentHash);
+            ApplyBackendSnapshot(bootstrap.playerSnapshot);
+            accountStartMessage = Tr("account.start.status.ready");
+            FinishBackendRequest($"{resultLabel}: {GetAccountPlayerId()}  {accountLabel}  Server Mode");
+            EnterGameFromAccountStartScreen(Tr("account.start.server_continue_result"));
+            yield break;
+        }
+
+        if (backendClient == null || !backendClient.HasSession)
+        {
+            SetBackendGameplayEnabled(false);
+        }
+
+        var failedMessage = $"{resultLabel}: bootstrap failed: {bootstrapError}";
+        accountStartMessage = failedMessage;
+        FinishBackendRequest(failedMessage);
+        if (enterOnBootstrapFailure)
+        {
+            EnterGameFromAccountStartScreen(TrFormat("account.start.server_bootstrap_failed_result", bootstrapError));
+            yield break;
+        }
+
+        ShowAccountStartScreen(failedMessage);
+    }
+
+    private void EnterGameFromAccountStartScreen(string resultMessage)
+    {
+        HideAccountStartScreen();
+        ShowHome();
+        RefreshUi();
+        if (!string.IsNullOrWhiteSpace(resultMessage))
+        {
+            SetDungeonResult(resultMessage);
+        }
+    }
+
+    private void SetAccountStartEmailStatus(string status)
+    {
+        if (accountStartEmailStatusText != null)
+        {
+            accountStartEmailStatusText.text = status;
+        }
+    }
+
+    private void RefreshAccountStartUi()
+    {
+        if (accountStartRoot == null)
+        {
+            return;
+        }
+
+        if (accountStartTitleText != null)
+        {
+            accountStartTitleText.text = Tr("account.start.title");
+        }
+
+        if (accountStartSubtitleText != null)
+        {
+            accountStartSubtitleText.text = Tr("account.start.subtitle");
+        }
+
+        if (accountStartStatusText != null)
+        {
+            var modeLabel = backendGameplayEnabled ? Tr("management.backend.server") : Tr("management.backend.local");
+            var message = string.IsNullOrWhiteSpace(accountStartMessage) ? Tr("account.start.status.ready") : accountStartMessage;
+            accountStartStatusText.text =
+                $"{GetAccountStartLocalSaveLabel()}\n" +
+                $"{GetAccountStartSessionLabel()}\n" +
+                $"{TrFormat("account.start.mode", modeLabel)} | {TrFormat("account.start.player", GetAccountPlayerId())}\n" +
+                message;
+        }
+
+        if (accountStartGoogleHintText != null)
+        {
+            accountStartGoogleHintText.text = Tr("account.start.google_later");
+        }
+
+        if (accountStartVersionText != null)
+        {
+            accountStartVersionText.text = GetVersionLabel();
+        }
+
+        SetButtonLabel(accountStartContinueButton, Tr("account.start.continue"));
+        SetButtonLabel(accountStartGuestButton, Tr("account.start.guest"));
+        SetButtonLabel(accountStartEmailLoginButton, Tr("account.start.email_login"));
+        SetButtonLabel(accountStartEmailRegisterButton, Tr("account.start.register"));
+        SetButtonLabel(accountStartEmailSubmitButton, Tr(accountStartEmailRegisterMode ? "account.start.email.submit.register" : "account.start.email.submit.login"));
+        SetButtonLabel(accountStartEmailBackButton, Tr("account.start.email.back"));
+
+        if (accountStartEmailTitleText != null)
+        {
+            accountStartEmailTitleText.text = Tr(accountStartEmailRegisterMode ? "account.start.email.title.register" : "account.start.email.title.login");
+        }
+
+        var hasContinueTarget = HasLocalSaveData() || (backendClient != null && backendClient.HasSession);
+        var interactable = !backendRequestInProgress;
+        if (accountStartContinueButton != null)
+        {
+            accountStartContinueButton.interactable = interactable && hasContinueTarget;
+        }
+
+        if (accountStartGuestButton != null)
+        {
+            accountStartGuestButton.interactable = interactable;
+        }
+
+        if (accountStartEmailLoginButton != null)
+        {
+            accountStartEmailLoginButton.interactable = interactable;
+        }
+
+        if (accountStartEmailRegisterButton != null)
+        {
+            accountStartEmailRegisterButton.interactable = interactable;
+        }
+
+        if (accountStartEmailInput != null)
+        {
+            accountStartEmailInput.interactable = interactable;
+        }
+
+        if (accountStartPasswordInput != null)
+        {
+            accountStartPasswordInput.interactable = interactable;
+        }
+
+        if (accountStartEmailSubmitButton != null)
+        {
+            accountStartEmailSubmitButton.interactable = interactable;
+        }
+
+        if (accountStartEmailBackButton != null)
+        {
+            accountStartEmailBackButton.interactable = interactable;
+        }
+
+        if (accountStartVisible)
+        {
+            accountStartRoot.SetAsLastSibling();
+        }
+    }
+
+    private string GetAccountStartLocalSaveLabel()
+    {
+        return HasLocalSaveData() ? Tr("account.start.local.present") : Tr("account.start.local.none");
+    }
+
+    private string GetAccountStartSessionLabel()
+    {
+        if (backendClient == null || !backendClient.HasSession)
+        {
+            return Tr("account.start.session.none");
+        }
+
+        return TrFormat("account.start.session.present", GetAccountStartSessionKindLabel(), backendClient.PlayerId);
+    }
+
+    private string GetAccountStartSessionKindLabel()
+    {
+        if (backendClient == null || !backendClient.HasSession)
+        {
+            return Tr("account.start.session.kind.none");
+        }
+
+        return backendClient.IsEmailAccount ? Tr("account.start.session.kind.email") : Tr("account.start.session.kind.guest");
+    }
+
+    private static bool HasLocalSaveData()
+    {
+        return PlayerPrefs.HasKey(SaveJsonKey) ||
+               PlayerPrefs.HasKey(SaveVersionKey) ||
+               PlayerPrefs.HasKey(GoldKey) ||
+               PlayerPrefs.HasKey(GemsKey) ||
+               PlayerPrefs.HasKey(MythEssenceKey) ||
+               PlayerPrefs.HasKey(EnemyLevelKey);
     }
 
     private void EnsureRuntimeScreenLayout()
@@ -23560,6 +24162,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             backendSmokeButton,
             backendResetButton,
             backendModeButton,
+            accountStartContinueButton,
+            accountStartGuestButton,
+            accountStartEmailLoginButton,
+            accountStartEmailRegisterButton,
+            accountStartEmailSubmitButton,
+            accountStartEmailBackButton,
             debugGoldButton,
             debugEssenceButton,
             debugGemsButton,
