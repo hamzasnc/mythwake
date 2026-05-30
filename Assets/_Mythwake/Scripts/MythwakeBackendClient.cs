@@ -12,8 +12,9 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 #else
     private const string DefaultBackendBaseUrl = "http://localhost:8080";
 #endif
+    private const string BackendBaseUrlResourcePath = "Mythwake/backend-base-url";
 
-    [SerializeField] private string baseUrl = DefaultBackendBaseUrl;
+    [SerializeField] private string baseUrl = string.Empty;
     [SerializeField] private int requestTimeoutSeconds = 10;
     private readonly Dictionary<string, string> pendingActionKeys = new Dictionary<string, string>();
     private string cachedSessionToken;
@@ -36,8 +37,8 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
     public string BaseUrl
     {
-        get => string.IsNullOrWhiteSpace(baseUrl) ? DefaultBackendBaseUrl : baseUrl.TrimEnd('/');
-        set => baseUrl = string.IsNullOrWhiteSpace(value) ? DefaultBackendBaseUrl : value.TrimEnd('/');
+        get => ResolveBackendBaseUrl(baseUrl);
+        set => baseUrl = string.IsNullOrWhiteSpace(value) ? string.Empty : value.TrimEnd('/');
     }
 
     public string SessionToken
@@ -95,6 +96,22 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
             return cachedStateRevision;
         }
+    }
+
+    private static string ResolveBackendBaseUrl(string configuredBaseUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(configuredBaseUrl))
+        {
+            return configuredBaseUrl.TrimEnd('/');
+        }
+
+        var backendConfig = Resources.Load<TextAsset>(BackendBaseUrlResourcePath);
+        if (backendConfig != null && !string.IsNullOrWhiteSpace(backendConfig.text))
+        {
+            return backendConfig.text.Trim().TrimEnd('/');
+        }
+
+        return DefaultBackendBaseUrl;
     }
 
     public void ClearSession()

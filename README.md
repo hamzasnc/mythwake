@@ -189,7 +189,7 @@ Backend:
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Guest auth and action responses include the full player snapshot for direct client UI updates
 - Email + Password auth now has backend register/login endpoints and a simple Unity Backend-panel UI; it creates or reuses one player state per email account, stores only PBKDF2 password hashes, and issues the same Bearer sessions as Guest auth
-- Android builds use `http://127.0.0.1:8080` as the default backend URL for local tester APKs; run `adb reverse tcp:8080 tcp:8080` when testing against the Windows backend. Editor/Desktop use `http://localhost:8080`
+- Android builds use `http://127.0.0.1:8080` as the default backend URL for local tester APKs; run `adb reverse tcp:8080 tcp:8080` when testing against the Windows backend. Editor/Desktop use `http://localhost:8080`. Server builds can pass `-BackendBaseUrl "https://api.example.com"` to `scripts/build-android.cmd`.
 - `scripts/build-android.cmd` builds APKs by default and AABs with `-AppBundle` for Play Internal Testing preparation
 - Redis is optional: when `MYTHWAKE_REDIS_ADDR` is set, sessions and rate limits can use Redis while PostgreSQL remains the durable source of truth
 - Windows helper scripts:
@@ -206,6 +206,7 @@ Backend:
   - `docs/TESTER_ACCOUNTS.md`
   - `docs/TESTER_RELEASE_PROCESS.md`
   - `docs/TESTER_BUILD_NOTES.md`
+  - `docs/SERVER_DEPLOYMENT.md`
   - `docs/TESTER_BUILD_0_2.md`
   - `docs/TESTER_BUILD_0_1.md`
   - `docs/UNITY_TEST_STAND.md` (includes the latest Mobile UX pass and open Android emulator/device follow-up)

@@ -700,6 +700,7 @@ public static class AndroidBuildAutomation
 {
     private const string DefaultScenePath = "Assets/Scenes/SampleScene.unity";
     private const string AndroidApplicationIdentifier = "com.xmiepsen.mythwake";
+    private const string BackendBaseUrlAssetPath = "Assets/_Mythwake/Resources/Mythwake/backend-base-url.txt";
     private const string ArtifactApk = "apk";
     private const string ArtifactAab = "aab";
 
@@ -749,6 +750,7 @@ public static class AndroidBuildAutomation
         EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
         EditorUserBuildSettings.buildAppBundle = appBundle;
         SyncAndroidVersionSettings();
+        var backendBaseUrlState = PrepareBackendBaseUrlConfig(GetCommandLineValue("-mythwakeBackendBaseUrl"));
 
         var scenes = GetEnabledScenes();
         var options = new BuildPlayerOptions
@@ -760,15 +762,22 @@ public static class AndroidBuildAutomation
             options = BuildOptions.None
         };
 
-        Debug.Log($"Building Android {(appBundle ? "AAB" : "APK")} to {outputPath} with {scenes.Length} scene(s).");
-        var report = BuildPipeline.BuildPlayer(options);
-        var summary = report.summary;
-        if (summary.result != BuildResult.Succeeded)
+        try
         {
-            throw new InvalidOperationException($"Android build failed: {summary.result} after {summary.totalTime}. Errors={summary.totalErrors}, warnings={summary.totalWarnings}.");
-        }
+            Debug.Log($"Building Android {(appBundle ? "AAB" : "APK")} to {outputPath} with {scenes.Length} scene(s).");
+            var report = BuildPipeline.BuildPlayer(options);
+            var summary = report.summary;
+            if (summary.result != BuildResult.Succeeded)
+            {
+                throw new InvalidOperationException($"Android build failed: {summary.result} after {summary.totalTime}. Errors={summary.totalErrors}, warnings={summary.totalWarnings}.");
+            }
 
-        return report;
+            return report;
+        }
+        finally
+        {
+            RestoreBackendBaseUrlConfig(backendBaseUrlState);
+        }
     }
 
     private static void SyncAndroidVersionSettings()
@@ -852,6 +861,65 @@ public static class AndroidBuildAutomation
         }
 
         return ArtifactApk;
+    }
+
+    private static TemporaryBackendConfigState PrepareBackendBaseUrlConfig(string backendBaseUrl)
+    {
+        if (string.IsNullOrWhiteSpace(backendBaseUrl))
+        {
+            return TemporaryBackendConfigState.Noop;
+        }
+
+        backendBaseUrl = backendBaseUrl.Trim().TrimEnd('/');
+        if (!Uri.TryCreate(backendBaseUrl, UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new InvalidOperationException($"Invalid backend base URL: {backendBaseUrl}");
+        }
+
+        var state = new TemporaryBackendConfigState
+        {
+            ShouldRestore = true,
+            Existed = File.Exists(BackendBaseUrlAssetPath),
+            PreviousContent = File.Exists(BackendBaseUrlAssetPath) ? File.ReadAllText(BackendBaseUrlAssetPath) : null
+        };
+
+        var directory = Path.GetDirectoryName(BackendBaseUrlAssetPath);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        File.WriteAllText(BackendBaseUrlAssetPath, backendBaseUrl + Environment.NewLine);
+        AssetDatabase.ImportAsset(BackendBaseUrlAssetPath);
+        Debug.Log($"Android build backend URL: {backendBaseUrl}");
+        return state;
+    }
+
+    private static void RestoreBackendBaseUrlConfig(TemporaryBackendConfigState state)
+    {
+        if (!state.ShouldRestore)
+        {
+            return;
+        }
+
+        if (state.Existed)
+        {
+            File.WriteAllText(BackendBaseUrlAssetPath, state.PreviousContent ?? string.Empty);
+            AssetDatabase.ImportAsset(BackendBaseUrlAssetPath);
+            return;
+        }
+
+        AssetDatabase.DeleteAsset(BackendBaseUrlAssetPath);
+    }
+
+    private struct TemporaryBackendConfigState
+    {
+        public static readonly TemporaryBackendConfigState Noop = new TemporaryBackendConfigState();
+
+        public bool ShouldRestore;
+        public bool Existed;
+        public string PreviousContent;
     }
 
     private static string GetCommandLineValue(string name)

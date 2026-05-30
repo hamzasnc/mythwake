@@ -1,0 +1,76 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    image: mythwake-api:local
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      MYTHWAKE_API_ADDR: ":8080"
+      MYTHWAKE_ENV: "${MYTHWAKE_ENV:-production}"
+      MYTHWAKE_API_VERSION: "${MYTHWAKE_API_VERSION:-0.2.60}"
+      MYTHWAKE_DATABASE_URL: "postgres://${POSTGRES_USER:-mythwake}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}@postgres:5432/${POSTGRES_DB:-mythwake}?sslmode=disable"
+      MYTHWAKE_REDIS_ADDR: "redis:6379"
+      MYTHWAKE_STATE_WRITE_MODE: "ledger_write_behind"
+      MYTHWAKE_STATE_FLUSH_INTERVAL: "30s"
+      MYTHWAKE_STATE_FLUSH_TIMEOUT: "5s"
+      MYTHWAKE_SESSION_CACHE_TTL: "30s"
+      MYTHWAKE_SESSION_TOUCH_WINDOW: "30s"
+      MYTHWAKE_RATE_LIMIT_ENABLED: "true"
+      MYTHWAKE_RATE_LIMIT_WINDOW: "1m"
+      MYTHWAKE_RATE_LIMIT_AUTH: "30"
+      MYTHWAKE_RATE_LIMIT_GAMEPLAY: "0"
+      MYTHWAKE_PLAYER_LOCK_TTL: "5s"
+      MYTHWAKE_REQUIRE_IDEMPOTENCY: "true"
+      MYTHWAKE_DEV_TOOLS_ENABLED: "${MYTHWAKE_DEV_TOOLS_ENABLED:-false}"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-mythwake}"
+      POSTGRES_USER: "${POSTGRES_USER:-mythwake}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}"
+    volumes:
+      - mythwake_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      MYTHWAKE_DOMAIN: "${MYTHWAKE_DOMAIN:?set MYTHWAKE_DOMAIN in deploy/.env}"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  mythwake_postgres_data:
+  caddy_data:
+  caddy_config:

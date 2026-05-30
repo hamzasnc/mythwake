@@ -14,6 +14,7 @@ Current direction:
 - PostgreSQL durable source of truth.
 - Redis optional for sessions, rate limits, locks, and temporary coordination.
 - No Docker requirement. Local Windows PostgreSQL is the expected setup for now.
+- First small Linux server deployment files now exist for the public/tester backend path: `backend/Dockerfile`, `deploy/docker-compose.prod.yml`, `deploy/Caddyfile`, `deploy/.env.example`, `deploy/install-docker-ubuntu.sh`, and `docs/SERVER_DEPLOYMENT.md`.
 - Android and iOS are both required.
 - Android testing currently uses MuMuPlayer when available, plus Android Studio emulator / physical device installs for follow-up checks.
 - User wants practical game progress and visible in-game UI, not endless backend-only work.
@@ -627,6 +628,7 @@ go run ./cmd/api
 Unity backend URLs:
 - Editor/Desktop: `http://localhost:8080`
 - Android local tester APK: `http://127.0.0.1:8080`
+- Android server APK/AAB builds: pass `-BackendBaseUrl "https://api.example.com"` to `scripts/build-android.cmd`; the build automation writes a temporary Resources config and restores the local default afterward.
 - For MuMuPlayer, Android emulators, or USB devices talking to the Windows backend, run `adb reverse tcp:8080 tcp:8080` before the account smoke.
 
 Navicat:
@@ -799,6 +801,7 @@ Backend:
 Docs:
 - `README.md`
 - `docs/ROADMAP.md`
+- `docs/SERVER_DEPLOYMENT.md`
 - `docs/TESTER_ACCOUNTS.md`
 - `docs/UNITY_TEST_STAND.md`
 - `backend/README.md`

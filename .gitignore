@@ -41,6 +41,11 @@ desktop.ini
 *.app
 *.xcarchive
 
+# Local deployment secrets / generated build config
+deploy/.env
+Assets/_Mythwake/Resources/Mythwake/backend-base-url.txt
+Assets/_Mythwake/Resources/Mythwake/backend-base-url.txt.meta
+
 # Asset store packages / local exports
 *.unitypackage
 

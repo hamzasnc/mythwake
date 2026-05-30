@@ -142,6 +142,7 @@ Shortcut scripts from the repo root:
 Unity client notes:
 - Editor/Desktop default backend URL: `http://localhost:8080`
 - Android local tester APK default backend URL: `http://127.0.0.1:8080`; run `adb reverse tcp:8080 tcp:8080` for MuMuPlayer, Android emulators, or USB devices that should talk to the Windows backend.
+- Android server builds can pass `-BackendBaseUrl "https://api.example.com"` to `scripts/build-android.cmd`; see `docs/SERVER_DEPLOYMENT.md`.
 - In the prototype, open `Shop` and use `Ping`, `Guest`, `Sync`, or the `Local`/`Server` mode button in the Backend panel.
 - Server Mode sends manual gameplay button actions to this API and applies the returned `playerSnapshot`.
 

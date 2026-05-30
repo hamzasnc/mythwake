@@ -2,6 +2,7 @@ param(
     [string]$UnityPath = "C:\Program Files\Unity\Hub\Editor\6000.4.5f1\Editor\Unity.exe",
     [string]$ProjectPath = "",
     [string]$OutputPath = "",
+    [string]$BackendBaseUrl = "",
     [string]$LogFile = "",
     [switch]$AppBundle,
     [switch]$DryRun
@@ -47,6 +48,10 @@ if ($AppBundle) {
     $arguments += @("-mythwakeAndroidArtifact", "aab")
 }
 
+if (-not [string]::IsNullOrWhiteSpace($BackendBaseUrl)) {
+    $arguments += @("-mythwakeBackendBaseUrl", $BackendBaseUrl)
+}
+
 $artifactLabel = if ($AppBundle) { "AAB" } else { "APK" }
 
 Write-Host "Unity Android $artifactLabel build"
@@ -55,6 +60,9 @@ Write-Host "Unity:   $UnityPath"
 Write-Host "Log:     $LogFile"
 if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
     Write-Host "Output:  $OutputPath"
+}
+if (-not [string]::IsNullOrWhiteSpace($BackendBaseUrl)) {
+    Write-Host "Backend: $BackendBaseUrl"
 }
 
 if ($DryRun) {
