@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.168
+Prototype version: 0.2.169
 Local save version: 2
 
 Current prototype:
@@ -11,7 +11,7 @@ Current prototype:
 - Reproducible Android APK batch build helper and portrait screenshot fallback helper
 - Simple portrait UI
 - Mobile app shell with Home, Village, Dungeons, Battle, Heroes, Gear, Summon, and Shop screens
-- Runtime Account Start screen appears before Home and shows local-save presence, backend session/account state, Local/Server mode, Player ID, Continue, Play as Guest, Email Login, Register, and a Google Login later hint
+- Runtime Account Start screen appears before Home and shows local-save presence, backend session/account state, Local/Server mode, Player ID, Continue, Login with Email, Create Account, Play as Guest, and a Google Play later hint
 - First core loop: fight enemies, earn Myth Essence, upgrade heroes
 - Auto attack while the app is open
 - Local save data via a versioned JSON blob stored in PlayerPrefs
@@ -31,6 +31,7 @@ Current prototype:
 - Cached Server Mode sessions persist across Unity restarts and are restored from the Account Start screen through `/client/bootstrap`
 - Email account sessions are cached like existing backend sessions; after Register/Login from the Start screen or Backend panel the client bootstraps the server player snapshot and keeps Server Mode active
 - Email account auth now has clearer missing-email, missing-password, weak-password, duplicate-email, unknown-account, and wrong-password errors, plus backend/E2E coverage that verifies Logout -> Login restores the same server player progress
+- Account Start now uses Email-first tester copy, friendlier validation/network errors, a less prominent Google Play later hint, and a clearer Management -> Account status with build, mode, session, and Player ID for feedback reports
 - Server Mode blocks local debug grants/reset so PostgreSQL remains the authoritative test source
 - Gameplay buttons are gated while backend requests are in flight to avoid accidental double actions
 - Backend panel includes a `Smoke` action that runs a compact server-backed Campaign/Dungeon/Gear/Progression/Summon/Daily/Mission Track/AFK/Flush test sequence
@@ -187,7 +188,7 @@ Backend:
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Guest auth and action responses include the full player snapshot for direct client UI updates
 - Email + Password auth now has backend register/login endpoints and a simple Unity Backend-panel UI; it creates or reuses one player state per email account, stores only PBKDF2 password hashes, and issues the same Bearer sessions as Guest auth
-- Android emulator builds use `http://10.0.2.2:8080` as the default backend URL, while Editor/Desktop use `http://localhost:8080`
+- Android builds use `http://127.0.0.1:8080` as the default backend URL for local tester APKs; run `adb reverse tcp:8080 tcp:8080` when testing against the Windows backend. Editor/Desktop use `http://localhost:8080`
 - Redis is optional: when `MYTHWAKE_REDIS_ADDR` is set, sessions and rate limits can use Redis while PostgreSQL remains the durable source of truth
 - Windows helper scripts:
   - `scripts/start-backend.cmd`
@@ -214,6 +215,7 @@ Backend:
   - `docs/screenshots/android/2026-05-29-tester-build-0-1-icon/README.md`
 
 Changelog:
+- Prototype 0.2.169: Polished the Account Start tester flow for the first multi-account handoff. Button order now favors saved progress and Email accounts (`Continue`, `Login with Email`, `Create Account`, `Play as Guest`), validation and backend/network failures show tester-readable messages, Google Play login is kept as a later note, and Management -> Account now shows Build, Local/Server mode, session kind, and Player ID instead of debug reset-key copy. Android local tester builds now use `127.0.0.1:8080` plus `adb reverse tcp:8080 tcp:8080` for MuMu/USB backend tests, and backend requests have a client-side timeout so server-down cases do not leave the UI waiting forever. Account Start validation now covers the Email-first order, friendly input errors, masked password input, no reset trap, and EN/DE text fit. APK `Builds/Android/Mythwake-0.2.169-account-tester-build.apk` builds, installs, and passed a MuMu account smoke covering Register, Server Mode progress to Stage 1-2, app restart/Continue, Logout/Login, wrong password, duplicate Email, backend-down, Guest fallback, and filtered Logcat. Added `docs/TESTER_BUILD_0_2.md` for account-build install, tester-account, feedback, and known-limit guidance.
 - Prototype 0.2.168 / Backend 0.2.60: Hardened the Email + Password account MVP. Backend auth now returns explicit structured errors for missing email, missing password, weak password, duplicate email, unknown account/wrong password, and keeps safe `invalid_credentials` behavior for account lookup failures. HTTP tests now cover protected endpoints, Logout revocation, and Email re-login restoring the same player snapshot after campaign progress. The PostgreSQL E2E smoke now uses a unique Email account for the durable progress/restart/re-login path while still checking Guest auth and definitions-driven accessory drops. The older Ravik summon-pool seed migration is idempotent for already-seeded dev databases. Unity client error labels recognize the new backend error codes, and the Account Start validator now checks masked password input, Email input type, no reset trap on the Start screen, and EN/DE text fit.
 - Prototype 0.2.167: Added a first runtime Account Start screen before Home. It shows whether a local save exists, whether a server session is cached, the active Local/Server mode, Player ID/status, and buttons for Continue, Play as Guest, Email Login, Register, plus a Google Login later hint. Continue restores cached Email/Guest sessions through `/client/bootstrap` or falls back to local saves, Email Login/Register reuse the existing secure backend Email auth, Play as Guest keeps Guest auth working with a local fallback if the backend is unavailable, Logout returns to the Start screen without deleting account progress, and the new Account Start validator is included in Current Slice.
 - Prototype 0.2.166: Added the first testable Unity Email + Password account flow in the Shop Backend panel: email/password inputs, Register, Login, Logout, visible Guest/Email Account status, Player ID/session revision display, and post-auth `/client/bootstrap` so the server player state is applied immediately. Unity now stores the backend account kind with the cached session, keeps Email sessions from silently falling back to Guest after a `401`, clears the cached session on Logout without deleting account progress, and the Current Slice validator checks the Account panel labels/placeholders/text fit. Backend HTTP tests now explicitly cover invalid email errors. APK `Builds/Android/Mythwake-0.2.166-email-login.apk` builds, installs, and cold-launches in MuMuPlayer.

@@ -31,6 +31,7 @@ Latest known pushed commit before the 0.2.159 continuation:
 - `24b2ab4 Rework battle formation mockup`
 
 Current continuation:
+- Prototype `0.2.169` polishes the Account Start tester flow for the first multi-account handoff. The Start screen now puts saved progress and Email accounts ahead of Guest (`Continue`, `Login with Email`, `Create Account`, `Play as Guest`), maps validation/backend/network failures to tester-readable copy, keeps Google Play login as a later note instead of a prominent action, and makes Management -> Account show Build, Local/Server mode, session kind, and Player ID for feedback reports. Android local tester APKs now point at `127.0.0.1:8080`; run `adb reverse tcp:8080 tcp:8080` before MuMu/emulator/USB backend tests. Backend requests also have an extra client timeout guard for server-down cases. APK `Builds\Android\Mythwake-0.2.169-account-tester-build.apk` builds, installs, and passed MuMu smoke for Register, Server Mode progress to Stage 1-2, app restart/Continue, Logout/Login, wrong password, duplicate Email, backend-down, Guest fallback, and filtered Logcat. `docs/TESTER_BUILD_0_2.md` is the new tester-build handoff doc with install/start, account creation, Continue/Login/Logout, Guest caveats, feedback questions, known risks, and multi-tester email conventions.
 - Prototype `0.2.168` / Backend `0.2.60` hardens the Email + Password account MVP. Backend auth now has structured errors for missing email, invalid email, missing password, weak password, duplicate email, and safe invalid-credentials login failures; HTTP tests cover protected state after Email auth, Logout revocation, and Email re-login restoring the same progressed player snapshot. `scripts/check-postgres-e2e.ps1` now uses a unique Email account for the durable PostgreSQL restart/re-login path while still checking Guest auth and definitions-driven accessory drops. The older Ravik summon-pool seed migration is idempotent for already-seeded dev databases. Unity recognizes the new error codes, and Account Start validation checks masked password input, Email input type, no reset trap in the first-run account flow, and EN/DE text fit. APK target for this slice is `Builds\Android\Mythwake-0.2.168-email-account-mvp.apk`.
 - Prototype `0.2.167` / Backend `0.2.59` puts a runtime Account Start screen in front of Home. It shows Local Save present/none, cached Server Session present/none, Local/Server mode, Player ID/status, Continue, Play as Guest, Email Login, Register, and a Google Login later hint. Continue restores cached Email/Guest sessions with `/client/bootstrap` or opens the local save. Email Login/Register reuse the existing secure Email auth and bootstrap the same server player snapshot. Play as Guest keeps Guest auth working with a local fallback if backend auth is unavailable. Logout returns to the Start screen without deleting server progress. `Assets/_Mythwake/Editor/AccountStartValidation.cs` is wired into Current Slice and validates the overlay, button labels, Email panel, Google-later copy, and text fit. APK target for this slice is `Builds\Android\Mythwake-0.2.167-startscreen.apk`.
 - Prototype `0.2.166` / Backend `0.2.59` makes the durable tester-account slice testable from Unity. The Shop Backend panel now has Email/Password inputs plus Register, Login, and Logout. Email Register/Login store the normal Bearer session, cache the account kind as Email, enable Server Mode, call `/client/bootstrap`, and apply the returned server player snapshot. Logout clears the cached session and turns Server Mode off without deleting account progress. Guest auth still works for smoke/dev, while Email-session `401`s ask the tester to login again instead of silently creating a fresh Guest player. Upgrade Clutter / Current Slice validation covers the Account panel labels, placeholders, status copy, and text fit. APK `Builds\Android\Mythwake-0.2.166-email-login.apk` builds, installs, and cold-launches in MuMuPlayer with `TotalTime 747 ms` / `WaitTime 749 ms`.
@@ -176,7 +177,7 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.168`
+- Prototype `0.2.169`
 - Save version `2`
 
 Important Unity scripts:
@@ -623,7 +624,8 @@ go run ./cmd/api
 
 Unity backend URLs:
 - Editor/Desktop: `http://localhost:8080`
-- Android emulator: `http://10.0.2.2:8080`
+- Android local tester APK: `http://127.0.0.1:8080`
+- For MuMuPlayer, Android emulators, or USB devices talking to the Windows backend, run `adb reverse tcp:8080 tcp:8080` before the account smoke.
 
 Navicat:
 - Connect to local PostgreSQL.
@@ -668,7 +670,7 @@ Good next asset tasks:
 Future login methods:
 - Guest/dev currently exists and remains useful for smoke tests.
 - Email + Password registration/login now exists in the backend, Account Start screen, and Unity Backend-panel MVP.
-- Next account step: decide Guest-to-Email linking rules, then add password reset/email verification and eventually polish the first-run account screen.
+- Next account step: decide Guest-to-Email linking rules, then add password reset/email verification and keep polishing the first-run account screen from real tester feedback.
 - Google Login through Play Store / Google Play Services comes later, after the Email + Password slice is stable.
 - Apple login remains a later iOS/platform-provider follow-up.
 

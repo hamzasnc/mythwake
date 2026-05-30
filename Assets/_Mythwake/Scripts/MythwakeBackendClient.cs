@@ -8,7 +8,7 @@ using UnityEngine.Networking;
 public sealed class MythwakeBackendClient : MonoBehaviour
 {
 #if UNITY_ANDROID && !UNITY_EDITOR
-    private const string DefaultBackendBaseUrl = "http://10.0.2.2:8080";
+    private const string DefaultBackendBaseUrl = "http://127.0.0.1:8080";
 #else
     private const string DefaultBackendBaseUrl = "http://localhost:8080";
 #endif
@@ -425,9 +425,16 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
         using (request)
         {
-            yield return request.SendWebRequest();
+            var timedOut = false;
+            yield return SendRequestWithTimeout(request, didTimeOut => timedOut = didTimeOut);
 
             var body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
+            if (timedOut)
+            {
+                completed?.Invoke(false, BuildTimeoutErrorMessage(), request.responseCode, default(T));
+                yield break;
+            }
+
             if (request.result != UnityWebRequest.Result.Success)
             {
                 completed?.Invoke(false, BuildErrorMessage(request, body), request.responseCode, default(T));
@@ -519,9 +526,16 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
         using (request)
         {
-            yield return request.SendWebRequest();
+            var timedOut = false;
+            yield return SendRequestWithTimeout(request, didTimeOut => timedOut = didTimeOut);
 
             var body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
+            if (timedOut)
+            {
+                completed?.Invoke(false, BuildTimeoutErrorMessage(), default(MythwakeDefinitionSnapshotDto), false);
+                yield break;
+            }
+
             if (request.responseCode == httpStatusNotModified)
             {
                 var cachedBody = PlayerPrefs.GetString(DefinitionsJsonCacheKey, string.Empty);
@@ -651,6 +665,25 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         return $"unity-{Guid.NewGuid().ToString("N").Substring(0, 24)}";
     }
 
+    private IEnumerator SendRequestWithTimeout(UnityWebRequest request, Action<bool> completed)
+    {
+        var timeoutSeconds = Mathf.Max(1, requestTimeoutSeconds);
+        var operation = request.SendWebRequest();
+        var deadline = Time.realtimeSinceStartup + timeoutSeconds + 1f;
+        while (!operation.isDone && Time.realtimeSinceStartup < deadline)
+        {
+            yield return null;
+        }
+
+        var timedOut = !operation.isDone;
+        if (timedOut)
+        {
+            request.Abort();
+        }
+
+        completed?.Invoke(timedOut);
+    }
+
     private string GetOrCreatePendingActionKey(string actionKey)
     {
         if (pendingActionKeys.TryGetValue(actionKey, out var idempotencyKey) && !string.IsNullOrWhiteSpace(idempotencyKey))
@@ -707,6 +740,11 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         }
 
         return $"{request.responseCode}: {error} - {Truncate(body, 480)}";
+    }
+
+    private static string BuildTimeoutErrorMessage()
+    {
+        return "0: Backend request timed out - server is not reachable";
     }
 
     private static bool TryParseBackendError(string body, out MythwakeBackendErrorDto backendError)

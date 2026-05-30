@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.168";
+    public const string PrototypeVersion = "0.2.169";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -14810,9 +14810,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         ConfigureRuntimeTextFit(accountStartStatusText, 15f, 22f);
 
         accountStartContinueButton = CreateRuntimeButton(accountStartRoot, "Account Start Continue Button", "Continue", 0, -648, 680, 78);
-        accountStartGuestButton = CreateRuntimeButton(accountStartRoot, "Account Start Guest Button", "Play as Guest", 0, -748, 680, 78);
-        accountStartEmailLoginButton = CreateRuntimeButton(accountStartRoot, "Account Start Email Login Button", "Email Login", 0, -848, 680, 78);
-        accountStartEmailRegisterButton = CreateRuntimeButton(accountStartRoot, "Account Start Email Register Button", "Register", 0, -948, 680, 78);
+        accountStartEmailLoginButton = CreateRuntimeButton(accountStartRoot, "Account Start Email Login Button", "Email Login", 0, -748, 680, 78);
+        accountStartEmailRegisterButton = CreateRuntimeButton(accountStartRoot, "Account Start Email Register Button", "Register", 0, -848, 680, 78);
+        accountStartGuestButton = CreateRuntimeButton(accountStartRoot, "Account Start Guest Button", "Play as Guest", 0, -948, 680, 78);
         ConfigureRuntimeButtonLabelFit(accountStartContinueButton, 15f, 24f);
         ConfigureRuntimeButtonLabelFit(accountStartGuestButton, 15f, 24f);
         ConfigureRuntimeButtonLabelFit(accountStartEmailLoginButton, 15f, 24f);
@@ -15075,7 +15075,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var email = accountStartEmailInput != null ? (accountStartEmailInput.text ?? string.Empty).Trim() : string.Empty;
         var password = accountStartPasswordInput != null ? accountStartPasswordInput.text ?? string.Empty : string.Empty;
-        if (!ValidateBackendEmailInputs(email, password, out var validationError))
+        if (!ValidateAccountStartEmailInputs(email, password, out var validationError))
         {
             SetAccountStartEmailStatus(validationError);
             return;
@@ -15089,6 +15089,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
+        accountStartMessage = Tr("account.start.email.status.working");
         SetAccountStartEmailStatus(Tr("account.start.email.status.working"));
         Func<string, string, Action<bool, string, MythwakeGuestAuthResponseDto>, IEnumerator> authCall = accountStartEmailRegisterMode
             ? backendClient.EmailRegister
@@ -15115,10 +15116,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (!authSuccess)
         {
-            var errorText = $"{resultLabel} failed: {authError}";
+            var errorText = FormatAccountStartAuthError(authError);
             accountStartMessage = errorText;
             SetAccountStartEmailStatus(errorText);
-            FinishBackendRequest(errorText);
+            FinishBackendRequest($"{resultLabel} failed: {authError}");
             yield break;
         }
 
@@ -15189,6 +15190,61 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             accountStartEmailStatusText.text = status;
         }
+    }
+
+    private bool ValidateAccountStartEmailInputs(string email, string password, out string validationError)
+    {
+        if (string.IsNullOrWhiteSpace(email) || email.IndexOf('@') <= 0 || email.LastIndexOf('@') != email.IndexOf('@') || !email.Substring(email.IndexOf('@') + 1).Contains("."))
+        {
+            validationError = Tr("account.start.email.error.invalid_email");
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(password) || password.Length < 8)
+        {
+            validationError = Tr("account.start.email.error.weak_password");
+            return false;
+        }
+
+        validationError = string.Empty;
+        return true;
+    }
+
+    private string FormatAccountStartAuthError(string authError)
+    {
+        var lowerError = (authError ?? string.Empty).ToLowerInvariant();
+        if (lowerError.Contains("email already registered") || lowerError.Contains("email_already_registered"))
+        {
+            return Tr("account.start.email.error.duplicate");
+        }
+
+        if (lowerError.Contains("invalid credentials") || lowerError.Contains("invalid_credentials"))
+        {
+            return Tr("account.start.email.error.credentials");
+        }
+
+        if (lowerError.Contains("invalid email") || lowerError.Contains("invalid_email") || lowerError.Contains("missing email") || lowerError.Contains("missing_email"))
+        {
+            return Tr("account.start.email.error.invalid_email");
+        }
+
+        if (lowerError.Contains("weak password") || lowerError.Contains("weak_password") || lowerError.Contains("missing password") || lowerError.Contains("missing_password"))
+        {
+            return Tr("account.start.email.error.weak_password");
+        }
+
+        if (lowerError.Contains("cannot connect") ||
+            lowerError.Contains("failed to connect") ||
+            lowerError.Contains("timed out") ||
+            lowerError.Contains("timeout") ||
+            lowerError.Contains("could not resolve") ||
+            lowerError.Contains("name resolution") ||
+            lowerError.Contains("network"))
+        {
+            return Tr("account.start.email.error.backend_down");
+        }
+
+        return TrFormat("account.start.email.error.generic", string.IsNullOrWhiteSpace(authError) ? "unknown error" : authError);
     }
 
     private void RefreshAccountStartUi()
@@ -23821,8 +23877,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 return TrFormat(
                     "management.account.body",
                     GetAccountPlayerId(),
-                    saveVersion,
-                    GetDailyDateKey(),
+                    PrototypeVersion,
+                    CurrentSaveVersion,
                     backendGameplayEnabled ? Tr("management.backend.server") : Tr("management.backend.local"),
                     GetAccountSessionLabel());
             case ManagementMenuMode.Support:

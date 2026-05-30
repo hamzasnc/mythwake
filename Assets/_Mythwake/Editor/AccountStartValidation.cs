@@ -15,7 +15,7 @@ public static class AccountStartValidation
         try
         {
             ValidateAccountStart();
-            Debug.Log("Account Start validated: start overlay, Continue/Guest/Email/Register actions, masked password input, Email panel labels, Google-later hint, EN/DE text fit, and no reset trap are present.");
+            Debug.Log("Account Start validated: polished start overlay, Continue/Email/Register/Guest order, masked password input, friendly Email errors, Google-later hint, EN/DE text fit, and no reset trap are present.");
         }
         catch (Exception ex)
         {
@@ -51,15 +51,18 @@ public static class AccountStartValidation
 
         AssertFullScreen(root, "Account Start Screen");
         AssertTextField(controller, "accountStartTitleText", "Mythwake");
-        AssertTextContains(controller, "accountStartStatusText", "Local Save");
-        AssertTextContains(controller, "accountStartStatusText", "Server Session");
-        AssertTextContains(controller, "accountStartStatusText", "Mode:");
-        AssertTextContains(controller, "accountStartGoogleHintText", "Google Login via Play Games comes later.");
+        AssertTextContains(controller, "accountStartStatusText", "Local save");
+        AssertTextContains(controller, "accountStartStatusText", "Server account");
+        AssertTextContains(controller, "accountStartStatusText", "Gameplay:");
+        AssertTextContains(controller, "accountStartGoogleHintText", "Google Play login comes later; use Email for this test.");
 
         var continueButton = AssertButton(controller, "accountStartContinueButton", "Continue");
         var guestButton = AssertButton(controller, "accountStartGuestButton", "Play as Guest");
-        var loginButton = AssertButton(controller, "accountStartEmailLoginButton", "Email Login");
-        var registerButton = AssertButton(controller, "accountStartEmailRegisterButton", "Register");
+        var loginButton = AssertButton(controller, "accountStartEmailLoginButton", "Login with Email");
+        var registerButton = AssertButton(controller, "accountStartEmailRegisterButton", "Create Account");
+        AssertButtonVerticalOrder(continueButton, loginButton, "Continue should stay above Email Login.");
+        AssertButtonVerticalOrder(loginButton, registerButton, "Email Login should stay above Create Account.");
+        AssertButtonVerticalOrder(registerButton, guestButton, "Create Account should stay above Play as Guest.");
         AssertButtonHasRaycastableTarget(continueButton, "Continue");
         AssertButtonHasRaycastableTarget(guestButton, "Guest");
         AssertButtonHasRaycastableTarget(loginButton, "Email Login");
@@ -93,7 +96,17 @@ public static class AccountStartValidation
         {
             throw new InvalidOperationException("Account Start password input should mask text.");
         }
-        AssertTextContains(controller, "accountStartEmailStatusText", "Enter email");
+        AssertTextContains(controller, "accountStartEmailStatusText", "restore server progress");
+        emailInput.text = "not-an-email";
+        passwordInput.text = "password123";
+        AssertButton(controller, "accountStartEmailSubmitButton", "Login").onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        AssertTextContains(controller, "accountStartEmailStatusText", "valid email");
+        emailInput.text = "tester@example.com";
+        passwordInput.text = "short";
+        AssertButton(controller, "accountStartEmailSubmitButton", "Login").onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        AssertTextContains(controller, "accountStartEmailStatusText", "at least 8");
         AssertButtonHasRaycastableTarget(backButton, "Email Back");
         backButton.onClick.Invoke();
         Canvas.ForceUpdateCanvases();
@@ -119,8 +132,9 @@ public static class AccountStartValidation
         Canvas.ForceUpdateCanvases();
         AssertButton(controller, "accountStartContinueButton", "Weiter");
         AssertButton(controller, "accountStartGuestButton", "Als Gast spielen");
-        AssertButton(controller, "accountStartEmailRegisterButton", "Registrieren");
-        AssertTextContains(controller, "accountStartGoogleHintText", "Google Login ueber Play Games kommt spaeter.");
+        AssertButton(controller, "accountStartEmailLoginButton", "Mit Email einloggen");
+        AssertButton(controller, "accountStartEmailRegisterButton", "Account erstellen");
+        AssertTextContains(controller, "accountStartGoogleHintText", "Google Play Login kommt spaeter");
         AssertTextFit(root, "Account Start Screen DE");
     }
 
@@ -220,6 +234,16 @@ public static class AccountStartValidation
         if (target.color.a <= 0f)
         {
             throw new InvalidOperationException($"{context} button target should be visible for pointer hits.");
+        }
+    }
+
+    private static void AssertButtonVerticalOrder(Button upper, Button lower, string context)
+    {
+        var upperRect = upper.GetComponent<RectTransform>();
+        var lowerRect = lower.GetComponent<RectTransform>();
+        if (upperRect == null || lowerRect == null || upperRect.anchoredPosition.y <= lowerRect.anchoredPosition.y)
+        {
+            throw new InvalidOperationException(context);
         }
     }
 

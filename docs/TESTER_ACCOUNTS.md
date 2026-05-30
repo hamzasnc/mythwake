@@ -28,9 +28,13 @@ Email + Password auth now exists on the backend and is exposed in two Unity plac
 - `Login`
 - `Logout`
 
-Both endpoints issue the same Bearer session shape as Guest auth. Passwords are stored as salted PBKDF2-SHA256 hashes in `account.player_email_credentials`; raw passwords are never stored. After Register/Login, Unity caches the session, marks it as an Email Account, enables Server Mode, calls `/client/bootstrap`, and applies the returned player snapshot. The Account Start screen's `Continue` button restores a cached server session through `/client/bootstrap`; if no server session exists but a local save exists, it continues the local save without touching server progress. Logout clears the cached session, turns Server Mode off, and returns to the Account Start screen, but it does not delete the account's server progress.
+Both endpoints issue the same Bearer session shape as Guest auth. Passwords are stored as salted PBKDF2-SHA256 hashes in `account.player_email_credentials`; raw passwords are never stored. After Register/Login, Unity caches the session, marks it as an Email Account, enables Server Mode, calls `/client/bootstrap`, and applies the returned player snapshot. The Account Start screen's preferred tester order is now `Continue`, `Login with Email`, `Create Account`, then `Play as Guest`, so testers are nudged toward durable Email progress before Guest smoke. If no server session exists but a local save exists, `Continue` opens the local save without touching server progress. Logout clears the cached session, turns Server Mode off, and returns to the Account Start screen, but it does not delete the account's server progress.
 
 Email auth errors are structured for tester-facing UI: missing email, invalid email, missing password, weak password, duplicate email, and invalid credentials are separate backend error codes. Unknown email and wrong password intentionally share `invalid_credentials` so the API does not leak which accounts exist.
+
+The Account Start screen maps those backend errors into tester-readable copy: duplicate Email points testers to Login, wrong password/unknown Email asks them to check both fields, backend/network failures explain that Email progress needs the server, and local validation catches invalid Email or passwords shorter than 8 characters before sending a request.
+
+Android local tester builds point at `http://127.0.0.1:8080`; run `adb reverse tcp:8080 tcp:8080` before MuMuPlayer/emulator/USB account tests against the Windows backend. Backend requests also have a client-side timeout guard so a missing server returns a readable message instead of leaving the Start screen in a loading state.
 
 `scripts/check-postgres-e2e.cmd` now uses a unique Email account for the durable PostgreSQL path: Register, protected state, gameplay progress, flush, backend restart, same-session state reload, Logout, Email Login again, and `/client/bootstrap` restoring the same `player_id` and progress. The same smoke also checks Guest auth still reaches and revokes a protected backend player.
 
@@ -68,6 +72,18 @@ Later:
 - Add Google Login through Play Store / Google Play Services.
 - Link provider identities to the same backend player where product rules allow it.
 - Add Apple login for iOS when that platform path becomes relevant.
+
+## Multi-Tester Convention
+
+For the next small tester build, use one Email account per tester or per device. Example pattern:
+
+- `mythwake+tester01@example.com`
+- `mythwake+tester02@example.com`
+- `mythwake+redmagic01@example.com`
+
+Each Email account should map to one backend `player_id`. A tester who changes device, reinstalls, or clears app data should use `Login with Email` to recover the same server progress. Feedback should include the visible Prototype version, Local/Server mode, session kind, and Player ID from Management -> Account or the Account Start screen.
+
+Do not ask testers to use personal production passwords. Current password rule is only "8 or more characters"; password reset and email verification are not implemented yet.
 
 ## Current Storage Map
 
@@ -112,7 +128,7 @@ Backend PostgreSQL:
 
 ## Next Technical Step
 
-- Use APK `Builds\Android\Mythwake-0.2.168-email-account-mvp.apk` for the next Account Start smoke.
+- Use APK `Builds\Android\Mythwake-0.2.169-account-tester-build.apk` for the next Account Start smoke.
 - Exercise Startscreen Register -> Server Mode progress -> app restart -> cached session Continue -> Logout -> Login -> same Player ID/progress against a PostgreSQL-backed API.
 - Exercise `Play as Guest` from the Account Start screen and confirm Guest auth still reaches a server `player_id`.
 - Decide Guest-to-Email linking behavior before asking testers to make meaningful progress as Guest.
