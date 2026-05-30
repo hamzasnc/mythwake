@@ -2,6 +2,8 @@
 
 Last updated: 2026-05-30
 
+Superseded for the current release-process handoff by `docs/TESTER_BUILD_NOTES.md` and Prototype `0.2.170`. Keep this file as the Account Start Build 0.2 evidence.
+
 ## Build
 
 - APK target: `Builds/Android/Mythwake-0.2.169-account-tester-build.apk`

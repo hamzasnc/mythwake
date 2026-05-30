@@ -1,6 +1,6 @@
 # Mythwake Tester Accounts
 
-Last updated: 2026-05-30
+Last updated: 2026-05-31
 
 ## Current Stand
 
@@ -35,6 +35,8 @@ Email auth errors are structured for tester-facing UI: missing email, invalid em
 The Account Start screen maps those backend errors into tester-readable copy: duplicate Email points testers to Login, wrong password/unknown Email asks them to check both fields, backend/network failures explain that Email progress needs the server, and local validation catches invalid Email or passwords shorter than 8 characters before sending a request.
 
 Android local tester builds point at `http://127.0.0.1:8080`; run `adb reverse tcp:8080 tcp:8080` before MuMuPlayer/emulator/USB account tests against the Windows backend. Backend requests also have a client-side timeout guard so a missing server returns a readable message instead of leaving the Start screen in a loading state.
+
+Starting with Prototype `0.2.170`, Android tester builds use package `com.xmiepsen.mythwake`, Version Name `0.2.170`, and Version Code `2170`. Older local saves from APKs with Unity's previous default package identity may not appear after installing this package, because Android treats it as a different app. Email Login can still recover server progress when the backend uses PostgreSQL.
 
 `scripts/check-postgres-e2e.cmd` now uses a unique Email account for the durable PostgreSQL path: Register, protected state, gameplay progress, flush, backend restart, same-session state reload, Logout, Email Login again, and `/client/bootstrap` restoring the same `player_id` and progress. The same smoke also checks Guest auth still reaches and revokes a protected backend player.
 
@@ -128,7 +130,7 @@ Backend PostgreSQL:
 
 ## Next Technical Step
 
-- Use APK `Builds\Android\Mythwake-0.2.169-account-tester-build.apk` for the next Account Start smoke.
+- Use APK `Builds\Android\Mythwake-0.2.170-tester-release.apk` plus `docs\TESTER_RELEASE_PROCESS.md` / `docs\TESTER_BUILD_NOTES.md` for the next Account Start smoke.
 - Exercise Startscreen Register -> Server Mode progress -> app restart -> cached session Continue -> Logout -> Login -> same Player ID/progress against a PostgreSQL-backed API.
 - Exercise `Play as Guest` from the Account Start screen and confirm Guest auth still reaches a server `player_id`.
 - Decide Guest-to-Email linking behavior before asking testers to make meaningful progress as Guest.

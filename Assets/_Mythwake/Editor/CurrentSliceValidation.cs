@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using TMPro;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -80,6 +81,7 @@ public static class MobileUxValidation
     private const string AndroidFullscreenHelperPath = "Assets/Plugins/Android/MythwakeFullscreen.androidlib/src/main/java/com/mythwake/fullscreen/MythwakeFullscreen.java";
     private const string AndroidLauncherIconPath = "Assets/_Mythwake/Branding/Mythwake_icon_launcher.png";
     private const string AndroidLauncherIconGuid = "e4a4f8593c1e42d0ba29e5183e83e026";
+    private const string AndroidApplicationIdentifier = "com.xmiepsen.mythwake";
     private const float ReferenceWidth = 1080f;
     private const float ReferenceHeight = 1920f;
 
@@ -125,6 +127,11 @@ public static class MobileUxValidation
     private static void ValidateAndroidPlayerSettings()
     {
         var projectSettings = File.ReadAllText(ProjectSettingsPath);
+        RequireProjectSetting(projectSettings, "productName", "Mythwake", "Android tester builds should keep the public app name stable.");
+        RequireProjectSetting(projectSettings, "companyName", "xMiepsen", "Android tester builds should not ship with the Unity DefaultCompany placeholder.");
+        RequireProjectSetting(projectSettings, "bundleVersion", IdlePrototypeController.PrototypeVersion, "Android Version Name should match the visible Prototype version.");
+        RequireProjectSetting(projectSettings, "AndroidBundleVersionCode", GetAndroidVersionCode().ToString(), "Android Version Code should be derived from the visible Prototype version.");
+        RequireSourceFragment(projectSettings, $"    Android: {AndroidApplicationIdentifier}", "Android package name should be explicit before any Play Console upload.");
         RequireProjectSetting(projectSettings, "defaultScreenOrientation", "0", "Android should use autorotation constrained to normal portrait for the mobile-first prototype.");
         RequireProjectSetting(projectSettings, "allowedAutorotateToPortrait", "1", "Portrait autorotation should stay enabled.");
         RequireProjectSetting(projectSettings, "allowedAutorotateToPortraitUpsideDown", "0", "Upside-down portrait should stay disabled for tester builds.");
@@ -143,6 +150,20 @@ public static class MobileUxValidation
         ValidateAndroidAppIcon(projectSettings);
         ValidateAndroidFullscreenManifest();
         ValidateAndroidImmersiveModeHook();
+    }
+
+    private static int GetAndroidVersionCode()
+    {
+        var parts = IdlePrototypeController.PrototypeVersion.Split('.');
+        if (parts.Length != 3
+            || !int.TryParse(parts[0], out var major)
+            || !int.TryParse(parts[1], out var minor)
+            || !int.TryParse(parts[2], out var patch))
+        {
+            throw new InvalidOperationException($"PrototypeVersion '{IdlePrototypeController.PrototypeVersion}' must use major.minor.patch to derive Android Version Code.");
+        }
+
+        return (major * 1000000) + (minor * 1000) + patch;
     }
 
     private static void ValidateAndroidAppIcon(string projectSettings)
@@ -678,6 +699,9 @@ public static class MobileUxValidation
 public static class AndroidBuildAutomation
 {
     private const string DefaultScenePath = "Assets/Scenes/SampleScene.unity";
+    private const string AndroidApplicationIdentifier = "com.xmiepsen.mythwake";
+    private const string ArtifactApk = "apk";
+    private const string ArtifactAab = "aab";
 
     [MenuItem("Mythwake/Build Android APK")]
     public static void BuildAndroidApk()
@@ -685,9 +709,9 @@ public static class AndroidBuildAutomation
         try
         {
             var outputPath = GetBuildOutputPath();
-            var report = BuildAndroidApk(outputPath);
+            var report = BuildAndroidArtifact(outputPath, IsAppBundleBuild());
             var summary = report.summary;
-            Debug.Log($"Android APK build succeeded: {summary.outputPath} ({summary.totalSize} bytes, {summary.totalTime}).");
+            Debug.Log($"Android build succeeded: {summary.outputPath} ({summary.totalSize} bytes, {summary.totalTime}).");
         }
         catch (Exception ex)
         {
@@ -696,7 +720,24 @@ public static class AndroidBuildAutomation
         }
     }
 
-    private static BuildReport BuildAndroidApk(string outputPath)
+    [MenuItem("Mythwake/Build Android AAB")]
+    public static void BuildAndroidAab()
+    {
+        try
+        {
+            var outputPath = GetBuildOutputPath(ArtifactAab);
+            var report = BuildAndroidArtifact(outputPath, true);
+            var summary = report.summary;
+            Debug.Log($"Android AAB build succeeded: {summary.outputPath} ({summary.totalSize} bytes, {summary.totalTime}).");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+            EditorApplication.Exit(1);
+        }
+    }
+
+    private static BuildReport BuildAndroidArtifact(string outputPath, bool appBundle)
     {
         var directory = Path.GetDirectoryName(outputPath);
         if (string.IsNullOrWhiteSpace(directory))
@@ -706,7 +747,8 @@ public static class AndroidBuildAutomation
 
         Directory.CreateDirectory(directory);
         EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
-        EditorUserBuildSettings.buildAppBundle = false;
+        EditorUserBuildSettings.buildAppBundle = appBundle;
+        SyncAndroidVersionSettings();
 
         var scenes = GetEnabledScenes();
         var options = new BuildPlayerOptions
@@ -718,15 +760,38 @@ public static class AndroidBuildAutomation
             options = BuildOptions.None
         };
 
-        Debug.Log($"Building Android APK to {outputPath} with {scenes.Length} scene(s).");
+        Debug.Log($"Building Android {(appBundle ? "AAB" : "APK")} to {outputPath} with {scenes.Length} scene(s).");
         var report = BuildPipeline.BuildPlayer(options);
         var summary = report.summary;
         if (summary.result != BuildResult.Succeeded)
         {
-            throw new InvalidOperationException($"Android APK build failed: {summary.result} after {summary.totalTime}. Errors={summary.totalErrors}, warnings={summary.totalWarnings}.");
+            throw new InvalidOperationException($"Android build failed: {summary.result} after {summary.totalTime}. Errors={summary.totalErrors}, warnings={summary.totalWarnings}.");
         }
 
         return report;
+    }
+
+    private static void SyncAndroidVersionSettings()
+    {
+        PlayerSettings.productName = "Mythwake";
+        PlayerSettings.companyName = "xMiepsen";
+        PlayerSettings.bundleVersion = IdlePrototypeController.PrototypeVersion;
+        PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, AndroidApplicationIdentifier);
+        PlayerSettings.Android.bundleVersionCode = GetAndroidVersionCode();
+    }
+
+    private static int GetAndroidVersionCode()
+    {
+        var parts = IdlePrototypeController.PrototypeVersion.Split('.');
+        if (parts.Length != 3
+            || !int.TryParse(parts[0], out var major)
+            || !int.TryParse(parts[1], out var minor)
+            || !int.TryParse(parts[2], out var patch))
+        {
+            throw new InvalidOperationException($"PrototypeVersion '{IdlePrototypeController.PrototypeVersion}' must use major.minor.patch to derive Android Version Code.");
+        }
+
+        return (major * 1000000) + (minor * 1000) + patch;
     }
 
     private static string[] GetEnabledScenes()
@@ -750,12 +815,13 @@ public static class AndroidBuildAutomation
         return scenes.ToArray();
     }
 
-    private static string GetBuildOutputPath()
+    private static string GetBuildOutputPath(string forcedArtifact = null)
     {
         var outputPath = GetCommandLineValue("-mythwakeAndroidOutput");
+        var artifact = forcedArtifact ?? GetBuildArtifact();
         if (string.IsNullOrWhiteSpace(outputPath))
         {
-            outputPath = Path.Combine("Builds", "Android", $"Mythwake-{IdlePrototypeController.PrototypeVersion}.apk");
+            outputPath = Path.Combine("Builds", "Android", $"Mythwake-{IdlePrototypeController.PrototypeVersion}.{artifact}");
         }
 
         if (Path.IsPathRooted(outputPath))
@@ -770,6 +836,22 @@ public static class AndroidBuildAutomation
         }
 
         return Path.GetFullPath(Path.Combine(projectRoot, outputPath));
+    }
+
+    private static bool IsAppBundleBuild()
+    {
+        return string.Equals(GetBuildArtifact(), ArtifactAab, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string GetBuildArtifact()
+    {
+        var artifact = GetCommandLineValue("-mythwakeAndroidArtifact");
+        if (string.Equals(artifact, ArtifactAab, StringComparison.OrdinalIgnoreCase))
+        {
+            return ArtifactAab;
+        }
+
+        return ArtifactApk;
     }
 
     private static string GetCommandLineValue(string name)

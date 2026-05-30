@@ -1,6 +1,6 @@
 # Mythwake Next Chat Context
 
-Last updated: 2026-05-30
+Last updated: 2026-05-31
 
 This file is meant to be pasted/read first in a new Codex chat so the project can continue without re-explaining everything.
 
@@ -31,6 +31,7 @@ Latest known pushed commit before the 0.2.159 continuation:
 - `24b2ab4 Rework battle formation mockup`
 
 Current continuation:
+- Prototype `0.2.170` prepares Mythwake's repeatable Android tester-release process. Unity PlayerSettings now have explicit Android identity: app name `Mythwake`, company `xMiepsen`, package `com.xmiepsen.mythwake`, Version Name `0.2.170`, and Version Code `2170` from `major*1000000 + minor*1000 + patch`; Mobile UX validation checks those values. `scripts/build-android.cmd` still builds APK by default and now builds AAB with `-AppBundle`, while the Android Build Profile GUI default remains APK. APK `Builds\Android\Mythwake-0.2.170-tester-release.apk` and AAB `Builds\Android\Mythwake-0.2.170-play-internal.aab` build successfully. MuMu smoke installed/launched the APK (`com.xmiepsen.mythwake`), verified Startscreen version, Continue, Guest fallback, Home, Formation/Fight/Result, Heroes, Village, Fast Rewards, Dungeons, Summon, restart/Continue, and filtered Logcat found no Mythwake/Unity crash/ANR/NullReference/missing-asset blocker. PostgreSQL E2E covered Email register/login/logout/restart persistence and Guest auth. Current release docs: `docs/TESTER_RELEASE_PROCESS.md` and `docs/TESTER_BUILD_NOTES.md`.
 - Prototype `0.2.169` polishes the Account Start tester flow for the first multi-account handoff. The Start screen now puts saved progress and Email accounts ahead of Guest (`Continue`, `Login with Email`, `Create Account`, `Play as Guest`), maps validation/backend/network failures to tester-readable copy, keeps Google Play login as a later note instead of a prominent action, and makes Management -> Account show Build, Local/Server mode, session kind, and Player ID for feedback reports. Android local tester APKs now point at `127.0.0.1:8080`; run `adb reverse tcp:8080 tcp:8080` before MuMu/emulator/USB backend tests. Backend requests also have an extra client timeout guard for server-down cases. APK `Builds\Android\Mythwake-0.2.169-account-tester-build.apk` builds, installs, and passed MuMu smoke for Register, Server Mode progress to Stage 1-2, app restart/Continue, Logout/Login, wrong password, duplicate Email, backend-down, Guest fallback, and filtered Logcat. `docs/TESTER_BUILD_0_2.md` is the new tester-build handoff doc with install/start, account creation, Continue/Login/Logout, Guest caveats, feedback questions, known risks, and multi-tester email conventions.
 - Prototype `0.2.168` / Backend `0.2.60` hardens the Email + Password account MVP. Backend auth now has structured errors for missing email, invalid email, missing password, weak password, duplicate email, and safe invalid-credentials login failures; HTTP tests cover protected state after Email auth, Logout revocation, and Email re-login restoring the same progressed player snapshot. `scripts/check-postgres-e2e.ps1` now uses a unique Email account for the durable PostgreSQL restart/re-login path while still checking Guest auth and definitions-driven accessory drops. The older Ravik summon-pool seed migration is idempotent for already-seeded dev databases. Unity recognizes the new error codes, and Account Start validation checks masked password input, Email input type, no reset trap in the first-run account flow, and EN/DE text fit. APK target for this slice is `Builds\Android\Mythwake-0.2.168-email-account-mvp.apk`.
 - Prototype `0.2.167` / Backend `0.2.59` puts a runtime Account Start screen in front of Home. It shows Local Save present/none, cached Server Session present/none, Local/Server mode, Player ID/status, Continue, Play as Guest, Email Login, Register, and a Google Login later hint. Continue restores cached Email/Guest sessions with `/client/bootstrap` or opens the local save. Email Login/Register reuse the existing secure Email auth and bootstrap the same server player snapshot. Play as Guest keeps Guest auth working with a local fallback if backend auth is unavailable. Logout returns to the Start screen without deleting server progress. `Assets/_Mythwake/Editor/AccountStartValidation.cs` is wired into Current Slice and validates the overlay, button labels, Email panel, Google-later copy, and text fit. APK target for this slice is `Builds\Android\Mythwake-0.2.167-startscreen.apk`.
@@ -177,8 +178,9 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.169`
+- Prototype `0.2.170`
 - Save version `2`
+- Android package `com.xmiepsen.mythwake`, Version Name `0.2.170`, Version Code `2170`
 
 Important Unity scripts:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`

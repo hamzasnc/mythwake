@@ -3,6 +3,7 @@ param(
     [string]$ProjectPath = "",
     [string]$OutputPath = "",
     [string]$LogFile = "",
+    [switch]$AppBundle,
     [switch]$DryRun
 )
 
@@ -42,7 +43,13 @@ if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
     $arguments += @("-mythwakeAndroidOutput", $OutputPath)
 }
 
-Write-Host "Unity Android APK build"
+if ($AppBundle) {
+    $arguments += @("-mythwakeAndroidArtifact", "aab")
+}
+
+$artifactLabel = if ($AppBundle) { "AAB" } else { "APK" }
+
+Write-Host "Unity Android $artifactLabel build"
 Write-Host "Project: $ProjectPath"
 Write-Host "Unity:   $UnityPath"
 Write-Host "Log:     $LogFile"
@@ -61,22 +68,22 @@ $exitCode = $LASTEXITCODE
 $unityText = $unityOutput -join "`n"
 
 if ($exitCode -ne 0 -or $unityText.Contains("Aborting batchmode due to fatal error") -or $unityText.Contains("Multiple Unity instances cannot open the same project")) {
-    Write-Host "Unity Android build failed with exit code $exitCode."
+    Write-Host "Unity Android $artifactLabel build failed with exit code $exitCode."
     if (Test-Path -LiteralPath $LogFile) {
         Write-Host "Last log lines:"
         Get-Content -Path $LogFile -Tail 120
     }
 
-    throw "Unity Android build failed. Check the build log above."
+    throw "Unity Android $artifactLabel build failed. Check the build log above."
 }
 
 if (Test-Path -LiteralPath $LogFile) {
-    $fatalLog = Select-String -Path $LogFile -Pattern "BuildFailedException|Android APK build failed|Exception:|Aborting batchmode due to fatal error|Multiple Unity instances cannot open the same project"
+    $fatalLog = Select-String -Path $LogFile -Pattern "BuildFailedException|Android build failed|Exception:|Aborting batchmode due to fatal error|Multiple Unity instances cannot open the same project"
     if ($fatalLog) {
         Write-Host "Unity Android build log contains a fatal error or exception."
         Get-Content -Path $LogFile -Tail 120
-        throw "Unity Android build failed. Check the build log above."
+        throw "Unity Android $artifactLabel build failed. Check the build log above."
     }
 }
 
-Write-Host "Unity Android APK build passed."
+Write-Host "Unity Android $artifactLabel build passed."
