@@ -33,7 +33,9 @@ var (
 	ErrMissingSession         = errors.New("session token is required")
 	ErrInvalidSession         = errors.New("session token is invalid")
 	ErrExpiredSession         = errors.New("session token has expired")
+	ErrMissingEmail           = errors.New("email address is required")
 	ErrInvalidEmail           = errors.New("email address is invalid")
+	ErrMissingPassword        = errors.New("password is required")
 	ErrInvalidPassword        = errors.New("password does not meet minimum requirements")
 	ErrEmailAlreadyRegistered = errors.New("email address is already registered")
 	ErrInvalidCredentials     = errors.New("email or password is invalid")
@@ -274,6 +276,9 @@ func (service *Service) LoginEmail(ctx context.Context, email string, password s
 	if err != nil {
 		return Session{}, err
 	}
+	if err := validatePassword(password); err != nil {
+		return Session{}, err
+	}
 
 	var credential EmailCredential
 	var found bool
@@ -486,6 +491,9 @@ func VerifyPassword(password string, encodedHash string) bool {
 }
 
 func validatePassword(password string) error {
+	if strings.TrimSpace(password) == "" {
+		return ErrMissingPassword
+	}
 	if len(password) < minPasswordLength || len(password) > maxPasswordLength {
 		return ErrInvalidPassword
 	}
@@ -495,7 +503,10 @@ func validatePassword(password string) error {
 
 func normalizeEmailForAuth(email string) (string, error) {
 	normalized := NormalizeEmail(email)
-	if normalized == "" || strings.ContainsAny(normalized, " \t\r\n") {
+	if normalized == "" {
+		return "", ErrMissingEmail
+	}
+	if strings.ContainsAny(normalized, " \t\r\n") {
 		return "", ErrInvalidEmail
 	}
 

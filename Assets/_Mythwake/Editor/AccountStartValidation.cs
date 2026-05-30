@@ -15,7 +15,7 @@ public static class AccountStartValidation
         try
         {
             ValidateAccountStart();
-            Debug.Log("Account Start validated: start overlay, Continue/Guest/Email/Register actions, Email panel labels, Google-later hint, and text fit are present.");
+            Debug.Log("Account Start validated: start overlay, Continue/Guest/Email/Register actions, masked password input, Email panel labels, Google-later hint, EN/DE text fit, and no reset trap are present.");
         }
         catch (Exception ex)
         {
@@ -65,6 +65,7 @@ public static class AccountStartValidation
         AssertButtonHasRaycastableTarget(loginButton, "Email Login");
         AssertButtonHasRaycastableTarget(registerButton, "Register");
         AssertNoGoogleButton(root);
+        AssertNoResetButton(root);
 
         var emailPanel = RequireObjectField<RectTransform>(controller, "accountStartEmailPanelRoot");
         if (emailPanel.gameObject.activeSelf)
@@ -82,8 +83,17 @@ public static class AccountStartValidation
         AssertTextField(controller, "accountStartEmailTitleText", "Email Login");
         AssertButton(controller, "accountStartEmailSubmitButton", "Login");
         var backButton = AssertButton(controller, "accountStartEmailBackButton", "Back");
-        RequireObjectField<TMP_InputField>(controller, "accountStartEmailInput");
-        RequireObjectField<TMP_InputField>(controller, "accountStartPasswordInput");
+        var emailInput = RequireObjectField<TMP_InputField>(controller, "accountStartEmailInput");
+        var passwordInput = RequireObjectField<TMP_InputField>(controller, "accountStartPasswordInput");
+        if (emailInput.contentType != TMP_InputField.ContentType.EmailAddress)
+        {
+            throw new InvalidOperationException("Account Start email input should use EmailAddress content type.");
+        }
+        if (passwordInput.contentType != TMP_InputField.ContentType.Password)
+        {
+            throw new InvalidOperationException("Account Start password input should mask text.");
+        }
+        AssertTextContains(controller, "accountStartEmailStatusText", "Enter email");
         AssertButtonHasRaycastableTarget(backButton, "Email Back");
         backButton.onClick.Invoke();
         Canvas.ForceUpdateCanvases();
@@ -103,6 +113,15 @@ public static class AccountStartValidation
         AssertButton(controller, "accountStartEmailSubmitButton", "Register");
 
         AssertTextFit(root, "Account Start Screen");
+
+        SetPrivateField(controller, "language", MythwakeLanguage.German);
+        InvokePrivate(controller, "RefreshAccountStartUi");
+        Canvas.ForceUpdateCanvases();
+        AssertButton(controller, "accountStartContinueButton", "Weiter");
+        AssertButton(controller, "accountStartGuestButton", "Als Gast spielen");
+        AssertButton(controller, "accountStartEmailRegisterButton", "Registrieren");
+        AssertTextContains(controller, "accountStartGoogleHintText", "Google Login ueber Play Games kommt spaeter.");
+        AssertTextFit(root, "Account Start Screen DE");
     }
 
     private static Button AssertButton(object controller, string fieldName, string expectedLabel)
@@ -154,6 +173,19 @@ public static class AccountStartValidation
             if (button != null && button.name.IndexOf("google", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 throw new InvalidOperationException("Account Start should show a Google-later hint, not a Google login button.");
+            }
+        }
+    }
+
+    private static void AssertNoResetButton(RectTransform root)
+    {
+        var buttons = root.GetComponentsInChildren<Button>(includeInactive: true);
+        for (var i = 0; i < buttons.Length; i++)
+        {
+            var button = buttons[i];
+            if (button != null && button.name.IndexOf("reset", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                throw new InvalidOperationException("Account Start should not expose reset/dev reset in the main flow.");
             }
         }
     }

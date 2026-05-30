@@ -207,6 +207,20 @@ func TestRegisterEmailRejectsDuplicateEmail(t *testing.T) {
 	}
 }
 
+func TestRegisterEmailValidatesRequiredFields(t *testing.T) {
+	service := NewService(nil)
+
+	if _, err := service.RegisterEmail(context.Background(), "", "tester-password-1", ""); !errors.Is(err, ErrMissingEmail) {
+		t.Fatalf("expected missing email error, got %v", err)
+	}
+	if _, err := service.RegisterEmail(context.Background(), "tester@example.com", "", ""); !errors.Is(err, ErrMissingPassword) {
+		t.Fatalf("expected missing password error, got %v", err)
+	}
+	if _, err := service.RegisterEmail(context.Background(), "tester@example.com", "short", ""); !errors.Is(err, ErrInvalidPassword) {
+		t.Fatalf("expected invalid password error, got %v", err)
+	}
+}
+
 func TestLoginEmailUsesExistingPlayerAndRejectsWrongPassword(t *testing.T) {
 	service := NewService(nil)
 
@@ -224,6 +238,20 @@ func TestLoginEmailUsesExistingPlayerAndRejectsWrongPassword(t *testing.T) {
 	}
 	if loggedIn.PlayerID != registered.PlayerID || loggedIn.Provider != ProviderEmail || loggedIn.Token == registered.Token {
 		t.Fatalf("expected new email session for existing player, registered=%#v loggedIn=%#v", registered, loggedIn)
+	}
+}
+
+func TestLoginEmailRejectsUnknownEmailAndMissingFields(t *testing.T) {
+	service := NewService(nil)
+
+	if _, err := service.LoginEmail(context.Background(), "", "tester-password-1", ""); !errors.Is(err, ErrMissingEmail) {
+		t.Fatalf("expected missing email error, got %v", err)
+	}
+	if _, err := service.LoginEmail(context.Background(), "tester@example.com", "", ""); !errors.Is(err, ErrMissingPassword) {
+		t.Fatalf("expected missing password error, got %v", err)
+	}
+	if _, err := service.LoginEmail(context.Background(), "missing@example.com", "tester-password-1", ""); !errors.Is(err, ErrInvalidCredentials) {
+		t.Fatalf("expected invalid credentials for unknown email, got %v", err)
 	}
 }
 

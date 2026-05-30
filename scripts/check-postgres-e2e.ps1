@@ -131,7 +131,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.56-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.60-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_REDIS_ADDR = ""
     $env:MYTHWAKE_REDIS_PASSWORD = ""
@@ -307,10 +307,36 @@ try {
     Assert-Equal $missingSession.Body.errorCode "missing_session" "Protected player state should reject missing sessions with a structured error code."
     Assert-Equal $missingSession.Body.requestId "e2e-missing-session-001" "Missing-session errors should preserve the client request id."
 
-    $login = Invoke-Json -Method "POST" -Path "/auth/guest"
+    $guestLogin = Invoke-Json -Method "POST" -Path "/auth/guest"
+    $guestHeaders = @{ "Authorization" = "Bearer $($guestLogin.sessionToken)" }
+    $guestState = Invoke-Json -Path "/player/state" -Headers $guestHeaders
+    Assert-Equal $guestState.playerId $guestLogin.playerId "Guest auth should still resolve a protected player state."
+    $guestLogout = Invoke-Json -Method "POST" -Path "/auth/logout" -Headers $guestHeaders
+    Assert-Equal $guestLogout.status "ok" "Guest logout should still revoke sessions."
+    $guestRevoked = Invoke-JsonExpectError -Path "/player/state" -Headers @{
+        "Authorization" = $guestHeaders["Authorization"]
+        "X-Request-ID" = "e2e-guest-revoked-session-001"
+    } -ExpectedStatus 401
+    Assert-Equal $guestRevoked.Body.errorCode "invalid_session" "Revoked guest session should reject protected state."
+
+    $emailAddress = "e2e+$([guid]::NewGuid().ToString("N"))@example.com"
+    $emailPassword = "tester-password-1"
+    $invalidEmail = Invoke-JsonExpectError -Method "POST" -Path "/auth/email/register" -Body '{"email":"not-an-email","password":"tester-password-1"}' -ExpectedStatus 400
+    Assert-Equal $invalidEmail.Body.errorCode "invalid_email" "Email register should reject invalid email."
+    $weakPassword = Invoke-JsonExpectError -Method "POST" -Path "/auth/email/register" -Body (@{ email = $emailAddress; password = "short" } | ConvertTo-Json -Compress) -ExpectedStatus 400
+    Assert-Equal $weakPassword.Body.errorCode "weak_password" "Email register should reject short passwords."
+    $missingPassword = Invoke-JsonExpectError -Method "POST" -Path "/auth/email/register" -Body (@{ email = $emailAddress } | ConvertTo-Json -Compress) -ExpectedStatus 400
+    Assert-Equal $missingPassword.Body.errorCode "missing_password" "Email register should reject missing password."
+    $unknownEmail = Invoke-JsonExpectError -Method "POST" -Path "/auth/email/login" -Body (@{ email = $emailAddress; password = $emailPassword } | ConvertTo-Json -Compress) -ExpectedStatus 401
+    Assert-Equal $unknownEmail.Body.errorCode "invalid_credentials" "Email login should reject unknown accounts without leaking account existence."
+
+    $login = Invoke-Json -Method "POST" -Path "/auth/email/register" -Body (@{ email = $emailAddress; password = $emailPassword } | ConvertTo-Json -Compress)
+    $duplicateEmail = Invoke-JsonExpectError -Method "POST" -Path "/auth/email/register" -Body (@{ email = $emailAddress.ToUpperInvariant(); password = "tester-password-2" } | ConvertTo-Json -Compress) -ExpectedStatus 409
+    Assert-Equal $duplicateEmail.Body.errorCode "email_already_registered" "Email register should reject duplicate normalized emails."
+    $activeSessionToken = $login.sessionToken
     $authHeaders = @{ "Authorization" = "Bearer $($login.sessionToken)" }
     $stateBefore = Invoke-Json -Path "/player/state" -Headers $authHeaders
-    Assert-Equal $stateBefore.playerId $login.playerId "State player should match guest login."
+    Assert-Equal $stateBefore.playerId $login.playerId "State player should match email register login."
     if ([string]::IsNullOrWhiteSpace($stateBefore.lastAfkClaimUtc)) {
         throw "Expected player state to include lastAfkClaimUtc."
     }
@@ -329,7 +355,7 @@ try {
     }
 
     $bootstrap = Invoke-Json -Path "/client/bootstrap" -Headers $authHeaders
-    Assert-Equal $bootstrap.playerSnapshot.playerId $login.playerId "Bootstrap snapshot player should match guest login."
+    Assert-Equal $bootstrap.playerSnapshot.playerId $login.playerId "Bootstrap snapshot player should match email login."
     if ([string]::IsNullOrWhiteSpace($bootstrap.serverClock.serverTimeUtc) -or [int64]$bootstrap.serverClock.serverUnixMs -le 0) {
         throw "Expected bootstrap to include server clock. Response: $($bootstrap | ConvertTo-Json -Depth 8)"
     }
@@ -371,7 +397,7 @@ try {
     if (-not $fight.combat -or -not $fight.combat.won -or [int]$fight.combat.elapsedSeconds -le 0 -or [int]$fight.combat.maxSeconds -ne 30) {
         throw "Expected campaign fight to include a successful server combat result. Response: $($fight | ConvertTo-Json -Depth 8)"
     }
-    Assert-Equal $fight.playerSnapshot.playerId $login.playerId "Action snapshot player should match guest login."
+    Assert-Equal $fight.playerSnapshot.playerId $login.playerId "Action snapshot player should match email login."
     Assert-Equal ([int64]$fight.receipt.stateRevision) ([int64]$fight.playerSnapshot.revision) "Action receipt should match snapshot revision."
     Assert-GreaterOrEqual ([int64]$fight.playerSnapshot.revision) (([int64]$stateBefore.revision) + 1) "Campaign fight should advance the server state revision."
     $fightDailyProgress = $fight.playerSnapshot.dailyProgress | Where-Object { $_.missionId -eq "daily_stage_clears_3" } | Select-Object -First 1
@@ -403,16 +429,17 @@ try {
     $gearDungeon = Invoke-GameplayPost -Path "/dungeons/gear_dungeon/run" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Gear dungeon"
     Assert-Equal $gearDungeon.actionId "gear_dungeon_run" "Gear dungeon should return the gear dungeon action id."
     Assert-Equal $gearDungeon.combat.won $true "Gear dungeon should win in the starter smoke path."
-    $droppedAccessory = $gearDungeon.playerSnapshot.accessories | Where-Object { $_.accessoryId -eq "accessory_earrings_r0" } | Select-Object -First 1
+    $droppedAccessory = $gearDungeon.playerSnapshot.accessories | Where-Object { [int]$_.copies -ge 1 } | Select-Object -First 1
     if (-not $droppedAccessory -or [int]$droppedAccessory.copies -lt 1) {
-        throw "Expected gear dungeon to add accessory_earrings_r0. Response: $($gearDungeon | ConvertTo-Json -Depth 10)"
+        throw "Expected gear dungeon to add at least one accessory copy. Response: $($gearDungeon | ConvertTo-Json -Depth 10)"
     }
+    $droppedAccessoryId = [string]$droppedAccessory.accessoryId
 
-    $accessoryEquip = Invoke-GameplayPost -Path "/gear/accessories/equip" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Accessory equip" -Body '{"accessoryId":"accessory_earrings_r0"}'
+    $accessoryEquip = Invoke-GameplayPost -Path "/gear/accessories/equip" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Accessory equip" -Body (@{ accessoryId = $droppedAccessoryId } | ConvertTo-Json -Compress)
     Assert-Equal $accessoryEquip.actionId "accessory_equip" "Accessory equip should return the accessory equip action id."
-    $equippedAccessory = $accessoryEquip.playerSnapshot.equippedAccessories | Where-Object { $_.slotId -eq "earrings" -and $_.accessoryId -eq "accessory_earrings_r0" } | Select-Object -First 1
+    $equippedAccessory = $accessoryEquip.playerSnapshot.equippedAccessories | Where-Object { $_.accessoryId -eq $droppedAccessoryId } | Select-Object -First 1
     if (-not $equippedAccessory) {
-        throw "Expected accessory_equip to equip accessory_earrings_r0. Response: $($accessoryEquip | ConvertTo-Json -Depth 10)"
+        throw "Expected accessory_equip to equip $droppedAccessoryId. Response: $($accessoryEquip | ConvertTo-Json -Depth 10)"
     }
 
     $heroLevel = Invoke-GameplayPost -Path "/heroes/hero_astra/level-up" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Hero level"
@@ -480,9 +507,9 @@ try {
     if (-not $restartBattlePassClaim -or -not $restartBattlePassClaim.claimed) {
         throw "Restarted API should load Battle Pass reward 01 claim. Response: $($stateAfterRestart | ConvertTo-Json -Depth 10)"
     }
-    $restartEquippedAccessory = $stateAfterRestart.equippedAccessories | Where-Object { $_.slotId -eq "earrings" -and $_.accessoryId -eq "accessory_earrings_r0" } | Select-Object -First 1
+    $restartEquippedAccessory = $stateAfterRestart.equippedAccessories | Where-Object { $_.accessoryId -eq $droppedAccessoryId } | Select-Object -First 1
     if (-not $restartEquippedAccessory) {
-        throw "Restarted API should load equipped accessory_earrings_r0. Response: $($stateAfterRestart | ConvertTo-Json -Depth 10)"
+        throw "Restarted API should load equipped $droppedAccessoryId. Response: $($stateAfterRestart | ConvertTo-Json -Depth 10)"
     }
 
     $replay = Invoke-Json -Method "POST" -Path "/campaign/fight" -Headers $actionHeaders
@@ -491,6 +518,27 @@ try {
     }
     Assert-Equal ([int]$replay.playerState.campaignStage) $stageAfterFight "Replay should not apply campaign fight twice."
     Assert-Equal ([int64]$replay.receipt.stateRevision) ([int64]$fight.receipt.stateRevision) "Replay should return the original action receipt revision."
+
+    $logoutBeforeRelogin = Invoke-Json -Method "POST" -Path "/auth/logout" -Headers $authHeaders
+    Assert-Equal $logoutBeforeRelogin.status "ok" "Email logout before re-login should return ok."
+    Assert-Equal $logoutBeforeRelogin.stateFlushed $true "Email logout before re-login should flush loaded state."
+    $revokedBeforeRelogin = Invoke-JsonExpectError -Path "/player/state" -Headers @{
+        "Authorization" = $authHeaders["Authorization"]
+        "X-Request-ID" = "e2e-email-revoked-session-001"
+    } -ExpectedStatus 401
+    Assert-Equal $revokedBeforeRelogin.Body.errorCode "invalid_session" "Logged-out email session should reject protected state."
+
+    $emailRelogin = Invoke-Json -Method "POST" -Path "/auth/email/login" -Body (@{ email = $emailAddress.ToUpperInvariant(); password = $emailPassword } | ConvertTo-Json -Compress)
+    Assert-Equal $emailRelogin.playerId $login.playerId "Email re-login should restore the same player id."
+    if ($emailRelogin.sessionToken -eq $login.sessionToken) {
+        throw "Email re-login should issue a fresh session token."
+    }
+    $activeSessionToken = $emailRelogin.sessionToken
+    $authHeaders = @{ "Authorization" = "Bearer $($emailRelogin.sessionToken)" }
+    $emailBootstrap = Invoke-Json -Path "/client/bootstrap" -Headers $authHeaders
+    Assert-Equal $emailBootstrap.playerSnapshot.playerId $login.playerId "Email re-login bootstrap should target the same player."
+    Assert-Equal ([int]$emailBootstrap.playerSnapshot.state.campaignStage) ([int]$stateAfterRestart.state.campaignStage) "Email re-login bootstrap should preserve campaign progress."
+    Assert-Equal ([int64]$emailBootstrap.playerSnapshot.revision) ([int64]$stateAfterRestart.revision) "Email re-login bootstrap should preserve flushed state revision."
 
     $reset = Invoke-Json -Method "POST" -Path "/dev/player/reset" -Headers $authHeaders
     Assert-Equal $reset.status "ok" "Dev player reset should return ok."
@@ -501,7 +549,12 @@ try {
     $stateAfterReset = Invoke-Json -Path "/player/state" -Headers $authHeaders
     Assert-Equal ([int]$stateAfterReset.state.campaignStage) 1 "State after dev reset should stay fresh through the active session."
 
-    $fightAfterReset = Invoke-Json -Method "POST" -Path "/campaign/fight" -Headers $actionHeaders
+    $postResetFightHeaders = @{
+        "Authorization" = $authHeaders["Authorization"]
+        "X-Player-State-Revision" = [string]$stateAfterReset.revision
+        "Idempotency-Key" = $idempotencyKey
+    }
+    $fightAfterReset = Invoke-Json -Method "POST" -Path "/campaign/fight" -Headers $postResetFightHeaders
     if ($fightAfterReset.replay) {
         throw "Expected old idempotency key to be cleared by dev reset."
     }
@@ -521,7 +574,8 @@ try {
     Write-Host "PostgreSQL E2E smoke passed."
     [pscustomobject]@{
         PlayerId = $login.playerId
-        SessionPrefix = $login.sessionToken.Substring(0, [Math]::Min(8, $login.sessionToken.Length))
+        SessionPrefix = $activeSessionToken.Substring(0, [Math]::Min(8, $activeSessionToken.Length))
+        Email = $emailAddress
         CampaignStage = [int]$fightAfterReset.playerState.campaignStage
         Replay = $replay.replay
         DevReset = $stateAfterReset.state.campaignStage -eq 1

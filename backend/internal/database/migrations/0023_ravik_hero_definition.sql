@@ -17,15 +17,42 @@ SET
 	health_per_ascension = 70
 WHERE id = 'hero_ravik';
 
+UPDATE common.summon_pool_definitions
+SET
+	shard_amount = 1,
+	rotation_order = CASE
+		WHEN NOT EXISTS (
+			SELECT 1
+			FROM common.summon_pool_definitions occupied
+			WHERE occupied.banner_id = 'hero_shard_standard'
+				AND occupied.rotation_order = 60
+				AND occupied.hero_id <> 'hero_ravik'
+		) THEN 60
+		ELSE rotation_order
+	END,
+	reward_id = 'reward_summon_shards'
+WHERE banner_id = 'hero_shard_standard'
+	AND hero_id = 'hero_ravik';
+
 INSERT INTO common.summon_pool_definitions (
 	banner_id,
 	hero_id,
 	shard_amount,
 	rotation_order,
 	reward_id
-) VALUES
-	('hero_shard_standard', 'hero_ravik', 1, 60, 'reward_summon_shards')
-ON CONFLICT (banner_id, hero_id) DO UPDATE SET
-	shard_amount = EXCLUDED.shard_amount,
-	rotation_order = EXCLUDED.rotation_order,
-	reward_id = EXCLUDED.reward_id;
+)
+SELECT
+	'hero_shard_standard',
+	'hero_ravik',
+	1,
+	60,
+	'reward_summon_shards'
+WHERE NOT EXISTS (
+	SELECT 1
+	FROM common.summon_pool_definitions existing
+	WHERE existing.banner_id = 'hero_shard_standard'
+		AND (
+			existing.hero_id = 'hero_ravik'
+			OR existing.rotation_order = 60
+		)
+);

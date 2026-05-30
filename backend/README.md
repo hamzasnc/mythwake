@@ -11,6 +11,7 @@ Current scope:
 - Dev player state endpoint
 - Guest auth with random session tokens
 - Email + Password register/login with salted PBKDF2 password hashes
+- Structured Email auth errors for missing email, invalid email, missing password, weak password, duplicate email, and safe invalid-credentials login failures
 - Logout endpoint that revokes the active session token
 - Redis or in-memory session cache implementation for PostgreSQL-backed auth validation
 - Request ID middleware for client/server log correlation
@@ -75,8 +76,9 @@ Current scope:
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
 - Guest auth returns the raw session token once; PostgreSQL stores only `token_hash`.
 - Email register/login returns the same response/session shape as Guest auth, so protected state and gameplay routes continue to use `Authorization: Bearer <sessionToken>`.
-- The Unity prototype can ping, guest-login, prepare email auth requests, store the session token, sync this snapshot, cache `/definitions` with ETag revalidation, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
-- Unity automatically sends `Authorization: Bearer <sessionToken>` and retries protected calls once after a `401` by refreshing guest auth.
+- Email account re-login restores the same `player_id`; `/client/bootstrap` returns the current durable player snapshot after a valid Email session is issued.
+- The Unity prototype can ping, guest-login, register/login Email accounts, store the session token/account kind, bootstrap this snapshot, cache `/definitions` with ETag revalidation, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
+- Unity automatically sends `Authorization: Bearer <sessionToken>`; Guest sessions can refresh through Guest auth after a `401`, while expired Email sessions ask the tester to log in again instead of silently creating a new Guest player.
 - Server gameplay POSTs require valid `Idempotency-Key` headers by default.
 - Gameplay action IDs are centralized in `internal/gameplay` so routing, persistence, ledgers, and tests share the same names.
 - Currency IDs, spends, grants, display names, and deltas are centralized in `internal/economy`.

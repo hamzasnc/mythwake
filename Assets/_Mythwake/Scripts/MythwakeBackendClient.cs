@@ -758,8 +758,12 @@ public sealed class MythwakeBackendClient : MonoBehaviour
                 return "Player reset failed";
             case "guest_auth_failed":
                 return "Guest auth failed";
+            case "missing_email":
+                return "Missing email";
             case "invalid_email":
                 return "Invalid email";
+            case "missing_password":
+                return "Missing password";
             case "weak_password":
                 return "Weak password";
             case "email_already_registered":

@@ -747,6 +747,168 @@ func TestEmailLoginRejectsWrongPassword(t *testing.T) {
 	}
 }
 
+func TestEmailAuthRejectsMissingAndWeakFields(t *testing.T) {
+	tests := []struct {
+		name       string
+		path       string
+		body       string
+		statusCode int
+		errorCode  string
+	}{
+		{
+			name:       "register missing email",
+			path:       "/auth/email/register",
+			body:       `{"password":"tester-password-1"}`,
+			statusCode: http.StatusBadRequest,
+			errorCode:  "missing_email",
+		},
+		{
+			name:       "register missing password",
+			path:       "/auth/email/register",
+			body:       `{"email":"tester@example.com"}`,
+			statusCode: http.StatusBadRequest,
+			errorCode:  "missing_password",
+		},
+		{
+			name:       "register weak password",
+			path:       "/auth/email/register",
+			body:       `{"email":"tester@example.com","password":"short"}`,
+			statusCode: http.StatusBadRequest,
+			errorCode:  "weak_password",
+		},
+		{
+			name:       "login missing email",
+			path:       "/auth/email/login",
+			body:       `{"password":"tester-password-1"}`,
+			statusCode: http.StatusBadRequest,
+			errorCode:  "missing_email",
+		},
+		{
+			name:       "login missing password",
+			path:       "/auth/email/login",
+			body:       `{"email":"tester@example.com"}`,
+			statusCode: http.StatusBadRequest,
+			errorCode:  "missing_password",
+		},
+		{
+			name:       "login unknown email",
+			path:       "/auth/email/login",
+			body:       `{"email":"missing@example.com","password":"tester-password-1"}`,
+			statusCode: http.StatusUnauthorized,
+			errorCode:  "invalid_credentials",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			handler := newTestHandler()
+			response := httptest.NewRecorder()
+			request := httptest.NewRequest(http.MethodPost, test.path, strings.NewReader(test.body))
+			handler.ServeHTTP(response, request)
+			if response.Code != test.statusCode {
+				t.Fatalf("expected status %d, got %d body=%s", test.statusCode, response.Code, response.Body.String())
+			}
+
+			var body api.ErrorResponse
+			if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+				t.Fatalf("decode error response: %v", err)
+			}
+			if body.ErrorCode != test.errorCode {
+				t.Fatalf("expected %s error, got %#v", test.errorCode, body)
+			}
+		})
+	}
+}
+
+func TestEmailReloginRestoresProtectedPlayerState(t *testing.T) {
+	handler := newTestHandler()
+
+	registerResponse := httptest.NewRecorder()
+	registerRequest := httptest.NewRequest(http.MethodPost, "/auth/email/register", strings.NewReader(`{"email":"tester@example.com","password":"tester-password-1"}`))
+	handler.ServeHTTP(registerResponse, registerRequest)
+	if registerResponse.Code != http.StatusOK {
+		t.Fatalf("expected register status 200, got %d body=%s", registerResponse.Code, registerResponse.Body.String())
+	}
+
+	var registered api.GuestAuthResponse
+	if err := json.NewDecoder(registerResponse.Body).Decode(&registered); err != nil {
+		t.Fatalf("decode register response: %v", err)
+	}
+
+	stateResponse := httptest.NewRecorder()
+	stateRequest := httptest.NewRequest(http.MethodGet, "/player/state", nil)
+	addAuth(stateRequest, registered.SessionToken)
+	handler.ServeHTTP(stateResponse, stateRequest)
+	if stateResponse.Code != http.StatusOK {
+		t.Fatalf("expected protected state after register, got %d", stateResponse.Code)
+	}
+
+	fightResponse := httptest.NewRecorder()
+	fightRequest := httptest.NewRequest(http.MethodPost, "/campaign/fight", nil)
+	addAuth(fightRequest, registered.SessionToken)
+	addIdempotencyKey(fightRequest, "email-campaign-001")
+	addStateRevision(fightRequest, registered.PlayerSnapshot.Revision)
+	handler.ServeHTTP(fightResponse, fightRequest)
+	if fightResponse.Code != http.StatusOK {
+		t.Fatalf("expected campaign fight status 200, got %d body=%s", fightResponse.Code, fightResponse.Body.String())
+	}
+
+	var fight api.ActionResult
+	if err := json.NewDecoder(fightResponse.Body).Decode(&fight); err != nil {
+		t.Fatalf("decode fight response: %v", err)
+	}
+	if !fight.Success || fight.PlayerSnapshot.PlayerID != registered.PlayerID || fight.PlayerSnapshot.State.CampaignStage <= registered.PlayerSnapshot.State.CampaignStage {
+		t.Fatalf("expected email player progress after fight, got %#v", fight)
+	}
+
+	logoutResponse := httptest.NewRecorder()
+	logoutRequest := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	addAuth(logoutRequest, registered.SessionToken)
+	handler.ServeHTTP(logoutResponse, logoutRequest)
+	if logoutResponse.Code != http.StatusOK {
+		t.Fatalf("expected logout status 200, got %d", logoutResponse.Code)
+	}
+
+	revokedResponse := httptest.NewRecorder()
+	revokedRequest := httptest.NewRequest(http.MethodGet, "/player/state", nil)
+	addAuth(revokedRequest, registered.SessionToken)
+	handler.ServeHTTP(revokedResponse, revokedRequest)
+	if revokedResponse.Code != http.StatusUnauthorized {
+		t.Fatalf("expected logged-out email session to be revoked, got %d", revokedResponse.Code)
+	}
+
+	loginResponse := httptest.NewRecorder()
+	loginRequest := httptest.NewRequest(http.MethodPost, "/auth/email/login", strings.NewReader(`{"email":"TESTER@example.com","password":"tester-password-1"}`))
+	handler.ServeHTTP(loginResponse, loginRequest)
+	if loginResponse.Code != http.StatusOK {
+		t.Fatalf("expected login status 200, got %d body=%s", loginResponse.Code, loginResponse.Body.String())
+	}
+
+	var loggedIn api.GuestAuthResponse
+	if err := json.NewDecoder(loginResponse.Body).Decode(&loggedIn); err != nil {
+		t.Fatalf("decode login response: %v", err)
+	}
+	if loggedIn.PlayerID != registered.PlayerID || loggedIn.SessionToken == registered.SessionToken {
+		t.Fatalf("expected login to restore same player with new token, registered=%#v loggedIn=%#v", registered, loggedIn)
+	}
+
+	bootstrapResponse := httptest.NewRecorder()
+	bootstrapRequest := httptest.NewRequest(http.MethodGet, "/client/bootstrap", nil)
+	addAuth(bootstrapRequest, loggedIn.SessionToken)
+	handler.ServeHTTP(bootstrapResponse, bootstrapRequest)
+	if bootstrapResponse.Code != http.StatusOK {
+		t.Fatalf("expected bootstrap status 200 after email relogin, got %d", bootstrapResponse.Code)
+	}
+
+	var bootstrap api.ClientBootstrapResponse
+	if err := json.NewDecoder(bootstrapResponse.Body).Decode(&bootstrap); err != nil {
+		t.Fatalf("decode bootstrap response: %v", err)
+	}
+	if bootstrap.PlayerSnapshot.PlayerID != registered.PlayerID || bootstrap.PlayerSnapshot.State.CampaignStage != fight.PlayerSnapshot.State.CampaignStage {
+		t.Fatalf("expected bootstrap to restore email player progress, registered=%#v fight=%#v bootstrap=%#v", registered, fight.PlayerSnapshot, bootstrap.PlayerSnapshot)
+	}
+}
+
 func TestLogoutEndpointRevokesSession(t *testing.T) {
 	handler := newTestHandler()
 	login := loginGuest(t, handler)

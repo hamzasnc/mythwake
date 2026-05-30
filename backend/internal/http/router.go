@@ -413,8 +413,12 @@ func (router *Router) handleEmailLogin(response http.ResponseWriter, request *ht
 
 func (router *Router) writeEmailAuthError(response http.ResponseWriter, request *http.Request, err error) {
 	switch {
+	case errors.Is(err, auth.ErrMissingEmail):
+		writeError(response, request, http.StatusBadRequest, "missing_email", "Email address is required.")
 	case errors.Is(err, auth.ErrInvalidEmail):
 		writeError(response, request, http.StatusBadRequest, "invalid_email", "Email address is invalid.")
+	case errors.Is(err, auth.ErrMissingPassword):
+		writeError(response, request, http.StatusBadRequest, "missing_password", "Password is required.")
 	case errors.Is(err, auth.ErrInvalidPassword):
 		writeError(response, request, http.StatusBadRequest, "weak_password", "Password must be between 8 and 256 characters.")
 	case errors.Is(err, auth.ErrEmailAlreadyRegistered):

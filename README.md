@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.167
+Prototype version: 0.2.168
 Local save version: 2
 
 Current prototype:
@@ -30,6 +30,7 @@ Current prototype:
 - Fast Rewards popup separates local stored rewards from Server Mode backend-authoritative AFK claim timing and server-snapshot Village AFK bonuses
 - Cached Server Mode sessions persist across Unity restarts and are restored from the Account Start screen through `/client/bootstrap`
 - Email account sessions are cached like existing backend sessions; after Register/Login from the Start screen or Backend panel the client bootstraps the server player snapshot and keeps Server Mode active
+- Email account auth now has clearer missing-email, missing-password, weak-password, duplicate-email, unknown-account, and wrong-password errors, plus backend/E2E coverage that verifies Logout -> Login restores the same server player progress
 - Server Mode blocks local debug grants/reset so PostgreSQL remains the authoritative test source
 - Gameplay buttons are gated while backend requests are in flight to avoid accidental double actions
 - Backend panel includes a `Smoke` action that runs a compact server-backed Campaign/Dungeon/Gear/Progression/Summon/Daily/Mission Track/AFK/Flush test sequence
@@ -213,6 +214,7 @@ Backend:
   - `docs/screenshots/android/2026-05-29-tester-build-0-1-icon/README.md`
 
 Changelog:
+- Prototype 0.2.168 / Backend 0.2.60: Hardened the Email + Password account MVP. Backend auth now returns explicit structured errors for missing email, missing password, weak password, duplicate email, unknown account/wrong password, and keeps safe `invalid_credentials` behavior for account lookup failures. HTTP tests now cover protected endpoints, Logout revocation, and Email re-login restoring the same player snapshot after campaign progress. The PostgreSQL E2E smoke now uses a unique Email account for the durable progress/restart/re-login path while still checking Guest auth and definitions-driven accessory drops. The older Ravik summon-pool seed migration is idempotent for already-seeded dev databases. Unity client error labels recognize the new backend error codes, and the Account Start validator now checks masked password input, Email input type, no reset trap on the Start screen, and EN/DE text fit.
 - Prototype 0.2.167: Added a first runtime Account Start screen before Home. It shows whether a local save exists, whether a server session is cached, the active Local/Server mode, Player ID/status, and buttons for Continue, Play as Guest, Email Login, Register, plus a Google Login later hint. Continue restores cached Email/Guest sessions through `/client/bootstrap` or falls back to local saves, Email Login/Register reuse the existing secure backend Email auth, Play as Guest keeps Guest auth working with a local fallback if the backend is unavailable, Logout returns to the Start screen without deleting account progress, and the new Account Start validator is included in Current Slice.
 - Prototype 0.2.166: Added the first testable Unity Email + Password account flow in the Shop Backend panel: email/password inputs, Register, Login, Logout, visible Guest/Email Account status, Player ID/session revision display, and post-auth `/client/bootstrap` so the server player state is applied immediately. Unity now stores the backend account kind with the cached session, keeps Email sessions from silently falling back to Guest after a `401`, clears the cached session on Logout without deleting account progress, and the Current Slice validator checks the Account panel labels/placeholders/text fit. Backend HTTP tests now explicitly cover invalid email errors. APK `Builds/Android/Mythwake-0.2.166-email-login.apk` builds, installs, and cold-launches in MuMuPlayer.
 - Prototype 0.2.165 / Backend 0.2.59: Added the first functional Email + Password backend slice with `POST /auth/email/register` and `POST /auth/email/login`, PBKDF2 password hashes in PostgreSQL migration `0030_email_password_auth.sql`, duplicate-email and wrong-password tests, and Bearer sessions that resolve the same per-player state as Guest auth. Unity now has email auth client helpers, clearer Backend panel labels (`Guest`, `Dev Reset`), and Account/Backend copy that exposes Local/Server mode, Guest Session status, and Player ID. Added `docs/TESTER_ACCOUNTS.md` for multi-tester persistence rules, reset risks, and the later Google Play login path.
