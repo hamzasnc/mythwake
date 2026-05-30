@@ -2,16 +2,18 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
 )
 
 type fakeAccountStore struct {
-	identity Identity
-	session  Session
-	findHits int
-	touches  int
+	identity         Identity
+	session          Session
+	emailCredentials map[string]EmailCredential
+	findHits         int
+	touches          int
 }
 
 func (store *fakeAccountStore) EnsureIdentity(_ context.Context, identity Identity) error {
@@ -21,6 +23,47 @@ func (store *fakeAccountStore) EnsureIdentity(_ context.Context, identity Identi
 
 func (store *fakeAccountStore) SaveSession(_ context.Context, session Session) error {
 	store.session = session
+	return nil
+}
+
+func (store *fakeAccountStore) CreateEmailCredential(_ context.Context, identity Identity, passwordHash string) error {
+	normalizedEmail := NormalizeEmail(identity.Email)
+	if store.emailCredentials == nil {
+		store.emailCredentials = map[string]EmailCredential{}
+	}
+	if _, exists := store.emailCredentials[normalizedEmail]; exists {
+		return ErrEmailAlreadyRegistered
+	}
+
+	store.identity = identity
+	store.emailCredentials[normalizedEmail] = EmailCredential{
+		PlayerID:        identity.PlayerID,
+		Email:           identity.Email,
+		NormalizedEmail: normalizedEmail,
+		PasswordHash:    passwordHash,
+		LastLoginAt:     identity.LastLoginAt,
+	}
+	return nil
+}
+
+func (store *fakeAccountStore) FindEmailCredential(_ context.Context, normalizedEmail string) (EmailCredential, bool, error) {
+	if store.emailCredentials == nil {
+		return EmailCredential{}, false, nil
+	}
+	credential, ok := store.emailCredentials[NormalizeEmail(normalizedEmail)]
+	return credential, ok, nil
+}
+
+func (store *fakeAccountStore) RecordEmailLogin(_ context.Context, normalizedEmail string, loginAt time.Time) error {
+	if store.emailCredentials == nil {
+		return nil
+	}
+	normalizedEmail = NormalizeEmail(normalizedEmail)
+	credential, ok := store.emailCredentials[normalizedEmail]
+	if ok {
+		credential.LastLoginAt = loginAt
+		store.emailCredentials[normalizedEmail] = credential
+	}
 	return nil
 }
 
@@ -103,6 +146,84 @@ func TestIssueGuestSessionGeneratesPlayerID(t *testing.T) {
 
 	if !strings.HasPrefix(session.PlayerID, "player_") {
 		t.Fatalf("expected generated player id, got %#v", session)
+	}
+}
+
+func TestHashPasswordUsesSaltedPBKDF2(t *testing.T) {
+	password := "tester-password-1"
+
+	first, err := HashPassword(password)
+	if err != nil {
+		t.Fatalf("hash password: %v", err)
+	}
+	second, err := HashPassword(password)
+	if err != nil {
+		t.Fatalf("hash password again: %v", err)
+	}
+
+	if first == password || first == second || !strings.HasPrefix(first, passwordHashAlgorithm+"$") {
+		t.Fatalf("expected unique encoded password hash, got first=%q second=%q", first, second)
+	}
+	if !VerifyPassword(password, first) {
+		t.Fatal("expected password verification to pass")
+	}
+	if VerifyPassword("wrong-password", first) {
+		t.Fatal("expected wrong password to fail")
+	}
+}
+
+func TestRegisterEmailCreatesCredentialAndSession(t *testing.T) {
+	store := &fakeAccountStore{}
+	service := NewService(store)
+
+	session, err := service.RegisterEmail(context.Background(), "Tester@Example.COM", "tester-password-1", "test-agent")
+	if err != nil {
+		t.Fatalf("register email: %v", err)
+	}
+
+	if session.Provider != ProviderEmail || session.PlayerID == "" || !strings.HasPrefix(session.Token, "mw_sess_") {
+		t.Fatalf("expected email session, got %#v", session)
+	}
+	if store.identity.Provider != ProviderEmail || store.identity.ProviderSubject != "tester@example.com" {
+		t.Fatalf("expected normalized email identity, got %#v", store.identity)
+	}
+	credential, ok := store.emailCredentials["tester@example.com"]
+	if !ok {
+		t.Fatalf("expected stored email credential, got %#v", store.emailCredentials)
+	}
+	if credential.PasswordHash == "" || credential.PasswordHash == "tester-password-1" {
+		t.Fatalf("expected hashed password, got %#v", credential)
+	}
+}
+
+func TestRegisterEmailRejectsDuplicateEmail(t *testing.T) {
+	service := NewService(nil)
+
+	if _, err := service.RegisterEmail(context.Background(), "tester@example.com", "tester-password-1", ""); err != nil {
+		t.Fatalf("register email: %v", err)
+	}
+	if _, err := service.RegisterEmail(context.Background(), "Tester@Example.com", "tester-password-2", ""); !errors.Is(err, ErrEmailAlreadyRegistered) {
+		t.Fatalf("expected duplicate email error, got %v", err)
+	}
+}
+
+func TestLoginEmailUsesExistingPlayerAndRejectsWrongPassword(t *testing.T) {
+	service := NewService(nil)
+
+	registered, err := service.RegisterEmail(context.Background(), "tester@example.com", "tester-password-1", "")
+	if err != nil {
+		t.Fatalf("register email: %v", err)
+	}
+	if _, err := service.LoginEmail(context.Background(), "tester@example.com", "wrong-password", ""); !errors.Is(err, ErrInvalidCredentials) {
+		t.Fatalf("expected invalid credentials, got %v", err)
+	}
+
+	loggedIn, err := service.LoginEmail(context.Background(), "TESTER@example.com", "tester-password-1", "")
+	if err != nil {
+		t.Fatalf("login email: %v", err)
+	}
+	if loggedIn.PlayerID != registered.PlayerID || loggedIn.Provider != ProviderEmail || loggedIn.Token == registered.Token {
+		t.Fatalf("expected new email session for existing player, registered=%#v loggedIn=%#v", registered, loggedIn)
 	}
 }
 

@@ -121,6 +121,16 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         });
     }
 
+    public IEnumerator EmailRegister(string email, string password, Action<bool, string, MythwakeGuestAuthResponseDto> completed)
+    {
+        return SendEmailAuth("/auth/email/register", email, password, completed);
+    }
+
+    public IEnumerator EmailLogin(string email, string password, Action<bool, string, MythwakeGuestAuthResponseDto> completed)
+    {
+        return SendEmailAuth("/auth/email/login", email, password, completed);
+    }
+
     public IEnumerator GetPlayerSnapshot(Action<bool, string, MythwakePlayerSnapshotDto> completed)
     {
         return SendAuthenticatedJson<MythwakePlayerSnapshotDto>(() => Get("/player/state"), (success, error, snapshot) =>
@@ -325,6 +335,26 @@ public sealed class MythwakeBackendClient : MonoBehaviour
     private UnityWebRequest Post(string path)
     {
         return PostJson(path, "{}");
+    }
+
+    private IEnumerator SendEmailAuth(string path, string email, string password, Action<bool, string, MythwakeGuestAuthResponseDto> completed)
+    {
+        var payload = JsonUtility.ToJson(new EmailAuthRequestDto
+        {
+            email = email ?? string.Empty,
+            password = password ?? string.Empty
+        });
+
+        return SendJson<MythwakeGuestAuthResponseDto>(PostJson(path, payload), (success, error, response) =>
+        {
+            if (success)
+            {
+                StoreSession(response);
+                StoreStateRevision(response.playerSnapshot);
+            }
+
+            completed?.Invoke(success, error, response);
+        });
     }
 
     private UnityWebRequest PostAccessory(string path, string accessoryId)
@@ -700,6 +730,16 @@ public sealed class MythwakeBackendClient : MonoBehaviour
                 return "Player reset failed";
             case "guest_auth_failed":
                 return "Guest auth failed";
+            case "invalid_email":
+                return "Invalid email";
+            case "weak_password":
+                return "Weak password";
+            case "email_already_registered":
+                return "Email already registered";
+            case "invalid_credentials":
+                return "Invalid credentials";
+            case "email_auth_failed":
+                return "Email auth failed";
             case "invalid_body":
                 return "Invalid body";
             case "invalid_json":
@@ -796,6 +836,13 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
         utc = DateTime.MinValue;
         return false;
+    }
+
+    [Serializable]
+    private struct EmailAuthRequestDto
+    {
+        public string email;
+        public string password;
     }
 
     [Serializable]

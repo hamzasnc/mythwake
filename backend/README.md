@@ -10,6 +10,7 @@ Current scope:
 - Read-only definitions endpoint
 - Dev player state endpoint
 - Guest auth with random session tokens
+- Email + Password register/login with salted PBKDF2 password hashes
 - Logout endpoint that revokes the active session token
 - Redis or in-memory session cache implementation for PostgreSQL-backed auth validation
 - Request ID middleware for client/server log correlation
@@ -17,6 +18,7 @@ Current scope:
 - Redis or in-memory rate limiter implementation for auth and gameplay mutation requests
 - Redis or in-memory short-lived player mutation locks for gameplay POSTs
 - PostgreSQL account identities and hashed session token persistence for guest, email, Google, and Apple login providers
+- PostgreSQL email credentials in `account.player_email_credentials`; raw passwords are never stored
 - Bearer session validation for player state, flush, and gameplay mutation endpoints
 - Per-player service contexts resolved from the authenticated session token
 - In-memory action endpoints for campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
@@ -72,7 +74,8 @@ Current scope:
 - Player state, flush, and gameplay mutation routes reject missing or invalid sessions with `401`.
 - Guest auth and action responses include `playerSnapshot` for direct client refresh.
 - Guest auth returns the raw session token once; PostgreSQL stores only `token_hash`.
-- The Unity prototype can ping, guest-login, store the session token, sync this snapshot, cache `/definitions` with ETag revalidation, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
+- Email register/login returns the same response/session shape as Guest auth, so protected state and gameplay routes continue to use `Authorization: Bearer <sessionToken>`.
+- The Unity prototype can ping, guest-login, prepare email auth requests, store the session token, sync this snapshot, cache `/definitions` with ETag revalidation, and route manual gameplay buttons from the Shop tab Backend panel's Server Mode.
 - Unity automatically sends `Authorization: Bearer <sessionToken>` and retries protected calls once after a `401` by refreshing guest auth.
 - Server gameplay POSTs require valid `Idempotency-Key` headers by default.
 - Gameplay action IDs are centralized in `internal/gameplay` so routing, persistence, ledgers, and tests share the same names.
@@ -105,7 +108,8 @@ Current scope:
 - Graceful shutdown flushes loaded player contexts before closing the state cache.
 
 Not included yet:
-- Email, Google, and Apple token verification endpoints
+- Unity Email + Password input UI
+- Google and Apple token verification endpoints
 - Production-ready balance tooling/admin flow
 
 Run local API without PostgreSQL:
@@ -136,7 +140,7 @@ Shortcut scripts from the repo root:
 Unity client notes:
 - Editor/Desktop default backend URL: `http://localhost:8080`
 - Android emulator default backend URL: `http://10.0.2.2:8080`
-- In the prototype, open `Shop` and use `Ping`, `Login`, `Sync`, or the `Local`/`Server` mode button in the Backend panel.
+- In the prototype, open `Shop` and use `Ping`, `Guest`, `Sync`, or the `Local`/`Server` mode button in the Backend panel.
 - Server Mode sends manual gameplay button actions to this API and applies the returned `playerSnapshot`.
 
 Optional script modes:
@@ -216,6 +220,8 @@ Database behavior:
 
 Endpoints:
 - `POST /auth/guest`
+- `POST /auth/email/register`
+- `POST /auth/email/login`
 - `POST /auth/logout`
 - `GET /health`
 - `GET /time`

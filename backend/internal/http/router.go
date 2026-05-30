@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -113,6 +114,8 @@ func NewRouter(cfg config.Config, logger *log.Logger, authService *auth.Service,
 
 func (router *Router) routes() {
 	router.mux.HandleFunc("POST /auth/guest", router.handleGuestAuth)
+	router.mux.HandleFunc("POST /auth/email/register", router.handleEmailRegister)
+	router.mux.HandleFunc("POST /auth/email/login", router.handleEmailLogin)
 	router.mux.HandleFunc("POST /auth/logout", router.handleLogout)
 	router.mux.HandleFunc("GET /health", router.handleHealth)
 	router.mux.HandleFunc("GET /time", router.handleTime)
@@ -338,6 +341,7 @@ func (router *Router) handleDevPlayerReset(response http.ResponseWriter, request
 }
 
 func (router *Router) handleGuestAuth(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Cache-Control", "no-store")
 	if token := sessionTokenFromRequest(request); token != "" {
 		session, err := router.authService.ValidateSession(request.Context(), token)
 		if err == nil {
@@ -363,6 +367,63 @@ func (router *Router) handleGuestAuth(response http.ResponseWriter, request *htt
 	}
 
 	writeJSON(response, http.StatusOK, playerService.GuestAuth(session.Token))
+}
+
+func (router *Router) handleEmailRegister(response http.ResponseWriter, request *http.Request) {
+	authRequest, ok := decodeEmailAuthRequest(response, request)
+	if !ok {
+		return
+	}
+
+	session, err := router.authService.RegisterEmail(request.Context(), authRequest.Email, authRequest.Password, request.UserAgent())
+	if err != nil {
+		router.writeEmailAuthError(response, request, err)
+		return
+	}
+
+	playerService, ok := router.playerServiceForSession(response, request, session)
+	if !ok {
+		return
+	}
+
+	response.Header().Set("Cache-Control", "no-store")
+	writeJSON(response, http.StatusOK, playerService.GuestAuth(session.Token))
+}
+
+func (router *Router) handleEmailLogin(response http.ResponseWriter, request *http.Request) {
+	authRequest, ok := decodeEmailAuthRequest(response, request)
+	if !ok {
+		return
+	}
+
+	session, err := router.authService.LoginEmail(request.Context(), authRequest.Email, authRequest.Password, request.UserAgent())
+	if err != nil {
+		router.writeEmailAuthError(response, request, err)
+		return
+	}
+
+	playerService, ok := router.playerServiceForSession(response, request, session)
+	if !ok {
+		return
+	}
+
+	response.Header().Set("Cache-Control", "no-store")
+	writeJSON(response, http.StatusOK, playerService.GuestAuth(session.Token))
+}
+
+func (router *Router) writeEmailAuthError(response http.ResponseWriter, request *http.Request, err error) {
+	switch {
+	case errors.Is(err, auth.ErrInvalidEmail):
+		writeError(response, request, http.StatusBadRequest, "invalid_email", "Email address is invalid.")
+	case errors.Is(err, auth.ErrInvalidPassword):
+		writeError(response, request, http.StatusBadRequest, "weak_password", "Password must be between 8 and 256 characters.")
+	case errors.Is(err, auth.ErrEmailAlreadyRegistered):
+		writeError(response, request, http.StatusConflict, "email_already_registered", "Email address is already registered.")
+	case errors.Is(err, auth.ErrInvalidCredentials):
+		writeError(response, request, http.StatusUnauthorized, "invalid_credentials", "Email or password is invalid.")
+	default:
+		writeError(response, request, http.StatusInternalServerError, "email_auth_failed", "Email authentication failed.")
+	}
 }
 
 func (router *Router) handleLogout(response http.ResponseWriter, request *http.Request) {
@@ -762,6 +823,22 @@ func validIdempotencyKey(key string) bool {
 	}
 
 	return true
+}
+
+func decodeEmailAuthRequest(response http.ResponseWriter, request *http.Request) (api.EmailAuthRequest, bool) {
+	rawBody, err := io.ReadAll(request.Body)
+	if err != nil {
+		writeError(response, request, http.StatusBadRequest, "invalid_body", "Could not read request body.")
+		return api.EmailAuthRequest{}, false
+	}
+
+	var authRequest api.EmailAuthRequest
+	if err := json.Unmarshal(rawBody, &authRequest); err != nil {
+		writeError(response, request, http.StatusBadRequest, "invalid_json", "Expected JSON body with email and password.")
+		return api.EmailAuthRequest{}, false
+	}
+
+	return authRequest, true
 }
 
 func boolLabel(value bool) string {

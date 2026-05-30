@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.164";
+    public const string PrototypeVersion = "0.2.165";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -3601,7 +3601,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void LoginBackend()
     {
-        if (!TryStartBackendRequest("Backend: guest login..."))
+        if (!TryStartBackendRequest("Backend: guest session login..."))
         {
             return;
         }
@@ -4175,11 +4175,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             ApplyBackendSnapshot(response.playerSnapshot);
             var playerId = string.IsNullOrWhiteSpace(response.playerId) ? backendClient.PlayerId : response.playerId;
-            FinishBackendRequest($"Backend login: {playerId}  Session active");
+            FinishBackendRequest($"Guest session: {playerId}  Active");
             return;
         }
 
-        FinishBackendRequest($"Backend login failed: {error}");
+        FinishBackendRequest($"Guest session login failed: {error}");
     }
 
     private void OnBackendSnapshot(bool success, string error, MythwakePlayerSnapshotDto snapshot)
@@ -14509,13 +14509,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendStatusText.fontSizeMax = 22;
 
         backendHealthButton = CreateRuntimeButton(panelObject.transform, "Backend Health Button", "Ping", -384, -154, 86, 54);
-        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Login", -288, -154, 86, 54);
+        backendLoginButton = CreateRuntimeButton(panelObject.transform, "Backend Login Button", "Guest", -288, -154, 86, 54);
         backendSyncButton = CreateRuntimeButton(panelObject.transform, "Backend Sync Button", "Sync", -192, -154, 86, 54);
         backendAfkButton = CreateRuntimeButton(panelObject.transform, "Backend AFK Button", "AFK", -96, -154, 86, 54);
         backendClockButton = CreateRuntimeButton(panelObject.transform, "Backend Clock Button", "Clock", 0, -154, 86, 54);
         backendDefinitionsButton = CreateRuntimeButton(panelObject.transform, "Backend Definitions Button", "Defs", 96, -154, 86, 54);
         backendSmokeButton = CreateRuntimeButton(panelObject.transform, "Backend Smoke Button", "Smoke", 192, -154, 86, 54);
-        backendResetButton = CreateRuntimeButton(panelObject.transform, "Backend Reset Button", "Reset", 288, -154, 86, 54);
+        backendResetButton = CreateRuntimeButton(panelObject.transform, "Backend Reset Button", "Dev Reset", 288, -154, 86, 54);
         backendModeButton = CreateRuntimeButton(panelObject.transform, "Backend Mode Button", "Local", 384, -154, 86, 54);
         backendModeText = backendModeButton.GetComponentInChildren<TMP_Text>();
     }
@@ -23014,7 +23014,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                     backendGameplayEnabled ? Tr("management.backend.server") : Tr("management.backend.local"),
                     GetPerformanceOverlayLabel());
             case ManagementMenuMode.Account:
-                return TrFormat("management.account.body", "local-player", saveVersion, GetDailyDateKey());
+                return TrFormat(
+                    "management.account.body",
+                    GetAccountPlayerId(),
+                    saveVersion,
+                    GetDailyDateKey(),
+                    backendGameplayEnabled ? Tr("management.backend.server") : Tr("management.backend.local"),
+                    backendClient != null && backendClient.HasSession ? Tr("management.session.guest") : Tr("management.session.none"));
             case ManagementMenuMode.Support:
                 return Tr("management.support.body");
             case ManagementMenuMode.About:
@@ -23900,7 +23906,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private string BackendSessionLabel()
     {
         var mode = backendGameplayEnabled ? "Server" : "Local";
-        var sessionLabel = backendClient != null && backendClient.HasSession ? $"Mode {mode}  Logged: {backendClient.PlayerId}" : $"Mode {mode}  Logged: no";
+        var sessionLabel = backendClient != null && backendClient.HasSession ? $"Mode {mode}  Guest Session: {backendClient.PlayerId}" : $"Mode {mode}  Guest Session: none  Email: ready";
         if (backendStateRevision > 0)
         {
             sessionLabel = $"{sessionLabel}  Rev {backendStateRevision}";
@@ -23912,6 +23918,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return sessionLabel;
+    }
+
+    private string GetAccountPlayerId()
+    {
+        if (backendClient != null && backendClient.HasSession && !string.IsNullOrWhiteSpace(backendClient.PlayerId))
+        {
+            return backendClient.PlayerId;
+        }
+
+        return "local-player";
     }
 
     private void SetBackendButtonsInteractable(bool interactable)

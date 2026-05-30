@@ -631,6 +631,103 @@ func TestGuestAuthEndpoint(t *testing.T) {
 	}
 }
 
+func TestEmailRegisterAndLoginEndpoints(t *testing.T) {
+	handler := newTestHandler()
+
+	registerResponse := httptest.NewRecorder()
+	registerRequest := httptest.NewRequest(http.MethodPost, "/auth/email/register", strings.NewReader(`{"email":"Tester@Example.com","password":"tester-password-1"}`))
+	handler.ServeHTTP(registerResponse, registerRequest)
+	if registerResponse.Code != http.StatusOK {
+		t.Fatalf("expected email register status 200, got %d body=%s", registerResponse.Code, registerResponse.Body.String())
+	}
+	if registerResponse.Header().Get("Cache-Control") != "no-store" {
+		t.Fatalf("expected no-store auth response, got %q", registerResponse.Header().Get("Cache-Control"))
+	}
+
+	var registered api.GuestAuthResponse
+	if err := json.NewDecoder(registerResponse.Body).Decode(&registered); err != nil {
+		t.Fatalf("decode register response: %v", err)
+	}
+	if registered.PlayerID == "" || registered.SessionToken == "" || len(registered.PlayerSnapshot.Heroes) == 0 {
+		t.Fatalf("expected email auth response with snapshot, got %#v", registered)
+	}
+
+	loginResponse := httptest.NewRecorder()
+	loginRequest := httptest.NewRequest(http.MethodPost, "/auth/email/login", strings.NewReader(`{"email":"tester@example.com","password":"tester-password-1"}`))
+	handler.ServeHTTP(loginResponse, loginRequest)
+	if loginResponse.Code != http.StatusOK {
+		t.Fatalf("expected email login status 200, got %d body=%s", loginResponse.Code, loginResponse.Body.String())
+	}
+
+	var loggedIn api.GuestAuthResponse
+	if err := json.NewDecoder(loginResponse.Body).Decode(&loggedIn); err != nil {
+		t.Fatalf("decode login response: %v", err)
+	}
+	if loggedIn.PlayerID != registered.PlayerID || loggedIn.SessionToken == registered.SessionToken {
+		t.Fatalf("expected login to reuse player with a fresh session, registered=%#v loggedIn=%#v", registered, loggedIn)
+	}
+
+	bootstrapResponse := httptest.NewRecorder()
+	bootstrapRequest := httptest.NewRequest(http.MethodGet, "/client/bootstrap", nil)
+	addAuth(bootstrapRequest, loggedIn.SessionToken)
+	handler.ServeHTTP(bootstrapResponse, bootstrapRequest)
+	if bootstrapResponse.Code != http.StatusOK {
+		t.Fatalf("expected bootstrap after email login, got %d", bootstrapResponse.Code)
+	}
+}
+
+func TestEmailRegisterRejectsDuplicateEmail(t *testing.T) {
+	handler := newTestHandler()
+
+	firstResponse := httptest.NewRecorder()
+	firstRequest := httptest.NewRequest(http.MethodPost, "/auth/email/register", strings.NewReader(`{"email":"tester@example.com","password":"tester-password-1"}`))
+	handler.ServeHTTP(firstResponse, firstRequest)
+	if firstResponse.Code != http.StatusOK {
+		t.Fatalf("expected first register status 200, got %d", firstResponse.Code)
+	}
+
+	secondResponse := httptest.NewRecorder()
+	secondRequest := httptest.NewRequest(http.MethodPost, "/auth/email/register", strings.NewReader(`{"email":"Tester@Example.com","password":"tester-password-2"}`))
+	handler.ServeHTTP(secondResponse, secondRequest)
+	if secondResponse.Code != http.StatusConflict {
+		t.Fatalf("expected duplicate register status 409, got %d", secondResponse.Code)
+	}
+
+	var body api.ErrorResponse
+	if err := json.NewDecoder(secondResponse.Body).Decode(&body); err != nil {
+		t.Fatalf("decode duplicate response: %v", err)
+	}
+	if body.ErrorCode != "email_already_registered" {
+		t.Fatalf("expected duplicate email error, got %#v", body)
+	}
+}
+
+func TestEmailLoginRejectsWrongPassword(t *testing.T) {
+	handler := newTestHandler()
+
+	registerResponse := httptest.NewRecorder()
+	registerRequest := httptest.NewRequest(http.MethodPost, "/auth/email/register", strings.NewReader(`{"email":"tester@example.com","password":"tester-password-1"}`))
+	handler.ServeHTTP(registerResponse, registerRequest)
+	if registerResponse.Code != http.StatusOK {
+		t.Fatalf("expected register status 200, got %d", registerResponse.Code)
+	}
+
+	loginResponse := httptest.NewRecorder()
+	loginRequest := httptest.NewRequest(http.MethodPost, "/auth/email/login", strings.NewReader(`{"email":"tester@example.com","password":"wrong-password"}`))
+	handler.ServeHTTP(loginResponse, loginRequest)
+	if loginResponse.Code != http.StatusUnauthorized {
+		t.Fatalf("expected wrong password status 401, got %d", loginResponse.Code)
+	}
+
+	var body api.ErrorResponse
+	if err := json.NewDecoder(loginResponse.Body).Decode(&body); err != nil {
+		t.Fatalf("decode wrong password response: %v", err)
+	}
+	if body.ErrorCode != "invalid_credentials" {
+		t.Fatalf("expected invalid credentials error, got %#v", body)
+	}
+}
+
 func TestLogoutEndpointRevokesSession(t *testing.T) {
 	handler := newTestHandler()
 	login := loginGuest(t, handler)

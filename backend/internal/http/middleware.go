@@ -136,7 +136,7 @@ func rateLimitCategory(cfg config.Config, request *http.Request) (string, int) {
 	}
 
 	switch request.URL.Path {
-	case "/auth/guest", "/auth/logout":
+	case "/auth/guest", "/auth/email/register", "/auth/email/login", "/auth/logout":
 		return rateLimitCategoryAuth, cfg.RateLimitAuth
 	default:
 		return rateLimitCategoryGameplay, cfg.RateLimitGameplay

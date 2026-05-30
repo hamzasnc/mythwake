@@ -2,13 +2,17 @@ package auth
 
 import (
 	"context"
+	"crypto/pbkdf2"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -26,9 +30,23 @@ const (
 )
 
 var (
-	ErrMissingSession = errors.New("session token is required")
-	ErrInvalidSession = errors.New("session token is invalid")
-	ErrExpiredSession = errors.New("session token has expired")
+	ErrMissingSession         = errors.New("session token is required")
+	ErrInvalidSession         = errors.New("session token is invalid")
+	ErrExpiredSession         = errors.New("session token has expired")
+	ErrInvalidEmail           = errors.New("email address is invalid")
+	ErrInvalidPassword        = errors.New("password does not meet minimum requirements")
+	ErrEmailAlreadyRegistered = errors.New("email address is already registered")
+	ErrInvalidCredentials     = errors.New("email or password is invalid")
+)
+
+const (
+	minPasswordLength      = 8
+	maxPasswordLength      = 256
+	passwordHashAlgorithm  = "pbkdf2_sha256"
+	passwordHashVersion    = "v=1"
+	passwordHashIterations = 210000
+	passwordHashSaltBytes  = 16
+	passwordHashKeyBytes   = 32
 )
 
 type ProviderDefinition struct {
@@ -60,8 +78,19 @@ type Session struct {
 	UserAgent  string
 }
 
+type EmailCredential struct {
+	PlayerID        string
+	Email           string
+	NormalizedEmail string
+	PasswordHash    string
+	LastLoginAt     time.Time
+}
+
 type AccountStore interface {
 	EnsureIdentity(ctx context.Context, identity Identity) error
+	CreateEmailCredential(ctx context.Context, identity Identity, passwordHash string) error
+	FindEmailCredential(ctx context.Context, normalizedEmail string) (EmailCredential, bool, error)
+	RecordEmailLogin(ctx context.Context, normalizedEmail string, loginAt time.Time) error
 	SaveSession(ctx context.Context, session Session) error
 	FindSessionByTokenHash(ctx context.Context, tokenHash string, now time.Time) (Session, bool, error)
 	TouchSession(ctx context.Context, sessionID string, seenAt time.Time) error
@@ -77,6 +106,8 @@ type Service struct {
 	cacheTTL      time.Duration
 	touchInterval time.Duration
 	sessionCache  SessionCache
+	emailMu       sync.Mutex
+	emailAccounts map[string]EmailCredential
 }
 
 func NewService(store AccountStore, options ...ServiceOption) *Service {
@@ -87,6 +118,7 @@ func NewService(store AccountStore, options ...ServiceOption) *Service {
 		cacheTTL:      defaultSessionCacheTTL,
 		touchInterval: defaultSessionTouchInterval,
 		sessionCache:  NewMemorySessionCache(),
+		emailAccounts: map[string]EmailCredential{},
 	}
 	for _, option := range options {
 		option(service)
@@ -182,14 +214,100 @@ func (service *Service) IssueGuestSessionForPlayer(ctx context.Context, playerID
 	if err := service.store.EnsureIdentity(ctx, identity); err != nil {
 		return Session{}, err
 	}
-	if err := service.store.SaveSession(ctx, session); err != nil {
+	return service.saveSession(ctx, session, now)
+}
+
+func (service *Service) RegisterEmail(ctx context.Context, email string, password string, userAgent string) (Session, error) {
+	normalizedEmail, err := normalizeEmailForAuth(email)
+	if err != nil {
 		return Session{}, err
 	}
-	if err := service.rememberSession(ctx, session, now, now); err != nil {
+	passwordHash, err := HashPassword(password)
+	if err != nil {
 		return Session{}, err
 	}
 
-	return session, nil
+	playerID, err := randomToken("player_", 16)
+	if err != nil {
+		return Session{}, err
+	}
+
+	now := service.now().UTC()
+	identity := Identity{
+		PlayerID:        playerID,
+		Provider:        ProviderEmail,
+		ProviderSubject: normalizedEmail,
+		Email:           normalizedEmail,
+		EmailVerified:   false,
+		LastLoginAt:     now,
+	}
+
+	if service.store != nil {
+		if err := service.store.CreateEmailCredential(ctx, identity, passwordHash); err != nil {
+			return Session{}, err
+		}
+	} else {
+		service.emailMu.Lock()
+		if _, exists := service.emailAccounts[normalizedEmail]; exists {
+			service.emailMu.Unlock()
+			return Session{}, ErrEmailAlreadyRegistered
+		}
+		service.emailAccounts[normalizedEmail] = EmailCredential{
+			PlayerID:        playerID,
+			Email:           normalizedEmail,
+			NormalizedEmail: normalizedEmail,
+			PasswordHash:    passwordHash,
+			LastLoginAt:     now,
+		}
+		service.emailMu.Unlock()
+	}
+
+	session, err := service.newSession(playerID, ProviderEmail, userAgent, now)
+	if err != nil {
+		return Session{}, err
+	}
+	return service.saveSession(ctx, session, now)
+}
+
+func (service *Service) LoginEmail(ctx context.Context, email string, password string, userAgent string) (Session, error) {
+	normalizedEmail, err := normalizeEmailForAuth(email)
+	if err != nil {
+		return Session{}, err
+	}
+
+	var credential EmailCredential
+	var found bool
+	if service.store != nil {
+		credential, found, err = service.store.FindEmailCredential(ctx, normalizedEmail)
+		if err != nil {
+			return Session{}, err
+		}
+	} else {
+		service.emailMu.Lock()
+		credential, found = service.emailAccounts[normalizedEmail]
+		service.emailMu.Unlock()
+	}
+	if !found || !VerifyPassword(password, credential.PasswordHash) {
+		return Session{}, ErrInvalidCredentials
+	}
+
+	now := service.now().UTC()
+	if service.store != nil {
+		if err := service.store.RecordEmailLogin(ctx, normalizedEmail, now); err != nil {
+			return Session{}, err
+		}
+	} else {
+		service.emailMu.Lock()
+		credential.LastLoginAt = now
+		service.emailAccounts[normalizedEmail] = credential
+		service.emailMu.Unlock()
+	}
+
+	session, err := service.newSession(credential.PlayerID, ProviderEmail, userAgent, now)
+	if err != nil {
+		return Session{}, err
+	}
+	return service.saveSession(ctx, session, now)
 }
 
 func (service *Service) ValidateSession(ctx context.Context, token string) (Session, error) {
@@ -302,13 +420,148 @@ func TokenHash(token string) string {
 	return hex.EncodeToString(sum[:])
 }
 
+func NormalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
+
+func HashPassword(password string) (string, error) {
+	if err := validatePassword(password); err != nil {
+		return "", err
+	}
+
+	salt, err := randomBytes(passwordHashSaltBytes)
+	if err != nil {
+		return "", err
+	}
+	key, err := pbkdf2.Key(sha256.New, password, salt, passwordHashIterations, passwordHashKeyBytes)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf(
+		"%s$%s$i=%d$s=%s$h=%s",
+		passwordHashAlgorithm,
+		passwordHashVersion,
+		passwordHashIterations,
+		base64.RawStdEncoding.EncodeToString(salt),
+		base64.RawStdEncoding.EncodeToString(key),
+	), nil
+}
+
+func VerifyPassword(password string, encodedHash string) bool {
+	parts := strings.Split(encodedHash, "$")
+	if len(parts) != 5 || parts[0] != passwordHashAlgorithm || parts[1] != passwordHashVersion {
+		return false
+	}
+
+	iterationsRaw := strings.TrimPrefix(parts[2], "i=")
+	if iterationsRaw == parts[2] {
+		return false
+	}
+	iterations, err := strconv.Atoi(iterationsRaw)
+	if err != nil || iterations <= 0 {
+		return false
+	}
+
+	saltRaw := strings.TrimPrefix(parts[3], "s=")
+	hashRaw := strings.TrimPrefix(parts[4], "h=")
+	if saltRaw == parts[3] || hashRaw == parts[4] {
+		return false
+	}
+	salt, err := base64.RawStdEncoding.DecodeString(saltRaw)
+	if err != nil || len(salt) == 0 {
+		return false
+	}
+	expected, err := base64.RawStdEncoding.DecodeString(hashRaw)
+	if err != nil || len(expected) == 0 {
+		return false
+	}
+
+	actual, err := pbkdf2.Key(sha256.New, password, salt, iterations, len(expected))
+	if err != nil {
+		return false
+	}
+
+	return subtle.ConstantTimeCompare(actual, expected) == 1
+}
+
+func validatePassword(password string) error {
+	if len(password) < minPasswordLength || len(password) > maxPasswordLength {
+		return ErrInvalidPassword
+	}
+
+	return nil
+}
+
+func normalizeEmailForAuth(email string) (string, error) {
+	normalized := NormalizeEmail(email)
+	if normalized == "" || strings.ContainsAny(normalized, " \t\r\n") {
+		return "", ErrInvalidEmail
+	}
+
+	at := strings.Index(normalized, "@")
+	if at <= 0 || at != strings.LastIndex(normalized, "@") || at == len(normalized)-1 {
+		return "", ErrInvalidEmail
+	}
+	domain := normalized[at+1:]
+	if !strings.Contains(domain, ".") {
+		return "", ErrInvalidEmail
+	}
+
+	return normalized, nil
+}
+
 func randomToken(prefix string, byteCount int) (string, error) {
-	bytes := make([]byte, byteCount)
-	if _, err := rand.Read(bytes); err != nil {
+	bytes, err := randomBytes(byteCount)
+	if err != nil {
 		return "", fmt.Errorf("generate token: %w", err)
 	}
 
 	return prefix + base64.RawURLEncoding.EncodeToString(bytes), nil
+}
+
+func randomBytes(byteCount int) ([]byte, error) {
+	bytes := make([]byte, byteCount)
+	if _, err := rand.Read(bytes); err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
+}
+
+func (service *Service) newSession(playerID string, provider string, userAgent string, now time.Time) (Session, error) {
+	token, err := randomToken("mw_sess_", 32)
+	if err != nil {
+		return Session{}, err
+	}
+	sessionID, err := randomToken("sess_", 16)
+	if err != nil {
+		return Session{}, err
+	}
+
+	return Session{
+		SessionID: sessionID,
+		PlayerID:  playerID,
+		Provider:  provider,
+		Token:     token,
+		TokenHash: TokenHash(token),
+		IssuedAt:  now,
+		ExpiresAt: now.Add(service.ttl),
+		UserAgent: strings.TrimSpace(userAgent),
+	}, nil
+}
+
+func (service *Service) saveSession(ctx context.Context, session Session, now time.Time) (Session, error) {
+	if service.store != nil {
+		if err := service.store.SaveSession(ctx, session); err != nil {
+			return Session{}, err
+		}
+	}
+	if err := service.rememberSession(ctx, session, now, now); err != nil {
+		return Session{}, err
+	}
+
+	return session, nil
 }
 
 func (service *Service) cachedSession(ctx context.Context, tokenHash string, token string, now time.Time) (Session, bool, error) {

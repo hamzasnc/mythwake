@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.164
+Prototype version: 0.2.165
 Local save version: 2
 
 Current prototype:
@@ -17,8 +17,8 @@ Current prototype:
 - Legacy PlayerPrefs scalar keys are migrated into the JSON save on load
 - Currency spend/grant actions now go through local economy boundary methods for backend migration
 - Shared service contracts now define player state, reward, action result, economy, battle, summon, and inventory boundaries
-- Unity has a backend client component for health, guest auth, player snapshot sync, and server action endpoints
-- Shop tab creates a small runtime Backend panel for Ping, Login, Sync, Reset, and Local/Server gameplay mode smoke tests
+- Unity has a backend client component for health, guest auth, email auth request helpers, player snapshot sync, and server action endpoints
+- Shop tab creates a small runtime Backend panel for Ping, Guest, Sync, Dev Reset, and Local/Server gameplay mode smoke tests
 - Server Mode routes manual gameplay buttons through the Go backend and applies the returned player snapshot
 - Server Mode campaign and dungeon actions now display server combat results with HP, damage, seconds, and rewards
 - Server definitions include campaign and dungeon combat stats so Unity previews match backend combat
@@ -172,6 +172,7 @@ Backend:
 - Unity can manually claim server AFK rewards from the Backend panel and checks them on app resume while Server Mode is active
 - Unity reads server daily mission progress from player snapshots when Server Mode syncs/actions complete
 - Unity stores the backend session token, sends it automatically, and retries once with a fresh guest login after a `401`
+- Unity Account/Backend surfaces now show Local/Server mode, Guest Session status, Player ID, and the future Email path more explicitly so testers can tell which state source they are touching
 - Unity reuses pending idempotency keys after transport failures
 - Unity requests a backend state flush on app pause/quit when a backend session is active
 - Unity Backend panel can reset the active local/dev server player and refresh the UI from the fresh server snapshot
@@ -182,6 +183,7 @@ Backend:
 - `/health` reports state-cache dirty, queued, flushed, failed, loaded player contexts, last flush, and last error counters for local diagnostics
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Guest auth and action responses include the full player snapshot for direct client UI updates
+- Email + Password auth now has backend register/login endpoints that create or reuse one player state per email account, store only PBKDF2 password hashes, and issue the same Bearer sessions as Guest auth
 - Android emulator builds use `http://10.0.2.2:8080` as the default backend URL, while Editor/Desktop use `http://localhost:8080`
 - Redis is optional: when `MYTHWAKE_REDIS_ADDR` is set, sessions and rate limits can use Redis while PostgreSQL remains the durable source of truth
 - Windows helper scripts:
@@ -195,6 +197,7 @@ Backend:
 - Test planning docs:
   - `docs/ROADMAP.md`
   - `docs/INTERNAL_TESTBUILD_CHECKLIST.md`
+  - `docs/TESTER_ACCOUNTS.md`
   - `docs/TESTER_BUILD_0_1.md`
   - `docs/UNITY_TEST_STAND.md` (includes the latest Mobile UX pass and open Android emulator/device follow-up)
   - `docs/screenshots/ANDROID_FALLBACK_2026-05-26.md`
@@ -208,6 +211,7 @@ Backend:
   - `docs/screenshots/android/2026-05-29-tester-build-0-1-icon/README.md`
 
 Changelog:
+- Prototype 0.2.165 / Backend 0.2.59: Added the first functional Email + Password backend slice with `POST /auth/email/register` and `POST /auth/email/login`, PBKDF2 password hashes in PostgreSQL migration `0030_email_password_auth.sql`, duplicate-email and wrong-password tests, and Bearer sessions that resolve the same per-player state as Guest auth. Unity now has email auth client helpers, clearer Backend panel labels (`Guest`, `Dev Reset`), and Account/Backend copy that exposes Local/Server mode, Guest Session status, and Player ID. Added `docs/TESTER_ACCOUNTS.md` for multi-tester persistence rules, reset risks, and the later Google Play login path.
 - Prototype 0.2.164: Upgrades Tester Build 0.1 for the current solo-tester handoff while keeping the later multi-tester path explicit. Android PlayerSettings now use `Mythwake_icon_transparent.png` as the launcher icon via `Assets/_Mythwake/Branding/Mythwake_icon_launcher.png`, Mobile UX validation checks the icon wiring, and `docs/TESTER_BUILD_0_1.md` now includes solo install/test steps plus future multi-tester account requirements. APK `Builds/Android/Mythwake-0.2.164-tester-build-0.1.apk` builds, installs, launches in MuMuPlayer, and smoke screenshots/logcat live under `docs/screenshots/android/2026-05-29-tester-build-0-1-icon/`. Replacing/disabling the Unity startup splash logo caused a MuMu launch crash during the experiment, so only the launcher icon is changed in this stable tester build.
 - Prototype 0.2.163: Prepared Tester Build 0.1 polish from the first tester-build review. Formation now hides the runtime FPS overlay, Gear/Hero disabled and copy states are clearer, Dungeons default/flow labels are localized, Home current-stage preview starts with `Ziel:`, and editor validators cover these mobile/tester feedback points. APK `Builds/Android/Mythwake-0.2.163-tester-build-0.1.apk` builds, installs, and launches in MuMuPlayer with cold `TotalTime 995 ms`; screenshots/logcat live under `docs/screenshots/android/2026-05-29-tester-build-0-1/`.
 - Prototype 0.2.162: Prepared Tester Build 0 with APK `Builds/Android/Mythwake-0.2.162-tester-build-0.apk`, Android/MuMu smoke screenshots under `docs/screenshots/android/2026-05-28-tester-build-0/`, `docs/TESTER_BUILD_0.md` for tester flow/questions/known issues, and a fix so Campaign Result text no longer leaks onto the Dungeons screen after Continue.
