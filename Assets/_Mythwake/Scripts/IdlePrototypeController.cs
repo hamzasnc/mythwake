@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.171";
+    public const string PrototypeVersion = "0.2.173";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -9273,7 +9273,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonInteractable(gearDungeonButton, canInteract);
         SetButtonInteractable(dungeonDetailRunButton, canInteract);
         SetButtonInteractable(shardRiftDungeonButton, false);
-        SetButtonInteractable(ancientTowerDungeonButton, false);
+        SetButtonInteractable(ancientTowerDungeonButton, canInteract);
         RefreshDungeonFloorListUi();
         GateButton(upgradeButton, canInteract);
         GateButton(heroUpgradeButton, canManageHeroes);
@@ -19837,15 +19837,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             GearDungeonDefinition.dungeonId,
             new Color(0.18f, 0.86f, 0.95f, 0.96f),
             locked: false);
-        EnsureRuntimeFutureDungeonSelectorCard(
-            ref shardRiftDungeonButton,
-            ref shardRiftDungeonTitleText,
-            ref shardRiftDungeonProgressText,
-            ref shardRiftDungeonText,
-            "Shard Rift Dungeon Selector Card",
-            "dungeon_essence",
-            "Shard Rift",
-            new Color(0.74f, 0.34f, 1f, 0.6f));
         EnsureRuntimeDungeonSelectorCard(
             ref ancientTowerDungeonButton,
             ref ancientTowerDungeonTitleText,
@@ -19857,6 +19848,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             TowerDungeonDefinition.dungeonId,
             new Color(1f, 0.58f, 0.24f, 0.96f),
             locked: false);
+        EnsureRuntimeFutureDungeonSelectorCard(
+            ref shardRiftDungeonButton,
+            ref shardRiftDungeonTitleText,
+            ref shardRiftDungeonProgressText,
+            ref shardRiftDungeonText,
+            "Shard Rift Dungeon Selector Card",
+            "dungeon_essence",
+            "Shard Rift",
+            new Color(0.74f, 0.34f, 1f, 0.6f));
 
         dungeonDetailRoot = EnsureRuntimePanel(dungeonSelectorPanelRoot, "Dungeon Detail Panel", new Vector2(-144f, -304f), new Vector2(602f, 586f), new Color(0.025f, 0.03f, 0.046f, 0.97f));
         EnsureRuntimePanel(dungeonDetailRoot, "Dungeon Detail Top Trim", new Vector2(0f, -8f), new Vector2(566f, 5f), new Color(0.86f, 0.56f, 0.22f, 0.9f));
@@ -19961,6 +19961,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var definition = ResolveDungeonDefinition(dungeonId);
         RefreshDungeonSelectorCardUi(definition, GetDungeonFloor(dungeonId), titleText, progressText, detailText);
+        RegisterDungeonSelectorCardButton(button, definition.dungeonId);
     }
 
     private void EnsureRuntimeFutureDungeonSelectorCard(
@@ -20482,32 +20483,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void RegisterDungeonButtonListeners()
     {
-        if (goldDungeonButton != null)
-        {
-            goldDungeonButton.onClick.RemoveListener(RunGoldDungeon);
-            goldDungeonButton.onClick.RemoveListener(SelectGoldDungeonForPreview);
-            goldDungeonButton.onClick.AddListener(SelectGoldDungeonForPreview);
-        }
-
-        if (essenceDungeonButton != null)
-        {
-            essenceDungeonButton.onClick.RemoveListener(RunEssenceDungeon);
-            essenceDungeonButton.onClick.RemoveListener(SelectEssenceDungeonForPreview);
-            essenceDungeonButton.onClick.AddListener(SelectEssenceDungeonForPreview);
-        }
-
-        if (gearDungeonButton != null)
-        {
-            gearDungeonButton.onClick.RemoveListener(RunGearDungeon);
-            gearDungeonButton.onClick.RemoveListener(SelectGearDungeonForPreview);
-            gearDungeonButton.onClick.AddListener(SelectGearDungeonForPreview);
-        }
-
-        if (ancientTowerDungeonButton != null)
-        {
-            ancientTowerDungeonButton.onClick.RemoveListener(SelectTowerDungeonForPreview);
-            ancientTowerDungeonButton.onClick.AddListener(SelectTowerDungeonForPreview);
-        }
+        RegisterDungeonSelectorCardButton(goldDungeonButton, GoldDungeonDefinition.dungeonId);
+        RegisterDungeonSelectorCardButton(essenceDungeonButton, EssenceDungeonDefinition.dungeonId);
+        RegisterDungeonSelectorCardButton(gearDungeonButton, GearDungeonDefinition.dungeonId);
+        RegisterDungeonSelectorCardButton(ancientTowerDungeonButton, TowerDungeonDefinition.dungeonId);
 
         if (dungeonDetailRunButton != null)
         {
@@ -20531,6 +20510,40 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RegisterTowerFloorSectionButtonListeners();
+    }
+
+    private void RegisterDungeonSelectorCardButton(Button button, string dungeonId)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        button.onClick.RemoveListener(RunGoldDungeon);
+        button.onClick.RemoveListener(RunEssenceDungeon);
+        button.onClick.RemoveListener(RunGearDungeon);
+        button.onClick.RemoveListener(SelectGoldDungeonForPreview);
+        button.onClick.RemoveListener(SelectEssenceDungeonForPreview);
+        button.onClick.RemoveListener(SelectGearDungeonForPreview);
+        button.onClick.RemoveListener(SelectTowerDungeonForPreview);
+
+        var normalizedDungeonId = ResolveDungeonDefinition(dungeonId).dungeonId;
+        if (normalizedDungeonId == GoldDungeonDefinition.dungeonId)
+        {
+            button.onClick.AddListener(SelectGoldDungeonForPreview);
+        }
+        else if (normalizedDungeonId == EssenceDungeonDefinition.dungeonId)
+        {
+            button.onClick.AddListener(SelectEssenceDungeonForPreview);
+        }
+        else if (normalizedDungeonId == GearDungeonDefinition.dungeonId)
+        {
+            button.onClick.AddListener(SelectGearDungeonForPreview);
+        }
+        else if (IsTowerDungeonId(normalizedDungeonId))
+        {
+            button.onClick.AddListener(SelectTowerDungeonForPreview);
+        }
     }
 
     private void UnregisterDungeonButtonListeners()
@@ -21580,8 +21593,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         LayoutDungeonSelectorCard(goldDungeonButton, -352f);
         LayoutDungeonSelectorCard(essenceDungeonButton, -176f);
         LayoutDungeonSelectorCard(gearDungeonButton, 0f);
-        LayoutDungeonSelectorCard(shardRiftDungeonButton, 176f);
-        LayoutDungeonSelectorCard(ancientTowerDungeonButton, 352f);
+        LayoutDungeonSelectorCard(ancientTowerDungeonButton, 176f);
+        LayoutDungeonSelectorCard(shardRiftDungeonButton, 352f);
         MoveUiElement(dungeonDetailRoot, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(-144f, -304f), new Vector2(602f, 586f));
         MoveUiElement(dungeonFloorListRoot, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(324f, -304f), new Vector2(274f, 586f));
         MoveUiElement(towerFloorSectionRoot, dungeonFloorListRoot != null ? dungeonFloorListRoot.gameObject : dungeonsPanel, new Vector2(0f, -54f), new Vector2(236f, 38f));

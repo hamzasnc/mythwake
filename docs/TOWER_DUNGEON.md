@@ -4,7 +4,7 @@ Last updated: 2026-05-31
 
 ## Scope
 
-Prototype `0.2.171` adds a first playable Tower Trial / Tower Dungeon in the Unity client. It is a local-mode MVP for tester feel, balancing, and UI validation. Existing Gold, Essence, Gear, Guest auth, Email auth, and Server Mode flows are kept intact.
+Prototype `0.2.173` keeps the first playable Tower Trial / Tower Dungeon available in the Unity client and fixes the device tap path for selecting it from the Dungeons menu. It is a local-mode MVP for tester feel, balancing, and UI validation. Existing Gold, Essence, Gear, Guest auth, Email auth, and Server Mode flows are kept intact.
 
 The tower is intentionally blocked while Server Mode is active. Backend/PostgreSQL tower definitions, rewards, action routing, and account-bound tower progress are the next persistence step.
 
@@ -36,7 +36,7 @@ Shard rewards rotate through the starter hero indexes by floor, so long tower pr
 
 ## UI
 
-The Dungeons overview now has a playable `Tower Trial` card. Selecting it shows:
+The Dungeons overview now has a playable `Tower Trial` card after Gold, Essence, and Gear, before the locked future Shard Rift card. Selecting it shows:
 - Highest unlocked floor
 - Highest cleared floor
 - Selected section
@@ -47,7 +47,7 @@ The Dungeons overview now has a playable `Tower Trial` card. Selecting it shows:
 - Reward preview
 - Floor list with section previous/next controls
 
-The same Formation entry path is used as other dungeon runs. The Dungeons validator now checks the Tower card, section label, mini-boss and apex-boss floor labels, reward copy, and tower Formation entry.
+The same Formation entry path is used as other dungeon runs. The Dungeons validator now checks the Tower card, selector-card raycast target, section label, mini-boss and apex-boss floor labels, reward copy, and tower Formation entry.
 
 ## Local Persistence
 

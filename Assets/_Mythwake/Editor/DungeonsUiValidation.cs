@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
 using UnityEditor;
@@ -91,10 +92,18 @@ public static class DungeonsUiValidation
 
     private static void ValidateTowerDungeonUi(IdlePrototypeController controller, GameObject selectorPanel)
     {
+        InvokePrivate(controller, "RefreshUi");
         controller.ShowDungeons();
         Canvas.ForceUpdateCanvases();
 
-        RequireButton("Ancient Tower Dungeon Selector Card").onClick.Invoke();
+        var towerSelector = RequireButton("Ancient Tower Dungeon Selector Card");
+        if (!towerSelector.interactable)
+        {
+            throw new InvalidOperationException("Tower Trial selector should stay interactable after the shared Dungeons UI refresh.");
+        }
+
+        AssertButtonCenterRaycast(towerSelector, "Ancient Tower Dungeon Selector Card refreshed state");
+        towerSelector.onClick.Invoke();
         Canvas.ForceUpdateCanvases();
 
         var selectedDungeonId = GetPrivateField<string>(controller, "selectedDungeonId");
@@ -200,6 +209,8 @@ public static class DungeonsUiValidation
             throw new InvalidOperationException($"{cardName} should be selectable.");
         }
 
+        AssertButtonCenterRaycast(card, cardName);
+
         var banner = RequireChildRawImageWithTexture(card.transform, "Selector Banner", cardName);
         if (!banner.texture.name.Contains(expectedBannerTexture))
         {
@@ -250,8 +261,8 @@ public static class DungeonsUiValidation
             RequireButton("Gold Dungeon Selector Card").gameObject,
             RequireButton("Essence Dungeon Selector Card").gameObject,
             RequireButton("Gear Dungeon Selector Card").gameObject,
-            RequireButton("Shard Rift Dungeon Selector Card").gameObject,
             RequireButton("Ancient Tower Dungeon Selector Card").gameObject,
+            RequireButton("Shard Rift Dungeon Selector Card").gameObject,
         };
 
         for (var i = 0; i < cards.Length; i++)
@@ -678,6 +689,86 @@ public static class DungeonsUiValidation
         {
             throw new InvalidOperationException($"{context} overlap: first={firstRect}, second={secondRect}.");
         }
+    }
+
+    private static void AssertButtonCenterRaycast(Button button, string context)
+    {
+        if (button == null || !button.gameObject.activeInHierarchy)
+        {
+            return;
+        }
+
+        var eventSystem = EventSystem.current ?? FindSceneComponent<EventSystem>();
+        if (eventSystem == null)
+        {
+            throw new InvalidOperationException($"{context} cannot be raycast-tested because the scene has no EventSystem.");
+        }
+
+        var rect = button.GetComponent<RectTransform>();
+        var canvas = button.GetComponentInParent<Canvas>();
+        var camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+        var screenPosition = RectTransformUtility.WorldToScreenPoint(camera, rect.TransformPoint(rect.rect.center));
+        var pointerData = new PointerEventData(eventSystem) { position = screenPosition };
+        var results = new List<RaycastResult>();
+        eventSystem.RaycastAll(pointerData, results);
+        if (results.Count == 0)
+        {
+            AssertButtonHasRaycastableTarget(button, context);
+            return;
+        }
+
+        var firstHitButton = results[0].gameObject.GetComponentInParent<Button>();
+        if (firstHitButton == button)
+        {
+            return;
+        }
+
+        var firstHitName = results[0].gameObject.name;
+        var firstButtonName = firstHitButton != null ? firstHitButton.name : "<none>";
+        throw new InvalidOperationException($"{context} center raycast should hit its own button. First hit={firstHitName}, first button={firstButtonName}.");
+    }
+
+    private static void AssertButtonHasRaycastableTarget(Button button, string context)
+    {
+        var target = button.targetGraphic;
+        if (target == null)
+        {
+            throw new InvalidOperationException($"{context} should have a target graphic for pointer hits.");
+        }
+
+        if (!target.raycastTarget)
+        {
+            throw new InvalidOperationException($"{context} target graphic should accept pointer raycasts.");
+        }
+
+        if (target.color.a <= 0f)
+        {
+            throw new InvalidOperationException($"{context} target graphic is fully transparent and can be culled before raycasts.");
+        }
+
+        var buttonRect = button.GetComponent<RectTransform>();
+        var targetRect = target.GetComponent<RectTransform>();
+        if (buttonRect == null || targetRect == null)
+        {
+            throw new InvalidOperationException($"{context} is missing RectTransform data for pointer-hit validation.");
+        }
+
+        var center = buttonRect.TransformPoint(buttonRect.rect.center);
+        if (!WorldPointInsideRect(targetRect, center))
+        {
+            throw new InvalidOperationException($"{context} target graphic should cover the button center.");
+        }
+    }
+
+    private static bool WorldPointInsideRect(RectTransform rect, Vector3 worldPoint)
+    {
+        var corners = new Vector3[4];
+        rect.GetWorldCorners(corners);
+        var minX = Mathf.Min(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+        var maxX = Mathf.Max(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+        var minY = Mathf.Min(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
+        var maxY = Mathf.Max(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
+        return worldPoint.x >= minX && worldPoint.x <= maxX && worldPoint.y >= minY && worldPoint.y <= maxY;
     }
 
     private static Rect GetAnchoredRect(RectTransform rect)
