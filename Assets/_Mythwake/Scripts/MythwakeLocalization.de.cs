@@ -66,6 +66,10 @@ public static partial class MythwakeLocalization
         { "gear.fuse_rarity", "{0}x {1} fusionieren" },
         { "gear.fuse_into", "Zu {0}" },
         { "gear.fuse_need_copies", "Brauche {0} Kopien" },
+        { "gear.tap_for_details", "Details antippen" },
+        { "gear.equip_confirm", "Ausrusten" },
+        { "gear.equip_already", "Ausgerustet" },
+        { "gear.no_slot_items", "Noch keine Item-Kopie fuer diesen Slot." },
 
         { "currency.gold.name", "Gold" },
         { "currency.gems.name", "Edelsteine" },

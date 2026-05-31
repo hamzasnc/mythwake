@@ -37,7 +37,7 @@ public sealed class MythwakeRuntimeArtPresenter
         "hero_paladin",
         "hero_ravik"
     };
-    private const string EquipmentIconTextureRoot = "EquipmentIcons/";
+    private const string EquipmentIconTextureRoot = "";
     private static readonly string[] EquipmentWeaponIconTextureNames =
     {
         EquipmentIconTextureRoot + "equipment_weapon_01_sword",
@@ -404,26 +404,52 @@ public sealed class MythwakeRuntimeArtPresenter
             return cachedTexture;
         }
 
-        var texture = Resources.Load<Texture2D>(ResourceRoot + textureName);
+        Texture2D texture = null;
+        var resourcePath = ResourceRoot + textureName;
+        var sprite = Resources.Load<Sprite>(resourcePath);
+        if (sprite != null)
+        {
+            texture = sprite.texture;
+        }
+
         if (texture == null)
         {
-            var sprite = Resources.Load<Sprite>(ResourceRoot + textureName);
-            if (sprite != null)
+            var sprites = Resources.LoadAll<Sprite>(resourcePath);
+            if (sprites != null && sprites.Length > 0 && sprites[0] != null)
             {
-                texture = sprite.texture;
+                texture = sprites[0].texture;
             }
+        }
+
+        if (texture == null)
+        {
+            texture = Resources.Load<Texture2D>(resourcePath);
         }
 
 #if UNITY_EDITOR
         if (texture == null)
         {
-            texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/_Mythwake/Resources/{ResourceRoot}{textureName}.png");
-            if (texture == null)
+            var editorPath = $"Assets/_Mythwake/Resources/{ResourceRoot}{textureName}.png";
+            var editorSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(editorPath);
+            if (editorSprite != null)
             {
-                var editorSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/_Mythwake/Resources/{ResourceRoot}{textureName}.png");
-                if (editorSprite != null)
+                texture = editorSprite.texture;
+            }
+            else
+            {
+                var editorAssets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(editorPath);
+                foreach (var asset in editorAssets)
                 {
-                    texture = editorSprite.texture;
+                    if (asset is Sprite nestedSprite)
+                    {
+                        texture = nestedSprite.texture;
+                        break;
+                    }
+                }
+
+                if (texture == null)
+                {
+                    texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(editorPath);
                 }
             }
         }

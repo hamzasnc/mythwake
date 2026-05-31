@@ -919,7 +919,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static readonly string[] EssenceDungeonBattleMapTextureNames = { "essence_dungeon_battle_01", "essence_dungeon_battle_02" };
     private static readonly string[] GearDungeonBattleMapTextureNames = { "equipment_dungeon_battle_01", "equipment_dungeon_battle_02" };
     private const string EquipmentHeroArmoryBackgroundTextureName = "equipment_hero_armory_background";
-    private const string EquipmentIconTextureRoot = "EquipmentIcons/";
+    private const string EquipmentIconTextureRoot = "";
     private static readonly string[] EquipmentWeaponIconTextureNames =
     {
         EquipmentIconTextureRoot + "equipment_weapon_01_sword",
@@ -1536,14 +1536,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text heroDetailStatsText;
     private TMP_Text heroDetailResourceText;
     private TMP_Text[] heroDetailGearSlotTexts;
-    private RawImage[] heroDetailGearSlotIcons;
+    private Image[] heroDetailGearSlotIcons;
     private Image[] heroDetailGearSlotFrames;
     private Button[] heroDetailGearSlotButtons;
     private RectTransform heroDetailGearListRoot;
     private TMP_Text heroDetailGearListTitleText;
     private TMP_Text[] heroDetailGearOptionTexts;
+    private Image[] heroDetailGearOptionIcons;
     private Button[] heroDetailGearOptionButtons;
     private Button heroDetailGearListCloseButton;
+    private RectTransform heroDetailGearConfirmRoot;
+    private Image heroDetailGearConfirmIcon;
+    private TMP_Text heroDetailGearConfirmTitleText;
+    private TMP_Text heroDetailGearConfirmStatsText;
+    private Button heroDetailGearConfirmEquipButton;
     private Button heroDetailCloseButton;
     private Button heroDetailPreviousButton;
     private Button heroDetailNextButton;
@@ -1551,6 +1557,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button heroDetailEquipGearButton;
     private Button heroDetailRemoveGearButton;
     private int selectedHeroDetailGearSlotIndex = -1;
+    private int selectedHeroDetailGearOptionRarity = -1;
     private RectTransform artBottomNavRoot;
     private RawImage villageNavImage;
     private RawImage dungeonsNavImage;
@@ -8937,6 +8944,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonsInteractable(heroTeamSlotButtons, canChangeTeam);
         GateButton(heroDetailLevelButton, canManageHeroes);
         RefreshHeroDetailGearActionButtons(canManageHeroes);
+        if (heroDetailGearListRoot != null && heroDetailGearListRoot.gameObject.activeSelf)
+        {
+            RefreshHeroDetailGearList();
+        }
         GateButton(weaponUpgradeButton, canManageHeroes);
         GateButton(armorUpgradeButton, canManageHeroes);
         SetButtonInteractable(accessoryPreviousSlotButton, canManageHeroes);
@@ -9131,16 +9142,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroDetailGearOptionButtons != null && heroDetailGearOptionButtons.Length > 0)
         {
-            if (heroDetailGearOptionButtons.Length > 0 && heroDetailGearOptionButtons[0] != null) heroDetailGearOptionButtons[0].onClick.AddListener(EquipHeroDetailGearOption0);
-            if (heroDetailGearOptionButtons.Length > 1 && heroDetailGearOptionButtons[1] != null) heroDetailGearOptionButtons[1].onClick.AddListener(EquipHeroDetailGearOption1);
-            if (heroDetailGearOptionButtons.Length > 2 && heroDetailGearOptionButtons[2] != null) heroDetailGearOptionButtons[2].onClick.AddListener(EquipHeroDetailGearOption2);
-            if (heroDetailGearOptionButtons.Length > 3 && heroDetailGearOptionButtons[3] != null) heroDetailGearOptionButtons[3].onClick.AddListener(EquipHeroDetailGearOption3);
-            if (heroDetailGearOptionButtons.Length > 4 && heroDetailGearOptionButtons[4] != null) heroDetailGearOptionButtons[4].onClick.AddListener(EquipHeroDetailGearOption4);
+            if (heroDetailGearOptionButtons.Length > 0 && heroDetailGearOptionButtons[0] != null) heroDetailGearOptionButtons[0].onClick.AddListener(SelectHeroDetailGearOption0);
+            if (heroDetailGearOptionButtons.Length > 1 && heroDetailGearOptionButtons[1] != null) heroDetailGearOptionButtons[1].onClick.AddListener(SelectHeroDetailGearOption1);
+            if (heroDetailGearOptionButtons.Length > 2 && heroDetailGearOptionButtons[2] != null) heroDetailGearOptionButtons[2].onClick.AddListener(SelectHeroDetailGearOption2);
+            if (heroDetailGearOptionButtons.Length > 3 && heroDetailGearOptionButtons[3] != null) heroDetailGearOptionButtons[3].onClick.AddListener(SelectHeroDetailGearOption3);
+            if (heroDetailGearOptionButtons.Length > 4 && heroDetailGearOptionButtons[4] != null) heroDetailGearOptionButtons[4].onClick.AddListener(SelectHeroDetailGearOption4);
         }
 
         if (heroDetailGearListCloseButton != null)
         {
             heroDetailGearListCloseButton.onClick.AddListener(HideHeroDetailGearList);
+        }
+
+        if (heroDetailGearConfirmEquipButton != null)
+        {
+            heroDetailGearConfirmEquipButton.onClick.AddListener(ConfirmSelectedHeroDetailGearOption);
         }
     }
 
@@ -9160,16 +9176,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroDetailGearOptionButtons != null && heroDetailGearOptionButtons.Length > 0)
         {
-            if (heroDetailGearOptionButtons.Length > 0 && heroDetailGearOptionButtons[0] != null) heroDetailGearOptionButtons[0].onClick.RemoveListener(EquipHeroDetailGearOption0);
-            if (heroDetailGearOptionButtons.Length > 1 && heroDetailGearOptionButtons[1] != null) heroDetailGearOptionButtons[1].onClick.RemoveListener(EquipHeroDetailGearOption1);
-            if (heroDetailGearOptionButtons.Length > 2 && heroDetailGearOptionButtons[2] != null) heroDetailGearOptionButtons[2].onClick.RemoveListener(EquipHeroDetailGearOption2);
-            if (heroDetailGearOptionButtons.Length > 3 && heroDetailGearOptionButtons[3] != null) heroDetailGearOptionButtons[3].onClick.RemoveListener(EquipHeroDetailGearOption3);
-            if (heroDetailGearOptionButtons.Length > 4 && heroDetailGearOptionButtons[4] != null) heroDetailGearOptionButtons[4].onClick.RemoveListener(EquipHeroDetailGearOption4);
+            if (heroDetailGearOptionButtons.Length > 0 && heroDetailGearOptionButtons[0] != null) heroDetailGearOptionButtons[0].onClick.RemoveListener(SelectHeroDetailGearOption0);
+            if (heroDetailGearOptionButtons.Length > 1 && heroDetailGearOptionButtons[1] != null) heroDetailGearOptionButtons[1].onClick.RemoveListener(SelectHeroDetailGearOption1);
+            if (heroDetailGearOptionButtons.Length > 2 && heroDetailGearOptionButtons[2] != null) heroDetailGearOptionButtons[2].onClick.RemoveListener(SelectHeroDetailGearOption2);
+            if (heroDetailGearOptionButtons.Length > 3 && heroDetailGearOptionButtons[3] != null) heroDetailGearOptionButtons[3].onClick.RemoveListener(SelectHeroDetailGearOption3);
+            if (heroDetailGearOptionButtons.Length > 4 && heroDetailGearOptionButtons[4] != null) heroDetailGearOptionButtons[4].onClick.RemoveListener(SelectHeroDetailGearOption4);
         }
 
         if (heroDetailGearListCloseButton != null)
         {
             heroDetailGearListCloseButton.onClick.RemoveListener(HideHeroDetailGearList);
+        }
+
+        if (heroDetailGearConfirmEquipButton != null)
+        {
+            heroDetailGearConfirmEquipButton.onClick.RemoveListener(ConfirmSelectedHeroDetailGearOption);
         }
     }
 
@@ -17750,7 +17771,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroDetailPortrait = CreateRuntimeRawImage(heroDetailRoot, "Hero Detail Portrait", LoadCombatTexture(GetHeroTextureName(selectedHeroIndex), "idle", 0, GetHeroTextureName(selectedHeroIndex)), new Vector2(0, -265), new Vector2(315, 315), new Vector2(0.5f, 1f));
 
         heroDetailGearSlotTexts = new TMP_Text[2 + AccessorySlotCount];
-        heroDetailGearSlotIcons = new RawImage[heroDetailGearSlotTexts.Length];
+        heroDetailGearSlotIcons = new Image[heroDetailGearSlotTexts.Length];
         heroDetailGearSlotFrames = new Image[heroDetailGearSlotTexts.Length];
         heroDetailGearSlotButtons = new Button[heroDetailGearSlotTexts.Length];
         for (var i = 0; i < heroDetailGearSlotTexts.Length; i++)
@@ -17764,7 +17785,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroDetailGearSlotButtons[i].targetGraphic = heroDetailGearSlotFrames[i];
             var inner = CreateRuntimePanel(slotRoot, "Inner", new Vector2(0, -9), new Vector2(90, 82), new Color(0.15f, 0.075f, 0.04f, 0.82f));
             inner.SetAsFirstSibling();
-            heroDetailGearSlotIcons[i] = CreateRuntimeRawImage(slotRoot, "Icon", null, new Vector2(0, -9), new Vector2(84, 56), new Vector2(0.5f, 1f));
+            heroDetailGearSlotIcons[i] = CreateRuntimeSpriteImage(slotRoot, "Icon", null, new Vector2(0, -9), new Vector2(84, 56), new Vector2(0.5f, 1f));
             heroDetailGearSlotIcons[i].raycastTarget = false;
             heroDetailGearSlotTexts[i] = CreateRuntimeText(slotRoot, "Label", string.Empty, 12, new Vector2(0, -80), new Vector2(100, 30));
             heroDetailGearSlotTexts[i].fontStyle = FontStyles.Bold;
@@ -17813,7 +17834,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void CreateHeroDetailGearList()
     {
-        heroDetailGearListRoot = CreateRuntimePanel(heroDetailRoot, "Hero Detail Gear List", new Vector2(0, -525), new Vector2(730, 390), new Color(0.045f, 0.028f, 0.02f, 0.98f));
+        heroDetailGearListRoot = CreateRuntimePanel(heroDetailRoot, "Hero Detail Gear List", new Vector2(0, -505), new Vector2(780, 458), new Color(0.045f, 0.028f, 0.02f, 0.98f));
         heroDetailGearListRoot.SetAsLastSibling();
         var listImage = heroDetailGearListRoot.GetComponent<Image>();
         if (listImage != null)
@@ -17821,38 +17842,68 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             listImage.raycastTarget = true;
         }
 
-        CreateRuntimePanel(heroDetailGearListRoot, "Divider", new Vector2(0, -62), new Vector2(660, 3), new Color(0.86f, 0.58f, 0.27f, 0.88f));
-        heroDetailGearListTitleText = CreateRuntimeText(heroDetailGearListRoot, "Title", string.Empty, 27, new Vector2(0, -20), new Vector2(610, 40));
+        CreateRuntimePanel(heroDetailGearListRoot, "Divider", new Vector2(0, -62), new Vector2(704, 3), new Color(0.86f, 0.58f, 0.27f, 0.88f));
+        heroDetailGearListTitleText = CreateRuntimeText(heroDetailGearListRoot, "Title", string.Empty, 27, new Vector2(-22, -20), new Vector2(610, 40));
         heroDetailGearListTitleText.fontStyle = FontStyles.Bold;
         heroDetailGearListTitleText.color = new Color(1f, 0.88f, 0.58f);
         heroDetailGearListTitleText.textWrappingMode = TextWrappingModes.NoWrap;
 
-        heroDetailGearListCloseButton = CreateRuntimeButton(heroDetailGearListRoot, "Close", "X", 326, -18, 46, 46);
+        heroDetailGearListCloseButton = CreateRuntimeButton(heroDetailGearListRoot, "Close", "X", 350, -18, 46, 46);
         heroDetailGearOptionButtons = new Button[AccessoryRarityCount];
         heroDetailGearOptionTexts = new TMP_Text[AccessoryRarityCount];
+        heroDetailGearOptionIcons = new Image[AccessoryRarityCount];
         for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
         {
-            var option = CreateRuntimeButton(heroDetailGearListRoot, $"Gear Option {rarity + 1}", string.Empty, 0, -92 - rarity * 56, 640, 48);
+            var option = CreateRuntimeButton(heroDetailGearListRoot, $"Gear Option {rarity + 1}", string.Empty, -142, -92 - rarity * 58, 430, 52);
             var image = option.GetComponent<Image>();
             if (image != null)
             {
                 image.color = GetAccessoryRarityColor(rarity);
             }
 
+            var iconBack = CreateRuntimePanel(option.transform, "Icon Back", new Vector2(-178, -6), new Vector2(50, 44), new Color(0.08f, 0.045f, 0.028f, 0.88f));
+            heroDetailGearOptionIcons[rarity] = CreateRuntimeSpriteImage(iconBack, "Icon", null, new Vector2(0, -5), new Vector2(42, 34), new Vector2(0.5f, 1f));
+            heroDetailGearOptionIcons[rarity].raycastTarget = false;
+
             var label = option.GetComponentInChildren<TMP_Text>(includeInactive: true);
             if (label != null)
             {
-                label.fontSize = 18;
-                label.fontSizeMin = 11;
-                label.fontSizeMax = 18;
+                SetRuntimeRect(label.rectTransform, new Vector2(36, -5), new Vector2(310, 44), new Vector2(0.5f, 1f));
+                label.fontSize = 17;
+                label.fontSizeMin = 10;
+                label.fontSizeMax = 17;
                 label.enableAutoSizing = true;
                 label.textWrappingMode = TextWrappingModes.Normal;
-                label.alignment = TextAlignmentOptions.Center;
+                label.alignment = TextAlignmentOptions.Left;
+                label.raycastTarget = false;
             }
 
             heroDetailGearOptionButtons[rarity] = option;
             heroDetailGearOptionTexts[rarity] = label;
         }
+
+        heroDetailGearConfirmRoot = CreateRuntimePanel(heroDetailGearListRoot, "Selected Gear Detail", new Vector2(226, -92), new Vector2(270, 322), new Color(0.12f, 0.075f, 0.04f, 0.94f));
+        CreateRuntimePanel(heroDetailGearConfirmRoot, "Selected Gear Detail Inner", new Vector2(0, -8), new Vector2(238, 128), new Color(0.92f, 0.78f, 0.52f, 0.18f));
+        heroDetailGearConfirmIcon = CreateRuntimeSpriteImage(heroDetailGearConfirmRoot, "Icon", null, new Vector2(0, -18), new Vector2(94, 76), new Vector2(0.5f, 1f));
+        heroDetailGearConfirmIcon.raycastTarget = false;
+
+        heroDetailGearConfirmTitleText = CreateRuntimeText(heroDetailGearConfirmRoot, "Title", string.Empty, 20, new Vector2(0, -106), new Vector2(238, 44));
+        heroDetailGearConfirmTitleText.fontStyle = FontStyles.Bold;
+        heroDetailGearConfirmTitleText.color = new Color(1f, 0.88f, 0.58f);
+        heroDetailGearConfirmTitleText.enableAutoSizing = true;
+        heroDetailGearConfirmTitleText.fontSizeMin = 12;
+        heroDetailGearConfirmTitleText.fontSizeMax = 20;
+        heroDetailGearConfirmTitleText.textWrappingMode = TextWrappingModes.Normal;
+
+        heroDetailGearConfirmStatsText = CreateRuntimeText(heroDetailGearConfirmRoot, "Stats", string.Empty, 16, new Vector2(0, -166), new Vector2(238, 70));
+        heroDetailGearConfirmStatsText.color = new Color(0.84f, 0.9f, 1f);
+        heroDetailGearConfirmStatsText.enableAutoSizing = true;
+        heroDetailGearConfirmStatsText.fontSizeMin = 10;
+        heroDetailGearConfirmStatsText.fontSizeMax = 16;
+        heroDetailGearConfirmStatsText.textWrappingMode = TextWrappingModes.Normal;
+
+        heroDetailGearConfirmEquipButton = CreateRuntimeButton(heroDetailGearConfirmRoot, "Confirm Equip", Tr("gear.equip_confirm"), 0, -260, 214, 54);
+        ConfigureRuntimeButtonLabelFit(heroDetailGearConfirmEquipButton, 10f, 16f);
 
         heroDetailGearListRoot.gameObject.SetActive(false);
     }
@@ -21362,7 +21413,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             if (heroDetailGearSlotIcons != null && i < heroDetailGearSlotIcons.Length && heroDetailGearSlotIcons[i] != null)
             {
                 var iconTextureName = GetHeroDetailGearSlotIconTextureName(i);
-                SetRuntimeRawImageTexture(heroDetailGearSlotIcons[i], LoadRuntimeTexture(iconTextureName), new Vector2(84f, 56f));
+                var iconSprite = LoadRuntimeSprite(iconTextureName);
+                SetRuntimeImageSprite(heroDetailGearSlotIcons[i], iconSprite, new Vector2(84f, 56f));
+                heroDetailGearSlotIcons[i].color = iconSprite == null ? new Color(1f, 1f, 1f, 0f) : GetHeroDetailGearSlotIconColor(i);
             }
 
             if (heroDetailGearSlotFrames != null && i < heroDetailGearSlotFrames.Length && heroDetailGearSlotFrames[i] != null)
@@ -21395,6 +21448,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         selectedHeroDetailGearSlotIndex = Mathf.Clamp(slotIndex, 0, heroDetailGearSlotTexts == null ? 5 : heroDetailGearSlotTexts.Length - 1);
+        selectedHeroDetailGearOptionRarity = GetDefaultHeroDetailGearOptionRarity();
         heroDetailGearListRoot.gameObject.SetActive(true);
         heroDetailGearListRoot.SetAsLastSibling();
         RefreshHeroDetailGearSlots();
@@ -21405,6 +21459,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void HideHeroDetailGearList()
     {
         selectedHeroDetailGearSlotIndex = -1;
+        selectedHeroDetailGearOptionRarity = -1;
         if (heroDetailGearListRoot != null)
         {
             heroDetailGearListRoot.gameObject.SetActive(false);
@@ -21450,38 +21505,65 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var canInteract = !backendRequestInProgress && !backendLifecycleFlushInProgress && !campaignFightInProgress;
+        if (!IsHeroDetailAccessoryOptionVisible(accessorySlot, heroIndex, selectedHeroDetailGearOptionRarity))
+        {
+            selectedHeroDetailGearOptionRarity = GetDefaultHeroDetailGearOptionRarity();
+        }
+
         for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
         {
             var optionButton = heroDetailGearOptionButtons != null && rarity < heroDetailGearOptionButtons.Length ? heroDetailGearOptionButtons[rarity] : null;
             var optionText = heroDetailGearOptionTexts != null && rarity < heroDetailGearOptionTexts.Length ? heroDetailGearOptionTexts[rarity] : null;
+            var optionIcon = heroDetailGearOptionIcons != null && rarity < heroDetailGearOptionIcons.Length ? heroDetailGearOptionIcons[rarity] : null;
             if (optionButton == null)
             {
                 continue;
             }
 
-            optionButton.gameObject.SetActive(true);
             var copies = GetAccessoryInventoryCount(accessorySlot, rarity);
             var equipped = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot) == rarity;
-            SetHeroDetailGearOptionRow(optionButton, GetHeroDetailAccessoryOptionRowIndex(accessorySlot, heroIndex, rarity));
-            var levelText = equipped ? $"  {Tr("ui.common.equipped")} {Tr("ui.common.level_short")} {GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot)}" : string.Empty;
-            var actionText = equipped ? Tr("ui.common.equipped") : copies > 0 ? Tr("ui.common.tap_to_equip") : Tr("ui.common.no_copy");
+            var visible = copies > 0 || equipped;
+            optionButton.gameObject.SetActive(visible);
+            if (!visible)
+            {
+                continue;
+            }
+
+            var selected = selectedHeroDetailGearOptionRarity == rarity;
+            SetHeroDetailGearOptionRow(optionButton, GetHeroDetailVisibleAccessoryOptionRowIndex(accessorySlot, heroIndex, rarity));
+            var levelText = equipped ? $" | {Tr("ui.common.level_short")} {GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot)}" : string.Empty;
+            var actionText = equipped ? Tr("gear.equip_already") : copies > 0 ? Tr("gear.tap_for_details") : Tr("ui.common.no_copy");
             if (optionText != null)
             {
-                optionText.text = $"{GetLocalizedAccessoryName(accessorySlot, rarity)}   {Tr("ui.common.copies")} {copies}{levelText}\n{actionText}";
+                optionText.text = $"{GetLocalizedAccessoryName(accessorySlot, rarity)}\n{Tr("ui.common.copies")} {copies}{levelText} | {actionText}";
+            }
+
+            if (optionIcon != null)
+            {
+                var optionSprite = LoadRuntimeSprite(GetInventoryAccessoryIconTextureName(accessorySlot, rarity));
+                SetRuntimeImageSprite(optionIcon, optionSprite, new Vector2(42f, 34f));
+                optionIcon.color = optionSprite == null
+                    ? new Color(1f, 1f, 1f, 0f)
+                    : equipped || copies > 0
+                        ? Color.white
+                        : new Color(1f, 1f, 1f, 0.38f);
             }
 
             var image = optionButton.GetComponent<Image>();
             if (image != null)
             {
-                image.color = equipped
+                var rowColor = equipped
                     ? new Color(1f, 0.76f, 0.25f, 0.98f)
                     : copies > 0
                         ? GetAccessoryRarityColor(rarity)
                         : new Color(0.16f, 0.11f, 0.09f, 0.84f);
+                image.color = selected ? Color.Lerp(rowColor, new Color(1f, 0.94f, 0.62f, 1f), 0.38f) : rowColor;
             }
 
-            optionButton.interactable = canInteract && copies > 0 && !equipped;
+            optionButton.interactable = canInteract;
         }
+
+        RefreshHeroDetailGearConfirmation(canInteract);
     }
 
     private int GetHeroDetailAccessoryOptionRowIndex(int accessorySlot, int heroIndex, int rarity)
@@ -21496,6 +21578,36 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return rowIndex;
+    }
+
+    private int GetHeroDetailVisibleAccessoryOptionRowIndex(int accessorySlot, int heroIndex, int rarity)
+    {
+        var rowIndex = 0;
+        for (var candidateRarity = 0; candidateRarity < AccessoryRarityCount; candidateRarity++)
+        {
+            if (!IsHeroDetailAccessoryOptionVisible(accessorySlot, heroIndex, candidateRarity))
+            {
+                continue;
+            }
+
+            if (CompareHeroDetailAccessoryOptions(accessorySlot, heroIndex, candidateRarity, rarity) < 0)
+            {
+                rowIndex++;
+            }
+        }
+
+        return rowIndex;
+    }
+
+    private bool IsHeroDetailAccessoryOptionVisible(int accessorySlot, int heroIndex, int rarity)
+    {
+        if (rarity < 0 || rarity >= AccessoryRarityCount)
+        {
+            return false;
+        }
+
+        return GetAccessoryInventoryCount(accessorySlot, rarity) > 0
+            || GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot) == rarity;
     }
 
     private int CompareHeroDetailAccessoryOptions(int accessorySlot, int heroIndex, int leftRarity, int rightRarity)
@@ -21529,11 +21641,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        rect.anchoredPosition = new Vector2(0, -92 - rowIndex * 56);
+        rect.anchoredPosition = new Vector2(-142, -92 - rowIndex * 58);
     }
 
     private void RefreshHeroDetailEquipmentTrackList(EquipmentTrackDefinition track, int level, int heroIndex)
     {
+        SetComponentActive(heroDetailGearConfirmRoot, false);
         var hero = GetHeroDefinition(heroIndex);
         if (heroDetailGearListTitleText != null)
         {
@@ -21544,6 +21657,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var optionButton = heroDetailGearOptionButtons != null && i < heroDetailGearOptionButtons.Length ? heroDetailGearOptionButtons[i] : null;
             var optionText = heroDetailGearOptionTexts != null && i < heroDetailGearOptionTexts.Length ? heroDetailGearOptionTexts[i] : null;
+            var optionIcon = heroDetailGearOptionIcons != null && i < heroDetailGearOptionIcons.Length ? heroDetailGearOptionIcons[i] : null;
             if (optionButton == null)
             {
                 continue;
@@ -21558,6 +21672,20 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 image.color = i == 1 ? new Color(0.38f, 0.2f, 0.08f, 0.96f) : new Color(0.18f, 0.11f, 0.07f, 0.9f);
             }
 
+            if (optionIcon != null)
+            {
+                var iconTextureName = track.equipmentId == WeaponTrack.equipmentId
+                    ? GetEquipmentWeaponIconTextureName(heroIndex)
+                    : GetEquipmentArmorIconTextureName(heroIndex);
+                var optionSprite = LoadRuntimeSprite(iconTextureName);
+                SetRuntimeImageSprite(optionIcon, optionSprite, new Vector2(42f, 34f));
+                optionIcon.color = optionSprite == null
+                    ? new Color(1f, 1f, 1f, 0f)
+                    : i == 1
+                        ? new Color(1f, 1f, 1f, 0.72f)
+                        : Color.white;
+            }
+
             if (optionText != null)
             {
                 var bonus = track.equipmentId == WeaponTrack.equipmentId ? GetHeroEquipmentAttackBonus(heroIndex) : GetHeroEquipmentHealthBonus(heroIndex);
@@ -21566,6 +21694,158 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                     : TrFormat("ui.common.open_gear", GetLocalizedHeroName(hero));
             }
         }
+    }
+
+    private int GetDefaultHeroDetailGearOptionRarity()
+    {
+        if (selectedHeroDetailGearSlotIndex < 2)
+        {
+            return -1;
+        }
+
+        var accessorySlot = selectedHeroDetailGearSlotIndex - 2;
+        if (accessorySlot < 0 || accessorySlot >= AccessorySlotCount)
+        {
+            return -1;
+        }
+
+        var heroIndex = GetSelectedHeroIndex();
+        for (var rarity = AccessoryRarityCount - 1; rarity >= 0; rarity--)
+        {
+            if (GetAccessoryInventoryCount(accessorySlot, rarity) > 0
+                && GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot) != rarity)
+            {
+                return rarity;
+            }
+        }
+
+        var equippedRarity = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot);
+        if (equippedRarity >= 0)
+        {
+            return equippedRarity;
+        }
+
+        return -1;
+    }
+
+    private void RefreshHeroDetailGearConfirmation(bool canInteract)
+    {
+        if (heroDetailGearConfirmRoot == null)
+        {
+            return;
+        }
+
+        if (selectedHeroDetailGearSlotIndex < 2)
+        {
+            heroDetailGearConfirmRoot.gameObject.SetActive(false);
+            return;
+        }
+
+        var accessorySlot = selectedHeroDetailGearSlotIndex - 2;
+        if (accessorySlot < 0 || accessorySlot >= AccessorySlotCount)
+        {
+            heroDetailGearConfirmRoot.gameObject.SetActive(false);
+            return;
+        }
+
+        heroDetailGearConfirmRoot.gameObject.SetActive(true);
+        var heroIndex = GetSelectedHeroIndex();
+        if (selectedHeroDetailGearOptionRarity < 0)
+        {
+            if (heroDetailGearConfirmIcon != null)
+            {
+                SetRuntimeImageSprite(heroDetailGearConfirmIcon, LoadRuntimeSprite(GetInventoryAccessoryIconTextureName(accessorySlot, 0)), new Vector2(94f, 76f));
+            }
+
+            if (heroDetailGearConfirmTitleText != null)
+            {
+                heroDetailGearConfirmTitleText.text = $"{GetLocalizedAccessorySlotName(accessorySlot)} {GetInventoryTabLabel(InventoryTabMode.Gear)}";
+            }
+
+            if (heroDetailGearConfirmStatsText != null)
+            {
+                heroDetailGearConfirmStatsText.text = Tr("gear.no_slot_items");
+            }
+
+            SetButtonLabel(heroDetailGearConfirmEquipButton, Tr("gear.equip_confirm"));
+            SetButtonInteractable(heroDetailGearConfirmEquipButton, false);
+            return;
+        }
+
+        var rarity = Mathf.Clamp(selectedHeroDetailGearOptionRarity, 0, AccessoryRarityCount - 1);
+        selectedHeroDetailGearOptionRarity = rarity;
+        var copies = GetAccessoryInventoryCount(accessorySlot, rarity);
+        var equipped = GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot) == rarity;
+        var level = equipped ? GetHeroEquippedAccessoryLevel(heroIndex, accessorySlot) : 1;
+        var maxLevel = GetAccessoryMaxLevel(rarity);
+        var attack = GetAccessoryAttackFor(accessorySlot, rarity, level);
+        var health = GetAccessoryHealthFor(accessorySlot, rarity, level);
+
+        if (heroDetailGearConfirmIcon != null)
+        {
+            var confirmSprite = LoadRuntimeSprite(GetInventoryAccessoryIconTextureName(accessorySlot, rarity));
+            SetRuntimeImageSprite(heroDetailGearConfirmIcon, confirmSprite, new Vector2(94f, 76f));
+            heroDetailGearConfirmIcon.color = confirmSprite == null
+                ? new Color(1f, 1f, 1f, 0f)
+                : equipped || copies > 0
+                    ? Color.white
+                    : new Color(1f, 1f, 1f, 0.45f);
+        }
+
+        if (heroDetailGearConfirmTitleText != null)
+        {
+            heroDetailGearConfirmTitleText.text = GetLocalizedAccessoryName(accessorySlot, rarity);
+        }
+
+        if (heroDetailGearConfirmStatsText != null)
+        {
+            var status = equipped
+                ? $"{Tr("ui.common.equipped")} {Tr("ui.common.level_short")} {level}"
+                : copies > 0
+                    ? $"{Tr("ui.common.copies")} {copies}"
+                    : Tr("ui.common.no_copy");
+            heroDetailGearConfirmStatsText.text = $"{status}\n+{attack} ATK   +{health} HP\n{Tr("ui.common.max")} {Tr("ui.common.level_short")} {maxLevel}";
+        }
+
+        SetButtonLabel(heroDetailGearConfirmEquipButton, equipped ? Tr("gear.equip_already") : Tr("gear.equip_confirm"));
+        SetButtonInteractable(heroDetailGearConfirmEquipButton, canInteract && copies > 0 && !equipped);
+    }
+
+    private void SelectHeroDetailGearOption0() => SelectHeroDetailGearOption(0);
+    private void SelectHeroDetailGearOption1() => SelectHeroDetailGearOption(1);
+    private void SelectHeroDetailGearOption2() => SelectHeroDetailGearOption(2);
+    private void SelectHeroDetailGearOption3() => SelectHeroDetailGearOption(3);
+    private void SelectHeroDetailGearOption4() => SelectHeroDetailGearOption(4);
+
+    private void SelectHeroDetailGearOption(int rarity)
+    {
+        if (selectedHeroDetailGearSlotIndex < 0)
+        {
+            return;
+        }
+
+        if (selectedHeroDetailGearSlotIndex < 2)
+        {
+            if (rarity == 1)
+            {
+                ShowGear();
+            }
+
+            return;
+        }
+
+        selectedHeroDetailGearOptionRarity = Mathf.Clamp(rarity, 0, AccessoryRarityCount - 1);
+        RefreshHeroDetailGearList();
+    }
+
+    private void ConfirmSelectedHeroDetailGearOption()
+    {
+        if (selectedHeroDetailGearOptionRarity < 0)
+        {
+            return;
+        }
+
+        EquipHeroDetailGearOption(selectedHeroDetailGearOptionRarity);
     }
 
     private void EquipHeroDetailGearOption0() => EquipHeroDetailGearOption(0);
@@ -21747,6 +22027,47 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return GetInventoryAccessoryIconTextureName(accessorySlot, rarity);
+    }
+
+    private Color GetHeroDetailGearSlotIconColor(int slotIndex)
+    {
+        if (slotIndex < 2)
+        {
+            return Color.white;
+        }
+
+        var accessorySlot = slotIndex - 2;
+        if (accessorySlot < 0 || accessorySlot >= AccessorySlotCount)
+        {
+            return new Color(1f, 1f, 1f, 0f);
+        }
+
+        return Color.white;
+    }
+
+    private int GetHeroDetailAccessorySlotDisplayRarity(int heroIndex, int accessorySlot)
+    {
+        var ownedRarity = GetBestOwnedAccessoryRarity(heroIndex, accessorySlot);
+        if (ownedRarity >= 0)
+        {
+            return ownedRarity;
+        }
+
+        return 0;
+    }
+
+    private int GetBestOwnedAccessoryRarity(int heroIndex, int accessorySlot)
+    {
+        for (var rarity = AccessoryRarityCount - 1; rarity >= 0; rarity--)
+        {
+            if (GetAccessoryInventoryCount(accessorySlot, rarity) > 0
+                || GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot) == rarity)
+            {
+                return rarity;
+            }
+        }
+
+        return -1;
     }
 
     private Color GetHeroDetailGearSlotColor(int slotIndex)
@@ -24245,7 +24566,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroDetailNextButton,
             heroDetailLevelButton,
             heroDetailEquipGearButton,
-            heroDetailRemoveGearButton);
+            heroDetailRemoveGearButton,
+            heroDetailGearConfirmEquipButton);
         runtimeArt.ApplyButtonStyle(heroSelectButtons);
         runtimeArt.ApplyButtonStyle(heroTeamSlotButtons);
         runtimeArt.ApplyButtonStyle(dailyMissionButtons);
@@ -24435,6 +24757,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return CreateRuntimeRawImage(parent, name, LoadRuntimeTexture(textureName), anchoredPosition, rectSize, new Vector2(0.5f, 1f));
     }
 
+    private static Image CreateRuntimeSpriteImage(Transform parent, string name, Sprite sprite, Vector2 anchoredPosition, Vector2 rectSize, Vector2 anchor)
+    {
+        var imageObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        imageObject.transform.SetParent(parent, false);
+        var rectTransform = imageObject.GetComponent<RectTransform>();
+        SetRuntimeRect(rectTransform, anchoredPosition, rectSize, anchor);
+
+        var image = imageObject.GetComponent<Image>();
+        image.sprite = sprite;
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+        image.color = sprite == null ? new Color(1f, 1f, 1f, 0f) : Color.white;
+        return image;
+    }
+
     private static RawImage CreateRuntimeRawImage(Transform parent, string name, Texture texture, Vector2 anchoredPosition, Vector2 rectSize, Vector2 anchor)
     {
         var imageObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
@@ -24447,6 +24784,40 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         rawImage.raycastTarget = false;
         rawImage.color = Color.white;
         return rawImage;
+    }
+
+    private static void FitImageToSprite(Image image, Vector2 maxSize)
+    {
+        if (image == null || image.sprite == null)
+        {
+            return;
+        }
+
+        var width = image.sprite.rect.width;
+        var height = image.sprite.rect.height;
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        var scale = Mathf.Min(maxSize.x / width, maxSize.y / height);
+        image.rectTransform.sizeDelta = new Vector2(width * scale, height * scale);
+    }
+
+    private static void SetRuntimeImageSprite(Image image, Sprite sprite, Vector2 maxSize)
+    {
+        if (image == null)
+        {
+            return;
+        }
+
+        image.sprite = sprite;
+        image.preserveAspect = true;
+        image.color = sprite == null ? new Color(1f, 1f, 1f, 0f) : Color.white;
+        if (sprite != null)
+        {
+            FitImageToSprite(image, maxSize);
+        }
     }
 
     private static void FitRawImageToTexture(RawImage image, Vector2 maxSize)
@@ -24529,6 +24900,65 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return button;
     }
 
+    private static Sprite LoadRuntimeSprite(string textureName)
+    {
+        if (string.IsNullOrWhiteSpace(textureName))
+        {
+            return null;
+        }
+
+        var resourcePath = $"Mythwake/Art/Runtime/{textureName}";
+        var sprite = Resources.Load<Sprite>(resourcePath);
+        if (sprite != null)
+        {
+            sprite.texture.filterMode = FilterMode.Point;
+            return sprite;
+        }
+
+        var sprites = Resources.LoadAll<Sprite>(resourcePath);
+        if (sprites != null && sprites.Length > 0 && sprites[0] != null)
+        {
+            sprites[0].texture.filterMode = FilterMode.Point;
+            return sprites[0];
+        }
+
+        var texture = Resources.Load<Texture2D>(resourcePath);
+        if (texture != null)
+        {
+            texture.filterMode = FilterMode.Point;
+            return Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+        }
+
+#if UNITY_EDITOR
+        var editorPath = $"Assets/_Mythwake/Resources/Mythwake/Art/Runtime/{textureName}.png";
+        var editorSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(editorPath);
+        if (editorSprite != null)
+        {
+            editorSprite.texture.filterMode = FilterMode.Point;
+            return editorSprite;
+        }
+
+        var editorAssets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(editorPath);
+        foreach (var asset in editorAssets)
+        {
+            if (asset is Sprite nestedSprite)
+            {
+                nestedSprite.texture.filterMode = FilterMode.Point;
+                return nestedSprite;
+            }
+        }
+
+        var editorTexture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(editorPath);
+        if (editorTexture != null)
+        {
+            editorTexture.filterMode = FilterMode.Point;
+            return Sprite.Create(editorTexture, new Rect(0f, 0f, editorTexture.width, editorTexture.height), new Vector2(0.5f, 0.5f), 100f);
+        }
+#endif
+
+        return null;
+    }
+
     private static Texture2D LoadRuntimeTexture(string textureName)
     {
         if (string.IsNullOrWhiteSpace(textureName))
@@ -24536,33 +24966,52 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return null;
         }
 
-        var texture = Resources.Load<Texture2D>($"Mythwake/Art/Runtime/{textureName}");
-        if (texture != null)
-        {
-            texture.filterMode = FilterMode.Point;
-            return texture;
-        }
-
-        var sprite = Resources.Load<Sprite>($"Mythwake/Art/Runtime/{textureName}");
+        var resourcePath = $"Mythwake/Art/Runtime/{textureName}";
+        var sprite = Resources.Load<Sprite>(resourcePath);
         if (sprite != null)
         {
             sprite.texture.filterMode = FilterMode.Point;
             return sprite.texture;
         }
 
-#if UNITY_EDITOR
-        var editorTexture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/_Mythwake/Resources/Mythwake/Art/Runtime/{textureName}.png");
-        if (editorTexture != null)
+        var sprites = Resources.LoadAll<Sprite>(resourcePath);
+        if (sprites != null && sprites.Length > 0 && sprites[0] != null)
         {
-            editorTexture.filterMode = FilterMode.Point;
-            return editorTexture;
+            sprites[0].texture.filterMode = FilterMode.Point;
+            return sprites[0].texture;
         }
 
-        var editorSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/_Mythwake/Resources/Mythwake/Art/Runtime/{textureName}.png");
+        var texture = Resources.Load<Texture2D>(resourcePath);
+        if (texture != null)
+        {
+            texture.filterMode = FilterMode.Point;
+            return texture;
+        }
+
+#if UNITY_EDITOR
+        var editorPath = $"Assets/_Mythwake/Resources/Mythwake/Art/Runtime/{textureName}.png";
+        var editorSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(editorPath);
         if (editorSprite != null)
         {
             editorSprite.texture.filterMode = FilterMode.Point;
             return editorSprite.texture;
+        }
+
+        var editorAssets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(editorPath);
+        foreach (var asset in editorAssets)
+        {
+            if (asset is Sprite nestedSprite)
+            {
+                nestedSprite.texture.filterMode = FilterMode.Point;
+                return nestedSprite.texture;
+            }
+        }
+
+        var editorTexture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(editorPath);
+        if (editorTexture != null)
+        {
+            editorTexture.filterMode = FilterMode.Point;
+            return editorTexture;
         }
 #endif
 

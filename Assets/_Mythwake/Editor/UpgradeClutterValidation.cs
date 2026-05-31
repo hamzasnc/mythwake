@@ -31,6 +31,7 @@ public static class UpgradeClutterValidation
     private static void ValidateUpgradeClutter()
     {
         ValidatePrototypeBuilderGearDefaults();
+        ValidateRuntimeEquipmentIconResources();
 
         EditorSceneManager.OpenScene(ScenePath);
 
@@ -77,6 +78,52 @@ public static class UpgradeClutterValidation
         AssertSourceDoesNotContain(source, "Armor +1", "Prototype builder should use localized equipment names for armor upgrade copy.");
         AssertSourceDoesNotContain(source, "Weapon {L(", "Prototype builder equipment summary should use equipment localization keys.");
         AssertSourceDoesNotContain(source, "Armor {L(", "Prototype builder equipment summary should use equipment localization keys.");
+    }
+
+    private static void ValidateRuntimeEquipmentIconResources()
+    {
+        const string equipmentIconRoot = "Assets/_Mythwake/Resources/Mythwake/Art/Runtime";
+        const string resourcePrefix = "Assets/_Mythwake/Resources/";
+        var allIconPaths = System.IO.Directory.Exists(equipmentIconRoot)
+            ? System.IO.Directory.GetFiles(equipmentIconRoot, "equipment_*.png", System.IO.SearchOption.TopDirectoryOnly)
+            : Array.Empty<string>();
+        var iconPaths = new List<string>();
+        foreach (var path in allIconPaths)
+        {
+            var fileName = System.IO.Path.GetFileName(path);
+            if (fileName.StartsWith("equipment_accessory_", StringComparison.Ordinal)
+                || fileName.StartsWith("equipment_armor_", StringComparison.Ordinal)
+                || fileName.StartsWith("equipment_boots_", StringComparison.Ordinal)
+                || fileName.StartsWith("equipment_gloves_", StringComparison.Ordinal)
+                || fileName.StartsWith("equipment_headgear_", StringComparison.Ordinal)
+                || fileName.StartsWith("equipment_weapon_", StringComparison.Ordinal))
+            {
+                iconPaths.Add(path);
+            }
+        }
+
+        if (iconPaths.Count == 0)
+        {
+            throw new InvalidOperationException("Runtime equipment icon resources should exist for gear UI art.");
+        }
+
+        foreach (var rawAssetPath in iconPaths)
+        {
+            var assetPath = rawAssetPath.Replace('\\', '/');
+            if (string.IsNullOrEmpty(assetPath) || !assetPath.StartsWith(resourcePrefix, StringComparison.Ordinal) || !assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var resourcePath = assetPath.Substring(resourcePrefix.Length, assetPath.Length - resourcePrefix.Length - ".png".Length);
+            var sprite = Resources.Load<Sprite>(resourcePath);
+            var sprites = Resources.LoadAll<Sprite>(resourcePath);
+            var texture = Resources.Load<Texture2D>(resourcePath);
+            if (sprite == null && (sprites == null || sprites.Length == 0) && texture == null)
+            {
+                throw new InvalidOperationException($"Runtime equipment icon '{resourcePath}' must load through Resources in player builds.");
+            }
+        }
     }
 
     private static void ValidateBattleScreen(IdlePrototypeController controller)
@@ -294,11 +341,16 @@ public static class UpgradeClutterValidation
 
         AssertTextFits(slotText, gearSlots[gearSlotIndex].name, $"{context} label");
 
-        var slotIcons = RequireField<RawImage[]>(controller, "heroDetailGearSlotIcons");
+        var slotIcons = RequireField<Image[]>(controller, "heroDetailGearSlotIcons");
         var icon = slotIcons[gearSlotIndex];
-        if (icon == null || IsRawImageVisible(icon))
+        if (icon == null)
         {
-            throw new InvalidOperationException($"{context}: empty accessory slot should not show inventory-copy icon art before gear is equipped.");
+            throw new InvalidOperationException($"{context}: accessory slot should keep its icon image object for equipped-state refreshes.");
+        }
+
+        if (IsImageVisible(icon))
+        {
+            throw new InvalidOperationException($"{context}: empty accessory slot should not show item icon art before gear is equipped.");
         }
 
         var frame = gearSlots[gearSlotIndex].GetComponent<Image>();
@@ -310,14 +362,14 @@ public static class UpgradeClutterValidation
 
     private static void AssertHeroDetailVisibleGearSlotIcon(IdlePrototypeController controller, Button[] gearSlots, int gearSlotIndex, string context)
     {
-        var slotIcons = RequireField<RawImage[]>(controller, "heroDetailGearSlotIcons");
+        var slotIcons = RequireField<Image[]>(controller, "heroDetailGearSlotIcons");
         if (slotIcons.Length <= gearSlotIndex)
         {
             throw new InvalidOperationException($"{context}: hero detail gear slot icon array should include slot {gearSlotIndex + 1}.");
         }
 
         var icon = slotIcons[gearSlotIndex];
-        if (icon == null || !IsRawImageVisible(icon))
+        if (icon == null || !IsImageVisible(icon))
         {
             throw new InvalidOperationException($"{context}: equipped gear slot should show icon art.");
         }
@@ -333,7 +385,7 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException($"{context}: gear slot icon should not intercept button input.");
         }
 
-        AssertVisibleTexture(icon, $"{context} icon");
+        AssertVisibleSprite(icon, $"{context} icon");
     }
 
     private static void ValidateHeroDetailEquipmentSlotLabels(IdlePrototypeController controller, Button[] gearSlots)
@@ -425,6 +477,7 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException("Hero detail accessory gear list should be active.");
         }
 
+        var visibleOptions = 0;
         for (var i = 0; i < gearOptionButtons.Length; i++)
         {
             var option = gearOptionButtons[i];
@@ -433,33 +486,48 @@ public static class UpgradeClutterValidation
                 throw new InvalidOperationException($"Hero detail accessory option {i + 1} is missing its button.");
             }
 
-            if (!option.gameObject.activeInHierarchy)
+            if (option.gameObject.activeInHierarchy)
             {
-                throw new InvalidOperationException($"Hero detail accessory list should show rarity option row {i + 1}.");
+                visibleOptions++;
             }
+        }
+
+        if (visibleOptions <= 0)
+        {
+            throw new InvalidOperationException("Hero detail accessory list should show actual equipped or owned item rows.");
         }
 
         if (gearOptionButtons.Length < 2)
         {
-            throw new InvalidOperationException("Hero detail accessory list should expose multiple rarity option rows.");
+            throw new InvalidOperationException("Hero detail accessory list should expose multiple rarity option row objects.");
         }
 
-        var lowestRarityRect = gearOptionButtons[0].GetComponent<RectTransform>();
-        var highestRarityRect = gearOptionButtons[gearOptionButtons.Length - 1].GetComponent<RectTransform>();
-        if (lowestRarityRect == null || highestRarityRect == null)
+        ValidateHeroDetailAccessoryConfirmPanel(gearListRoot);
+    }
+
+    private static void ValidateHeroDetailAccessoryConfirmPanel(GameObject gearListRoot)
+    {
+        var confirmRoot = gearListRoot.transform.Find("Selected Gear Detail");
+        if (confirmRoot == null || !confirmRoot.gameObject.activeInHierarchy)
         {
-            throw new InvalidOperationException("Hero detail accessory option rows should keep RectTransforms.");
+            throw new InvalidOperationException("Hero detail accessory list should show a selected-item confirmation panel.");
         }
 
-        if (highestRarityRect.anchoredPosition.y <= lowestRarityRect.anchoredPosition.y)
+        var confirmButton = confirmRoot.Find("Confirm Equip")?.GetComponent<Button>();
+        if (confirmButton == null)
         {
-            throw new InvalidOperationException("Hero detail accessory list should display higher rarity rows above lower rarity rows.");
+            throw new InvalidOperationException("Hero detail accessory confirmation panel should expose an equip button.");
         }
 
-        if (gearOptionButtons.Length > 0 && gearOptionButtons[0].interactable)
+        var icon = confirmRoot.Find("Icon")?.GetComponent<Image>();
+        if (icon == null || !IsImageVisible(icon))
         {
-            throw new InvalidOperationException("Hero detail equipped accessory option row should not be clickable.");
+            throw new InvalidOperationException("Hero detail accessory confirmation panel should show selected item icon art.");
         }
+
+        RequireInsidePanel(gearListRoot, confirmRoot.gameObject);
+        RequireInsidePanel(confirmRoot.gameObject, confirmButton.gameObject);
+        RequireInsidePanel(confirmRoot.gameObject, icon.gameObject);
     }
 
     private static void ValidateHeroDetailAccessoryOwnedRowsFirst(IdlePrototypeController controller, Button[] gearOptionButtons)
@@ -506,15 +574,14 @@ public static class UpgradeClutterValidation
 
             var higherOwnedRect = RequireRectTransform(gearOptionButtons[higherOwnedRarity].gameObject);
             var lowerOwnedRect = RequireRectTransform(gearOptionButtons[lowerOwnedRarity].gameObject);
-            var emptyRect = RequireRectTransform(gearOptionButtons[emptyRarity].gameObject);
             if (higherOwnedRect.anchoredPosition.y <= lowerOwnedRect.anchoredPosition.y)
             {
                 throw new InvalidOperationException("Hero detail owned accessory rows should keep higher rarity above lower rarity.");
             }
 
-            if (lowerOwnedRect.anchoredPosition.y <= emptyRect.anchoredPosition.y)
+            if (gearOptionButtons[emptyRarity].gameObject.activeInHierarchy)
             {
-                throw new InvalidOperationException("Hero detail owned accessory rows should appear above empty rarity rows.");
+                throw new InvalidOperationException("Hero detail accessory picker should hide empty rarity rows instead of showing no-copy clutter.");
             }
         }
         finally
@@ -540,9 +607,9 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException($"{context} should keep visible option copy.");
         }
 
-        if (!text.text.Contains($"{GetLocalizedText(controller, "ui.common.copies")} 1") || !text.text.Contains(GetLocalizedText(controller, "ui.common.tap_to_equip")))
+        if (!text.text.Contains($"{GetLocalizedText(controller, "ui.common.copies")} 1") || !text.text.Contains(GetLocalizedText(controller, "gear.tap_for_details")))
         {
-            throw new InvalidOperationException($"{context} should show owned copies and tap-to-equip copy in the picker. Got '{text.text}'.");
+            throw new InvalidOperationException($"{context} should show owned copies and detail-tap copy in the picker. Got '{text.text}'.");
         }
 
         AssertTextFits(text, optionButton.name, context);
@@ -714,13 +781,12 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException("Hero detail armory background should not intercept gear slot input.");
         }
 
-        var slotIcons = RequireField<RawImage[]>(controller, "heroDetailGearSlotIcons");
+        var slotIcons = RequireField<Image[]>(controller, "heroDetailGearSlotIcons");
         if (slotIcons.Length < expectedGearSlotCount)
         {
             throw new InvalidOperationException($"Hero detail should expose {expectedGearSlotCount} gear slot icons.");
         }
 
-        var heroIndex = (int)InvokePrivate(controller, "GetSelectedHeroIndex");
         for (var i = 0; i < expectedGearSlotCount; i++)
         {
             var icon = slotIcons[i];
@@ -740,23 +806,22 @@ public static class UpgradeClutterValidation
                 throw new InvalidOperationException($"Hero detail gear slot {i + 1} icon should not intercept button input.");
             }
 
-            var accessorySlot = i - 2;
-            var shouldShowIcon = i < 2 || (accessorySlot >= 0 && (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, accessorySlot) >= 0);
-            if (!shouldShowIcon)
+            var shouldRenderIcon = i < 2 || IsHeroDetailAccessorySlotEquipped(controller, i - 2);
+            if (!shouldRenderIcon)
             {
-                if (IsRawImageVisible(icon))
+                if (IsImageVisible(icon))
                 {
-                    throw new InvalidOperationException($"Hero detail accessory slot {i + 1} should not render item icon art unless gear is actually equipped.");
+                    throw new InvalidOperationException($"Hero detail empty accessory slot {i + 1} should stay visually empty until gear is equipped.");
                 }
 
                 continue;
             }
 
-            if (icon.texture == null)
+            if (icon.sprite == null)
             {
-                throw new InvalidOperationException($"Hero detail gear slot {i + 1} should render equipment icon art.");
+                throw new InvalidOperationException($"Hero detail gear slot {i + 1} should render equipped icon art.");
             }
-            AssertVisibleTexture(icon, $"Hero detail gear slot {i + 1} icon");
+            AssertVisibleSprite(icon, $"Hero detail gear slot {i + 1} icon");
 
             var iconRect = RequireRectTransform(icon.gameObject);
             if (iconRect.rect.width <= 0f || iconRect.rect.height <= 0f || iconRect.rect.width > 84.5f || iconRect.rect.height > 56.5f)
@@ -770,6 +835,17 @@ public static class UpgradeClutterValidation
                 AssertNoOverlap(icon.gameObject, label.gameObject, 0f, "Hero Detail gear slot icon layout");
             }
         }
+    }
+
+    private static bool IsHeroDetailAccessorySlotEquipped(IdlePrototypeController controller, int accessorySlot)
+    {
+        if (accessorySlot < 0)
+        {
+            return false;
+        }
+
+        var heroIndex = (int)InvokePrivate(controller, "GetSelectedHeroIndex");
+        return (int)InvokePrivate(controller, "GetHeroEquippedAccessoryRarity", heroIndex, accessorySlot) >= 0;
     }
 
     private static void ValidateHeroDetailGearLayout(GameObject heroDetailRoot, Button[] gearSlots, int expectedGearSlotCount)
@@ -1014,6 +1090,19 @@ public static class UpgradeClutterValidation
         }
     }
 
+    private static void AssertVisibleSprite(Image image, string context)
+    {
+        if (!image.enabled || !image.gameObject.activeInHierarchy || image.color.a < 0.95f)
+        {
+            throw new InvalidOperationException($"{context} should be visibly rendered, not hidden as a blank placeholder.");
+        }
+
+        if (image.sprite == null || image.sprite.texture == Texture2D.whiteTexture || image.sprite.rect.width <= 8 || image.sprite.rect.height <= 8)
+        {
+            throw new InvalidOperationException($"{context} should use real sprite art, not Unity's white placeholder texture.");
+        }
+    }
+
     private static void ValidateGearScreenPolishLayout(IdlePrototypeController controller, GameObject gearPanel)
     {
         var oldParchment = FindSceneObject("Gear Parchment Backdrop");
@@ -1073,6 +1162,15 @@ public static class UpgradeClutterValidation
             && image.enabled
             && image.gameObject.activeInHierarchy
             && image.texture != null
+            && image.color.a > 0.05f;
+    }
+
+    private static bool IsImageVisible(Image image)
+    {
+        return image != null
+            && image.enabled
+            && image.gameObject.activeInHierarchy
+            && image.sprite != null
             && image.color.a > 0.05f;
     }
 
