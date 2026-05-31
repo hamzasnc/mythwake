@@ -20,7 +20,7 @@ public static class DungeonsUiValidation
         try
         {
             ValidateDungeonsUi();
-            Debug.Log("Dungeons UI validated: selector cards, detail panel, floor list, locked future dungeons, and Formation back flows are present.");
+            Debug.Log("Dungeons UI validated: selector cards, tower floor sections, boss badges, detail panel, floor list, locked future dungeons, and Formation back flows are present.");
         }
         catch (Exception ex)
         {
@@ -56,10 +56,11 @@ public static class DungeonsUiValidation
         ValidateDungeonSelectorCard(selectorCards, "Essence Dungeon Selector Card", "Essence Grove", "Floor", "Reward", "essence_dungeon_set_banner", "dungeon_essence");
         ValidateDungeonSelectorCard(selectorCards, "Gear Dungeon Selector Card", "Gear Forge", "Floor", "Reward", "gear_dungeon_set_banner", "dungeon_fire");
         ValidateLockedDungeonCard(selectorCards, "Shard Rift Dungeon Selector Card", "Shard Rift");
-        ValidateLockedDungeonCard(selectorCards, "Ancient Tower Dungeon Selector Card", "Ancient Tower");
+        ValidateDungeonSelectorCard(selectorCards, "Ancient Tower Dungeon Selector Card", "Tower Trial", "Unlocked", "Cleared", "area_map_hollow_spire_obsidian_vault", "dungeon_portal");
         ValidateDungeonSelectorSpacing();
         ValidateDungeonDetail(selectorPanel, "Gold Vault", "gold_dungeon_set_banner");
         ValidateFloorList(selectorPanel);
+        ValidateTowerDungeonUi(controller, selectorPanel);
 
         var oldWorldMap = FindSceneObject("Mythwake World Map Image");
         if (oldWorldMap != null && oldWorldMap.activeInHierarchy)
@@ -78,6 +79,7 @@ public static class DungeonsUiValidation
         ValidateDungeonFormationEntry(controller, "Gold Dungeon Selector Card", "gold_dungeon", "Gold Vault", "Gold");
         ValidateDungeonFormationEntry(controller, "Essence Dungeon Selector Card", "essence_dungeon", "Essence Grove", "Essence");
         ValidateDungeonFormationEntry(controller, "Gear Dungeon Selector Card", "gear_dungeon", "Gear Forge", "Gear");
+        ValidateDungeonFormationEntry(controller, "Ancient Tower Dungeon Selector Card", "tower_dungeon", "Tower Trial", "Tower");
 
         controller.ShowDungeons();
         Canvas.ForceUpdateCanvases();
@@ -85,6 +87,82 @@ public static class DungeonsUiValidation
         {
             throw new InvalidOperationException("Dungeons panel should remain reachable after validating Formation entry flows.");
         }
+    }
+
+    private static void ValidateTowerDungeonUi(IdlePrototypeController controller, GameObject selectorPanel)
+    {
+        controller.ShowDungeons();
+        Canvas.ForceUpdateCanvases();
+
+        RequireButton("Ancient Tower Dungeon Selector Card").onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+
+        var selectedDungeonId = GetPrivateField<string>(controller, "selectedDungeonId");
+        if (selectedDungeonId != "tower_dungeon")
+        {
+            throw new InvalidOperationException($"Tower card should select tower_dungeon, got '{selectedDungeonId}'.");
+        }
+
+        var detail = RequireObject("Dungeon Detail Panel", true);
+        AssertInsideParent(selectorPanel, detail);
+        var detailTitle = RequireText(detail, "Dungeon Detail Title");
+        var detailMeta = RequireText(detail, "Dungeon Detail Meta");
+        var detailRewards = RequireText(detail, "Dungeon Detail Rewards");
+        RequireCopy(detailTitle.text, "Tower Trial", "Tower detail title");
+        RequireCopy(detailMeta.text, "Normal", "Tower detail normal floor meta");
+        RequireCopy(detailRewards.text, "Reward", "Tower detail reward label");
+        AssertTextFits(detailTitle, "Tower detail title");
+        AssertTextFits(detailMeta, "Tower detail meta");
+        AssertTextFits(detailRewards, "Tower detail rewards");
+
+        var sectionRoot = RequireObject("Tower Floor Section Controls", true);
+        AssertInsideParent(RequireObject("Dungeon Floor List", true), sectionRoot);
+        var sectionText = RequireText(sectionRoot, "Tower Floor Section Text");
+        RequireCopy(sectionText.text, "F1-100", "Tower floor section label");
+        AssertTextFits(sectionText, "Tower floor section label");
+
+        var firstEntry = RequireButton("Dungeon Floor Entry 1");
+        var firstTitle = RequireChildText(firstEntry.transform, "Floor Title", firstEntry.name);
+        var firstStatus = RequireChildText(firstEntry.transform, "Floor Status", firstEntry.name);
+        var firstAction = RequireChildText(firstEntry.transform, "Floor Action", firstEntry.name);
+        RequireCopy(firstTitle.text, "Floor 1", "Tower first floor title");
+        RequireCopy(firstStatus.text, "Ready", "Tower first floor status");
+        RequireCopy(firstAction.text, "Battle", "Tower first floor action");
+
+        SetPrivateField(controller, "towerDungeonHighestUnlockedFloor", 25);
+        SetPrivateField(controller, "towerDungeonHighestClearedFloor", 24);
+        SetPrivateField(controller, "towerDungeonSelectedFloor", 25);
+        SetPrivateField(controller, "towerDungeonSectionStartFloor", 1);
+        InvokePrivate(controller, "RefreshUi");
+        controller.ShowDungeons();
+        Canvas.ForceUpdateCanvases();
+        RequireButton("Ancient Tower Dungeon Selector Card").onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        detailMeta = RequireText(RequireObject("Dungeon Detail Panel", true), "Dungeon Detail Meta");
+        RequireCopy(detailMeta.text, "Mini Boss", "Tower mini boss detail meta");
+
+        SetPrivateField(controller, "towerDungeonHighestUnlockedFloor", 100);
+        SetPrivateField(controller, "towerDungeonHighestClearedFloor", 99);
+        SetPrivateField(controller, "towerDungeonSelectedFloor", 100);
+        SetPrivateField(controller, "towerDungeonSectionStartFloor", 1);
+        InvokePrivate(controller, "RefreshUi");
+        controller.ShowDungeons();
+        Canvas.ForceUpdateCanvases();
+        RequireButton("Ancient Tower Dungeon Selector Card").onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+        detailMeta = RequireText(RequireObject("Dungeon Detail Panel", true), "Dungeon Detail Meta");
+        detailRewards = RequireText(RequireObject("Dungeon Detail Panel", true), "Dungeon Detail Rewards");
+        RequireCopy(detailMeta.text, "Big Boss", "Tower big boss detail meta");
+        RequireCopy(detailRewards.text, "Shards", "Tower big boss reward shards");
+        AssertTextFits(detailMeta, "Tower big boss detail meta");
+        AssertTextFits(detailRewards, "Tower big boss rewards");
+
+        SetPrivateField(controller, "towerDungeonHighestUnlockedFloor", 1);
+        SetPrivateField(controller, "towerDungeonHighestClearedFloor", 0);
+        SetPrivateField(controller, "towerDungeonSelectedFloor", 1);
+        SetPrivateField(controller, "towerDungeonSectionStartFloor", 1);
+        RequireButton("Gold Dungeon Selector Card").onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
     }
 
     private static void ValidateDungeonsLanguageRefresh(IdlePrototypeController controller)

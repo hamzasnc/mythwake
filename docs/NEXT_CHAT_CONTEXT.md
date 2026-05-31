@@ -32,6 +32,7 @@ Latest known pushed commit before the 0.2.159 continuation:
 - `24b2ab4 Rework battle formation mockup`
 
 Current continuation:
+- Prototype `0.2.171` adds the local Tower Trial / Tower Dungeon MVP. The Dungeons overview now exposes a playable 1,000-floor tower card, 100-floor section browsing, four floor preview rows, mini-boss markers every 25 floors, apex boss markers every 100 floors, recommended-power/enemy-stat/reward copy, and Formation entry validation. Tower wins grant Gold, Myth Essence, and rotating Hero Shards; highest cleared, highest unlocked, selected floor, and section start are saved in the versioned local PlayerPrefs JSON. Tower is intentionally blocked in Server Mode until backend/PostgreSQL tower definitions, rewards, and player progress are added. See `docs/TOWER_DUNGEON.md`.
 - Prototype `0.2.170` prepares Mythwake's repeatable Android tester-release process. Unity PlayerSettings now have explicit Android identity: app name `Mythwake`, company `xMiepsen`, package `com.xmiepsen.mythwake`, Version Name `0.2.170`, and Version Code `2170` from `major*1000000 + minor*1000 + patch`; Mobile UX validation checks those values. `scripts/build-android.cmd` still builds APK by default and now builds AAB with `-AppBundle`, while the Android Build Profile GUI default remains APK. APK `Builds\Android\Mythwake-0.2.170-tester-release.apk` and AAB `Builds\Android\Mythwake-0.2.170-play-internal.aab` build successfully. MuMu smoke installed/launched the APK (`com.xmiepsen.mythwake`), verified Startscreen version, Continue, Guest fallback, Home, Formation/Fight/Result, Heroes, Village, Fast Rewards, Dungeons, Summon, restart/Continue, and filtered Logcat found no Mythwake/Unity crash/ANR/NullReference/missing-asset blocker. PostgreSQL E2E covered Email register/login/logout/restart persistence and Guest auth. Current release docs: `docs/TESTER_RELEASE_PROCESS.md` and `docs/TESTER_BUILD_NOTES.md`.
 - Prototype `0.2.169` polishes the Account Start tester flow for the first multi-account handoff. The Start screen now puts saved progress and Email accounts ahead of Guest (`Continue`, `Login with Email`, `Create Account`, `Play as Guest`), maps validation/backend/network failures to tester-readable copy, keeps Google Play login as a later note instead of a prominent action, and makes Management -> Account show Build, Local/Server mode, session kind, and Player ID for feedback reports. Android local tester APKs now point at `127.0.0.1:8080`; run `adb reverse tcp:8080 tcp:8080` before MuMu/emulator/USB backend tests. Backend requests also have an extra client timeout guard for server-down cases. APK `Builds\Android\Mythwake-0.2.169-account-tester-build.apk` builds, installs, and passed MuMu smoke for Register, Server Mode progress to Stage 1-2, app restart/Continue, Logout/Login, wrong password, duplicate Email, backend-down, Guest fallback, and filtered Logcat. `docs/TESTER_BUILD_0_2.md` is the new tester-build handoff doc with install/start, account creation, Continue/Login/Logout, Guest caveats, feedback questions, known risks, and multi-tester email conventions.
 - Prototype `0.2.168` / Backend `0.2.60` hardens the Email + Password account MVP. Backend auth now has structured errors for missing email, invalid email, missing password, weak password, duplicate email, and safe invalid-credentials login failures; HTTP tests cover protected state after Email auth, Logout revocation, and Email re-login restoring the same progressed player snapshot. `scripts/check-postgres-e2e.ps1` now uses a unique Email account for the durable PostgreSQL restart/re-login path while still checking Guest auth and definitions-driven accessory drops. The older Ravik summon-pool seed migration is idempotent for already-seeded dev databases. Unity recognizes the new error codes, and Account Start validation checks masked password input, Email input type, no reset trap in the first-run account flow, and EN/DE text fit. APK target for this slice is `Builds\Android\Mythwake-0.2.168-email-account-mvp.apk`.
@@ -179,15 +180,15 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.170`
+- Prototype `0.2.171`
 - Save version `2`
-- Android package `com.xmiepsen.mythwake`, Version Name `0.2.170`, Version Code `2170`
+- Android package `com.xmiepsen.mythwake`, Version Name `0.2.171`, Version Code `2171`
 
 Important Unity scripts:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Latest local gameplay/UI batch:
-- Dungeons now have a dedicated map screen opened from the bottom Dungeons nav item, with Gold, Essence, and Gear dungeon cards; `Validate Dungeons UI` checks the world-map viewport, map art, pan/scroll handlers, zoom controls and clamps, all three dungeon markers, marker spacing/text/art fit, and Gold/Essence/Gear Formation entry plus back-navigation flows.
+- Dungeons now have a dedicated map screen opened from the bottom Dungeons nav item, with Gold, Essence, Gear, and Tower Trial cards. The local Tower Trial has 1,000 floors, 100-floor section controls, floor previews, mini-bosses every 25 floors, apex bosses every 100 floors, Gold/Myth Essence/Hero Shard rewards, and saved local highest cleared/unlocked/selected/section progress. `Validate Dungeons UI` checks the world-map viewport, map art, pan/scroll handlers, zoom controls and clamps, dungeon markers, marker spacing/text/art fit, Tower Trial section/boss/reward states, and Formation entry plus back-navigation flows. Server Mode tower runs are blocked until the backend owns tower persistence.
 - Village now has a dedicated scrollable map screen opened from the bottom Village nav item, with 12 build plots and imported building art.
 - Village free plots open a build panel. Built plots open a building detail panel with level, next upgrade cost, available Myth Essence, visible HP/ATK/Fast Rewards bonus categories, `Aufwerten`, `Abreissen`, and `Schliessen`; the Village validator also checks the scrollable map/content wiring, all 12 plot buttons, loaded map/building art, build/detail close flows, built-plot hidden build marks, max-level upgrade lockout, and the Village bonus hint.
 - Village building upgrades spend Myth Essence locally and route through the existing backend Village upgrade action in Server Mode.
@@ -369,6 +370,8 @@ Dungeons:
 - Gold Dungeon: endless tower, increasing floor difficulty/rewards.
 - Essence Dungeon: endless tower, increasing floor difficulty/rewards.
 - Gear Dungeon: endless tower, drops accessories.
+- Tower Trial / Tower Dungeon: local 1,000-floor tower, 100-floor section browsing, mini-boss every 25 floors, apex boss every 100 floors, Gold/Myth Essence/Hero Shard rewards, saved local progress.
+- Tower Trial is not server-authoritative yet; Server Mode blocks tower runs until backend/PostgreSQL definitions and progress are added.
 - Dungeons have a first-pass dedicated screen/tab and still need visual/layout polish.
 
 Village:

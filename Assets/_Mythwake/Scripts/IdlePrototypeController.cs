@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.170";
+    public const string PrototypeVersion = "0.2.171";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -230,6 +230,22 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             this.baseReward = baseReward;
             this.rewardScale = rewardScale;
             this.rewardGrowth = rewardGrowth;
+        }
+    }
+
+    private struct TowerRewardDefinition
+    {
+        public int gold;
+        public int mythEssence;
+        public int shardHeroIndex;
+        public int heroShards;
+
+        public TowerRewardDefinition(int gold, int mythEssence, int shardHeroIndex, int heroShards)
+        {
+            this.gold = gold;
+            this.mythEssence = mythEssence;
+            this.shardHeroIndex = shardHeroIndex;
+            this.heroShards = heroShards;
         }
     }
 
@@ -531,6 +547,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         Dungeon
     }
 
+    private enum TowerBossType
+    {
+        None,
+        MiniBoss,
+        BigBoss
+    }
+
     private enum InventoryTabMode
     {
         Misc,
@@ -581,6 +604,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int goldDungeonFloor;
         public int essenceDungeonFloor;
         public int gearDungeonFloor;
+        public int towerDungeonHighestUnlockedFloor;
+        public int towerDungeonHighestClearedFloor;
+        public int towerDungeonSelectedFloor;
+        public int towerDungeonSectionStartFloor;
         public int weaponLevel;
         public int armorLevel;
         public int selectedAccessorySlot;
@@ -628,6 +655,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const string GoldDungeonFloorKey = "Mythwake.Prototype.Dungeon.GoldFloor";
     private const string EssenceDungeonFloorKey = "Mythwake.Prototype.Dungeon.EssenceFloor";
     private const string GearDungeonFloorKey = "Mythwake.Prototype.Dungeon.GearFloor";
+    private const string TowerDungeonHighestUnlockedFloorKey = "Mythwake.Prototype.Dungeon.TowerHighestUnlockedFloor";
+    private const string TowerDungeonHighestClearedFloorKey = "Mythwake.Prototype.Dungeon.TowerHighestClearedFloor";
+    private const string TowerDungeonSelectedFloorKey = "Mythwake.Prototype.Dungeon.TowerSelectedFloor";
+    private const string TowerDungeonSectionStartFloorKey = "Mythwake.Prototype.Dungeon.TowerSectionStartFloor";
     private const string WeaponLevelKey = "Mythwake.Prototype.Equipment.WeaponLevel";
     private const string ArmorLevelKey = "Mythwake.Prototype.Equipment.ArmorLevel";
     private const string SelectedAccessorySlotKey = "Mythwake.Prototype.Accessory.SelectedSlot";
@@ -713,6 +744,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int DungeonBonusInterval = 5;
     private const int DungeonSetProgressGoal = 9;
     private const float DungeonBossHpMultiplier = 1.8f;
+    private const int TowerDungeonMaxFloor = 1000;
+    private const int TowerDungeonSectionSize = 100;
+    private const int TowerDungeonMiniBossInterval = 25;
+    private const int TowerDungeonBigBossInterval = 100;
+    private const int TowerDungeonShardInterval = 10;
+    private const float TowerDungeonNormalHpMultiplier = 0.86f;
+    private const float TowerDungeonMiniBossHpMultiplier = 1.55f;
+    private const float TowerDungeonBigBossHpMultiplier = 2.35f;
+    private const float TowerDungeonNormalDamageMultiplier = 0.92f;
+    private const float TowerDungeonMiniBossDamageMultiplier = 1.28f;
+    private const float TowerDungeonBigBossDamageMultiplier = 1.62f;
     private static readonly Vector2 DungeonMapViewportPosition = new Vector2(0f, -166f);
     private static readonly Vector2 DungeonMapViewportSize = new Vector2(1000f, 970f);
     private static readonly Vector2 DungeonWorldMapSize = new Vector2(1760f, 1320f);
@@ -826,6 +868,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         GoldDungeonFloorKey,
         EssenceDungeonFloorKey,
         GearDungeonFloorKey,
+        TowerDungeonHighestUnlockedFloorKey,
+        TowerDungeonHighestClearedFloorKey,
+        TowerDungeonSelectedFloorKey,
+        TowerDungeonSectionStartFloorKey,
         WeaponLevelKey,
         ArmorLevelKey,
         SelectedAccessorySlotKey,
@@ -915,9 +961,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static readonly DungeonDefinition GoldDungeonDefinition = new DungeonDefinition("gold_dungeon", "Gold Dungeon", GoldCurrencyId, 200, 100f, 1.2f, 22, 9f, 1.12f, 115, 50f, 1.18f, 95, 34f, 1.14f);
     private static readonly DungeonDefinition EssenceDungeonDefinition = new DungeonDefinition("essence_dungeon", "Essence Dungeon", MythEssenceCurrencyId, 210, 104f, 1.2f, 22, 9.5f, 1.12f, 118, 51f, 1.18f, 110, 40f, 1.13f);
     private static readonly DungeonDefinition GearDungeonDefinition = new DungeonDefinition("gear_dungeon", "Gear Dungeon", string.Empty, 235, 120f, 1.21f, 24, 10f, 1.14f, 130, 56f, 1.18f, 0, 0f, 1f);
+    private static readonly DungeonDefinition TowerDungeonDefinition = new DungeonDefinition("tower_dungeon", "Tower Dungeon", string.Empty, 185, 74f, 1.12f, 18, 5.8f, 1.08f, 105, 34f, 1.12f, 80, 18f, 1.08f);
     private static readonly string[] GoldDungeonBattleMapTextureNames = { "gold_dungeon_battle_01", "gold_dungeon_battle_02" };
     private static readonly string[] EssenceDungeonBattleMapTextureNames = { "essence_dungeon_battle_01", "essence_dungeon_battle_02" };
     private static readonly string[] GearDungeonBattleMapTextureNames = { "equipment_dungeon_battle_01", "equipment_dungeon_battle_02" };
+    private static readonly string[] TowerDungeonBattleMapTextureNames = { "area_map_hollow_spire_obsidian_vault", "gear_dungeon_set_banner" };
     private const string EquipmentHeroArmoryBackgroundTextureName = "equipment_hero_armory_background";
     private const string EquipmentIconTextureRoot = "";
     private static readonly string[] EquipmentWeaponIconTextureNames =
@@ -1030,6 +1078,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private int goldDungeonFloor = 1;
     [SerializeField] private int essenceDungeonFloor = 1;
     [SerializeField] private int gearDungeonFloor = 1;
+    [SerializeField] private int towerDungeonHighestUnlockedFloor = 1;
+    [SerializeField] private int towerDungeonHighestClearedFloor;
+    [SerializeField] private int towerDungeonSelectedFloor = 1;
+    [SerializeField] private int towerDungeonSectionStartFloor = 1;
     [SerializeField] private int weaponLevel = StarterEquipmentLevel;
     [SerializeField] private int armorLevel = StarterEquipmentLevel;
     [SerializeField] private int[] heroWeaponLevels = new int[HeroCount];
@@ -1274,6 +1326,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text dungeonDetailMetaText;
     private TMP_Text dungeonDetailRewardsText;
     private TMP_Text dungeonFlowHintText;
+    private RectTransform towerFloorSectionRoot;
+    private Button towerFloorSectionPreviousButton;
+    private Button towerFloorSectionNextButton;
+    private TMP_Text towerFloorSectionText;
     private RawImage dungeonDetailBannerImage;
     private RawImage dungeonDetailBossImage;
     private Button dungeonDetailRunButton;
@@ -2639,6 +2695,22 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureSelectedDungeonBattleMap();
         selectedFormationSlotIndex = -1;
         fightAutoSkillsEnabled = autoContinueFightsEnabled;
+        if (IsSelectedTowerDungeon() && backendGameplayEnabled)
+        {
+            SetDungeonResult($"{GetLocalizedDungeonName(TowerDungeonDefinition.dungeonId)} is local-only in this build.\nServer Mode tower persistence is still open.");
+            ShowScreen(AppScreen.Dungeons);
+            RefreshUi();
+            return;
+        }
+
+        if (IsSelectedTowerDungeon() && !CanRunTowerFloor(towerDungeonSelectedFloor))
+        {
+            SetDungeonResult($"Tower Floor {towerDungeonSelectedFloor} is not ready.\nHighest unlocked: {towerDungeonHighestUnlockedFloor}; highest cleared: {towerDungeonHighestClearedFloor}.");
+            ShowScreen(AppScreen.Dungeons);
+            RefreshUi();
+            return;
+        }
+
         if (backendGameplayEnabled)
         {
             var dungeon = ResolveDungeonDefinition(selectedDungeonId);
@@ -2786,6 +2858,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (dungeonId == GearDungeonDefinition.dungeonId)
         {
             return ExecuteGearDungeon();
+        }
+
+        if (IsTowerDungeonId(dungeonId))
+        {
+            return ExecuteTowerDungeon();
         }
 
         var result = CreateActionResult(false, "run_dungeon", "invalid_dungeon", $"Unknown dungeon: {dungeonId}");
@@ -4257,6 +4334,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         goldDungeonFloor = 1;
         essenceDungeonFloor = 1;
         gearDungeonFloor = 1;
+        towerDungeonHighestUnlockedFloor = 1;
+        towerDungeonHighestClearedFloor = 0;
+        towerDungeonSelectedFloor = 1;
+        towerDungeonSectionStartFloor = 1;
         weaponLevel = StarterEquipmentLevel;
         armorLevel = StarterEquipmentLevel;
         heroWeaponLevels = CreateFilledIntArray(HeroCount, StarterEquipmentLevel);
@@ -4882,6 +4963,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         goldDungeonFloor = Mathf.Max(1, state.goldDungeonFloor);
         essenceDungeonFloor = Mathf.Max(1, state.essenceDungeonFloor);
         gearDungeonFloor = Mathf.Max(1, state.gearDungeonFloor);
+        NormalizeTowerDungeonProgress();
         backendTeamPower = Mathf.Max(0, state.teamPower);
         backendTeamAttack = Mathf.Max(0, state.teamAttack);
         backendTeamHealth = Mathf.Max(0, state.teamHealth);
@@ -5239,13 +5321,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         dailyFightCount++;
         var dungeon = ResolveDungeonDefinition(selectedDungeonId);
         var floor = GetDungeonFloor(dungeon.dungeonId);
-        var enemyHp = GetDungeonEnemyHp(dungeon, floor);
-        var enemyDamage = GetDungeonEnemyDamage(dungeon, floor);
+        var isTower = IsTowerDungeonId(dungeon.dungeonId);
+        var enemyHp = isTower ? GetTowerEnemyHp(floor) : GetDungeonEnemyHp(dungeon, floor);
+        var enemyDamage = isTower ? GetTowerEnemyDamage(floor) : GetDungeonEnemyDamage(dungeon, floor);
+        var towerBossType = isTower ? GetTowerBossType(floor) : TowerBossType.None;
+        var enemyLabel = isTower
+            ? $"{GetLocalizedDungeonName(dungeon.dungeonId)} F{floor}  VS  {GetTowerEnemyLabel(floor)}"
+            : $"{GetLocalizedDungeonName(dungeon.dungeonId)} F{floor}  VS  {GetLocalizedDungeonBossName(dungeon.dungeonId)}";
+        var bossTextureName = isTower ? GetTowerEnemyTextureName(floor) : GetDungeonBossTextureName(dungeon.dungeonId);
         var result = SimulateCombat(enemyHp, enemyDamage);
         yield return PlayCampaignFightVisualRoutine(
             result.won,
             floor,
-            $"{GetLocalizedDungeonName(dungeon.dungeonId)} F{floor}  VS  {GetLocalizedDungeonBossName(dungeon.dungeonId)}",
+            enemyLabel,
             result.elapsedSeconds,
             GetTeamHealth(),
             result.teamHpRemaining,
@@ -5253,8 +5341,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             result.enemyHpRemaining,
             result.damageDealt,
             result.damageTaken,
-            singleBoss: true,
-            bossTextureName: GetDungeonBossTextureName(dungeon.dungeonId),
+            singleBoss: !isTower || towerBossType != TowerBossType.None,
+            bossTextureName: bossTextureName,
             enemyDamage: enemyDamage);
         if (ConsumeFightCancelRequest())
         {
@@ -5411,6 +5499,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         goldDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(GoldDungeonFloorKey, goldDungeonFloor));
         essenceDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(EssenceDungeonFloorKey, essenceDungeonFloor));
         gearDungeonFloor = Mathf.Max(1, PlayerPrefs.GetInt(GearDungeonFloorKey, gearDungeonFloor));
+        towerDungeonHighestUnlockedFloor = Mathf.Clamp(PlayerPrefs.GetInt(TowerDungeonHighestUnlockedFloorKey, towerDungeonHighestUnlockedFloor), 1, TowerDungeonMaxFloor);
+        towerDungeonHighestClearedFloor = Mathf.Clamp(PlayerPrefs.GetInt(TowerDungeonHighestClearedFloorKey, towerDungeonHighestClearedFloor), 0, TowerDungeonMaxFloor);
+        towerDungeonSelectedFloor = Mathf.Clamp(PlayerPrefs.GetInt(TowerDungeonSelectedFloorKey, towerDungeonSelectedFloor), 1, TowerDungeonMaxFloor);
+        towerDungeonSectionStartFloor = Mathf.Clamp(PlayerPrefs.GetInt(TowerDungeonSectionStartFloorKey, towerDungeonSectionStartFloor), 1, TowerDungeonMaxFloor);
         weaponLevel = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt(WeaponLevelKey, weaponLevel));
         armorLevel = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt(ArmorLevelKey, armorLevel));
         heroWeaponLevels = new int[HeroCount];
@@ -5534,6 +5626,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             goldDungeonFloor = goldDungeonFloor,
             essenceDungeonFloor = essenceDungeonFloor,
             gearDungeonFloor = gearDungeonFloor,
+            towerDungeonHighestUnlockedFloor = towerDungeonHighestUnlockedFloor,
+            towerDungeonHighestClearedFloor = towerDungeonHighestClearedFloor,
+            towerDungeonSelectedFloor = towerDungeonSelectedFloor,
+            towerDungeonSectionStartFloor = towerDungeonSectionStartFloor,
             weaponLevel = weaponLevel,
             armorLevel = armorLevel,
             selectedAccessorySlot = selectedAccessorySlot,
@@ -5583,6 +5679,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         goldDungeonFloor = Mathf.Max(1, data.goldDungeonFloor);
         essenceDungeonFloor = Mathf.Max(1, data.essenceDungeonFloor);
         gearDungeonFloor = Mathf.Max(1, data.gearDungeonFloor);
+        towerDungeonHighestUnlockedFloor = data.towerDungeonHighestUnlockedFloor;
+        towerDungeonHighestClearedFloor = data.towerDungeonHighestClearedFloor;
+        towerDungeonSelectedFloor = data.towerDungeonSelectedFloor;
+        towerDungeonSectionStartFloor = data.towerDungeonSectionStartFloor;
         weaponLevel = Mathf.Max(StarterEquipmentLevel, data.weaponLevel);
         armorLevel = Mathf.Max(StarterEquipmentLevel, data.armorLevel);
         selectedAccessorySlot = Mathf.Clamp(data.selectedAccessorySlot, 0, AccessorySlotCount - 1);
@@ -5653,6 +5753,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         goldDungeonFloor = Mathf.Max(1, goldDungeonFloor);
         essenceDungeonFloor = Mathf.Max(1, essenceDungeonFloor);
         gearDungeonFloor = Mathf.Max(1, gearDungeonFloor);
+        NormalizeTowerDungeonProgress();
         weaponLevel = Mathf.Max(StarterEquipmentLevel, weaponLevel);
         armorLevel = Mathf.Max(StarterEquipmentLevel, armorLevel);
         selectedAccessorySlot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
@@ -5663,6 +5764,43 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         afkRewardStoredSeconds = Mathf.Clamp(afkRewardStoredSeconds, 0f, GetAfkRewardMaxSeconds());
         damage = GetTeamDamage();
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
+    }
+
+    private void NormalizeTowerDungeonProgress()
+    {
+        towerDungeonHighestClearedFloor = Mathf.Clamp(towerDungeonHighestClearedFloor, 0, TowerDungeonMaxFloor);
+        towerDungeonHighestUnlockedFloor = Mathf.Clamp(Mathf.Max(towerDungeonHighestUnlockedFloor, towerDungeonHighestClearedFloor + 1), 1, TowerDungeonMaxFloor);
+        if (towerDungeonHighestClearedFloor >= TowerDungeonMaxFloor)
+        {
+            towerDungeonHighestUnlockedFloor = TowerDungeonMaxFloor;
+        }
+
+        towerDungeonSelectedFloor = Mathf.Clamp(towerDungeonSelectedFloor <= 0 ? towerDungeonHighestUnlockedFloor : towerDungeonSelectedFloor, 1, towerDungeonHighestUnlockedFloor);
+        towerDungeonSectionStartFloor = NormalizeTowerSectionStart(towerDungeonSectionStartFloor <= 0 ? towerDungeonSelectedFloor : towerDungeonSectionStartFloor);
+        if (towerDungeonSelectedFloor < towerDungeonSectionStartFloor || towerDungeonSelectedFloor > GetTowerSectionEndFloor(towerDungeonSectionStartFloor))
+        {
+            towerDungeonSectionStartFloor = NormalizeTowerSectionStart(towerDungeonSelectedFloor);
+        }
+    }
+
+    private static int NormalizeTowerSectionStart(int floor)
+    {
+        floor = Mathf.Clamp(floor, 1, TowerDungeonMaxFloor);
+        return ((floor - 1) / TowerDungeonSectionSize * TowerDungeonSectionSize) + 1;
+    }
+
+    private static int GetTowerSectionEndFloor(int sectionStartFloor)
+    {
+        return Mathf.Clamp(NormalizeTowerSectionStart(sectionStartFloor) + TowerDungeonSectionSize - 1, 1, TowerDungeonMaxFloor);
+    }
+
+    private int GetTowerFloorForEntry(int entryIndex)
+    {
+        NormalizeTowerDungeonProgress();
+        var sectionStart = NormalizeTowerSectionStart(towerDungeonSectionStartFloor);
+        var sectionEnd = GetTowerSectionEndFloor(sectionStart);
+        var firstVisibleFloor = Mathf.Clamp(towerDungeonSelectedFloor - 1, sectionStart, Mathf.Max(sectionStart, sectionEnd - 3));
+        return Mathf.Clamp(firstVisibleFloor + Mathf.Clamp(entryIndex, 0, 3), sectionStart, sectionEnd);
     }
 
     private static int[] CopyIntArray(int[] source, int length, int defaultValue)
@@ -5924,6 +6062,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (dungeonId == GearDungeonDefinition.dungeonId)
         {
             return ApplyGearDungeonResult(floor, result, enemyHp);
+        }
+
+        if (IsTowerDungeonId(dungeonId))
+        {
+            return ApplyTowerDungeonResult(floor, result, enemyHp);
         }
 
         var message = $"Unknown dungeon: {dungeonId}";
@@ -6195,6 +6338,205 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return string.Empty;
+    }
+
+    private MythwakeActionResultDto ExecuteTowerDungeon()
+    {
+        NormalizeTowerDungeonProgress();
+        if (backendGameplayEnabled)
+        {
+            var blockedMessage = $"{GetLocalizedDungeonName(TowerDungeonDefinition.dungeonId)} is local-only in this build.\nTurn Server Mode off to test the tower MVP; backend persistence comes later.";
+            SetDungeonResult(blockedMessage);
+            RefreshUi();
+            return CreateActionResult(false, "tower_dungeon_run", "server_tower_pending", blockedMessage);
+        }
+
+        var floor = towerDungeonSelectedFloor;
+        if (!CanRunTowerFloor(floor))
+        {
+            var message = $"Tower Floor {floor} is not the active unlocked floor.\nHighest unlocked: {towerDungeonHighestUnlockedFloor}.";
+            SetDungeonResult(message);
+            RefreshUi();
+            return CreateActionResult(false, "tower_dungeon_run", "not_unlocked", message);
+        }
+
+        var enemyHp = GetTowerEnemyHp(floor);
+        var enemyDamage = GetTowerEnemyDamage(floor);
+        var result = SimulateCombat(enemyHp, enemyDamage);
+        var actionResult = ApplyTowerDungeonResult(floor, result, enemyHp);
+        SaveProgress();
+        RefreshUi();
+        return actionResult;
+    }
+
+    private MythwakeActionResultDto ApplyTowerDungeonResult(int floor, CombatResult result, int enemyHp)
+    {
+        var dungeonName = GetLocalizedDungeonName(TowerDungeonDefinition.dungeonId);
+        var bossLabel = GetTowerBossTypeLabel(GetTowerBossType(floor));
+        var label = $"{dungeonName} Floor {floor}";
+        if (!string.IsNullOrWhiteSpace(bossLabel))
+        {
+            label = $"{label} [{bossLabel}]";
+        }
+
+        if (!result.won)
+        {
+            var failMessage = $"{label} failed after {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetTowerEnemyDamage(floor))}{FormatNextGoalResultLine()}";
+            PlayCombatVisual(TowerDungeonDefinition.dungeonId, $"{dungeonName} F{floor}", result, enemyHp);
+            SetDungeonResult(failMessage);
+            return CreateActionResult(false, "tower_dungeon_run", "combat_lost", failMessage);
+        }
+
+        var reward = GetTowerReward(floor);
+        GrantCurrency(GoldCurrencyId, reward.gold);
+        GrantCurrency(MythEssenceCurrencyId, reward.mythEssence);
+        if (reward.heroShards > 0)
+        {
+            EnsureHeroShards();
+            heroShards[Mathf.Clamp(reward.shardHeroIndex, 0, HeroCount - 1)] += reward.heroShards;
+        }
+
+        towerDungeonHighestClearedFloor = Mathf.Max(towerDungeonHighestClearedFloor, floor);
+        towerDungeonHighestUnlockedFloor = Mathf.Clamp(Mathf.Max(towerDungeonHighestUnlockedFloor, floor + 1), 1, TowerDungeonMaxFloor);
+        towerDungeonSelectedFloor = towerDungeonHighestClearedFloor >= TowerDungeonMaxFloor ? TowerDungeonMaxFloor : towerDungeonHighestUnlockedFloor;
+        towerDungeonSectionStartFloor = NormalizeTowerSectionStart(towerDungeonSelectedFloor);
+
+        var message = $"{label} cleared in {result.elapsedSeconds}s\n{FormatLocalCombatResult(result, GetTeamHealth(), enemyHp, GetTowerEnemyDamage(floor))}\nReward: {FormatTowerReward(reward)}{FormatNextGoalResultLine()}";
+        PlayCombatVisual(TowerDungeonDefinition.dungeonId, $"{dungeonName} F{floor}", result, enemyHp);
+        SetDungeonResult(message);
+        var rewardDto = new MythwakeRewardDto { rewardId = $"reward_tower_dungeon_floor_{floor}", gold = reward.gold, mythEssence = reward.mythEssence };
+        return CreateActionResult(true, "tower_dungeon_run", string.Empty, message, rewardDto);
+    }
+
+    private bool CanRunTowerFloor(int floor)
+    {
+        NormalizeTowerDungeonProgress();
+        return !backendGameplayEnabled && floor == towerDungeonHighestUnlockedFloor && floor > towerDungeonHighestClearedFloor && floor <= TowerDungeonMaxFloor;
+    }
+
+    private static TowerBossType GetTowerBossType(int floor)
+    {
+        floor = Mathf.Clamp(floor, 1, TowerDungeonMaxFloor);
+        if (floor % TowerDungeonBigBossInterval == 0)
+        {
+            return TowerBossType.BigBoss;
+        }
+
+        if (floor % TowerDungeonMiniBossInterval == 0)
+        {
+            return TowerBossType.MiniBoss;
+        }
+
+        return TowerBossType.None;
+    }
+
+    private static bool IsTowerBossFloor(int floor)
+    {
+        return GetTowerBossType(floor) != TowerBossType.None;
+    }
+
+    private static int GetTowerRecommendedPower(int floor)
+    {
+        var basePower = GetDungeonRecommendedPower(TowerDungeonDefinition, floor);
+        switch (GetTowerBossType(floor))
+        {
+            case TowerBossType.BigBoss:
+                return Mathf.CeilToInt(basePower * 2.05f);
+            case TowerBossType.MiniBoss:
+                return Mathf.CeilToInt(basePower * 1.38f);
+            default:
+                return basePower;
+        }
+    }
+
+    private static int GetTowerEnemyHp(int floor)
+    {
+        var baseHp = GetDungeonEnemyHp(TowerDungeonDefinition, floor);
+        switch (GetTowerBossType(floor))
+        {
+            case TowerBossType.BigBoss:
+                return Mathf.CeilToInt(baseHp * TowerDungeonBigBossHpMultiplier);
+            case TowerBossType.MiniBoss:
+                return Mathf.CeilToInt(baseHp * TowerDungeonMiniBossHpMultiplier);
+            default:
+                return Mathf.CeilToInt(baseHp * TowerDungeonNormalHpMultiplier);
+        }
+    }
+
+    private static int GetTowerEnemyDamage(int floor)
+    {
+        var baseDamage = GetDungeonEnemyDamage(TowerDungeonDefinition, floor);
+        switch (GetTowerBossType(floor))
+        {
+            case TowerBossType.BigBoss:
+                return Mathf.CeilToInt(baseDamage * TowerDungeonBigBossDamageMultiplier);
+            case TowerBossType.MiniBoss:
+                return Mathf.CeilToInt(baseDamage * TowerDungeonMiniBossDamageMultiplier);
+            default:
+                return Mathf.CeilToInt(baseDamage * TowerDungeonNormalDamageMultiplier);
+        }
+    }
+
+    private TowerRewardDefinition GetTowerReward(int floor)
+    {
+        floor = Mathf.Clamp(floor, 1, TowerDungeonMaxFloor);
+        var goldReward = 55 + Mathf.FloorToInt(16f * Mathf.Pow(floor, 1.08f));
+        var essenceReward = 14 + Mathf.FloorToInt(5f * Mathf.Pow(floor, 1.04f));
+        var shards = 0;
+
+        switch (GetTowerBossType(floor))
+        {
+            case TowerBossType.BigBoss:
+                goldReward = Mathf.CeilToInt(goldReward * 4.5f);
+                essenceReward = Mathf.CeilToInt(essenceReward * 4.25f);
+                shards = 12 + Mathf.FloorToInt(floor / 100f);
+                break;
+            case TowerBossType.MiniBoss:
+                goldReward = Mathf.CeilToInt(goldReward * 2.15f);
+                essenceReward = Mathf.CeilToInt(essenceReward * 2f);
+                shards = 4 + Mathf.FloorToInt(floor / 200f);
+                break;
+            default:
+                if (floor % TowerDungeonShardInterval == 0)
+                {
+                    shards = 1 + Mathf.FloorToInt(floor / 250f);
+                }
+
+                break;
+        }
+
+        return new TowerRewardDefinition(goldReward, essenceReward, GetTowerShardHeroIndex(floor), shards);
+    }
+
+    private static int GetTowerShardHeroIndex(int floor)
+    {
+        return Mathf.Abs((Mathf.Max(1, floor) / TowerDungeonShardInterval) % HeroCount);
+    }
+
+    private string FormatTowerReward(TowerRewardDefinition reward)
+    {
+        var text = FormatReward(reward.gold, 0, reward.mythEssence);
+        if (reward.heroShards <= 0)
+        {
+            return text;
+        }
+
+        var heroName = GetLocalizedHeroName(Mathf.Clamp(reward.shardHeroIndex, 0, HeroCount - 1));
+        return $"{text}, {reward.heroShards} {heroName} Shards";
+    }
+
+    private static string FormatTowerRewardShort(TowerRewardDefinition reward)
+    {
+        var text = $"+{FormatCompactNumber(reward.gold)} Gold +{FormatCompactNumber(reward.mythEssence)} Essence";
+        return reward.heroShards > 0 ? $"{text} +{reward.heroShards} Shards" : text;
+    }
+
+    private string FormatTowerFormationStageText(int floor)
+    {
+        var bossLabel = GetTowerBossTypeLabel(GetTowerBossType(floor));
+        return string.IsNullOrWhiteSpace(bossLabel)
+            ? $"{GetLocalizedDungeonName(TowerDungeonDefinition.dungeonId)} F{floor}"
+            : $"{GetLocalizedDungeonName(TowerDungeonDefinition.dungeonId)} F{floor} {bossLabel}";
     }
 
     private void PlayCombatVisual(string mode, string label, CombatResult result, int enemyMaxHp)
@@ -7767,6 +8109,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static string[] GetDungeonBattleMapTextureNames(string dungeonId)
     {
+        if (IsTowerDungeonId(dungeonId))
+        {
+            return TowerDungeonBattleMapTextureNames;
+        }
+
         if (dungeonId == EssenceDungeonDefinition.dungeonId)
         {
             return EssenceDungeonBattleMapTextureNames;
@@ -11621,6 +11968,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static string GetDungeonBossTextureName(string dungeonId)
     {
+        if (IsTowerDungeonId(dungeonId))
+        {
+            return "enemy_golem";
+        }
+
         if (dungeonId == EssenceDungeonDefinition.dungeonId)
         {
             return "enemy_dragon";
@@ -11636,6 +11988,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static string GetDungeonBossName(string dungeonId)
     {
+        if (IsTowerDungeonId(dungeonId))
+        {
+            return "Apex Guardian";
+        }
+
         if (dungeonId == EssenceDungeonDefinition.dungeonId)
         {
             return "Rift Dragon";
@@ -11647,6 +12004,46 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return "Treasure Golem";
+    }
+
+    private static string GetTowerEnemyTextureName(int floor)
+    {
+        switch (GetTowerBossType(floor))
+        {
+            case TowerBossType.BigBoss:
+                return "enemy_dragon";
+            case TowerBossType.MiniBoss:
+                return "enemy_golem";
+            default:
+                var regularCount = Mathf.Max(1, CampaignEnemyCombatTextureNames.Length - 2);
+                return CampaignEnemyCombatTextureNames[Mathf.Abs(floor - 1) % regularCount];
+        }
+    }
+
+    private static string GetTowerEnemyLabel(int floor)
+    {
+        switch (GetTowerBossType(floor))
+        {
+            case TowerBossType.BigBoss:
+                return "Apex Guardian";
+            case TowerBossType.MiniBoss:
+                return "Trial Warden";
+            default:
+                return "Tower Guard Formation";
+        }
+    }
+
+    private static string GetTowerBossTypeLabel(TowerBossType bossType)
+    {
+        switch (bossType)
+        {
+            case TowerBossType.BigBoss:
+                return "Big Boss";
+            case TowerBossType.MiniBoss:
+                return "Mini Boss";
+            default:
+                return string.Empty;
+        }
     }
 
     private static float GetHeroFacingScale(int heroIndex)
@@ -12492,6 +12889,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private DungeonDefinition ResolveDungeonDefinition(string dungeonId)
     {
+        if (dungeonId == TowerDungeonDefinition.dungeonId)
+        {
+            return TowerDungeonDefinition;
+        }
+
         if (dungeonId == EssenceDungeonDefinition.dungeonId)
         {
             return EssenceDungeonDefinition;
@@ -12507,6 +12909,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private int GetDungeonFloor(string dungeonId)
     {
+        if (IsTowerDungeonId(dungeonId))
+        {
+            NormalizeTowerDungeonProgress();
+            return towerDungeonSelectedFloor;
+        }
+
         if (dungeonId == EssenceDungeonDefinition.dungeonId)
         {
             return Mathf.Max(1, essenceDungeonFloor);
@@ -12518,6 +12926,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return Mathf.Max(1, goldDungeonFloor);
+    }
+
+    private static bool IsTowerDungeonId(string dungeonId)
+    {
+        return dungeonId == TowerDungeonDefinition.dungeonId;
+    }
+
+    private bool IsSelectedTowerDungeon()
+    {
+        return IsTowerDungeonId(selectedDungeonId);
     }
 
     private static string ShortHash(string contentHash)
@@ -13436,10 +13854,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshDungeonSelectorCardUi(EssenceDungeonDefinition, essenceDungeonFloor, essenceDungeonTitleText, essenceDungeonProgressText, essenceDungeonText);
         RefreshDungeonSelectorCardUi(GearDungeonDefinition, gearDungeonFloor, gearDungeonTitleText, gearDungeonProgressText, gearDungeonText);
         RefreshFutureDungeonCardUi(shardRiftDungeonTitleText, shardRiftDungeonProgressText, shardRiftDungeonText, "Shard Rift");
-        RefreshFutureDungeonCardUi(ancientTowerDungeonTitleText, ancientTowerDungeonProgressText, ancientTowerDungeonText, "Ancient Tower");
+        RefreshTowerDungeonSelectorCardUi();
         RefreshDungeonSelectorState(goldDungeonButton, GoldDungeonDefinition.dungeonId, new Color(0.96f, 0.68f, 0.22f, 0.96f));
         RefreshDungeonSelectorState(essenceDungeonButton, EssenceDungeonDefinition.dungeonId, new Color(0.55f, 0.34f, 1f, 0.96f));
         RefreshDungeonSelectorState(gearDungeonButton, GearDungeonDefinition.dungeonId, new Color(0.18f, 0.86f, 0.95f, 0.96f));
+        RefreshDungeonSelectorState(ancientTowerDungeonButton, TowerDungeonDefinition.dungeonId, new Color(1f, 0.58f, 0.24f, 0.96f));
         RefreshDungeonDetailUi();
         RefreshDungeonFloorListUi();
 
@@ -13498,6 +13917,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void RefreshTowerDungeonSelectorCardUi()
+    {
+        NormalizeTowerDungeonProgress();
+        if (ancientTowerDungeonTitleText != null)
+        {
+            ancientTowerDungeonTitleText.text = GetDungeonSelectorTitle(TowerDungeonDefinition.dungeonId);
+        }
+
+        if (ancientTowerDungeonProgressText != null)
+        {
+            ancientTowerDungeonProgressText.text = $"Unlocked F{towerDungeonHighestUnlockedFloor}/{TowerDungeonMaxFloor}";
+        }
+
+        if (ancientTowerDungeonText != null)
+        {
+            ancientTowerDungeonText.text = $"Cleared {towerDungeonHighestClearedFloor} | {FormatTowerRewardShort(GetTowerReward(towerDungeonHighestUnlockedFloor))}";
+        }
+    }
+
     private void RefreshDungeonSelectorState(Button button, string dungeonId, Color accentColor)
     {
         if (button == null)
@@ -13528,6 +13966,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         var dungeon = ResolveDungeonDefinition(selectedDungeonId);
         var floor = GetDungeonFloor(dungeon.dungeonId);
+        if (IsTowerDungeonId(dungeon.dungeonId))
+        {
+            RefreshTowerDungeonDetailUi(floor);
+            return;
+        }
+
         var bannerTexture = LoadRuntimeTexture(GetDungeonBannerTextureName(dungeon.dungeonId));
         if (dungeonDetailBannerImage != null)
         {
@@ -13573,6 +14017,58 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void RefreshTowerDungeonDetailUi(int floor)
+    {
+        NormalizeTowerDungeonProgress();
+        var bannerTexture = LoadRuntimeTexture(GetDungeonBannerTextureName(TowerDungeonDefinition.dungeonId));
+        if (dungeonDetailBannerImage != null)
+        {
+            dungeonDetailBannerImage.texture = bannerTexture;
+            dungeonDetailBannerImage.color = bannerTexture != null ? new Color(1f, 1f, 1f, 0.94f) : new Color(1f, 0.74f, 0.42f, 0.12f);
+        }
+
+        if (dungeonDetailBossImage != null)
+        {
+            var textureName = GetTowerEnemyTextureName(floor);
+            dungeonDetailBossImage.texture = LoadCombatTexture(textureName, "idle", 0, "enemy_campaign");
+            dungeonDetailBossImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale(textureName), 1f, 1f);
+        }
+
+        if (dungeonDetailTitleText != null)
+        {
+            dungeonDetailTitleText.text = GetDungeonSelectorTitle(TowerDungeonDefinition.dungeonId);
+        }
+
+        if (dungeonDetailMetaText != null)
+        {
+            var bossType = GetTowerBossType(floor);
+            var bossText = bossType == TowerBossType.None ? "Normal Floor" : GetTowerBossTypeLabel(bossType);
+            dungeonDetailMetaText.text = $"{GetLocalizedDungeonSetTitle(TowerDungeonDefinition.dungeonId)}\n{bossText} | Rec {FormatCompactNumber(GetTowerRecommendedPower(floor))} | {GetTowerEnemyLabel(floor)}";
+        }
+
+        if (dungeonDetailRewardsText != null)
+        {
+            dungeonDetailRewardsText.text = $"Floor {floor}/{TowerDungeonMaxFloor}  HP {FormatCompactNumber(GetTowerEnemyHp(floor))}  DMG {GetTowerEnemyDamage(floor)}\nReward: {FormatTowerReward(GetTowerReward(floor))}";
+        }
+
+        if (dungeonDetailRunButtonText != null)
+        {
+            dungeonDetailRunButtonText.text = CanRunTowerFloor(floor) ? $"Start F{floor}" : backendGameplayEnabled ? "Server Pending" : "Select Active";
+        }
+
+        if (dungeonDetailRunButton != null)
+        {
+            dungeonDetailRunButton.interactable = CanStartDungeonRun() && CanRunTowerFloor(floor);
+        }
+
+        if (dungeonFlowHintText != null)
+        {
+            dungeonFlowHintText.text = backendGameplayEnabled
+                ? "Tower MVP uses local progress only in this build. Turn Server Mode off before running tower floors."
+                : $"Tower section {towerDungeonSectionStartFloor}-{GetTowerSectionEndFloor(towerDungeonSectionStartFloor)}. Clear F{towerDungeonHighestUnlockedFloor} to unlock the next floor.";
+        }
+    }
+
     private void RefreshDungeonFloorListUi()
     {
         if (dungeonFloorButtons == null || dungeonFloorTitleTexts == null || dungeonFloorStatusTexts == null || dungeonFloorActionTexts == null)
@@ -13581,6 +14077,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var dungeon = ResolveDungeonDefinition(selectedDungeonId);
+        if (IsTowerDungeonId(dungeon.dungeonId))
+        {
+            RefreshTowerFloorListUi();
+            return;
+        }
+
+        SetComponentActive(towerFloorSectionRoot, false);
         var currentFloor = GetDungeonFloor(dungeon.dungeonId);
         var firstFloor = currentFloor <= 2 ? 1 : currentFloor - 2;
         for (var i = 0; i < dungeonFloorButtons.Length; i++)
@@ -13626,6 +14129,78 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
 
             dungeonFloorButtons[i].interactable = isReady && CanStartDungeonRun();
+        }
+    }
+
+    private void RefreshTowerFloorListUi()
+    {
+        NormalizeTowerDungeonProgress();
+        SetComponentActive(towerFloorSectionRoot, true);
+        if (towerFloorSectionText != null)
+        {
+            towerFloorSectionText.text = $"F{towerDungeonSectionStartFloor}-{GetTowerSectionEndFloor(towerDungeonSectionStartFloor)}";
+        }
+
+        if (towerFloorSectionPreviousButton != null)
+        {
+            towerFloorSectionPreviousButton.interactable = towerDungeonSectionStartFloor > 1;
+        }
+
+        if (towerFloorSectionNextButton != null)
+        {
+            towerFloorSectionNextButton.interactable = towerDungeonHighestUnlockedFloor > GetTowerSectionEndFloor(towerDungeonSectionStartFloor);
+        }
+
+        for (var i = 0; i < dungeonFloorButtons.Length; i++)
+        {
+            var floor = GetTowerFloorForEntry(i);
+            var bossType = GetTowerBossType(floor);
+            var isCleared = floor <= towerDungeonHighestClearedFloor;
+            var isReady = CanRunTowerFloor(floor);
+            var isLocked = floor > towerDungeonHighestUnlockedFloor;
+            var isSelected = floor == towerDungeonSelectedFloor;
+            var bossLabel = GetTowerBossTypeLabel(bossType);
+
+            if (dungeonFloorTitleTexts[i] != null)
+            {
+                dungeonFloorTitleTexts[i].text = string.IsNullOrWhiteSpace(bossLabel)
+                    ? $"Floor {floor}"
+                    : $"F{floor} {bossLabel}";
+                dungeonFloorTitleTexts[i].color = isSelected ? new Color(1f, 0.93f, 0.62f) : Color.white;
+            }
+
+            if (dungeonFloorStatusTexts[i] != null)
+            {
+                dungeonFloorStatusTexts[i].text = isCleared ? "Cleared" : isReady ? "Ready" : isLocked ? "Locked" : "Preview";
+                dungeonFloorStatusTexts[i].color = isCleared
+                    ? new Color(0.48f, 0.95f, 0.72f)
+                    : isReady
+                        ? new Color(0.35f, 0.95f, 1f)
+                        : isLocked
+                            ? new Color(0.62f, 0.64f, 0.72f)
+                            : new Color(0.9f, 0.76f, 0.38f);
+            }
+
+            if (dungeonFloorActionTexts[i] != null)
+            {
+                dungeonFloorActionTexts[i].text = isReady
+                    ? $"Battle | Rec {FormatCompactNumber(GetTowerRecommendedPower(floor))}"
+                    : FormatTowerRewardShort(GetTowerReward(floor));
+                dungeonFloorActionTexts[i].color = isReady ? new Color(1f, 0.94f, 0.72f) : new Color(0.78f, 0.86f, 0.92f);
+            }
+
+            if (dungeonFloorAccentImages != null && i < dungeonFloorAccentImages.Length && dungeonFloorAccentImages[i] != null)
+            {
+                dungeonFloorAccentImages[i].color = bossType == TowerBossType.BigBoss
+                    ? new Color(1f, 0.34f, 0.22f, 0.92f)
+                    : bossType == TowerBossType.MiniBoss
+                        ? new Color(1f, 0.72f, 0.24f, 0.9f)
+                        : isReady
+                            ? GetDungeonAccentColor(TowerDungeonDefinition.dungeonId)
+                            : new Color(0.36f, 0.36f, 0.42f, 0.76f);
+            }
+
+            dungeonFloorButtons[i].interactable = !isLocked && CanStartDungeonRun();
         }
     }
 
@@ -13681,6 +14256,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private bool CanStartDungeonRun()
     {
+        if (IsSelectedTowerDungeon() && backendGameplayEnabled)
+        {
+            return false;
+        }
+
         return !backendRequestInProgress && !backendLifecycleFlushInProgress && !campaignFightInProgress;
     }
 
@@ -13704,11 +14284,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return "Gear Forge";
         }
 
+        if (resolvedId == TowerDungeonDefinition.dungeonId)
+        {
+            return "Tower Dungeon";
+        }
+
         return "Gold Vault";
     }
 
     private static string GetDungeonBannerTextureName(string dungeonId)
     {
+        if (IsTowerDungeonId(dungeonId))
+        {
+            return "area_map_hollow_spire_obsidian_vault";
+        }
+
         if (dungeonId == EssenceDungeonDefinition.dungeonId)
         {
             return "essence_dungeon_set_banner";
@@ -13724,6 +14314,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private static Color GetDungeonAccentColor(string dungeonId)
     {
+        if (IsTowerDungeonId(dungeonId))
+        {
+            return new Color(1f, 0.58f, 0.24f, 0.94f);
+        }
+
         if (dungeonId == EssenceDungeonDefinition.dungeonId)
         {
             return new Color(0.55f, 0.34f, 1f, 0.94f);
@@ -13743,6 +14338,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (UseBackendDefinitionView() && TryGetBackendDungeonDefinition(dungeon.dungeonId, out var backendDefinition))
         {
             return GetBackendDungeonRequiredPower(backendDefinition, floor);
+        }
+
+        if (IsTowerDungeonId(dungeon.dungeonId))
+        {
+            return GetTowerRecommendedPower(floor);
         }
 
         return GetDungeonRecommendedPower(dungeon, floor);
@@ -13771,6 +14371,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return TrFormat("dungeon.reward.currency", GetEssenceDungeonReward(floor), GetLocalizedCurrencyName(dungeon.rewardCurrencyId));
         }
 
+        if (IsTowerDungeonId(dungeon.dungeonId))
+        {
+            return $"Reward: {FormatTowerReward(GetTowerReward(floor))}";
+        }
+
         return Tr("dungeon.reward.drop");
     }
 
@@ -13784,6 +14389,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (dungeonId == GearDungeonDefinition.dungeonId)
         {
             return "Iron Armory Set";
+        }
+
+        if (IsTowerDungeonId(dungeonId))
+        {
+            return "Turm der Pruefung";
         }
 
         return "Gold Treasury Set";
@@ -13817,6 +14427,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return TrFormat("dungeon.preview.reward", GetLocalizedDungeonName(localDefinition.dungeonId), floor, GetDungeonRecommendedPower(floor), FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor)), GetEssenceDungeonReward(floor), GetLocalizedCurrencyName(localDefinition.rewardCurrencyId));
         }
 
+        if (IsTowerDungeonId(localDefinition.dungeonId))
+        {
+            return $"{GetLocalizedDungeonName(localDefinition.dungeonId)} F{floor}  Rec {FormatCompactNumber(GetTowerRecommendedPower(floor))}\n{GetTowerEnemyLabel(floor)} HP {FormatCompactNumber(GetTowerEnemyHp(floor))}  {FormatTowerReward(GetTowerReward(floor))}";
+        }
+
         return TrFormat("dungeon.preview.drop", GetLocalizedDungeonName(localDefinition.dungeonId), floor, GetGearDungeonRecommendedPower(floor), FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor)));
     }
 
@@ -13840,6 +14455,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (dungeon.dungeonId == EssenceDungeonDefinition.dungeonId)
         {
             return TrFormat("dungeon.reward.currency", GetEssenceDungeonReward(floor), GetLocalizedCurrencyName(dungeon.rewardCurrencyId));
+        }
+
+        if (IsTowerDungeonId(dungeon.dungeonId))
+        {
+            return $"Reward: {FormatTowerReward(GetTowerReward(floor))}";
         }
 
         return Tr("dungeon.reward.drop");
@@ -15398,7 +16018,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                PlayerPrefs.HasKey(GoldKey) ||
                PlayerPrefs.HasKey(GemsKey) ||
                PlayerPrefs.HasKey(MythEssenceKey) ||
-               PlayerPrefs.HasKey(EnemyLevelKey);
+               PlayerPrefs.HasKey(EnemyLevelKey) ||
+               PlayerPrefs.HasKey(TowerDungeonHighestUnlockedFloorKey);
     }
 
     private void EnsureRuntimeScreenLayout()
@@ -19225,15 +19846,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             "dungeon_essence",
             "Shard Rift",
             new Color(0.74f, 0.34f, 1f, 0.6f));
-        EnsureRuntimeFutureDungeonSelectorCard(
+        EnsureRuntimeDungeonSelectorCard(
             ref ancientTowerDungeonButton,
             ref ancientTowerDungeonTitleText,
             ref ancientTowerDungeonProgressText,
             ref ancientTowerDungeonText,
             "Ancient Tower Dungeon Selector Card",
+            "area_map_hollow_spire_obsidian_vault",
             "dungeon_portal",
-            "Ancient Tower",
-            new Color(1f, 0.58f, 0.24f, 0.62f));
+            TowerDungeonDefinition.dungeonId,
+            new Color(1f, 0.58f, 0.24f, 0.96f),
+            locked: false);
 
         dungeonDetailRoot = EnsureRuntimePanel(dungeonSelectorPanelRoot, "Dungeon Detail Panel", new Vector2(-144f, -304f), new Vector2(602f, 586f), new Color(0.025f, 0.03f, 0.046f, 0.97f));
         EnsureRuntimePanel(dungeonDetailRoot, "Dungeon Detail Top Trim", new Vector2(0f, -8f), new Vector2(566f, 5f), new Color(0.86f, 0.56f, 0.22f, 0.9f));
@@ -19432,6 +20055,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         title.fontSizeMax = 22;
         title.textWrappingMode = TextWrappingModes.NoWrap;
 
+        towerFloorSectionRoot = EnsureRuntimePanel(dungeonFloorListRoot, "Tower Floor Section Controls", new Vector2(0f, -54f), new Vector2(236f, 38f), new Color(0.075f, 0.046f, 0.026f, 0.92f));
+        if (towerFloorSectionPreviousButton == null)
+        {
+            towerFloorSectionPreviousButton = CreateRuntimeButton(towerFloorSectionRoot, "Tower Floor Section Previous", "<", -86f, -6f, 42f, 30f);
+        }
+
+        if (towerFloorSectionNextButton == null)
+        {
+            towerFloorSectionNextButton = CreateRuntimeButton(towerFloorSectionRoot, "Tower Floor Section Next", ">", 86f, -6f, 42f, 30f);
+        }
+
+        if (towerFloorSectionText == null)
+        {
+            towerFloorSectionText = CreateRuntimeText(towerFloorSectionRoot, "Tower Floor Section Text", "F1-100", 16, new Vector2(0f, -7f), new Vector2(118f, 24f));
+        }
+
+        StyleDungeonMapZoomButton(towerFloorSectionPreviousButton);
+        StyleDungeonMapZoomButton(towerFloorSectionNextButton);
+        StyleDungeonFloorText(towerFloorSectionText, 16);
+        SetComponentActive(towerFloorSectionRoot, false);
+
         if (dungeonFloorButtons == null || dungeonFloorButtons.Length != 4)
         {
             dungeonFloorButtons = new Button[4];
@@ -19443,7 +20087,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         for (var i = 0; i < dungeonFloorButtons.Length; i++)
         {
-            var y = -76f - i * 122f;
+            var y = -92f - i * 112f;
             if (dungeonFloorButtons[i] == null)
             {
                 dungeonFloorButtons[i] = CreateRuntimeButton(dungeonFloorListRoot, $"Dungeon Floor Entry {i + 1}", string.Empty, 0f, y, 236f, 108f);
@@ -19859,6 +20503,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             gearDungeonButton.onClick.AddListener(SelectGearDungeonForPreview);
         }
 
+        if (ancientTowerDungeonButton != null)
+        {
+            ancientTowerDungeonButton.onClick.RemoveListener(SelectTowerDungeonForPreview);
+            ancientTowerDungeonButton.onClick.AddListener(SelectTowerDungeonForPreview);
+        }
+
         if (dungeonDetailRunButton != null)
         {
             dungeonDetailRunButton.onClick.RemoveListener(RunSelectedDungeon);
@@ -19874,10 +20524,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                     continue;
                 }
 
-                dungeonFloorButtons[i].onClick.RemoveListener(RunSelectedDungeon);
-                dungeonFloorButtons[i].onClick.AddListener(RunSelectedDungeon);
+                dungeonFloorButtons[i].onClick.RemoveAllListeners();
+                var floorIndex = i;
+                dungeonFloorButtons[i].onClick.AddListener(() => SelectDungeonFloorEntry(floorIndex));
             }
         }
+
+        RegisterTowerFloorSectionButtonListeners();
     }
 
     private void UnregisterDungeonButtonListeners()
@@ -19900,6 +20553,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             gearDungeonButton.onClick.RemoveListener(SelectGearDungeonForPreview);
         }
 
+        if (ancientTowerDungeonButton != null)
+        {
+            ancientTowerDungeonButton.onClick.RemoveListener(SelectTowerDungeonForPreview);
+        }
+
         if (dungeonDetailRunButton != null)
         {
             dungeonDetailRunButton.onClick.RemoveListener(RunSelectedDungeon);
@@ -19911,10 +20569,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 if (dungeonFloorButtons[i] != null)
                 {
-                    dungeonFloorButtons[i].onClick.RemoveListener(RunSelectedDungeon);
+                    dungeonFloorButtons[i].onClick.RemoveAllListeners();
                 }
             }
         }
+
+        UnregisterTowerFloorSectionButtonListeners();
     }
 
     private void SelectGoldDungeonForPreview()
@@ -19932,6 +20592,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SelectDungeonForPreview(GearDungeonDefinition.dungeonId);
     }
 
+    private void SelectTowerDungeonForPreview()
+    {
+        SelectDungeonForPreview(TowerDungeonDefinition.dungeonId);
+    }
+
     private void SelectDungeonForPreview(string dungeonId)
     {
         if (campaignFightInProgress)
@@ -19940,6 +20605,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         selectedDungeonId = ResolveDungeonDefinition(dungeonId).dungeonId;
+        if (IsSelectedTowerDungeon())
+        {
+            NormalizeTowerDungeonProgress();
+            towerDungeonSectionStartFloor = NormalizeTowerSectionStart(towerDungeonSelectedFloor);
+        }
+
         RefreshDungeonUi();
     }
 
@@ -19950,7 +20621,88 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
+        if (IsSelectedTowerDungeon() && backendGameplayEnabled)
+        {
+            SetDungeonResult($"{GetLocalizedDungeonName(TowerDungeonDefinition.dungeonId)} is local-only in this build.\nServer Mode tower persistence is still open.");
+            RefreshDungeonUi();
+            return;
+        }
+
         ShowDungeonFormation(selectedDungeonId);
+    }
+
+    private void SelectDungeonFloorEntry(int entryIndex)
+    {
+        if (campaignFightInProgress)
+        {
+            return;
+        }
+
+        if (!IsSelectedTowerDungeon())
+        {
+            RunSelectedDungeon();
+            return;
+        }
+
+        towerDungeonSelectedFloor = Mathf.Clamp(GetTowerFloorForEntry(entryIndex), 1, towerDungeonHighestUnlockedFloor);
+        towerDungeonSectionStartFloor = NormalizeTowerSectionStart(towerDungeonSelectedFloor);
+        RefreshDungeonUi();
+    }
+
+    private void RegisterTowerFloorSectionButtonListeners()
+    {
+        if (towerFloorSectionPreviousButton != null)
+        {
+            towerFloorSectionPreviousButton.onClick.RemoveListener(ShowPreviousTowerFloorSection);
+            towerFloorSectionPreviousButton.onClick.AddListener(ShowPreviousTowerFloorSection);
+        }
+
+        if (towerFloorSectionNextButton != null)
+        {
+            towerFloorSectionNextButton.onClick.RemoveListener(ShowNextTowerFloorSection);
+            towerFloorSectionNextButton.onClick.AddListener(ShowNextTowerFloorSection);
+        }
+    }
+
+    private void UnregisterTowerFloorSectionButtonListeners()
+    {
+        if (towerFloorSectionPreviousButton != null)
+        {
+            towerFloorSectionPreviousButton.onClick.RemoveListener(ShowPreviousTowerFloorSection);
+        }
+
+        if (towerFloorSectionNextButton != null)
+        {
+            towerFloorSectionNextButton.onClick.RemoveListener(ShowNextTowerFloorSection);
+        }
+    }
+
+    private void ShowPreviousTowerFloorSection()
+    {
+        ChangeTowerFloorSection(-TowerDungeonSectionSize);
+    }
+
+    private void ShowNextTowerFloorSection()
+    {
+        ChangeTowerFloorSection(TowerDungeonSectionSize);
+    }
+
+    private void ChangeTowerFloorSection(int delta)
+    {
+        if (!IsSelectedTowerDungeon() || campaignFightInProgress)
+        {
+            return;
+        }
+
+        towerDungeonSectionStartFloor = NormalizeTowerSectionStart(towerDungeonSectionStartFloor + delta);
+        if (towerDungeonSectionStartFloor > towerDungeonHighestUnlockedFloor)
+        {
+            towerDungeonSectionStartFloor = NormalizeTowerSectionStart(towerDungeonHighestUnlockedFloor);
+        }
+
+        var sectionEnd = GetTowerSectionEndFloor(towerDungeonSectionStartFloor);
+        towerDungeonSelectedFloor = Mathf.Clamp(towerDungeonSelectedFloor, towerDungeonSectionStartFloor, Mathf.Min(sectionEnd, towerDungeonHighestUnlockedFloor));
+        RefreshDungeonUi();
     }
 
     private static void StyleDungeonMapZoomButton(Button button)
@@ -20832,6 +21584,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         LayoutDungeonSelectorCard(ancientTowerDungeonButton, 352f);
         MoveUiElement(dungeonDetailRoot, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(-144f, -304f), new Vector2(602f, 586f));
         MoveUiElement(dungeonFloorListRoot, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(324f, -304f), new Vector2(274f, 586f));
+        MoveUiElement(towerFloorSectionRoot, dungeonFloorListRoot != null ? dungeonFloorListRoot.gameObject : dungeonsPanel, new Vector2(0f, -54f), new Vector2(236f, 38f));
+        MoveUiElement(towerFloorSectionPreviousButton, towerFloorSectionRoot != null ? towerFloorSectionRoot.gameObject : dungeonsPanel, new Vector2(-86f, -6f), new Vector2(42f, 30f));
+        MoveUiElement(towerFloorSectionNextButton, towerFloorSectionRoot != null ? towerFloorSectionRoot.gameObject : dungeonsPanel, new Vector2(86f, -6f), new Vector2(42f, 30f));
+        MoveUiElement(towerFloorSectionText, towerFloorSectionRoot != null ? towerFloorSectionRoot.gameObject : dungeonsPanel, new Vector2(0f, -7f), new Vector2(118f, 24f));
         MoveUiElement(dungeonFlowHintRoot, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(0f, -934f), new Vector2(884f, 88f));
         MoveUiElement(runtimeDungeonResultText, dungeonsPanel, new Vector2(0, -1296), new Vector2(820, 58));
         if (dungeonsHeaderText != null)
@@ -23481,6 +24237,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var stage = GetStageDefinition(stageNumber);
         var dungeon = ResolveDungeonDefinition(selectedDungeonId);
         var dungeonFloor = GetDungeonFloor(dungeon.dungeonId);
+        var isTower = isDungeon && IsTowerDungeonId(dungeon.dungeonId);
         RefreshFormationArenaBackground(isDungeon);
 
         if (formationHeaderText != null)
@@ -23491,7 +24248,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (formationStageText != null)
         {
             formationStageText.text = isDungeon
-                ? $"{GetLocalizedDungeonName(dungeon.dungeonId)} F{dungeonFloor}"
+                ? isTower
+                    ? FormatTowerFormationStageText(dungeonFloor)
+                    : $"{GetLocalizedDungeonName(dungeon.dungeonId)} F{dungeonFloor}"
                 : $"{Tr("ui.common.stage")}: {GetCampaignStageLabel(stageNumber)}";
         }
 
@@ -23503,13 +24262,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (formationEnemyText != null)
         {
             formationEnemyText.text = isDungeon
-                ? $"{Tr("formation.enemy_power")}\n{FormatCompactNumber(GetDungeonRecommendedPower(dungeon, dungeonFloor))}"
+                ? $"{Tr("formation.enemy_power")}\n{FormatCompactNumber(isTower ? GetTowerRecommendedPower(dungeonFloor) : GetDungeonRecommendedPower(dungeon, dungeonFloor))}"
                 : $"{Tr("formation.enemy_power")}\n{FormatCompactNumber(GetStageRecommendedPower(stageNumber))}";
         }
 
         if (formationEnemyImage != null)
         {
-            var enemyTextureName = isDungeon ? GetDungeonBossTextureName(dungeon.dungeonId) : GetCampaignEnemyTextureName(stageNumber, 0);
+            var enemyTextureName = isTower ? GetTowerEnemyTextureName(dungeonFloor) : isDungeon ? GetDungeonBossTextureName(dungeon.dungeonId) : GetCampaignEnemyTextureName(stageNumber, 0);
             formationEnemyImage.texture = LoadCombatTexture(enemyTextureName, "idle", 0, "enemy_campaign");
             formationEnemyImage.rectTransform.anchoredPosition = isDungeon ? new Vector2(410, -70) : new Vector2(414, -92);
             formationEnemyImage.rectTransform.sizeDelta = isDungeon ? new Vector2(144, 144) : new Vector2(110, 110);
