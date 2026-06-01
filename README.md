@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.173
+Prototype version: 0.2.174
 Local save version: 2
 
 Current prototype:
@@ -14,6 +14,7 @@ Current prototype:
 - Runtime Account Start screen appears before Home and shows local-save presence, backend session/account state, Local/Server mode, Player ID, Continue, Login with Email, Create Account, Play as Guest, and a Google Play later hint
 - Android tester builds now have an explicit package/version identity: `com.xmiepsen.mythwake`, app name `Mythwake`, Version Name matching the visible Prototype version, and Version Code derived from that version
 - Dungeons now include a local Tower Trial MVP with 1,000 floors, 100-floor section browsing, saved highest cleared/unlocked/selected floor state, mini-bosses every 25 floors, apex bosses every 100 floors, and Gold/Myth Essence/Hero Shard rewards. Server/PostgreSQL tower persistence is intentionally still a follow-up.
+- Hero progression now has a shared client/backend Lv. 100 cap. Hero Shards are saved for Awakening 0-10 after Lv. 100, with per-stage ATK/HP bonuses and Hero Detail copy that explains whether Level, Myth Essence, or Shards are missing.
 - First core loop: fight enemies, earn Myth Essence, upgrade heroes
 - Auto attack while the app is open
 - Local save data via a versioned JSON blob stored in PlayerPrefs
@@ -27,7 +28,7 @@ Current prototype:
 - Server definitions include campaign and dungeon combat stats so Unity previews match backend combat
 - Server Mode uses backend definitions for summon, progression cost, daily mission, and Mission Track preview values
 - Server Mode uses backend hero, equipment, accessory, and snapshot team stats for authoritative stat previews
-- Server Mode upgrade buttons now respect backend max-level/max-ascension caps and AFK timing definitions
+- Server Mode upgrade buttons now respect backend max-level/Awakening caps and AFK timing definitions
 - Local and backend AFK reward caps are aligned at 24 hours
 - Fast Rewards popup separates local stored rewards from Server Mode backend-authoritative AFK claim timing and server-snapshot Village AFK bonuses
 - Cached Server Mode sessions persist across Unity restarts and are restored from the Account Start screen through `/client/bootstrap`
@@ -41,7 +42,7 @@ Current prototype:
 - Auto Attack stays local-only for now and is paused while Server Mode is active
 - Campaign fights, dungeon runs, and summons now return local action-result DTOs
 - Accessory equip, level, and fuse actions now return local action-result DTOs
-- Hero leveling, hero ascension, equipment leveling, daily claims, and mission track claims now return local action-result DTOs
+- Hero leveling, hero Awakening, equipment leveling, daily claims, and mission track claims now return local action-result DTOs
 - Basic offline Gold and Myth Essence calculation when reopening the app
 - Visible prototype/save version text for quick test builds
 - Debug resource buttons for adding small Gold, Gems, Myth Essence, and accessory test amounts
@@ -78,9 +79,9 @@ Current prototype:
 - Campaign and dungeon fights now simulate win/loss with team HP and enemy damage, and local result summaries mirror the server combat shape with team HP, enemy HP, team ATK, enemy damage, dealt/taken/heal/crit/miss details
 - Campaign and dungeon result popups append a short next-step line so early testers know where to go after a win or loss
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
-- Hero shards add minor Attack and HP immediately
-- Summon result copy now explains that shards give small stats immediately and enough duplicates unlock Ascend
-- Hero ascension consumes shards for larger saved stat upgrades
+- Hero shards are saved for Lv. 100 Awakening instead of giving passive immediate stats
+- Summon result copy explains that shards fuel Awakening after Lv. 100
+- Hero Awakening consumes shards for larger saved ATK/HP stat upgrades
 - Daily missions track battles, stage clears, and summons
 - Daily mission claims reward Gold, Gems, Myth Essence, and reset by UTC day
 - Mission Track XP is earned from daily mission claims
@@ -117,7 +118,7 @@ Backend:
 - In-memory pre-PostgreSQL action endpoints for auth, campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
 - Optional PostgreSQL connection using `MYTHWAKE_DATABASE_URL`
 - Embedded PostgreSQL migrations for first core tables and definition seeds
-- PostgreSQL player progress tables for currencies, campaign, dungeons, heroes, ascensions, and hero shards
+- PostgreSQL player progress tables for currencies, campaign, dungeons, heroes, Awakening stages through the existing ascension storage, and hero shards
 - JSON player state snapshot remains as a debug/fallback mirror
 - PostgreSQL schemas split tables into `account`, `common`, `player`, `logs`, and `debug`
 - Navicat-friendly debug views expose player overview, hero overview, and economy history
@@ -139,7 +140,7 @@ Backend:
 - Player gameplay actions read balance through an injectable catalog boundary, and PostgreSQL-backed APIs now inject the loaded common definition snapshot into live gameplay logic at startup
 - Backend Daily Mission, Mission Track, and Summon actions now validate against known server balance definitions instead of accepting arbitrary claim IDs
 - Backend new-player starter heroes are seeded from server-owned hero definitions
-- Backend hero definitions now include server-owned stat scaling and level/ascension caps, and team ATK/HP/Power are derived from those definitions
+- Backend hero definitions now include server-owned stat scaling and level/Awakening caps, and team ATK/HP/Power are derived from those definitions
 - Backend starter equipment definitions now include server-owned stat scaling and max-level caps, and equipment training validates against those definitions
 - Backend Accessory equip, level, and fuse actions now validate against server-owned accessory and rarity definitions instead of deriving slot/fuse behavior from ID strings
 - Backend accessory definition snapshots and PostgreSQL seeds include all 6 client slots, including `headgear`/Helm and its R0-R4 item definitions
@@ -207,6 +208,7 @@ Backend:
   - `docs/TESTER_ACCOUNTS.md`
   - `docs/TESTER_RELEASE_PROCESS.md`
   - `docs/TESTER_BUILD_NOTES.md`
+  - `docs/HERO_PROGRESSION.md`
   - `docs/SERVER_DEPLOYMENT.md`
   - `docs/TESTER_BUILD_0_2.md`
   - `docs/TESTER_BUILD_0_1.md`
@@ -222,6 +224,7 @@ Backend:
   - `docs/screenshots/android/2026-05-29-tester-build-0-1-icon/README.md`
 
 Changelog:
+- Prototype 0.2.174 / Backend 0.2.61: Stabilized Hero leveling and Awakening rules across client and backend. Heroes now cap at Lv. 100 locally and on the server; Awakening is blocked before Lv. 100, uses Hero Shards, caps at 10, and applies the existing per-hero ATK/HP Awakening bonuses. Hero Detail now shows `Lv. x/100`, `Awk y/10`, the next resource gate, and switches its main action from Level Up to Awaken at cap. Backend keeps the legacy `/heroes/{hero_id}/ascend` route for compatibility and adds `/heroes/{hero_id}/awaken`; service and Unity validators cover Lv. 100 cap, early Awakening lockout, shard spend, and stat/power gains. APK `Builds/Android/Mythwake-0.2.174-hero-progression.apk` builds, installs, and cold-launches in MuMuPlayer with versionCode `2174`, versionName `0.2.174`, and no filtered Unity/Mythwake crash errors.
 - Prototype 0.2.173: Fixed the Tower Trial selector card on device by allowing the playable tower card through the shared Dungeons interactable gate.
 - Prototype 0.2.172: Placed playable dungeon cards before the locked future Shard Rift card, bound selector-card listeners during runtime card creation, and added Dungeons validator raycast coverage for selector-card tap targets.
 - Prototype 0.2.171: Added the local Tower Trial / Tower Dungeon MVP. The Dungeons overview now exposes a playable 1,000-floor tower card, floor-section controls in 100-floor bands, four floor preview buttons, mini-boss markers every 25 floors, apex boss markers every 100 floors, recommended-power/enemy-stat/reward preview copy, and Formation entry validation. Local wins grant Gold, Myth Essence, and rotating Hero Shards; highest cleared, highest unlocked, selected floor, and current section are saved in the versioned PlayerPrefs JSON save plus legacy migration keys. Tower runs are blocked in Server Mode for now so PostgreSQL remains authoritative for the existing server dungeons until backend tower definitions/progress are added. See `docs/TOWER_DUNGEON.md`.

@@ -1,6 +1,6 @@
 # Mythwake Next Chat Context
 
-Last updated: 2026-05-31
+Last updated: 2026-06-01
 
 This file is meant to be pasted/read first in a new Codex chat so the project can continue without re-explaining everything.
 
@@ -32,6 +32,7 @@ Latest known pushed commit before the 0.2.159 continuation:
 - `24b2ab4 Rework battle formation mockup`
 
 Current continuation:
+- Prototype `0.2.174` / Backend `0.2.61` stabilizes Hero progression. Normal Hero leveling is capped at Lv. 100 in both local and server rules; Awakening is blocked before Lv. 100, consumes Hero Shards, caps at 10, and grants the per-hero ATK/HP bonuses from shared definitions. Hero Detail now shows `Lv. x/100`, `Awk y/10`, resource-gate copy for Level/Myth Essence/Shards, and changes the main action from Level Up to Awaken at cap. Backend adds `/heroes/{hero_id}/awaken` and keeps `/heroes/{hero_id}/ascend` as a compatibility alias for the existing stored ascension field. `HeroProgressionValidation` is included in Current Slice. APK `Builds/Android/Mythwake-0.2.174-hero-progression.apk` builds, installs, and cold-launches in MuMuPlayer.
 - Prototype `0.2.173` fixes the Tower Trial selector tap regression seen on MuMu/device by allowing the playable tower card through the shared Dungeons interactable gate after refresh.
 - Prototype `0.2.172` orders playable cards as Gold, Essence, Gear, Tower Trial, then the locked Shard Rift future card; selector-card listeners are bound during runtime card creation; and Dungeons validation now raycast-tests selectable card centers so a visible card cannot pass only through direct `onClick.Invoke()`.
 - Prototype `0.2.171` adds the local Tower Trial / Tower Dungeon MVP. The Dungeons overview now exposes a playable 1,000-floor tower card, 100-floor section browsing, four floor preview rows, mini-boss markers every 25 floors, apex boss markers every 100 floors, recommended-power/enemy-stat/reward copy, and Formation entry validation. Tower wins grant Gold, Myth Essence, and rotating Hero Shards; highest cleared, highest unlocked, selected floor, and section start are saved in the versioned local PlayerPrefs JSON. Tower is intentionally blocked in Server Mode until backend/PostgreSQL tower definitions, rewards, and player progress are added. See `docs/TOWER_DUNGEON.md`.
@@ -136,7 +137,7 @@ Current continuation:
 - Fast Rewards UI validator in `Assets/_Mythwake/Editor/FastRewardsUiValidation.cs`.
 - Summon UI validator in `Assets/_Mythwake/Editor/SummonUiValidation.cs`.
 - Upgrade clutter validator in `Assets/_Mythwake/Editor/UpgradeClutterValidation.cs` checks that old Battle/Hero upgrade controls stay hidden, Gear upgrade controls live on Gear, Gear navigation uses compact arrow labels, Gear builder defaults do not recreate stale placeholder copy, Gear showcase art loads/fits without intercepting input, the Gear showcase label names all visible equipment slots, fits, and does not overlap the icon rows, Hero Detail gear slots do not overlap the portrait/stats/actions, Hero Detail gear lists stay inside their popup, equipment/accessory list rows switch correctly, localized/contextual Hero Detail action labels and gear-list rows are correct after a German language refresh and do not overflow, and debug shortcuts live in Shop/tools.
-- Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Dungeons UI, Fast Rewards UI, Mobile UX, Account Start, Summon UI, Upgrade Clutter, Home Idle Combat, Fight Formation UI, Early Game Loop, Paladin integration, and Paladin Spine handoff checks in one pass.
+- Current slice validator in `Assets/_Mythwake/Editor/CurrentSliceValidation.cs`; use `Mythwake/Validate Current Slice` in the editor or `scripts/check-unity-current-slice.cmd` from PowerShell to run Village UI, Dungeons UI, Fast Rewards UI, Mobile UX, Account Start, Summon UI, Upgrade Clutter, Home Idle Combat, Fight Formation UI, Hero Progression, Early Game Loop, Paladin integration, and Paladin Spine handoff checks in one pass.
 - Current status summary in `docs/CURRENT_STATUS.md` and this handoff note.
 
 ## User Preferences And Product Intent
@@ -182,9 +183,9 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.173`
+- Prototype `0.2.174`
 - Save version `2`
-- Android package `com.xmiepsen.mythwake`, Version Name `0.2.173`, Version Code `2173`
+- Android package `com.xmiepsen.mythwake`, Version Name `0.2.174`, Version Code `2174`
 
 Important Unity scripts:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
@@ -353,7 +354,7 @@ Currencies:
 - Pass XP
   - Mission track / battle pass style progression.
 - Hero Shards
-  - Summon/ascension.
+  - Summon duplicates and Lv. 100 Awakening.
 
 AFK/offline rewards:
 - Should grant Gold and Myth Essence.
@@ -500,7 +501,7 @@ Backend entrypoint:
 - `backend/cmd/api/main.go`
 
 Current API version:
-- `0.2.60`
+- `0.2.61`
 
 Core backend status:
 - Go standard library HTTP server.

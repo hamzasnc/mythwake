@@ -105,7 +105,7 @@ public static class EarlyGameLoopValidation
             throw new InvalidOperationException($"Starter Summon should succeed, got '{result.message}'.");
         }
 
-        RequireCopy(result.message, "Shards add small stats", "starter Summon shard hint");
+        RequireCopy(result.message, "Shards fuel Awakening", "starter Summon shard hint");
         if (GetPrivateField<int>(controller, "gems") >= startingGems)
         {
             throw new InvalidOperationException("Starter Summon should spend Gems.");

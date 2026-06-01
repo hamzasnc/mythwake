@@ -1,6 +1,6 @@
 # Mythwake Tester Release Process
 
-Last updated: 2026-05-31
+Last updated: 2026-06-01
 
 This is the reproducible handoff path for small Android tester builds. It is meant for local APK tests now and for a later Google Play Internal Testing track once signing, Play Console setup, and policy text are ready.
 
@@ -9,10 +9,10 @@ This is the reproducible handoff path for small Android tester builds. It is mea
 - App name: `Mythwake`
 - Company name in Unity PlayerSettings: `xMiepsen`
 - Android package name: `com.xmiepsen.mythwake`
-- Prototype / Android Version Name: `0.2.170`
-- Android Version Code: `2170`
+- Prototype / Android Version Name: `0.2.174`
+- Android Version Code: `2174`
 - Local save version: `2`
-- Backend default API version: `0.2.60`
+- Backend default API version: `0.2.61`
 - Main scene: `Assets/Scenes/SampleScene.unity`
 - Launcher icon: `Assets/_Mythwake/Branding/Mythwake_icon_launcher.png`
 - Orientation: portrait only, fullscreen, inside Android safe viewport for MuMu/input stability.
@@ -24,7 +24,7 @@ Important: builds before `0.2.170` may have used Unity's default package identit
 The visible tester version starts in `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`:
 
 ```csharp
-public const string PrototypeVersion = "0.2.170";
+public const string PrototypeVersion = "0.2.174";
 ```
 
 For tester builds:
@@ -32,7 +32,7 @@ For tester builds:
 - Bump `PrototypeVersion` for every handed-off APK/AAB.
 - Keep `ProjectSettings/ProjectSettings.asset` `bundleVersion` equal to `PrototypeVersion`.
 - Derive Android Version Code as `major * 1000000 + minor * 1000 + patch`.
-- Example: `0.2.170` -> `2170`.
+- Example: `0.2.174` -> `2174`.
 - Keep `CurrentSaveVersion` unchanged unless the local save schema changes.
 - Mention the backend version separately when backend contracts changed.
 
@@ -54,13 +54,13 @@ Do not commit APK/AAB files unless a release policy explicitly changes. Keep rel
 APK for local MuMuPlayer, emulator, or USB install:
 
 ```powershell
-.\scripts\build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.170-tester-release.apk
+.\scripts\build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.174-hero-progression.apk
 ```
 
 AAB for Play Console preparation:
 
 ```powershell
-.\scripts\build-android.cmd -AppBundle -OutputPath Builds\Android\Mythwake-0.2.170-play-internal.aab
+.\scripts\build-android.cmd -AppBundle -OutputPath Builds\Android\Mythwake-0.2.174-play-internal.aab
 ```
 
 The same helper runs Unity batchmode through `AndroidBuildAutomation.BuildAndroidApk`. Passing `-AppBundle` switches the Unity build to Android App Bundle output. The Unity menu also exposes:
@@ -74,7 +74,7 @@ Use Unity's embedded Android tools or any available Android SDK `adb`:
 
 ```powershell
 adb devices -l
-adb install -r Builds\Android\Mythwake-0.2.170-tester-release.apk
+adb install -r Builds\Android\Mythwake-0.2.174-hero-progression.apk
 adb shell monkey -p com.xmiepsen.mythwake 1
 ```
 
@@ -138,7 +138,18 @@ Run an Android smoke whenever possible:
 
 ## Latest Local Verification
 
-Latest verified candidate: Prototype `0.2.170`.
+Source candidate: Prototype `0.2.174` / Backend `0.2.61`.
+
+- `go test ./...` in `backend`: passed after the Hero Awakening backend rule change.
+- `scripts/check-unity-csharp.cmd`: passed, with existing serialized-field warnings only.
+- `scripts/check-unity-current-slice.cmd`: passed, including Hero Progression validation for Lv. 100 cap, Awakening lockout, shard spend, and stat growth.
+- APK built: `Builds/Android/Mythwake-0.2.174-hero-progression.apk`, `165,314,419` bytes.
+- APK metadata: package `com.xmiepsen.mythwake`, versionCode `2174`, versionName `0.2.174`, label `Mythwake`, minSdk `25`, targetSdk `36`.
+- MuMuPlayer `emulator-5554` installed/launched the APK on Android `12` at `1080x1920`; cold launch reported `TotalTime 750 ms` / `WaitTime 754 ms`.
+- Filtered process Logcat found no Mythwake/Unity `FATAL EXCEPTION`, `ANR`, `NullReference`, missing-file, `libunity`, or generic exception blocker after launch.
+- AAB packaging was not rerun in this Hero progression pass.
+
+Latest fully packaged APK+AAB candidate remains Prototype `0.2.170`.
 
 - `scripts/check-unity-csharp.cmd`: passed, with existing serialized-field warnings only.
 - `scripts/check-unity-current-slice.cmd`: passed.

@@ -245,7 +245,7 @@ public sealed class MythwakeRuntimeArtPresenter
         if (battleMetaText != null)
         {
             var mode = state.backendRequestInProgress ? "Server resolving..." : currentBattleMeta;
-            battleMetaText.text = $"{mode} | {state.selectedHeroName} Lv {state.selectedHeroLevel}+{state.selectedHeroAscension} | Power {state.teamPower}";
+            battleMetaText.text = $"{mode} | {state.selectedHeroName} Lv {state.selectedHeroLevel} Awk {state.selectedHeroAscension} | Power {state.teamPower}";
         }
 
         if (dungeonText != null)

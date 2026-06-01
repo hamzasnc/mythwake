@@ -202,7 +202,7 @@ public static class MythwakePrototypeBuilder
         var heroUpgradeButton = CreateButton("Hero Upgrade Button", heroesPanel.transform, "Upgrade Astra (12 Essence)", UpgradeButtonColor);
         SetRect(heroUpgradeButton.GetComponent<RectTransform>(), new Vector2(0, -355), new Vector2(760, 100), new Vector2(0.5f, 1f));
 
-        var heroAscendButton = CreateButton("Hero Ascend Button", heroesPanel.transform, "Ascend Astra (20 Shards)", ButtonColor);
+        var heroAscendButton = CreateButton("Hero Ascend Button", heroesPanel.transform, "Awaken Astra (20 Shards)", ButtonColor);
         SetRect(heroAscendButton.GetComponent<RectTransform>(), new Vector2(0, -475), new Vector2(760, 100), new Vector2(0.5f, 1f));
 
         var equipmentSummary = CreateText("Equipment Summary Text", gearPanel.transform, $"{L("ui.inventory.tab.gear")}\n{EquipmentName(EquipmentWeaponId)} {L("ui.common.level_short")}. 1  +8 ATK\n{EquipmentName(EquipmentArmorId)} {L("ui.common.level_short")}. 1  +80 HP", 24, FontStyles.Bold);

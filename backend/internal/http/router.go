@@ -128,6 +128,7 @@ func (router *Router) routes() {
 	router.mux.HandleFunc("POST /campaign/fight", router.handleCampaignFight)
 	router.mux.HandleFunc("POST /dungeons/{dungeon_id}/run", router.handleDungeonRun)
 	router.mux.HandleFunc("POST /heroes/{hero_id}/level-up", router.handleHeroLevel)
+	router.mux.HandleFunc("POST /heroes/{hero_id}/awaken", router.handleHeroAscend)
 	router.mux.HandleFunc("POST /heroes/{hero_id}/ascend", router.handleHeroAscend)
 	router.mux.HandleFunc("POST /equipment/{equipment_id}/level-up", router.handleEquipmentLevel)
 	router.mux.HandleFunc("POST /gear/accessories/equip", router.handleAccessoryEquip)

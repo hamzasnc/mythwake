@@ -192,7 +192,7 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 			SaveVersion:         1,
 			Gold:                0,
 			Gems:                35,
-			MythEssence:         20,
+			MythEssence:         27,
 			PassXP:              0,
 			CampaignStage:       1,
 			GoldDungeonFloor:    1,

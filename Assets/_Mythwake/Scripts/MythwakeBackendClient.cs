@@ -285,7 +285,12 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
     public IEnumerator AscendHero(string heroId, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendAuthenticatedActionJson($"hero_ascend:{heroId}", () => Post($"/heroes/{EscapePath(heroId)}/ascend"), completed);
+        return AwakenHero(heroId, completed);
+    }
+
+    public IEnumerator AwakenHero(string heroId, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        return SendAuthenticatedActionJson($"hero_awaken:{heroId}", () => Post($"/heroes/{EscapePath(heroId)}/awaken"), completed);
     }
 
     public IEnumerator LevelEquipment(string equipmentId, Action<bool, string, MythwakeActionResultDto> completed)

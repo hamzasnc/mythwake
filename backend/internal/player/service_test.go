@@ -97,6 +97,57 @@ func TestHeroProgressionRespectsDefinitionCaps(t *testing.T) {
 	}
 }
 
+func TestHeroLevelCapsAtOneHundred(t *testing.T) {
+	service := NewService()
+	service.state.MythEssence = 100000
+
+	for i := 1; i < 100; i++ {
+		result := service.LevelHero("hero_astra")
+		if !result.Success {
+			t.Fatalf("expected level %d to succeed, got %#v", i+1, result)
+		}
+	}
+
+	if level := service.heroLevels["hero_astra"]; level != 100 {
+		t.Fatalf("expected hero_astra to reach level 100, got %d", level)
+	}
+
+	capped := service.LevelHero("hero_astra")
+	if capped.Success || capped.ErrorCode != "max_level" {
+		t.Fatalf("expected max_level at level 100, got %#v", capped)
+	}
+}
+
+func TestHeroAwakeningRequiresLevelCapAndRaisesPower(t *testing.T) {
+	service := NewService()
+	service.heroShards["hero_astra"] = 1000
+
+	early := service.AscendHero("hero_astra")
+	if early.Success || early.ErrorCode != "level_required" {
+		t.Fatalf("expected level_required before level 100, got %#v", early)
+	}
+
+	service.heroLevels["hero_astra"] = 100
+	service.recalculatePower()
+	beforePower := service.state.TeamPower
+	beforeAttack := service.state.TeamAttack
+	beforeHealth := service.state.TeamHealth
+
+	result := service.AscendHero("hero_astra")
+	if !result.Success {
+		t.Fatalf("expected Awakening at level 100 to succeed, got %#v", result)
+	}
+	if service.heroAscensions["hero_astra"] != 1 {
+		t.Fatalf("expected Awakening 1, got %d", service.heroAscensions["hero_astra"])
+	}
+	if service.heroShards["hero_astra"] != 980 {
+		t.Fatalf("expected first Awakening to spend 20 shards, got %d", service.heroShards["hero_astra"])
+	}
+	if service.state.TeamPower <= beforePower || service.state.TeamAttack <= beforeAttack || service.state.TeamHealth <= beforeHealth {
+		t.Fatalf("expected Awakening to raise stats, before power=%d attack=%d health=%d after=%#v", beforePower, beforeAttack, beforeHealth, service.state)
+	}
+}
+
 func TestAccessoryEquipUsesDefinitionSlot(t *testing.T) {
 	service := NewService()
 	service.accessoryInventory["accessory_necklace_r0"] = 1

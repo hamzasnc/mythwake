@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.173";
+    public const string PrototypeVersion = "0.2.174";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -690,6 +690,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const string GemsCurrencyId = "gems";
     private const string MythEssenceCurrencyId = "myth_essence";
     private const string PassXpCurrencyId = "pass_xp";
+    private const int LocalHeroMaxLevel = 100;
+    private const int LocalHeroMaxAwakening = 10;
+    private const int HeroLevelBaseCost = 14;
+    private const int HeroLevelCostPerLevel = 6;
+    private const int HeroAwakeningBaseShardCost = 20;
+    private const int HeroAwakeningShardCostPerStage = 15;
     private const string WarriorRoleId = "warrior";
     private const string TankRoleId = "tank";
     private const string MageRoleId = "mage";
@@ -715,7 +721,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int BattlePassXpPerDailyClaim = 40;
     private const int SummonCost = 35;
     private const int StarterGems = 35;
-    private const int StarterMythEssence = 20;
+    private const int StarterMythEssence = 27;
     private const float OfflineGoldRewardRate = 0.5f;
     private const int AfkRewardMaxSeconds = 24 * 60 * 60;
     private const float AfkRewardAutosaveSeconds = 30f;
@@ -1830,7 +1836,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroDetailLevelButton != null)
         {
-            heroDetailLevelButton.onClick.AddListener(UpgradeDamage);
+            heroDetailLevelButton.onClick.AddListener(UseHeroDetailProgressionAction);
         }
 
         if (heroDetailEquipGearButton != null)
@@ -2084,7 +2090,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroDetailLevelButton != null)
         {
-            heroDetailLevelButton.onClick.RemoveListener(UpgradeDamage);
+            heroDetailLevelButton.onClick.RemoveListener(UseHeroDetailProgressionAction);
         }
 
         if (heroDetailEquipGearButton != null)
@@ -2924,15 +2930,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
         if (backendGameplayEnabled)
         {
-            if (TryStartBackendRequest($"Server: ascending {GetHeroDefinition(selectedHeroIndex).name}..."))
+            if (TryStartBackendRequest($"Server: awakening {GetHeroDefinition(selectedHeroIndex).name}..."))
             {
-                StartCoroutine(backendClient.AscendHero(GetHeroDefinition(selectedHeroIndex).heroId, OnBackendGameplayAction));
+                StartCoroutine(backendClient.AwakenHero(GetHeroDefinition(selectedHeroIndex).heroId, OnBackendGameplayAction));
             }
 
             return;
         }
 
         AscendHero(GetHeroDefinition(selectedHeroIndex).heroId);
+    }
+
+    private void UseHeroDetailProgressionAction()
+    {
+        selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+        if (IsHeroLevelMax(selectedHeroIndex))
+        {
+            AscendSelectedHero();
+            return;
+        }
+
+        UpgradeDamage();
     }
 
     public void UpgradeWeapon()
@@ -3011,9 +3029,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         selectedHeroIndex = heroIndex;
         EnsureHeroShards();
         EnsureHeroAscensions();
+        var levelCap = GetHeroLevelCap(heroIndex);
+        if (!IsHeroLevelMax(heroIndex))
+        {
+            var levelRequiredResult = CreateActionResult(false, "hero_ascend", "level_required", $"{GetLocalizedHeroName(heroIndex)} must reach {Tr("ui.common.level_short")}. {levelCap} before Awakening.");
+            RefreshUi();
+            return levelRequiredResult;
+        }
+
         if (IsHeroAscensionMax(heroIndex))
         {
-            var maxResult = CreateActionResult(false, "hero_ascend", "max_ascension", $"{GetLocalizedHeroName(heroIndex)} is already max ascension.");
+            var maxResult = CreateActionResult(false, "hero_ascend", "max_ascension", $"{GetLocalizedHeroName(heroIndex)} is already max Awakening.");
             RefreshUi();
             return maxResult;
         }
@@ -3021,7 +3047,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var ascendCost = GetHeroAscensionCost(selectedHeroIndex);
         if (heroShards[selectedHeroIndex] < ascendCost)
         {
-            var failMessage = $"Need {ascendCost} shards to ascend {GetLocalizedHeroName(heroIndex)}.";
+            var failMessage = $"Need {ascendCost} shards to awaken {GetLocalizedHeroName(heroIndex)}.";
             RefreshUi();
             return CreateActionResult(false, "hero_ascend", "insufficient_shards", failMessage);
         }
@@ -3032,7 +3058,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SaveProgress();
         RefreshUi();
-        return CreateActionResult(true, "hero_ascend", string.Empty, $"{GetLocalizedHeroName(heroIndex)} ascended to +{heroAscensions[heroIndex]}.");
+        return CreateActionResult(true, "hero_ascend", string.Empty, $"{GetLocalizedHeroName(heroIndex)} Awakening {heroAscensions[heroIndex]}/{GetHeroAscensionCap(heroIndex)}.");
     }
 
     public MythwakeActionResultDto LevelEquipment(string equipmentId)
@@ -4806,6 +4832,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 return "not enough currency";
             case "insufficient_shards":
                 return "not enough shards";
+            case "level_required":
+                return "level 100 required";
             case "missing_item":
                 return "missing item";
             case "missing_items":
@@ -4813,7 +4841,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             case "max_level":
                 return "max level";
             case "max_ascension":
-                return "max ascension";
+                return "max Awakening";
             case "max_rarity":
                 return "max rarity";
             case "already_claimed":
@@ -9158,8 +9186,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (heroAscendCostText != null)
         {
             heroAscendCostText.text = heroAscensionMax
-                ? $"{GetLocalizedHeroName(selectedHeroIndex)} Max Asc. {GetHeroAscensionCap(selectedHeroIndex)}"
-                : $"Ascend {GetLocalizedHeroName(selectedHeroIndex)} ({GetHeroAscensionCost(selectedHeroIndex)} Shards)";
+                ? $"{GetLocalizedHeroName(selectedHeroIndex)} {Tr("ui.common.awakening")} {FormatCappedValue(heroAscensions[selectedHeroIndex], GetHeroAscensionCap(selectedHeroIndex))}"
+                : $"{Tr("ui.common.awaken")} {GetLocalizedHeroName(selectedHeroIndex)} ({GetHeroAscensionCost(selectedHeroIndex)} Shards)";
         }
 
         if (upgradeButton != null)
@@ -9174,7 +9202,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroAscendButton != null)
         {
-            heroAscendButton.interactable = !heroAscensionMax && heroShards[selectedHeroIndex] >= GetHeroAscensionCost(selectedHeroIndex);
+            heroAscendButton.interactable = CanHeroAwaken(selectedHeroIndex);
         }
 
         if (weaponUpgradeButton != null)
@@ -10702,7 +10730,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (selectedHeroText != null)
         {
             var hero = GetHeroDefinition(selectedHeroIndex);
-            selectedHeroText.text = $"{GetLocalizedHeroName(hero)}  {Tr("ui.common.level_short")}. {FormatCappedValue(heroLevels[selectedHeroIndex], GetHeroLevelCap(selectedHeroIndex))}  Asc. {FormatCappedValue(heroAscensions[selectedHeroIndex], GetHeroAscensionCap(selectedHeroIndex))}\n{GetLocalizedHeroRarityName(hero.rarityId)} {GetHeroAttackTypeLabel(selectedHeroIndex)}  {Tr("ui.common.power")} {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroEffectiveAttack(selectedHeroIndex)}  HP {GetHeroCombatMaxHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
+            selectedHeroText.text = $"{GetLocalizedHeroName(hero)}  {Tr("ui.common.level_short")}. {FormatCappedValue(heroLevels[selectedHeroIndex], GetHeroLevelCap(selectedHeroIndex))}  {Tr("ui.common.awakening_short")} {FormatCappedValue(heroAscensions[selectedHeroIndex], GetHeroAscensionCap(selectedHeroIndex))}\n{GetLocalizedHeroRarityName(hero.rarityId)} {GetHeroAttackTypeLabel(selectedHeroIndex)}  {Tr("ui.common.power")} {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroEffectiveAttack(selectedHeroIndex)}  HP {GetHeroCombatMaxHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
         }
 
         if (heroCardTexts != null)
@@ -10763,10 +10791,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             var ascensionNeed = visible ? Mathf.Max(1, GetHeroAscensionCost(heroIndex)) : 1;
             heroCardShardTexts[cardIndex].gameObject.SetActive(visible);
-            heroCardShardTexts[cardIndex].text = visible ? $"{heroShards[heroIndex]}/{ascensionNeed}" : string.Empty;
+            heroCardShardTexts[cardIndex].text = visible
+                ? IsHeroLevelMax(heroIndex)
+                    ? $"{heroShards[heroIndex]}/{ascensionNeed}"
+                    : $"{Tr("ui.common.level_short")} {GetHeroLevelCap(heroIndex)}"
+                : string.Empty;
             if (heroCardShardFills != null && cardIndex < heroCardShardFills.Length && heroCardShardFills[cardIndex] != null)
             {
-                SetRuntimeFillPercent(heroCardShardFills[cardIndex], visible ? heroShards[heroIndex] / (float)ascensionNeed : 0f);
+                SetRuntimeFillPercent(heroCardShardFills[cardIndex], visible && IsHeroLevelMax(heroIndex) ? heroShards[heroIndex] / (float)ascensionNeed : 0f);
                 heroCardShardFills[cardIndex].transform.parent.gameObject.SetActive(visible);
             }
         }
@@ -11439,6 +11471,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 heroLevels[i] = 1;
             }
+
+            heroLevels[i] = Mathf.Clamp(heroLevels[i], 1, GetHeroLevelCap(i));
         }
     }
 
@@ -11471,6 +11505,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 heroAscensions[i] = 0;
             }
+
+            heroAscensions[i] = Mathf.Clamp(heroAscensions[i], 0, GetHeroAscensionCap(i));
         }
     }
 
@@ -13566,8 +13602,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return hero.baseAttack
-            + (heroLevels[index] * hero.attackGrowth)
-            + Mathf.FloorToInt(heroShards[index] * 0.25f)
+            + ((Mathf.Max(1, heroLevels[index]) - 1) * hero.attackGrowth)
             + (heroAscensions[index] * hero.ascensionAttack);
     }
 
@@ -13587,9 +13622,46 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         return hero.baseHealth
-            + (heroLevels[index] * hero.healthGrowth)
-            + Mathf.FloorToInt(heroShards[index] * 1.2f)
+            + ((Mathf.Max(1, heroLevels[index]) - 1) * hero.healthGrowth)
             + (heroAscensions[index] * hero.ascensionHealth);
+    }
+
+    private int GetHeroAwakeningAttackPerStage(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        var hero = GetHeroDefinition(index);
+        if (TryGetBackendHeroDefinition(hero.heroId, out var backendHero))
+        {
+            return Mathf.Max(0, backendHero.attackPerAscension);
+        }
+
+        return Mathf.Max(0, hero.ascensionAttack);
+    }
+
+    private int GetHeroAwakeningHealthPerStage(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        var hero = GetHeroDefinition(index);
+        if (TryGetBackendHeroDefinition(hero.heroId, out var backendHero))
+        {
+            return Mathf.Max(0, backendHero.healthPerAscension);
+        }
+
+        return Mathf.Max(0, hero.ascensionHealth);
+    }
+
+    private int GetHeroAwakeningAttackBonus(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        EnsureHeroAscensions();
+        return Mathf.Max(0, heroAscensions[index]) * GetHeroAwakeningAttackPerStage(index);
+    }
+
+    private int GetHeroAwakeningHealthBonus(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        EnsureHeroAscensions();
+        return Mathf.Max(0, heroAscensions[index]) * GetHeroAwakeningHealthPerStage(index);
     }
 
     private int GetHeroCritChancePercent(int index)
@@ -13597,7 +13669,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         index = Mathf.Clamp(index, 0, HeroCount - 1);
         EnsureHeroAscensions();
         var hero = GetHeroDefinition(index);
-        return Mathf.Clamp(hero.critChancePercent + Mathf.FloorToInt(heroAscensions[index] * 0.6f), 0, 75);
+        return Mathf.Clamp(hero.critChancePercent + Mathf.FloorToInt(heroAscensions[index] / 2f), 0, 75);
     }
 
     private int GetHeroAccuracyPercent(int index)
@@ -13605,7 +13677,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         index = Mathf.Clamp(index, 0, HeroCount - 1);
         EnsureHeroAscensions();
         var hero = GetHeroDefinition(index);
-        return Mathf.Clamp(hero.accuracyPercent + Mathf.FloorToInt(heroAscensions[index] * 0.35f), 50, 100);
+        return Mathf.Clamp(hero.accuracyPercent + Mathf.FloorToInt(heroAscensions[index] / 3f), 50, 100);
     }
 
     private int GetHeroDefense(int index)
@@ -13614,7 +13686,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroAscensions();
         var hero = GetHeroDefinition(index);
-        return Mathf.Max(0, hero.defense + Mathf.FloorToInt(heroLevels[index] * 0.45f) + (heroAscensions[index] * 3));
+        return Mathf.Max(0, hero.defense + Mathf.FloorToInt(heroLevels[index] / 2f) + (heroAscensions[index] * 3));
     }
 
     private int GetTeamDefense()
@@ -13673,7 +13745,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return backendCost;
         }
 
-        return Mathf.CeilToInt(14 * Mathf.Pow(1.34f, heroLevels[index] - 1));
+        return HeroLevelBaseCost + (heroLevels[index] * HeroLevelCostPerLevel);
     }
 
     private int GetHeroLevelCap(int index)
@@ -13685,7 +13757,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return Mathf.Max(1, backendHero.maxLevel);
         }
 
-        return int.MaxValue;
+        return LocalHeroMaxLevel;
     }
 
     private bool IsHeroLevelMax(int index)
@@ -13704,8 +13776,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return backendCost;
         }
 
-        var hero = GetHeroDefinition(index);
-        return hero.ascensionBaseCost + (heroAscensions[index] * hero.ascensionCostGrowth);
+        return HeroAwakeningBaseShardCost + (heroAscensions[index] * HeroAwakeningShardCostPerStage);
     }
 
     private int GetHeroAscensionCap(int index)
@@ -13717,7 +13788,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return Mathf.Max(0, backendHero.maxAscension);
         }
 
-        return int.MaxValue;
+        return LocalHeroMaxAwakening;
     }
 
     private bool IsHeroAscensionMax(int index)
@@ -13725,6 +13796,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         index = Mathf.Clamp(index, 0, HeroCount - 1);
         var cap = GetHeroAscensionCap(index);
         return HasFiniteCap(cap) && heroAscensions[index] >= cap;
+    }
+
+    private bool CanHeroAwaken(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        EnsureHeroShards();
+        EnsureHeroAscensions();
+        return IsHeroLevelMax(index)
+            && !IsHeroAscensionMax(index)
+            && heroShards[index] >= GetHeroAscensionCost(index);
     }
 
     private int GetWeaponUpgradeCost()
@@ -22117,6 +22198,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var upgradeCost = GetHeroUpgradeCost(heroIndex);
         var ascensionCost = GetHeroAscensionCost(heroIndex);
         var heroColor = GetHeroRarityColor(hero.rarityId);
+        var levelMax = IsHeroLevelMax(heroIndex);
+        var ascensionMax = IsHeroAscensionMax(heroIndex);
 
         if (heroDetailPortrait != null)
         {
@@ -22149,19 +22232,30 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroDetailStatsText != null)
         {
-            heroDetailStatsText.text = $"{Tr("ui.common.level_short")} {FormatCappedValue(level, levelCap)}   Asc {FormatCappedValue(ascension, ascensionCap)}   {GetLocalizedHeroRoleName(hero)}\nHP {GetHeroCombatMaxHealth(heroIndex)}   ATK {GetHeroEffectiveAttack(heroIndex)}   DEF {GetHeroDefense(heroIndex)}\nCrit {GetHeroCritChancePercent(heroIndex)}%   Acc {GetHeroAccuracyPercent(heroIndex)}%";
+            heroDetailStatsText.text = $"{Tr("ui.common.level_short")} {FormatCappedValue(level, levelCap)}   {Tr("ui.common.awakening_short")} {FormatCappedValue(ascension, ascensionCap)}   {GetLocalizedHeroRoleName(hero)}\nHP {GetHeroCombatMaxHealth(heroIndex)}   ATK {GetHeroEffectiveAttack(heroIndex)}   DEF {GetHeroDefense(heroIndex)}\n{Tr("ui.common.awakening_short")} +{GetHeroAwakeningAttackBonus(heroIndex)} ATK +{GetHeroAwakeningHealthBonus(heroIndex)} HP   Crit {GetHeroCritChancePercent(heroIndex)}%   Acc {GetHeroAccuracyPercent(heroIndex)}%";
         }
 
         if (heroDetailResourceText != null)
         {
-            heroDetailResourceText.text = $"{GetLocalizedCurrencyName(MythEssenceCurrencyId)} {mythEssence}/{upgradeCost}   Shards {heroShards[heroIndex]}/{ascensionCost}";
+            if (!levelMax)
+            {
+                heroDetailResourceText.text = $"{Tr("ui.common.level")} {FormatCappedValue(level, levelCap)} | {GetLocalizedCurrencyName(MythEssenceCurrencyId)} {mythEssence}/{upgradeCost} | {TrFormat("hero.awakening.locked", levelCap)}";
+            }
+            else if (ascensionMax)
+            {
+                heroDetailResourceText.text = $"{Tr("ui.common.awakening")} {FormatCappedValue(ascension, ascensionCap)} | {Tr("hero.awakening.max")}";
+            }
+            else
+            {
+                heroDetailResourceText.text = $"{Tr("ui.common.awakening")} {FormatCappedValue(ascension, ascensionCap)} | Shards {heroShards[heroIndex]}/{ascensionCost} | +{GetHeroAwakeningAttackPerStage(heroIndex)} ATK +{GetHeroAwakeningHealthPerStage(heroIndex)} HP";
+            }
         }
 
         RefreshHeroDetailGearSlots();
         RefreshHeroDetailGearList();
 
-        SetButtonLabel(heroDetailLevelButton, IsHeroLevelMax(heroIndex) ? Tr("ui.common.max_level") : Tr("ui.common.level_up"));
-        SetButtonInteractable(heroDetailLevelButton, !IsHeroLevelMax(heroIndex) && mythEssence >= upgradeCost);
+        SetButtonLabel(heroDetailLevelButton, !levelMax ? Tr("ui.common.level_up") : ascensionMax ? Tr("ui.common.max_level") : Tr("ui.common.awaken"));
+        SetButtonInteractable(heroDetailLevelButton, !levelMax ? mythEssence >= upgradeCost : CanHeroAwaken(heroIndex));
         RefreshHeroDetailGearActionButtons(true);
     }
 
@@ -24193,7 +24287,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (filterId == "up")
         {
             return (!IsHeroLevelMax(heroIndex) && mythEssence >= GetHeroUpgradeCost(heroIndex))
-                || heroShards[heroIndex] >= GetHeroAscensionCost(heroIndex);
+                || CanHeroAwaken(heroIndex);
         }
 
         return string.Equals(GetHeroDefinition(heroIndex).roleId, filterId, StringComparison.Ordinal);

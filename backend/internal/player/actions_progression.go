@@ -67,9 +67,14 @@ func (actions heroProgressionActions) AscendHero(ctx context.Context, request Ac
 		if !ok {
 			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero definition: %s", heroID))
 		}
+		currentLevel := service.heroLevels[heroID]
+		if definition.MaxLevel > 0 && currentLevel < definition.MaxLevel {
+			return actionFailure("level_required", fmt.Sprintf("%s must reach Lv. %d before Awakening.", heroID, definition.MaxLevel))
+		}
+
 		currentAscension := service.heroAscensions[heroID]
 		if definition.MaxAscension > 0 && currentAscension >= definition.MaxAscension {
-			return actionFailure("max_ascension", fmt.Sprintf("%s is already +%d.", heroID, currentAscension))
+			return actionFailure("max_ascension", fmt.Sprintf("%s is already Awakening %d.", heroID, currentAscension))
 		}
 
 		cost := service.balanceCatalog.HeroAscensionShardCost(currentAscension)
@@ -80,7 +85,7 @@ func (actions heroProgressionActions) AscendHero(ctx context.Context, request Ac
 		service.heroShards[heroID] -= cost
 		service.heroAscensions[heroID]++
 		service.recalculatePower()
-		return actionSuccess(fmt.Sprintf("%s ascended.", heroID), api.Reward{})
+		return actionSuccess(fmt.Sprintf("%s awakened to %d.", heroID, service.heroAscensions[heroID]), api.Reward{})
 	})
 }
 
