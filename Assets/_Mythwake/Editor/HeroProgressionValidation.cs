@@ -17,7 +17,7 @@ public static class HeroProgressionValidation
         try
         {
             ValidateHeroProgression();
-            Debug.Log("Hero progression validated: level 100 cap, level-gated Awakening, shard spend, stat growth, and Hero Detail copy are stable.");
+            Debug.Log("Hero progression validated: level 100 cap, Awakening Shards, hero-specific Star shards, Hero Shard Chest, Bag Use flow, reward popup, stat growth, and Hero Detail copy are stable.");
         }
         catch (Exception ex)
         {
@@ -48,6 +48,8 @@ public static class HeroProgressionValidation
             ValidateAwakeningLockedBelowLevelCap(controller);
             ValidateLevelOneHundredCap(controller);
             ValidateAwakeningSpendAndStats(controller);
+            ValidateHeroStarUpgradeAndChest(controller);
+            ValidateInventoryChestUseFlow(controller);
             ValidateHeroDetailAwakeningCopy(controller);
         }
         finally
@@ -58,7 +60,7 @@ public static class HeroProgressionValidation
 
     private static void ValidateAwakeningLockedBelowLevelCap(IdlePrototypeController controller)
     {
-        SetHeroProgress(controller, level: 99, awakening: 0, shards: 1000);
+        SetHeroProgress(controller, level: 99, awakening: 0, shards: 1000, awakeningShards: 1000);
         var result = controller.AscendHero(TestHeroId);
         if (result.success || result.errorCode != "level_required")
         {
@@ -92,7 +94,7 @@ public static class HeroProgressionValidation
 
     private static void ValidateAwakeningSpendAndStats(IdlePrototypeController controller)
     {
-        SetHeroProgress(controller, level: 100, awakening: 0, shards: 20);
+        SetHeroProgress(controller, level: 100, awakening: 0, shards: 7, awakeningShards: 20);
         InvokePrivate(controller, "RefreshUi");
         var powerBefore = (int)InvokePrivate(controller, "GetHeroPower", 0);
         var attackBefore = (int)InvokePrivate(controller, "GetHeroEffectiveAttack", 0);
@@ -106,9 +108,10 @@ public static class HeroProgressionValidation
 
         var awakenings = GetPrivateField<int[]>(controller, "heroAscensions");
         var shards = GetPrivateField<int[]>(controller, "heroShards");
-        if (awakenings[0] != 1 || shards[0] != 0)
+        var awakeningShards = GetPrivateField<int>(controller, "awakeningShards");
+        if (awakenings[0] != 1 || shards[0] != 7 || awakeningShards != 0)
         {
-            throw new InvalidOperationException($"Awakening should consume 20 shards and set stage 1, got awakening={awakenings[0]}, shards={shards[0]}.");
+            throw new InvalidOperationException($"Awakening should consume 20 Awakening Shards, keep hero shards, and set stage 1; got awakening={awakenings[0]}, heroShards={shards[0]}, awakeningShards={awakeningShards}.");
         }
 
         var powerAfter = (int)InvokePrivate(controller, "GetHeroPower", 0);
@@ -120,9 +123,66 @@ public static class HeroProgressionValidation
         }
     }
 
+    private static void ValidateHeroStarUpgradeAndChest(IdlePrototypeController controller)
+    {
+        SetHeroProgress(controller, level: 1, awakening: 0, shards: 5, awakeningShards: 0, star: 0);
+        InvokePrivate(controller, "RefreshUi");
+        var powerBefore = (int)InvokePrivate(controller, "GetHeroPower", 0);
+        var attackBefore = (int)InvokePrivate(controller, "GetHeroEffectiveAttack", 0);
+        var healthBefore = (int)InvokePrivate(controller, "GetHeroCombatMaxHealth", 0);
+
+        var result = controller.UpgradeHeroStar(TestHeroId);
+        if (!result.success)
+        {
+            throw new InvalidOperationException($"Star upgrade with 5 hero shards should succeed, got {result.errorCode}: {result.message}");
+        }
+
+        var stars = GetPrivateField<int[]>(controller, "heroStarLevels");
+        var shards = GetPrivateField<int[]>(controller, "heroShards");
+        if (stars[0] != 1 || shards[0] != 0)
+        {
+            throw new InvalidOperationException($"Star upgrade should consume 5 hero shards and set star level 1, got star={stars[0]}, shards={shards[0]}.");
+        }
+
+        var powerAfter = (int)InvokePrivate(controller, "GetHeroPower", 0);
+        var attackAfter = (int)InvokePrivate(controller, "GetHeroEffectiveAttack", 0);
+        var healthAfter = (int)InvokePrivate(controller, "GetHeroCombatMaxHealth", 0);
+        if (powerAfter <= powerBefore || attackAfter <= attackBefore || healthAfter <= healthBefore)
+        {
+            throw new InvalidOperationException($"Star upgrade should raise power, ATK, and HP. Before power={powerBefore} atk={attackBefore} hp={healthBefore}; after power={powerAfter} atk={attackAfter} hp={healthAfter}.");
+        }
+
+        SetHeroProgress(controller, level: 1, awakening: 0, shards: 9, awakeningShards: 0, star: 1);
+        var blocked = controller.UpgradeHeroStar(TestHeroId);
+        if (blocked.success || blocked.errorCode != "insufficient_hero_shards")
+        {
+            throw new InvalidOperationException($"Second star should cost 10 hero shards, got success={blocked.success}, error={blocked.errorCode}.");
+        }
+
+        SetHeroProgress(controller, level: 1, awakening: 0, shards: 0, awakeningShards: 0, star: 0, chests: 1);
+        var chest = controller.OpenHeroShardChest();
+        if (!chest.success)
+        {
+            throw new InvalidOperationException($"Hero Shard Chest should open, got {chest.errorCode}: {chest.message}");
+        }
+
+        var chestCount = GetPrivateField<int>(controller, "heroShardChests");
+        shards = GetPrivateField<int[]>(controller, "heroShards");
+        var totalShards = 0;
+        for (var i = 0; i < shards.Length; i++)
+        {
+            totalShards += shards[i];
+        }
+
+        if (chestCount != 0 || totalShards <= 0)
+        {
+            throw new InvalidOperationException($"Hero Shard Chest should consume one chest and grant hero shards, got chests={chestCount}, totalShards={totalShards}.");
+        }
+    }
+
     private static void ValidateHeroDetailAwakeningCopy(IdlePrototypeController controller)
     {
-        SetHeroProgress(controller, level: 100, awakening: 0, shards: 20);
+        SetHeroProgress(controller, level: 100, awakening: 0, shards: 5, awakeningShards: 20, star: 0, chests: 1);
         controller.ShowHeroes();
         InvokePrivate(controller, "ShowHeroDetail", 0);
         InvokePrivate(controller, "RefreshUi");
@@ -132,16 +192,36 @@ public static class HeroProgressionValidation
         AssertButtonLabel(levelButton, "Awaken", "Hero Detail should switch the main progression button to Awaken at level 100.");
         if (!levelButton.interactable)
         {
-            throw new InvalidOperationException("Hero Detail Awaken button should be interactable when level 100 and shards are sufficient.");
+            throw new InvalidOperationException("Hero Detail Awaken button should be interactable when level 100 and Awakening Shards are sufficient.");
+        }
+
+        var starButton = RequireObjectField<Button>(controller, "heroDetailStarButton");
+        AssertButtonLabel(starButton, "Star 0->1", "Hero Detail should expose star-level upgrade.");
+        if (!starButton.interactable)
+        {
+            throw new InvalidOperationException("Hero Detail Star button should be interactable when hero shards are sufficient.");
+        }
+
+        var chestButton = RequireObjectField<Button>(controller, "heroDetailOpenChestButton");
+        AssertButtonLabel(chestButton, "Open Chest (1)", "Hero Detail should expose Hero Shard Chest opening.");
+        if (!chestButton.interactable)
+        {
+            throw new InvalidOperationException("Hero Detail Open Chest button should be interactable when a chest is available.");
         }
 
         var stats = RequireObjectField<TMP_Text>(controller, "heroDetailStatsText");
         RequireCopy(stats.text, "Lv 100/100", "Hero Detail level cap copy");
         RequireCopy(stats.text, "Awk 0/10", "Hero Detail Awakening stage copy");
+        RequireCopy(stats.text, "Star 0/5", "Hero Detail star stage copy");
         RequireCopy(stats.text, "+0 ATK +0 HP", "Hero Detail Awakening bonus copy");
         AssertTextFits(stats, "Hero Detail stats");
 
-        SetHeroProgress(controller, level: 99, awakening: 0, shards: 1000);
+        var resourcesAtCap = RequireObjectField<TMP_Text>(controller, "heroDetailResourceText");
+        RequireCopy(resourcesAtCap.text, "Awakening Shards 20/20", "Hero Detail Awakening Shards resource copy");
+        RequireCopy(resourcesAtCap.text, "Hero Shards 5/5", "Hero Detail hero shard resource copy");
+        AssertTextFits(resourcesAtCap, "Hero Detail resource copy at cap");
+
+        SetHeroProgress(controller, level: 99, awakening: 0, shards: 1000, awakeningShards: 1000);
         InvokePrivate(controller, "RefreshUi");
         Canvas.ForceUpdateCanvases();
         var resources = RequireObjectField<TMP_Text>(controller, "heroDetailResourceText");
@@ -149,17 +229,77 @@ public static class HeroProgressionValidation
         AssertTextFits(resources, "Hero Detail resource copy");
     }
 
-    private static void SetHeroProgress(IdlePrototypeController controller, int level, int awakening, int shards)
+    private static void ValidateInventoryChestUseFlow(IdlePrototypeController controller)
+    {
+        SetHeroProgress(controller, level: 1, awakening: 0, shards: 0, awakeningShards: 0, star: 0, chests: 3);
+        InvokePrivate(controller, "ShowInventoryPopup");
+        InvokePrivate(controller, "SelectInventoryItem", 0);
+        InvokePrivate(controller, "RefreshUi");
+        Canvas.ForceUpdateCanvases();
+
+        var useOneButton = RequireObjectField<Button>(controller, "inventoryUseOneButton");
+        var useAmountButton = RequireObjectField<Button>(controller, "inventoryUseAmountButton");
+        var useAllButton = RequireObjectField<Button>(controller, "inventoryUseAllButton");
+        var amountInput = RequireObjectField<TMP_InputField>(controller, "inventoryUseAmountInput");
+        if (!useOneButton.gameObject.activeInHierarchy || !useOneButton.interactable)
+        {
+            throw new InvalidOperationException("Inventory Hero Shard Chest detail should expose an interactable Use 1 button.");
+        }
+
+        AssertButtonLabel(useAllButton, "All (3)", "Inventory Hero Shard Chest should expose Use All with owned count.");
+        amountInput.text = "2";
+        useAmountButton.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+
+        var chestCount = GetPrivateField<int>(controller, "heroShardChests");
+        if (chestCount != 1)
+        {
+            throw new InvalidOperationException($"Inventory Use amount should consume 2 of 3 Hero Shard Chests, got {chestCount}.");
+        }
+
+        var rewardRoot = RequireObjectField<RectTransform>(controller, "inventoryRewardPopupRoot");
+        if (!rewardRoot.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Inventory Use should show the reward popup.");
+        }
+
+        var rewardSummary = RequireObjectField<TMP_Text>(controller, "inventoryRewardSummaryText");
+        RequireCopy(rewardSummary.text, "Opened 2 Hero Shard Chests", "Inventory reward summary");
+        AssertTextFits(rewardSummary, "Inventory reward summary");
+
+        var rewardFrames = GetPrivateField<Image[]>(controller, "inventoryRewardFrames");
+        var visibleReward = false;
+        for (var i = 0; rewardFrames != null && i < rewardFrames.Length; i++)
+        {
+            if (rewardFrames[i] != null && rewardFrames[i].gameObject.activeInHierarchy)
+            {
+                visibleReward = true;
+                break;
+            }
+        }
+
+        if (!visibleReward)
+        {
+            throw new InvalidOperationException("Inventory reward popup should show at least one visible reward slot.");
+        }
+    }
+
+    private static void SetHeroProgress(IdlePrototypeController controller, int level, int awakening, int shards, int awakeningShards = 0, int star = 0, int chests = 0)
     {
         var levels = GetPrivateField<int[]>(controller, "heroLevels");
         var awakenings = GetPrivateField<int[]>(controller, "heroAscensions");
         var shardCounts = GetPrivateField<int[]>(controller, "heroShards");
+        var stars = GetPrivateField<int[]>(controller, "heroStarLevels");
         levels[0] = level;
         awakenings[0] = awakening;
         shardCounts[0] = shards;
+        stars[0] = star;
         SetPrivateField(controller, "heroLevels", levels);
         SetPrivateField(controller, "heroAscensions", awakenings);
         SetPrivateField(controller, "heroShards", shardCounts);
+        SetPrivateField(controller, "heroStarLevels", stars);
+        SetPrivateField(controller, "awakeningShards", awakeningShards);
+        SetPrivateField(controller, "heroShardChests", chests);
         SetPrivateField(controller, "selectedHeroIndex", 0);
     }
 

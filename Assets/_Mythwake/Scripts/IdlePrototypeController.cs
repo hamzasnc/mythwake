@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.174";
+    public const string PrototypeVersion = "0.2.176";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -304,6 +304,15 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int missedHits;
     }
 
+    private struct ShardRiftRunResult
+    {
+        public CombatResult combat;
+        public int enemiesDefeated;
+        public int awakeningShards;
+        public int heroShardChests;
+        public int elapsedSeconds;
+    }
+
     private struct FightVisualUnitState
     {
         public Vector2 position;
@@ -455,6 +464,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private enum InventoryConsumableType
+    {
+        None,
+        HeroShardChest
+    }
+
     private struct InventoryItemViewData
     {
         public string displayName;
@@ -464,8 +479,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public string countText;
         public string iconTextureName;
         public Color frameColor;
+        public InventoryConsumableType consumableType;
+        public int maxUseCount;
 
-        public InventoryItemViewData(string displayName, string detail, string description, string statsText, string countText, string iconTextureName, Color frameColor)
+        public bool IsUsable => consumableType != InventoryConsumableType.None && maxUseCount > 0;
+
+        public InventoryItemViewData(string displayName, string detail, string description, string statsText, string countText, string iconTextureName, Color frameColor, InventoryConsumableType consumableType = InventoryConsumableType.None, int maxUseCount = 0)
         {
             this.displayName = displayName;
             this.detail = detail;
@@ -474,6 +493,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             this.countText = countText;
             this.iconTextureName = iconTextureName;
             this.frameColor = frameColor;
+            this.consumableType = consumableType;
+            this.maxUseCount = maxUseCount;
         }
     }
 
@@ -596,6 +617,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int gold;
         public int gems;
         public int mythEssence;
+        public int awakeningShards;
         public int damage;
         public int enemyLevel;
         public int enemyHp;
@@ -608,6 +630,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int towerDungeonHighestClearedFloor;
         public int towerDungeonSelectedFloor;
         public int towerDungeonSectionStartFloor;
+        public int shardDungeonBestEnemiesDefeated;
+        public int shardDungeonTotalEnemiesDefeated;
+        public int heroShardChests;
         public int weaponLevel;
         public int armorLevel;
         public int selectedAccessorySlot;
@@ -624,6 +649,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         public int[] heroLevels;
         public int[] heroShards;
         public int[] heroAscensions;
+        public int[] heroStarLevels;
         public int[] formationSlotHeroIndices;
         public int selectedFormationPresetIndex;
         public int[] formationPresetHeroIndices;
@@ -647,6 +673,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const string GoldKey = "Mythwake.Prototype.Gold";
     private const string GemsKey = "Mythwake.Prototype.Gems";
     private const string MythEssenceKey = "Mythwake.Prototype.MythEssence";
+    private const string AwakeningShardsKey = "Mythwake.Prototype.AwakeningShards";
     private const string DamageKey = "Mythwake.Prototype.Damage";
     private const string EnemyLevelKey = "Mythwake.Prototype.EnemyLevel";
     private const string EnemyHpKey = "Mythwake.Prototype.EnemyHp";
@@ -659,6 +686,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const string TowerDungeonHighestClearedFloorKey = "Mythwake.Prototype.Dungeon.TowerHighestClearedFloor";
     private const string TowerDungeonSelectedFloorKey = "Mythwake.Prototype.Dungeon.TowerSelectedFloor";
     private const string TowerDungeonSectionStartFloorKey = "Mythwake.Prototype.Dungeon.TowerSectionStartFloor";
+    private const string ShardDungeonBestEnemiesDefeatedKey = "Mythwake.Prototype.Dungeon.ShardBestEnemiesDefeated";
+    private const string ShardDungeonTotalEnemiesDefeatedKey = "Mythwake.Prototype.Dungeon.ShardTotalEnemiesDefeated";
+    private const string HeroShardChestsKey = "Mythwake.Prototype.HeroShardChest";
     private const string WeaponLevelKey = "Mythwake.Prototype.Equipment.WeaponLevel";
     private const string ArmorLevelKey = "Mythwake.Prototype.Equipment.ArmorLevel";
     private const string SelectedAccessorySlotKey = "Mythwake.Prototype.Accessory.SelectedSlot";
@@ -675,6 +705,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const string HeroLevelKeyPrefix = "Mythwake.Prototype.HeroLevel.";
     private const string HeroShardKeyPrefix = "Mythwake.Prototype.HeroShard.";
     private const string HeroAscensionKeyPrefix = "Mythwake.Prototype.HeroAscension.";
+    private const string HeroStarLevelKeyPrefix = "Mythwake.Prototype.HeroStarLevel.";
     private const string SummonCountKey = "Mythwake.Prototype.SummonCount";
     private const string DailyDateKey = "Mythwake.Prototype.Daily.Date";
     private const string DailyFightCountKey = "Mythwake.Prototype.Daily.FightCount";
@@ -689,13 +720,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const string GoldCurrencyId = "gold";
     private const string GemsCurrencyId = "gems";
     private const string MythEssenceCurrencyId = "myth_essence";
+    private const string AwakeningShardCurrencyId = "awakening_shards";
     private const string PassXpCurrencyId = "pass_xp";
     private const int LocalHeroMaxLevel = 100;
     private const int LocalHeroMaxAwakening = 10;
+    private const int LocalHeroMaxStarLevel = 5;
     private const int HeroLevelBaseCost = 14;
     private const int HeroLevelCostPerLevel = 6;
     private const int HeroAwakeningBaseShardCost = 20;
     private const int HeroAwakeningShardCostPerStage = 15;
+    private const int HeroStarBaseShardCost = 5;
+    private const int HeroStarShardCostPerStage = 5;
     private const string WarriorRoleId = "warrior";
     private const string TankRoleId = "tank";
     private const string MageRoleId = "mage";
@@ -857,6 +892,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int DebugGoldAmount = 500;
     private const int DebugGemAmount = 30;
     private const int DebugEssenceAmount = 250;
+    private const int DebugAwakeningShardAmount = 50;
+    private const int DebugHeroShardChestAmount = 3;
     private const float PerformanceOverlayUpdateInterval = 0.5f;
 
     private static readonly string[] SaveKeys =
@@ -866,6 +903,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         GoldKey,
         GemsKey,
         MythEssenceKey,
+        AwakeningShardsKey,
         DamageKey,
         EnemyLevelKey,
         EnemyHpKey,
@@ -878,6 +916,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         TowerDungeonHighestClearedFloorKey,
         TowerDungeonSelectedFloorKey,
         TowerDungeonSectionStartFloorKey,
+        ShardDungeonBestEnemiesDefeatedKey,
+        ShardDungeonTotalEnemiesDefeatedKey,
+        HeroShardChestsKey,
         WeaponLevelKey,
         ArmorLevelKey,
         SelectedAccessorySlotKey,
@@ -897,6 +938,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         new CurrencyDefinition(GoldCurrencyId, "Gold", GoldKey, 0),
         new CurrencyDefinition(GemsCurrencyId, "Gems", GemsKey, StarterGems),
         new CurrencyDefinition(MythEssenceCurrencyId, "Myth Essence", MythEssenceKey, StarterMythEssence),
+        new CurrencyDefinition(AwakeningShardCurrencyId, "Awakening Shards", AwakeningShardsKey, 0),
         new CurrencyDefinition(PassXpCurrencyId, "Pass XP", BattlePassXpKey, 0)
     };
 
@@ -968,10 +1010,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private static readonly DungeonDefinition EssenceDungeonDefinition = new DungeonDefinition("essence_dungeon", "Essence Dungeon", MythEssenceCurrencyId, 210, 104f, 1.2f, 22, 9.5f, 1.12f, 118, 51f, 1.18f, 110, 40f, 1.13f);
     private static readonly DungeonDefinition GearDungeonDefinition = new DungeonDefinition("gear_dungeon", "Gear Dungeon", string.Empty, 235, 120f, 1.21f, 24, 10f, 1.14f, 130, 56f, 1.18f, 0, 0f, 1f);
     private static readonly DungeonDefinition TowerDungeonDefinition = new DungeonDefinition("tower_dungeon", "Tower Dungeon", string.Empty, 185, 74f, 1.12f, 18, 5.8f, 1.08f, 105, 34f, 1.12f, 80, 18f, 1.08f);
+    private static readonly DungeonDefinition ShardRiftDungeonDefinition = new DungeonDefinition("shard_rift", "Shard Rift", AwakeningShardCurrencyId, 165, 72f, 1.12f, 16, 5.2f, 1.08f, 96, 30f, 1.11f, 4, 1.5f, 1.05f);
     private static readonly string[] GoldDungeonBattleMapTextureNames = { "gold_dungeon_battle_01", "gold_dungeon_battle_02" };
     private static readonly string[] EssenceDungeonBattleMapTextureNames = { "essence_dungeon_battle_01", "essence_dungeon_battle_02" };
     private static readonly string[] GearDungeonBattleMapTextureNames = { "equipment_dungeon_battle_01", "equipment_dungeon_battle_02" };
     private static readonly string[] TowerDungeonBattleMapTextureNames = { "area_map_hollow_spire_obsidian_vault", "gear_dungeon_set_banner" };
+    private static readonly string[] ShardRiftDungeonBattleMapTextureNames = { "essence_dungeon_battle_01", "area_map_hollow_spire_obsidian_vault" };
     private const string EquipmentHeroArmoryBackgroundTextureName = "equipment_hero_armory_background";
     private const string EquipmentIconTextureRoot = "";
     private static readonly string[] EquipmentWeaponIconTextureNames =
@@ -1076,6 +1120,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private int gold;
     [SerializeField] private int gems;
     [SerializeField] private int mythEssence;
+    [SerializeField] private int awakeningShards;
     [SerializeField] private int damage = 1;
     [SerializeField] private int enemyLevel = 1;
     [SerializeField] private int enemyHp = 10;
@@ -1088,6 +1133,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private int towerDungeonHighestClearedFloor;
     [SerializeField] private int towerDungeonSelectedFloor = 1;
     [SerializeField] private int towerDungeonSectionStartFloor = 1;
+    [SerializeField] private int shardDungeonBestEnemiesDefeated;
+    [SerializeField] private int shardDungeonTotalEnemiesDefeated;
+    [SerializeField] private int heroShardChests;
     [SerializeField] private int weaponLevel = StarterEquipmentLevel;
     [SerializeField] private int armorLevel = StarterEquipmentLevel;
     [SerializeField] private int[] heroWeaponLevels = new int[HeroCount];
@@ -1108,6 +1156,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private int[] heroLevels = new int[HeroCount];
     [SerializeField] private int[] heroShards = new int[HeroCount];
     [SerializeField] private int[] heroAscensions = new int[HeroCount];
+    [SerializeField] private int[] heroStarLevels = new int[HeroCount];
     [SerializeField] private int summonCount;
     [SerializeField] private int dailyFightCount;
     [SerializeField] private int dailyStageClearCount;
@@ -1246,6 +1295,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     [SerializeField] private Button debugEssenceButton;
     [SerializeField] private Button debugGemsButton;
     [SerializeField] private Button debugAccessoryButton;
+    [SerializeField] private Button debugAwakeningShardsButton;
+    [SerializeField] private Button debugHeroShardChestButton;
     [SerializeField] private Button[] heroSelectButtons;
     [SerializeField] private Button[] dailyMissionButtons;
     [SerializeField] private Button[] battlePassRewardButtons;
@@ -1534,11 +1585,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private TMP_Text inventoryDetailTitleText;
     private TMP_Text inventoryDetailDescriptionText;
     private TMP_Text inventoryDetailStatsText;
+    private TMP_InputField inventoryUseAmountInput;
+    private RectTransform inventoryRewardPopupRoot;
+    private TMP_Text inventoryRewardTitleText;
+    private TMP_Text inventoryRewardSummaryText;
     private TMP_Text fastRewardsPopupText;
     private Image fastRewardsProgressFill;
     private TMP_Text fastRewardsProgressText;
     private Button inventoryCloseButton;
     private Button inventoryDetailCloseButton;
+    private Button inventoryUseOneButton;
+    private Button inventoryUseAmountButton;
+    private Button inventoryUseAllButton;
+    private Button inventoryRewardCloseButton;
     private Button inventoryMiscTabButton;
     private Button inventoryGearTabButton;
     private Button inventoryAllTabButton;
@@ -1550,6 +1609,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RawImage[] inventorySlotIcons;
     private RawImage inventoryDetailIcon;
     private Image inventoryDetailFrame;
+    private Image[] inventoryRewardFrames;
+    private RawImage[] inventoryRewardIcons;
+    private TMP_Text[] inventoryRewardTexts;
     private TMP_Text[] inventorySlotCountTexts;
     private TMP_Text[] inventorySlotNameTexts;
     private TMP_Text[] inventorySlotDetailTexts;
@@ -1618,6 +1680,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button heroDetailLevelButton;
     private Button heroDetailEquipGearButton;
     private Button heroDetailRemoveGearButton;
+    private Button heroDetailStarButton;
+    private Button heroDetailOpenChestButton;
     private int selectedHeroDetailGearSlotIndex = -1;
     private int selectedHeroDetailGearOptionRarity = -1;
     private RectTransform artBottomNavRoot;
@@ -1768,6 +1832,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private Button fightContinueButton;
     private Button fightEndButton;
     private bool fightCancelRequested;
+    private float fightStartedUnscaledTime;
     private Coroutine activeFightCoroutine;
 
     private void Awake()
@@ -1837,6 +1902,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (heroDetailLevelButton != null)
         {
             heroDetailLevelButton.onClick.AddListener(UseHeroDetailProgressionAction);
+        }
+
+        if (heroDetailStarButton != null)
+        {
+            heroDetailStarButton.onClick.AddListener(UpgradeSelectedHeroStar);
+        }
+
+        if (heroDetailOpenChestButton != null)
+        {
+            heroDetailOpenChestButton.onClick.AddListener(OpenHeroShardChestFromHeroDetail);
         }
 
         if (heroDetailEquipGearButton != null)
@@ -1932,6 +2007,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (debugAccessoryButton != null)
         {
             debugAccessoryButton.onClick.AddListener(AddDebugAccessoryCopy);
+        }
+
+        if (debugAwakeningShardsButton != null)
+        {
+            debugAwakeningShardsButton.onClick.AddListener(AddDebugAwakeningShards);
+        }
+
+        if (debugHeroShardChestButton != null)
+        {
+            debugHeroShardChestButton.onClick.AddListener(AddDebugHeroShardChests);
         }
 
         if (backendHealthButton != null)
@@ -2093,6 +2178,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroDetailLevelButton.onClick.RemoveListener(UseHeroDetailProgressionAction);
         }
 
+        if (heroDetailStarButton != null)
+        {
+            heroDetailStarButton.onClick.RemoveListener(UpgradeSelectedHeroStar);
+        }
+
+        if (heroDetailOpenChestButton != null)
+        {
+            heroDetailOpenChestButton.onClick.RemoveListener(OpenHeroShardChestFromHeroDetail);
+        }
+
         if (heroDetailEquipGearButton != null)
         {
             heroDetailEquipGearButton.onClick.RemoveListener(OpenSelectedHeroDetailGearOptions);
@@ -2186,6 +2281,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (debugAccessoryButton != null)
         {
             debugAccessoryButton.onClick.RemoveListener(AddDebugAccessoryCopy);
+        }
+
+        if (debugAwakeningShardsButton != null)
+        {
+            debugAwakeningShardsButton.onClick.RemoveListener(AddDebugAwakeningShards);
+        }
+
+        if (debugHeroShardChestButton != null)
+        {
+            debugHeroShardChestButton.onClick.RemoveListener(AddDebugHeroShardChests);
         }
 
         if (backendHealthButton != null)
@@ -2390,12 +2495,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         selectedInventoryTab = tab;
         selectedInventoryItemIndex = -1;
         SetComponentActive(inventoryDetailRoot, false);
+        HideInventoryRewardPopup();
         RefreshInventoryPopupUi();
     }
 
     private void SelectInventoryItem(int itemIndex)
     {
         selectedInventoryItemIndex = Mathf.Max(0, itemIndex);
+        if (inventoryUseAmountInput != null)
+        {
+            inventoryUseAmountInput.text = "1";
+        }
+
+        HideInventoryRewardPopup();
         RefreshInventoryPopupUi();
     }
 
@@ -2404,6 +2516,168 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         selectedInventoryItemIndex = -1;
         SetComponentActive(inventoryDetailRoot, false);
         RefreshInventoryPopupUi();
+    }
+
+    private void HideInventoryRewardPopup()
+    {
+        SetComponentActive(inventoryRewardPopupRoot, false);
+    }
+
+    private void UseSelectedInventoryItemOne()
+    {
+        UseSelectedInventoryItem(1);
+    }
+
+    private void UseSelectedInventoryItemAmount()
+    {
+        if (!TryGetSelectedInventoryItem(out var item))
+        {
+            return;
+        }
+
+        UseSelectedInventoryItem(ParseInventoryUseAmount(item.maxUseCount));
+    }
+
+    private void UseSelectedInventoryItemAll()
+    {
+        if (!TryGetSelectedInventoryItem(out var item))
+        {
+            return;
+        }
+
+        UseSelectedInventoryItem(item.maxUseCount);
+    }
+
+    private void UseSelectedInventoryItem(int requestedAmount)
+    {
+        if (!TryGetSelectedInventoryItem(out var item) || !item.IsUsable)
+        {
+            return;
+        }
+
+        var amount = NormalizeInventoryUseCount(item, requestedAmount);
+        switch (item.consumableType)
+        {
+            case InventoryConsumableType.HeroShardChest:
+                UseHeroShardChestsFromInventory(amount);
+                break;
+        }
+    }
+
+    private bool TryGetSelectedInventoryItem(out InventoryItemViewData item)
+    {
+        var items = BuildInventoryItems();
+        if (selectedInventoryItemIndex >= 0 && selectedInventoryItemIndex < items.Count)
+        {
+            item = items[selectedInventoryItemIndex];
+            return true;
+        }
+
+        item = default;
+        return false;
+    }
+
+    private int NormalizeInventoryUseCount(InventoryItemViewData item, int requestedAmount)
+    {
+        return Mathf.Clamp(requestedAmount, 1, Mathf.Max(1, item.maxUseCount));
+    }
+
+    private int ParseInventoryUseAmount(int maxCount)
+    {
+        if (inventoryUseAmountInput == null)
+        {
+            return 1;
+        }
+
+        var text = inventoryUseAmountInput.text == null ? string.Empty : inventoryUseAmountInput.text.Trim();
+        if (!int.TryParse(text, out var amount))
+        {
+            amount = 1;
+        }
+
+        return Mathf.Clamp(amount, 1, Mathf.Max(1, maxCount));
+    }
+
+    private void UseHeroShardChestsFromInventory(int requestedAmount)
+    {
+        var amount = Mathf.Clamp(requestedAmount, 1, Mathf.Max(1, heroShardChests));
+        if (backendGameplayEnabled)
+        {
+            EnsureRuntimeBackendClient();
+            if (backendClient == null || !backendClient.HasSession)
+            {
+                SetDungeonResult("Server Mode needs a session before using inventory items.");
+                RefreshUi();
+                return;
+            }
+
+            if (TryStartBackendRequest(amount == 1 ? "Server: opening Hero Shard Chest..." : $"Server: opening {amount} Hero Shard Chests..."))
+            {
+                StartCoroutine(OpenHeroShardChestsFromInventoryBackend(amount));
+            }
+
+            return;
+        }
+
+        var rewards = OpenHeroShardChestsLocal(amount, out var openedCount, out var summary);
+        if (openedCount > 0)
+        {
+            ShowInventoryRewardPopup("Rewards", summary, rewards);
+        }
+    }
+
+    private IEnumerator OpenHeroShardChestsFromInventoryBackend(int requestedAmount)
+    {
+        EnsureHeroShards();
+        var beforeHeroShards = CopyIntArray(heroShards, HeroCount, 0);
+        var amount = Mathf.Clamp(requestedAmount, 1, Mathf.Max(1, heroShardChests));
+        var openedCount = 0;
+        var failureMessage = string.Empty;
+
+        for (var i = 0; i < amount; i++)
+        {
+            var requestSuccess = false;
+            var requestError = string.Empty;
+            var requestResult = default(MythwakeActionResultDto);
+            yield return backendClient.OpenHeroShardChest((success, error, result) =>
+            {
+                requestSuccess = success;
+                requestError = error;
+                requestResult = result;
+            });
+
+            if (!requestSuccess)
+            {
+                failureMessage = $"Server request failed: {requestError}";
+                break;
+            }
+
+            if (!requestResult.success)
+            {
+                ApplyBackendSnapshot(requestResult.playerSnapshot);
+                failureMessage = string.IsNullOrWhiteSpace(requestResult.message)
+                    ? HumanizeActionErrorCode(requestResult.errorCode)
+                    : requestResult.message;
+                break;
+            }
+
+            openedCount++;
+            ApplyBackendSnapshot(requestResult.playerSnapshot);
+        }
+
+        var rewards = CalculateHeroShardRewards(beforeHeroShards);
+        var summary = openedCount > 0
+            ? BuildHeroShardChestRewardSummary(openedCount, rewards)
+            : string.IsNullOrWhiteSpace(failureMessage) ? "No Hero Shard Chest opened." : failureMessage;
+        SetDungeonResult(summary);
+        FinishBackendRequest(openedCount > 0
+            ? $"Server: opened {openedCount} Hero Shard Chest{(openedCount == 1 ? string.Empty : "s")}."
+            : summary);
+
+        if (openedCount > 0)
+        {
+            ShowInventoryRewardPopup("Rewards", summary, rewards);
+        }
     }
 
     private void ShowFastRewardsPopup()
@@ -2585,6 +2859,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
+        if (battleTargetMode == BattleTargetMode.Dungeon && IsSelectedShardRiftDungeon())
+        {
+            EndShardRiftFightEarly();
+            return;
+        }
+
         fightCancelRequested = true;
         autoContinueFightsEnabled = false;
         fightAutoSkillsEnabled = false;
@@ -2703,7 +2983,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         fightAutoSkillsEnabled = autoContinueFightsEnabled;
         if (IsSelectedTowerDungeon() && backendGameplayEnabled)
         {
-            SetDungeonResult($"{GetLocalizedDungeonName(TowerDungeonDefinition.dungeonId)} is local-only in this build.\nServer Mode tower persistence is still open.");
+            SetDungeonResult($"{GetLocalizedDungeonName(selectedDungeonId)} is local-only in this build.\nServer persistence for this dungeon is still open.");
             ShowScreen(AppScreen.Dungeons);
             RefreshUi();
             return;
@@ -2841,6 +3121,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         ShowDungeonFormation(GearDungeonDefinition.dungeonId);
     }
 
+    public void RunShardRiftDungeon()
+    {
+        ShowDungeonFormation(ShardRiftDungeonDefinition.dungeonId);
+    }
+
     public MythwakeActionResultDto FightCampaign()
     {
         var result = ExecuteCampaignFight();
@@ -2869,6 +3154,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (IsTowerDungeonId(dungeonId))
         {
             return ExecuteTowerDungeon();
+        }
+
+        if (IsShardRiftDungeonId(dungeonId))
+        {
+            return ExecuteShardRiftDungeon();
         }
 
         var result = CreateActionResult(false, "run_dungeon", "invalid_dungeon", $"Unknown dungeon: {dungeonId}");
@@ -2953,6 +3243,37 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         UpgradeDamage();
     }
 
+    private void UpgradeSelectedHeroStar()
+    {
+        selectedHeroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest($"Server: starring {GetHeroDefinition(selectedHeroIndex).name}..."))
+            {
+                StartCoroutine(backendClient.UpgradeHeroStar(GetHeroDefinition(selectedHeroIndex).heroId, OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
+        UpgradeHeroStar(GetHeroDefinition(selectedHeroIndex).heroId);
+    }
+
+    private void OpenHeroShardChestFromHeroDetail()
+    {
+        if (backendGameplayEnabled)
+        {
+            if (TryStartBackendRequest("Server: opening Hero Shard Chest..."))
+            {
+                StartCoroutine(backendClient.OpenHeroShardChest(OnBackendGameplayAction));
+            }
+
+            return;
+        }
+
+        OpenHeroShardChest();
+    }
+
     public void UpgradeWeapon()
     {
         if (backendGameplayEnabled)
@@ -3027,7 +3348,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         selectedHeroIndex = heroIndex;
-        EnsureHeroShards();
         EnsureHeroAscensions();
         var levelCap = GetHeroLevelCap(heroIndex);
         if (!IsHeroLevelMax(heroIndex))
@@ -3045,20 +3365,137 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         var ascendCost = GetHeroAscensionCost(selectedHeroIndex);
-        if (heroShards[selectedHeroIndex] < ascendCost)
+        if (awakeningShards < ascendCost)
         {
-            var failMessage = $"Need {ascendCost} shards to awaken {GetLocalizedHeroName(heroIndex)}.";
+            var failMessage = $"Need {ascendCost} {GetLocalizedCurrencyName(AwakeningShardCurrencyId)} to awaken {GetLocalizedHeroName(heroIndex)}.";
             RefreshUi();
-            return CreateActionResult(false, "hero_ascend", "insufficient_shards", failMessage);
+            return CreateActionResult(false, "hero_ascend", "insufficient_awakening_shards", failMessage);
         }
 
-        heroShards[selectedHeroIndex] -= ascendCost;
+        awakeningShards -= ascendCost;
         heroAscensions[selectedHeroIndex]++;
         damage = GetTeamDamage();
 
         SaveProgress();
         RefreshUi();
         return CreateActionResult(true, "hero_ascend", string.Empty, $"{GetLocalizedHeroName(heroIndex)} Awakening {heroAscensions[heroIndex]}/{GetHeroAscensionCap(heroIndex)}.");
+    }
+
+    public MythwakeActionResultDto UpgradeHeroStar(string heroId)
+    {
+        if (!TryGetHeroIndexById(heroId, out var heroIndex))
+        {
+            var invalidResult = CreateActionResult(false, "hero_star", "invalid_hero", $"Unknown hero: {heroId}");
+            RefreshUi();
+            return invalidResult;
+        }
+
+        selectedHeroIndex = heroIndex;
+        EnsureHeroShards();
+        EnsureHeroStars();
+
+        if (IsHeroStarLevelMax(heroIndex))
+        {
+            var maxResult = CreateActionResult(false, "hero_star", "max_star_level", $"{GetLocalizedHeroName(heroIndex)} is already star level {GetHeroStarLevelCap(heroIndex)}.");
+            RefreshUi();
+            return maxResult;
+        }
+
+        var cost = GetHeroStarUpgradeCost(heroIndex);
+        if (heroShards[heroIndex] < cost)
+        {
+            var failMessage = $"Need {cost} {GetLocalizedHeroName(heroIndex)} shards to upgrade star level.";
+            RefreshUi();
+            return CreateActionResult(false, "hero_star", "insufficient_hero_shards", failMessage);
+        }
+
+        heroShards[heroIndex] -= cost;
+        heroStarLevels[heroIndex]++;
+        damage = GetTeamDamage();
+
+        SaveProgress();
+        RefreshUi();
+        return CreateActionResult(true, "hero_star", string.Empty, $"{GetLocalizedHeroName(heroIndex)} Star {heroStarLevels[heroIndex]}/{GetHeroStarLevelCap(heroIndex)}.");
+    }
+
+    public MythwakeActionResultDto OpenHeroShardChest()
+    {
+        var rewards = OpenHeroShardChestsLocal(1, out var openedCount, out var message);
+        if (openedCount <= 0)
+        {
+            return CreateActionResult(false, "hero_shard_chest", "missing_chest", message);
+        }
+
+        return CreateActionResult(true, "hero_shard_chest", string.Empty, message);
+    }
+
+    private int[] OpenHeroShardChestsLocal(int requestedAmount, out int openedCount, out string message)
+    {
+        EnsureHeroShards();
+        openedCount = 0;
+        var rewards = new int[HeroCount];
+        if (heroShardChests <= 0)
+        {
+            message = "No Hero Shard Chest available.";
+            RefreshUi();
+            return rewards;
+        }
+
+        var amount = Mathf.Clamp(requestedAmount, 1, heroShardChests);
+        for (var i = 0; i < amount; i++)
+        {
+            var heroIndex = Mathf.Clamp((summonCount + shardDungeonTotalEnemiesDefeated + heroShardChests) % HeroCount, 0, HeroCount - 1);
+            var shardAmount = GetHeroShardChestShardAmount();
+            heroShardChests--;
+            AddHeroShards(heroIndex, shardAmount);
+            rewards[heroIndex] += shardAmount;
+            openedCount++;
+        }
+
+        SaveProgress();
+        message = BuildHeroShardChestRewardSummary(openedCount, rewards);
+        SetDungeonResult(message);
+        RefreshUi();
+        return rewards;
+    }
+
+    private int GetHeroShardChestShardAmount()
+    {
+        return 5 + Mathf.Clamp(enemyLevel / 10, 0, 10);
+    }
+
+    private int[] CalculateHeroShardRewards(int[] beforeHeroShards)
+    {
+        EnsureHeroShards();
+        var rewards = new int[HeroCount];
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var before = beforeHeroShards != null && i < beforeHeroShards.Length ? Mathf.Max(0, beforeHeroShards[i]) : 0;
+            rewards[i] = Mathf.Max(0, heroShards[i] - before);
+        }
+
+        return rewards;
+    }
+
+    private string BuildHeroShardChestRewardSummary(int openedCount, int[] rewards)
+    {
+        var parts = new List<string>();
+        var totalShards = 0;
+        for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
+        {
+            var amount = rewards != null && heroIndex < rewards.Length ? rewards[heroIndex] : 0;
+            if (amount <= 0)
+            {
+                continue;
+            }
+
+            totalShards += amount;
+            parts.Add($"+{amount} {GetLocalizedHeroName(heroIndex)} Shards");
+        }
+
+        var chestLabel = openedCount == 1 ? "Hero Shard Chest" : "Hero Shard Chests";
+        var rewardLine = parts.Count <= 0 ? "No reward details available." : string.Join(", ", parts);
+        return $"Opened {openedCount} {chestLabel}.\n{rewardLine}\nTotal +{totalShards} Hero Shards.";
     }
 
     public MythwakeActionResultDto LevelEquipment(string equipmentId)
@@ -3726,6 +4163,32 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetDungeonResult($"Debug: +1 {GetAccessoryRarityName(rarity)} {AccessorySlots[slot].name} copy.");
     }
 
+    public void AddDebugAwakeningShards()
+    {
+        if (RejectDebugActionInBackendMode())
+        {
+            return;
+        }
+
+        GrantCurrency(AwakeningShardCurrencyId, DebugAwakeningShardAmount);
+        SaveProgress();
+        RefreshUi();
+        SetDungeonResult($"Debug: +{DebugAwakeningShardAmount} {GetLocalizedCurrencyName(AwakeningShardCurrencyId)}.");
+    }
+
+    public void AddDebugHeroShardChests()
+    {
+        if (RejectDebugActionInBackendMode())
+        {
+            return;
+        }
+
+        heroShardChests += DebugHeroShardChestAmount;
+        SaveProgress();
+        RefreshUi();
+        SetDungeonResult($"Debug: +{DebugHeroShardChestAmount} Hero Shard Chests.");
+    }
+
     public void PingBackend()
     {
         if (!TryStartBackendRequest("Backend: pinging..."))
@@ -4355,6 +4818,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         gold = GetCurrencyDefinition(GoldCurrencyId).starterAmount;
         gems = GetCurrencyDefinition(GemsCurrencyId).starterAmount;
         mythEssence = GetCurrencyDefinition(MythEssenceCurrencyId).starterAmount;
+        awakeningShards = GetCurrencyDefinition(AwakeningShardCurrencyId).starterAmount;
         damage = 1;
         enemyLevel = 1;
         goldDungeonFloor = 1;
@@ -4364,6 +4828,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         towerDungeonHighestClearedFloor = 0;
         towerDungeonSelectedFloor = 1;
         towerDungeonSectionStartFloor = 1;
+        shardDungeonBestEnemiesDefeated = 0;
+        shardDungeonTotalEnemiesDefeated = 0;
+        heroShardChests = 0;
         weaponLevel = StarterEquipmentLevel;
         armorLevel = StarterEquipmentLevel;
         heroWeaponLevels = CreateFilledIntArray(HeroCount, StarterEquipmentLevel);
@@ -4381,11 +4848,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureHeroStars();
         EnsureAccessories();
         for (var i = 0; i < heroShards.Length; i++)
         {
             heroShards[i] = 0;
             heroAscensions[i] = 0;
+            heroStarLevels[i] = 0;
         }
 
         equippedAccessoryRarities = CreateFilledIntArray(AccessorySlotCount, -1);
@@ -4830,6 +5299,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 return "persistence failed";
             case "insufficient_currency":
                 return "not enough currency";
+            case "insufficient_awakening_shards":
+                return "not enough Awakening Shards";
+            case "insufficient_hero_shards":
+                return "not enough Hero Shards";
             case "insufficient_shards":
                 return "not enough shards";
             case "level_required":
@@ -4985,6 +5458,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         gold = Mathf.Max(0, state.gold);
         gems = Mathf.Max(0, state.gems);
         mythEssence = Mathf.Max(0, state.mythEssence);
+        awakeningShards = Mathf.Max(0, state.awakeningShards);
         battlePassXp = Mathf.Max(0, state.passXp);
         enemyLevel = Mathf.Max(1, state.campaignStage);
         selectedCampaignStage = Mathf.Max(1, enemyLevel);
@@ -4998,6 +5472,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         backendLastAfkClaimUtc = snapshot.lastAfkClaimUtc ?? string.Empty;
 
         ApplyBackendHeroes(snapshot.heroes, snapshot.heroShards);
+        heroShardChests = Mathf.Max(0, snapshot.heroShardChests);
+        shardDungeonBestEnemiesDefeated = Mathf.Max(0, snapshot.shardRiftBestEnemiesDefeated);
+        shardDungeonTotalEnemiesDefeated = Mathf.Max(0, snapshot.shardRiftTotalEnemiesDefeated);
         ApplyBackendEquipment(snapshot.equipment);
         ApplyBackendAccessories(snapshot.accessories, snapshot.equippedAccessories);
         ApplyBackendVillageBuildings(snapshot.villageBuildings);
@@ -5019,12 +5496,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureHeroStars();
 
         for (var i = 0; i < HeroCount; i++)
         {
             heroLevels[i] = 1;
             heroShards[i] = 0;
             heroAscensions[i] = 0;
+            heroStarLevels[i] = 0;
         }
 
         if (heroes != null)
@@ -5038,6 +5517,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
                 heroLevels[heroIndex] = Mathf.Max(1, heroes[i].level);
                 heroAscensions[heroIndex] = Mathf.Max(0, heroes[i].ascension);
+                heroStarLevels[heroIndex] = Mathf.Clamp(heroes[i].starLevel, 0, GetHeroStarLevelCap(heroIndex));
             }
         }
 
@@ -5347,7 +5827,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         damage = GetTeamDamage();
         dailyFightCount++;
+        fightStartedUnscaledTime = Time.unscaledTime;
         var dungeon = ResolveDungeonDefinition(selectedDungeonId);
+        if (IsShardRiftDungeonId(dungeon.dungeonId))
+        {
+            yield return PlayLocalShardRiftFightRoutine();
+            yield break;
+        }
+
         var floor = GetDungeonFloor(dungeon.dungeonId);
         var isTower = IsTowerDungeonId(dungeon.dungeonId);
         var enemyHp = isTower ? GetTowerEnemyHp(floor) : GetDungeonEnemyHp(dungeon, floor);
@@ -5514,6 +6001,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         gold = PlayerPrefs.GetInt(GoldKey, gold);
         gems = PlayerPrefs.GetInt(GemsKey, gems);
         mythEssence = PlayerPrefs.GetInt(MythEssenceKey, mythEssence);
+        awakeningShards = Mathf.Max(0, PlayerPrefs.GetInt(AwakeningShardsKey, awakeningShards));
         if (!PlayerPrefs.HasKey(GemsKey))
         {
             gems = GetCurrencyDefinition(GemsCurrencyId).starterAmount;
@@ -5531,6 +6019,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         towerDungeonHighestClearedFloor = Mathf.Clamp(PlayerPrefs.GetInt(TowerDungeonHighestClearedFloorKey, towerDungeonHighestClearedFloor), 0, TowerDungeonMaxFloor);
         towerDungeonSelectedFloor = Mathf.Clamp(PlayerPrefs.GetInt(TowerDungeonSelectedFloorKey, towerDungeonSelectedFloor), 1, TowerDungeonMaxFloor);
         towerDungeonSectionStartFloor = Mathf.Clamp(PlayerPrefs.GetInt(TowerDungeonSectionStartFloorKey, towerDungeonSectionStartFloor), 1, TowerDungeonMaxFloor);
+        shardDungeonBestEnemiesDefeated = Mathf.Max(0, PlayerPrefs.GetInt(ShardDungeonBestEnemiesDefeatedKey, shardDungeonBestEnemiesDefeated));
+        shardDungeonTotalEnemiesDefeated = Mathf.Max(0, PlayerPrefs.GetInt(ShardDungeonTotalEnemiesDefeatedKey, shardDungeonTotalEnemiesDefeated));
+        heroShardChests = Mathf.Max(0, PlayerPrefs.GetInt(HeroShardChestsKey, heroShardChests));
         weaponLevel = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt(WeaponLevelKey, weaponLevel));
         armorLevel = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt(ArmorLevelKey, armorLevel));
         heroWeaponLevels = new int[HeroCount];
@@ -5550,6 +6041,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureHeroStars();
         EnsureHeroEquipment();
         EnsureAccessories();
 
@@ -5558,6 +6050,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroLevels[i] = Mathf.Max(1, PlayerPrefs.GetInt($"{HeroLevelKeyPrefix}{i}", 1));
             heroShards[i] = Mathf.Max(0, PlayerPrefs.GetInt($"{HeroShardKeyPrefix}{i}", 0));
             heroAscensions[i] = Mathf.Max(0, PlayerPrefs.GetInt($"{HeroAscensionKeyPrefix}{i}", 0));
+            heroStarLevels[i] = Mathf.Clamp(PlayerPrefs.GetInt($"{HeroStarLevelKeyPrefix}{i}", 0), 0, GetHeroStarLevelCap(i));
         }
 
         for (var i = 0; i < AccessorySlotCount; i++)
@@ -5632,6 +6125,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureHeroStars();
         EnsureHeroEquipment();
         EnsureAccessories();
         EnsureDailyMissionClaims();
@@ -5646,6 +6140,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             gold = gold,
             gems = gems,
             mythEssence = mythEssence,
+            awakeningShards = awakeningShards,
             damage = damage,
             enemyLevel = enemyLevel,
             enemyHp = enemyHp,
@@ -5658,6 +6153,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             towerDungeonHighestClearedFloor = towerDungeonHighestClearedFloor,
             towerDungeonSelectedFloor = towerDungeonSelectedFloor,
             towerDungeonSectionStartFloor = towerDungeonSectionStartFloor,
+            shardDungeonBestEnemiesDefeated = shardDungeonBestEnemiesDefeated,
+            shardDungeonTotalEnemiesDefeated = shardDungeonTotalEnemiesDefeated,
+            heroShardChests = heroShardChests,
             weaponLevel = weaponLevel,
             armorLevel = armorLevel,
             selectedAccessorySlot = selectedAccessorySlot,
@@ -5674,6 +6172,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroLevels = CopyIntArray(heroLevels, HeroCount, 1),
             heroShards = CopyIntArray(heroShards, HeroCount, 0),
             heroAscensions = CopyIntArray(heroAscensions, HeroCount, 0),
+            heroStarLevels = CopyIntArray(heroStarLevels, HeroCount, 0),
             formationSlotHeroIndices = CopyIntArray(this.formationSlotHeroIndices, HeroCount, -1),
             selectedFormationPresetIndex = selectedFormationPresetIndex,
             formationPresetHeroIndices = CopyIntArray(formationPresetHeroIndices, FormationPresetCount * HeroCount, -1),
@@ -5699,6 +6198,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         gold = Mathf.Max(0, data.gold);
         gems = Mathf.Max(0, data.gems);
         mythEssence = Mathf.Max(0, data.mythEssence);
+        awakeningShards = Mathf.Max(0, data.awakeningShards);
         damage = Mathf.Max(1, data.damage);
         enemyLevel = Mathf.Max(1, data.enemyLevel);
         enemyMaxHp = Mathf.Max(GetStageMaxHp(enemyLevel), data.enemyMaxHp);
@@ -5711,6 +6211,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         towerDungeonHighestClearedFloor = data.towerDungeonHighestClearedFloor;
         towerDungeonSelectedFloor = data.towerDungeonSelectedFloor;
         towerDungeonSectionStartFloor = data.towerDungeonSectionStartFloor;
+        shardDungeonBestEnemiesDefeated = Mathf.Max(0, data.shardDungeonBestEnemiesDefeated);
+        shardDungeonTotalEnemiesDefeated = Mathf.Max(0, data.shardDungeonTotalEnemiesDefeated);
+        heroShardChests = Mathf.Max(0, data.heroShardChests);
         weaponLevel = Mathf.Max(StarterEquipmentLevel, data.weaponLevel);
         armorLevel = Mathf.Max(StarterEquipmentLevel, data.armorLevel);
         selectedAccessorySlot = Mathf.Clamp(data.selectedAccessorySlot, 0, AccessorySlotCount - 1);
@@ -5723,6 +6226,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         heroLevels = CopyIntArray(data.heroLevels, HeroCount, 1);
         heroShards = CopyIntArray(data.heroShards, HeroCount, 0);
         heroAscensions = CopyIntArray(data.heroAscensions, HeroCount, 0);
+        heroStarLevels = CopyIntArray(data.heroStarLevels, HeroCount, 0);
         formationSlotHeroIndices = CopyIntArray(data.formationSlotHeroIndices, HeroCount, -1);
         selectedFormationPresetIndex = Mathf.Clamp(data.selectedFormationPresetIndex, 0, FormationPresetCount - 1);
         formationPresetHeroIndices = data.formationPresetHeroIndices == null ? null : CopyIntArray(data.formationPresetHeroIndices, FormationPresetCount * HeroCount, -1);
@@ -5766,6 +6270,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureHeroStars();
         EnsureAccessories();
         EnsureDailyMissionClaims();
         EnsureBattlePassRewardClaims();
@@ -5775,6 +6280,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         gold = Mathf.Max(0, gold);
         gems = Mathf.Max(0, gems);
         mythEssence = Mathf.Max(0, mythEssence);
+        awakeningShards = Mathf.Max(0, awakeningShards);
         enemyLevel = Mathf.Max(1, enemyLevel);
         enemyMaxHp = Mathf.Max(GetStageMaxHp(enemyLevel), enemyMaxHp);
         enemyHp = Mathf.Clamp(enemyHp, 1, enemyMaxHp);
@@ -5782,6 +6288,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         essenceDungeonFloor = Mathf.Max(1, essenceDungeonFloor);
         gearDungeonFloor = Mathf.Max(1, gearDungeonFloor);
         NormalizeTowerDungeonProgress();
+        shardDungeonBestEnemiesDefeated = Mathf.Max(0, shardDungeonBestEnemiesDefeated);
+        shardDungeonTotalEnemiesDefeated = Mathf.Max(0, shardDungeonTotalEnemiesDefeated);
+        heroShardChests = Mathf.Max(0, heroShardChests);
         weaponLevel = Mathf.Max(StarterEquipmentLevel, weaponLevel);
         armorLevel = Mathf.Max(StarterEquipmentLevel, armorLevel);
         selectedAccessorySlot = Mathf.Clamp(selectedAccessorySlot, 0, AccessorySlotCount - 1);
@@ -6092,6 +6601,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return ApplyGearDungeonResult(floor, result, enemyHp);
         }
 
+        if (IsShardRiftDungeonId(dungeonId))
+        {
+            var run = new ShardRiftRunResult
+            {
+                combat = result,
+                enemiesDefeated = result.won ? 1 : 0,
+                awakeningShards = result.won ? GetShardRiftAwakeningShardReward(1) : 0,
+                heroShardChests = result.won ? GetShardRiftChestReward(1) : 0,
+                elapsedSeconds = result.elapsedSeconds
+            };
+            return ApplyShardRiftResult(run, endedEarly: false);
+        }
+
         if (IsTowerDungeonId(dungeonId))
         {
             return ApplyTowerDungeonResult(floor, result, enemyHp);
@@ -6100,6 +6622,215 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var message = $"Unknown dungeon: {dungeonId}";
         SetDungeonResult(message);
         return CreateActionResult(false, "run_dungeon", "invalid_dungeon", message);
+    }
+
+    private MythwakeActionResultDto ExecuteShardRiftDungeon()
+    {
+        var run = SimulateShardRiftCombat(DefaultCombatDurationSeconds);
+        var actionResult = ApplyShardRiftResult(run, endedEarly: false);
+        SaveProgress();
+        RefreshUi();
+        return actionResult;
+    }
+
+    private IEnumerator PlayLocalShardRiftFightRoutine()
+    {
+        var run = SimulateShardRiftCombat(DefaultCombatDurationSeconds);
+        var enemyNumber = Mathf.Max(1, run.enemiesDefeated + 1);
+        var enemyHp = GetShardRiftEnemyHp(enemyNumber);
+        var enemyDamage = GetShardRiftEnemyDamage(enemyNumber);
+        yield return PlayCampaignFightVisualRoutine(
+            run.combat.won,
+            enemyNumber,
+            $"{GetLocalizedDungeonName(ShardRiftDungeonDefinition.dungeonId)}  Endless  VS  {GetLocalizedDungeonBossName(ShardRiftDungeonDefinition.dungeonId)}",
+            run.combat.elapsedSeconds,
+            GetTeamHealth(),
+            run.combat.teamHpRemaining,
+            enemyHp,
+            run.combat.enemyHpRemaining,
+            run.combat.damageDealt,
+            run.combat.damageTaken,
+            singleBoss: false,
+            bossTextureName: GetDungeonBossTextureName(ShardRiftDungeonDefinition.dungeonId),
+            enemyDamage: enemyDamage);
+        if (ConsumeFightCancelRequest())
+        {
+            yield break;
+        }
+
+        var actionResult = ApplyShardRiftResult(run, endedEarly: false);
+        SaveProgress();
+        RefreshUi();
+        ShowCampaignFightResult(actionResult.success, actionResult.success ? "Rift Rewards" : "Rift Failed", actionResult.message);
+    }
+
+    private void EndShardRiftFightEarly()
+    {
+        fightCancelRequested = true;
+        autoContinueFightsEnabled = false;
+        fightAutoSkillsEnabled = false;
+        if (autoContinueFightCoroutine != null)
+        {
+            StopCoroutine(autoContinueFightCoroutine);
+            autoContinueFightCoroutine = null;
+        }
+
+        if (activeFightCoroutine != null)
+        {
+            StopCoroutine(activeFightCoroutine);
+            activeFightCoroutine = null;
+        }
+
+        SetProjectilesVisible(fightHeroProjectileImages, false);
+        SetProjectilesVisible(fightEnemyProjectileImages, false);
+        SetRawImagesVisible(fightHeroFxImages, false);
+        HideRavikSkeletalViews(fightHeroSkeletalViews);
+        HidePaladinSkeletalViews(fightHeroPaladinViews);
+        var elapsedSeconds = Mathf.Clamp(Mathf.CeilToInt(Time.unscaledTime - fightStartedUnscaledTime), 1, DefaultCombatDurationSeconds);
+        var run = SimulateShardRiftCombat(elapsedSeconds);
+        var actionResult = ApplyShardRiftResult(run, endedEarly: true);
+        RefreshFormationAutoContinueToggle();
+        RefreshFightAutoSkillButton();
+        SaveProgress();
+        RefreshUi();
+        ShowCampaignFightResult(actionResult.success, actionResult.success ? "Rift Rewards" : "Fight Ended", actionResult.message);
+    }
+
+    private ShardRiftRunResult SimulateShardRiftCombat(int maxSeconds)
+    {
+        maxSeconds = Mathf.Clamp(maxSeconds, 1, DefaultCombatDurationSeconds);
+        var teamDps = Mathf.Max(1, GetTeamCombatDamagePerSecond());
+        var teamHp = Mathf.Max(1, GetTeamHealth());
+        var teamDefense = Mathf.Max(0, GetTeamDefense());
+        var elapsed = 0;
+        var enemiesDefeated = 0;
+        var damageDealt = 0;
+        var damageTaken = 0;
+        var criticalHits = 0;
+        var missedHits = 0;
+        var enemyRemainingHp = GetShardRiftEnemyHp(1);
+
+        while (elapsed < maxSeconds && teamHp > 0)
+        {
+            var enemyNumber = enemiesDefeated + 1;
+            var enemyHp = GetShardRiftEnemyHp(enemyNumber);
+            var enemyDamage = GetShardRiftEnemyDamage(enemyNumber);
+            var secondsToKill = Mathf.Max(1, Mathf.CeilToInt(enemyHp / (float)teamDps));
+            var availableSeconds = maxSeconds - elapsed;
+            var effectiveEnemyDamage = Mathf.Max(1, enemyDamage - Mathf.FloorToInt(teamDefense / 18f));
+            if (secondsToKill > availableSeconds)
+            {
+                var partialDamage = Mathf.Min(enemyHp, teamDps * availableSeconds);
+                damageDealt += partialDamage;
+                damageTaken += effectiveEnemyDamage * availableSeconds;
+                teamHp -= effectiveEnemyDamage * availableSeconds;
+                enemyRemainingHp = Mathf.Max(0, enemyHp - partialDamage);
+                elapsed = maxSeconds;
+                break;
+            }
+
+            damageDealt += enemyHp;
+            damageTaken += effectiveEnemyDamage * secondsToKill;
+            teamHp -= effectiveEnemyDamage * secondsToKill;
+            elapsed += secondsToKill;
+            enemyRemainingHp = 0;
+            if (teamHp <= 0)
+            {
+                break;
+            }
+
+            enemiesDefeated++;
+            criticalHits += Mathf.Max(1, secondsToKill / 3);
+            missedHits += secondsToKill / 8;
+        }
+
+        var rewardShards = 0;
+        for (var i = 1; i <= enemiesDefeated; i++)
+        {
+            rewardShards += GetShardRiftAwakeningShardReward(i);
+        }
+
+        var combat = new CombatResult
+        {
+            won = enemiesDefeated > 0 && teamHp > 0,
+            elapsedSeconds = Mathf.Max(1, elapsed),
+            teamHpRemaining = Mathf.Max(0, teamHp),
+            enemyHpRemaining = enemyRemainingHp,
+            damageDealt = damageDealt,
+            damageTaken = damageTaken,
+            healingDone = 0,
+            criticalHits = criticalHits,
+            missedHits = missedHits
+        };
+
+        return new ShardRiftRunResult
+        {
+            combat = combat,
+            enemiesDefeated = enemiesDefeated,
+            awakeningShards = rewardShards,
+            heroShardChests = GetShardRiftChestReward(enemiesDefeated),
+            elapsedSeconds = combat.elapsedSeconds
+        };
+    }
+
+    private MythwakeActionResultDto ApplyShardRiftResult(ShardRiftRunResult run, bool endedEarly)
+    {
+        var dungeonName = GetLocalizedDungeonName(ShardRiftDungeonDefinition.dungeonId);
+        if (run.enemiesDefeated <= 0)
+        {
+            var noRewardMessage = endedEarly
+                ? $"{dungeonName} ended before any enemy fell.\nNo rewards claimed yet."
+                : $"{dungeonName} failed after {run.elapsedSeconds}s before the first enemy fell.\nNo rewards claimed.";
+            SetDungeonResult(noRewardMessage);
+            PlayCombatVisual(ShardRiftDungeonDefinition.dungeonId, $"{dungeonName} Endless", run.combat, Mathf.Max(1, GetShardRiftEnemyHp(1)));
+            return CreateActionResult(false, "shard_rift_run", "no_enemies_defeated", noRewardMessage);
+        }
+
+        GrantCurrency(AwakeningShardCurrencyId, run.awakeningShards);
+        heroShardChests += run.heroShardChests;
+        shardDungeonBestEnemiesDefeated = Mathf.Max(shardDungeonBestEnemiesDefeated, run.enemiesDefeated);
+        shardDungeonTotalEnemiesDefeated += run.enemiesDefeated;
+
+        var modeText = endedEarly ? "ended" : run.combat.teamHpRemaining <= 0 ? "defeated" : "completed";
+        var chestText = run.heroShardChests > 0 ? $"  +{run.heroShardChests} Hero Shard Chest" : string.Empty;
+        var message = $"{dungeonName} {modeText} after {run.elapsedSeconds}s\nDefeated {run.enemiesDefeated} enemies. Reward +{run.awakeningShards} {GetLocalizedCurrencyName(AwakeningShardCurrencyId)}{chestText}\nRewards are kept after defeat or manual end.";
+        PlayCombatVisual(ShardRiftDungeonDefinition.dungeonId, $"{dungeonName} Endless", run.combat, Mathf.Max(1, GetShardRiftEnemyHp(run.enemiesDefeated + 1)));
+        SetDungeonResult(message);
+        return CreateActionResult(true, "shard_rift_run", string.Empty, message, new MythwakeRewardDto { rewardId = $"reward_shard_rift_{shardDungeonTotalEnemiesDefeated}" });
+    }
+
+    private int GetShardRiftEnemyHp(int enemyNumber)
+    {
+        enemyNumber = Mathf.Max(1, enemyNumber);
+        return Mathf.Max(1, Mathf.RoundToInt(GetDungeonEnemyHp(ShardRiftDungeonDefinition, enemyNumber) * (0.72f + enemyNumber * 0.035f)));
+    }
+
+    private int GetShardRiftEnemyDamage(int enemyNumber)
+    {
+        enemyNumber = Mathf.Max(1, enemyNumber);
+        return Mathf.Max(1, Mathf.RoundToInt(GetDungeonEnemyDamage(ShardRiftDungeonDefinition, enemyNumber) * (0.78f + enemyNumber * 0.025f)));
+    }
+
+    private int GetShardRiftRecommendedPower(int enemyNumber)
+    {
+        enemyNumber = Mathf.Max(1, enemyNumber);
+        return GetDungeonRecommendedPower(ShardRiftDungeonDefinition, enemyNumber);
+    }
+
+    private static int GetShardRiftAwakeningShardReward(int enemyNumber)
+    {
+        enemyNumber = Mathf.Max(1, enemyNumber);
+        return 2 + (enemyNumber / 5);
+    }
+
+    private static int GetShardRiftChestReward(int enemiesDefeated)
+    {
+        return Mathf.Max(0, enemiesDefeated / 4);
+    }
+
+    private string FormatShardRiftRewardShort()
+    {
+        return $"+{GetShardRiftAwakeningShardReward(1)}+ {GetLocalizedCurrencyName(AwakeningShardCurrencyId)} | Chest streak";
     }
 
     private int GetCampaignEnemyDamage(int stage)
@@ -8152,6 +8883,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return GearDungeonBattleMapTextureNames;
         }
 
+        if (IsShardRiftDungeonId(dungeonId))
+        {
+            return ShardRiftDungeonBattleMapTextureNames;
+        }
+
         return GoldDungeonBattleMapTextureNames;
     }
 
@@ -9083,7 +9819,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (goldText != null)
         {
-            var resourceText = $"{GetLocalizedCurrencyName(GoldCurrencyId)} {gold}   {GetLocalizedCurrencyName(GemsCurrencyId)} {gems}   {GetLocalizedCurrencyName(MythEssenceCurrencyId)} {mythEssence}";
+            var resourceText = $"{GetLocalizedCurrencyName(GoldCurrencyId)} {gold}   {GetLocalizedCurrencyName(GemsCurrencyId)} {gems}   {GetLocalizedCurrencyName(MythEssenceCurrencyId)} {mythEssence}   Awk {awakeningShards}";
             goldText.fontSize = versionText == null ? 30 : 36;
             goldText.text = versionText == null ? $"{resourceText}\n{GetVersionLabel()}" : resourceText;
         }
@@ -9187,7 +9923,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             heroAscendCostText.text = heroAscensionMax
                 ? $"{GetLocalizedHeroName(selectedHeroIndex)} {Tr("ui.common.awakening")} {FormatCappedValue(heroAscensions[selectedHeroIndex], GetHeroAscensionCap(selectedHeroIndex))}"
-                : $"{Tr("ui.common.awaken")} {GetLocalizedHeroName(selectedHeroIndex)} ({GetHeroAscensionCost(selectedHeroIndex)} Shards)";
+                : $"{Tr("ui.common.awaken")} {GetLocalizedHeroName(selectedHeroIndex)} ({awakeningShards}/{GetHeroAscensionCost(selectedHeroIndex)} {GetLocalizedCurrencyName(AwakeningShardCurrencyId)})";
         }
 
         if (upgradeButton != null)
@@ -9300,7 +10036,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonInteractable(essenceDungeonButton, canInteract);
         SetButtonInteractable(gearDungeonButton, canInteract);
         SetButtonInteractable(dungeonDetailRunButton, canInteract);
-        SetButtonInteractable(shardRiftDungeonButton, false);
+        SetButtonInteractable(shardRiftDungeonButton, canInteract);
         SetButtonInteractable(ancientTowerDungeonButton, canInteract);
         RefreshDungeonFloorListUi();
         GateButton(upgradeButton, canInteract);
@@ -9318,6 +10054,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonInteractable(heroAutoSetTeamButton, canChangeTeam);
         SetButtonsInteractable(heroTeamSlotButtons, canChangeTeam);
         GateButton(heroDetailLevelButton, canManageHeroes);
+        GateButton(heroDetailStarButton, canManageHeroes);
+        GateButton(heroDetailOpenChestButton, canManageHeroes);
         RefreshHeroDetailGearActionButtons(canManageHeroes);
         if (heroDetailGearListRoot != null && heroDetailGearListRoot.gameObject.activeSelf)
         {
@@ -9343,6 +10081,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetButtonInteractable(debugEssenceButton, canInteract && !backendGameplayEnabled);
         SetButtonInteractable(debugGemsButton, canInteract && !backendGameplayEnabled);
         SetButtonInteractable(debugAccessoryButton, canInteract && !backendGameplayEnabled);
+        SetButtonInteractable(debugAwakeningShardsButton, canInteract && !backendGameplayEnabled);
+        SetButtonInteractable(debugHeroShardChestButton, canInteract && !backendGameplayEnabled);
         SetButtonsInteractable(heroSelectButtons, canManageHeroes);
         GateButtons(dailyMissionButtons, canInteract);
         GateButtons(battlePassRewardButtons, canInteract);
@@ -10134,6 +10874,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             inventoryDetailCloseButton.onClick.AddListener(HideInventoryItemDetails);
         }
 
+        if (inventoryUseOneButton != null)
+        {
+            inventoryUseOneButton.onClick.AddListener(UseSelectedInventoryItemOne);
+        }
+
+        if (inventoryUseAmountButton != null)
+        {
+            inventoryUseAmountButton.onClick.AddListener(UseSelectedInventoryItemAmount);
+        }
+
+        if (inventoryUseAllButton != null)
+        {
+            inventoryUseAllButton.onClick.AddListener(UseSelectedInventoryItemAll);
+        }
+
+        if (inventoryRewardCloseButton != null)
+        {
+            inventoryRewardCloseButton.onClick.AddListener(HideInventoryRewardPopup);
+        }
+
         if (inventoryMiscTabButton != null)
         {
             inventoryMiscTabButton.onClick.AddListener(ShowInventoryMiscTab);
@@ -10405,6 +11165,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (inventoryDetailCloseButton != null)
         {
             inventoryDetailCloseButton.onClick.RemoveListener(HideInventoryItemDetails);
+        }
+
+        if (inventoryUseOneButton != null)
+        {
+            inventoryUseOneButton.onClick.RemoveListener(UseSelectedInventoryItemOne);
+        }
+
+        if (inventoryUseAmountButton != null)
+        {
+            inventoryUseAmountButton.onClick.RemoveListener(UseSelectedInventoryItemAmount);
+        }
+
+        if (inventoryUseAllButton != null)
+        {
+            inventoryUseAllButton.onClick.RemoveListener(UseSelectedInventoryItemAll);
+        }
+
+        if (inventoryRewardCloseButton != null)
+        {
+            inventoryRewardCloseButton.onClick.RemoveListener(HideInventoryRewardPopup);
         }
 
         if (inventoryMiscTabButton != null)
@@ -10713,6 +11493,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureHeroStars();
         EnsureFormationOrder();
         RebuildHeroCardDisplayIndices();
 
@@ -10730,7 +11511,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (selectedHeroText != null)
         {
             var hero = GetHeroDefinition(selectedHeroIndex);
-            selectedHeroText.text = $"{GetLocalizedHeroName(hero)}  {Tr("ui.common.level_short")}. {FormatCappedValue(heroLevels[selectedHeroIndex], GetHeroLevelCap(selectedHeroIndex))}  {Tr("ui.common.awakening_short")} {FormatCappedValue(heroAscensions[selectedHeroIndex], GetHeroAscensionCap(selectedHeroIndex))}\n{GetLocalizedHeroRarityName(hero.rarityId)} {GetHeroAttackTypeLabel(selectedHeroIndex)}  {Tr("ui.common.power")} {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroEffectiveAttack(selectedHeroIndex)}  HP {GetHeroCombatMaxHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}";
+            selectedHeroText.text = $"{GetLocalizedHeroName(hero)}  {Tr("ui.common.level_short")}. {FormatCappedValue(heroLevels[selectedHeroIndex], GetHeroLevelCap(selectedHeroIndex))}  {Tr("ui.common.awakening_short")} {FormatCappedValue(heroAscensions[selectedHeroIndex], GetHeroAscensionCap(selectedHeroIndex))}  Star {FormatCappedValue(GetHeroStarLevel(selectedHeroIndex), GetHeroStarLevelCap(selectedHeroIndex))}\n{GetLocalizedHeroRarityName(hero.rarityId)} {GetHeroAttackTypeLabel(selectedHeroIndex)}  {Tr("ui.common.power")} {GetHeroPower(selectedHeroIndex)}\nATK {GetHeroEffectiveAttack(selectedHeroIndex)}  HP {GetHeroCombatMaxHealth(selectedHeroIndex)}  Shards {heroShards[selectedHeroIndex]}  Chests {heroShardChests}";
         }
 
         if (heroCardTexts != null)
@@ -10773,7 +11554,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (heroCardStarTexts != null && cardIndex < heroCardStarTexts.Length && heroCardStarTexts[cardIndex] != null)
         {
             heroCardStarTexts[cardIndex].gameObject.SetActive(visible);
-            heroCardStarTexts[cardIndex].text = visible ? GetHeroRarityStars(heroIndex) : string.Empty;
+            heroCardStarTexts[cardIndex].text = visible ? $"{GetHeroRarityStars(heroIndex)}  S{GetHeroStarLevel(heroIndex)}/{GetHeroStarLevelCap(heroIndex)}" : string.Empty;
         }
 
         if (heroCardRoleBadgeTexts != null && cardIndex < heroCardRoleBadgeTexts.Length && heroCardRoleBadgeTexts[cardIndex] != null)
@@ -10789,16 +11570,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroCardShardTexts != null && cardIndex < heroCardShardTexts.Length && heroCardShardTexts[cardIndex] != null)
         {
-            var ascensionNeed = visible ? Mathf.Max(1, GetHeroAscensionCost(heroIndex)) : 1;
+            var starNeed = visible ? Mathf.Max(1, GetHeroStarUpgradeCost(heroIndex)) : 1;
             heroCardShardTexts[cardIndex].gameObject.SetActive(visible);
             heroCardShardTexts[cardIndex].text = visible
-                ? IsHeroLevelMax(heroIndex)
-                    ? $"{heroShards[heroIndex]}/{ascensionNeed}"
-                    : $"{Tr("ui.common.level_short")} {GetHeroLevelCap(heroIndex)}"
+                ? IsHeroStarLevelMax(heroIndex)
+                    ? "Star MAX"
+                    : $"{heroShards[heroIndex]}/{starNeed}"
                 : string.Empty;
             if (heroCardShardFills != null && cardIndex < heroCardShardFills.Length && heroCardShardFills[cardIndex] != null)
             {
-                SetRuntimeFillPercent(heroCardShardFills[cardIndex], visible && IsHeroLevelMax(heroIndex) ? heroShards[heroIndex] / (float)ascensionNeed : 0f);
+                SetRuntimeFillPercent(heroCardShardFills[cardIndex], visible && !IsHeroStarLevelMax(heroIndex) ? heroShards[heroIndex] / (float)starNeed : 1f);
                 heroCardShardFills[cardIndex].transform.parent.gameObject.SetActive(visible);
             }
         }
@@ -11510,6 +12291,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void EnsureHeroStars()
+    {
+        if (heroStarLevels == null || heroStarLevels.Length != HeroCount)
+        {
+            heroStarLevels = new int[HeroCount];
+        }
+
+        for (var i = 0; i < heroStarLevels.Length; i++)
+        {
+            heroStarLevels[i] = Mathf.Clamp(heroStarLevels[i], 0, GetHeroStarLevelCap(i));
+        }
+    }
+
     private void EnsureHeroEquipment()
     {
         var legacyWeaponLevel = Mathf.Max(StarterEquipmentLevel, weaponLevel);
@@ -12019,6 +12813,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return "enemy_canine";
         }
 
+        if (IsShardRiftDungeonId(dungeonId))
+        {
+            return "enemy_dragon";
+        }
+
         return "enemy_golem";
     }
 
@@ -12037,6 +12836,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (dungeonId == GearDungeonDefinition.dungeonId)
         {
             return "Iron Hound";
+        }
+
+        if (IsShardRiftDungeonId(dungeonId))
+        {
+            return "Shard Warden";
         }
 
         return "Treasure Golem";
@@ -12582,6 +13386,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 return gems;
             case MythEssenceCurrencyId:
                 return mythEssence;
+            case AwakeningShardCurrencyId:
+                return awakeningShards;
             case PassXpCurrencyId:
                 return battlePassXp;
             default:
@@ -12603,6 +13409,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             case MythEssenceCurrencyId:
                 mythEssence = amount;
                 break;
+            case AwakeningShardCurrencyId:
+                awakeningShards = amount;
+                break;
             case PassXpCurrencyId:
                 battlePassXp = amount;
                 break;
@@ -12618,6 +13427,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             gold = gold,
             gems = gems,
             mythEssence = mythEssence,
+            awakeningShards = awakeningShards,
             passXp = battlePassXp,
             campaignStage = enemyLevel,
             goldDungeonFloor = goldDungeonFloor,
@@ -12638,13 +13448,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             state = GetPlayerState(),
             heroes = CreateHeroSnapshot(),
             heroShards = CreateHeroShardSnapshot(),
+            heroShardChests = heroShardChests,
             equipment = CreateEquipmentSnapshot(),
             accessories = CreateAccessorySnapshot(),
             equippedAccessories = CreateEquippedAccessorySnapshot(),
             villageBuildings = CreateVillageBuildingSnapshot(),
             dailyClaims = CreateDailyClaimSnapshot(),
             battlePassClaims = CreateBattlePassClaimSnapshot(),
-            summonCount = summonCount
+            summonCount = summonCount,
+            shardRiftBestEnemiesDefeated = shardDungeonBestEnemiesDefeated,
+            shardRiftTotalEnemiesDefeated = shardDungeonTotalEnemiesDefeated
         };
     }
 
@@ -12940,6 +13753,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return GearDungeonDefinition;
         }
 
+        if (dungeonId == ShardRiftDungeonDefinition.dungeonId)
+        {
+            return ShardRiftDungeonDefinition;
+        }
+
         return GoldDungeonDefinition;
     }
 
@@ -12949,6 +13767,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             NormalizeTowerDungeonProgress();
             return towerDungeonSelectedFloor;
+        }
+
+        if (IsShardRiftDungeonId(dungeonId))
+        {
+            return 1;
         }
 
         if (dungeonId == EssenceDungeonDefinition.dungeonId)
@@ -12969,9 +13792,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return dungeonId == TowerDungeonDefinition.dungeonId;
     }
 
+    private static bool IsShardRiftDungeonId(string dungeonId)
+    {
+        return dungeonId == ShardRiftDungeonDefinition.dungeonId;
+    }
+
     private bool IsSelectedTowerDungeon()
     {
         return IsTowerDungeonId(selectedDungeonId);
+    }
+
+    private bool IsSelectedShardRiftDungeon()
+    {
+        return IsShardRiftDungeonId(selectedDungeonId);
     }
 
     private static string ShortHash(string contentHash)
@@ -13031,6 +13864,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         EnsureHeroLevels();
         EnsureHeroAscensions();
+        EnsureHeroStars();
         var snapshot = new MythwakeHeroStateDto[HeroCount];
         for (var i = 0; i < snapshot.Length; i++)
         {
@@ -13038,7 +13872,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 heroId = GetHeroDefinition(i).heroId,
                 level = heroLevels[i],
-                ascension = heroAscensions[i]
+                ascension = heroAscensions[i],
+                starLevel = heroStarLevels[i]
             };
         }
 
@@ -13580,6 +14415,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         accessoryInventory[index] = Mathf.Max(0, accessoryInventory[index] + amount);
     }
 
+    private void AddHeroShards(int heroIndex, int amount)
+    {
+        EnsureHeroShards();
+        heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
+        heroShards[heroIndex] = Mathf.Max(0, heroShards[heroIndex] + Mathf.Max(0, amount));
+    }
+
     private int GetEquipmentBonus(EquipmentTrackDefinition track, int level)
     {
         level = Mathf.Max(StarterEquipmentLevel, level);
@@ -13592,6 +14434,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureHeroStars();
         var hero = GetHeroDefinition(index);
 
         if (TryGetBackendHeroDefinition(hero.heroId, out var backendHero))
@@ -13603,7 +14446,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         return hero.baseAttack
             + ((Mathf.Max(1, heroLevels[index]) - 1) * hero.attackGrowth)
-            + (heroAscensions[index] * hero.ascensionAttack);
+            + (heroAscensions[index] * hero.ascensionAttack)
+            + GetHeroStarAttackBonus(index);
     }
 
     private int GetHeroHealth(int index)
@@ -13612,6 +14456,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureHeroStars();
         var hero = GetHeroDefinition(index);
 
         if (TryGetBackendHeroDefinition(hero.heroId, out var backendHero))
@@ -13623,7 +14468,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         return hero.baseHealth
             + ((Mathf.Max(1, heroLevels[index]) - 1) * hero.healthGrowth)
-            + (heroAscensions[index] * hero.ascensionHealth);
+            + (heroAscensions[index] * hero.ascensionHealth)
+            + GetHeroStarHealthBonus(index);
     }
 
     private int GetHeroAwakeningAttackPerStage(int index)
@@ -13685,8 +14531,56 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         index = Mathf.Clamp(index, 0, HeroCount - 1);
         EnsureHeroLevels();
         EnsureHeroAscensions();
+        EnsureHeroStars();
         var hero = GetHeroDefinition(index);
-        return Mathf.Max(0, hero.defense + Mathf.FloorToInt(heroLevels[index] / 2f) + (heroAscensions[index] * 3));
+        return Mathf.Max(0, hero.defense + Mathf.FloorToInt(heroLevels[index] / 2f) + (heroAscensions[index] * 3) + GetHeroStarDefenseBonus(index));
+    }
+
+    private int GetHeroStarLevel(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        EnsureHeroStars();
+        return Mathf.Clamp(heroStarLevels[index], 0, GetHeroStarLevelCap(index));
+    }
+
+    private int GetHeroStarLevelCap(int index)
+    {
+        return LocalHeroMaxStarLevel;
+    }
+
+    private bool IsHeroStarLevelMax(int index)
+    {
+        return GetHeroStarLevel(index) >= GetHeroStarLevelCap(index);
+    }
+
+    private int GetHeroStarUpgradeCost(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        return HeroStarBaseShardCost + (GetHeroStarLevel(index) * HeroStarShardCostPerStage);
+    }
+
+    private bool CanUpgradeHeroStar(int index)
+    {
+        index = Mathf.Clamp(index, 0, HeroCount - 1);
+        EnsureHeroShards();
+        return !IsHeroStarLevelMax(index) && heroShards[index] >= GetHeroStarUpgradeCost(index);
+    }
+
+    private int GetHeroStarAttackBonus(int index)
+    {
+        var hero = GetHeroDefinition(index);
+        return Mathf.Max(0, Mathf.CeilToInt(hero.baseAttack * 0.12f) * GetHeroStarLevel(index));
+    }
+
+    private int GetHeroStarHealthBonus(int index)
+    {
+        var hero = GetHeroDefinition(index);
+        return Mathf.Max(0, Mathf.CeilToInt(hero.baseHealth * 0.09f) * GetHeroStarLevel(index));
+    }
+
+    private int GetHeroStarDefenseBonus(int index)
+    {
+        return Mathf.Max(0, 2 * GetHeroStarLevel(index));
     }
 
     private int GetTeamDefense()
@@ -13801,11 +14695,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private bool CanHeroAwaken(int index)
     {
         index = Mathf.Clamp(index, 0, HeroCount - 1);
-        EnsureHeroShards();
         EnsureHeroAscensions();
         return IsHeroLevelMax(index)
             && !IsHeroAscensionMax(index)
-            && heroShards[index] >= GetHeroAscensionCost(index);
+            && awakeningShards >= GetHeroAscensionCost(index);
     }
 
     private int GetWeaponUpgradeCost()
@@ -13934,11 +14827,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshDungeonSelectorCardUi(GoldDungeonDefinition, goldDungeonFloor, goldDungeonTitleText, goldDungeonProgressText, goldDungeonText);
         RefreshDungeonSelectorCardUi(EssenceDungeonDefinition, essenceDungeonFloor, essenceDungeonTitleText, essenceDungeonProgressText, essenceDungeonText);
         RefreshDungeonSelectorCardUi(GearDungeonDefinition, gearDungeonFloor, gearDungeonTitleText, gearDungeonProgressText, gearDungeonText);
-        RefreshFutureDungeonCardUi(shardRiftDungeonTitleText, shardRiftDungeonProgressText, shardRiftDungeonText, "Shard Rift");
+        RefreshShardRiftDungeonSelectorCardUi();
         RefreshTowerDungeonSelectorCardUi();
         RefreshDungeonSelectorState(goldDungeonButton, GoldDungeonDefinition.dungeonId, new Color(0.96f, 0.68f, 0.22f, 0.96f));
         RefreshDungeonSelectorState(essenceDungeonButton, EssenceDungeonDefinition.dungeonId, new Color(0.55f, 0.34f, 1f, 0.96f));
         RefreshDungeonSelectorState(gearDungeonButton, GearDungeonDefinition.dungeonId, new Color(0.18f, 0.86f, 0.95f, 0.96f));
+        RefreshDungeonSelectorState(shardRiftDungeonButton, ShardRiftDungeonDefinition.dungeonId, new Color(0.74f, 0.34f, 1f, 0.96f));
         RefreshDungeonSelectorState(ancientTowerDungeonButton, TowerDungeonDefinition.dungeonId, new Color(1f, 0.58f, 0.24f, 0.96f));
         RefreshDungeonDetailUi();
         RefreshDungeonFloorListUi();
@@ -13998,6 +14892,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void RefreshShardRiftDungeonSelectorCardUi()
+    {
+        if (shardRiftDungeonTitleText != null)
+        {
+            shardRiftDungeonTitleText.text = GetDungeonSelectorTitle(ShardRiftDungeonDefinition.dungeonId);
+        }
+
+        if (shardRiftDungeonProgressText != null)
+        {
+            shardRiftDungeonProgressText.text = $"Best {shardDungeonBestEnemiesDefeated} Kills";
+        }
+
+        if (shardRiftDungeonText != null)
+        {
+            shardRiftDungeonText.text = $"Endless | {FormatShardRiftRewardShort()}";
+        }
+    }
+
     private void RefreshTowerDungeonSelectorCardUi()
     {
         NormalizeTowerDungeonProgress();
@@ -14050,6 +14962,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (IsTowerDungeonId(dungeon.dungeonId))
         {
             RefreshTowerDungeonDetailUi(floor);
+            return;
+        }
+
+        if (IsShardRiftDungeonId(dungeon.dungeonId))
+        {
+            RefreshShardRiftDungeonDetailUi();
             return;
         }
 
@@ -14150,6 +15068,55 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void RefreshShardRiftDungeonDetailUi()
+    {
+        var bannerTexture = LoadRuntimeTexture(GetDungeonBannerTextureName(ShardRiftDungeonDefinition.dungeonId));
+        if (dungeonDetailBannerImage != null)
+        {
+            dungeonDetailBannerImage.texture = bannerTexture;
+            dungeonDetailBannerImage.color = bannerTexture != null ? new Color(1f, 1f, 1f, 0.94f) : new Color(0.7f, 0.34f, 1f, 0.16f);
+        }
+
+        if (dungeonDetailBossImage != null)
+        {
+            var bossTextureName = GetDungeonBossTextureName(ShardRiftDungeonDefinition.dungeonId);
+            dungeonDetailBossImage.texture = LoadCombatTexture(bossTextureName, "idle", 0, bossTextureName);
+            dungeonDetailBossImage.rectTransform.localScale = new Vector3(GetEnemyFacingScale(bossTextureName), 1f, 1f);
+        }
+
+        if (dungeonDetailTitleText != null)
+        {
+            dungeonDetailTitleText.text = GetDungeonSelectorTitle(ShardRiftDungeonDefinition.dungeonId);
+        }
+
+        if (dungeonDetailMetaText != null)
+        {
+            dungeonDetailMetaText.text = $"{GetLocalizedDungeonSetTitle(ShardRiftDungeonDefinition.dungeonId)}\nEndless | Best {shardDungeonBestEnemiesDefeated} | Total {shardDungeonTotalEnemiesDefeated}";
+        }
+
+        if (dungeonDetailRewardsText != null)
+        {
+            dungeonDetailRewardsText.text = $"Defeat enemies for {GetLocalizedCurrencyName(AwakeningShardCurrencyId)} and Hero Shard Chests.\nRewards are kept on defeat or manual end.";
+        }
+
+        if (dungeonDetailRunButtonText != null)
+        {
+            dungeonDetailRunButtonText.text = backendGameplayEnabled ? "Server Run" : "Start Endless";
+        }
+
+        if (dungeonDetailRunButton != null)
+        {
+            dungeonDetailRunButton.interactable = CanStartDungeonRun();
+        }
+
+        if (dungeonFlowHintText != null)
+        {
+            dungeonFlowHintText.text = backendGameplayEnabled
+                ? "Server Mode simulates the endless run and keeps every defeated enemy reward."
+                : "End the Shard Rift whenever you want; every defeated enemy pays out.";
+        }
+    }
+
     private void RefreshDungeonFloorListUi()
     {
         if (dungeonFloorButtons == null || dungeonFloorTitleTexts == null || dungeonFloorStatusTexts == null || dungeonFloorActionTexts == null)
@@ -14161,6 +15128,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (IsTowerDungeonId(dungeon.dungeonId))
         {
             RefreshTowerFloorListUi();
+            return;
+        }
+
+        if (IsShardRiftDungeonId(dungeon.dungeonId))
+        {
+            RefreshShardRiftFloorListUi();
             return;
         }
 
@@ -14285,6 +15258,50 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
+    private void RefreshShardRiftFloorListUi()
+    {
+        SetComponentActive(towerFloorSectionRoot, false);
+        var titles = new[] { "Endless Run", "Awakening Shards", "Hero Shard Chest", "No Floor Cap" };
+        var statuses = new[] { "Ready", "Per Kill", "Every Few Kills", "End Anytime" };
+        var actions = new[]
+        {
+            $"Battle | Rec {FormatCompactNumber(GetShardRiftRecommendedPower(1))}",
+            $"+{GetShardRiftAwakeningShardReward(1)} per first kill",
+            "Chest from streak rewards",
+            $"Best {shardDungeonBestEnemiesDefeated} kills"
+        };
+
+        for (var i = 0; i < dungeonFloorButtons.Length; i++)
+        {
+            if (dungeonFloorTitleTexts[i] != null)
+            {
+                dungeonFloorTitleTexts[i].text = titles[Mathf.Clamp(i, 0, titles.Length - 1)];
+                dungeonFloorTitleTexts[i].color = i == 0 ? new Color(1f, 0.93f, 0.62f) : Color.white;
+            }
+
+            if (dungeonFloorStatusTexts[i] != null)
+            {
+                dungeonFloorStatusTexts[i].text = statuses[Mathf.Clamp(i, 0, statuses.Length - 1)];
+                dungeonFloorStatusTexts[i].color = i == 0 ? new Color(0.35f, 0.95f, 1f) : new Color(0.78f, 0.86f, 0.92f);
+            }
+
+            if (dungeonFloorActionTexts[i] != null)
+            {
+                dungeonFloorActionTexts[i].text = actions[Mathf.Clamp(i, 0, actions.Length - 1)];
+                dungeonFloorActionTexts[i].color = i == 0 ? new Color(1f, 0.94f, 0.72f) : new Color(0.78f, 0.86f, 0.92f);
+            }
+
+            if (dungeonFloorAccentImages != null && i < dungeonFloorAccentImages.Length && dungeonFloorAccentImages[i] != null)
+            {
+                dungeonFloorAccentImages[i].color = i == 0
+                    ? GetDungeonAccentColor(ShardRiftDungeonDefinition.dungeonId)
+                    : new Color(0.42f, 0.22f, 0.62f, 0.78f);
+            }
+
+            dungeonFloorButtons[i].interactable = i == 0 && CanStartDungeonRun();
+        }
+    }
+
     private void RefreshDungeonCardUi(DungeonDefinition dungeon, int floor, TMP_Text titleText, TMP_Text progressText, TMP_Text detailText)
     {
         floor = Mathf.Max(1, floor);
@@ -14370,6 +15387,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return "Tower Dungeon";
         }
 
+        if (resolvedId == ShardRiftDungeonDefinition.dungeonId)
+        {
+            return "Shard Rift";
+        }
+
         return "Gold Vault";
     }
 
@@ -14390,6 +15412,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return "gear_dungeon_set_banner";
         }
 
+        if (IsShardRiftDungeonId(dungeonId))
+        {
+            return "essence_dungeon_set_banner";
+        }
+
         return "gold_dungeon_set_banner";
     }
 
@@ -14408,6 +15435,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (dungeonId == GearDungeonDefinition.dungeonId)
         {
             return new Color(0.18f, 0.86f, 0.95f, 0.94f);
+        }
+
+        if (IsShardRiftDungeonId(dungeonId))
+        {
+            return new Color(0.74f, 0.34f, 1f, 0.94f);
         }
 
         return new Color(0.96f, 0.68f, 0.22f, 0.94f);
@@ -14457,6 +15489,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return $"Reward: {FormatTowerReward(GetTowerReward(floor))}";
         }
 
+        if (IsShardRiftDungeonId(dungeon.dungeonId))
+        {
+            return $"Reward: {FormatShardRiftRewardShort()}";
+        }
+
         return Tr("dungeon.reward.drop");
     }
 
@@ -14475,6 +15512,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (IsTowerDungeonId(dungeonId))
         {
             return "Turm der Pruefung";
+        }
+
+        if (IsShardRiftDungeonId(dungeonId))
+        {
+            return "Endless Shard Rift";
         }
 
         return "Gold Treasury Set";
@@ -14513,6 +15555,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return $"{GetLocalizedDungeonName(localDefinition.dungeonId)} F{floor}  Rec {FormatCompactNumber(GetTowerRecommendedPower(floor))}\n{GetTowerEnemyLabel(floor)} HP {FormatCompactNumber(GetTowerEnemyHp(floor))}  {FormatTowerReward(GetTowerReward(floor))}";
         }
 
+        if (IsShardRiftDungeonId(localDefinition.dungeonId))
+        {
+            return $"{GetLocalizedDungeonName(localDefinition.dungeonId)} Endless  Rec {FormatCompactNumber(GetShardRiftRecommendedPower(1))}\nKeep rewards on defeat/end  Best {shardDungeonBestEnemiesDefeated}";
+        }
+
         return TrFormat("dungeon.preview.drop", GetLocalizedDungeonName(localDefinition.dungeonId), floor, GetGearDungeonRecommendedPower(floor), FormatCompactNumber(GetDungeonEnemyHp(localDefinition, floor)));
     }
 
@@ -14541,6 +15588,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (IsTowerDungeonId(dungeon.dungeonId))
         {
             return $"Reward: {FormatTowerReward(GetTowerReward(floor))}";
+        }
+
+        if (IsShardRiftDungeonId(dungeon.dungeonId))
+        {
+            return $"Reward: {FormatShardRiftRewardShort()}";
         }
 
         return Tr("dungeon.reward.drop");
@@ -15270,6 +16322,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             PlayerPrefs.DeleteKey($"{HeroLevelKeyPrefix}{i}");
             PlayerPrefs.DeleteKey($"{HeroShardKeyPrefix}{i}");
             PlayerPrefs.DeleteKey($"{HeroAscensionKeyPrefix}{i}");
+            PlayerPrefs.DeleteKey($"{HeroStarLevelKeyPrefix}{i}");
             PlayerPrefs.DeleteKey($"{HeroWeaponLevelKeyPrefix}{i}");
             PlayerPrefs.DeleteKey($"{HeroArmorLevelKeyPrefix}{i}");
         }
@@ -17542,6 +18595,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         inventoryGridRoot.GetComponent<Image>().raycastTarget = false;
         CreateInventoryGridSlots();
         CreateInventoryDetailPanel();
+        CreateInventoryRewardPopup();
 
         inventoryMiscTabButton = CreateRuntimeButton(inventoryPopupRoot, "Inventory Misc Tab", "Misc", -260, -1000, 200, 64);
         inventoryGearTabButton = CreateRuntimeButton(inventoryPopupRoot, "Inventory Gear Tab", "Gear", 0, -1000, 200, 64);
@@ -17755,9 +18809,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        inventoryDetailRoot = CreateRuntimePanel(inventoryPopupRoot, "Inventory Detail Panel", new Vector2(0, -362), new Vector2(760, 324), new Color(0.09f, 0.045f, 0.025f, 0.98f));
+        inventoryDetailRoot = CreateRuntimePanel(inventoryPopupRoot, "Inventory Detail Panel", new Vector2(0, -362), new Vector2(760, 382), new Color(0.09f, 0.045f, 0.025f, 0.98f));
         inventoryDetailRoot.GetComponent<Image>().raycastTarget = true;
-        CreateRuntimePanel(inventoryDetailRoot, "Detail Inner", new Vector2(0, -34), new Vector2(716, 268), new Color(0.96f, 0.78f, 0.46f, 0.94f));
+        CreateRuntimePanel(inventoryDetailRoot, "Detail Inner", new Vector2(0, -34), new Vector2(716, 326), new Color(0.96f, 0.78f, 0.46f, 0.94f));
         inventoryDetailFrame = CreateRuntimePanel(inventoryDetailRoot, "Detail Icon Frame", new Vector2(-272, -96), new Vector2(128, 128), new Color(0.38f, 0.24f, 0.13f, 0.96f)).GetComponent<Image>();
         inventoryDetailIcon = CreateRuntimeRawImage(inventoryDetailFrame.transform, "Icon", null, new Vector2(0, -18), new Vector2(112, 90), new Vector2(0.5f, 1f));
         inventoryDetailIcon.raycastTarget = false;
@@ -17779,7 +18833,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         inventoryDetailDescriptionText.fontSizeMin = 14;
         inventoryDetailDescriptionText.fontSizeMax = 20;
 
-        inventoryDetailStatsText = CreateRuntimeText(inventoryDetailRoot, "Detail Stats", string.Empty, 20, new Vector2(90, -204), new Vector2(560, 74));
+        inventoryDetailStatsText = CreateRuntimeText(inventoryDetailRoot, "Detail Stats", string.Empty, 20, new Vector2(90, -194), new Vector2(560, 74));
         inventoryDetailStatsText.alignment = TextAlignmentOptions.TopLeft;
         inventoryDetailStatsText.fontStyle = FontStyles.Bold;
         inventoryDetailStatsText.color = new Color(0.13f, 0.07f, 0.03f);
@@ -17789,7 +18843,66 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         inventoryDetailStatsText.fontSizeMax = 20;
 
         inventoryDetailCloseButton = CreateRuntimeButton(inventoryDetailRoot, "Detail Close Button", "X", 340, -28, 48, 48);
+        inventoryUseOneButton = CreateRuntimeButton(inventoryDetailRoot, "Detail Use One Button", "Use 1", -246, -306, 136, 50);
+        inventoryUseAmountInput = CreateRuntimeInputField(inventoryDetailRoot, "Detail Use Amount Input", "1", -78, -306, 112, 50, false);
+        inventoryUseAmountInput.contentType = TMP_InputField.ContentType.IntegerNumber;
+        inventoryUseAmountInput.characterLimit = 3;
+        inventoryUseAmountInput.text = "1";
+        inventoryUseAmountButton = CreateRuntimeButton(inventoryDetailRoot, "Detail Use Amount Button", "Use", 74, -306, 126, 50);
+        inventoryUseAllButton = CreateRuntimeButton(inventoryDetailRoot, "Detail Use All Button", "All", 246, -306, 136, 50);
         inventoryDetailRoot.gameObject.SetActive(false);
+    }
+
+    private void CreateInventoryRewardPopup()
+    {
+        if (inventoryPopupRoot == null || inventoryRewardPopupRoot != null)
+        {
+            return;
+        }
+
+        inventoryRewardPopupRoot = CreateRuntimePopup(inventoryPopupRoot, "Inventory Reward Popup", new Vector2(0, -392), new Vector2(700, 430), "Rewards");
+        var popupImage = inventoryRewardPopupRoot.GetComponent<Image>();
+        if (popupImage != null)
+        {
+            popupImage.color = new Color(0.055f, 0.032f, 0.02f, 0.995f);
+            popupImage.raycastTarget = true;
+        }
+
+        inventoryRewardTitleText = inventoryRewardPopupRoot.Find("Title")?.GetComponent<TMP_Text>();
+        CreateRuntimePanel(inventoryRewardPopupRoot, "Reward Inner Parchment", new Vector2(0, -96), new Vector2(640, 238), new Color(0.96f, 0.78f, 0.48f, 0.96f));
+        inventoryRewardSummaryText = CreateRuntimeText(inventoryRewardPopupRoot, "Reward Summary", string.Empty, 20, new Vector2(0, -96), new Vector2(590, 54));
+        inventoryRewardSummaryText.fontStyle = FontStyles.Bold;
+        inventoryRewardSummaryText.color = new Color(0.23f, 0.11f, 0.04f);
+        inventoryRewardSummaryText.enableAutoSizing = true;
+        inventoryRewardSummaryText.fontSizeMin = 13;
+        inventoryRewardSummaryText.fontSizeMax = 20;
+        inventoryRewardSummaryText.textWrappingMode = TextWrappingModes.Normal;
+
+        inventoryRewardFrames = new Image[HeroCount];
+        inventoryRewardIcons = new RawImage[HeroCount];
+        inventoryRewardTexts = new TMP_Text[HeroCount];
+        for (var i = 0; i < HeroCount; i++)
+        {
+            var column = i % 4;
+            var row = i / 4;
+            var x = -240f + column * 160f;
+            var y = -166f - row * 108f;
+            var frame = CreateRuntimePanel(inventoryRewardPopupRoot, $"Reward Slot {i + 1}", new Vector2(x, y), new Vector2(126, 92), new Color(0.3f, 0.17f, 0.08f, 0.94f));
+            inventoryRewardFrames[i] = frame.GetComponent<Image>();
+            inventoryRewardIcons[i] = CreateRuntimeRawImage(frame, "Icon", null, new Vector2(-34, -10), new Vector2(52, 58), new Vector2(0.5f, 1f));
+            inventoryRewardIcons[i].raycastTarget = false;
+            inventoryRewardTexts[i] = CreateRuntimeText(frame, "Text", string.Empty, 14, new Vector2(22, -16), new Vector2(64, 56));
+            inventoryRewardTexts[i].alignment = TextAlignmentOptions.Left;
+            inventoryRewardTexts[i].fontStyle = FontStyles.Bold;
+            inventoryRewardTexts[i].enableAutoSizing = true;
+            inventoryRewardTexts[i].fontSizeMin = 9;
+            inventoryRewardTexts[i].fontSizeMax = 14;
+            inventoryRewardTexts[i].textWrappingMode = TextWrappingModes.Normal;
+            frame.gameObject.SetActive(false);
+        }
+
+        inventoryRewardCloseButton = CreateRuntimeButton(inventoryRewardPopupRoot, "Inventory Reward Close Button", "OK", 0, -376, 210, 58);
+        inventoryRewardPopupRoot.gameObject.SetActive(false);
     }
 
     private void RefreshInventoryPopupUi()
@@ -17923,6 +19036,119 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             inventoryDetailStatsText.text = item.statsText;
         }
+
+        RefreshInventoryUseControls(item);
+    }
+
+    private void RefreshInventoryUseControls(InventoryItemViewData item)
+    {
+        var canUse = item.IsUsable && !backendRequestInProgress && !backendLifecycleFlushInProgress;
+        SetComponentActive(inventoryUseOneButton, item.IsUsable);
+        SetComponentActive(inventoryUseAmountInput, item.IsUsable);
+        SetComponentActive(inventoryUseAmountButton, item.IsUsable);
+        SetComponentActive(inventoryUseAllButton, item.IsUsable);
+
+        if (!item.IsUsable)
+        {
+            return;
+        }
+
+        var clampedMax = Mathf.Max(1, item.maxUseCount);
+        if (inventoryUseAmountInput != null)
+        {
+            var amount = ParseInventoryUseAmount(clampedMax);
+            if (amount > clampedMax)
+            {
+                inventoryUseAmountInput.text = clampedMax.ToString();
+            }
+        }
+
+        SetButtonLabel(inventoryUseOneButton, "Use 1");
+        SetButtonLabel(inventoryUseAmountButton, "Use");
+        SetButtonLabel(inventoryUseAllButton, clampedMax > 1 ? $"All ({clampedMax})" : "All");
+        SetButtonInteractable(inventoryUseOneButton, canUse);
+        SetButtonInteractable(inventoryUseAmountButton, canUse);
+        SetButtonInteractable(inventoryUseAllButton, canUse && clampedMax > 1);
+    }
+
+    private void ShowInventoryRewardPopup(string title, string summary, int[] heroShardRewards)
+    {
+        if (inventoryPopupRoot == null)
+        {
+            return;
+        }
+
+        CreateInventoryRewardPopup();
+        if (inventoryRewardPopupRoot == null)
+        {
+            return;
+        }
+
+        inventoryRewardPopupRoot.gameObject.SetActive(true);
+        inventoryRewardPopupRoot.SetAsLastSibling();
+
+        if (inventoryRewardTitleText != null)
+        {
+            inventoryRewardTitleText.text = string.IsNullOrWhiteSpace(title) ? "Rewards" : title;
+        }
+
+        if (inventoryRewardSummaryText != null)
+        {
+            inventoryRewardSummaryText.text = FormatInventoryRewardPopupSummary(summary);
+        }
+
+        var slotIndex = 0;
+        for (var heroIndex = 0; heroIndex < HeroCount && slotIndex < HeroCount; heroIndex++)
+        {
+            var rewardAmount = heroShardRewards != null && heroIndex < heroShardRewards.Length ? heroShardRewards[heroIndex] : 0;
+            if (rewardAmount <= 0)
+            {
+                continue;
+            }
+
+            if (inventoryRewardFrames != null && slotIndex < inventoryRewardFrames.Length && inventoryRewardFrames[slotIndex] != null)
+            {
+                inventoryRewardFrames[slotIndex].gameObject.SetActive(true);
+                inventoryRewardFrames[slotIndex].color = GetHeroRarityColor(GetHeroDefinition(heroIndex).rarityId);
+            }
+
+            if (inventoryRewardIcons != null && slotIndex < inventoryRewardIcons.Length && inventoryRewardIcons[slotIndex] != null)
+            {
+                inventoryRewardIcons[slotIndex].texture = LoadCombatTexture(GetHeroTextureName(heroIndex), "idle", 0, GetHeroTextureName(heroIndex));
+                inventoryRewardIcons[slotIndex].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
+            }
+
+            if (inventoryRewardTexts != null && slotIndex < inventoryRewardTexts.Length && inventoryRewardTexts[slotIndex] != null)
+            {
+                inventoryRewardTexts[slotIndex].text = $"{GetLocalizedHeroName(heroIndex)}\n+{rewardAmount} Shards";
+            }
+
+            slotIndex++;
+        }
+
+        for (var i = slotIndex; i < HeroCount; i++)
+        {
+            if (inventoryRewardFrames != null && i < inventoryRewardFrames.Length && inventoryRewardFrames[i] != null)
+            {
+                inventoryRewardFrames[i].gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private static string FormatInventoryRewardPopupSummary(string summary)
+    {
+        if (string.IsNullOrWhiteSpace(summary))
+        {
+            return "Rewards claimed.";
+        }
+
+        var lines = summary.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        if (lines.Length <= 2)
+        {
+            return summary;
+        }
+
+        return $"{lines[0]}\n{lines[lines.Length - 1]}";
     }
 
     private List<InventoryItemViewData> BuildInventoryItems()
@@ -17943,6 +19169,53 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void AddMiscInventoryItems(List<InventoryItemViewData> items)
     {
+        EnsureHeroShards();
+        if (awakeningShards > 0)
+        {
+            items.Add(new InventoryItemViewData(
+                GetLocalizedCurrencyName(AwakeningShardCurrencyId),
+                Tr("ui.common.awakening"),
+                "Currency used after Lv 100 to awaken heroes.",
+                $"Owned {FormatCompactNumber(awakeningShards)}\nSource: Shard Rift, cheat panel",
+                FormatCompactNumber(awakeningShards),
+                "dungeon_essence",
+                new Color(0.64f, 0.34f, 1f, 0.96f)));
+        }
+
+        if (heroShardChests > 0)
+        {
+            items.Add(new InventoryItemViewData(
+                "Hero Shard Chest",
+                "Consumable",
+                "A chest containing shards for one hero. Shards upgrade that hero's star level.",
+                $"Owned {heroShardChests}\nUse from Bag or Hero Detail to add hero-specific shards.",
+                heroShardChests.ToString(),
+                "vfx_summon",
+                new Color(0.88f, 0.54f, 0.18f, 0.96f),
+                InventoryConsumableType.HeroShardChest,
+                heroShardChests));
+        }
+
+        for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
+        {
+            if (heroShards[heroIndex] <= 0)
+            {
+                continue;
+            }
+
+            var starCost = IsHeroStarLevelMax(heroIndex) ? 0 : GetHeroStarUpgradeCost(heroIndex);
+            items.Add(new InventoryItemViewData(
+                $"{GetLocalizedHeroName(heroIndex)} Shards",
+                $"Star {GetHeroStarLevel(heroIndex)}/{GetHeroStarLevelCap(heroIndex)}",
+                "Hero-specific shards for star-level upgrades.",
+                IsHeroStarLevelMax(heroIndex)
+                    ? $"Owned {heroShards[heroIndex]}\nStar level is max."
+                    : $"Owned {heroShards[heroIndex]}/{starCost}\nNext star: +{Mathf.CeilToInt(GetHeroDefinition(heroIndex).baseAttack * 0.12f)} ATK source.",
+                heroShards[heroIndex].ToString(),
+                "vfx_summon",
+                GetHeroRarityColor(GetHeroDefinition(heroIndex).rarityId)));
+        }
+
         if (battlePassXp > 0)
         {
             items.Add(new InventoryItemViewData(
@@ -18518,9 +19791,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         heroDetailPreviousButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Previous Button", "<", -170, -618, 64, 66);
         heroDetailNextButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Next Button", ">", 170, -618, 64, 66);
-        heroDetailRemoveGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Remove Gear Button", "Remove Gear", -250, -1018, 210, 62);
-        heroDetailLevelButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Level Button", "Level Up", 0, -1022, 260, 74);
-        heroDetailEquipGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Equip Gear Button", "Equip Gear", 250, -1018, 210, 62);
+        heroDetailRemoveGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Remove Gear Button", "Remove Gear", -310, -1018, 180, 56);
+        heroDetailLevelButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Level Button", "Level Up", -102, -1022, 202, 66);
+        heroDetailStarButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Star Button", "Star Up", 102, -1022, 202, 66);
+        heroDetailEquipGearButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Equip Gear Button", "Equip Gear", 310, -1018, 180, 56);
+        heroDetailOpenChestButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Open Chest Button", "Open Chest", 0, -1086, 260, 54);
 
         var tabBack = CreateRuntimePanel(heroDetailRoot, "Hero Detail Tabs Backplate", new Vector2(0, -1150), new Vector2(640, 78), new Color(0.045f, 0.027f, 0.02f, 0.86f));
         CreateRuntimeText(tabBack, "Story Tab", "Story", 22, new Vector2(-210, -18), new Vector2(160, 44)).color = new Color(0.86f, 0.72f, 0.52f);
@@ -19929,15 +21204,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             TowerDungeonDefinition.dungeonId,
             new Color(1f, 0.58f, 0.24f, 0.96f),
             locked: false);
-        EnsureRuntimeFutureDungeonSelectorCard(
+        EnsureRuntimeDungeonSelectorCard(
             ref shardRiftDungeonButton,
             ref shardRiftDungeonTitleText,
             ref shardRiftDungeonProgressText,
             ref shardRiftDungeonText,
             "Shard Rift Dungeon Selector Card",
+            "essence_dungeon_set_banner",
             "dungeon_essence",
-            "Shard Rift",
-            new Color(0.74f, 0.34f, 1f, 0.6f));
+            ShardRiftDungeonDefinition.dungeonId,
+            new Color(0.74f, 0.34f, 1f, 0.96f),
+            locked: false);
 
         dungeonDetailRoot = EnsureRuntimePanel(dungeonSelectorPanelRoot, "Dungeon Detail Panel", new Vector2(-144f, -304f), new Vector2(602f, 586f), new Color(0.025f, 0.03f, 0.046f, 0.97f));
         EnsureRuntimePanel(dungeonDetailRoot, "Dungeon Detail Top Trim", new Vector2(0f, -8f), new Vector2(566f, 5f), new Color(0.86f, 0.56f, 0.22f, 0.9f));
@@ -20567,6 +21844,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RegisterDungeonSelectorCardButton(goldDungeonButton, GoldDungeonDefinition.dungeonId);
         RegisterDungeonSelectorCardButton(essenceDungeonButton, EssenceDungeonDefinition.dungeonId);
         RegisterDungeonSelectorCardButton(gearDungeonButton, GearDungeonDefinition.dungeonId);
+        RegisterDungeonSelectorCardButton(shardRiftDungeonButton, ShardRiftDungeonDefinition.dungeonId);
         RegisterDungeonSelectorCardButton(ancientTowerDungeonButton, TowerDungeonDefinition.dungeonId);
 
         if (dungeonDetailRunButton != null)
@@ -20607,6 +21885,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         button.onClick.RemoveListener(SelectEssenceDungeonForPreview);
         button.onClick.RemoveListener(SelectGearDungeonForPreview);
         button.onClick.RemoveListener(SelectTowerDungeonForPreview);
+        button.onClick.RemoveListener(SelectShardRiftDungeonForPreview);
 
         var normalizedDungeonId = ResolveDungeonDefinition(dungeonId).dungeonId;
         if (normalizedDungeonId == GoldDungeonDefinition.dungeonId)
@@ -20620,6 +21899,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         else if (normalizedDungeonId == GearDungeonDefinition.dungeonId)
         {
             button.onClick.AddListener(SelectGearDungeonForPreview);
+        }
+        else if (IsShardRiftDungeonId(normalizedDungeonId))
+        {
+            button.onClick.AddListener(SelectShardRiftDungeonForPreview);
         }
         else if (IsTowerDungeonId(normalizedDungeonId))
         {
@@ -20650,6 +21933,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (ancientTowerDungeonButton != null)
         {
             ancientTowerDungeonButton.onClick.RemoveListener(SelectTowerDungeonForPreview);
+        }
+
+        if (shardRiftDungeonButton != null)
+        {
+            shardRiftDungeonButton.onClick.RemoveListener(SelectShardRiftDungeonForPreview);
         }
 
         if (dungeonDetailRunButton != null)
@@ -20691,6 +21979,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SelectDungeonForPreview(TowerDungeonDefinition.dungeonId);
     }
 
+    private void SelectShardRiftDungeonForPreview()
+    {
+        SelectDungeonForPreview(ShardRiftDungeonDefinition.dungeonId);
+    }
+
     private void SelectDungeonForPreview(string dungeonId)
     {
         if (campaignFightInProgress)
@@ -20717,7 +22010,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (IsSelectedTowerDungeon() && backendGameplayEnabled)
         {
-            SetDungeonResult($"{GetLocalizedDungeonName(TowerDungeonDefinition.dungeonId)} is local-only in this build.\nServer Mode tower persistence is still open.");
+            SetDungeonResult($"{GetLocalizedDungeonName(selectedDungeonId)} is local-only in this build.\nServer persistence is still open.");
             RefreshDungeonUi();
             return;
         }
@@ -21977,6 +23270,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         MoveUiElement(debugEssenceButton, shopPanel, new Vector2(-105, -1196), new Vector2(150, 50));
         MoveUiElement(debugGemsButton, shopPanel, new Vector2(105, -1196), new Vector2(150, 50));
         MoveUiElement(debugAccessoryButton, shopPanel, new Vector2(315, -1196), new Vector2(150, 50));
+        MoveUiElement(debugAwakeningShardsButton, shopPanel, new Vector2(-160, -1260), new Vector2(190, 50));
+        MoveUiElement(debugHeroShardChestButton, shopPanel, new Vector2(160, -1260), new Vector2(190, 50));
     }
 
     private void ApplyAfkInspiredTextSkin()
@@ -22187,19 +23482,24 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
+        EnsureHeroStars();
         EnsureAccessories();
 
         var heroIndex = Mathf.Clamp(selectedHeroIndex, 0, HeroCount - 1);
         var hero = GetHeroDefinition(heroIndex);
         var level = heroLevels[heroIndex];
         var ascension = heroAscensions[heroIndex];
+        var starLevel = GetHeroStarLevel(heroIndex);
         var levelCap = GetHeroLevelCap(heroIndex);
         var ascensionCap = GetHeroAscensionCap(heroIndex);
+        var starCap = GetHeroStarLevelCap(heroIndex);
         var upgradeCost = GetHeroUpgradeCost(heroIndex);
         var ascensionCost = GetHeroAscensionCost(heroIndex);
+        var starCost = GetHeroStarUpgradeCost(heroIndex);
         var heroColor = GetHeroRarityColor(hero.rarityId);
         var levelMax = IsHeroLevelMax(heroIndex);
         var ascensionMax = IsHeroAscensionMax(heroIndex);
+        var starMax = IsHeroStarLevelMax(heroIndex);
 
         if (heroDetailPortrait != null)
         {
@@ -22232,7 +23532,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (heroDetailStatsText != null)
         {
-            heroDetailStatsText.text = $"{Tr("ui.common.level_short")} {FormatCappedValue(level, levelCap)}   {Tr("ui.common.awakening_short")} {FormatCappedValue(ascension, ascensionCap)}   {GetLocalizedHeroRoleName(hero)}\nHP {GetHeroCombatMaxHealth(heroIndex)}   ATK {GetHeroEffectiveAttack(heroIndex)}   DEF {GetHeroDefense(heroIndex)}\n{Tr("ui.common.awakening_short")} +{GetHeroAwakeningAttackBonus(heroIndex)} ATK +{GetHeroAwakeningHealthBonus(heroIndex)} HP   Crit {GetHeroCritChancePercent(heroIndex)}%   Acc {GetHeroAccuracyPercent(heroIndex)}%";
+            heroDetailStatsText.text = $"{Tr("ui.common.level_short")} {FormatCappedValue(level, levelCap)}   {Tr("ui.common.awakening_short")} {FormatCappedValue(ascension, ascensionCap)}   Star {FormatCappedValue(starLevel, starCap)}   {GetLocalizedHeroRoleName(hero)}\nHP {GetHeroCombatMaxHealth(heroIndex)}   ATK {GetHeroEffectiveAttack(heroIndex)}   DEF {GetHeroDefense(heroIndex)}\n{Tr("ui.common.awakening_short")} +{GetHeroAwakeningAttackBonus(heroIndex)} ATK +{GetHeroAwakeningHealthBonus(heroIndex)} HP   Star +{GetHeroStarAttackBonus(heroIndex)} ATK +{GetHeroStarHealthBonus(heroIndex)} HP";
         }
 
         if (heroDetailResourceText != null)
@@ -22247,7 +23547,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             }
             else
             {
-                heroDetailResourceText.text = $"{Tr("ui.common.awakening")} {FormatCappedValue(ascension, ascensionCap)} | Shards {heroShards[heroIndex]}/{ascensionCost} | +{GetHeroAwakeningAttackPerStage(heroIndex)} ATK +{GetHeroAwakeningHealthPerStage(heroIndex)} HP";
+                heroDetailResourceText.text = $"{Tr("ui.common.awakening")} {FormatCappedValue(ascension, ascensionCap)} | {GetLocalizedCurrencyName(AwakeningShardCurrencyId)} {awakeningShards}/{ascensionCost} | Hero Shards {heroShards[heroIndex]}/{(starMax ? 0 : starCost)} | Chests {heroShardChests}";
             }
         }
 
@@ -22256,6 +23556,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         SetButtonLabel(heroDetailLevelButton, !levelMax ? Tr("ui.common.level_up") : ascensionMax ? Tr("ui.common.max_level") : Tr("ui.common.awaken"));
         SetButtonInteractable(heroDetailLevelButton, !levelMax ? mythEssence >= upgradeCost : CanHeroAwaken(heroIndex));
+        SetButtonLabel(heroDetailStarButton, starMax ? "Star MAX" : $"Star {starLevel}->{starLevel + 1}");
+        SetButtonInteractable(heroDetailStarButton, CanUpgradeHeroStar(heroIndex) && !backendRequestInProgress);
+        SetButtonLabel(heroDetailOpenChestButton, heroShardChests > 0 ? $"Open Chest ({heroShardChests})" : "No Chest");
+        SetButtonInteractable(heroDetailOpenChestButton, heroShardChests > 0 && !backendRequestInProgress);
         RefreshHeroDetailGearActionButtons(true);
     }
 
@@ -24287,7 +25591,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (filterId == "up")
         {
             return (!IsHeroLevelMax(heroIndex) && mythEssence >= GetHeroUpgradeCost(heroIndex))
-                || CanHeroAwaken(heroIndex);
+                || CanHeroAwaken(heroIndex)
+                || CanUpgradeHeroStar(heroIndex);
         }
 
         return string.Equals(GetHeroDefinition(heroIndex).roleId, filterId, StringComparison.Ordinal);
@@ -24649,6 +25954,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             selectedInventoryItemIndex = -1;
             SetComponentActive(inventoryDetailRoot, false);
+            SetComponentActive(inventoryRewardPopupRoot, false);
             return;
         }
 
@@ -25415,10 +26721,21 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             debugEssenceButton,
             debugGemsButton,
             debugAccessoryButton,
+            debugAwakeningShardsButton,
+            debugHeroShardChestButton,
             fightEndButton,
             homeBeginButton,
             campaignStageDetailBattleButton,
             campaignStageDetailCloseButton,
+            inventoryCloseButton,
+            inventoryDetailCloseButton,
+            inventoryUseOneButton,
+            inventoryUseAmountButton,
+            inventoryUseAllButton,
+            inventoryRewardCloseButton,
+            inventoryMiscTabButton,
+            inventoryGearTabButton,
+            inventoryAllTabButton,
             fastRewardsRedeemButton,
             fastRewardsCloseButton,
             homeIdleInfoCloseButton,
@@ -25431,6 +26748,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroDetailPreviousButton,
             heroDetailNextButton,
             heroDetailLevelButton,
+            heroDetailStarButton,
+            heroDetailOpenChestButton,
             heroDetailEquipGearButton,
             heroDetailRemoveGearButton,
             heroDetailGearConfirmEquipButton);
@@ -25445,26 +26764,50 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void EnsureRuntimeDebugUi()
     {
-        if (battlePanel == null || debugGoldButton != null)
+        if (battlePanel == null && shopPanel == null)
         {
             return;
         }
 
-        var panelObject = new GameObject("Debug Resource Panel", typeof(RectTransform));
-        panelObject.transform.SetParent(battlePanel.transform, false);
-        SetRuntimeRect(panelObject.GetComponent<RectTransform>(), new Vector2(0, -1430), new Vector2(860, 72), new Vector2(0.5f, 1f));
+        var parent = GetRuntimeDebugButtonParent();
 
-        debugGoldButton = CreateRuntimeDebugButton(panelObject.transform, "Debug Gold Button", "+Gold", -315);
-        debugEssenceButton = CreateRuntimeDebugButton(panelObject.transform, "Debug Essence Button", "+Essence", -105);
-        debugGemsButton = CreateRuntimeDebugButton(panelObject.transform, "Debug Gems Button", "+Gems", 105);
-        debugAccessoryButton = CreateRuntimeDebugButton(panelObject.transform, "Debug Accessory Button", "+Gear", 315);
+        if (debugGoldButton == null) debugGoldButton = CreateRuntimeDebugButton(parent, "Debug Gold Button", "+Gold", -300, 34);
+        if (debugEssenceButton == null) debugEssenceButton = CreateRuntimeDebugButton(parent, "Debug Essence Button", "+Essence", 0, 34);
+        if (debugGemsButton == null) debugGemsButton = CreateRuntimeDebugButton(parent, "Debug Gems Button", "+Gems", 300, 34);
+        if (debugAccessoryButton == null) debugAccessoryButton = CreateRuntimeDebugButton(parent, "Debug Accessory Button", "+Gear", -300, -34);
+        if (debugAwakeningShardsButton == null) debugAwakeningShardsButton = CreateRuntimeDebugButton(parent, "Debug Awakening Shards Button", "+Awk Shards", 0, -34);
+        if (debugHeroShardChestButton == null) debugHeroShardChestButton = CreateRuntimeDebugButton(parent, "Debug Hero Shard Chest Button", "+Shard Chest", 300, -34);
+    }
+
+    private Transform GetRuntimeDebugButtonParent()
+    {
+        var existingButton = debugGoldButton;
+        if (existingButton == null) existingButton = debugEssenceButton;
+        if (existingButton == null) existingButton = debugGemsButton;
+        if (existingButton == null) existingButton = debugAccessoryButton;
+        if (existingButton == null) existingButton = debugAwakeningShardsButton;
+        if (existingButton == null) existingButton = debugHeroShardChestButton;
+        if (existingButton != null && existingButton.transform.parent != null)
+        {
+            return existingButton.transform.parent;
+        }
+
+        var panelObject = new GameObject("Debug Resource Panel", typeof(RectTransform));
+        panelObject.transform.SetParent(battlePanel != null ? battlePanel.transform : shopPanel.transform, false);
+        SetRuntimeRect(panelObject.GetComponent<RectTransform>(), new Vector2(0, -1430), new Vector2(900, 136), new Vector2(0.5f, 1f));
+        return panelObject.transform;
     }
 
     private static Button CreateRuntimeDebugButton(Transform parent, string name, string label, float xPosition)
     {
+        return CreateRuntimeDebugButton(parent, name, label, xPosition, 0f);
+    }
+
+    private static Button CreateRuntimeDebugButton(Transform parent, string name, string label, float xPosition, float yPosition)
+    {
         var buttonObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
         buttonObject.transform.SetParent(parent, false);
-        SetRuntimeRect(buttonObject.GetComponent<RectTransform>(), new Vector2(xPosition, 0), new Vector2(190, 64), new Vector2(0.5f, 0.5f));
+        SetRuntimeRect(buttonObject.GetComponent<RectTransform>(), new Vector2(xPosition, yPosition), new Vector2(190, 58), new Vector2(0.5f, 0.5f));
 
         var image = buttonObject.GetComponent<Image>();
         image.color = new Color(0.11f, 0.14f, 0.2f, 0.98f);

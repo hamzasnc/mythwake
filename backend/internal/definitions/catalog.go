@@ -13,7 +13,7 @@ import (
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
-const SchemaVersion = 7
+const SchemaVersion = 8
 
 func Snapshot(apiVersion string) api.DefinitionSnapshot {
 	snapshot := api.DefinitionSnapshot{

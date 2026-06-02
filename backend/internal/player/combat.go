@@ -261,7 +261,7 @@ func (service *Service) combatHeroes() []combatHeroRuntime {
 			continue
 		}
 		ascension := service.heroAscensions[definition.ID]
-		baseTotal += heroAttackFromDefinition(definition, level, ascension)
+		baseTotal += heroAttackFromDefinition(definition, level, ascension) + heroStarAttackBonus(definition, service.heroStars[definition.ID])
 	}
 	baseTotal = max(1, baseTotal)
 
@@ -272,7 +272,8 @@ func (service *Service) combatHeroes() []combatHeroRuntime {
 			continue
 		}
 		ascension := service.heroAscensions[definition.ID]
-		baseAttack := heroAttackFromDefinition(definition, level, ascension)
+		starLevel := service.heroStars[definition.ID]
+		baseAttack := heroAttackFromDefinition(definition, level, ascension) + heroStarAttackBonus(definition, starLevel)
 		scaledAttack := max(1, baseAttack*max(1, service.state.TeamAttack)/baseTotal)
 		index := len(heroes)
 		heroes = append(heroes, combatHeroRuntime{
@@ -282,7 +283,7 @@ func (service *Service) combatHeroes() []combatHeroRuntime {
 			attack:             scaledAttack,
 			critChancePercent:  heroCritChancePercent(definition.ID, ascension),
 			accuracyPercent:    heroAccuracyPercent(definition.ID, ascension),
-			defense:            heroDefense(definition.ID, level, ascension),
+			defense:            heroDefense(definition.ID, level, ascension) + (clampHeroStarLevel(starLevel) * 2),
 			maxMana:            heroMaxMana(definition.ID),
 			nextAttackMS:       250 + index*170,
 			attackIntervalMS:   heroAttackIntervalMS(definition.ID),

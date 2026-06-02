@@ -32,6 +32,8 @@ Latest known pushed commit before the 0.2.159 continuation:
 - `24b2ab4 Rework battle formation mockup`
 
 Current continuation:
+- Prototype `0.2.176` / Backend `0.2.62` makes the Shard Rift / Hero Star loop persistent for Server Mode. Backend snapshots now carry `awakeningShards`, `heroShardChests`, `shardRiftBestEnemiesDefeated`, `shardRiftTotalEnemiesDefeated`, and per-hero `starLevel`; PostgreSQL migration `0031_shard_rift_progression.sql` adds `awakening_shards`, `shard_rift`, `player_heroes.star_level`, `player_inventory_items`, and `player_shard_rift_progress`. Unity can now run Shard Rift in Server Mode, upgrade Hero Stars through `/heroes/{hero_id}/star-up`, and open Hero Shard Chests through `/inventory/hero-shard-chest/open`; `go test ./...`, `scripts/check-unity-csharp.cmd`, and `scripts/check-unity-current-slice.cmd` pass for this slice.
+- Prototype `0.2.175` adds the first local Shard Rift and Hero Star progression loop. Awakening now spends local `Awakening Shards`; hero-specific shards are used for separate Star levels from 0 to 5 with costs 5/10/15/20/25. Hero Shard Chests can be opened from Hero Detail to grant hero-specific shards, the cheat panel can grant Awakening Shards and Hero Shard Chests, and the Bag lists these new local items. Shard Rift is playable from Dungeons as an endless fight with no floors; it grants rewards per defeated enemy and keeps earned rewards even on defeat or manual end. `HeroProgressionValidation` and `DungeonsUiValidation` were updated for this slice.
 - Prototype `0.2.174` / Backend `0.2.61` stabilizes Hero progression. Normal Hero leveling is capped at Lv. 100 in both local and server rules; Awakening is blocked before Lv. 100, consumes Hero Shards, caps at 10, and grants the per-hero ATK/HP bonuses from shared definitions. Hero Detail now shows `Lv. x/100`, `Awk y/10`, resource-gate copy for Level/Myth Essence/Shards, and changes the main action from Level Up to Awaken at cap. Backend adds `/heroes/{hero_id}/awaken` and keeps `/heroes/{hero_id}/ascend` as a compatibility alias for the existing stored ascension field. `HeroProgressionValidation` is included in Current Slice. APK `Builds/Android/Mythwake-0.2.174-hero-progression.apk` builds, installs, and cold-launches in MuMuPlayer.
 - Prototype `0.2.173` fixes the Tower Trial selector tap regression seen on MuMu/device by allowing the playable tower card through the shared Dungeons interactable gate after refresh.
 - Prototype `0.2.172` orders playable cards as Gold, Essence, Gear, Tower Trial, then the locked Shard Rift future card; selector-card listeners are bound during runtime card creation; and Dungeons validation now raycast-tests selectable card centers so a visible card cannot pass only through direct `onClick.Invoke()`.
@@ -183,15 +185,15 @@ Core runtime script:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Current client version:
-- Prototype `0.2.174`
+- Prototype `0.2.176`
 - Save version `2`
-- Android package `com.xmiepsen.mythwake`, Version Name `0.2.174`, Version Code `2174`
+- Android package `com.xmiepsen.mythwake`, Version Name `0.2.176`, Version Code `2176`
 
 Important Unity scripts:
 - `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`
 
 Latest local gameplay/UI batch:
-- Dungeons now have a dedicated map screen opened from the bottom Dungeons nav item, with Gold, Essence, Gear, Tower Trial, and locked Shard Rift cards in that order. The local Tower Trial has 1,000 floors, 100-floor section controls, floor previews, mini-bosses every 25 floors, apex bosses every 100 floors, Gold/Myth Essence/Hero Shard rewards, and saved local highest cleared/unlocked/selected/section progress. `Validate Dungeons UI` checks the world-map viewport, map art, pan/scroll handlers, zoom controls and clamps, dungeon markers, marker spacing/text/art fit, selector-card raycast targets, Tower Trial section/boss/reward states, and Formation entry plus back-navigation flows. Server Mode tower runs are blocked until the backend owns tower persistence.
+- Dungeons now have a dedicated map screen opened from the bottom Dungeons nav item, with Gold, Essence, Gear, Tower Trial, and Shard Rift cards in that order. The local Tower Trial has 1,000 floors, 100-floor section controls, floor previews, mini-bosses every 25 floors, apex bosses every 100 floors, Gold/Myth Essence/Hero Shard rewards, and saved local highest cleared/unlocked/selected/section progress. Shard Rift is an endless reward run for Awakening Shards and Hero Shard Chests and is now server-persistent too. `Validate Dungeons UI` checks the world-map viewport, map art, pan/scroll handlers, zoom controls and clamps, dungeon markers, marker spacing/text/art fit, selector-card raycast targets, Tower Trial section/boss/reward states, Shard Rift detail states, and Formation entry plus back-navigation flows. Server Mode tower runs are blocked until the backend owns tower persistence.
 - Village now has a dedicated scrollable map screen opened from the bottom Village nav item, with 12 build plots and imported building art.
 - Village free plots open a build panel. Built plots open a building detail panel with level, next upgrade cost, available Myth Essence, visible HP/ATK/Fast Rewards bonus categories, `Aufwerten`, `Abreissen`, and `Schliessen`; the Village validator also checks the scrollable map/content wiring, all 12 plot buttons, loaded map/building art, build/detail close flows, built-plot hidden build marks, max-level upgrade lockout, and the Village bonus hint.
 - Village building upgrades spend Myth Essence locally and route through the existing backend Village upgrade action in Server Mode.
@@ -501,7 +503,7 @@ Backend entrypoint:
 - `backend/cmd/api/main.go`
 
 Current API version:
-- `0.2.61`
+- `0.2.62`
 
 Core backend status:
 - Go standard library HTTP server.

@@ -16,8 +16,9 @@ func (service *Service) snapshot() api.PlayerSnapshot {
 		LastAFKClaimUTC:   formatSnapshotTime(service.lastAFKClaimedAt),
 		DailyDate:         service.dailyDate,
 		DailyProgress:     service.dailyProgressStates(),
-		Heroes:            heroStates(service.heroLevels, service.heroAscensions),
+		Heroes:            heroStates(service.heroLevels, service.heroAscensions, service.heroStars),
 		HeroShards:        heroShardStates(service.heroShards),
+		HeroShardChests:   service.heroShardChests,
 		Equipment:         equipmentStates(service.equipmentLevels),
 		Accessories:       accessoryStates(service.accessoryInventory, service.accessoryLevels),
 		EquippedAccessory: equippedAccessoryStates(service.equippedAccessory),
@@ -25,6 +26,8 @@ func (service *Service) snapshot() api.PlayerSnapshot {
 		DailyClaims:       claimStates(service.claimedDaily),
 		BattlePassClaims:  claimStates(service.claimedBattlePass),
 		SummonCount:       service.summonCount,
+		ShardRiftBest:     service.shardRiftBest,
+		ShardRiftTotal:    service.shardRiftTotal,
 	}
 }
 
@@ -50,7 +53,7 @@ func formatSnapshotTime(value time.Time) string {
 	return value.UTC().Format(time.RFC3339)
 }
 
-func heroStates(levels map[string]int, ascensions map[string]int) []api.HeroState {
+func heroStates(levels map[string]int, ascensions map[string]int, stars map[string]int) []api.HeroState {
 	heroIDs := sortedKeys(levels)
 	states := make([]api.HeroState, 0, len(heroIDs))
 	for _, heroID := range heroIDs {
@@ -58,6 +61,7 @@ func heroStates(levels map[string]int, ascensions map[string]int) []api.HeroStat
 			HeroID:    heroID,
 			Level:     levels[heroID],
 			Ascension: ascensions[heroID],
+			StarLevel: stars[heroID],
 		})
 	}
 	return states

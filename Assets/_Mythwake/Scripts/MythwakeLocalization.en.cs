@@ -79,6 +79,7 @@ public static partial class MythwakeLocalization
         { "currency.gold.name", "Gold" },
         { "currency.gems.name", "Gems" },
         { "currency.myth_essence.name", "Myth Essence" },
+        { "currency.awakening_shards.name", "Awakening Shards" },
         { "currency.pass_xp.name", "Pass XP" },
 
         { "role.warrior.name", "Warrior" },
@@ -170,6 +171,10 @@ public static partial class MythwakeLocalization
         { "dungeon.tower_dungeon.selector", "Tower Trial" },
         { "dungeon.tower_dungeon.set", "Tower of Trials" },
         { "dungeon.tower_dungeon.boss", "Apex Guardian" },
+        { "dungeon.shard_rift.name", "Shard Rift" },
+        { "dungeon.shard_rift.selector", "Shard Rift" },
+        { "dungeon.shard_rift.set", "Endless Shard Rift" },
+        { "dungeon.shard_rift.boss", "Shard Warden" },
         { "dungeon.default_result", "Dungeons are the active resource source." },
         { "dungeon.flow_hint", "Select {0}, enter Formation, clear Floor {1}, then spend rewards on upgrades." },
         { "dungeon.future_locked", "Locked" },

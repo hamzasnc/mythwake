@@ -149,6 +149,8 @@ public static class UpgradeClutterValidation
         RequireNotUnderPanel(RequireButtonField(controller, "debugEssenceButton"), battlePanel, "Debug Essence Button");
         RequireNotUnderPanel(RequireButtonField(controller, "debugGemsButton"), battlePanel, "Debug Gems Button");
         RequireNotUnderPanel(RequireButtonField(controller, "debugAccessoryButton"), battlePanel, "Debug Accessory Button");
+        RequireNotUnderPanel(RequireButtonField(controller, "debugAwakeningShardsButton"), battlePanel, "Debug Awakening Shards Button");
+        RequireNotUnderPanel(RequireButtonField(controller, "debugHeroShardChestButton"), battlePanel, "Debug Hero Shard Chest Button");
         ValidateLocalCombatResultSummary(controller);
     }
 
@@ -1492,6 +1494,8 @@ public static class UpgradeClutterValidation
         RequireToolButtonInPanel(controller, "debugEssenceButton", shopPanel);
         RequireToolButtonInPanel(controller, "debugGemsButton", shopPanel);
         RequireToolButtonInPanel(controller, "debugAccessoryButton", shopPanel);
+        RequireToolButtonInPanel(controller, "debugAwakeningShardsButton", shopPanel);
+        RequireToolButtonInPanel(controller, "debugHeroShardChestButton", shopPanel);
         ValidateBackendAccountPanel(controller, shopPanel);
     }
 

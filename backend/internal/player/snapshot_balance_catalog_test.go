@@ -109,7 +109,7 @@ func TestSnapshotBalanceCatalogUsesSnapshotCostsAndMetaRewards(t *testing.T) {
 	catalog := NewSnapshotBalanceCatalog(api.DefinitionSnapshot{
 		ProgressionCosts: []api.ProgressionCostDefinition{
 			{Domain: "hero", TargetID: "*", CostCurrencyID: economy.CurrencyMythEssence, BaseAmount: 100, AmountPerLevel: 3},
-			{Domain: "hero", TargetID: "*", CostCurrencyID: "hero_shards", BaseAmount: 40, AmountPerLevel: 11},
+			{Domain: "hero", TargetID: "*", CostCurrencyID: economy.CurrencyAwakeningShards, BaseAmount: 40, AmountPerLevel: 11},
 			{Domain: "equipment", TargetID: balance.EquipmentWeapon, CostCurrencyID: economy.CurrencyGold, BaseAmount: 9, AmountPerLevel: 2},
 			{Domain: "accessory", TargetID: "*", CostCurrencyID: economy.CurrencyGold, BaseAmount: 6, AmountPerLevel: 1},
 		},

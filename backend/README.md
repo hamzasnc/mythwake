@@ -25,7 +25,7 @@ Current scope:
 - In-memory action endpoints for campaign, dungeons, heroes, equipment, accessories, summons, missions, and mission track
 - Optional PostgreSQL connection via `MYTHWAKE_DATABASE_URL`
 - Embedded SQL migrations
-- PostgreSQL player progress tables for currencies, campaign, dungeons, heroes, Awakening stages through the existing ascension storage, and hero shards
+- PostgreSQL player progress tables for currencies, campaign, dungeons, heroes, Awakening stages through the existing ascension storage, Hero Star levels, hero shards, Hero Shard Chests, and Shard Rift progress
 - JSON player state snapshot mirror for fallback/debugging
 - Seeded definition tables for currencies, heroes, starter equipment, dungeons, accessory slots, accessory rarities, accessories, campaign stages, rewards, progression costs, summons, missions, and Mission Track rewards
 - PostgreSQL schemas:
@@ -50,6 +50,8 @@ Current scope:
   - `debug.v_player_claim_overview`
   - `debug.v_player_daily_progress_overview`
   - `debug.v_player_summon_overview`
+- Navicat-friendly Shard Rift view:
+  - `debug.v_player_shard_rift_overview`
 - Navicat-friendly account and persistence views:
   - `debug.v_account_player_overview`
   - `debug.v_account_identity_overview`
@@ -87,8 +89,8 @@ Current scope:
 - When PostgreSQL is enabled, `/definitions` is loaded from `common.*` definition tables; no-database mode keeps using the static Go catalog.
 - When PostgreSQL is enabled, the same loaded definition snapshot is injected into live gameplay balance for combat stats, dungeon rewards, progression costs, summon rotation, daily missions, and Mission Track rewards.
 - New player starter heroes and initial shard rows are seeded from the active hero definition catalog.
-- Hero definitions carry server-owned stat scaling plus level/Awakening caps, and backend team ATK/HP/Power are derived from those rows.
-- Hero leveling caps at Lv. 100; Awakening is blocked before Lv. 100, spends Hero Shards, caps at 10, and currently grants definition-owned ATK/HP per stage.
+- Hero definitions carry server-owned stat scaling plus level/Awakening caps, and backend team ATK/HP/Power are derived from those rows plus Hero Star bonuses.
+- Hero leveling caps at Lv. 100; Awakening is blocked before Lv. 100, spends Awakening Shards, caps at 10, and grants definition-owned ATK/HP per stage. Hero Shards now upgrade separate Hero Star levels.
 - Starter equipment definitions carry server-owned stat scaling plus max-level caps, and equipment training validates against those rows.
 - AFK reward definitions carry server-owned claim timing and Gold/Myth Essence formula values, and AFK claims read them from the active gameplay catalog.
 - Accessory equip, level, and fuse actions use server-owned accessory and rarity definitions for slot selection, fuse targets, fuse copy costs, max level validation, and equipped ATK/HP stat bonuses.

@@ -130,6 +130,8 @@ func (router *Router) routes() {
 	router.mux.HandleFunc("POST /heroes/{hero_id}/level-up", router.handleHeroLevel)
 	router.mux.HandleFunc("POST /heroes/{hero_id}/awaken", router.handleHeroAscend)
 	router.mux.HandleFunc("POST /heroes/{hero_id}/ascend", router.handleHeroAscend)
+	router.mux.HandleFunc("POST /heroes/{hero_id}/star-up", router.handleHeroStarUpgrade)
+	router.mux.HandleFunc("POST /inventory/hero-shard-chest/open", router.handleHeroShardChestOpen)
 	router.mux.HandleFunc("POST /equipment/{equipment_id}/level-up", router.handleEquipmentLevel)
 	router.mux.HandleFunc("POST /gear/accessories/equip", router.handleAccessoryEquip)
 	router.mux.HandleFunc("POST /gear/accessories/unequip", router.handleAccessoryUnequip)
@@ -484,6 +486,18 @@ func (router *Router) handleHeroLevel(response http.ResponseWriter, request *htt
 func (router *Router) handleHeroAscend(response http.ResponseWriter, request *http.Request) {
 	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
 		return playerService.AscendHeroWithRequest(request.Context(), action, request.PathValue("hero_id"))
+	})
+}
+
+func (router *Router) handleHeroStarUpgrade(response http.ResponseWriter, request *http.Request) {
+	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.UpgradeHeroStarWithRequest(request.Context(), action, request.PathValue("hero_id"))
+	})
+}
+
+func (router *Router) handleHeroShardChestOpen(response http.ResponseWriter, request *http.Request) {
+	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		return playerService.OpenHeroShardChestWithRequest(request.Context(), action)
 	})
 }
 

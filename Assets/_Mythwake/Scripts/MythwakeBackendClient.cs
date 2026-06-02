@@ -293,6 +293,16 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         return SendAuthenticatedActionJson($"hero_awaken:{heroId}", () => Post($"/heroes/{EscapePath(heroId)}/awaken"), completed);
     }
 
+    public IEnumerator UpgradeHeroStar(string heroId, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        return SendAuthenticatedActionJson($"hero_star:{heroId}", () => Post($"/heroes/{EscapePath(heroId)}/star-up"), completed);
+    }
+
+    public IEnumerator OpenHeroShardChest(Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        return SendAuthenticatedActionJson("hero_shard_chest:open", () => Post("/inventory/hero-shard-chest/open"), completed);
+    }
+
     public IEnumerator LevelEquipment(string equipmentId, Action<bool, string, MythwakeActionResultDto> completed)
     {
         return SendAuthenticatedActionJson($"equipment_level:{equipmentId}", () => Post($"/equipment/{EscapePath(equipmentId)}/level-up"), completed);

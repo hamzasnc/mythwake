@@ -8,10 +8,14 @@ Last updated: 2026-06-01
 - Awakening stages: `0-10`.
 - Awakening is locked until the hero is Lv. `100`.
 - Hero leveling costs Myth Essence.
-- Awakening costs Hero Shards.
-- First Awakening cost: `20` shards.
-- Additional Awakening cost scaling: `+15` shards per current Awakening stage.
+- Awakening costs Awakening Shards.
+- First Awakening cost: `20` Awakening Shards.
+- Additional Awakening cost scaling: `+15` Awakening Shards per current Awakening stage.
 - Current Awakening bonuses are per-hero ATK and HP from shared hero definitions.
+- Hero Star levels are separate from Awakening. Every hero starts at star level `0`, can reach star level `5`, and uses that hero's own shards.
+- Hero Star costs start at `5` hero-specific shards, then `10`, `15`, `20`, and `25`.
+- Hero Shard Chests are openable items that grant shards for one hero.
+- Shard Rift is the first source for Awakening Shards and Hero Shard Chests. It is an endless dungeon and keeps rewards from defeated enemies even after defeat or manual end.
 - Future bonus slots can add Crit, Defense, Skill, or role bonuses without changing the Lv. 100 gate.
 
 ## Compatibility Note
@@ -30,26 +34,26 @@ Both routes apply the same Awakening rules.
 - Client fallback max Awakening is `10`.
 - Backend hero definitions have `MaxAscension: 10`.
 - Client fallback Hero level cost mirrors backend `hero_level_any`: `14 + current_level * 6`.
-- Client fallback Awakening shard cost mirrors backend `hero_ascension_any`: `20 + current_awakening * 15`.
-- Client local stat formulas mirror backend definitions for base stats, per-level growth, and per-Awakening ATK/HP.
+- Client fallback Awakening shard cost still mirrors backend `hero_ascension_any`: `20 + current_awakening * 15`, paid from Awakening Shards.
+- Client local stat formulas mirror backend definitions for base stats, per-level growth, per-Awakening ATK/HP, and Hero Star ATK/HP/Defense-style bonuses.
+- Backend/PostgreSQL now persists Awakening Shards, Hero Star levels, Hero Shard Chests, and Shard Rift best/total kill progress for Server Mode and Email accounts.
 
 ## Hero Detail UX
 
 - Below Lv. 100, the main action remains `Level Up`.
-- Below Lv. 100, shards are shown as future Awakening progress, not as passive stat power.
+- Hero-specific shards are shown as Star progress and can be spent before or after Lv. 100.
 - At Lv. 100, the main action becomes `Awaken` when the hero is below Awakening 10.
-- Missing resources should name the current gate clearly: Level, Myth Essence, or Shards.
+- Missing resources should name the current gate clearly: Level, Myth Essence, Awakening Shards, Hero Shards, or Hero Shard Chest.
 - At Awakening 10, the hero shows max bonus state.
 
 ## Tests And Validators
 
-- Backend service tests cover Lv. 100 cap, `max_level`, early Awakening `level_required`, shard spend, and ATK/HP/Power growth after Awakening.
-- Unity `HeroProgressionValidation` covers the same local rules and Hero Detail copy/action state.
+- Backend service tests still cover Lv. 100 cap, `max_level`, early Awakening `level_required`, Awakening Shard spend, Hero Star shard spend, Hero Shard Chest opening, Shard Rift rewards, and ATK/HP/Power growth after progression.
+- Unity `HeroProgressionValidation` now covers local Awakening Shard spend, hero-specific Star shard spend, Hero Shard Chest opening, and Hero Detail copy/action state.
 - Current Slice includes Hero Progression validation.
 
 ## Open Follow-Ups
 
 - Rename persisted/API DTO `ascension` fields only after a migration/compatibility plan exists.
 - Decide if later Awakening stages unlock Crit, Defense, Skill, or role bonuses.
-- Add backend/PostgreSQL Tower Trial persistence so Tower shard rewards can feed Email-account Awakening progress.
 - Run a deeper Account/Server Mode Android smoke before external tester handoff.

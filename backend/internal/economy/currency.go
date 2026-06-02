@@ -7,11 +7,12 @@ import (
 )
 
 const (
-	CurrencyGold        = "gold"
-	CurrencyGems        = "gems"
-	CurrencyMythEssence = "myth_essence"
-	CurrencyPassXP      = "pass_xp"
-	CurrencyHeroShards  = "hero_shards"
+	CurrencyGold            = "gold"
+	CurrencyGems            = "gems"
+	CurrencyMythEssence     = "myth_essence"
+	CurrencyAwakeningShards = "awakening_shards"
+	CurrencyPassXP          = "pass_xp"
+	CurrencyHeroShards      = "hero_shards"
 )
 
 type CurrencyDefinition struct {
@@ -30,6 +31,7 @@ var currencyDefinitions = []CurrencyDefinition{
 	{ID: CurrencyGold, DisplayName: "Gold"},
 	{ID: CurrencyGems, DisplayName: "Gems", IsPremium: true},
 	{ID: CurrencyMythEssence, DisplayName: "Myth Essence"},
+	{ID: CurrencyAwakeningShards, DisplayName: "Awakening Shards"},
 	{ID: CurrencyPassXP, DisplayName: "Pass XP"},
 	{ID: CurrencyHeroShards, DisplayName: "Hero Shards"},
 }
@@ -66,6 +68,8 @@ func Amount(state api.PlayerState, currencyID string) (int, bool) {
 		return state.Gems, true
 	case CurrencyMythEssence:
 		return state.MythEssence, true
+	case CurrencyAwakeningShards:
+		return state.AwakeningShards, true
 	case CurrencyPassXP:
 		return state.PassXP, true
 	default:
@@ -97,6 +101,8 @@ func Spend(state *api.PlayerState, currencyID string, amount int) error {
 		state.Gems -= amount
 	case CurrencyMythEssence:
 		state.MythEssence -= amount
+	case CurrencyAwakeningShards:
+		state.AwakeningShards -= amount
 	case CurrencyPassXP:
 		state.PassXP -= amount
 	}
@@ -108,14 +114,16 @@ func Grant(state *api.PlayerState, reward api.Reward) {
 	state.Gold += reward.Gold
 	state.Gems += reward.Gems
 	state.MythEssence += reward.MythEssence
+	state.AwakeningShards += reward.AwakeningShards
 	state.PassXP += reward.PassXP
 }
 
 func Delta(before api.PlayerState, after api.PlayerState) api.Reward {
 	return api.Reward{
-		Gold:        after.Gold - before.Gold,
-		Gems:        after.Gems - before.Gems,
-		MythEssence: after.MythEssence - before.MythEssence,
-		PassXP:      after.PassXP - before.PassXP,
+		Gold:            after.Gold - before.Gold,
+		Gems:            after.Gems - before.Gems,
+		MythEssence:     after.MythEssence - before.MythEssence,
+		AwakeningShards: after.AwakeningShards - before.AwakeningShards,
+		PassXP:          after.PassXP - before.PassXP,
 	}
 }

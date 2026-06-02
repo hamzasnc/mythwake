@@ -41,8 +41,33 @@ func TestDungeonActionIDUsesSpecificActionForKnownDungeons(t *testing.T) {
 	if actionID := dungeonActionID(gearDungeonID); actionID != gameplay.ActionGearDungeonRun {
 		t.Fatalf("expected gear dungeon action id, got %s", actionID)
 	}
+	if actionID := dungeonActionID(shardRiftDungeonID); actionID != gameplay.ActionShardRiftRun {
+		t.Fatalf("expected shard rift action id, got %s", actionID)
+	}
 	if actionID := dungeonActionID("unknown"); actionID != gameplay.ActionDungeonRun {
 		t.Fatalf("expected generic dungeon action id, got %s", actionID)
+	}
+}
+
+func TestShardRiftRunKeepsRewardsAfterFailedEnd(t *testing.T) {
+	service := NewService()
+	for heroID := range service.heroLevels {
+		service.heroLevels[heroID] = 35
+	}
+	service.recalculatePower()
+
+	result := service.RunDungeon(shardRiftDungeonID)
+	if !result.Success {
+		t.Fatalf("expected Shard Rift to defeat at least one enemy, got %#v", result)
+	}
+	if result.ActionID != gameplay.ActionShardRiftRun {
+		t.Fatalf("expected Shard Rift action id, got %s", result.ActionID)
+	}
+	if service.shardRiftBest <= 0 || service.shardRiftTotal <= 0 {
+		t.Fatalf("expected Shard Rift kill progress, best=%d total=%d", service.shardRiftBest, service.shardRiftTotal)
+	}
+	if service.state.AwakeningShards <= 0 || result.Reward.AwakeningShards <= 0 {
+		t.Fatalf("expected Awakening Shard reward, state=%d reward=%#v", service.state.AwakeningShards, result.Reward)
 	}
 }
 
@@ -80,7 +105,7 @@ func TestHeroProgressionRespectsDefinitionCaps(t *testing.T) {
 	})
 	service := NewServiceForPlayer("hero-cap-player", withServiceBalanceCatalog(catalog))
 	service.state.MythEssence = 100000
-	service.heroShards["hero_capped"] = 100000
+	service.state.AwakeningShards = 100000
 
 	levelResult := service.LevelHero("hero_capped")
 	if levelResult.Success || levelResult.ErrorCode != "max_level" {
@@ -120,7 +145,7 @@ func TestHeroLevelCapsAtOneHundred(t *testing.T) {
 
 func TestHeroAwakeningRequiresLevelCapAndRaisesPower(t *testing.T) {
 	service := NewService()
-	service.heroShards["hero_astra"] = 1000
+	service.state.AwakeningShards = 1000
 
 	early := service.AscendHero("hero_astra")
 	if early.Success || early.ErrorCode != "level_required" {
@@ -140,11 +165,60 @@ func TestHeroAwakeningRequiresLevelCapAndRaisesPower(t *testing.T) {
 	if service.heroAscensions["hero_astra"] != 1 {
 		t.Fatalf("expected Awakening 1, got %d", service.heroAscensions["hero_astra"])
 	}
-	if service.heroShards["hero_astra"] != 980 {
-		t.Fatalf("expected first Awakening to spend 20 shards, got %d", service.heroShards["hero_astra"])
+	if service.state.AwakeningShards != 980 {
+		t.Fatalf("expected first Awakening to spend 20 Awakening Shards, got %d", service.state.AwakeningShards)
 	}
 	if service.state.TeamPower <= beforePower || service.state.TeamAttack <= beforeAttack || service.state.TeamHealth <= beforeHealth {
 		t.Fatalf("expected Awakening to raise stats, before power=%d attack=%d health=%d after=%#v", beforePower, beforeAttack, beforeHealth, service.state)
+	}
+}
+
+func TestHeroStarUpgradeUsesHeroShardsAndRaisesPower(t *testing.T) {
+	service := NewService()
+	service.heroShards["hero_astra"] = 5
+	beforePower := service.state.TeamPower
+
+	result := service.UpgradeHeroStar("hero_astra")
+	if !result.Success {
+		t.Fatalf("expected Star 1 to succeed, got %#v", result)
+	}
+	if service.heroStars["hero_astra"] != 1 {
+		t.Fatalf("expected Star 1, got %d", service.heroStars["hero_astra"])
+	}
+	if service.heroShards["hero_astra"] != 0 {
+		t.Fatalf("expected Star 1 to spend 5 hero shards, got %d", service.heroShards["hero_astra"])
+	}
+	if service.state.TeamPower <= beforePower {
+		t.Fatalf("expected Star level to raise power, before=%d after=%d", beforePower, service.state.TeamPower)
+	}
+
+	again := service.UpgradeHeroStar("hero_astra")
+	if again.Success || again.ErrorCode != "insufficient_hero_shards" {
+		t.Fatalf("expected missing shards for Star 2, got %#v", again)
+	}
+}
+
+func TestHeroShardChestOpensIntoHeroShards(t *testing.T) {
+	service := NewService()
+	service.heroShardChests = 1
+	beforeTotal := 0
+	for _, shards := range service.heroShards {
+		beforeTotal += shards
+	}
+
+	result := service.OpenHeroShardChest()
+	if !result.Success {
+		t.Fatalf("expected chest open to succeed, got %#v", result)
+	}
+	if service.heroShardChests != 0 {
+		t.Fatalf("expected chest to be consumed, got %d", service.heroShardChests)
+	}
+	afterTotal := 0
+	for _, shards := range service.heroShards {
+		afterTotal += shards
+	}
+	if afterTotal <= beforeTotal {
+		t.Fatalf("expected chest to grant hero shards, before=%d after=%d", beforeTotal, afterTotal)
 	}
 }
 

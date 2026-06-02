@@ -21,7 +21,7 @@ public static class DungeonsUiValidation
         try
         {
             ValidateDungeonsUi();
-            Debug.Log("Dungeons UI validated: selector cards, tower floor sections, boss badges, detail panel, floor list, locked future dungeons, and Formation back flows are present.");
+            Debug.Log("Dungeons UI validated: selector cards, Shard Rift endless rewards, tower floor sections, boss badges, detail panel, floor list, and Formation back flows are present.");
         }
         catch (Exception ex)
         {
@@ -56,11 +56,12 @@ public static class DungeonsUiValidation
         ValidateDungeonSelectorCard(selectorCards, "Gold Dungeon Selector Card", "Gold Vault", "Floor", "Reward", "gold_dungeon_set_banner", "dungeon_portal");
         ValidateDungeonSelectorCard(selectorCards, "Essence Dungeon Selector Card", "Essence Grove", "Floor", "Reward", "essence_dungeon_set_banner", "dungeon_essence");
         ValidateDungeonSelectorCard(selectorCards, "Gear Dungeon Selector Card", "Gear Forge", "Floor", "Reward", "gear_dungeon_set_banner", "dungeon_fire");
-        ValidateLockedDungeonCard(selectorCards, "Shard Rift Dungeon Selector Card", "Shard Rift");
+        ValidateDungeonSelectorCard(selectorCards, "Shard Rift Dungeon Selector Card", "Shard Rift", "Best", "Endless", "essence_dungeon_set_banner", "dungeon_essence");
         ValidateDungeonSelectorCard(selectorCards, "Ancient Tower Dungeon Selector Card", "Tower Trial", "Unlocked", "Cleared", "area_map_hollow_spire_obsidian_vault", "dungeon_portal");
         ValidateDungeonSelectorSpacing();
         ValidateDungeonDetail(selectorPanel, "Gold Vault", "gold_dungeon_set_banner");
         ValidateFloorList(selectorPanel);
+        ValidateShardRiftDungeonUi(controller, selectorPanel);
         ValidateTowerDungeonUi(controller, selectorPanel);
 
         var oldWorldMap = FindSceneObject("Mythwake World Map Image");
@@ -80,6 +81,7 @@ public static class DungeonsUiValidation
         ValidateDungeonFormationEntry(controller, "Gold Dungeon Selector Card", "gold_dungeon", "Gold Vault", "Gold");
         ValidateDungeonFormationEntry(controller, "Essence Dungeon Selector Card", "essence_dungeon", "Essence Grove", "Essence");
         ValidateDungeonFormationEntry(controller, "Gear Dungeon Selector Card", "gear_dungeon", "Gear Forge", "Gear");
+        ValidateDungeonFormationEntry(controller, "Shard Rift Dungeon Selector Card", "shard_rift", "Shard Rift", "Shard");
         ValidateDungeonFormationEntry(controller, "Ancient Tower Dungeon Selector Card", "tower_dungeon", "Tower Trial", "Tower");
 
         controller.ShowDungeons();
@@ -234,24 +236,64 @@ public static class DungeonsUiValidation
         AssertTextFits(detail, $"{cardName} detail");
     }
 
-    private static void ValidateLockedDungeonCard(GameObject selectorCards, string cardName, string expectedTitle)
+    private static void ValidateShardRiftDungeonUi(IdlePrototypeController controller, GameObject selectorPanel)
     {
-        var card = RequireButton(cardName);
-        AssertInsideParent(selectorCards, card.gameObject);
-        if (card.interactable)
+        InvokePrivate(controller, "RefreshUi");
+        controller.ShowDungeons();
+        Canvas.ForceUpdateCanvases();
+
+        var shardSelector = RequireButton("Shard Rift Dungeon Selector Card");
+        if (!shardSelector.interactable)
         {
-            throw new InvalidOperationException($"{cardName} should be visible but locked/non-interactable.");
+            throw new InvalidOperationException("Shard Rift selector should be playable.");
         }
 
-        var title = RequireChildText(card.transform, "Dungeon Set Title", cardName);
-        var progress = RequireChildText(card.transform, "Dungeon Set Progress", cardName);
-        var detail = RequireChildText(card.transform, "Dungeon Set Detail", cardName);
-        RequireCopy(title.text, expectedTitle, $"{cardName} title");
-        RequireCopy(progress.text, "Locked", $"{cardName} locked state");
-        RequireCopy(detail.text, "Future", $"{cardName} future state");
-        AssertTextFits(title, $"{cardName} title");
-        AssertTextFits(progress, $"{cardName} locked state");
-        AssertTextFits(detail, $"{cardName} future state");
+        AssertButtonCenterRaycast(shardSelector, "Shard Rift selector refreshed state");
+        shardSelector.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+
+        var selectedDungeonId = GetPrivateField<string>(controller, "selectedDungeonId");
+        if (selectedDungeonId != "shard_rift")
+        {
+            throw new InvalidOperationException($"Shard Rift card should select shard_rift, got '{selectedDungeonId}'.");
+        }
+
+        var detail = RequireObject("Dungeon Detail Panel", true);
+        AssertInsideParent(selectorPanel, detail);
+        var detailTitle = RequireText(detail, "Dungeon Detail Title");
+        var detailMeta = RequireText(detail, "Dungeon Detail Meta");
+        var detailRewards = RequireText(detail, "Dungeon Detail Rewards");
+        RequireCopy(detailTitle.text, "Shard Rift", "Shard Rift detail title");
+        RequireCopy(detailMeta.text, "Endless", "Shard Rift detail meta");
+        RequireCopy(detailRewards.text, "Awakening Shards", "Shard Rift detail rewards");
+        RequireCopy(detailRewards.text, "Hero Shard Chests", "Shard Rift detail chest rewards");
+        AssertTextFits(detailTitle, "Shard Rift detail title");
+        AssertTextFits(detailMeta, "Shard Rift detail meta");
+        AssertTextFits(detailRewards, "Shard Rift detail rewards");
+
+        var firstEntry = RequireButton("Dungeon Floor Entry 1");
+        var firstTitle = RequireChildText(firstEntry.transform, "Floor Title", firstEntry.name);
+        var firstStatus = RequireChildText(firstEntry.transform, "Floor Status", firstEntry.name);
+        var firstAction = RequireChildText(firstEntry.transform, "Floor Action", firstEntry.name);
+        RequireCopy(firstTitle.text, "Endless Run", "Shard Rift first entry title");
+        RequireCopy(firstStatus.text, "Ready", "Shard Rift first entry status");
+        RequireCopy(firstAction.text, "Battle", "Shard Rift first entry action");
+        if (!firstEntry.interactable)
+        {
+            throw new InvalidOperationException("Shard Rift first entry should start the endless run.");
+        }
+
+        for (var i = 2; i <= 4; i++)
+        {
+            var entry = RequireButton($"Dungeon Floor Entry {i}");
+            if (entry.interactable)
+            {
+                throw new InvalidOperationException($"{entry.name} should be informational in Shard Rift.");
+            }
+        }
+
+        RequireButton("Gold Dungeon Selector Card").onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
     }
 
     private static void ValidateDungeonSelectorSpacing()

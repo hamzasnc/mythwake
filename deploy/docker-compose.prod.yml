@@ -13,7 +13,7 @@ services:
     environment:
       MYTHWAKE_API_ADDR: ":8080"
       MYTHWAKE_ENV: "${MYTHWAKE_ENV:-production}"
-      MYTHWAKE_API_VERSION: "${MYTHWAKE_API_VERSION:-0.2.61}"
+      MYTHWAKE_API_VERSION: "${MYTHWAKE_API_VERSION:-0.2.62}"
       MYTHWAKE_DATABASE_URL: "postgres://${POSTGRES_USER:-mythwake}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}@postgres:5432/${POSTGRES_DB:-mythwake}?sslmode=disable"
       MYTHWAKE_REDIS_ADDR: "redis:6379"
       MYTHWAKE_STATE_WRITE_MODE: "ledger_write_behind"

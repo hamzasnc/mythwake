@@ -4,14 +4,14 @@ Last updated: 2026-06-01
 
 ## Current Candidate
 
-- Tester build label: `0.3 hero-progression prep`
-- Prototype / Android Version Name: `0.2.174`
-- Android Version Code: `2174`
+- Tester build label: `0.3 shard-rift server-persistence`
+- Prototype / Android Version Name: `0.2.176`
+- Android Version Code: `2176`
 - Package: `com.xmiepsen.mythwake`
-- Backend: `0.2.61`
+- Backend: `0.2.62`
 - Save version: `2`
-- APK target: `Builds/Android/Mythwake-0.2.174-hero-progression.apk`
-- AAB target: `Builds/Android/Mythwake-0.2.174-play-internal.aab`
+- APK target: `Builds/Android/Mythwake-0.2.176-shard-rift-server.apk`
+- AAB target: `Builds/Android/Mythwake-0.2.176-play-internal.aab`
 
 ## What Is New
 
@@ -21,7 +21,7 @@ Last updated: 2026-06-01
 - The Android build helper can build either APK or AAB.
 - Release process documentation now covers build commands, signing status, Play Internal Testing prep, tester feedback fields, and account/privacy MVP notes.
 - Current release notes and known issues are centralized here for small tester handoffs.
-- Hero progression now has a shared Lv. 100 cap in client/backend. Awakening is locked until Lv. 100, uses Hero Shards, caps at 10, and gives visible ATK/HP bonuses in Hero Detail.
+- Hero progression now has a server-persistent Shard Rift loop on top of the Lv. 100 cap: Awakening uses Awakening Shards, Hero Shards upgrade Star levels 0-5, Hero Shard Chests can be opened from Hero Detail, and Shard Rift keeps per-enemy rewards even after defeat/manual end.
 
 ## What To Test
 
@@ -33,6 +33,9 @@ Last updated: 2026-06-01
 - Home opens and navigation works.
 - Fight starts and reaches Result.
 - Result `Continue` returns to Home.
+- Local Mode: Dungeons -> Shard Rift opens Formation, starts an endless fight, and keeps per-enemy rewards after End/failure.
+- Server Mode: Dungeons -> Shard Rift runs through the backend and keeps Awakening Shards, Hero Shard Chests, best kills, and total kills after restart/login.
+- Hero Detail can open Hero Shard Chests and spend hero-specific shards on Star Up in Local Mode and Server Mode.
 - Hero Detail opens.
 - Gear opens.
 - Dungeons opens.

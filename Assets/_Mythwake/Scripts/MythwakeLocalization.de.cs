@@ -79,6 +79,7 @@ public static partial class MythwakeLocalization
         { "currency.gold.name", "Gold" },
         { "currency.gems.name", "Edelsteine" },
         { "currency.myth_essence.name", "Mythos-Essenz" },
+        { "currency.awakening_shards.name", "Erweckungs-Splitter" },
         { "currency.pass_xp.name", "Pass-EP" },
 
         { "role.warrior.name", "Krieger" },
@@ -170,6 +171,10 @@ public static partial class MythwakeLocalization
         { "dungeon.tower_dungeon.selector", "Turm der Pruefung" },
         { "dungeon.tower_dungeon.set", "Pruefungsturm" },
         { "dungeon.tower_dungeon.boss", "Apex-Waechter" },
+        { "dungeon.shard_rift.name", "Splitter-Riss" },
+        { "dungeon.shard_rift.selector", "Splitter-Riss" },
+        { "dungeon.shard_rift.set", "Endloser Splitter-Riss" },
+        { "dungeon.shard_rift.boss", "Splitter-Waechter" },
         { "dungeon.default_result", "Dungeons sind die aktive Quelle für Ressourcen." },
         { "dungeon.flow_hint", "{0} waehlen, Formation oeffnen, Etage {1} clearen, dann Rewards in Upgrades stecken." },
         { "dungeon.future_locked", "Gesperrt" },

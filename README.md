@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.174
+Prototype version: 0.2.176
 Local save version: 2
 
 Current prototype:
@@ -14,7 +14,7 @@ Current prototype:
 - Runtime Account Start screen appears before Home and shows local-save presence, backend session/account state, Local/Server mode, Player ID, Continue, Login with Email, Create Account, Play as Guest, and a Google Play later hint
 - Android tester builds now have an explicit package/version identity: `com.xmiepsen.mythwake`, app name `Mythwake`, Version Name matching the visible Prototype version, and Version Code derived from that version
 - Dungeons now include a local Tower Trial MVP with 1,000 floors, 100-floor section browsing, saved highest cleared/unlocked/selected floor state, mini-bosses every 25 floors, apex bosses every 100 floors, and Gold/Myth Essence/Hero Shard rewards. Server/PostgreSQL tower persistence is intentionally still a follow-up.
-- Hero progression now has a shared client/backend Lv. 100 cap. Hero Shards are saved for Awakening 0-10 after Lv. 100, with per-stage ATK/HP bonuses and Hero Detail copy that explains whether Level, Myth Essence, or Shards are missing.
+- Hero progression now has a shared client/backend Lv. 100 cap. Awakening uses Awakening Shards after Lv. 100, while hero-specific shards upgrade separate Hero Star levels 0-5.
 - First core loop: fight enemies, earn Myth Essence, upgrade heroes
 - Auto attack while the app is open
 - Local save data via a versioned JSON blob stored in PlayerPrefs
@@ -24,6 +24,7 @@ Current prototype:
 - Unity has a backend client component for health, guest auth, Email register/login, player snapshot sync, and server action endpoints
 - Shop tab creates a small runtime Backend panel for Email/Password Register/Login/Logout, Ping, Guest, Sync, Dev Reset, and Local/Server gameplay mode smoke tests
 - Server Mode routes manual gameplay buttons through the Go backend and applies the returned player snapshot
+- Server Mode now persists Shard Rift runs, Awakening Shards, Hero Shard Chests, and Hero Star levels for Email accounts
 - Server Mode campaign and dungeon actions now display server combat results with HP, damage, seconds, and rewards
 - Server definitions include campaign and dungeon combat stats so Unity previews match backend combat
 - Server Mode uses backend definitions for summon, progression cost, daily mission, and Mission Track preview values
@@ -50,7 +51,7 @@ Current prototype:
 - Each starter hero has role-flavored Attack and HP stats
 - Team Attack and Team HP are summed from the active hero roster
 - Starter roles now affect combat: Warrior and Mage add damage, Tank reduces incoming damage, Support heals, Ranger executes weak enemies
-- Gold, Gems, Myth Essence, Pass XP, and Hero Shards are separated
+- Gold, Gems, Myth Essence, Awakening Shards, Pass XP, and Hero Shards are separated
 - Gold can be spent on starter Weapon and Armor equipment upgrades
 - Equipment upgrades are saved locally and add team-wide ATK and HP
 - Starter equipment balance is defined through stable server/database-ready definitions
@@ -79,9 +80,9 @@ Current prototype:
 - Campaign and dungeon fights now simulate win/loss with team HP and enemy damage, and local result summaries mirror the server combat shape with team HP, enemy HP, team ATK, enemy damage, dealt/taken/heal/crit/miss details
 - Campaign and dungeon result popups append a short next-step line so early testers know where to go after a win or loss
 - Basic summon flow with Gem cost, rarity rates, hero shards, and saved summon count
-- Hero shards are saved for Lv. 100 Awakening instead of giving passive immediate stats
-- Summon result copy explains that shards fuel Awakening after Lv. 100
-- Hero Awakening consumes shards for larger saved ATK/HP stat upgrades
+- Hero shards are saved for Hero Star upgrades instead of giving passive immediate stats
+- Summon result copy explains that shards fuel Hero Star upgrades
+- Hero Awakening consumes Awakening Shards for larger saved ATK/HP stat upgrades
 - Daily missions track battles, stage clears, and summons
 - Daily mission claims reward Gold, Gems, Myth Essence, and reset by UTC day
 - Mission Track XP is earned from daily mission claims
@@ -224,6 +225,8 @@ Backend:
   - `docs/screenshots/android/2026-05-29-tester-build-0-1-icon/README.md`
 
 Changelog:
+- Prototype 0.2.176 / Backend 0.2.62: Made the Shard Rift / Hero Star progression server-persistent. Backend snapshots now carry Awakening Shards, Hero Shard Chests, Shard Rift best/total kills, and Hero Star levels; PostgreSQL migration `0031_shard_rift_progression.sql` adds the matching currency, dungeon definition, hero star column, inventory item table, and Shard Rift progress table. Server Mode can now run Shard Rift, upgrade Hero Stars, and open Hero Shard Chests through authenticated/idempotent endpoints, while Unity applies those snapshot fields and keeps the Hero Detail controls active in Server Mode.
+- Prototype 0.2.175: Added the first local Shard Rift / Hero Star progression slice. Shard Rift is now a playable local-only endless dungeon that grants rewards for each defeated enemy and keeps those rewards even when the run fails or is manually ended. The new local inventory resources are Awakening Shards, Hero Shard Chests, and hero-specific shards; Awakening now spends Awakening Shards while hero-specific shards upgrade each hero from star level 0 to 5 with costs 5, 10, 15, and so on. Hero Detail exposes Star Up and Open Chest actions, the cheat panel can grant Awakening Shards and Hero Shard Chests, the Bag lists these new items, and Current Slice validators cover the new Hero progression and Shard Rift UI rules.
 - Prototype 0.2.174 / Backend 0.2.61: Stabilized Hero leveling and Awakening rules across client and backend. Heroes now cap at Lv. 100 locally and on the server; Awakening is blocked before Lv. 100, uses Hero Shards, caps at 10, and applies the existing per-hero ATK/HP Awakening bonuses. Hero Detail now shows `Lv. x/100`, `Awk y/10`, the next resource gate, and switches its main action from Level Up to Awaken at cap. Backend keeps the legacy `/heroes/{hero_id}/ascend` route for compatibility and adds `/heroes/{hero_id}/awaken`; service and Unity validators cover Lv. 100 cap, early Awakening lockout, shard spend, and stat/power gains. APK `Builds/Android/Mythwake-0.2.174-hero-progression.apk` builds, installs, and cold-launches in MuMuPlayer with versionCode `2174`, versionName `0.2.174`, and no filtered Unity/Mythwake crash errors.
 - Prototype 0.2.173: Fixed the Tower Trial selector card on device by allowing the playable tower card through the shared Dungeons interactable gate.
 - Prototype 0.2.172: Placed playable dungeon cards before the locked future Shard Rift card, bound selector-card listeners during runtime card creation, and added Dungeons validator raycast coverage for selector-card tap targets.

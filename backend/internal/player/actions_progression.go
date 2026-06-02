@@ -5,8 +5,16 @@ import (
 	"fmt"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
+)
+
+const (
+	heroStarMaxLevel         = 5
+	heroStarBaseShardCost    = 5
+	heroStarShardCostPerStep = 5
+	heroShardChestShardBase  = 5
 )
 
 func (service *Service) LevelHero(heroID string) api.ActionResult {
@@ -78,15 +86,90 @@ func (actions heroProgressionActions) AscendHero(ctx context.Context, request Ac
 		}
 
 		cost := service.balanceCatalog.HeroAscensionShardCost(currentAscension)
-		if service.heroShards[heroID] < cost {
-			return actionFailure("insufficient_shards", fmt.Sprintf("Need %d shards.", cost))
+		if failure, ok := service.spendCurrency(economy.CurrencyAwakeningShards, cost); !ok {
+			failure.errorCode = "insufficient_awakening_shards"
+			failure.message = fmt.Sprintf("Need %d Awakening Shards.", cost)
+			return failure
 		}
 
-		service.heroShards[heroID] -= cost
 		service.heroAscensions[heroID]++
 		service.recalculatePower()
 		return actionSuccess(fmt.Sprintf("%s awakened to %d.", heroID, service.heroAscensions[heroID]), api.Reward{})
 	})
+}
+
+func (service *Service) UpgradeHeroStar(heroID string) api.ActionResult {
+	return service.UpgradeHeroStarWithRequest(context.Background(), ActionRequest{}, heroID)
+}
+
+func (service *Service) UpgradeHeroStarWithRequest(ctx context.Context, request ActionRequest, heroID string) api.ActionResult {
+	return service.heroActions.UpgradeHeroStar(ctx, request, heroID)
+}
+
+func (actions heroProgressionActions) UpgradeHeroStar(ctx context.Context, request ActionRequest, heroID string) api.ActionResult {
+	service := actions.service
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	return service.executeAction(ctx, request, gameplay.ActionHeroStarUpgrade, func() actionOutcome {
+		if _, ok := service.heroLevels[heroID]; !ok {
+			return actionFailure("invalid_hero", fmt.Sprintf("Unknown hero: %s", heroID))
+		}
+
+		currentStar := clampHeroStarLevel(service.heroStars[heroID])
+		if currentStar >= heroStarMaxLevel {
+			return actionFailure("max_star_level", fmt.Sprintf("%s is already Star %d.", heroID, heroStarMaxLevel))
+		}
+
+		cost := heroStarUpgradeCost(currentStar)
+		if service.heroShards[heroID] < cost {
+			return actionFailure("insufficient_hero_shards", fmt.Sprintf("Need %d %s shards.", cost, heroID))
+		}
+
+		service.heroShards[heroID] -= cost
+		service.heroStars[heroID] = currentStar + 1
+		service.recalculatePower()
+		return actionSuccess(fmt.Sprintf("%s reached Star %d.", heroID, service.heroStars[heroID]), api.Reward{})
+	})
+}
+
+func (service *Service) OpenHeroShardChest() api.ActionResult {
+	return service.OpenHeroShardChestWithRequest(context.Background(), ActionRequest{})
+}
+
+func (service *Service) OpenHeroShardChestWithRequest(ctx context.Context, request ActionRequest) api.ActionResult {
+	return service.heroActions.OpenHeroShardChest(ctx, request)
+}
+
+func (actions heroProgressionActions) OpenHeroShardChest(ctx context.Context, request ActionRequest) api.ActionResult {
+	service := actions.service
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	return service.executeAction(ctx, request, gameplay.ActionHeroShardChestOpen, func() actionOutcome {
+		if service.heroShardChests <= 0 {
+			return actionFailure("missing_chest", "No Hero Shard Chest available.")
+		}
+
+		heroes := service.balanceCatalog.HeroDefinitions()
+		if len(heroes) == 0 {
+			return actionFailure("invalid_hero_pool", "No heroes are available for Hero Shard Chest rewards.")
+		}
+
+		index := max(0, service.summonCount+service.shardRiftTotal+service.heroShardChests) % len(heroes)
+		heroID := heroes[index].ID
+		shards := heroShardChestShardBase + min(max(0, service.state.CampaignStage/10), 10)
+		service.heroShardChests--
+		service.heroShards[heroID] += shards
+		return actionSuccess(
+			fmt.Sprintf("Hero Shard Chest opened: +%d %s shards.", shards, heroID),
+			api.Reward{RewardID: balance.RewardHeroShardChest},
+		)
+	})
+}
+
+func heroStarUpgradeCost(currentStar int) int {
+	return heroStarBaseShardCost + (clampHeroStarLevel(currentStar) * heroStarShardCostPerStep)
 }
 
 func (service *Service) LevelEquipment(equipmentID string) api.ActionResult {

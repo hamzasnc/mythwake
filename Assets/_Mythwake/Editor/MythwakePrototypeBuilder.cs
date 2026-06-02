@@ -190,6 +190,14 @@ public static class MythwakePrototypeBuilder
         SetRect(debugAccessoryButton.GetComponent<RectTransform>(), new Vector2(315, -1430), new Vector2(190, 64), new Vector2(0.5f, 1f));
         debugAccessoryButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
 
+        var debugAwakeningShardsButton = CreateButton("Debug Awakening Shards Button", battlePanel.transform, "+Awk Shards", NavButtonColor);
+        SetRect(debugAwakeningShardsButton.GetComponent<RectTransform>(), new Vector2(-160, -1498), new Vector2(190, 64), new Vector2(0.5f, 1f));
+        debugAwakeningShardsButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
+
+        var debugHeroShardChestButton = CreateButton("Debug Hero Shard Chest Button", battlePanel.transform, "+Shard Chest", NavButtonColor);
+        SetRect(debugHeroShardChestButton.GetComponent<RectTransform>(), new Vector2(160, -1498), new Vector2(190, 64), new Vector2(0.5f, 1f));
+        debugHeroShardChestButton.GetComponentInChildren<TMP_Text>().fontSize = 24;
+
         var heroHeader = CreateText("Hero Header", heroesPanel.transform, "Heroes", 42, FontStyles.Bold);
         SetRect(heroHeader.rectTransform, new Vector2(0, -30), new Vector2(860, 60), new Vector2(0.5f, 1f));
 
@@ -406,6 +414,8 @@ public static class MythwakePrototypeBuilder
         SetObject(serializedController, "debugEssenceButton", debugEssenceButton);
         SetObject(serializedController, "debugGemsButton", debugGemsButton);
         SetObject(serializedController, "debugAccessoryButton", debugAccessoryButton);
+        SetObject(serializedController, "debugAwakeningShardsButton", debugAwakeningShardsButton);
+        SetObject(serializedController, "debugHeroShardChestButton", debugHeroShardChestButton);
         SetObjectArray(serializedController, "heroSelectButtons", heroButtons);
         SetObjectArray(serializedController, "dailyMissionButtons", dailyMissionButtons);
         SetObjectArray(serializedController, "battlePassRewardButtons", battlePassRewardButtons);

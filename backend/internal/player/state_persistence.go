@@ -36,6 +36,7 @@ func (service *Service) persistentState() PersistentState {
 		HeroLevels:         service.heroLevels,
 		HeroShards:         service.heroShards,
 		HeroAscensions:     service.heroAscensions,
+		HeroStars:          service.heroStars,
 		EquipmentLevels:    service.equipmentLevels,
 		AccessoryInventory: service.accessoryInventory,
 		AccessoryLevels:    service.accessoryLevels,
@@ -44,6 +45,9 @@ func (service *Service) persistentState() PersistentState {
 		ClaimedDaily:       service.claimedDaily,
 		ClaimedBattlePass:  service.claimedBattlePass,
 		SummonCount:        service.summonCount,
+		HeroShardChests:    service.heroShardChests,
+		ShardRiftBest:      service.shardRiftBest,
+		ShardRiftTotal:     service.shardRiftTotal,
 		LastAFKClaimedAt:   service.lastAFKClaimedAt,
 		DailyDate:          service.dailyDate,
 		DailyFightCount:    service.dailyFightCount,
@@ -65,6 +69,7 @@ func (service *Service) applyPersistentState(state PersistentState) {
 	service.heroLevels = mergeIntMaps(service.heroLevels, state.HeroLevels)
 	service.heroShards = mergeIntMaps(service.heroShards, state.HeroShards)
 	service.heroAscensions = mergeIntMaps(service.heroAscensions, state.HeroAscensions)
+	service.heroStars = mergeIntMaps(service.heroStars, state.HeroStars)
 	service.equipmentLevels = mergeIntMaps(service.equipmentLevels, state.EquipmentLevels)
 	service.accessoryInventory = mergeIntMaps(service.accessoryInventory, state.AccessoryInventory)
 	service.accessoryLevels = mergeIntMaps(service.accessoryLevels, state.AccessoryLevels)
@@ -73,6 +78,9 @@ func (service *Service) applyPersistentState(state PersistentState) {
 	service.claimedDaily = mergeBoolMaps(service.claimedDaily, state.ClaimedDaily)
 	service.claimedBattlePass = mergeBoolMaps(service.claimedBattlePass, state.ClaimedBattlePass)
 	service.summonCount = state.SummonCount
+	service.heroShardChests = max(0, state.HeroShardChests)
+	service.shardRiftBest = max(0, state.ShardRiftBest)
+	service.shardRiftTotal = max(0, state.ShardRiftTotal)
 	service.lastAFKClaimedAt = state.LastAFKClaimedAt
 	if service.lastAFKClaimedAt.IsZero() {
 		service.lastAFKClaimedAt = service.now().UTC()
@@ -188,8 +196,9 @@ func (service *Service) heroStatTotals() (int, int) {
 		}
 		level = clampHeroLevel(level, definition.MaxLevel)
 		ascension := clampHeroAscension(service.heroAscensions[heroID], definition.MaxAscension)
-		totalAttack += definition.BaseAttack + ((level - 1) * definition.AttackPerLevel) + (ascension * definition.AttackPerAscension)
-		totalHealth += definition.BaseHealth + ((level - 1) * definition.HealthPerLevel) + (ascension * definition.HealthPerAscension)
+		starLevel := clampHeroStarLevel(service.heroStars[heroID])
+		totalAttack += definition.BaseAttack + ((level - 1) * definition.AttackPerLevel) + (ascension * definition.AttackPerAscension) + heroStarAttackBonus(definition, starLevel)
+		totalHealth += definition.BaseHealth + ((level - 1) * definition.HealthPerLevel) + (ascension * definition.HealthPerAscension) + heroStarHealthBonus(definition, starLevel)
 	}
 
 	return totalAttack, totalHealth
@@ -270,6 +279,18 @@ func clampHeroAscension(value int, maximum int) int {
 	}
 
 	return min(value, maximum)
+}
+
+func clampHeroStarLevel(value int) int {
+	return min(max(0, value), heroStarMaxLevel)
+}
+
+func heroStarAttackBonus(definition balance.HeroDefinition, starLevel int) int {
+	return max(0, int(math.Ceil(float64(definition.BaseAttack)*0.12))*clampHeroStarLevel(starLevel))
+}
+
+func heroStarHealthBonus(definition balance.HeroDefinition, starLevel int) int {
+	return max(0, int(math.Ceil(float64(definition.BaseHealth)*0.09))*clampHeroStarLevel(starLevel))
 }
 
 func clampEquipmentLevel(value int, maximum int) int {

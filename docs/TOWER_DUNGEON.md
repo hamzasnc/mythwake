@@ -36,7 +36,7 @@ Shard rewards rotate through the starter hero indexes by floor, so long tower pr
 
 ## UI
 
-The Dungeons overview now has a playable `Tower Trial` card after Gold, Essence, and Gear, before the locked future Shard Rift card. Selecting it shows:
+The Dungeons overview now has a playable `Tower Trial` card after Gold, Essence, and Gear, before the Shard Rift card. Selecting it shows:
 - Highest unlocked floor
 - Highest cleared floor
 - Selected section

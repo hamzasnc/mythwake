@@ -23,8 +23,8 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if len(snapshot.AuthProviders) != 4 {
 		t.Fatalf("expected 4 auth provider definitions, got %#v", snapshot.AuthProviders)
 	}
-	if len(snapshot.Currencies) != 5 {
-		t.Fatalf("expected 5 currency definitions, got %#v", snapshot.Currencies)
+	if len(snapshot.Currencies) != 6 {
+		t.Fatalf("expected 6 currency definitions, got %#v", snapshot.Currencies)
 	}
 	if len(snapshot.Heroes) != 7 {
 		t.Fatalf("expected 7 hero definitions, got %#v", snapshot.Heroes)
@@ -38,8 +38,8 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if snapshot.Equipment[0].MaxLevel != 100 || snapshot.Equipment[0].AttackPerLevel <= 0 {
 		t.Fatalf("expected weapon stat definition, got %#v", snapshot.Equipment[0])
 	}
-	if len(snapshot.Rewards) != 71 {
-		t.Fatalf("expected 71 reward definitions, got %d", len(snapshot.Rewards))
+	if len(snapshot.Rewards) != 73 {
+		t.Fatalf("expected 73 reward definitions, got %d", len(snapshot.Rewards))
 	}
 	if len(snapshot.AFKRewards) != 1 {
 		t.Fatalf("expected 1 AFK reward definition, got %#v", snapshot.AFKRewards)
@@ -53,8 +53,8 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if len(snapshot.CampaignStages) != 60 {
 		t.Fatalf("expected 60 campaign stage definitions, got %d", len(snapshot.CampaignStages))
 	}
-	if len(snapshot.Dungeons) != 3 {
-		t.Fatalf("expected 3 dungeons, got %#v", snapshot.Dungeons)
+	if len(snapshot.Dungeons) != 4 {
+		t.Fatalf("expected 4 dungeons, got %#v", snapshot.Dungeons)
 	}
 	if len(snapshot.AccessorySlots) != 6 {
 		t.Fatalf("expected 6 accessory slot definitions, got %#v", snapshot.AccessorySlots)

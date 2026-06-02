@@ -18,6 +18,8 @@ type PlayerStateStore struct {
 	db *sql.DB
 }
 
+const heroShardChestItemID = "hero_shard_chest"
+
 func NewPlayerStateStore(db *sql.DB) *PlayerStateStore {
 	return &PlayerStateStore{db: db}
 }
@@ -80,6 +82,12 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 		return err
 	}
 	if err := store.saveMetaState(ctx, tx, playerID, state, source); err != nil {
+		return err
+	}
+	if err := store.saveInventoryItemState(ctx, tx, playerID, state); err != nil {
+		return err
+	}
+	if err := store.saveShardRiftState(ctx, tx, playerID, state); err != nil {
 		return err
 	}
 	if err := store.saveAFKState(ctx, tx, playerID, state); err != nil {
@@ -176,6 +184,8 @@ func (store *PlayerStateStore) ResetState(ctx context.Context, playerID string) 
 		`DELETE FROM player.player_daily_mission_claims WHERE player_id = $1`,
 		`DELETE FROM player.player_daily_progress WHERE player_id = $1`,
 		`DELETE FROM player.player_battle_pass_claims WHERE player_id = $1`,
+		`DELETE FROM player.player_shard_rift_progress WHERE player_id = $1`,
+		`DELETE FROM player.player_inventory_items WHERE player_id = $1`,
 		`DELETE FROM player.player_summon_state WHERE player_id = $1`,
 		`DELETE FROM player.player_village_buildings WHERE player_id = $1`,
 		`DELETE FROM player.player_equipped_accessories WHERE player_id = $1`,
@@ -347,6 +357,7 @@ func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentS
 		HeroLevels:         map[string]int{},
 		HeroShards:         map[string]int{},
 		HeroAscensions:     map[string]int{},
+		HeroStars:          map[string]int{},
 		EquipmentLevels:    map[string]int{},
 		AccessoryInventory: map[string]int{},
 		AccessoryLevels:    map[string]int{},
@@ -355,6 +366,9 @@ func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentS
 		ClaimedDaily:       map[string]bool{},
 		ClaimedBattlePass:  map[string]bool{},
 		SummonCount:        snapshot.SummonCount,
+		HeroShardChests:    snapshot.HeroShardChests,
+		ShardRiftBest:      snapshot.ShardRiftBest,
+		ShardRiftTotal:     snapshot.ShardRiftTotal,
 		LastAFKClaimedAt:   parseSnapshotTime(snapshot.LastAFKClaimUTC),
 		DailyDate:          snapshot.DailyDate,
 	}
@@ -362,6 +376,7 @@ func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentS
 	for _, hero := range snapshot.Heroes {
 		state.HeroLevels[hero.HeroID] = hero.Level
 		state.HeroAscensions[hero.HeroID] = hero.Ascension
+		state.HeroStars[hero.HeroID] = hero.StarLevel
 	}
 	for _, shard := range snapshot.HeroShards {
 		state.HeroShards[shard.HeroID] = shard.Shards
@@ -476,6 +491,7 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	state.Gold = currencies[economy.CurrencyGold]
 	state.Gems = currencies[economy.CurrencyGems]
 	state.MythEssence = currencies[economy.CurrencyMythEssence]
+	state.AwakeningShards = currencies[economy.CurrencyAwakeningShards]
 	state.PassXP = currencies[economy.CurrencyPassXP]
 
 	dungeons, err := store.loadDungeons(ctx, playerID)
@@ -486,7 +502,7 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	state.EssenceDungeonFloor = dungeons["essence_dungeon"]
 	state.GearDungeonFloor = dungeons["gear_dungeon"]
 
-	heroLevels, heroAscensions, err := store.loadHeroes(ctx, playerID)
+	heroLevels, heroAscensions, heroStars, err := store.loadHeroes(ctx, playerID)
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
@@ -526,6 +542,14 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
+	heroShardChests, err := store.loadInventoryItemCount(ctx, playerID, heroShardChestItemID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
+	shardRiftBest, shardRiftTotal, err := store.loadShardRiftProgress(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
 	lastAFKClaimedAt, err := store.loadAFKClaimedAt(ctx, playerID)
 	if err != nil {
 		return player.PersistentState{}, false, err
@@ -542,6 +566,7 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 		HeroLevels:         heroLevels,
 		HeroShards:         heroShards,
 		HeroAscensions:     heroAscensions,
+		HeroStars:          heroStars,
 		EquipmentLevels:    equipmentLevels,
 		AccessoryInventory: accessoryInventory,
 		AccessoryLevels:    accessoryLevels,
@@ -550,6 +575,9 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 		ClaimedDaily:       claimedDaily,
 		ClaimedBattlePass:  claimedBattlePass,
 		SummonCount:        summonCount,
+		HeroShardChests:    heroShardChests,
+		ShardRiftBest:      shardRiftBest,
+		ShardRiftTotal:     shardRiftTotal,
 		LastAFKClaimedAt:   lastAFKClaimedAt,
 		DailyDate:          dailyDate,
 		DailyFightCount:    dailyFightCount,
@@ -604,10 +632,11 @@ func (store *PlayerStateStore) saveCoreState(ctx context.Context, tx *sql.Tx, pl
 	}
 
 	currencies := map[string]int{
-		economy.CurrencyGold:        state.Gold,
-		economy.CurrencyGems:        state.Gems,
-		economy.CurrencyMythEssence: state.MythEssence,
-		economy.CurrencyPassXP:      state.PassXP,
+		economy.CurrencyGold:            state.Gold,
+		economy.CurrencyGems:            state.Gems,
+		economy.CurrencyMythEssence:     state.MythEssence,
+		economy.CurrencyAwakeningShards: state.AwakeningShards,
+		economy.CurrencyPassXP:          state.PassXP,
 	}
 	for currencyID, amount := range currencies {
 		if _, err := tx.ExecContext(ctx, `
@@ -681,13 +710,14 @@ func (store *PlayerStateStore) saveRevisionState(ctx context.Context, tx *sql.Tx
 func (store *PlayerStateStore) saveHeroState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
 	for heroID, level := range state.HeroLevels {
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO player.player_heroes (player_id, hero_id, level, ascension, updated_at)
-			VALUES ($1, $2, $3, $4, now())
+			INSERT INTO player.player_heroes (player_id, hero_id, level, ascension, star_level, updated_at)
+			VALUES ($1, $2, $3, $4, $5, now())
 			ON CONFLICT (player_id, hero_id) DO UPDATE SET
 				level = EXCLUDED.level,
 				ascension = EXCLUDED.ascension,
+				star_level = EXCLUDED.star_level,
 				updated_at = now()
-		`, playerID, heroID, level, state.HeroAscensions[heroID]); err != nil {
+		`, playerID, heroID, level, state.HeroAscensions[heroID], state.HeroStars[heroID]); err != nil {
 			return err
 		}
 	}
@@ -929,6 +959,42 @@ func (store *PlayerStateStore) saveMetaState(ctx context.Context, tx *sql.Tx, pl
 	return nil
 }
 
+func (store *PlayerStateStore) saveInventoryItemState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
+	if _, err := tx.ExecContext(ctx, `
+		DELETE FROM player.player_inventory_items
+		WHERE player_id = $1
+	`, playerID); err != nil {
+		return err
+	}
+
+	if state.HeroShardChests <= 0 {
+		return nil
+	}
+
+	_, err := tx.ExecContext(ctx, `
+		INSERT INTO player.player_inventory_items (player_id, item_id, quantity, updated_at)
+		VALUES ($1, $2, $3, now())
+	`, playerID, heroShardChestItemID, state.HeroShardChests)
+	return err
+}
+
+func (store *PlayerStateStore) saveShardRiftState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
+	_, err := tx.ExecContext(ctx, `
+		INSERT INTO player.player_shard_rift_progress (
+			player_id,
+			best_enemies_defeated,
+			total_enemies_defeated,
+			updated_at
+		)
+		VALUES ($1, $2, $3, now())
+		ON CONFLICT (player_id) DO UPDATE SET
+			best_enemies_defeated = EXCLUDED.best_enemies_defeated,
+			total_enemies_defeated = EXCLUDED.total_enemies_defeated,
+			updated_at = now()
+	`, playerID, state.ShardRiftBest, state.ShardRiftTotal)
+	return err
+}
+
 func (store *PlayerStateStore) saveAFKState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
 	if state.LastAFKClaimedAt.IsZero() {
 		return nil
@@ -1017,31 +1083,34 @@ func (store *PlayerStateStore) loadDungeons(ctx context.Context, playerID string
 	return dungeons, rows.Err()
 }
 
-func (store *PlayerStateStore) loadHeroes(ctx context.Context, playerID string) (map[string]int, map[string]int, error) {
+func (store *PlayerStateStore) loadHeroes(ctx context.Context, playerID string) (map[string]int, map[string]int, map[string]int, error) {
 	rows, err := store.db.QueryContext(ctx, `
-		SELECT hero_id, level, ascension
+		SELECT hero_id, level, ascension, star_level
 		FROM player.player_heroes
 		WHERE player_id = $1
 	`, playerID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	defer rows.Close()
 
 	levels := map[string]int{}
 	ascensions := map[string]int{}
+	stars := map[string]int{}
 	for rows.Next() {
 		var heroID string
 		var level int
 		var ascension int
-		if err := rows.Scan(&heroID, &level, &ascension); err != nil {
-			return nil, nil, err
+		var starLevel int
+		if err := rows.Scan(&heroID, &level, &ascension, &starLevel); err != nil {
+			return nil, nil, nil, err
 		}
 		levels[heroID] = level
 		ascensions[heroID] = ascension
+		stars[heroID] = starLevel
 	}
 
-	return levels, ascensions, rows.Err()
+	return levels, ascensions, stars, rows.Err()
 }
 
 func (store *PlayerStateStore) loadHeroShards(ctx context.Context, playerID string) (map[string]int, error) {
@@ -1066,6 +1135,42 @@ func (store *PlayerStateStore) loadHeroShards(ctx context.Context, playerID stri
 	}
 
 	return shards, rows.Err()
+}
+
+func (store *PlayerStateStore) loadInventoryItemCount(ctx context.Context, playerID string, itemID string) (int, error) {
+	var quantity int
+	err := store.db.QueryRowContext(ctx, `
+		SELECT quantity
+		FROM player.player_inventory_items
+		WHERE player_id = $1
+			AND item_id = $2
+	`, playerID, itemID).Scan(&quantity)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+
+	return max(0, quantity), nil
+}
+
+func (store *PlayerStateStore) loadShardRiftProgress(ctx context.Context, playerID string) (int, int, error) {
+	var best int
+	var total int
+	err := store.db.QueryRowContext(ctx, `
+		SELECT best_enemies_defeated, total_enemies_defeated
+		FROM player.player_shard_rift_progress
+		WHERE player_id = $1
+	`, playerID).Scan(&best, &total)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, 0, nil
+	}
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return max(0, best), max(0, total), nil
 }
 
 func (store *PlayerStateStore) loadAccessoryInventory(ctx context.Context, playerID string) (map[string]int, map[string]int, error) {

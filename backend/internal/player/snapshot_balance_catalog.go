@@ -438,7 +438,7 @@ func (catalog *SnapshotBalanceCatalog) HeroLevelCost(level int) int {
 }
 
 func (catalog *SnapshotBalanceCatalog) HeroAscensionShardCost(ascension int) int {
-	if cost, ok := catalog.progressionCost("hero", "*", "hero_shards", ascension); ok {
+	if cost, ok := catalog.progressionCost("hero", "*", economy.CurrencyAwakeningShards, ascension); ok {
 		return cost
 	}
 

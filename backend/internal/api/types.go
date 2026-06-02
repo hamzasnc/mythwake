@@ -5,6 +5,7 @@ type PlayerState struct {
 	Gold                int `json:"gold"`
 	Gems                int `json:"gems"`
 	MythEssence         int `json:"mythEssence"`
+	AwakeningShards     int `json:"awakeningShards"`
 	PassXP              int `json:"passXp"`
 	CampaignStage       int `json:"campaignStage"`
 	GoldDungeonFloor    int `json:"goldDungeonFloor"`
@@ -25,6 +26,7 @@ type PlayerSnapshot struct {
 	DailyProgress     []DailyProgress     `json:"dailyProgress"`
 	Heroes            []HeroState         `json:"heroes"`
 	HeroShards        []HeroShardState    `json:"heroShards"`
+	HeroShardChests   int                 `json:"heroShardChests"`
 	Equipment         []EquipmentState    `json:"equipment"`
 	Accessories       []AccessoryState    `json:"accessories"`
 	EquippedAccessory []EquippedAccessory `json:"equippedAccessories"`
@@ -32,12 +34,15 @@ type PlayerSnapshot struct {
 	DailyClaims       []ClaimState        `json:"dailyClaims"`
 	BattlePassClaims  []ClaimState        `json:"battlePassClaims"`
 	SummonCount       int                 `json:"summonCount"`
+	ShardRiftBest     int                 `json:"shardRiftBestEnemiesDefeated"`
+	ShardRiftTotal    int                 `json:"shardRiftTotalEnemiesDefeated"`
 }
 
 type HeroState struct {
 	HeroID    string `json:"heroId"`
 	Level     int    `json:"level"`
 	Ascension int    `json:"ascension"`
+	StarLevel int    `json:"starLevel"`
 }
 
 type HeroShardState struct {
@@ -81,11 +86,13 @@ type DailyProgress struct {
 }
 
 type Reward struct {
-	RewardID    string `json:"rewardId"`
-	Gold        int    `json:"gold"`
-	Gems        int    `json:"gems"`
-	MythEssence int    `json:"mythEssence"`
-	PassXP      int    `json:"passXp"`
+	RewardID        string `json:"rewardId"`
+	Gold            int    `json:"gold"`
+	Gems            int    `json:"gems"`
+	MythEssence     int    `json:"mythEssence"`
+	AwakeningShards int    `json:"awakeningShards"`
+	HeroShardChests int    `json:"heroShardChests"`
+	PassXP          int    `json:"passXp"`
 }
 
 type CombatResult struct {

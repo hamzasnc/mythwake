@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hamzasnc/mythwake/backend/internal/api"
+	"github.com/hamzasnc/mythwake/backend/internal/balance"
 	"github.com/hamzasnc/mythwake/backend/internal/economy"
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
@@ -30,6 +31,8 @@ func (actions dungeonActions) RunDungeon(ctx context.Context, request ActionRequ
 			return actions.runResourceDungeon(dungeonID, service.state.EssenceDungeonFloor, false)
 		case gearDungeonID:
 			return actions.runGearDungeon()
+		case shardRiftDungeonID:
+			return actions.runShardRiftDungeon()
 		default:
 			return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", dungeonID))
 		}
@@ -44,6 +47,8 @@ func dungeonActionID(dungeonID string) string {
 		return gameplay.ActionEssenceDungeonRun
 	case gearDungeonID:
 		return gameplay.ActionGearDungeonRun
+	case shardRiftDungeonID:
+		return gameplay.ActionShardRiftRun
 	default:
 		return gameplay.ActionDungeonRun
 	}
@@ -101,4 +106,69 @@ func (actions dungeonActions) runGearDungeon() actionOutcome {
 	service.state.GearDungeonFloor++
 	message := fmt.Sprintf("%s Dropped %s.", formatCombatMessage(label, combat), accessoryID)
 	return actionSuccessWithCombat(message, service.balanceCatalog.GearDungeonReward(), combat)
+}
+
+func (actions dungeonActions) runShardRiftDungeon() actionOutcome {
+	service := actions.service
+	definition, ok := service.balanceCatalog.DungeonDefinitionByID(shardRiftDungeonID)
+	if !ok {
+		return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", shardRiftDungeonID))
+	}
+
+	defeated := 0
+	var finalCombat api.CombatResult
+	for encounter := 1; encounter <= 50; encounter++ {
+		enemy := service.dungeonEnemy(definition, encounter)
+		enemy.mode = "shard_rift"
+		enemy.targetID = shardRiftDungeonID
+		finalCombat = service.simulateCombat(enemy)
+		if !finalCombat.Won {
+			break
+		}
+
+		defeated++
+	}
+
+	service.dailyFightCount++
+	awakeningShards := shardRiftAwakeningShardReward(defeated)
+	heroShardChests := shardRiftHeroShardChestReward(defeated)
+	reward := api.Reward{
+		RewardID:        balance.RewardShardRiftRun,
+		AwakeningShards: awakeningShards,
+		HeroShardChests: heroShardChests,
+	}
+	service.state.AwakeningShards += awakeningShards
+	service.heroShardChests += heroShardChests
+	service.shardRiftTotal += defeated
+	if defeated > service.shardRiftBest {
+		service.shardRiftBest = defeated
+	}
+
+	message := fmt.Sprintf(
+		"Shard Rift ended after %d kills. Reward +%d Awakening Shards, +%d Hero Shard Chests.",
+		defeated,
+		awakeningShards,
+		heroShardChests,
+	)
+	if defeated <= 0 {
+		return actionFailureWithCombat("combat_lost", message, finalCombat, true)
+	}
+
+	return actionSuccessWithCombat(message, reward, finalCombat)
+}
+
+func shardRiftAwakeningShardReward(defeated int) int {
+	if defeated <= 0 {
+		return 0
+	}
+
+	return defeated*2 + defeated/5
+}
+
+func shardRiftHeroShardChestReward(defeated int) int {
+	if defeated <= 0 {
+		return 0
+	}
+
+	return defeated / 7
 }

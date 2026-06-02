@@ -35,11 +35,11 @@ func TestSpendCurrencyReturnsInsufficientError(t *testing.T) {
 }
 
 func TestGrantReward(t *testing.T) {
-	state := api.PlayerState{Gold: 10, Gems: 1, MythEssence: 5, PassXP: 2}
+	state := api.PlayerState{Gold: 10, Gems: 1, MythEssence: 5, AwakeningShards: 2, PassXP: 2}
 
-	Grant(&state, api.Reward{Gold: 3, Gems: 4, MythEssence: 7, PassXP: 9})
+	Grant(&state, api.Reward{Gold: 3, Gems: 4, MythEssence: 7, AwakeningShards: 11, PassXP: 9})
 
-	if state.Gold != 13 || state.Gems != 5 || state.MythEssence != 12 || state.PassXP != 11 {
+	if state.Gold != 13 || state.Gems != 5 || state.MythEssence != 12 || state.AwakeningShards != 13 || state.PassXP != 11 {
 		t.Fatalf("unexpected state after grant: %#v", state)
 	}
 }
@@ -47,8 +47,11 @@ func TestGrantReward(t *testing.T) {
 func TestCurrencyDefinitions(t *testing.T) {
 	definitions := CurrencyDefinitions()
 
-	if len(definitions) != 5 {
-		t.Fatalf("expected 5 currency definitions, got %#v", definitions)
+	if len(definitions) != 6 {
+		t.Fatalf("expected 6 currency definitions, got %#v", definitions)
+	}
+	if DisplayName(CurrencyAwakeningShards) != "Awakening Shards" {
+		t.Fatalf("expected Awakening Shards display name, got %s", DisplayName(CurrencyAwakeningShards))
 	}
 	if DisplayName(CurrencyHeroShards) != "Hero Shards" {
 		t.Fatalf("expected hero shard display name, got %s", DisplayName(CurrencyHeroShards))
@@ -59,12 +62,12 @@ func TestCurrencyDefinitions(t *testing.T) {
 }
 
 func TestDelta(t *testing.T) {
-	before := api.PlayerState{Gold: 100, Gems: 20, MythEssence: 50, PassXP: 5}
-	after := api.PlayerState{Gold: 80, Gems: 25, MythEssence: 75, PassXP: 5}
+	before := api.PlayerState{Gold: 100, Gems: 20, MythEssence: 50, AwakeningShards: 7, PassXP: 5}
+	after := api.PlayerState{Gold: 80, Gems: 25, MythEssence: 75, AwakeningShards: 10, PassXP: 5}
 
 	delta := Delta(before, after)
 
-	if delta.Gold != -20 || delta.Gems != 5 || delta.MythEssence != 25 || delta.PassXP != 0 {
+	if delta.Gold != -20 || delta.Gems != 5 || delta.MythEssence != 25 || delta.AwakeningShards != 3 || delta.PassXP != 0 {
 		t.Fatalf("unexpected delta: %#v", delta)
 	}
 }

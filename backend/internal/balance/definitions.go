@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	DungeonGold    = "gold_dungeon"
-	DungeonEssence = "essence_dungeon"
-	DungeonGear    = "gear_dungeon"
+	DungeonGold      = "gold_dungeon"
+	DungeonEssence   = "essence_dungeon"
+	DungeonGear      = "gear_dungeon"
+	DungeonShardRift = "shard_rift"
 
 	EquipmentWeapon = "equipment_weapon"
 	EquipmentArmor  = "equipment_armor"
@@ -20,6 +21,8 @@ const (
 
 	RewardSummonShards         = "reward_summon_shards"
 	RewardGearDrop             = "reward_gear_drop"
+	RewardShardRiftRun         = "reward_shard_rift_run"
+	RewardHeroShardChest       = "reward_hero_shard_chest"
 	RewardAFKClaim             = "reward_afk_claim"
 	StarterGearDropAccessoryID = "accessory_earrings_r0"
 
@@ -373,6 +376,22 @@ var dungeonDefinitions = map[string]DungeonDefinition{
 		EnemyDamagePowerDiv:   48,
 		MaxCombatSeconds:      DefaultCombatDurationSeconds,
 	},
+	DungeonShardRift: {
+		ID:                    DungeonShardRift,
+		DisplayName:           "Shard Rift",
+		RewardCurrencyID:      economy.CurrencyAwakeningShards,
+		BaseRequiredPower:     125,
+		RequiredPowerPerFloor: 36,
+		BaseRewardAmount:      2,
+		RewardPerFloor:        1,
+		EnemyBaseHP:           150,
+		EnemyHPPerPower:       1,
+		EnemyHPPerFloor:       55,
+		EnemyBaseDamage:       16,
+		EnemyDamagePerFloor:   2,
+		EnemyDamagePowerDiv:   60,
+		MaxCombatSeconds:      DefaultCombatDurationSeconds,
+	},
 }
 
 var dailyMissionDefinitions = []DailyMissionDefinition{
@@ -431,10 +450,19 @@ var progressionCostDefinitions = []ProgressionCostDefinition{
 		ID:             "hero_ascension_any",
 		Domain:         "hero",
 		TargetID:       "*",
-		CostCurrencyID: "hero_shards",
+		CostCurrencyID: economy.CurrencyAwakeningShards,
 		BaseAmount:     20,
 		AmountPerLevel: 15,
 		Formula:        "base_amount + current_ascension * amount_per_level",
+	},
+	{
+		ID:             "hero_star_any",
+		Domain:         "hero_star",
+		TargetID:       "*",
+		CostCurrencyID: economy.CurrencyHeroShards,
+		BaseAmount:     5,
+		AmountPerLevel: 5,
+		Formula:        "base_amount + current_star * amount_per_level",
 	},
 	{
 		ID:             "equipment_weapon_level",
@@ -659,6 +687,8 @@ func RewardDefinitions() []RewardDefinition {
 	definitions := []RewardDefinition{
 		{ID: RewardSummonShards, DisplayName: "Hero Shards", RewardType: "summon", Reward: api.Reward{RewardID: RewardSummonShards}},
 		{ID: RewardGearDrop, DisplayName: "Gear Dungeon Accessory Drop", RewardType: "gear_drop", Reward: api.Reward{RewardID: RewardGearDrop}},
+		{ID: RewardShardRiftRun, DisplayName: "Shard Rift Run", RewardType: "dungeon", Reward: api.Reward{RewardID: RewardShardRiftRun}},
+		{ID: RewardHeroShardChest, DisplayName: "Hero Shard Chest", RewardType: "chest", Reward: api.Reward{RewardID: RewardHeroShardChest}},
 		{ID: RewardAFKClaim, DisplayName: "AFK Gold and Myth Essence", RewardType: "afk", Reward: api.Reward{RewardID: RewardAFKClaim}},
 	}
 
@@ -807,6 +837,8 @@ func DungeonReward(definition DungeonDefinition, floor int) api.Reward {
 		reward.Gold = amount
 	case economy.CurrencyMythEssence:
 		reward.MythEssence = amount
+	case economy.CurrencyAwakeningShards:
+		reward.AwakeningShards = amount
 	case economy.CurrencyGems:
 		reward.Gems = amount
 	case economy.CurrencyPassXP:

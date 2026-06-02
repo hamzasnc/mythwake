@@ -5,25 +5,28 @@ const (
 	ActionPlayerStateFlush = "player_state_flush"
 	ActionStateCacheFlush  = "state_cache_flush"
 
-	ActionAFKRewardClaim    = "afk_reward_claim"
-	ActionCampaignFight     = "campaign_fight"
-	ActionDungeonRun        = "dungeon_run"
-	ActionGoldDungeonRun    = "gold_dungeon_run"
-	ActionEssenceDungeonRun = "essence_dungeon_run"
-	ActionGearDungeonRun    = "gear_dungeon_run"
-	ActionHeroLevel         = "hero_level"
-	ActionHeroAscend        = "hero_ascend"
-	ActionEquipmentLevel    = "equipment_level"
-	ActionAccessoryEquip    = "accessory_equip"
-	ActionAccessoryUnequip  = "accessory_unequip"
-	ActionAccessoryLevel    = "accessory_level"
-	ActionAccessoryFuse     = "accessory_fuse"
-	ActionSummonPull        = "summon_pull"
-	ActionVillageBuild      = "village_build"
-	ActionVillageDemolish   = "village_demolish"
-	ActionVillageUpgrade    = "village_upgrade"
-	ActionDailyMissionClaim = "daily_mission_claim"
-	ActionBattlePassClaim   = "battle_pass_claim"
+	ActionAFKRewardClaim     = "afk_reward_claim"
+	ActionCampaignFight      = "campaign_fight"
+	ActionDungeonRun         = "dungeon_run"
+	ActionGoldDungeonRun     = "gold_dungeon_run"
+	ActionEssenceDungeonRun  = "essence_dungeon_run"
+	ActionGearDungeonRun     = "gear_dungeon_run"
+	ActionShardRiftRun       = "shard_rift_run"
+	ActionHeroLevel          = "hero_level"
+	ActionHeroAscend         = "hero_ascend"
+	ActionHeroStarUpgrade    = "hero_star_upgrade"
+	ActionHeroShardChestOpen = "hero_shard_chest_open"
+	ActionEquipmentLevel     = "equipment_level"
+	ActionAccessoryEquip     = "accessory_equip"
+	ActionAccessoryUnequip   = "accessory_unequip"
+	ActionAccessoryLevel     = "accessory_level"
+	ActionAccessoryFuse      = "accessory_fuse"
+	ActionSummonPull         = "summon_pull"
+	ActionVillageBuild       = "village_build"
+	ActionVillageDemolish    = "village_demolish"
+	ActionVillageUpgrade     = "village_upgrade"
+	ActionDailyMissionClaim  = "daily_mission_claim"
+	ActionBattlePassClaim    = "battle_pass_claim"
 )
 
 type ActionDefinition struct {
@@ -41,8 +44,11 @@ func ActionCatalog() []ActionDefinition {
 		{ID: ActionGoldDungeonRun, Domain: "dungeon", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionEssenceDungeonRun, Domain: "dungeon", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionGearDungeonRun, Domain: "dungeon", RequiresIdempotency: true, MaterializedByFlush: true},
+		{ID: ActionShardRiftRun, Domain: "dungeon", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionHeroLevel, Domain: "hero", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionHeroAscend, Domain: "hero", RequiresIdempotency: true, MaterializedByFlush: true},
+		{ID: ActionHeroStarUpgrade, Domain: "hero", RequiresIdempotency: true, MaterializedByFlush: true},
+		{ID: ActionHeroShardChestOpen, Domain: "inventory", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionEquipmentLevel, Domain: "equipment", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionAccessoryEquip, Domain: "inventory", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionAccessoryUnequip, Domain: "inventory", RequiresIdempotency: true, MaterializedByFlush: true},

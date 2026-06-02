@@ -15,13 +15,14 @@ import (
 )
 
 const (
-	defaultPlayerID  = "dev-player-1"
-	goldDungeonID    = balance.DungeonGold
-	essenceDungeonID = balance.DungeonEssence
-	gearDungeonID    = balance.DungeonGear
-	heroBannerID     = balance.BannerHeroShardStandard
-	weaponID         = balance.EquipmentWeapon
-	armorID          = balance.EquipmentArmor
+	defaultPlayerID    = "dev-player-1"
+	goldDungeonID      = balance.DungeonGold
+	essenceDungeonID   = balance.DungeonEssence
+	gearDungeonID      = balance.DungeonGear
+	shardRiftDungeonID = balance.DungeonShardRift
+	heroBannerID       = balance.BannerHeroShardStandard
+	weaponID           = balance.EquipmentWeapon
+	armorID            = balance.EquipmentArmor
 )
 
 type StateStore interface {
@@ -52,6 +53,7 @@ type PersistentState struct {
 	HeroLevels         map[string]int
 	HeroShards         map[string]int
 	HeroAscensions     map[string]int
+	HeroStars          map[string]int
 	EquipmentLevels    map[string]int
 	AccessoryInventory map[string]int
 	AccessoryLevels    map[string]int
@@ -60,6 +62,9 @@ type PersistentState struct {
 	ClaimedDaily       map[string]bool
 	ClaimedBattlePass  map[string]bool
 	SummonCount        int
+	HeroShardChests    int
+	ShardRiftBest      int
+	ShardRiftTotal     int
 	LastAFKClaimedAt   time.Time
 	DailyDate          string
 	DailyFightCount    int
@@ -110,6 +115,7 @@ func ClonePersistentState(state PersistentState) PersistentState {
 		HeroLevels:         cloneIntMap(state.HeroLevels),
 		HeroShards:         cloneIntMap(state.HeroShards),
 		HeroAscensions:     cloneIntMap(state.HeroAscensions),
+		HeroStars:          cloneIntMap(state.HeroStars),
 		EquipmentLevels:    cloneIntMap(state.EquipmentLevels),
 		AccessoryInventory: cloneIntMap(state.AccessoryInventory),
 		AccessoryLevels:    cloneIntMap(state.AccessoryLevels),
@@ -118,6 +124,9 @@ func ClonePersistentState(state PersistentState) PersistentState {
 		ClaimedDaily:       cloneBoolMap(state.ClaimedDaily),
 		ClaimedBattlePass:  cloneBoolMap(state.ClaimedBattlePass),
 		SummonCount:        state.SummonCount,
+		HeroShardChests:    state.HeroShardChests,
+		ShardRiftBest:      state.ShardRiftBest,
+		ShardRiftTotal:     state.ShardRiftTotal,
 		LastAFKClaimedAt:   state.LastAFKClaimedAt,
 		DailyDate:          state.DailyDate,
 		DailyFightCount:    state.DailyFightCount,
@@ -145,6 +154,7 @@ type Service struct {
 	heroLevels         map[string]int
 	heroShards         map[string]int
 	heroAscensions     map[string]int
+	heroStars          map[string]int
 	equipmentLevels    map[string]int
 	accessoryInventory map[string]int
 	accessoryLevels    map[string]int
@@ -153,6 +163,9 @@ type Service struct {
 	claimedDaily       map[string]bool
 	claimedBattlePass  map[string]bool
 	summonCount        int
+	heroShardChests    int
+	shardRiftBest      int
+	shardRiftTotal     int
 	revision           int64
 	updatedAt          time.Time
 	lastAFKClaimedAt   time.Time
@@ -193,6 +206,7 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 			Gold:                0,
 			Gems:                35,
 			MythEssence:         27,
+			AwakeningShards:     0,
 			PassXP:              0,
 			CampaignStage:       1,
 			GoldDungeonFloor:    1,
@@ -205,6 +219,7 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 		heroLevels:         map[string]int{},
 		heroShards:         map[string]int{},
 		heroAscensions:     map[string]int{},
+		heroStars:          map[string]int{},
 		equipmentLevels:    map[string]int{},
 		accessoryInventory: map[string]int{},
 		accessoryLevels:    map[string]int{},
@@ -240,6 +255,9 @@ func (service *Service) seedInitialHeroes() {
 		}
 		if _, ok := service.heroAscensions[definition.ID]; !ok {
 			service.heroAscensions[definition.ID] = 0
+		}
+		if _, ok := service.heroStars[definition.ID]; !ok {
+			service.heroStars[definition.ID] = 0
 		}
 	}
 }

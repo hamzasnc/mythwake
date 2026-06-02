@@ -7,6 +7,7 @@ public struct MythwakePlayerStateDto
     public int gold;
     public int gems;
     public int mythEssence;
+    public int awakeningShards;
     public int passXp;
     public int campaignStage;
     public int goldDungeonFloor;
@@ -29,6 +30,7 @@ public struct MythwakePlayerSnapshotDto
     public MythwakeDailyProgressDto[] dailyProgress;
     public MythwakeHeroStateDto[] heroes;
     public MythwakeHeroShardStateDto[] heroShards;
+    public int heroShardChests;
     public MythwakeEquipmentStateDto[] equipment;
     public MythwakeAccessoryStateDto[] accessories;
     public MythwakeEquippedAccessoryDto[] equippedAccessories;
@@ -36,6 +38,8 @@ public struct MythwakePlayerSnapshotDto
     public MythwakeClaimStateDto[] dailyClaims;
     public MythwakeClaimStateDto[] battlePassClaims;
     public int summonCount;
+    public int shardRiftBestEnemiesDefeated;
+    public int shardRiftTotalEnemiesDefeated;
 }
 
 [Serializable]
@@ -44,6 +48,7 @@ public struct MythwakeHeroStateDto
     public string heroId;
     public int level;
     public int ascension;
+    public int starLevel;
 }
 
 [Serializable]
@@ -107,6 +112,8 @@ public struct MythwakeRewardDto
     public int gold;
     public int gems;
     public int mythEssence;
+    public int awakeningShards;
+    public int heroShardChests;
     public int passXp;
 }
 
