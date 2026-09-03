@@ -5496,7 +5496,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (reward.heroShardChests > 0)
         {
-            parts.Add($"{reward.heroShardChests} {Tr(\"item.hero_shard_chest.name\")}");
+            parts.Add($"{reward.heroShardChests} {Tr("item.hero_shard_chest.name")}");
         }
 
         if (reward.passXp > 0)
@@ -5524,7 +5524,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                     }
                 }
 
-                parts.Add($"{shardReward.shards} {heroName} {Tr(\"ui.common.shards\")}");
+                parts.Add($"{shardReward.shards} {heroName} {Tr("ui.common.shards")}");
             }
         }
 
@@ -19402,7 +19402,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
-    private static string FormatInventoryRewardPopupSummary(string summary, int[] heroShardRewards)
+    private string FormatInventoryRewardPopupSummary(string summary, int[] heroShardRewards)
     {
         var totalHeroShards = 0;
         if (heroShardRewards != null)
