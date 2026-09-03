@@ -18716,9 +18716,52 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         inventoryGridRoot = CreateRuntimeBagPanel(inventoryPopupRoot, "Inventory Grid", "bag_panel_background", new Vector2(0, -166), new Vector2(790, 300));
         inventoryGridRoot.GetComponent<Image>().raycastTarget = false;
-        CreateInventoryGridSlots();
-        CreateInventoryDetailPanel();
-        CreateInventoryRewardPopup();
+        var bagUi = BagInventoryUiFactory.Create(
+            inventoryPopupRoot,
+            inventoryGridRoot,
+            InventoryGridSlotCount,
+            HeroCount,
+            CreateRuntimeBagPanel,
+            CreateRuntimeText,
+            CreateRuntimeBagButton,
+            CreateRuntimeRawImage,
+            CreateRuntimeInputField,
+            ApplyRuntimeBagSprite,
+            SelectInventoryItem,
+            Tr);
+        inventorySlotRoots = bagUi.slotRoots;
+        inventorySlotButtons = bagUi.slotButtons;
+        inventorySlotFrames = bagUi.slotFrames;
+        inventorySlotInnerFrames = bagUi.slotInnerFrames;
+        inventorySlotHighlightFrames = bagUi.slotHighlightFrames;
+        inventorySlotIcons = bagUi.slotIcons;
+        inventorySlotCountTexts = bagUi.slotCountTexts;
+        inventorySlotNameTexts = bagUi.slotNameTexts;
+        inventorySlotDetailTexts = bagUi.slotDetailTexts;
+        inventoryDetailRoot = bagUi.detailRoot;
+        inventoryDetailFrame = bagUi.detailFrame;
+        inventoryDetailIcon = bagUi.detailIcon;
+        inventoryDetailTitleText = bagUi.detailTitleText;
+        inventoryDetailDescriptionText = bagUi.detailDescriptionText;
+        inventoryDetailStatsText = bagUi.detailStatsText;
+        inventoryDetailCloseButton = bagUi.detailCloseButton;
+        inventoryUseRoot = bagUi.useRoot;
+        inventoryUseTitleText = bagUi.useTitleText;
+        inventoryUseHintText = bagUi.useHintText;
+        inventoryUseAmountInput = bagUi.useAmountInput;
+        inventoryUseOneButton = bagUi.useOneButton;
+        inventoryUseMinusButton = bagUi.useMinusButton;
+        inventoryUsePlusButton = bagUi.usePlusButton;
+        inventoryUseAmountButton = bagUi.useAmountButton;
+        inventoryUseAllButton = bagUi.useAllButton;
+        inventoryRewardPopupRoot = bagUi.rewardPopupRoot;
+        inventoryRewardTitleText = bagUi.rewardTitleText;
+        inventoryRewardSummaryText = bagUi.rewardSummaryText;
+        inventoryRewardFrames = bagUi.rewardFrames;
+        inventoryRewardIcons = bagUi.rewardIcons;
+        inventoryRewardTexts = bagUi.rewardTexts;
+        inventoryRewardCloseButton = bagUi.rewardCloseButton;
+        inventoryRewardXButton = bagUi.rewardXButton;
 
         inventoryCloseButton = CreateRuntimeBagButton(inventoryPopupRoot, "Inventory Close Button", "X", "bag_close_button", 388, -28, 54, 54);
         inventoryPopupRoot.gameObject.SetActive(false);
@@ -18845,231 +18888,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         campaignStageDetailCloseButton = CreateRuntimeButton(campaignStageDetailPopupRoot, "Stage Detail Close Button", "Close", -160, -704, 180, 52);
         campaignStageDetailBattleButton = CreateRuntimeButton(campaignStageDetailPopupRoot, "Stage Detail Battle Button", "Battle", 130, -704, 240, 62);
         campaignStageDetailPopupRoot.gameObject.SetActive(false);
-    }
-
-    private void CreateInventoryGridSlots()
-    {
-        if (inventoryGridRoot == null)
-        {
-            return;
-        }
-
-        inventorySlotRoots = new RectTransform[InventoryGridSlotCount];
-        inventorySlotButtons = new Button[InventoryGridSlotCount];
-        inventorySlotFrames = new Image[InventoryGridSlotCount];
-        inventorySlotInnerFrames = new Image[InventoryGridSlotCount];
-        inventorySlotHighlightFrames = new Image[InventoryGridSlotCount];
-        inventorySlotIcons = new RawImage[InventoryGridSlotCount];
-        inventorySlotCountTexts = new TMP_Text[InventoryGridSlotCount];
-        inventorySlotNameTexts = new TMP_Text[InventoryGridSlotCount];
-        inventorySlotDetailTexts = new TMP_Text[InventoryGridSlotCount];
-
-        const int columns = 5;
-        const float startX = -304f;
-        const float startY = -28f;
-        const float spacingX = 152f;
-        const float spacingY = 132f;
-
-        for (var i = 0; i < InventoryGridSlotCount; i++)
-        {
-            var column = i % columns;
-            var row = i / columns;
-            var slotRoot = CreateRuntimeBagPanel(
-                inventoryGridRoot,
-                $"Inventory Slot {i + 1}",
-                "bag_slot_filled",
-                new Vector2(startX + (column * spacingX), startY - (row * spacingY)),
-                new Vector2(126, 112));
-            inventorySlotRoots[i] = slotRoot;
-            inventorySlotFrames[i] = slotRoot.GetComponent<Image>();
-            inventorySlotFrames[i].raycastTarget = true;
-
-            var slotButton = slotRoot.gameObject.AddComponent<Button>();
-            var capturedSlot = i;
-            slotButton.targetGraphic = inventorySlotFrames[i];
-            slotButton.onClick.AddListener(() => SelectInventoryItem(capturedSlot));
-            inventorySlotButtons[i] = slotButton;
-
-            inventorySlotInnerFrames[i] = null;
-
-            var highlight = CreateRuntimeBagPanel(slotRoot, "Selected Highlight", "bag_slot_selected", new Vector2(0, 0), new Vector2(126, 112));
-            inventorySlotHighlightFrames[i] = highlight.GetComponent<Image>();
-            inventorySlotHighlightFrames[i].raycastTarget = false;
-            highlight.gameObject.SetActive(false);
-
-            inventorySlotIcons[i] = CreateRuntimeRawImage(slotRoot, "Icon", null, new Vector2(0, -14), new Vector2(86, 76), new Vector2(0.5f, 1f));
-            inventorySlotIcons[i].raycastTarget = false;
-
-            var countBack = CreateRuntimeBagPanel(slotRoot, "Count Back", "bag_slot_amount_badge", new Vector2(38, -78), new Vector2(58, 28));
-            inventorySlotCountTexts[i] = CreateRuntimeText(countBack, "Count", string.Empty, 17, Vector2.zero, new Vector2(48, 24));
-            inventorySlotCountTexts[i].fontStyle = FontStyles.Bold;
-            inventorySlotCountTexts[i].enableAutoSizing = true;
-            inventorySlotCountTexts[i].fontSizeMin = 10;
-            inventorySlotCountTexts[i].fontSizeMax = 17;
-            inventorySlotCountTexts[i].color = new Color(1f, 0.9f, 0.54f);
-            inventorySlotCountTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
-
-            inventorySlotNameTexts[i] = CreateRuntimeText(slotRoot, "Name", string.Empty, 14, new Vector2(0, -92), new Vector2(104, 22));
-            inventorySlotNameTexts[i].fontStyle = FontStyles.Bold;
-            inventorySlotNameTexts[i].enableAutoSizing = true;
-            inventorySlotNameTexts[i].fontSizeMin = 9;
-            inventorySlotNameTexts[i].fontSizeMax = 14;
-            inventorySlotNameTexts[i].color = new Color(0.16f, 0.08f, 0.025f);
-            inventorySlotNameTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
-            inventorySlotNameTexts[i].gameObject.SetActive(false);
-
-            inventorySlotDetailTexts[i] = CreateRuntimeText(slotRoot, "Detail", string.Empty, 11, new Vector2(0, -112), new Vector2(106, 18));
-            inventorySlotDetailTexts[i].enableAutoSizing = true;
-            inventorySlotDetailTexts[i].fontSizeMin = 8;
-            inventorySlotDetailTexts[i].fontSizeMax = 11;
-            inventorySlotDetailTexts[i].color = new Color(0.28f, 0.17f, 0.07f);
-            inventorySlotDetailTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
-            inventorySlotDetailTexts[i].gameObject.SetActive(false);
-
-            slotRoot.gameObject.SetActive(true);
-        }
-    }
-
-    private void CreateInventoryDetailPanel()
-    {
-        if (inventoryPopupRoot == null || inventoryDetailRoot != null)
-        {
-            return;
-        }
-
-        inventoryDetailRoot = CreateRuntimeBagPanel(inventoryPopupRoot, "Inventory Detail Panel", "bag_detail_panel", new Vector2(0, -494), new Vector2(790, 180));
-        inventoryDetailRoot.GetComponent<Image>().raycastTarget = true;
-        inventoryDetailFrame = CreateRuntimeBagPanel(inventoryDetailRoot, "Detail Icon Frame", "bag_icon_frame", new Vector2(-302, -40), new Vector2(128, 112)).GetComponent<Image>();
-        inventoryDetailIcon = CreateRuntimeRawImage(inventoryDetailFrame.transform, "Icon", null, new Vector2(0, -16), new Vector2(100, 82), new Vector2(0.5f, 1f));
-        inventoryDetailIcon.raycastTarget = false;
-
-        inventoryDetailTitleText = CreateRuntimeText(inventoryDetailRoot, "Detail Title", string.Empty, 25, new Vector2(82, -32), new Vector2(500, 34));
-        inventoryDetailTitleText.alignment = TextAlignmentOptions.Left;
-        inventoryDetailTitleText.fontStyle = FontStyles.Bold;
-        inventoryDetailTitleText.color = new Color(0.17f, 0.085f, 0.025f);
-        inventoryDetailTitleText.textWrappingMode = TextWrappingModes.NoWrap;
-        inventoryDetailTitleText.enableAutoSizing = true;
-        inventoryDetailTitleText.fontSizeMin = 18;
-        inventoryDetailTitleText.fontSizeMax = 26;
-
-        inventoryDetailDescriptionText = CreateRuntimeText(inventoryDetailRoot, "Detail Description", string.Empty, 18, new Vector2(82, -70), new Vector2(500, 48));
-        inventoryDetailDescriptionText.alignment = TextAlignmentOptions.TopLeft;
-        inventoryDetailDescriptionText.color = new Color(0.24f, 0.12f, 0.04f);
-        inventoryDetailDescriptionText.textWrappingMode = TextWrappingModes.Normal;
-        inventoryDetailDescriptionText.enableAutoSizing = true;
-        inventoryDetailDescriptionText.fontSizeMin = 12;
-        inventoryDetailDescriptionText.fontSizeMax = 18;
-
-        inventoryDetailStatsText = CreateRuntimeText(inventoryDetailRoot, "Detail Stats", string.Empty, 17, new Vector2(82, -122), new Vector2(500, 40));
-        inventoryDetailStatsText.alignment = TextAlignmentOptions.TopLeft;
-        inventoryDetailStatsText.fontStyle = FontStyles.Bold;
-        inventoryDetailStatsText.color = new Color(0.13f, 0.07f, 0.03f);
-        inventoryDetailStatsText.textWrappingMode = TextWrappingModes.Normal;
-        inventoryDetailStatsText.enableAutoSizing = true;
-        inventoryDetailStatsText.fontSizeMin = 12;
-        inventoryDetailStatsText.fontSizeMax = 18;
-
-        inventoryDetailCloseButton = null;
-
-        inventoryUseRoot = CreateRuntimeBagPanel(inventoryPopupRoot, "Inventory Use Panel", "bag_use_panel", new Vector2(0, -700), new Vector2(790, 244));
-        inventoryUseRoot.GetComponent<Image>().raycastTarget = true;
-        CreateRuntimeBagPanel(inventoryUseRoot, "Use Header Plaque", "bag_header", new Vector2(0, -18), new Vector2(260, 50));
-        var useHeader = CreateRuntimeText(inventoryUseRoot, "Use Header", "Use", 24, new Vector2(0, -28), new Vector2(230, 34));
-        useHeader.fontStyle = FontStyles.Bold;
-        useHeader.color = new Color(1f, 0.9f, 0.66f);
-        useHeader.textWrappingMode = TextWrappingModes.NoWrap;
-        useHeader.outlineColor = new Color(0.03f, 0.08f, 0.08f, 0.96f);
-        useHeader.outlineWidth = 0.14f;
-
-        inventoryUseTitleText = CreateRuntimeText(inventoryUseRoot, "Use Title", string.Empty, 21, new Vector2(0, -74), new Vector2(620, 34));
-        inventoryUseTitleText.alignment = TextAlignmentOptions.Center;
-        inventoryUseTitleText.fontStyle = FontStyles.Bold;
-        inventoryUseTitleText.color = new Color(0.17f, 0.085f, 0.025f);
-        inventoryUseTitleText.enableAutoSizing = true;
-        inventoryUseTitleText.fontSizeMin = 14;
-        inventoryUseTitleText.fontSizeMax = 21;
-        inventoryUseTitleText.textWrappingMode = TextWrappingModes.NoWrap;
-
-        inventoryUseHintText = CreateRuntimeText(inventoryUseRoot, "Use Hint", "Select amount to use.", 16, new Vector2(0, -104), new Vector2(620, 28));
-        inventoryUseHintText.alignment = TextAlignmentOptions.Center;
-        inventoryUseHintText.color = new Color(0.23f, 0.12f, 0.045f);
-        inventoryUseHintText.enableAutoSizing = true;
-        inventoryUseHintText.fontSizeMin = 12;
-        inventoryUseHintText.fontSizeMax = 16;
-        inventoryUseHintText.textWrappingMode = TextWrappingModes.NoWrap;
-
-        inventoryUseOneButton = CreateRuntimeBagButton(inventoryUseRoot, "Detail Use One Button", "Use 1", "bag_button_normal", -238, -122, 102, 42);
-        inventoryUseMinusButton = CreateRuntimeBagButton(inventoryUseRoot, "Detail Use Minus Button", "-", "bag_button_normal", -116, -122, 52, 42);
-        inventoryUseAmountInput = CreateRuntimeInputField(inventoryUseRoot, "Detail Use Amount Input", "1", -40, -122, 88, 42, false);
-        inventoryUseAmountInput.contentType = TMP_InputField.ContentType.IntegerNumber;
-        inventoryUseAmountInput.characterLimit = 3;
-        inventoryUseAmountInput.text = "1";
-        ApplyRuntimeBagSprite(inventoryUseAmountInput.targetGraphic as Image, "bag_button_normal");
-        inventoryUsePlusButton = CreateRuntimeBagButton(inventoryUseRoot, "Detail Use Plus Button", "+", "bag_button_normal", 36, -122, 52, 42);
-        inventoryUseAllButton = CreateRuntimeBagButton(inventoryUseRoot, "Detail Use All Button", "All", "bag_button_normal", 156, -122, 102, 42);
-        inventoryUseAmountButton = CreateRuntimeBagButton(inventoryUseRoot, "Detail Use Amount Button", "Use", "bag_ok_button", 0, -178, 330, 56);
-        inventoryDetailRoot.gameObject.SetActive(false);
-        inventoryUseRoot.gameObject.SetActive(false);
-    }
-
-    private void CreateInventoryRewardPopup()
-    {
-        if (inventoryPopupRoot == null || inventoryRewardPopupRoot != null)
-        {
-            return;
-        }
-
-        inventoryRewardPopupRoot = CreateRuntimeBagPanel(inventoryPopupRoot, "Inventory Reward Popup", "bag_reward_popup_frame", new Vector2(0, -566), new Vector2(760, 350));
-        var popupImage = inventoryRewardPopupRoot.GetComponent<Image>();
-        if (popupImage != null)
-        {
-            popupImage.raycastTarget = true;
-        }
-
-        CreateRuntimeBagPanel(inventoryRewardPopupRoot, "Reward Header Plaque", "bag_header", new Vector2(0, -18), new Vector2(300, 58));
-        inventoryRewardTitleText = CreateRuntimeText(inventoryRewardPopupRoot, "Title", "Rewards", 30, new Vector2(0, -27), new Vector2(260, 38));
-        inventoryRewardTitleText.fontStyle = FontStyles.Bold;
-        inventoryRewardTitleText.color = new Color(1f, 0.9f, 0.66f);
-        inventoryRewardTitleText.textWrappingMode = TextWrappingModes.NoWrap;
-        inventoryRewardTitleText.outlineColor = new Color(0.09f, 0.035f, 0.01f, 0.96f);
-        inventoryRewardTitleText.outlineWidth = 0.16f;
-
-        inventoryRewardXButton = CreateRuntimeBagButton(inventoryRewardPopupRoot, "Inventory Reward X Button", "X", "bag_close_button", 334, -22, 48, 48);
-        CreateRuntimeBagPanel(inventoryRewardPopupRoot, "Reward Inner Glow", "bag_reward_inner", new Vector2(0, -88), new Vector2(700, 132));
-        inventoryRewardSummaryText = CreateRuntimeText(inventoryRewardPopupRoot, "Reward Summary", string.Empty, 22, new Vector2(0, -202), new Vector2(640, 42));
-        inventoryRewardSummaryText.fontStyle = FontStyles.Bold;
-        inventoryRewardSummaryText.color = new Color(0.43f, 0.97f, 0.88f);
-        inventoryRewardSummaryText.enableAutoSizing = true;
-        inventoryRewardSummaryText.fontSizeMin = 14;
-        inventoryRewardSummaryText.fontSizeMax = 22;
-        inventoryRewardSummaryText.textWrappingMode = TextWrappingModes.NoWrap;
-        inventoryRewardSummaryText.outlineColor = new Color(0.02f, 0.04f, 0.035f, 0.96f);
-        inventoryRewardSummaryText.outlineWidth = 0.12f;
-
-        inventoryRewardFrames = new Image[HeroCount];
-        inventoryRewardIcons = new RawImage[HeroCount];
-        inventoryRewardTexts = new TMP_Text[HeroCount];
-        for (var i = 0; i < HeroCount; i++)
-        {
-            var x = -288f + i * 96f;
-            var y = -76f;
-            var frame = CreateRuntimeBagPanel(inventoryRewardPopupRoot, $"Reward Slot {i + 1}", "bag_reward_slot", new Vector2(x, y), new Vector2(80, 88));
-            inventoryRewardFrames[i] = frame.GetComponent<Image>();
-            inventoryRewardIcons[i] = CreateRuntimeRawImage(frame, "Icon", null, new Vector2(0, -8), new Vector2(62, 62), new Vector2(0.5f, 1f));
-            inventoryRewardIcons[i].raycastTarget = false;
-            inventoryRewardTexts[i] = CreateRuntimeText(frame, "Text", string.Empty, 13, new Vector2(0, -65), new Vector2(74, 20));
-            inventoryRewardTexts[i].alignment = TextAlignmentOptions.Center;
-            inventoryRewardTexts[i].fontStyle = FontStyles.Bold;
-            inventoryRewardTexts[i].enableAutoSizing = true;
-            inventoryRewardTexts[i].fontSizeMin = 9;
-            inventoryRewardTexts[i].fontSizeMax = 13;
-            inventoryRewardTexts[i].color = Color.white;
-            inventoryRewardTexts[i].textWrappingMode = TextWrappingModes.NoWrap;
-            frame.gameObject.SetActive(false);
-        }
-
-        inventoryRewardCloseButton = CreateRuntimeBagButton(inventoryRewardPopupRoot, "Inventory Reward Close Button", "OK", "bag_ok_button", 0, -278, 330, 58);
-        inventoryRewardPopupRoot.gameObject.SetActive(false);
     }
 
     private void RefreshInventoryPopupUi()
@@ -19232,12 +19050,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var canUse = item.IsUsable && !backendRequestInProgress && !backendLifecycleFlushInProgress;
         if (inventoryUseTitleText != null)
         {
-            inventoryUseTitleText.text = item.IsUsable ? "Select amount to use." : "This item cannot be used from the Bag.";
+            inventoryUseTitleText.text = item.IsUsable ? Tr("ui.inventory.use.status") : Tr("ui.inventory.use.unavailable");
         }
 
         if (inventoryUseHintText != null)
         {
-            inventoryUseHintText.text = item.IsUsable ? $"Owned: {item.countText}" : string.Empty;
+            inventoryUseHintText.text = item.IsUsable ? TrFormat("ui.inventory.use.owned", item.countText) : string.Empty;
         }
 
         SetComponentActive(inventoryUseOneButton, item.IsUsable);
@@ -19260,9 +19078,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             inventoryUseAmountInput.text = selectedAmount.ToString();
         }
 
-        SetButtonLabel(inventoryUseOneButton, "Use 1");
-        SetButtonLabel(inventoryUseAmountButton, "Use");
-        SetButtonLabel(inventoryUseAllButton, "All");
+        SetButtonLabel(inventoryUseOneButton, Tr("ui.inventory.action.use_one"));
+        SetButtonLabel(inventoryUseAmountButton, Tr("ui.inventory.action.use"));
+        SetButtonLabel(inventoryUseAllButton, Tr("ui.inventory.action.all"));
         SetButtonInteractable(inventoryUseOneButton, canUse);
         SetButtonInteractable(inventoryUseMinusButton, canUse && selectedAmount > 1);
         SetButtonInteractable(inventoryUsePlusButton, canUse && selectedAmount < clampedMax);
@@ -19310,7 +19128,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        CreateInventoryRewardPopup();
         if (inventoryRewardPopupRoot == null)
         {
             return;
@@ -19321,7 +19138,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (inventoryRewardTitleText != null)
         {
-            inventoryRewardTitleText.text = string.IsNullOrWhiteSpace(title) ? "Rewards" : title;
+            inventoryRewardTitleText.text = string.IsNullOrWhiteSpace(title) ? Tr("ui.inventory.reward.title") : title;
         }
 
         if (inventoryRewardSummaryText != null)
@@ -19380,12 +19197,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         if (totalHeroShards > 0)
         {
-            return $"+{totalHeroShards} Hero Shards";
+            return TrFormat("ui.inventory.reward.shards", totalHeroShards);
         }
 
         if (string.IsNullOrWhiteSpace(summary))
         {
-            return "Rewards claimed.";
+            return Tr("ui.inventory.reward.claimed");
         }
 
         var lines = summary.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
@@ -19431,10 +19248,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (heroShardChests > 0)
         {
             items.Add(new InventoryItemViewData(
-                "Hero Shard Chest",
-                "Consumable",
-                "Open to obtain Hero Shards.",
-                $"Owned: {heroShardChests}\nContains random Hero Shards.",
+                Tr("item.hero_shard_chest.name"),
+                Tr("item.hero_shard_chest.detail"),
+                Tr("item.hero_shard_chest.description"),
+                TrFormat("item.hero_shard_chest.stats", heroShardChests),
                 heroShardChests.ToString(),
                 "vfx_summon",
                 new Color(0.88f, 0.54f, 0.18f, 0.96f),
@@ -19443,17 +19260,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
                 heroShardChests));
         }
 
-        AddCurrencyInventoryItem(items, GoldCurrencyId, gold, "gold_coin", InventoryTabMode.Materials, "Common currency used for gear and village upgrades.");
-        AddCurrencyInventoryItem(items, GemsCurrencyId, gems, "mythic_gem", InventoryTabMode.Gems, "Premium currency used for summons and shop purchases.");
-        AddCurrencyInventoryItem(items, MythEssenceCurrencyId, mythEssence, "exp_shard", InventoryTabMode.Materials, "Essence used to level heroes and progress the village.");
+        AddCurrencyInventoryItem(items, GoldCurrencyId, gold, "gold_coin", InventoryTabMode.Materials, Tr("item.currency.gold.description"));
+        AddCurrencyInventoryItem(items, GemsCurrencyId, gems, "mythic_gem", InventoryTabMode.Gems, Tr("item.currency.gems.description"));
+        AddCurrencyInventoryItem(items, MythEssenceCurrencyId, mythEssence, "exp_shard", InventoryTabMode.Materials, Tr("item.currency.myth_essence.description"));
 
         if (awakeningShards > 0)
         {
             items.Add(new InventoryItemViewData(
                 GetLocalizedCurrencyName(AwakeningShardCurrencyId),
                 Tr("ui.common.awakening"),
-                "Currency used after Lv 100 to awaken heroes.",
-                $"Owned {FormatCompactNumber(awakeningShards)}\nSource: Shard Rift, cheat panel",
+                Tr("item.currency.awakening_shards.description"),
+                TrFormat("item.currency.awakening_shards.stats", FormatCompactNumber(awakeningShards)),
                 FormatCompactNumber(awakeningShards),
                 "dungeon_essence",
                 new Color(0.64f, 0.34f, 1f, 0.96f),
@@ -19469,12 +19286,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
             var starCost = IsHeroStarLevelMax(heroIndex) ? 0 : GetHeroStarUpgradeCost(heroIndex);
             items.Add(new InventoryItemViewData(
-                $"{GetLocalizedHeroName(heroIndex)} Shards",
-                $"Star {GetHeroStarLevel(heroIndex)}/{GetHeroStarLevelCap(heroIndex)}",
-                "Hero-specific shards for star-level upgrades.",
+                $"{GetLocalizedHeroName(heroIndex)} {Tr("ui.common.shards")}",
+                TrFormat("item.hero_shards.detail", GetHeroStarLevel(heroIndex), GetHeroStarLevelCap(heroIndex)),
+                Tr("item.hero_shards.description"),
                 IsHeroStarLevelMax(heroIndex)
-                    ? $"Owned {heroShards[heroIndex]}\nStar level is max."
-                    : $"Owned {heroShards[heroIndex]}/{starCost}\nNext star: +{Mathf.CeilToInt(GetHeroDefinition(heroIndex).baseAttack * 0.12f)} ATK source.",
+                    ? TrFormat("item.hero_shards.owned_max", heroShards[heroIndex])
+                    : TrFormat("item.hero_shards.owned_next", heroShards[heroIndex], starCost, Mathf.CeilToInt(GetHeroDefinition(heroIndex).baseAttack * 0.12f)),
                 heroShards[heroIndex].ToString(),
                 "vfx_summon",
                 GetHeroRarityColor(GetHeroDefinition(heroIndex).rarityId),
@@ -19504,9 +19321,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         items.Add(new InventoryItemViewData(
             GetLocalizedCurrencyName(currencyId),
-            category == InventoryTabMode.Gems ? "Premium" : "Currency",
+            category == InventoryTabMode.Gems ? Tr("ui.common.premium") : Tr("ui.common.currency"),
             description,
-            $"Owned: {FormatCompactNumber(amount)}",
+            TrFormat("ui.inventory.use.owned", FormatCompactNumber(amount)),
             FormatCompactNumber(amount),
             iconTextureName,
             category == InventoryTabMode.Gems ? new Color(0.18f, 0.72f, 0.98f, 0.96f) : new Color(0.78f, 0.56f, 0.18f, 0.96f),

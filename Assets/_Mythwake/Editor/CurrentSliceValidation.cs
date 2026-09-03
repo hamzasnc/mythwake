@@ -26,6 +26,7 @@ public static class CurrentSliceValidation
             RunPrivateValidator(typeof(SummonUiValidation), "ValidateSummonUi", "Summon UI");
             RunPrivateValidator(typeof(UpgradeClutterValidation), "ValidateUpgradeClutter", "Upgrade Clutter");
             RunPrivateValidator(typeof(HeroProgressionValidation), "ValidateHeroProgression", "Hero Progression");
+            RunValidator("Bag Inventory Rules", BagInventoryRulesEditModeTests.Run);
             RunPrivateValidator(typeof(HomeIdleCombatValidation), "ValidateHomeIdleCombatUi", "Home Idle Combat");
             RunPrivateValidator(typeof(FightFormationValidation), "ValidateFightFormationUi", "Fight Formation UI");
             RunPrivateValidator(typeof(EarlyGameLoopValidation), "ValidateEarlyGameLoop", "Early Game Loop");
