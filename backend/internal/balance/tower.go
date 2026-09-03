@@ -150,6 +150,10 @@ func TowerEnemyCombatStats(definition TowerDefinition, floor int) EnemyCombatSta
 }
 
 func TowerReward(definition TowerDefinition, floor int) api.Reward {
+	return TowerRewardForHeroes(definition, floor, HeroDefinitions())
+}
+
+func TowerRewardForHeroes(definition TowerDefinition, floor int, heroes []HeroDefinition) api.Reward {
 	floor = clampTowerFloor(definition, floor)
 	bossType := TowerBossType(definition, floor)
 	gold := definition.BaseRewardGold + int(math.Floor(definition.RewardGoldScale*math.Pow(float64(floor), definition.RewardGoldGrowth)))
@@ -176,7 +180,6 @@ func TowerReward(definition TowerDefinition, floor int) api.Reward {
 		MythEssence: max(0, essence),
 	}
 	if shards > 0 {
-		heroes := HeroDefinitions()
 		if len(heroes) > 0 {
 			heroIndex := (floor / max(1, definition.ShardInterval)) % len(heroes)
 			result.HeroShards = []api.HeroShardReward{{HeroID: heroes[heroIndex].ID, Shards: shards}}

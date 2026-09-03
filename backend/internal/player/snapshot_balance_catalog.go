@@ -400,7 +400,7 @@ func (catalog *SnapshotBalanceCatalog) TowerEnemyCombatStats(definition balance.
 }
 
 func (catalog *SnapshotBalanceCatalog) TowerReward(definition balance.TowerDefinition, floor int) api.Reward {
-	return balance.TowerReward(definition, floor)
+	return balance.TowerRewardForHeroes(definition, floor, catalog.HeroDefinitions())
 }
 
 func (catalog *SnapshotBalanceCatalog) GearDungeonDropAccessoryID(floor int) string {
