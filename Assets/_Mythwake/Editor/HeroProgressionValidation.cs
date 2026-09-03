@@ -241,12 +241,60 @@ public static class HeroProgressionValidation
         var useAmountButton = RequireObjectField<Button>(controller, "inventoryUseAmountButton");
         var useAllButton = RequireObjectField<Button>(controller, "inventoryUseAllButton");
         var amountInput = RequireObjectField<TMP_InputField>(controller, "inventoryUseAmountInput");
+        var popupRoot = RequireObjectField<RectTransform>(controller, "inventoryPopupRoot");
+        var gridRoot = RequireObjectField<RectTransform>(controller, "inventoryGridRoot");
+        var detailRoot = RequireObjectField<RectTransform>(controller, "inventoryDetailRoot");
+        AssertNoChildNamed(popupRoot, "Inventory Lower Parchment", "Inventory should not contain the old lower ghost/shadow bag panel.");
+        AssertNoChildNamed(popupRoot, "Inventory Inner Parchment", "Inventory should not contain an extra overlapping parchment panel.");
+        AssertNoChildNamed(popupRoot, "Detail Close Button", "Inventory detail panel should not contain a hidden duplicate close button.");
+        AssertNoChildNamed(popupRoot, "Use Item Frame", "Inventory Use area should not render a second item icon mini-panel.");
+        AssertNoChildNamed(popupRoot, "Use Icon Frame", "Inventory Use area should not render a second item icon mini-panel.");
+        AssertSingleChildNamed(popupRoot, "Inventory Header Plaque", "Inventory should contain exactly one Bag header plaque.");
+        AssertSingleChildNamed(popupRoot, "Inventory Grid", "Inventory should contain exactly one grid area.");
+        AssertSingleChildNamed(popupRoot, "Inventory Detail Panel", "Inventory should contain exactly one detail panel.");
+        AssertSingleChildNamed(popupRoot, "Inventory Use Panel", "Inventory should contain exactly one use panel.");
+        var useRoot = RequireObjectField<RectTransform>(controller, "inventoryUseRoot");
+        AssertSingleChildNamed(useRoot, "Detail Use Amount Button", "Inventory Use panel should contain exactly one final Use button.");
+
+        var useTitle = RequireObjectField<TMP_Text>(controller, "inventoryUseTitleText");
+        if (useTitle.text.IndexOf("Hero Shard Chest", StringComparison.Ordinal) >= 0)
+        {
+            throw new InvalidOperationException("Inventory Use status text should not repeat the selected item name.");
+        }
+
+        AssertNoRectOverlap(popupRoot, gridRoot, detailRoot, "Inventory grid and detail panel should not overlap.");
+        AssertNoRectOverlap(popupRoot, detailRoot, useRoot, "Inventory detail and use panel should not overlap.");
+        AssertSpriteUnderGenerated(popupRoot.GetComponent<Image>(), "Inventory bag frame");
+        AssertSpriteUnderGenerated(gridRoot.GetComponent<Image>(), "Inventory grid panel");
+        AssertSpriteUnderGenerated(detailRoot.GetComponent<Image>(), "Inventory detail panel");
+        AssertSpriteUnderGenerated(useRoot.GetComponent<Image>(), "Inventory Use panel");
+        AssertSpriteUnderGenerated(useOneButton.GetComponent<Image>(), "Inventory Use quantity button");
+        AssertSpriteUnderGenerated(useAmountButton.GetComponent<Image>(), "Inventory Use button");
+        AssertSlicedImage(popupRoot.GetComponent<Image>(), "Inventory bag frame");
+        AssertSlicedImage(gridRoot.GetComponent<Image>(), "Inventory grid panel");
+        AssertSlicedImage(detailRoot.GetComponent<Image>(), "Inventory detail panel");
+        AssertSlicedImage(useRoot.GetComponent<Image>(), "Inventory Use panel");
+        AssertSlicedImage(useOneButton.GetComponent<Image>(), "Inventory Use quantity button");
+        AssertSlicedImage(useAmountButton.GetComponent<Image>(), "Inventory Use button");
+
+        var slotRoots = GetPrivateField<RectTransform[]>(controller, "inventorySlotRoots");
+        if (slotRoots == null || slotRoots.Length != 10)
+        {
+            throw new InvalidOperationException($"Inventory grid should expose 10 mockup-style slots, got {slotRoots?.Length ?? 0}.");
+        }
+
+        var inventorySummary = RequireObjectField<TMP_Text>(controller, "inventoryPopupText");
+        if (inventorySummary.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Inventory should not show lower summary/ghost text while items are available.");
+        }
+
         if (!useOneButton.gameObject.activeInHierarchy || !useOneButton.interactable)
         {
             throw new InvalidOperationException("Inventory Hero Shard Chest detail should expose an interactable Use 1 button.");
         }
 
-        AssertButtonLabel(useAllButton, "All (3)", "Inventory Hero Shard Chest should expose Use All with owned count.");
+        AssertButtonLabel(useAllButton, "All", "Inventory Hero Shard Chest should expose Use All amount selection.");
         amountInput.text = "2";
         useAmountButton.onClick.Invoke();
         Canvas.ForceUpdateCanvases();
@@ -263,8 +311,10 @@ public static class HeroProgressionValidation
             throw new InvalidOperationException("Inventory Use should show the reward popup.");
         }
 
+        AssertSpriteUnderGenerated(rewardRoot.GetComponent<Image>(), "Inventory reward popup");
+
         var rewardSummary = RequireObjectField<TMP_Text>(controller, "inventoryRewardSummaryText");
-        RequireCopy(rewardSummary.text, "Opened 2 Hero Shard Chests", "Inventory reward summary");
+        RequireCopy(rewardSummary.text, "Hero Shards", "Inventory reward summary");
         AssertTextFits(rewardSummary, "Inventory reward summary");
 
         var rewardFrames = GetPrivateField<Image[]>(controller, "inventoryRewardFrames");
@@ -281,6 +331,87 @@ public static class HeroProgressionValidation
         if (!visibleReward)
         {
             throw new InvalidOperationException("Inventory reward popup should show at least one visible reward slot.");
+        }
+    }
+
+    private static void AssertSpriteUnderGenerated(Image image, string context)
+    {
+        if (image == null || image.sprite == null)
+        {
+            throw new InvalidOperationException($"{context} is missing its generated Bag sprite.");
+        }
+
+        var path = AssetDatabase.GetAssetPath(image.sprite);
+        if (string.IsNullOrWhiteSpace(path) || !path.StartsWith("Assets/Art/UI/BagGenerated/Sprites/", StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"{context} should use isolated generated Bag sprites, got '{path}'.");
+        }
+    }
+
+    private static void AssertSlicedImage(Image image, string context)
+    {
+        if (image == null || image.sprite == null || image.type != Image.Type.Sliced || image.sprite.border == Vector4.zero)
+        {
+            throw new InvalidOperationException($"{context} should use a 9-sliced generated sprite.");
+        }
+    }
+
+    private static void AssertNoRectOverlap(RectTransform relativeRoot, RectTransform first, RectTransform second, string message)
+    {
+        Canvas.ForceUpdateCanvases();
+        var firstBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(relativeRoot, first);
+        var secondBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(relativeRoot, second);
+        if (BoundsOverlap(firstBounds, secondBounds, 1f))
+        {
+            throw new InvalidOperationException(message);
+        }
+    }
+
+    private static bool BoundsOverlap(Bounds first, Bounds second, float tolerance)
+    {
+        return first.min.x < second.max.x - tolerance &&
+            first.max.x > second.min.x + tolerance &&
+            first.min.y < second.max.y - tolerance &&
+            first.max.y > second.min.y + tolerance;
+    }
+
+    private static void AssertSingleChildNamed(Transform root, string childName, string message)
+    {
+        if (root == null)
+        {
+            throw new InvalidOperationException($"Cannot inspect child '{childName}' on a missing root.");
+        }
+
+        var count = 0;
+        var children = root.GetComponentsInChildren<Transform>(includeInactive: true);
+        for (var i = 0; i < children.Length; i++)
+        {
+            if (children[i] != null && string.Equals(children[i].name, childName, StringComparison.Ordinal))
+            {
+                count++;
+            }
+        }
+
+        if (count != 1)
+        {
+            throw new InvalidOperationException($"{message} Found {count}.");
+        }
+    }
+
+    private static void AssertNoChildNamed(Transform root, string childName, string message)
+    {
+        if (root == null)
+        {
+            throw new InvalidOperationException($"Cannot inspect child '{childName}' on a missing root.");
+        }
+
+        var children = root.GetComponentsInChildren<Transform>(includeInactive: true);
+        for (var i = 0; i < children.Length; i++)
+        {
+            if (children[i] != null && string.Equals(children[i].name, childName, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException(message);
+            }
         }
     }
 

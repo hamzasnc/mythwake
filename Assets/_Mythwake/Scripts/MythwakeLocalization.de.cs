@@ -4,6 +4,12 @@ public static partial class MythwakeLocalization
 {
     private static readonly Dictionary<string, string> German = new Dictionary<string, string>
     {
+        { "ui.inventory.tab.armor", "Ruestung" },
+        { "ui.inventory.tab.consumables", "Nutzen" },
+        { "ui.inventory.tab.materials", "Material" },
+        { "ui.inventory.tab.gems", "Juwelen" },
+        { "ui.inventory.empty.all", "Noch keine Gegenstaende im Inventar." },
+        { "ui.inventory.empty.category", "Noch keine Gegenstaende in {0}." },
         { "language.english", "Englisch" },
         { "language.german", "Deutsch" },
         { "language.button", "Sprache: DE" },

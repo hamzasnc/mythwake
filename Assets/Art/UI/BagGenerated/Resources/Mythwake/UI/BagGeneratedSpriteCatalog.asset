@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7fa1480d187f86244a3072a3d6fdc213, type: 3}
+  m_Name: BagGeneratedSpriteCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::BagGeneratedSpriteCatalog
+  entries:
+  - key: bag_panel_frame
+    sprite: {fileID: 21300000, guid: e869ffa347842be49b66ad6b2f1ccf90, type: 3}
+  - key: bag_panel_background
+    sprite: {fileID: 21300000, guid: 7f2d2dbe78e682f4f92287101c8acdbc, type: 3}
+  - key: bag_header
+    sprite: {fileID: 21300000, guid: e97d423ea1e86db4687d6cc32551d215, type: 3}
+  - key: bag_close_button
+    sprite: {fileID: 21300000, guid: e3764f0221105e14b8335b56dec6591d, type: 3}
+  - key: bag_tab_normal
+    sprite: {fileID: 21300000, guid: e1ad72cc9737bfe42b7e9ae541bc5719, type: 3}
+  - key: bag_tab_selected
+    sprite: {fileID: 21300000, guid: d5682090ae700f241af0a166a67306d5, type: 3}
+  - key: bag_tab_pressed
+    sprite: {fileID: 21300000, guid: 6ccb8b1816f20864ba3901dc418574da, type: 3}
+  - key: bag_slot_empty
+    sprite: {fileID: 21300000, guid: 9f9aaf9ab9e93364781acbef0478b5d0, type: 3}
+  - key: bag_slot_filled
+    sprite: {fileID: 21300000, guid: 81e6ce2bbee66b24698af19058dda83d, type: 3}
+  - key: bag_slot_selected
+    sprite: {fileID: 21300000, guid: 2e90bf9434014b24ea96554b12af13b6, type: 3}
+  - key: bag_slot_amount_badge
+    sprite: {fileID: 21300000, guid: ab99bbc935a868f4894d4fb2f5bb8f1f, type: 3}
+  - key: bag_detail_panel
+    sprite: {fileID: 21300000, guid: ce194799d8df3944ea2fd968081e8c80, type: 3}
+  - key: bag_use_panel
+    sprite: {fileID: 21300000, guid: 8f02b50de9fffe34b9c605d9ddfa7948, type: 3}
+  - key: bag_button_normal
+    sprite: {fileID: 21300000, guid: 251b13d4f7ca5d74483ae3dae1f6a74a, type: 3}
+  - key: bag_button_pressed
+    sprite: {fileID: 21300000, guid: 95649202d4d0abc408ef340f69f76b9f, type: 3}
+  - key: bag_button_disabled
+    sprite: {fileID: 21300000, guid: f3a70191a0278cc49834ef06bb11c2dd, type: 3}
+  - key: bag_reward_popup_frame
+    sprite: {fileID: 21300000, guid: 452081c197638ec4494340947e62bf2b, type: 3}
+  - key: bag_reward_slot
+    sprite: {fileID: 21300000, guid: 71237a54b777ebd45b78751f3ca6cb1a, type: 3}
+  - key: bag_ok_button
+    sprite: {fileID: 21300000, guid: 6725d7809db7b5d48ad4a0f8be960589, type: 3}
+  - key: bag_icon_frame
+    sprite: {fileID: 21300000, guid: bf20e4938bcd5c149b55e44de2e03710, type: 3}
+  - key: bag_reward_inner
+    sprite: {fileID: 21300000, guid: f70d65e46bf8e524cad7c5426fea6f8b, type: 3}
