@@ -8,6 +8,7 @@ Last updated: 2026-09-03
 - Unity client code is at Prototype `0.2.177`, save version `2`.
 - Backend API default version is `0.2.63`.
 - Backend unit, player, HTTP, `go vet`, and whitespace checks are green.
+- Direct Runtime C# compilation against the installed Unity 6 runtime/module references passes with 0 errors; the official Unity project validator remains blocked before project generation by the missing Editor license.
 - Server-authoritative core is already broad: guest auth, Email + Password backend auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
 - Client has moved beyond the older roadmap notes: Dungeons have their own map screen, Village has a scrollable map with 12 build plots, building art is imported, and Paladin/Ravik art plus combat presentation hooks exist.
 - Local Fast Rewards already stores continuous AFK time up to 24h. The backend AFK definition has now been aligned to the same 24h cap.

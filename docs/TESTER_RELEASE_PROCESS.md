@@ -10,7 +10,7 @@ This is the reproducible handoff path for small Android tester builds. It is mea
 - Company name in Unity PlayerSettings: `xMiepsen`
 - Android package name: `com.xmiepsen.mythwake`
 - Prototype / Android Version Name: `0.2.177`
-- Android Version Code: `2176`
+- Android Version Code: `2177`
 - Local save version: `2`
 - Backend default API version: `0.2.63`
 - Main scene: `Assets/Scenes/SampleScene.unity`
@@ -142,6 +142,7 @@ Source candidate: Prototype `0.2.177` / Backend `0.2.63`.
 
 - `go test ./...` in `backend`: passed, including Tower balance, progression, and HTTP coverage.
 - `go vet ./...` in `backend`: passed.
+- Direct Runtime C# compilation against the installed Unity 6 runtime/module references passed with 0 errors; the official Unity C# project validator remains blocked because `Assembly-CSharp.csproj` cannot be generated without a valid Editor license.
 - Unity Current Slice validation was attempted and stopped at Unity license error 198 before project validation.
 - PostgreSQL restart/re-login Tower E2E passed against the available local PostgreSQL instance, including migration `0032`, Tower definition loading, progression, cleared-floor rejection, restart recovery, and idempotent replay. APK/AAB packaging remains open because Unity has no valid Editor license; Docker and `adb` are not on `PATH` here.
 

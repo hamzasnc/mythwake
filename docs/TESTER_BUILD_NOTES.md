@@ -101,6 +101,7 @@ Source candidate: Prototype `0.2.177` / Backend `0.2.63`.
 
 - `go test ./...` in `backend`: passed, including Tower balance, player progression/idempotency, and HTTP endpoint coverage.
 - `go vet ./...` in `backend`: passed.
+- Direct Runtime C# compilation against the installed Unity 6 runtime/module references: passed with 0 errors; the official Unity C# project validator remains blocked because `Assembly-CSharp.csproj` cannot be generated without a valid Editor license.
 - `git diff --check`: passed for the completed working-tree validation runs.
 - `scripts/check-unity-current-slice.ps1`: blocked before project validation by Unity license error 198 (`No valid Unity Editor license found`).
 - PostgreSQL restart/re-login E2E passed against the available local PostgreSQL instance, including Tower definition loading, floor progression, cleared-floor rejection, restart recovery, and idempotent replay. Android APK/AAB packaging remains pending because Unity has no valid Editor license; Docker and `adb` are not on `PATH` here.
