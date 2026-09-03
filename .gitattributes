@@ -30,3 +30,12 @@
 *.mov binary
 *.ttf binary
 *.otf binary
+
+# Opt-in LFS policy for future large authored art. Existing repository history
+# stays as normal Git blobs; only files added under this directory use LFS.
+Assets/_Mythwake/Art/Large/*.png filter=lfs diff=lfs merge=lfs -text
+Assets/_Mythwake/Art/Large/*.jpg filter=lfs diff=lfs merge=lfs -text
+Assets/_Mythwake/Art/Large/*.jpeg filter=lfs diff=lfs merge=lfs -text
+Assets/_Mythwake/Art/Large/*.psd filter=lfs diff=lfs merge=lfs -text
+Assets/_Mythwake/Art/Large/*.fbx filter=lfs diff=lfs merge=lfs -text
+Assets/_Mythwake/Art/Large/*.blend filter=lfs diff=lfs merge=lfs -text
