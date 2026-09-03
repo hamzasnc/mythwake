@@ -1,13 +1,13 @@
 # Mythwake Current Status
 
-Last updated: 2026-06-01
+Last updated: 2026-09-03
 
 ## Where We Are
 
-- Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.176`, save version `2`.
-- Backend API default version is `0.2.62`.
-- Backend core tests for balance, player, and HTTP routes are green.
+- Current branch: `codex/internal-alpha-candidate`.
+- Unity client code is at Prototype `0.2.177`, save version `2`.
+- Backend API default version is `0.2.63`.
+- Backend unit, player, HTTP, `go vet`, and whitespace checks are green.
 - Server-authoritative core is already broad: guest auth, Email + Password backend auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
 - Client has moved beyond the older roadmap notes: Dungeons have their own map screen, Village has a scrollable map with 12 build plots, building art is imported, and Paladin/Ravik art plus combat presentation hooks exist.
 - Local Fast Rewards already stores continuous AFK time up to 24h. The backend AFK definition has now been aligned to the same 24h cap.
@@ -22,7 +22,7 @@ Last updated: 2026-06-01
 - The Android tester release process now has a documented, reproducible APK/AAB path: package `com.xmiepsen.mythwake`, Version Name `0.2.176`, Version Code `2176`, APK/AAB build commands, signing boundaries, Play Internal Testing prep notes, release notes, known issues, and feedback templates.
 - Hero progression now has one shared local rule set: normal leveling ends at Lv. 100, Awakening is locked until Lv. 100, Awakening uses Awakening Shards, caps at 10, and grants per-stage ATK/HP from hero definitions. Hero-specific shards now upgrade each hero's separate Star level from 0 to 5, with Hero Shard Chests feeding those shards. The client still maps Awakening onto the existing saved `ascension` field for compatibility, but UI/API copy presents it as Awakening.
 - Shard Rift is now the first endless reward dungeon. It has no floors, pays Awakening Shards plus Hero Shard Chests for defeated enemies, and keeps earned rewards if the player fails or manually ends the run. Server Mode now owns Shard Rift runs, Awakening Shards, Hero Shard Chests, Hero Star levels, and Shard Rift best/total kill progress.
-- The Dungeon overview now has a local Tower Trial MVP: 1,000 floors, 100-floor section browsing, mini-bosses every 25 floors, apex bosses every 100 floors, Gold/Myth Essence/Hero Shard rewards, saved local tower progress, and editor-validator coverage. Tower runs are blocked in Server Mode until backend/PostgreSQL tower definitions and progress tables are added.
+- The Dungeon overview now has a Tower Trial slice in both modes: 1,000 floors, 100-floor section browsing, mini-bosses every 25 floors, apex bosses every 100 floors, Gold/Myth Essence/Hero Shard rewards, and saved progress. Server Mode now uses `POST /dungeons/tower_dungeon/run?floor=N`, authoritative Go balance/rewards/combat, idempotency, `player.player_tower_progress`, migration `0032_tower_progression.sql`, and `playerSnapshot.tower`/`definitions.towers` Unity contracts.
 - The first local-to-small-server deployment handoff now exists: Dockerized Go API, production Docker Compose for API/PostgreSQL/Redis/Caddy, Ubuntu Docker install helper, and `docs/SERVER_DEPLOYMENT.md`. Android builds can now pass `-BackendBaseUrl "https://api.example.com"` so server APK/AAB builds no longer point at local `127.0.0.1`.
 - Follow-up MuMuPlayer testing found that forcing Unity to render outside Android safe areas made desktop mouse clicks land high above the visible buttons in MuMu. Prototype `0.2.144` keeps rendering inside the safe viewport, removes cutout/layout-behind-system-bar flags, and preserves the explicit launcher Activity intent filter.
 - Prototype `0.2.145` switches Android runtime UI input to `StandaloneInputModule` with both Unity input backends enabled, because MuMu desktop mouse coordinates can be shifted when routed through `InputSystemUIInputModule`.
@@ -211,10 +211,11 @@ Last updated: 2026-06-01
 
 ## Next Small Steps
 
-1. Add backend/PostgreSQL support for Tower Dungeon definitions, tower progress, tower rewards, and server-authoritative run actions so Email-account tester progress can include tower floors.
-2. Use `docs/TESTER_RELEASE_PROCESS.md`, `docs/TESTER_BUILD_NOTES.md`, and the next APK built from Prototype `0.2.176` for the next repeatable tester handoff.
-3. Use `docs/SERVER_DEPLOYMENT.md` for the first small Linux backend move; after the server is reachable, rebuild Android with `scripts/build-android.cmd -BackendBaseUrl "https://api.example.com"`.
-4. Use `docs/TESTER_ACCOUNTS.md` when diagnosing tester progress loss; capture Startscreen status, Local/Server mode, Account status, Player ID, app-data reset, backend DB mode, and reset-button usage.
-5. Decide the next account rule: whether and how an existing Guest `player_id` can be linked into an Email account, or whether testers should create Email accounts before meaningful Server Mode progress.
-6. Prepare real Play Console Internal Testing setup: Play App Signing/upload key outside git, tester list, privacy/account text, store listing assets, and AAB upload validation.
-7. Re-test the current APK on the REDMAGIC phone and confirm the Startscreen, top bar/side chrome, Home, Village, and Dungeons/Tower Trial fit the extra vertical space.
+1. Activate a valid Unity Editor license and run Current Slice/C# validation, then build and smoke-test the `0.2.177` Android candidate on MuMu or a physical device.
+2. Use the now-passing PostgreSQL restart/re-login E2E as the backend baseline; repeat it after any migration or balance changes.
+3. Use `docs/TESTER_RELEASE_PROCESS.md`, `docs/TESTER_BUILD_NOTES.md`, and the next APK built from Prototype `0.2.177` for the repeatable tester handoff.
+4. Use `docs/SERVER_DEPLOYMENT.md` for the first small Linux backend move; after the server is reachable, rebuild Android with `scripts/build-android.cmd -BackendBaseUrl "https://api.example.com"`.
+5. Use `docs/TESTER_ACCOUNTS.md` when diagnosing tester progress loss; capture Startscreen status, Local/Server mode, Account status, Player ID, app-data reset, backend DB mode, and reset-button usage.
+6. Decide the next account rule: whether and how an existing Guest `player_id` can be linked into an Email account, or whether testers should create Email accounts before meaningful Server Mode progress.
+7. Prepare real Play Console Internal Testing setup: Play App Signing/upload key outside git, tester list, privacy/account text, store listing assets, and AAB upload validation.
+8. Re-test the current APK on the REDMAGIC phone and confirm the Startscreen, top bar/side chrome, Home, Village, and Dungeons/Tower Trial fit the extra vertical space.

@@ -1,6 +1,6 @@
 # Mythwake Internal Testbuild Checklist
 
-Last updated: 2026-05-29
+Last updated: 2026-09-03
 
 Use this checklist for small 20-30 minute internal feedback runs. The goal is not final balance yet; testers should be able to understand the early loop, notice what feels rewarding, and report where the prototype feels confusing or stuck.
 
@@ -27,6 +27,15 @@ Use this checklist for small 20-30 minute internal feedback runs. The goal is no
 - Run Gold Dungeon, Essence Dungeon, and Gear Dungeon floor 1.
 - Equip the first Gear Dungeon accessory drop and check whether Team Power visibly changes.
 - Return to Home and verify the `Next Goal` changes after upgrades.
+
+## Tower Server Slice
+
+- Log in with an Email account, enable Server Mode, and open Dungeons → Tower Dungeon.
+- Confirm the card and floor detail show `Highest Unlocked F1`, `Highest Cleared 0`, boss/stat preview, and an enabled `Start F1` action.
+- Enter Formation, start the floor, watch the visible server combat result, and confirm the next unlocked floor is shown after Continue.
+- Retry the cleared floor with a new idempotency key and confirm the server rejects it without another reward.
+- Retry the same floor request with the original idempotency key and confirm the response is a replay.
+- Restart the app, use the same Email account, and confirm Tower progress returns from the server snapshot.
 
 ## Village And Rewards
 

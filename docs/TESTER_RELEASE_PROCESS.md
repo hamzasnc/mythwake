@@ -1,6 +1,6 @@
 # Mythwake Tester Release Process
 
-Last updated: 2026-06-01
+Last updated: 2026-09-03
 
 This is the reproducible handoff path for small Android tester builds. It is meant for local APK tests now and for a later Google Play Internal Testing track once signing, Play Console setup, and policy text are ready.
 
@@ -9,10 +9,10 @@ This is the reproducible handoff path for small Android tester builds. It is mea
 - App name: `Mythwake`
 - Company name in Unity PlayerSettings: `xMiepsen`
 - Android package name: `com.xmiepsen.mythwake`
-- Prototype / Android Version Name: `0.2.176`
+- Prototype / Android Version Name: `0.2.177`
 - Android Version Code: `2176`
 - Local save version: `2`
-- Backend default API version: `0.2.62`
+- Backend default API version: `0.2.63`
 - Main scene: `Assets/Scenes/SampleScene.unity`
 - Launcher icon: `Assets/_Mythwake/Branding/Mythwake_icon_launcher.png`
 - Orientation: portrait only, fullscreen, inside Android safe viewport for MuMu/input stability.
@@ -24,7 +24,7 @@ Important: builds before `0.2.170` may have used Unity's default package identit
 The visible tester version starts in `Assets/_Mythwake/Scripts/IdlePrototypeController.cs`:
 
 ```csharp
-public const string PrototypeVersion = "0.2.176";
+public const string PrototypeVersion = "0.2.177";
 ```
 
 For tester builds:
@@ -32,7 +32,7 @@ For tester builds:
 - Bump `PrototypeVersion` for every handed-off APK/AAB.
 - Keep `ProjectSettings/ProjectSettings.asset` `bundleVersion` equal to `PrototypeVersion`.
 - Derive Android Version Code as `major * 1000000 + minor * 1000 + patch`.
-- Example: `0.2.176` -> `2176`.
+- Example: `0.2.177` -> `2177`.
 - Keep `CurrentSaveVersion` unchanged unless the local save schema changes.
 - Mention the backend version separately when backend contracts changed.
 
@@ -54,13 +54,13 @@ Do not commit APK/AAB files unless a release policy explicitly changes. Keep rel
 APK for local MuMuPlayer, emulator, or USB install:
 
 ```powershell
-.\scripts\build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.176-shard-rift-server.apk
+.\scripts\build-android.cmd -OutputPath Builds\Android\Mythwake-0.2.177-tower-server.apk
 ```
 
 AAB for Play Console preparation:
 
 ```powershell
-.\scripts\build-android.cmd -AppBundle -OutputPath Builds\Android\Mythwake-0.2.176-play-internal.aab
+.\scripts\build-android.cmd -AppBundle -OutputPath Builds\Android\Mythwake-0.2.177-play-internal.aab
 ```
 
 The same helper runs Unity batchmode through `AndroidBuildAutomation.BuildAndroidApk`. Passing `-AppBundle` switches the Unity build to Android App Bundle output. The Unity menu also exposes:
@@ -74,7 +74,7 @@ Use Unity's embedded Android tools or any available Android SDK `adb`:
 
 ```powershell
 adb devices -l
-adb install -r Builds\Android\Mythwake-0.2.176-shard-rift-server.apk
+adb install -r Builds\Android\Mythwake-0.2.177-tower-server.apk
 adb shell monkey -p com.xmiepsen.mythwake 1
 ```
 
@@ -138,12 +138,12 @@ Run an Android smoke whenever possible:
 
 ## Latest Local Verification
 
-Source candidate: Prototype `0.2.176` / Backend `0.2.62`.
+Source candidate: Prototype `0.2.177` / Backend `0.2.63`.
 
-- `go test ./...` in `backend`: passed, including Shard Rift, Hero Star, Hero Shard Chest, and Awakening Shard backend coverage.
-- `scripts/check-unity-csharp.cmd`: passed, with existing serialized-field warnings only.
-- `scripts/check-unity-current-slice.cmd`: passed, including Awakening Shards, Hero Star upgrades, Hero Shard Chest opening, and playable Shard Rift validation.
-- APK/AAB packaging for `0.2.176` is still open.
+- `go test ./...` in `backend`: passed, including Tower balance, progression, and HTTP coverage.
+- `go vet ./...` in `backend`: passed.
+- Unity Current Slice validation was attempted and stopped at Unity license error 198 before project validation.
+- PostgreSQL restart/re-login Tower E2E passed against the available local PostgreSQL instance, including migration `0032`, Tower definition loading, progression, cleared-floor rejection, restart recovery, and idempotent replay. APK/AAB packaging remains open because Unity has no valid Editor license; Docker and `adb` are not on `PATH` here.
 
 Source candidate: Prototype `0.2.175` / Backend `0.2.61`.
 

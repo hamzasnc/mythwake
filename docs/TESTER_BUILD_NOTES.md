@@ -1,17 +1,17 @@
 # Mythwake Tester Build Notes
 
-Last updated: 2026-06-01
+Last updated: 2026-09-03
 
 ## Current Candidate
 
-- Tester build label: `0.3 shard-rift server-persistence`
-- Prototype / Android Version Name: `0.2.176`
-- Android Version Code: `2176`
+- Tester build label: `0.4 tower-server internal-alpha candidate`
+- Prototype / Android Version Name: `0.2.177`
+- Android Version Code: `2177`
 - Package: `com.xmiepsen.mythwake`
-- Backend: `0.2.62`
+- Backend: `0.2.63`
 - Save version: `2`
-- APK target: `Builds/Android/Mythwake-0.2.176-shard-rift-server.apk`
-- AAB target: `Builds/Android/Mythwake-0.2.176-play-internal.aab`
+- APK target: `Builds/Android/Mythwake-0.2.177-tower-server.apk`
+- AAB target: `Builds/Android/Mythwake-0.2.177-play-internal.aab`
 
 ## What Is New
 
@@ -22,6 +22,7 @@ Last updated: 2026-06-01
 - Release process documentation now covers build commands, signing status, Play Internal Testing prep, tester feedback fields, and account/privacy MVP notes.
 - Current release notes and known issues are centralized here for small tester handoffs.
 - Hero progression now has a server-persistent Shard Rift loop on top of the Lv. 100 cap: Awakening uses Awakening Shards, Hero Shards upgrade Star levels 0-5, Hero Shard Chests can be opened from Hero Detail, and Shard Rift keeps per-enemy rewards even after defeat/manual end.
+- Tower Dungeon now runs in Server Mode through `POST /dungeons/tower_dungeon/run?floor=N`; Tower progress, authoritative combat/rewards, Hero Shards, and idempotent action replay are account-bound. The Dungeons UI shows the server snapshot and the existing visible combat.
 
 ## What To Test
 
@@ -35,6 +36,8 @@ Last updated: 2026-06-01
 - Result `Continue` returns to Home.
 - Local Mode: Dungeons -> Shard Rift opens Formation, starts an endless fight, and keeps per-enemy rewards after End/failure.
 - Server Mode: Dungeons -> Shard Rift runs through the backend and keeps Awakening Shards, Hero Shard Chests, best kills, and total kills after restart/login.
+- Server Mode: Dungeons -> Tower Dungeon -> Formation starts the active unlocked floor, shows the backend combat result, advances `Highest Cleared`/`Highest Unlocked`, and rejects a second run of the already-cleared floor.
+- Server Mode: repeat the same Tower request with the same `Idempotency-Key` and confirm the response is marked replay without granting rewards twice.
 - Hero Detail can open Hero Shard Chests and spend hero-specific shards on Star Up in Local Mode and Server Mode.
 - Hero Detail opens.
 - Gear opens.
@@ -58,6 +61,7 @@ Last updated: 2026-06-01
 - Physical REDMAGIC/tall-phone safe-area testing remains a required follow-up.
 - Current signing is local/debug-style; Play Internal Testing still needs upload-key/Play App Signing setup.
 - No final privacy policy exists yet.
+- This source candidate has not been packaged in the current environment because Unity reports no valid Editor license; do not treat the APK/AAB target names above as built artifacts.
 
 ## Do Not Report As New
 
@@ -92,6 +96,14 @@ Last updated: 2026-06-01
 - What exact Player ID and build version were visible when the issue happened?
 
 ## Latest Verification
+
+Source candidate: Prototype `0.2.177` / Backend `0.2.63`.
+
+- `go test ./...` in `backend`: passed, including Tower balance, player progression/idempotency, and HTTP endpoint coverage.
+- `go vet ./...` in `backend`: passed.
+- `git diff --check`: passed for the completed working-tree validation runs.
+- `scripts/check-unity-current-slice.ps1`: blocked before project validation by Unity license error 198 (`No valid Unity Editor license found`).
+- PostgreSQL restart/re-login E2E passed against the available local PostgreSQL instance, including Tower definition loading, floor progression, cleared-floor rejection, restart recovery, and idempotent replay. Android APK/AAB packaging remains pending because Unity has no valid Editor license; Docker and `adb` are not on `PATH` here.
 
 - `go test ./...` in `backend`: passed for the Hero Awakening backend rule/test update.
 - `scripts/check-unity-csharp.cmd`: passed, with the existing serialized-field warnings only.

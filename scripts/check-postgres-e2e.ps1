@@ -131,7 +131,7 @@ function Wait-Api {
 function Start-Api {
     $env:MYTHWAKE_API_ADDR = ":$Port"
     $env:MYTHWAKE_ENV = "local-e2e"
-    $env:MYTHWAKE_API_VERSION = "0.2.60-e2e"
+    $env:MYTHWAKE_API_VERSION = "0.2.63-e2e"
     $env:MYTHWAKE_DATABASE_URL = $DatabaseUrl
     $env:MYTHWAKE_REDIS_ADDR = ""
     $env:MYTHWAKE_REDIS_PASSWORD = ""
@@ -272,7 +272,7 @@ try {
     $firstProcess = Start-Api
 
     $definitions = Invoke-Json -Path "/definitions"
-    Assert-Equal ([int]$definitions.schemaVersion) 7 "Definitions schema should include editable Village balance fields."
+    Assert-Equal ([int]$definitions.schemaVersion) 8 "Definitions schema should include Tower balance fields."
     $starterHeroDefinitions = @($definitions.heroes | Where-Object { $_.starterOwned -eq $true })
     $astraDefinition = $definitions.heroes | Where-Object { $_.heroId -eq "hero_astra" } | Select-Object -First 1
     if (-not $astraDefinition -or [int]$astraDefinition.maxLevel -le 0 -or [int]$astraDefinition.baseAttack -le 0 -or [int]$astraDefinition.baseHealth -le 0) {
@@ -301,6 +301,10 @@ try {
     $goldDungeonDefinition = $definitions.dungeons | Where-Object { $_.dungeonId -eq "gold_dungeon" } | Select-Object -First 1
     if (-not $goldDungeonDefinition -or [int]$goldDungeonDefinition.enemyBaseHp -le 0 -or [int]$goldDungeonDefinition.enemyDamagePowerDivisor -le 0) {
         throw "Expected definitions to include dungeon combat curves. Response: $($definitions | ConvertTo-Json -Depth 8)"
+    }
+    $towerDefinition = $definitions.towers | Where-Object { $_.towerId -eq "tower_dungeon" } | Select-Object -First 1
+    if (-not $towerDefinition -or [int]$towerDefinition.maxFloor -ne 1000 -or [int]$towerDefinition.bigBossInterval -ne 100 -or [int]$towerDefinition.shardInterval -ne 10) {
+        throw "Expected definitions to include Tower balance curves. Response: $($definitions | ConvertTo-Json -Depth 8)"
     }
 
     $missingSession = Invoke-JsonExpectError -Path "/player/state" -Headers @{ "X-Request-ID" = "e2e-missing-session-001" } -ExpectedStatus 401
@@ -435,6 +439,30 @@ try {
     }
     $droppedAccessoryId = [string]$droppedAccessory.accessoryId
 
+    $towerIdempotencyKey = "e2e-tower-$([guid]::NewGuid().ToString("N"))"
+    $towerHeaders = @{
+        "Authorization" = $authHeaders["Authorization"]
+        "X-Player-State-Revision" = [string]$currentRevision
+        "Idempotency-Key" = $towerIdempotencyKey
+    }
+    $tower = Invoke-Json -Method "POST" -Path "/dungeons/tower_dungeon/run?floor=1" -Headers $towerHeaders
+    if (-not $tower.success -or $tower.actionId -ne "tower_run" -or -not $tower.combat -or $tower.combat.mode -ne "tower" -or [int]$tower.combat.targetLevel -ne 1) {
+        throw "Expected Tower floor 1 to succeed with a server combat result. Response: $($tower | ConvertTo-Json -Depth 10)"
+    }
+    Assert-Equal ([int]$tower.playerSnapshot.tower.highestClearedFloor) 1 "Tower floor 1 should be cleared."
+    Assert-Equal ([int]$tower.playerSnapshot.tower.highestUnlockedFloor) 2 "Tower floor 2 should unlock after floor 1."
+    Assert-Equal ([int64]$tower.receipt.stateRevision) ([int64]$tower.playerSnapshot.revision) "Tower receipt should match snapshot revision."
+    $currentRevision = [int64]$tower.playerSnapshot.revision
+
+    $towerRejected = Invoke-Json -Method "POST" -Path "/dungeons/tower_dungeon/run?floor=1" -Headers @{
+        "Authorization" = $authHeaders["Authorization"]
+        "X-Player-State-Revision" = [string]$currentRevision
+        "Idempotency-Key" = "e2e-tower-rejected-$([guid]::NewGuid().ToString("N"))"
+    }
+    if ($towerRejected.success -or $towerRejected.errorCode -ne "tower_floor_not_ready") {
+        throw "Expected a second Tower floor 1 request to be rejected without another reward. Response: $($towerRejected | ConvertTo-Json -Depth 10)"
+    }
+
     $accessoryEquip = Invoke-GameplayPost -Path "/gear/accessories/equip" -AuthHeaders $authHeaders -Revision ([ref]$currentRevision) -Label "Accessory equip" -Body (@{ accessoryId = $droppedAccessoryId } | ConvertTo-Json -Compress)
     Assert-Equal $accessoryEquip.actionId "accessory_equip" "Accessory equip should return the accessory equip action id."
     $equippedAccessory = $accessoryEquip.playerSnapshot.equippedAccessories | Where-Object { $_.accessoryId -eq $droppedAccessoryId } | Select-Object -First 1
@@ -502,6 +530,8 @@ try {
     Assert-Equal ([int]$stateAfterRestart.state.goldDungeonFloor) ([int]$finalSnapshotBeforeFlush.state.goldDungeonFloor) "Restarted API should load gold dungeon progress."
     Assert-Equal ([int]$stateAfterRestart.state.essenceDungeonFloor) ([int]$finalSnapshotBeforeFlush.state.essenceDungeonFloor) "Restarted API should load essence dungeon progress."
     Assert-Equal ([int]$stateAfterRestart.state.gearDungeonFloor) ([int]$finalSnapshotBeforeFlush.state.gearDungeonFloor) "Restarted API should load gear dungeon progress."
+    Assert-Equal ([int]$stateAfterRestart.tower.highestClearedFloor) ([int]$tower.playerSnapshot.tower.highestClearedFloor) "Restarted API should load Tower cleared progress."
+    Assert-Equal ([int]$stateAfterRestart.tower.highestUnlockedFloor) ([int]$tower.playerSnapshot.tower.highestUnlockedFloor) "Restarted API should load Tower unlocked progress."
     Assert-Equal ([int]$stateAfterRestart.summonCount) ([int]$finalSnapshotBeforeFlush.summonCount) "Restarted API should load summon progress."
     $restartBattlePassClaim = $stateAfterRestart.battlePassClaims | Where-Object { $_.claimId -eq "mission_track_reward_01" } | Select-Object -First 1
     if (-not $restartBattlePassClaim -or -not $restartBattlePassClaim.claimed) {
@@ -518,6 +548,12 @@ try {
     }
     Assert-Equal ([int]$replay.playerState.campaignStage) $stageAfterFight "Replay should not apply campaign fight twice."
     Assert-Equal ([int64]$replay.receipt.stateRevision) ([int64]$fight.receipt.stateRevision) "Replay should return the original action receipt revision."
+
+    $towerReplay = Invoke-Json -Method "POST" -Path "/dungeons/tower_dungeon/run?floor=1" -Headers $towerHeaders
+    if (-not $towerReplay.replay -or -not $towerReplay.success) {
+        throw "Expected Tower replay after restart for idempotency key $towerIdempotencyKey. Response: $($towerReplay | ConvertTo-Json -Depth 10)"
+    }
+    Assert-Equal ([int]$towerReplay.playerSnapshot.tower.highestClearedFloor) 1 "Tower replay should not apply floor 1 twice."
 
     $logoutBeforeRelogin = Invoke-Json -Method "POST" -Path "/auth/logout" -Headers $authHeaders
     Assert-Equal $logoutBeforeRelogin.status "ok" "Email logout before re-login should return ok."
