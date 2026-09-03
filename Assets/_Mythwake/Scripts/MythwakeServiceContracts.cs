@@ -40,6 +40,16 @@ public struct MythwakePlayerSnapshotDto
     public int summonCount;
     public int shardRiftBestEnemiesDefeated;
     public int shardRiftTotalEnemiesDefeated;
+    public MythwakeTowerProgressDto tower;
+}
+
+[Serializable]
+public struct MythwakeTowerProgressDto
+{
+    public int highestUnlockedFloor;
+    public int highestClearedFloor;
+    public int selectedFloor;
+    public int sectionStartFloor;
 }
 
 [Serializable]
@@ -115,6 +125,14 @@ public struct MythwakeRewardDto
     public int awakeningShards;
     public int heroShardChests;
     public int passXp;
+    public MythwakeHeroShardRewardDto[] heroShards;
+}
+
+[Serializable]
+public struct MythwakeHeroShardRewardDto
+{
+    public string heroId;
+    public int shards;
 }
 
 [Serializable]
@@ -288,6 +306,7 @@ public struct MythwakeDefinitionSnapshotDto
     public MythwakeCampaignDefinitionDto[] campaigns;
     public MythwakeCampaignStageDefinitionDto[] campaignStages;
     public MythwakeDungeonDefinitionDto[] dungeons;
+    public MythwakeTowerDefinitionDto[] towers;
     public MythwakeAccessorySlotDefinitionDto[] accessorySlots;
     public MythwakeAccessoryRarityDefinitionDto[] accessoryRarities;
     public MythwakeAccessoryDefinitionDto[] accessories;
@@ -297,6 +316,49 @@ public struct MythwakeDefinitionSnapshotDto
     public MythwakeDailyMissionDefinitionDto[] dailyMissions;
     public MythwakeBattlePassRewardDefinitionDto[] battlePassRewards;
     public MythwakeGameplayActionDefinitionDto[] gameplayActions;
+}
+
+[Serializable]
+public struct MythwakeTowerDefinitionDto
+{
+    public string towerId;
+    public string displayName;
+    public int maxFloor;
+    public int sectionSize;
+    public int miniBossInterval;
+    public int bigBossInterval;
+    public int shardInterval;
+    public int baseRequiredPower;
+    public float requiredPowerScale;
+    public float requiredPowerGrowth;
+    public int baseRewardGold;
+    public float rewardGoldScale;
+    public float rewardGoldGrowth;
+    public int baseRewardEssence;
+    public float rewardEssenceScale;
+    public float rewardEssenceGrowth;
+    public int baseEnemyHp;
+    public float enemyHpScale;
+    public float enemyHpGrowth;
+    public int baseEnemyDamage;
+    public float enemyDamageScale;
+    public float enemyDamageGrowth;
+    public float normalEnemyHpMultiplier;
+    public float miniBossEnemyHpMultiplier;
+    public float bigBossEnemyHpMultiplier;
+    public float normalEnemyDamageMultiplier;
+    public float miniBossEnemyDamageMultiplier;
+    public float bigBossEnemyDamageMultiplier;
+    public float normalRecommendedPowerMultiplier;
+    public float miniBossRecommendedPowerMultiplier;
+    public float bigBossRecommendedPowerMultiplier;
+    public int normalShardBase;
+    public int normalShardEveryFloors;
+    public int miniBossShardBase;
+    public int miniBossShardEveryFloors;
+    public int bigBossShardBase;
+    public int bigBossShardEveryFloors;
+    public int maxCombatSeconds;
 }
 
 [Serializable]

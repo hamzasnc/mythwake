@@ -278,6 +278,12 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         return SendAuthenticatedActionJson($"dungeon_run:{dungeonId}", () => Post($"/dungeons/{EscapePath(dungeonId)}/run"), completed);
     }
 
+    public IEnumerator RunTower(int floor, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        floor = Mathf.Clamp(floor, 1, 1000);
+        return SendAuthenticatedActionJson($"tower_run:{floor}", () => Post($"/dungeons/tower_dungeon/run?floor={floor}"), completed);
+    }
+
     public IEnumerator LevelHero(string heroId, Action<bool, string, MythwakeActionResultDto> completed)
     {
         return SendAuthenticatedActionJson($"hero_level:{heroId}", () => Post($"/heroes/{EscapePath(heroId)}/level-up"), completed);

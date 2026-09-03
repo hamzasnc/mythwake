@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.176";
+    public const string PrototypeVersion = "0.2.177";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -3040,14 +3040,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureSelectedDungeonBattleMap();
         selectedFormationSlotIndex = -1;
         fightAutoSkillsEnabled = autoContinueFightsEnabled;
-        if (IsSelectedTowerDungeon() && backendGameplayEnabled)
-        {
-            SetDungeonResult($"{GetLocalizedDungeonName(selectedDungeonId)} is local-only in this build.\nServer persistence for this dungeon is still open.");
-            ShowScreen(AppScreen.Dungeons);
-            RefreshUi();
-            return;
-        }
-
         if (IsSelectedTowerDungeon() && !CanRunTowerFloor(towerDungeonSelectedFloor))
         {
             SetDungeonResult($"Tower Floor {towerDungeonSelectedFloor} is not ready.\nHighest unlocked: {towerDungeonHighestUnlockedFloor}; highest cleared: {towerDungeonHighestClearedFloor}.");
@@ -3063,7 +3055,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 campaignFightInProgress = true;
                 SetBattleFlowMode(BattleFlowMode.Fight);
-                StartCoroutine(backendClient.RunDungeon(selectedDungeonId, OnBackendDungeonFightVisual));
+                if (IsSelectedTowerDungeon())
+                {
+                    StartCoroutine(backendClient.RunTower(towerDungeonSelectedFloor, OnBackendDungeonFightVisual));
+                }
+                else
+                {
+                    StartCoroutine(backendClient.RunDungeon(selectedDungeonId, OnBackendDungeonFightVisual));
+                }
             }
 
             return;
@@ -4596,6 +4595,19 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             yield break;
         }
 
+        var smokeTowerFloor = Mathf.Clamp(towerDungeonHighestUnlockedFloor, 1, TowerDungeonMaxFloor);
+        yield return RunBackendSmokeAction($"Tower Floor {smokeTowerFloor}", callback => backendClient.RunTower(smokeTowerFloor, callback), (ok, line) =>
+        {
+            summary = $"{summary}\n{line}";
+            transportFailed = !ok;
+        });
+        if (transportFailed)
+        {
+            SetDungeonResult(summary);
+            FinishBackendRequest($"Server smoke failed during Tower Floor {smokeTowerFloor}");
+            yield break;
+        }
+
         if (TryGetFirstOwnedAccessoryId(out var smokeAccessoryId))
         {
             yield return RunBackendSmokeAction("Accessory Equip", callback => backendClient.EquipAccessory(smokeAccessoryId, callback), (ok, line) =>
@@ -5461,13 +5473,62 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private string FormatServerReward(MythwakeRewardDto reward)
     {
-        var text = FormatReward(reward.gold, reward.gems, reward.mythEssence);
-        if (reward.passXp <= 0)
+        var parts = new List<string>();
+        if (reward.gold > 0)
         {
-            return text == "None" ? string.Empty : text;
+            parts.Add($"{reward.gold} {GetLocalizedCurrencyName(GoldCurrencyId)}");
         }
 
-        return text == "None" ? $"{reward.passXp} Pass XP" : $"{text}, {reward.passXp} Pass XP";
+        if (reward.gems > 0)
+        {
+            parts.Add($"{reward.gems} {GetLocalizedCurrencyName(GemsCurrencyId)}");
+        }
+
+        if (reward.mythEssence > 0)
+        {
+            parts.Add($"{reward.mythEssence} {GetLocalizedCurrencyName(MythEssenceCurrencyId)}");
+        }
+
+        if (reward.awakeningShards > 0)
+        {
+            parts.Add($"{reward.awakeningShards} {GetLocalizedCurrencyName(AwakeningShardCurrencyId)}");
+        }
+
+        if (reward.heroShardChests > 0)
+        {
+            parts.Add($"{reward.heroShardChests} {Tr(\"item.hero_shard_chest.name\")}");
+        }
+
+        if (reward.passXp > 0)
+        {
+            parts.Add($"{reward.passXp} Pass XP");
+        }
+
+        if (reward.heroShards != null)
+        {
+            for (var i = 0; i < reward.heroShards.Length; i++)
+            {
+                var shardReward = reward.heroShards[i];
+                if (shardReward.shards <= 0 || string.IsNullOrWhiteSpace(shardReward.heroId))
+                {
+                    continue;
+                }
+
+                var heroName = shardReward.heroId;
+                for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
+                {
+                    if (GetHeroDefinition(heroIndex).heroId == shardReward.heroId)
+                    {
+                        heroName = GetLocalizedHeroName(heroIndex);
+                        break;
+                    }
+                }
+
+                parts.Add($"{shardReward.shards} {heroName} {Tr(\"ui.common.shards\")}");
+            }
+        }
+
+        return string.Join(", ", parts);
     }
 
     private void FinishBackendRequest(string status)
@@ -5524,6 +5585,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         goldDungeonFloor = Mathf.Max(1, state.goldDungeonFloor);
         essenceDungeonFloor = Mathf.Max(1, state.essenceDungeonFloor);
         gearDungeonFloor = Mathf.Max(1, state.gearDungeonFloor);
+        if (snapshot.tower.highestUnlockedFloor > 0)
+        {
+            towerDungeonHighestUnlockedFloor = snapshot.tower.highestUnlockedFloor;
+            towerDungeonHighestClearedFloor = snapshot.tower.highestClearedFloor;
+            towerDungeonSelectedFloor = snapshot.tower.selectedFloor;
+            towerDungeonSectionStartFloor = snapshot.tower.sectionStartFloor;
+        }
         NormalizeTowerDungeonProgress();
         backendTeamPower = Mathf.Max(0, state.teamPower);
         backendTeamAttack = Mathf.Max(0, state.teamAttack);
@@ -7161,14 +7229,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private MythwakeActionResultDto ExecuteTowerDungeon()
     {
         NormalizeTowerDungeonProgress();
-        if (backendGameplayEnabled)
-        {
-            var blockedMessage = $"{GetLocalizedDungeonName(TowerDungeonDefinition.dungeonId)} is local-only in this build.\nTurn Server Mode off to test the tower MVP; backend persistence comes later.";
-            SetDungeonResult(blockedMessage);
-            RefreshUi();
-            return CreateActionResult(false, "tower_dungeon_run", "server_tower_pending", blockedMessage);
-        }
-
         var floor = towerDungeonSelectedFloor;
         if (!CanRunTowerFloor(floor))
         {
@@ -7229,7 +7289,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private bool CanRunTowerFloor(int floor)
     {
         NormalizeTowerDungeonProgress();
-        return !backendGameplayEnabled && floor == towerDungeonHighestUnlockedFloor && floor > towerDungeonHighestClearedFloor && floor <= TowerDungeonMaxFloor;
+        return floor == towerDungeonHighestUnlockedFloor && floor > towerDungeonHighestClearedFloor && floor <= TowerDungeonMaxFloor;
     }
 
     private static TowerBossType GetTowerBossType(int floor)
@@ -7253,8 +7313,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         return GetTowerBossType(floor) != TowerBossType.None;
     }
 
-    private static int GetTowerRecommendedPower(int floor)
+    private int GetTowerRecommendedPower(int floor)
     {
+        if (UseBackendDefinitionView() && TryGetBackendTowerDefinition(out var backendDefinition))
+        {
+            return GetBackendTowerRecommendedPower(backendDefinition, floor);
+        }
+
         var basePower = GetDungeonRecommendedPower(TowerDungeonDefinition, floor);
         switch (GetTowerBossType(floor))
         {
@@ -7267,8 +7332,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
-    private static int GetTowerEnemyHp(int floor)
+    private int GetTowerEnemyHp(int floor)
     {
+        if (UseBackendDefinitionView() && TryGetBackendTowerDefinition(out var backendDefinition))
+        {
+            return GetBackendTowerEnemyHp(backendDefinition, floor);
+        }
+
         var baseHp = GetDungeonEnemyHp(TowerDungeonDefinition, floor);
         switch (GetTowerBossType(floor))
         {
@@ -7281,8 +7351,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
     }
 
-    private static int GetTowerEnemyDamage(int floor)
+    private int GetTowerEnemyDamage(int floor)
     {
+        if (UseBackendDefinitionView() && TryGetBackendTowerDefinition(out var backendDefinition))
+        {
+            return GetBackendTowerEnemyDamage(backendDefinition, floor);
+        }
+
         var baseDamage = GetDungeonEnemyDamage(TowerDungeonDefinition, floor);
         switch (GetTowerBossType(floor))
         {
@@ -7297,6 +7372,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private TowerRewardDefinition GetTowerReward(int floor)
     {
+        if (UseBackendDefinitionView() && TryGetBackendTowerDefinition(out var backendDefinition))
+        {
+            return GetBackendTowerReward(backendDefinition, floor);
+        }
+
         floor = Mathf.Clamp(floor, 1, TowerDungeonMaxFloor);
         var goldReward = 55 + Mathf.FloorToInt(16f * Mathf.Pow(floor, 1.08f));
         var essenceReward = 14 + Mathf.FloorToInt(5f * Mathf.Pow(floor, 1.04f));
@@ -13576,7 +13656,14 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             battlePassClaims = CreateBattlePassClaimSnapshot(),
             summonCount = summonCount,
             shardRiftBestEnemiesDefeated = shardDungeonBestEnemiesDefeated,
-            shardRiftTotalEnemiesDefeated = shardDungeonTotalEnemiesDefeated
+            shardRiftTotalEnemiesDefeated = shardDungeonTotalEnemiesDefeated,
+            tower = new MythwakeTowerProgressDto
+            {
+                highestUnlockedFloor = towerDungeonHighestUnlockedFloor,
+                highestClearedFloor = towerDungeonHighestClearedFloor,
+                selectedFloor = towerDungeonSelectedFloor,
+                sectionStartFloor = towerDungeonSectionStartFloor
+            }
         };
     }
 
@@ -13606,6 +13693,26 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             {
                 definition = definitions.dungeons[i];
                 return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetBackendTowerDefinition(out MythwakeTowerDefinitionDto definition)
+    {
+        definition = default(MythwakeTowerDefinitionDto);
+        if (!TryGetDefinitions(out var definitions) || definitions.towers == null)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < definitions.towers.Length; i++)
+        {
+            if (definitions.towers[i].towerId == TowerDungeonDefinition.dungeonId)
+            {
+                definition = definitions.towers[i];
+                return definition.maxFloor > 0;
             }
         }
 
@@ -13853,6 +13960,122 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var damagePerFloor = definition.enemyDamagePerFloor > 0 ? definition.enemyDamagePerFloor : definition.dungeonId == GearDungeonDefinition.dungeonId ? 4 : 3;
         var damagePowerDivisor = definition.enemyDamagePowerDivisor > 0 ? definition.enemyDamagePowerDivisor : 48;
         return Mathf.Max(1, baseDamage + (floor * damagePerFloor) + (requiredPower / damagePowerDivisor));
+    }
+
+    private static TowerBossType GetBackendTowerBossType(MythwakeTowerDefinitionDto definition, int floor)
+    {
+        floor = Mathf.Clamp(floor, 1, Mathf.Max(1, definition.maxFloor));
+        if (definition.bigBossInterval > 0 && floor % definition.bigBossInterval == 0)
+        {
+            return TowerBossType.BigBoss;
+        }
+
+        if (definition.miniBossInterval > 0 && floor % definition.miniBossInterval == 0)
+        {
+            return TowerBossType.MiniBoss;
+        }
+
+        return TowerBossType.None;
+    }
+
+    private static int GetBackendTowerRequiredPower(MythwakeTowerDefinitionDto definition, int floor)
+    {
+        floor = Mathf.Clamp(floor, 1, Mathf.Max(1, definition.maxFloor));
+        return Mathf.Max(1, definition.baseRequiredPower + Mathf.FloorToInt(definition.requiredPowerScale * Mathf.Pow(floor, definition.requiredPowerGrowth)));
+    }
+
+    private static int GetBackendTowerRecommendedPower(MythwakeTowerDefinitionDto definition, int floor)
+    {
+        var multiplier = GetBackendTowerRecommendedPowerMultiplier(definition, floor);
+        return Mathf.CeilToInt(GetBackendTowerRequiredPower(definition, floor) * multiplier);
+    }
+
+    private static float GetBackendTowerRecommendedPowerMultiplier(MythwakeTowerDefinitionDto definition, int floor)
+    {
+        switch (GetBackendTowerBossType(definition, floor))
+        {
+            case TowerBossType.BigBoss:
+                return definition.bigBossRecommendedPowerMultiplier > 0f ? definition.bigBossRecommendedPowerMultiplier : 1f;
+            case TowerBossType.MiniBoss:
+                return definition.miniBossRecommendedPowerMultiplier > 0f ? definition.miniBossRecommendedPowerMultiplier : 1f;
+            default:
+                return definition.normalRecommendedPowerMultiplier > 0f ? definition.normalRecommendedPowerMultiplier : 1f;
+        }
+    }
+
+    private static int GetBackendTowerEnemyHp(MythwakeTowerDefinitionDto definition, int floor)
+    {
+        floor = Mathf.Clamp(floor, 1, Mathf.Max(1, definition.maxFloor));
+        var baseHp = definition.baseEnemyHp + (definition.enemyHpScale * Mathf.Pow(floor, definition.enemyHpGrowth));
+        var multiplier = definition.normalEnemyHpMultiplier;
+        switch (GetBackendTowerBossType(definition, floor))
+        {
+            case TowerBossType.BigBoss:
+                multiplier = definition.bigBossEnemyHpMultiplier;
+                break;
+            case TowerBossType.MiniBoss:
+                multiplier = definition.miniBossEnemyHpMultiplier;
+                break;
+        }
+
+        return Mathf.Max(1, Mathf.CeilToInt(baseHp * 1.8f * (multiplier > 0f ? multiplier : 1f)));
+    }
+
+    private static int GetBackendTowerEnemyDamage(MythwakeTowerDefinitionDto definition, int floor)
+    {
+        floor = Mathf.Clamp(floor, 1, Mathf.Max(1, definition.maxFloor));
+        var baseDamage = definition.baseEnemyDamage + (definition.enemyDamageScale * Mathf.Pow(floor, definition.enemyDamageGrowth));
+        var multiplier = definition.normalEnemyDamageMultiplier;
+        switch (GetBackendTowerBossType(definition, floor))
+        {
+            case TowerBossType.BigBoss:
+                multiplier = definition.bigBossEnemyDamageMultiplier;
+                break;
+            case TowerBossType.MiniBoss:
+                multiplier = definition.miniBossEnemyDamageMultiplier;
+                break;
+        }
+
+        return Mathf.Max(1, Mathf.CeilToInt(baseDamage * (multiplier > 0f ? multiplier : 1f)));
+    }
+
+    private TowerRewardDefinition GetBackendTowerReward(MythwakeTowerDefinitionDto definition, int floor)
+    {
+        floor = Mathf.Clamp(floor, 1, Mathf.Max(1, definition.maxFloor));
+        var goldReward = definition.baseRewardGold + Mathf.FloorToInt(definition.rewardGoldScale * Mathf.Pow(floor, definition.rewardGoldGrowth));
+        var essenceReward = definition.baseRewardEssence + Mathf.FloorToInt(definition.rewardEssenceScale * Mathf.Pow(floor, definition.rewardEssenceGrowth));
+        var shards = 0;
+        switch (GetBackendTowerBossType(definition, floor))
+        {
+            case TowerBossType.BigBoss:
+                goldReward = Mathf.CeilToInt(goldReward * 4.5f);
+                essenceReward = Mathf.CeilToInt(essenceReward * 4.25f);
+                shards = definition.bigBossShardBase + Mathf.FloorToInt(floor / (float)Mathf.Max(1, definition.bigBossShardEveryFloors));
+                break;
+            case TowerBossType.MiniBoss:
+                goldReward = Mathf.CeilToInt(goldReward * 2.15f);
+                essenceReward = Mathf.CeilToInt(essenceReward * 2f);
+                shards = definition.miniBossShardBase + Mathf.FloorToInt(floor / (float)Mathf.Max(1, definition.miniBossShardEveryFloors));
+                break;
+            default:
+                if (definition.shardInterval > 0 && floor % definition.shardInterval == 0)
+                {
+                    shards = definition.normalShardBase + Mathf.FloorToInt(floor / (float)Mathf.Max(1, definition.normalShardEveryFloors));
+                }
+                break;
+        }
+
+        var shardHeroIndex = GetTowerShardHeroIndex(floor);
+        if (TryGetDefinitions(out var definitions) && definitions.heroes != null && definitions.heroes.Length > 0)
+        {
+            var backendHeroIndex = (floor / Mathf.Max(1, definition.shardInterval)) % definitions.heroes.Length;
+            if (TryGetHeroIndexById(definitions.heroes[backendHeroIndex].heroId, out var mappedHeroIndex))
+            {
+                shardHeroIndex = mappedHeroIndex;
+            }
+        }
+
+        return new TowerRewardDefinition(Mathf.Max(0, goldReward), Mathf.Max(0, essenceReward), shardHeroIndex, Mathf.Max(0, shards));
     }
 
     private DungeonDefinition ResolveDungeonDefinition(string dungeonId)
@@ -15182,7 +15405,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         if (dungeonFlowHintText != null)
         {
             dungeonFlowHintText.text = backendGameplayEnabled
-                ? "Tower MVP uses local progress only in this build. Turn Server Mode off before running tower floors."
+                ? $"Server Tower: section {towerDungeonSectionStartFloor}-{GetTowerSectionEndFloor(towerDungeonSectionStartFloor)}. Clear F{towerDungeonHighestUnlockedFloor} to unlock the next floor."
                 : $"Tower section {towerDungeonSectionStartFloor}-{GetTowerSectionEndFloor(towerDungeonSectionStartFloor)}. Clear F{towerDungeonHighestUnlockedFloor} to unlock the next floor.";
         }
     }
@@ -15473,11 +15696,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private bool CanStartDungeonRun()
     {
-        if (IsSelectedTowerDungeon() && backendGameplayEnabled)
-        {
-            return false;
-        }
-
         return !backendRequestInProgress && !backendLifecycleFlushInProgress && !campaignFightInProgress;
     }
 
@@ -22114,13 +22332,6 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     {
         if (campaignFightInProgress)
         {
-            return;
-        }
-
-        if (IsSelectedTowerDungeon() && backendGameplayEnabled)
-        {
-            SetDungeonResult($"{GetLocalizedDungeonName(selectedDungeonId)} is local-only in this build.\nServer persistence is still open.");
-            RefreshDungeonUi();
             return;
         }
 
