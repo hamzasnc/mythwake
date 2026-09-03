@@ -149,6 +149,7 @@ public static class MobileUxValidation
         RequireProjectSetting(projectSettings, "defaultScreenHeight", "1920", "Default Game View height should match the portrait reference canvas.");
         RequireProjectSetting(projectSettings, "androidDefaultWindowWidth", "1080", "Android freeform width should match the portrait reference canvas.");
         RequireProjectSetting(projectSettings, "androidDefaultWindowHeight", "1920", "Android freeform height should match the portrait reference canvas.");
+        RequireProjectSetting(projectSettings, "insecureHttpOption", "2", "Internal Android builds should allow the local HTTP backend used by device testers.");
         ValidateAndroidAppIcon(projectSettings);
         ValidateAndroidFullscreenManifest();
         ValidateAndroidImmersiveModeHook();
@@ -206,6 +207,7 @@ public static class MobileUxValidation
         }
 
         var manifest = File.ReadAllText(AndroidManifestPath);
+        RequireSourceFragment(manifest, "android:usesCleartextTraffic=\"true\"", "Internal Android builds should allow the local HTTP backend used by device testers.");
         RequireSourceFragment(manifest, "UnityPlayerGameActivity", "Android manifest should target Unity GameActivity.");
         RequireSourceFragment(manifest, "android:immersive=\"true\"", "Android GameActivity should request immersive behavior before Unity renders.");
         RequireSourceFragment(manifest, "android:screenOrientation=\"portrait\"", "Android GameActivity should explicitly lock normal portrait so phones do not launch upside down.");
@@ -787,6 +789,7 @@ public static class AndroidBuildAutomation
         PlayerSettings.productName = "Mythwake";
         PlayerSettings.companyName = "xMiepsen";
         PlayerSettings.bundleVersion = IdlePrototypeController.PrototypeVersion;
+        PlayerSettings.insecureHttpOption = InsecureHttpOption.AlwaysAllowed;
         PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, AndroidApplicationIdentifier);
         PlayerSettings.Android.bundleVersionCode = GetAndroidVersionCode();
     }
