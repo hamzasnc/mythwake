@@ -44,6 +44,9 @@ func (store *DefinitionStore) Snapshot(ctx context.Context, apiVersion string) (
 	if snapshot.Dungeons, err = store.dungeonDefinitions(ctx); err != nil {
 		return api.DefinitionSnapshot{}, err
 	}
+	if snapshot.Towers, err = store.towerDefinitions(ctx); err != nil {
+		return api.DefinitionSnapshot{}, err
+	}
 	if snapshot.AccessorySlots, err = store.accessorySlotDefinitions(ctx); err != nil {
 		return api.DefinitionSnapshot{}, err
 	}
@@ -408,6 +411,79 @@ func (store *DefinitionStore) dungeonDefinitions(ctx context.Context) ([]api.Dun
 		}
 		if rewardCurrencyID.Valid {
 			definition.RewardCurrencyID = rewardCurrencyID.String
+		}
+		response = append(response, definition)
+	}
+
+	return response, rows.Err()
+}
+
+func (store *DefinitionStore) towerDefinitions(ctx context.Context) ([]api.TowerDefinition, error) {
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT
+			id, display_name, max_floor, section_size, mini_boss_interval, big_boss_interval, shard_interval,
+			base_required_power, required_power_scale, required_power_growth,
+			base_reward_gold, reward_gold_scale, reward_gold_growth,
+			base_reward_essence, reward_essence_scale, reward_essence_growth,
+			base_enemy_hp, enemy_hp_scale, enemy_hp_growth,
+			base_enemy_damage, enemy_damage_scale, enemy_damage_growth,
+			normal_enemy_hp_multiplier, mini_boss_enemy_hp_multiplier, big_boss_enemy_hp_multiplier,
+			normal_enemy_damage_multiplier, mini_boss_enemy_damage_multiplier, big_boss_enemy_damage_multiplier,
+			normal_recommended_power_multiplier, mini_boss_recommended_power_multiplier, big_boss_recommended_power_multiplier,
+			normal_shard_base, normal_shard_every_floors, mini_boss_shard_base, mini_boss_shard_every_floors,
+			big_boss_shard_base, big_boss_shard_every_floors, max_combat_seconds
+		FROM common.tower_definitions
+		ORDER BY id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	response := []api.TowerDefinition{}
+	for rows.Next() {
+		var definition api.TowerDefinition
+		if err := rows.Scan(
+			&definition.TowerID,
+			&definition.DisplayName,
+			&definition.MaxFloor,
+			&definition.SectionSize,
+			&definition.MiniBossInterval,
+			&definition.BigBossInterval,
+			&definition.ShardInterval,
+			&definition.BaseRequiredPower,
+			&definition.RequiredPowerScale,
+			&definition.RequiredPowerGrowth,
+			&definition.BaseRewardGold,
+			&definition.RewardGoldScale,
+			&definition.RewardGoldGrowth,
+			&definition.BaseRewardEssence,
+			&definition.RewardEssenceScale,
+			&definition.RewardEssenceGrowth,
+			&definition.BaseEnemyHP,
+			&definition.EnemyHPScale,
+			&definition.EnemyHPGrowth,
+			&definition.BaseEnemyDamage,
+			&definition.EnemyDamageScale,
+			&definition.EnemyDamageGrowth,
+			&definition.NormalEnemyHPMultiplier,
+			&definition.MiniBossEnemyHPMultiplier,
+			&definition.BigBossEnemyHPMultiplier,
+			&definition.NormalEnemyDamageMultiplier,
+			&definition.MiniBossEnemyDamageMultiplier,
+			&definition.BigBossEnemyDamageMultiplier,
+			&definition.NormalRecommendedPowerMultiplier,
+			&definition.MiniBossRecommendedPowerMultiplier,
+			&definition.BigBossRecommendedPowerMultiplier,
+			&definition.NormalShardBase,
+			&definition.NormalShardEveryFloors,
+			&definition.MiniBossShardBase,
+			&definition.MiniBossShardEveryFloors,
+			&definition.BigBossShardBase,
+			&definition.BigBossShardEveryFloors,
+			&definition.MaxCombatSeconds,
+		); err != nil {
+			return nil, err
 		}
 		response = append(response, definition)
 	}

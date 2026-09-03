@@ -8,6 +8,7 @@ import (
 )
 
 func (service *Service) snapshot() api.PlayerSnapshot {
+	service.normalizeTowerProgress()
 	return api.PlayerSnapshot{
 		PlayerID:          service.playerID,
 		Revision:          service.revision,
@@ -28,6 +29,12 @@ func (service *Service) snapshot() api.PlayerSnapshot {
 		SummonCount:       service.summonCount,
 		ShardRiftBest:     service.shardRiftBest,
 		ShardRiftTotal:    service.shardRiftTotal,
+		Tower: api.TowerProgress{
+			HighestUnlockedFloor: service.towerHighestUnlockedFloor,
+			HighestClearedFloor:  service.towerHighestClearedFloor,
+			SelectedFloor:        service.towerSelectedFloor,
+			SectionStartFloor:    service.towerSectionStartFloor,
+		},
 	}
 }
 

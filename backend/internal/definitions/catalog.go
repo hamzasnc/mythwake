@@ -28,6 +28,7 @@ func Snapshot(apiVersion string) api.DefinitionSnapshot {
 		Campaigns:         campaignDefinitions(),
 		CampaignStages:    campaignStageDefinitions(),
 		Dungeons:          dungeonDefinitions(),
+		Towers:            towerDefinitions(),
 		AccessorySlots:    accessorySlotDefinitions(),
 		AccessoryRarities: accessoryRarityDefinitions(),
 		Accessories:       accessoryDefinitions(),
@@ -223,6 +224,54 @@ func dungeonDefinitions() []api.DungeonDefinition {
 			EnemyDamagePerFloor:     definition.EnemyDamagePerFloor,
 			EnemyDamagePowerDivisor: definition.EnemyDamagePowerDiv,
 			MaxCombatSeconds:        definition.MaxCombatSeconds,
+		})
+	}
+	return response
+}
+
+func towerDefinitions() []api.TowerDefinition {
+	definitions := balance.TowerDefinitions()
+	response := make([]api.TowerDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		response = append(response, api.TowerDefinition{
+			TowerID:                            definition.ID,
+			DisplayName:                        definition.DisplayName,
+			MaxFloor:                           definition.MaxFloor,
+			SectionSize:                        definition.SectionSize,
+			MiniBossInterval:                   definition.MiniBossInterval,
+			BigBossInterval:                    definition.BigBossInterval,
+			ShardInterval:                      definition.ShardInterval,
+			BaseRequiredPower:                  definition.BaseRequiredPower,
+			RequiredPowerScale:                 definition.RequiredPowerScale,
+			RequiredPowerGrowth:                definition.RequiredPowerGrowth,
+			BaseRewardGold:                     definition.BaseRewardGold,
+			RewardGoldScale:                    definition.RewardGoldScale,
+			RewardGoldGrowth:                   definition.RewardGoldGrowth,
+			BaseRewardEssence:                  definition.BaseRewardEssence,
+			RewardEssenceScale:                 definition.RewardEssenceScale,
+			RewardEssenceGrowth:                definition.RewardEssenceGrowth,
+			BaseEnemyHP:                        definition.BaseEnemyHP,
+			EnemyHPScale:                       definition.EnemyHPScale,
+			EnemyHPGrowth:                      definition.EnemyHPGrowth,
+			BaseEnemyDamage:                    definition.BaseEnemyDamage,
+			EnemyDamageScale:                   definition.EnemyDamageScale,
+			EnemyDamageGrowth:                  definition.EnemyDamageGrowth,
+			NormalEnemyHPMultiplier:            definition.NormalEnemyHPMultiplier,
+			MiniBossEnemyHPMultiplier:          definition.MiniBossEnemyHPMultiplier,
+			BigBossEnemyHPMultiplier:           definition.BigBossEnemyHPMultiplier,
+			NormalEnemyDamageMultiplier:        definition.NormalEnemyDamageMultiplier,
+			MiniBossEnemyDamageMultiplier:      definition.MiniBossEnemyDamageMultiplier,
+			BigBossEnemyDamageMultiplier:       definition.BigBossEnemyDamageMultiplier,
+			NormalRecommendedPowerMultiplier:   definition.NormalRecommendedPowerMultiplier,
+			MiniBossRecommendedPowerMultiplier: definition.MiniBossRecommendedPowerMultiplier,
+			BigBossRecommendedPowerMultiplier:  definition.BigBossRecommendedPowerMultiplier,
+			NormalShardBase:                    definition.NormalShardBase,
+			NormalShardEveryFloors:             definition.NormalShardEveryFloors,
+			MiniBossShardBase:                  definition.MiniBossShardBase,
+			MiniBossShardEveryFloors:           definition.MiniBossShardEveryFloors,
+			BigBossShardBase:                   definition.BigBossShardBase,
+			BigBossShardEveryFloors:            definition.BigBossShardEveryFloors,
+			MaxCombatSeconds:                   definition.MaxCombatSeconds,
 		})
 	}
 	return response

@@ -56,6 +56,9 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if len(snapshot.Dungeons) != 4 {
 		t.Fatalf("expected 4 dungeons, got %#v", snapshot.Dungeons)
 	}
+	if len(snapshot.Towers) != 1 || snapshot.Towers[0].TowerID != "tower_dungeon" || snapshot.Towers[0].MaxFloor != 1000 {
+		t.Fatalf("expected authoritative tower definition, got %#v", snapshot.Towers)
+	}
 	if len(snapshot.AccessorySlots) != 6 {
 		t.Fatalf("expected 6 accessory slot definitions, got %#v", snapshot.AccessorySlots)
 	}

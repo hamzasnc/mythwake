@@ -47,6 +47,63 @@ func TestDungeonActionIDUsesSpecificActionForKnownDungeons(t *testing.T) {
 	if actionID := dungeonActionID("unknown"); actionID != gameplay.ActionDungeonRun {
 		t.Fatalf("expected generic dungeon action id, got %s", actionID)
 	}
+	if actionID := dungeonActionID(towerDungeonID); actionID != gameplay.ActionTowerRun {
+		t.Fatalf("expected tower action id, got %s", actionID)
+	}
+}
+
+func TestTowerRunAdvancesOnlyTheActiveFloor(t *testing.T) {
+	service := NewService()
+	for heroID := range service.heroLevels {
+		service.heroLevels[heroID] = 100
+	}
+	service.recalculatePower()
+
+	first := service.RunTowerWithRequest(context.Background(), ActionRequest{}, 1)
+	if !first.Success || first.ActionID != gameplay.ActionTowerRun {
+		t.Fatalf("expected floor 1 tower run to succeed, got %#v", first)
+	}
+	if first.Combat == nil || first.Combat.Mode != "tower" || first.Combat.TargetLevel != 1 {
+		t.Fatalf("expected tower combat receipt, got %#v", first.Combat)
+	}
+	if first.PlayerSnapshot.Tower.HighestClearedFloor != 1 || first.PlayerSnapshot.Tower.HighestUnlockedFloor != 2 {
+		t.Fatalf("expected floor 2 to unlock after floor 1, got %#v", first.PlayerSnapshot.Tower)
+	}
+
+	replayFloor := service.RunTowerWithRequest(context.Background(), ActionRequest{}, 1)
+	if replayFloor.Success || replayFloor.ErrorCode != "tower_floor_not_ready" {
+		t.Fatalf("expected cleared floor to be rejected, got %#v", replayFloor)
+	}
+
+	second := service.RunTowerWithRequest(context.Background(), ActionRequest{}, 2)
+	if !second.Success || second.PlayerSnapshot.Tower.HighestClearedFloor != 2 || second.PlayerSnapshot.Tower.HighestUnlockedFloor != 3 {
+		t.Fatalf("expected active floor 2 to clear, got %#v", second)
+	}
+}
+
+func TestTowerRunIdempotencyReplaysWithoutUnlockingTwice(t *testing.T) {
+	store := newIdempotentStateStore()
+	service := NewService()
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+	for heroID := range service.heroLevels {
+		service.heroLevels[heroID] = 100
+	}
+	service.recalculatePower()
+
+	request := ActionRequest{IdempotencyKey: "tower-key-1", RequestHash: "tower-hash-1"}
+	first := service.RunTowerWithRequest(context.Background(), request, 1)
+	if !first.Success {
+		t.Fatalf("expected first tower run to succeed, got %#v", first)
+	}
+	replay := service.RunTowerWithRequest(context.Background(), request, 1)
+	if !replay.Success || !replay.Replay {
+		t.Fatalf("expected idempotent tower replay, got %#v", replay)
+	}
+	if replay.PlayerSnapshot.Tower.HighestClearedFloor != 1 || service.GetSnapshot().Tower.HighestUnlockedFloor != 2 {
+		t.Fatalf("expected replay to preserve one clear, replay=%#v current=%#v", replay.PlayerSnapshot.Tower, service.GetSnapshot().Tower)
+	}
 }
 
 func TestShardRiftRunKeepsRewardsAfterFailedEnd(t *testing.T) {

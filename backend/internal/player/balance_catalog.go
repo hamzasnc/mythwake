@@ -11,6 +11,9 @@ type BalanceCatalog interface {
 	DungeonDefinitionByID(dungeonID string) (balance.DungeonDefinition, bool)
 	DungeonEnemyCombatStats(definition balance.DungeonDefinition, floor int) balance.EnemyCombatStats
 	DungeonReward(definition balance.DungeonDefinition, floor int) api.Reward
+	TowerDefinitionByID(towerID string) (balance.TowerDefinition, bool)
+	TowerEnemyCombatStats(definition balance.TowerDefinition, floor int) balance.EnemyCombatStats
+	TowerReward(definition balance.TowerDefinition, floor int) api.Reward
 	GearDungeonDropAccessoryID(floor int) string
 	GearDungeonReward() api.Reward
 	AFKReward(stage int, elapsedSeconds int) (api.Reward, int)
@@ -58,6 +61,18 @@ func (StaticBalanceCatalog) DungeonEnemyCombatStats(definition balance.DungeonDe
 
 func (StaticBalanceCatalog) DungeonReward(definition balance.DungeonDefinition, floor int) api.Reward {
 	return balance.DungeonReward(definition, floor)
+}
+
+func (StaticBalanceCatalog) TowerDefinitionByID(towerID string) (balance.TowerDefinition, bool) {
+	return balance.TowerDefinitionByID(towerID)
+}
+
+func (StaticBalanceCatalog) TowerEnemyCombatStats(definition balance.TowerDefinition, floor int) balance.EnemyCombatStats {
+	return balance.TowerEnemyCombatStats(definition, floor)
+}
+
+func (StaticBalanceCatalog) TowerReward(definition balance.TowerDefinition, floor int) api.Reward {
+	return balance.TowerReward(definition, floor)
 }
 
 func (StaticBalanceCatalog) GearDungeonDropAccessoryID(floor int) string {

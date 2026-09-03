@@ -472,9 +472,37 @@ func (router *Router) handleOfflineClaim(response http.ResponseWriter, request *
 }
 
 func (router *Router) handleDungeonRun(response http.ResponseWriter, request *http.Request) {
+	dungeonID := request.PathValue("dungeon_id")
+	if dungeonID == "tower_dungeon" {
+		floor, ok := towerRunFloor(response, request)
+		if !ok {
+			return
+		}
+		router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+			return playerService.RunTowerWithRequest(request.Context(), action, floor)
+		})
+		return
+	}
+
 	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
-		return playerService.RunDungeonWithRequest(request.Context(), action, request.PathValue("dungeon_id"))
+		return playerService.RunDungeonWithRequest(request.Context(), action, dungeonID)
 	})
+}
+
+func towerRunFloor(response http.ResponseWriter, request *http.Request) (int, bool) {
+	value := strings.TrimSpace(request.URL.Query().Get("floor"))
+	if value == "" {
+		writeError(response, request, http.StatusBadRequest, "invalid_tower_floor", "Tower runs require a floor between 1 and 1000.")
+		return 0, false
+	}
+
+	floor, err := strconv.Atoi(value)
+	if err != nil || floor < 1 || floor > 1000 {
+		writeError(response, request, http.StatusBadRequest, "invalid_tower_floor", "Tower floor must be between 1 and 1000.")
+		return 0, false
+	}
+
+	return floor, true
 }
 
 func (router *Router) handleHeroLevel(response http.ResponseWriter, request *http.Request) {

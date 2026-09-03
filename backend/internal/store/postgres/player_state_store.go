@@ -90,6 +90,9 @@ func (store *PlayerStateStore) SaveState(ctx context.Context, playerID string, s
 	if err := store.saveShardRiftState(ctx, tx, playerID, state); err != nil {
 		return err
 	}
+	if err := store.saveTowerState(ctx, tx, playerID, state); err != nil {
+		return err
+	}
 	if err := store.saveAFKState(ctx, tx, playerID, state); err != nil {
 		return err
 	}
@@ -185,6 +188,7 @@ func (store *PlayerStateStore) ResetState(ctx context.Context, playerID string) 
 		`DELETE FROM player.player_daily_progress WHERE player_id = $1`,
 		`DELETE FROM player.player_battle_pass_claims WHERE player_id = $1`,
 		`DELETE FROM player.player_shard_rift_progress WHERE player_id = $1`,
+		`DELETE FROM player.player_tower_progress WHERE player_id = $1`,
 		`DELETE FROM player.player_inventory_items WHERE player_id = $1`,
 		`DELETE FROM player.player_summon_state WHERE player_id = $1`,
 		`DELETE FROM player.player_village_buildings WHERE player_id = $1`,
@@ -351,26 +355,30 @@ func (store *PlayerStateStore) loadLatestActionState(ctx context.Context, player
 
 func persistentStateFromSnapshot(snapshot api.PlayerSnapshot) player.PersistentState {
 	state := player.PersistentState{
-		Revision:           snapshot.Revision,
-		UpdatedAt:          parseSnapshotTime(snapshot.UpdatedAtUTC),
-		PlayerState:        snapshot.State,
-		HeroLevels:         map[string]int{},
-		HeroShards:         map[string]int{},
-		HeroAscensions:     map[string]int{},
-		HeroStars:          map[string]int{},
-		EquipmentLevels:    map[string]int{},
-		AccessoryInventory: map[string]int{},
-		AccessoryLevels:    map[string]int{},
-		EquippedAccessory:  map[string]string{},
-		VillageBuildings:   map[int]api.VillageBuilding{},
-		ClaimedDaily:       map[string]bool{},
-		ClaimedBattlePass:  map[string]bool{},
-		SummonCount:        snapshot.SummonCount,
-		HeroShardChests:    snapshot.HeroShardChests,
-		ShardRiftBest:      snapshot.ShardRiftBest,
-		ShardRiftTotal:     snapshot.ShardRiftTotal,
-		LastAFKClaimedAt:   parseSnapshotTime(snapshot.LastAFKClaimUTC),
-		DailyDate:          snapshot.DailyDate,
+		Revision:                  snapshot.Revision,
+		UpdatedAt:                 parseSnapshotTime(snapshot.UpdatedAtUTC),
+		PlayerState:               snapshot.State,
+		HeroLevels:                map[string]int{},
+		HeroShards:                map[string]int{},
+		HeroAscensions:            map[string]int{},
+		HeroStars:                 map[string]int{},
+		EquipmentLevels:           map[string]int{},
+		AccessoryInventory:        map[string]int{},
+		AccessoryLevels:           map[string]int{},
+		EquippedAccessory:         map[string]string{},
+		VillageBuildings:          map[int]api.VillageBuilding{},
+		ClaimedDaily:              map[string]bool{},
+		ClaimedBattlePass:         map[string]bool{},
+		SummonCount:               snapshot.SummonCount,
+		HeroShardChests:           snapshot.HeroShardChests,
+		ShardRiftBest:             snapshot.ShardRiftBest,
+		ShardRiftTotal:            snapshot.ShardRiftTotal,
+		TowerHighestUnlockedFloor: snapshot.Tower.HighestUnlockedFloor,
+		TowerHighestClearedFloor:  snapshot.Tower.HighestClearedFloor,
+		TowerSelectedFloor:        snapshot.Tower.SelectedFloor,
+		TowerSectionStartFloor:    snapshot.Tower.SectionStartFloor,
+		LastAFKClaimedAt:          parseSnapshotTime(snapshot.LastAFKClaimUTC),
+		DailyDate:                 snapshot.DailyDate,
 	}
 
 	for _, hero := range snapshot.Heroes {
@@ -550,6 +558,10 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	if err != nil {
 		return player.PersistentState{}, false, err
 	}
+	towerHighestUnlockedFloor, towerHighestClearedFloor, towerSelectedFloor, towerSectionStartFloor, err := store.loadTowerProgress(ctx, playerID)
+	if err != nil {
+		return player.PersistentState{}, false, err
+	}
 	lastAFKClaimedAt, err := store.loadAFKClaimedAt(ctx, playerID)
 	if err != nil {
 		return player.PersistentState{}, false, err
@@ -560,29 +572,33 @@ func (store *PlayerStateStore) loadNormalizedState(ctx context.Context, playerID
 	}
 
 	return player.PersistentState{
-		Revision:           revision,
-		UpdatedAt:          updatedAt,
-		PlayerState:        state,
-		HeroLevels:         heroLevels,
-		HeroShards:         heroShards,
-		HeroAscensions:     heroAscensions,
-		HeroStars:          heroStars,
-		EquipmentLevels:    equipmentLevels,
-		AccessoryInventory: accessoryInventory,
-		AccessoryLevels:    accessoryLevels,
-		EquippedAccessory:  equippedAccessory,
-		VillageBuildings:   villageBuildings,
-		ClaimedDaily:       claimedDaily,
-		ClaimedBattlePass:  claimedBattlePass,
-		SummonCount:        summonCount,
-		HeroShardChests:    heroShardChests,
-		ShardRiftBest:      shardRiftBest,
-		ShardRiftTotal:     shardRiftTotal,
-		LastAFKClaimedAt:   lastAFKClaimedAt,
-		DailyDate:          dailyDate,
-		DailyFightCount:    dailyFightCount,
-		DailyStageClears:   dailyStageClears,
-		DailySummonCount:   dailySummonCount,
+		Revision:                  revision,
+		UpdatedAt:                 updatedAt,
+		PlayerState:               state,
+		HeroLevels:                heroLevels,
+		HeroShards:                heroShards,
+		HeroAscensions:            heroAscensions,
+		HeroStars:                 heroStars,
+		EquipmentLevels:           equipmentLevels,
+		AccessoryInventory:        accessoryInventory,
+		AccessoryLevels:           accessoryLevels,
+		EquippedAccessory:         equippedAccessory,
+		VillageBuildings:          villageBuildings,
+		ClaimedDaily:              claimedDaily,
+		ClaimedBattlePass:         claimedBattlePass,
+		SummonCount:               summonCount,
+		HeroShardChests:           heroShardChests,
+		ShardRiftBest:             shardRiftBest,
+		ShardRiftTotal:            shardRiftTotal,
+		TowerHighestUnlockedFloor: towerHighestUnlockedFloor,
+		TowerHighestClearedFloor:  towerHighestClearedFloor,
+		TowerSelectedFloor:        towerSelectedFloor,
+		TowerSectionStartFloor:    towerSectionStartFloor,
+		LastAFKClaimedAt:          lastAFKClaimedAt,
+		DailyDate:                 dailyDate,
+		DailyFightCount:           dailyFightCount,
+		DailyStageClears:          dailyStageClears,
+		DailySummonCount:          dailySummonCount,
 	}, true, nil
 }
 
@@ -995,6 +1011,26 @@ func (store *PlayerStateStore) saveShardRiftState(ctx context.Context, tx *sql.T
 	return err
 }
 
+func (store *PlayerStateStore) saveTowerState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
+	highestUnlockedFloor := max(1, state.TowerHighestUnlockedFloor)
+	highestClearedFloor := max(0, state.TowerHighestClearedFloor)
+	selectedFloor := max(1, state.TowerSelectedFloor)
+	sectionStartFloor := max(1, state.TowerSectionStartFloor)
+	_, err := tx.ExecContext(ctx, `
+		INSERT INTO player.player_tower_progress (
+			player_id, highest_unlocked_floor, highest_cleared_floor, selected_floor, section_start_floor, updated_at
+		)
+		VALUES ($1, $2, $3, $4, $5, now())
+		ON CONFLICT (player_id) DO UPDATE SET
+			highest_unlocked_floor = EXCLUDED.highest_unlocked_floor,
+			highest_cleared_floor = EXCLUDED.highest_cleared_floor,
+			selected_floor = EXCLUDED.selected_floor,
+			section_start_floor = EXCLUDED.section_start_floor,
+			updated_at = now()
+	`, playerID, highestUnlockedFloor, highestClearedFloor, selectedFloor, sectionStartFloor)
+	return err
+}
+
 func (store *PlayerStateStore) saveAFKState(ctx context.Context, tx *sql.Tx, playerID string, state player.PersistentState) error {
 	if state.LastAFKClaimedAt.IsZero() {
 		return nil
@@ -1171,6 +1207,26 @@ func (store *PlayerStateStore) loadShardRiftProgress(ctx context.Context, player
 	}
 
 	return max(0, best), max(0, total), nil
+}
+
+func (store *PlayerStateStore) loadTowerProgress(ctx context.Context, playerID string) (int, int, int, int, error) {
+	var unlocked int
+	var cleared int
+	var selected int
+	var sectionStart int
+	err := store.db.QueryRowContext(ctx, `
+		SELECT highest_unlocked_floor, highest_cleared_floor, selected_floor, section_start_floor
+		FROM player.player_tower_progress
+		WHERE player_id = $1
+	`, playerID).Scan(&unlocked, &cleared, &selected, &sectionStart)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 1, 0, 1, 1, nil
+	}
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+
+	return max(1, unlocked), max(0, cleared), max(1, selected), max(1, sectionStart), nil
 }
 
 func (store *PlayerStateStore) loadAccessoryInventory(ctx context.Context, playerID string) (map[string]int, map[string]int, error) {

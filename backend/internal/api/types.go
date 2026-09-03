@@ -36,6 +36,7 @@ type PlayerSnapshot struct {
 	SummonCount       int                 `json:"summonCount"`
 	ShardRiftBest     int                 `json:"shardRiftBestEnemiesDefeated"`
 	ShardRiftTotal    int                 `json:"shardRiftTotalEnemiesDefeated"`
+	Tower             TowerProgress       `json:"tower"`
 }
 
 type HeroState struct {
@@ -48,6 +49,13 @@ type HeroState struct {
 type HeroShardState struct {
 	HeroID string `json:"heroId"`
 	Shards int    `json:"shards"`
+}
+
+type TowerProgress struct {
+	HighestUnlockedFloor int `json:"highestUnlockedFloor"`
+	HighestClearedFloor  int `json:"highestClearedFloor"`
+	SelectedFloor        int `json:"selectedFloor"`
+	SectionStartFloor    int `json:"sectionStartFloor"`
 }
 
 type EquipmentState struct {
@@ -86,13 +94,19 @@ type DailyProgress struct {
 }
 
 type Reward struct {
-	RewardID        string `json:"rewardId"`
-	Gold            int    `json:"gold"`
-	Gems            int    `json:"gems"`
-	MythEssence     int    `json:"mythEssence"`
-	AwakeningShards int    `json:"awakeningShards"`
-	HeroShardChests int    `json:"heroShardChests"`
-	PassXP          int    `json:"passXp"`
+	RewardID        string            `json:"rewardId"`
+	Gold            int               `json:"gold"`
+	Gems            int               `json:"gems"`
+	MythEssence     int               `json:"mythEssence"`
+	AwakeningShards int               `json:"awakeningShards"`
+	HeroShardChests int               `json:"heroShardChests"`
+	PassXP          int               `json:"passXp"`
+	HeroShards      []HeroShardReward `json:"heroShards,omitempty"`
+}
+
+type HeroShardReward struct {
+	HeroID string `json:"heroId"`
+	Shards int    `json:"shards"`
 }
 
 type CombatResult struct {
@@ -219,6 +233,7 @@ type DefinitionSnapshot struct {
 	Campaigns         []CampaignDefinition         `json:"campaigns"`
 	CampaignStages    []CampaignStageDefinition    `json:"campaignStages"`
 	Dungeons          []DungeonDefinition          `json:"dungeons"`
+	Towers            []TowerDefinition            `json:"towers"`
 	AccessorySlots    []AccessorySlotDefinition    `json:"accessorySlots"`
 	AccessoryRarities []AccessoryRarityDefinition  `json:"accessoryRarities"`
 	Accessories       []AccessoryDefinition        `json:"accessories"`
@@ -336,6 +351,47 @@ type DungeonDefinition struct {
 	EnemyDamagePerFloor     int    `json:"enemyDamagePerFloor"`
 	EnemyDamagePowerDivisor int    `json:"enemyDamagePowerDivisor"`
 	MaxCombatSeconds        int    `json:"maxCombatSeconds"`
+}
+
+type TowerDefinition struct {
+	TowerID                            string  `json:"towerId"`
+	DisplayName                        string  `json:"displayName"`
+	MaxFloor                           int     `json:"maxFloor"`
+	SectionSize                        int     `json:"sectionSize"`
+	MiniBossInterval                   int     `json:"miniBossInterval"`
+	BigBossInterval                    int     `json:"bigBossInterval"`
+	ShardInterval                      int     `json:"shardInterval"`
+	BaseRequiredPower                  int     `json:"baseRequiredPower"`
+	RequiredPowerScale                 float64 `json:"requiredPowerScale"`
+	RequiredPowerGrowth                float64 `json:"requiredPowerGrowth"`
+	BaseRewardGold                     int     `json:"baseRewardGold"`
+	RewardGoldScale                    float64 `json:"rewardGoldScale"`
+	RewardGoldGrowth                   float64 `json:"rewardGoldGrowth"`
+	BaseRewardEssence                  int     `json:"baseRewardEssence"`
+	RewardEssenceScale                 float64 `json:"rewardEssenceScale"`
+	RewardEssenceGrowth                float64 `json:"rewardEssenceGrowth"`
+	BaseEnemyHP                        int     `json:"baseEnemyHp"`
+	EnemyHPScale                       float64 `json:"enemyHpScale"`
+	EnemyHPGrowth                      float64 `json:"enemyHpGrowth"`
+	BaseEnemyDamage                    int     `json:"baseEnemyDamage"`
+	EnemyDamageScale                   float64 `json:"enemyDamageScale"`
+	EnemyDamageGrowth                  float64 `json:"enemyDamageGrowth"`
+	NormalEnemyHPMultiplier            float64 `json:"normalEnemyHpMultiplier"`
+	MiniBossEnemyHPMultiplier          float64 `json:"miniBossEnemyHpMultiplier"`
+	BigBossEnemyHPMultiplier           float64 `json:"bigBossEnemyHpMultiplier"`
+	NormalEnemyDamageMultiplier        float64 `json:"normalEnemyDamageMultiplier"`
+	MiniBossEnemyDamageMultiplier      float64 `json:"miniBossEnemyDamageMultiplier"`
+	BigBossEnemyDamageMultiplier       float64 `json:"bigBossEnemyDamageMultiplier"`
+	NormalRecommendedPowerMultiplier   float64 `json:"normalRecommendedPowerMultiplier"`
+	MiniBossRecommendedPowerMultiplier float64 `json:"miniBossRecommendedPowerMultiplier"`
+	BigBossRecommendedPowerMultiplier  float64 `json:"bigBossRecommendedPowerMultiplier"`
+	NormalShardBase                    int     `json:"normalShardBase"`
+	NormalShardEveryFloors             int     `json:"normalShardEveryFloors"`
+	MiniBossShardBase                  int     `json:"miniBossShardBase"`
+	MiniBossShardEveryFloors           int     `json:"miniBossShardEveryFloors"`
+	BigBossShardBase                   int     `json:"bigBossShardBase"`
+	BigBossShardEveryFloors            int     `json:"bigBossShardEveryFloors"`
+	MaxCombatSeconds                   int     `json:"maxCombatSeconds"`
 }
 
 type AccessorySlotDefinition struct {
