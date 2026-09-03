@@ -755,7 +755,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private const int SummonCarouselCardCount = 3;
     private const int SummonFeaturedHeroCount = 3;
     private const int SummonCarouselHeroSlotsPerCard = 2;
-    private const int InventoryGridSlotCount = 10;
+    private const int InventoryGridSlotCount = BagInventoryRules.GridSlotCount;
     private const int MaxSummonPullCount = 300;
     private const int SummonAutoStepCount = 10;
     private const int BattlePassXpPerDailyClaim = 40;
@@ -2644,7 +2644,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private int NormalizeInventoryUseCount(InventoryItemViewData item, int requestedAmount)
     {
-        return Mathf.Clamp(requestedAmount, 1, Mathf.Max(1, item.maxUseCount));
+        return BagInventoryRules.NormalizeUseCount(requestedAmount, item.maxUseCount);
     }
 
     private int ParseInventoryUseAmount(int maxCount)
@@ -2654,13 +2654,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return 1;
         }
 
-        var text = inventoryUseAmountInput.text == null ? string.Empty : inventoryUseAmountInput.text.Trim();
-        if (!int.TryParse(text, out var amount))
-        {
-            amount = 1;
-        }
-
-        return Mathf.Clamp(amount, 1, Mathf.Max(1, maxCount));
+        return BagInventoryRules.ParseUseAmount(inventoryUseAmountInput.text, maxCount);
     }
 
     private void UseHeroShardChestsFromInventory(int requestedAmount)
@@ -19424,12 +19418,11 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         AddMiscInventoryItems(items);
         AddGearInventoryItems(items);
 
-        if (selectedInventoryTab != InventoryTabMode.All)
-        {
-            items.RemoveAll(item => item.category != selectedInventoryTab);
-        }
-
-        return items;
+        return BagInventoryRules.Filter(
+            items,
+            (BagInventoryTab)(int)selectedInventoryTab,
+            InventoryGridSlotCount,
+            item => (BagInventoryTab)(int)item.category);
     }
 
     private void AddMiscInventoryItems(List<InventoryItemViewData> items)
@@ -27284,24 +27277,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             ? runtimeBagGeneratedSpriteCatalog.GetSprite(generatedSpriteName)
             : null;
 
-        if (sprite == null)
-        {
-            sprite = Resources.Load<Sprite>($"Mythwake/UI/Bag/{generatedSpriteName}");
-        }
-
-        if (sprite == null && !string.Equals(generatedSpriteName, spriteName, StringComparison.Ordinal))
-        {
-            sprite = Resources.Load<Sprite>($"Mythwake/UI/Bag/{spriteName}");
-        }
 #if UNITY_EDITOR
         if (sprite == null)
         {
             sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Art/UI/BagGenerated/Sprites/{generatedSpriteName}.png");
-        }
-
-        if (sprite == null)
-        {
-            sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/_Mythwake/Resources/Mythwake/UI/Bag/{spriteName}.png");
         }
 #endif
         RuntimeBagSpriteCache[spriteName] = sprite;

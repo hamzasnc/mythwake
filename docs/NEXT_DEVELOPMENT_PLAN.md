@@ -19,7 +19,7 @@ The target is not more feature breadth. The target is a stable, testable vertica
 - `git diff --check` passes.
 - Unity Current Slice validation is presently blocked by a missing local Unity Editor license, not by a confirmed validation failure.
 - No Android device/emulator is currently attached and Docker is not available on `PATH`.
-- The working Bag implementation contains two generated asset approaches. Runtime and validation prefer `Assets/Art/UI/BagGenerated`; the older `Assets/_Mythwake/Resources/Mythwake/UI/Bag` and `Assets/_Mythwake/Prefabs/Bag` path remains as a fallback/draft.
+- The canonical Bag implementation uses `Assets/Art/UI/BagGenerated` and its `BagGeneratedSpriteCatalog`; no legacy runtime Bag asset path remains.
 
 ## Working Rules
 
