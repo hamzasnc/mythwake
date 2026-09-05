@@ -296,6 +296,7 @@ public struct MythwakeDefinitionSnapshotDto
     public MythwakeSummonBannerDefinitionDto[] summonBanners;
     public MythwakeDailyMissionDefinitionDto[] dailyMissions;
     public MythwakeBattlePassRewardDefinitionDto[] battlePassRewards;
+    public MythwakeShopOfferDefinitionDto[] shopOffers;
     public MythwakeGameplayActionDefinitionDto[] gameplayActions;
 }
 
@@ -521,6 +522,20 @@ public struct MythwakeBattlePassRewardDefinitionDto
     public string rewardId;
     public int requiredPassXp;
     public MythwakeRewardDto reward;
+}
+
+[Serializable]
+public struct MythwakeShopOfferDefinitionDto
+{
+    public string offerId;
+    public string tab;
+    public string displayName;
+    public string contents;
+    public string price;
+    public string iconKey;
+    public int sortOrder;
+    public bool topPick;
+    public string badgeLabel;
 }
 
 [Serializable]

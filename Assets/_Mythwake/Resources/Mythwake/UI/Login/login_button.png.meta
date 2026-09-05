@@ -1,0 +1,2392 @@
+fileFormatVersion: 2
+guid: 41ccca5e4bd159543823b2b7c68ad5ce
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4366986214404691306
+    second: login_button_0
+  - first:
+      213: -6524923319836265305
+    second: login_button_1
+  - first:
+      213: 1346258204049983261
+    second: login_button_2
+  - first:
+      213: 5674718584925517936
+    second: login_button_3
+  - first:
+      213: -1785918519803386071
+    second: login_button_4
+  - first:
+      213: -6617300884024836700
+    second: login_button_5
+  - first:
+      213: -3130404793496436750
+    second: login_button_6
+  - first:
+      213: 7959065217163829705
+    second: login_button_7
+  - first:
+      213: -4779025585814532606
+    second: login_button_8
+  - first:
+      213: -25931237729990996
+    second: login_button_9
+  - first:
+      213: -6197222928435838271
+    second: login_button_10
+  - first:
+      213: -3668360933738855311
+    second: login_button_11
+  - first:
+      213: 2185212076960694600
+    second: login_button_12
+  - first:
+      213: 7669024468906202484
+    second: login_button_13
+  - first:
+      213: 7963091406465301974
+    second: login_button_14
+  - first:
+      213: -1776516991669460243
+    second: login_button_15
+  - first:
+      213: -2761400277329548995
+    second: login_button_16
+  - first:
+      213: -2667065267935609045
+    second: login_button_17
+  - first:
+      213: 1058523325435173856
+    second: login_button_18
+  - first:
+      213: 6883279915211978468
+    second: login_button_19
+  - first:
+      213: 5416561276211155400
+    second: login_button_20
+  - first:
+      213: 8183214587741191365
+    second: login_button_21
+  - first:
+      213: -3631699833470477317
+    second: login_button_22
+  - first:
+      213: -8356470357124016905
+    second: login_button_23
+  - first:
+      213: -3164234106359247610
+    second: login_button_24
+  - first:
+      213: 6144276543380232273
+    second: login_button_25
+  - first:
+      213: -8340579723631514413
+    second: login_button_26
+  - first:
+      213: -2175278814447637772
+    second: login_button_27
+  - first:
+      213: -3172652844682022703
+    second: login_button_28
+  - first:
+      213: -5195387478440657631
+    second: login_button_29
+  - first:
+      213: -1885697375677852717
+    second: login_button_30
+  - first:
+      213: -4025496567979624678
+    second: login_button_31
+  - first:
+      213: 8579316572980458503
+    second: login_button_32
+  - first:
+      213: 6898311800358800350
+    second: login_button_33
+  - first:
+      213: 5480091502784765824
+    second: login_button_34
+  - first:
+      213: 8434021842584746251
+    second: login_button_35
+  - first:
+      213: -9208961470543869487
+    second: login_button_36
+  - first:
+      213: 1045786889626207016
+    second: login_button_37
+  - first:
+      213: -3413424308796369178
+    second: login_button_38
+  - first:
+      213: -8144445251853187791
+    second: login_button_39
+  - first:
+      213: 2667960464222236577
+    second: login_button_40
+  - first:
+      213: 7990684253550442386
+    second: login_button_41
+  - first:
+      213: 4486932705928388076
+    second: login_button_42
+  - first:
+      213: -7106048066374798904
+    second: login_button_43
+  - first:
+      213: -4720004927014115944
+    second: login_button_44
+  - first:
+      213: -3443407696448538318
+    second: login_button_45
+  - first:
+      213: -848043689991718422
+    second: login_button_46
+  - first:
+      213: 8680357620107591074
+    second: login_button_47
+  - first:
+      213: -7594555173562517737
+    second: login_button_48
+  - first:
+      213: -7882675114523877073
+    second: login_button_49
+  - first:
+      213: -4582992764673178696
+    second: login_button_50
+  - first:
+      213: -524503894227858299
+    second: login_button_51
+  - first:
+      213: 5347083248507630246
+    second: login_button_52
+  - first:
+      213: -5069030970992138641
+    second: login_button_53
+  - first:
+      213: -6144385886697601116
+    second: login_button_54
+  - first:
+      213: -681942228696196597
+    second: login_button_55
+  - first:
+      213: 6365907908873362625
+    second: login_button_56
+  - first:
+      213: 8783991684587364611
+    second: login_button_57
+  - first:
+      213: -3130121626147392529
+    second: login_button_58
+  - first:
+      213: -1307234133867219886
+    second: login_button_59
+  - first:
+      213: 9052302453622943406
+    second: login_button_60
+  - first:
+      213: 1087855126567802149
+    second: login_button_61
+  - first:
+      213: -8769499552370526683
+    second: login_button_62
+  - first:
+      213: 139066121770052122
+    second: login_button_63
+  - first:
+      213: 8481601523987851212
+    second: login_button_64
+  - first:
+      213: -3331802783096926500
+    second: login_button_65
+  - first:
+      213: -871613027510897459
+    second: login_button_66
+  - first:
+      213: -4129796864415152382
+    second: login_button_67
+  - first:
+      213: -6038644570631595380
+    second: login_button_68
+  - first:
+      213: 3822163103568600059
+    second: login_button_69
+  - first:
+      213: -9069773449752936805
+    second: login_button_70
+  - first:
+      213: -1870525082078707582
+    second: login_button_71
+  - first:
+      213: 1478942894850260023
+    second: login_button_72
+  - first:
+      213: -7528578341217130624
+    second: login_button_73
+  - first:
+      213: 1025272765693526701
+    second: login_button_74
+  - first:
+      213: 2721575738247110668
+    second: login_button_75
+  - first:
+      213: 2028116823456482264
+    second: login_button_76
+  - first:
+      213: -8387673734478359230
+    second: login_button_77
+  - first:
+      213: -5681519530368129001
+    second: login_button_78
+  - first:
+      213: -3400207736753929466
+    second: login_button_79
+  - first:
+      213: -1197380239583076982
+    second: login_button_80
+  - first:
+      213: 3600249981530957459
+    second: login_button_81
+  - first:
+      213: -4502266127051883560
+    second: login_button_82
+  - first:
+      213: 5152215074185062387
+    second: login_button_83
+  - first:
+      213: 8832552167623293694
+    second: login_button_84
+  - first:
+      213: -2995161386100436782
+    second: login_button_85
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: login_button_0
+      rect:
+        serializedVersion: 2
+        x: 223
+        y: 659
+        width: 78
+        height: 57
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69a616fdc295563c0800000000000000
+      internalID: -4366986214404691306
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_1
+      rect:
+        serializedVersion: 2
+        x: 432
+        y: 699
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a43f76afc0d275a0800000000000000
+      internalID: -6524923319836265305
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_2
+      rect:
+        serializedVersion: 2
+        x: 440
+        y: 699
+        width: 12
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d17ca5c24bedea210800000000000000
+      internalID: 1346258204049983261
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_3
+      rect:
+        serializedVersion: 2
+        x: 507
+        y: 708
+        width: 33
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 078faceac76a0ce40800000000000000
+      internalID: 5674718584925517936
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_4
+      rect:
+        serializedVersion: 2
+        x: 1054
+        y: 622
+        width: 81
+        height: 95
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 927e35581942737e0800000000000000
+      internalID: -1785918519803386071
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_5
+      rect:
+        serializedVersion: 2
+        x: 1134
+        y: 628
+        width: 86
+        height: 88
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ad32dbe7ef9a24a0800000000000000
+      internalID: -6617300884024836700
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_6
+      rect:
+        serializedVersion: 2
+        x: 1293
+        y: 675
+        width: 13
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fff6780d619e84d0800000000000000
+      internalID: -3130404793496436750
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_7
+      rect:
+        serializedVersion: 2
+        x: 1412
+        y: 592
+        width: 93
+        height: 124
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c1a73565a7447e60800000000000000
+      internalID: 7959065217163829705
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_8
+      rect:
+        serializedVersion: 2
+        x: 1842
+        y: 640
+        width: 58
+        height: 76
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 20e8501dc8d7dadb0800000000000000
+      internalID: -4779025585814532606
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_9
+      rect:
+        serializedVersion: 2
+        x: 334
+        y: 588
+        width: 112
+        height: 118
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca6848a3dafd3aff0800000000000000
+      internalID: -25931237729990996
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_10
+      rect:
+        serializedVersion: 2
+        x: 342
+        y: 671
+        width: 31
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c20da4b49a0ff9a0800000000000000
+      internalID: -6197222928435838271
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_11
+      rect:
+        serializedVersion: 2
+        x: 632
+        y: 588
+        width: 91
+        height: 117
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1744394aa2d571dc0800000000000000
+      internalID: -3668360933738855311
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_12
+      rect:
+        serializedVersion: 2
+        x: 812
+        y: 693
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 841c2266ece635e10800000000000000
+      internalID: 2185212076960694600
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_13
+      rect:
+        serializedVersion: 2
+        x: 835
+        y: 673
+        width: 27
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 475deea4f19dd6a60800000000000000
+      internalID: 7669024468906202484
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_14
+      rect:
+        serializedVersion: 2
+        x: 1229
+        y: 610
+        width: 59
+        height: 88
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6dd7454a175928e60800000000000000
+      internalID: 7963091406465301974
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_15
+      rect:
+        serializedVersion: 2
+        x: 1311
+        y: 600
+        width: 74
+        height: 94
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de2a81e553b8857e0800000000000000
+      internalID: -1776516991669460243
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_16
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 657
+        width: 47
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d396b1b04198da9d0800000000000000
+      internalID: -2761400277329548995
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_17
+      rect:
+        serializedVersion: 2
+        x: 257
+        y: 634
+        width: 10
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2f7aeff44eacfad0800000000000000
+      internalID: -2667065267935609045
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_18
+      rect:
+        serializedVersion: 2
+        x: 265
+        y: 645
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0eb570f2b51a0be00800000000000000
+      internalID: 1058523325435173856
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_19
+      rect:
+        serializedVersion: 2
+        x: 271
+        y: 594
+        width: 56
+        height: 58
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e67acb1d92568f50800000000000000
+      internalID: 6883279915211978468
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_20
+      rect:
+        serializedVersion: 2
+        x: 279
+        y: 658
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c1d3b458cd7b2b40800000000000000
+      internalID: 5416561276211155400
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_21
+      rect:
+        serializedVersion: 2
+        x: 304
+        y: 640
+        width: 39
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ccbb1f9f4e909170800000000000000
+      internalID: 8183214587741191365
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_22
+      rect:
+        serializedVersion: 2
+        x: 324
+        y: 626
+        width: 17
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfb95273e3c999dc0800000000000000
+      internalID: -3631699833470477317
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_23
+      rect:
+        serializedVersion: 2
+        x: 336
+        y: 630
+        width: 29
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f49a831c7ad70c80800000000000000
+      internalID: -8356470357124016905
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_24
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 661
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60d084858d16614d0800000000000000
+      internalID: -3164234106359247610
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_25
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 644
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15891f166fad44550800000000000000
+      internalID: 6144276543380232273
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_26
+      rect:
+        serializedVersion: 2
+        x: 366
+        y: 644
+        width: 15
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3dc2e108eee404c80800000000000000
+      internalID: -8340579723631514413
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_27
+      rect:
+        serializedVersion: 2
+        x: 442
+        y: 661
+        width: 26
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4fa6a61817bdfc1e0800000000000000
+      internalID: -2175278814447637772
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_28
+      rect:
+        serializedVersion: 2
+        x: 445
+        y: 584
+        width: 81
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d078151c0978f3d0800000000000000
+      internalID: -3172652844682022703
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_29
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 640
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12d380d5d9646e7b0800000000000000
+      internalID: -5195387478440657631
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_30
+      rect:
+        serializedVersion: 2
+        x: 475
+        y: 646
+        width: 61
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d3d5d84a38a4d5e0800000000000000
+      internalID: -1885697375677852717
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_31
+      rect:
+        serializedVersion: 2
+        x: 542
+        y: 638
+        width: 95
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a17350d03309228c0800000000000000
+      internalID: -4025496567979624678
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_32
+      rect:
+        serializedVersion: 2
+        x: 738
+        y: 602
+        width: 55
+        height: 72
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7043f1cc7fadf0770800000000000000
+      internalID: 8579316572980458503
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_33
+      rect:
+        serializedVersion: 2
+        x: 780
+        y: 622
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: edb854a980abbbf50800000000000000
+      internalID: 6898311800358800350
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_34
+      rect:
+        serializedVersion: 2
+        x: 796
+        y: 665
+        width: 26
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08f5f10ef223d0c40800000000000000
+      internalID: 5480091502784765824
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_35
+      rect:
+        serializedVersion: 2
+        x: 804
+        y: 609
+        width: 28
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0936233e2aab0570800000000000000
+      internalID: 8434021842584746251
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_36
+      rect:
+        serializedVersion: 2
+        x: 828
+        y: 648
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d949fd6552333080800000000000000
+      internalID: -9208961470543869487
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_37
+      rect:
+        serializedVersion: 2
+        x: 857
+        y: 673
+        width: 15
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8234ee2a2a1638e00800000000000000
+      internalID: 1045786889626207016
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_38
+      rect:
+        serializedVersion: 2
+        x: 859
+        y: 659
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e6528e1da411a0d0800000000000000
+      internalID: -3413424308796369178
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_39
+      rect:
+        serializedVersion: 2
+        x: 891
+        y: 606
+        width: 108
+        height: 80
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1358caec13e19fe80800000000000000
+      internalID: -8144445251853187791
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_40
+      rect:
+        serializedVersion: 2
+        x: 941
+        y: 602
+        width: 17
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1afa0c028ef760520800000000000000
+      internalID: 2667960464222236577
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_41
+      rect:
+        serializedVersion: 2
+        x: 985
+        y: 610
+        width: 16
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2977e2dfdfc94ee60800000000000000
+      internalID: 7990684253550442386
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_42
+      rect:
+        serializedVersion: 2
+        x: 989
+        y: 626
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ced91f3f589c44e30800000000000000
+      internalID: 4486932705928388076
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_43
+      rect:
+        serializedVersion: 2
+        x: 1005
+        y: 618
+        width: 60
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c1f0eedeee326d90800000000000000
+      internalID: -7106048066374798904
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_44
+      rect:
+        serializedVersion: 2
+        x: 1060
+        y: 594
+        width: 45
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 895ea3bc68c2f7eb0800000000000000
+      internalID: -4720004927014115944
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_45
+      rect:
+        serializedVersion: 2
+        x: 1070
+        y: 659
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 239b65ca1fe8630d0800000000000000
+      internalID: -3443407696448538318
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_46
+      rect:
+        serializedVersion: 2
+        x: 1134
+        y: 644
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae93800d1c42b34f0800000000000000
+      internalID: -848043689991718422
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_47
+      rect:
+        serializedVersion: 2
+        x: 1164
+        y: 586
+        width: 28
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ad3ed5d343d67870800000000000000
+      internalID: 8680357620107591074
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_48
+      rect:
+        serializedVersion: 2
+        x: 1436
+        y: 648
+        width: 19
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71773bcae48ba9690800000000000000
+      internalID: -7594555173562517737
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_49
+      rect:
+        serializedVersion: 2
+        x: 1488
+        y: 651
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f212efe5fbc1b9290800000000000000
+      internalID: -7882675114523877073
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_50
+      rect:
+        serializedVersion: 2
+        x: 1502
+        y: 649
+        width: 13
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b3487dbc50f560c0800000000000000
+      internalID: -4582992764673178696
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_51
+      rect:
+        serializedVersion: 2
+        x: 1518
+        y: 665
+        width: 10
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58c4d35bc7698b8f0800000000000000
+      internalID: -524503894227858299
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_52
+      rect:
+        serializedVersion: 2
+        x: 1518
+        y: 652
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a23dbb62e7a43a40800000000000000
+      internalID: 5347083248507630246
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_53
+      rect:
+        serializedVersion: 2
+        x: 1524
+        y: 655
+        width: 30
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f666f82503f27a9b0800000000000000
+      internalID: -5069030970992138641
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_54
+      rect:
+        serializedVersion: 2
+        x: 1549
+        y: 657
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a747742791cabaa0800000000000000
+      internalID: -6144385886697601116
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_55
+      rect:
+        serializedVersion: 2
+        x: 1550
+        y: 646
+        width: 28
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0a9935f7214986f0800000000000000
+      internalID: -681942228696196597
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_56
+      rect:
+        serializedVersion: 2
+        x: 1589
+        y: 640
+        width: 47
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1cc1f3dd38f385850800000000000000
+      internalID: 6365907908873362625
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_57
+      rect:
+        serializedVersion: 2
+        x: 1647
+        y: 626
+        width: 60
+        height: 58
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 301a0d5c5e107e970800000000000000
+      internalID: 8783991684587364611
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_58
+      rect:
+        serializedVersion: 2
+        x: 1727
+        y: 594
+        width: 62
+        height: 90
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe377b117f29f84d0800000000000000
+      internalID: -3130121626147392529
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_59
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: 642
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25434943b75cbdde0800000000000000
+      internalID: -1307234133867219886
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_60
+      rect:
+        serializedVersion: 2
+        x: 1810
+        y: 659
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eaea793de1d30ad70800000000000000
+      internalID: 9052302453622943406
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_61
+      rect:
+        serializedVersion: 2
+        x: 1816
+        y: 626
+        width: 19
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52559225976d81f00800000000000000
+      internalID: 1087855126567802149
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_62
+      rect:
+        serializedVersion: 2
+        x: 1858
+        y: 614
+        width: 28
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 526f103be9a7c4680800000000000000
+      internalID: -8769499552370526683
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_63
+      rect:
+        serializedVersion: 2
+        x: 1882
+        y: 642
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1a2564a6ef0ee100800000000000000
+      internalID: 139066121770052122
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_64
+      rect:
+        serializedVersion: 2
+        x: 2065
+        y: 610
+        width: 52
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc725bb06a3b4b570800000000000000
+      internalID: 8481601523987851212
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_65
+      rect:
+        serializedVersion: 2
+        x: 2094
+        y: 655
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cde89db750f03c1d0800000000000000
+      internalID: -3331802783096926500
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_66
+      rect:
+        serializedVersion: 2
+        x: 1052
+        y: 596
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc43c99c19867e3f0800000000000000
+      internalID: -871613027510897459
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_67
+      rect:
+        serializedVersion: 2
+        x: 1343
+        y: 594
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2074306e1a300b6c0800000000000000
+      internalID: -4129796864415152382
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_68
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 28
+        width: 2168
+        height: 512
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8a99a2d1cc623ca0800000000000000
+      internalID: -6038644570631595380
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_69
+      rect:
+        serializedVersion: 2
+        x: 249
+        y: 33
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfb9fcd871d0b0530800000000000000
+      internalID: 3822163103568600059
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_70
+      rect:
+        serializedVersion: 2
+        x: 253
+        y: 35
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9ef436e911b12280800000000000000
+      internalID: -9069773449752936805
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_71
+      rect:
+        serializedVersion: 2
+        x: 378
+        y: 95
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2808d3b295f8a06e0800000000000000
+      internalID: -1870525082078707582
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_72
+      rect:
+        serializedVersion: 2
+        x: 442
+        y: 98
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 73c33a22ab2468410800000000000000
+      internalID: 1478942894850260023
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_73
+      rect:
+        serializedVersion: 2
+        x: 571
+        y: 95
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 087ad0403ed158790800000000000000
+      internalID: -7528578341217130624
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_74
+      rect:
+        serializedVersion: 2
+        x: 875
+        y: 99
+        width: 8
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da28b05f5208a3e00800000000000000
+      internalID: 1025272765693526701
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_75
+      rect:
+        serializedVersion: 2
+        x: 1249
+        y: 23
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c006a83e6baf4c520800000000000000
+      internalID: 2721575738247110668
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_76
+      rect:
+        serializedVersion: 2
+        x: 1281
+        y: 63
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d30e196181552c10800000000000000
+      internalID: 2028116823456482264
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_77
+      rect:
+        serializedVersion: 2
+        x: 1464
+        y: 79
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2451b84ad2ff89b80800000000000000
+      internalID: -8387673734478359230
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_78
+      rect:
+        serializedVersion: 2
+        x: 1480
+        y: 71
+        width: 9
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 718a6ffc6103721b0800000000000000
+      internalID: -5681519530368129001
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_79
+      rect:
+        serializedVersion: 2
+        x: 1520
+        y: 90
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6034f38141900d0d0800000000000000
+      internalID: -3400207736753929466
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_80
+      rect:
+        serializedVersion: 2
+        x: 1523
+        y: 91
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a8d149e140d026fe0800000000000000
+      internalID: -1197380239583076982
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_81
+      rect:
+        serializedVersion: 2
+        x: 1681
+        y: 93
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39662c38848a6f130800000000000000
+      internalID: 3600249981530957459
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_82
+      rect:
+        serializedVersion: 2
+        x: 1719
+        y: 129
+        width: 22
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8db7cccbfccb481c0800000000000000
+      internalID: -4502266127051883560
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_83
+      rect:
+        serializedVersion: 2
+        x: 1721
+        y: 95
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f7a637ff48508740800000000000000
+      internalID: 5152215074185062387
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_84
+      rect:
+        serializedVersion: 2
+        x: 1725
+        y: 93
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: efafa4b4667839a70800000000000000
+      internalID: 8832552167623293694
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: login_button_85
+      rect:
+        serializedVersion: 2
+        x: 1818
+        y: 47
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d05480a69c0f66d0800000000000000
+      internalID: -2995161386100436782
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    outline: []
+    customData:
+    physicsShape: []
+    bones: []
+    spriteID:
+    internalID: 0
+    vertices: []
+    indices:
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      login_button_0: -4366986214404691306
+      login_button_1: -6524923319836265305
+      login_button_10: -6197222928435838271
+      login_button_11: -3668360933738855311
+      login_button_12: 2185212076960694600
+      login_button_13: 7669024468906202484
+      login_button_14: 7963091406465301974
+      login_button_15: -1776516991669460243
+      login_button_16: -2761400277329548995
+      login_button_17: -2667065267935609045
+      login_button_18: 1058523325435173856
+      login_button_19: 6883279915211978468
+      login_button_2: 1346258204049983261
+      login_button_20: 5416561276211155400
+      login_button_21: 8183214587741191365
+      login_button_22: -3631699833470477317
+      login_button_23: -8356470357124016905
+      login_button_24: -3164234106359247610
+      login_button_25: 6144276543380232273
+      login_button_26: -8340579723631514413
+      login_button_27: -2175278814447637772
+      login_button_28: -3172652844682022703
+      login_button_29: -5195387478440657631
+      login_button_3: 5674718584925517936
+      login_button_30: -1885697375677852717
+      login_button_31: -4025496567979624678
+      login_button_32: 8579316572980458503
+      login_button_33: 6898311800358800350
+      login_button_34: 5480091502784765824
+      login_button_35: 8434021842584746251
+      login_button_36: -9208961470543869487
+      login_button_37: 1045786889626207016
+      login_button_38: -3413424308796369178
+      login_button_39: -8144445251853187791
+      login_button_4: -1785918519803386071
+      login_button_40: 2667960464222236577
+      login_button_41: 7990684253550442386
+      login_button_42: 4486932705928388076
+      login_button_43: -7106048066374798904
+      login_button_44: -4720004927014115944
+      login_button_45: -3443407696448538318
+      login_button_46: -848043689991718422
+      login_button_47: 8680357620107591074
+      login_button_48: -7594555173562517737
+      login_button_49: -7882675114523877073
+      login_button_5: -6617300884024836700
+      login_button_50: -4582992764673178696
+      login_button_51: -524503894227858299
+      login_button_52: 5347083248507630246
+      login_button_53: -5069030970992138641
+      login_button_54: -6144385886697601116
+      login_button_55: -681942228696196597
+      login_button_56: 6365907908873362625
+      login_button_57: 8783991684587364611
+      login_button_58: -3130121626147392529
+      login_button_59: -1307234133867219886
+      login_button_6: -3130404793496436750
+      login_button_60: 9052302453622943406
+      login_button_61: 1087855126567802149
+      login_button_62: -8769499552370526683
+      login_button_63: 139066121770052122
+      login_button_64: 8481601523987851212
+      login_button_65: -3331802783096926500
+      login_button_66: -871613027510897459
+      login_button_67: -4129796864415152382
+      login_button_68: -6038644570631595380
+      login_button_69: 3822163103568600059
+      login_button_7: 7959065217163829705
+      login_button_70: -9069773449752936805
+      login_button_71: -1870525082078707582
+      login_button_72: 1478942894850260023
+      login_button_73: -7528578341217130624
+      login_button_74: 1025272765693526701
+      login_button_75: 2721575738247110668
+      login_button_76: 2028116823456482264
+      login_button_77: -8387673734478359230
+      login_button_78: -5681519530368129001
+      login_button_79: -3400207736753929466
+      login_button_8: -4779025585814532606
+      login_button_80: -1197380239583076982
+      login_button_81: 3600249981530957459
+      login_button_82: -4502266127051883560
+      login_button_83: 5152215074185062387
+      login_button_84: 8832552167623293694
+      login_button_85: -2995161386100436782
+      login_button_9: -25931237729990996
+  mipmapLimitGroupName:
+  pSDRemoveMatte: 0
+  userData:
+  assetBundleName:
+  assetBundleVariant:

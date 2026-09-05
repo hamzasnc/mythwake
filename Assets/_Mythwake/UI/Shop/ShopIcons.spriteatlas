@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ShopIcons
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 0
+      enableTightPacking: 0
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 2800000, guid: a2c34432b71226644853065b91e0ffec, type: 3}
+    - {fileID: 2800000, guid: a589ad31be60ef14580ee0c749cea706, type: 3}
+    - {fileID: 2800000, guid: 77a92b547d24db44faf8357a839ffdea, type: 3}
+    - {fileID: 2800000, guid: ed54ca508b74e6f4582bb32c934e9974, type: 3}
+    - {fileID: 2800000, guid: 5d292dd2af3d09b4eacd5a61eaca90b2, type: 3}
+    - {fileID: 2800000, guid: 25918dfdaee4647488495e4f85133a5b, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - ed54ca508b74e6f4582bb32c934e9974: 21300000
+    - a589ad31be60ef14580ee0c749cea706: 21300000
+    - a2c34432b71226644853065b91e0ffec: 21300000
+    - 5d292dd2af3d09b4eacd5a61eaca90b2: 21300000
+    - 77a92b547d24db44faf8357a839ffdea: 21300000
+    - 25918dfdaee4647488495e4f85133a5b: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: ed54ca508b74e6f4582bb32c934e9974, type: 3}
+  - {fileID: 21300000, guid: a589ad31be60ef14580ee0c749cea706, type: 3}
+  - {fileID: 21300000, guid: a2c34432b71226644853065b91e0ffec, type: 3}
+  - {fileID: 21300000, guid: 5d292dd2af3d09b4eacd5a61eaca90b2, type: 3}
+  - {fileID: 21300000, guid: 77a92b547d24db44faf8357a839ffdea, type: 3}
+  - {fileID: 21300000, guid: 25918dfdaee4647488495e4f85133a5b, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - shop_icon_bundle_chest
+  - shop_icon_battle_pass
+  - shop_icon_adventurer_satchel
+  - shop_icon_crystal_altar
+  - shop_icon_battle_pass_crest
+  - shop_icon_crystal_vault
+  m_RenderDataMap: {}
+  m_Tag: ShopIcons
+  m_IsVariant: 0

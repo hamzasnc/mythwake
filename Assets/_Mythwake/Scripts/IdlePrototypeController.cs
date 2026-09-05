@@ -1375,6 +1375,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private MythwakeDefinitionSnapshotDto backendDefinitions;
     private bool hasBackendDefinitions;
     private MythwakeRuntimeArtPresenter runtimeArt;
+    private MythwakeShopUI runtimeShopUi;
     private TMP_Text dungeonsHeaderText;
     private TMP_Text dungeonsSubtitleText;
     private TMP_Text runtimeDungeonResultText;
@@ -2466,6 +2467,25 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         ShowScreen(AppScreen.Shop);
+    }
+
+    public void RefreshShopChrome()
+    {
+        ApplyNavigationChromeVisibility();
+    }
+
+    // The shop UI only signals intent. Rewards must be granted by a verified
+    // platform receipt once native IAP is integrated.
+    public void NotifyShopPurchaseRequested(string productId, string displayName, string price)
+    {
+        SetBackendStatus($"Store preview: {displayName} ({price}) selected. IAP receipt validation is not configured yet.");
+        Debug.Log($"Shop purchase intent: {productId} ({price})");
+    }
+
+    public void NotifyShopRestoreRequested()
+    {
+        SetBackendStatus("Store preview: restore purchases requested. IAP receipt validation is not configured yet.");
+        Debug.Log("Shop restore purchases intent.");
     }
 
     private bool ShouldResumeCampaignFightFromVillage()
@@ -9859,6 +9879,10 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         EnsureHeroLevels();
         EnsureHeroEquipment();
         EnsureAccessories();
+        if (runtimeShopUi != null && hasBackendDefinitions)
+        {
+            runtimeShopUi.BindShopOffers(backendDefinitions.shopOffers);
+        }
         damage = GetTeamDamage();
         upgradeCost = GetHeroUpgradeCost(selectedHeroIndex);
 
@@ -11536,7 +11560,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     private void ApplyNavigationChromeVisibility()
     {
-        var hideChrome = activeScreen == AppScreen.Battle && battleTargetMode == BattleTargetMode.Dungeon;
+        if (runtimeShopUi != null)
+        {
+            runtimeShopUi.SetReferenceArtworkVisible(activeScreen == AppScreen.Shop && runtimeShopUi.ShouldShowReferenceArtwork);
+        }
+
+        var shopReferenceVisible = activeScreen == AppScreen.Shop && runtimeShopUi != null && runtimeShopUi.UsesReferenceArtwork;
+        var hideChrome = (activeScreen == AppScreen.Battle && battleTargetMode == BattleTargetMode.Dungeon) || shopReferenceVisible;
         if (topBarRoot != null)
         {
             topBarRoot.gameObject.SetActive(!hideChrome);
@@ -16687,50 +16717,45 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         rootImage.color = new Color(0.015f, 0.02f, 0.032f, 0.99f);
         rootImage.raycastTarget = true;
 
-        CreateLayeredRuntimeBackground(accountStartRoot, new Vector2(1080f, 1920f), 0.24f);
-        var scrim = CreateRuntimePanel(accountStartRoot, "Account Start Scrim", Vector2.zero, new Vector2(1080f, 1920f), new Color(0.01f, 0.012f, 0.02f, 0.66f));
-        scrim.anchorMin = new Vector2(0.5f, 0.5f);
-        scrim.anchorMax = new Vector2(0.5f, 0.5f);
+        var presentationRoot = MythwakeLoginUI.CreatePresentation(accountStartRoot);
 
-        var body = CreateRuntimePanel(accountStartRoot, "Account Start Body", new Vector2(0, -150), new Vector2(880, 1180), new Color(0.035f, 0.048f, 0.072f, 0.88f));
-        CreateRuntimePanel(body, "Account Start Top Accent", new Vector2(0, -10), new Vector2(820, 5), new Color(0.26f, 0.86f, 0.94f, 0.78f));
-        CreateRuntimePanel(body, "Account Start Bottom Accent", new Vector2(0, -1160), new Vector2(820, 5), new Color(0.86f, 0.58f, 0.24f, 0.78f));
-
-        accountStartTitleText = CreateRuntimeText(accountStartRoot, "Account Start Title", "Mythwake", 68, new Vector2(0, -208), new Vector2(860, 96));
+        accountStartTitleText = CreateRuntimeText(presentationRoot, "Account Start Title", "Mythwake", 68, new Vector2(0, -738), new Vector2(860, 96));
         accountStartTitleText.fontStyle = FontStyles.Bold;
+        if (MythwakeLoginUI.HeadingFont != null) accountStartTitleText.font = MythwakeLoginUI.HeadingFont;
         accountStartTitleText.color = new Color(1f, 0.88f, 0.55f);
         accountStartTitleText.textWrappingMode = TextWrappingModes.NoWrap;
 
-        accountStartSubtitleText = CreateRuntimeText(accountStartRoot, "Account Start Subtitle", string.Empty, 24, new Vector2(0, -310), new Vector2(790, 82));
+        accountStartSubtitleText = CreateRuntimeText(presentationRoot, "Account Start Subtitle", string.Empty, 24, new Vector2(0, -834), new Vector2(650, 62));
         accountStartSubtitleText.color = new Color(0.78f, 0.92f, 1f);
         ConfigureRuntimeTextFit(accountStartSubtitleText, 17f, 24f);
 
-        accountStartStatusText = CreateRuntimeText(accountStartRoot, "Account Start Status", string.Empty, 22, new Vector2(0, -432), new Vector2(790, 172));
+        accountStartStatusText = CreateRuntimeText(presentationRoot, "Account Start Status", string.Empty, 22, new Vector2(0, -922), new Vector2(660, 148));
         accountStartStatusText.color = new Color(0.92f, 0.96f, 1f);
         ConfigureRuntimeTextFit(accountStartStatusText, 15f, 22f);
 
-        accountStartContinueButton = CreateRuntimeButton(accountStartRoot, "Account Start Continue Button", "Continue", 0, -648, 680, 78);
-        accountStartEmailLoginButton = CreateRuntimeButton(accountStartRoot, "Account Start Email Login Button", "Email Login", 0, -748, 680, 78);
-        accountStartEmailRegisterButton = CreateRuntimeButton(accountStartRoot, "Account Start Email Register Button", "Register", 0, -848, 680, 78);
-        accountStartGuestButton = CreateRuntimeButton(accountStartRoot, "Account Start Guest Button", "Play as Guest", 0, -948, 680, 78);
+        accountStartContinueButton = CreateRuntimeButton(presentationRoot, "Account Start Continue Button", "Continue", 0, -1114, 660, 94);
+        accountStartEmailLoginButton = CreateRuntimeButton(presentationRoot, "Account Start Email Login Button", "Email Login", 0, -1228, 660, 94);
+        accountStartEmailRegisterButton = CreateRuntimeButton(presentationRoot, "Account Start Email Register Button", "Register", 0, -1342, 660, 94);
+        accountStartGuestButton = CreateRuntimeButton(presentationRoot, "Account Start Guest Button", "Play as Guest", 0, -1456, 660, 94);
         ConfigureRuntimeButtonLabelFit(accountStartContinueButton, 15f, 24f);
         ConfigureRuntimeButtonLabelFit(accountStartGuestButton, 15f, 24f);
         ConfigureRuntimeButtonLabelFit(accountStartEmailLoginButton, 15f, 24f);
         ConfigureRuntimeButtonLabelFit(accountStartEmailRegisterButton, 15f, 24f);
 
-        accountStartGoogleHintText = CreateRuntimeText(accountStartRoot, "Account Start Google Hint", string.Empty, 20, new Vector2(0, -1068), new Vector2(790, 56));
+        accountStartGoogleHintText = CreateRuntimeText(presentationRoot, "Account Start Google Hint", string.Empty, 20, new Vector2(0, -1590), new Vector2(640, 60));
         accountStartGoogleHintText.color = new Color(0.78f, 0.86f, 0.95f);
         ConfigureRuntimeTextFit(accountStartGoogleHintText, 14f, 20f);
 
-        accountStartVersionText = CreateRuntimeText(accountStartRoot, "Account Start Version", string.Empty, 16, new Vector2(0, -1148), new Vector2(790, 34));
+        accountStartVersionText = CreateRuntimeText(presentationRoot, "Account Start Version", string.Empty, 16, new Vector2(0, -1680), new Vector2(790, 34));
         accountStartVersionText.color = new Color(0.58f, 0.68f, 0.8f);
         accountStartVersionText.textWrappingMode = TextWrappingModes.NoWrap;
 
-        accountStartEmailPanelRoot = CreateRuntimePanel(accountStartRoot, "Account Start Email Panel", new Vector2(0, -406), new Vector2(820, 650), new Color(0.025f, 0.032f, 0.046f, 0.99f));
+        accountStartEmailPanelRoot = CreateRuntimePanel(presentationRoot, "Account Start Email Panel", new Vector2(0, -902), new Vector2(750, 650), new Color(0.025f, 0.032f, 0.046f, 0.99f));
         accountStartEmailPanelRoot.GetComponent<Image>().raycastTarget = true;
-        CreateRuntimePanel(accountStartEmailPanelRoot, "Account Start Email Accent", new Vector2(0, -10), new Vector2(760, 5), new Color(0.26f, 0.86f, 0.94f, 0.82f));
+        CreateRuntimePanel(accountStartEmailPanelRoot, "Account Start Email Accent", new Vector2(0, -10), new Vector2(650, 3), new Color(0.26f, 0.86f, 0.94f, 0.82f));
         accountStartEmailTitleText = CreateRuntimeText(accountStartEmailPanelRoot, "Account Start Email Title", string.Empty, 32, new Vector2(0, -48), new Vector2(720, 54));
         accountStartEmailTitleText.fontStyle = FontStyles.Bold;
+        if (MythwakeLoginUI.HeadingFont != null) accountStartEmailTitleText.font = MythwakeLoginUI.HeadingFont;
         accountStartEmailTitleText.color = new Color(1f, 0.88f, 0.55f);
         accountStartEmailTitleText.textWrappingMode = TextWrappingModes.NoWrap;
 
@@ -16744,6 +16769,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         accountStartEmailBackButton = CreateRuntimeButton(accountStartEmailPanelRoot, "Account Start Email Back Button", "Back", 176, -428, 300, 70);
         ConfigureRuntimeButtonLabelFit(accountStartEmailSubmitButton, 15f, 23f);
         ConfigureRuntimeButtonLabelFit(accountStartEmailBackButton, 15f, 23f);
+
+        MythwakeLoginUI.StyleButton(accountStartContinueButton, true);
+        MythwakeLoginUI.StyleButton(accountStartEmailLoginButton, false);
+        MythwakeLoginUI.StyleButton(accountStartEmailRegisterButton, false);
+        MythwakeLoginUI.StyleButton(accountStartGuestButton, false);
+        MythwakeLoginUI.StylePanel(accountStartEmailPanelRoot.GetComponent<Image>());
+        MythwakeLoginUI.StyleButton(accountStartEmailSubmitButton, true);
+        MythwakeLoginUI.StyleButton(accountStartEmailBackButton, false);
+        MythwakeLoginUI.StyleInput(accountStartEmailInput);
+        MythwakeLoginUI.StyleInput(accountStartPasswordInput);
 
         SetComponentActive(accountStartEmailPanelRoot, false);
         SetComponentActive(accountStartRoot, false);
@@ -17314,6 +17349,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         LayoutShopScreen();
         LayoutPrototypeTools();
         ApplyAfkInspiredTextSkin();
+        EnsureRuntimeShopUi();
     }
 
 #if UNITY_EDITOR
@@ -23571,6 +23607,72 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         MoveUiElement(debugAccessoryButton, shopPanel, new Vector2(315, -1196), new Vector2(150, 50));
         MoveUiElement(debugAwakeningShardsButton, shopPanel, new Vector2(-160, -1260), new Vector2(190, 50));
         MoveUiElement(debugHeroShardChestButton, shopPanel, new Vector2(160, -1260), new Vector2(190, 50));
+    }
+
+    private void EnsureRuntimeShopUi()
+    {
+        if (shopPanel == null || runtimeShopUi != null)
+        {
+            return;
+        }
+
+        var legacyShopChildren = new List<GameObject>();
+        for (var i = 0; i < shopPanel.transform.childCount; i++)
+        {
+            var child = shopPanel.transform.GetChild(i);
+            if (child != null)
+            {
+                legacyShopChildren.Add(child.gameObject);
+            }
+        }
+
+        runtimeShopUi = shopPanel.GetComponent<MythwakeShopUI>();
+        if (runtimeShopUi == null)
+        {
+            runtimeShopUi = shopPanel.AddComponent<MythwakeShopUI>();
+        }
+
+        runtimeShopUi.Build(this);
+        runtimeShopUi.BindProgression(
+            dailyMissionTexts,
+            dailyMissionButtons,
+            battlePassProgressText,
+            battlePassRewardTexts,
+            battlePassRewardButtons);
+
+        if (hasBackendDefinitions)
+        {
+            runtimeShopUi.BindShopOffers(backendDefinitions.shopOffers);
+        }
+
+        var backendPanel = backendStatusText != null && backendStatusText.transform.parent != null
+            ? backendStatusText.transform.parent.GetComponent<RectTransform>()
+            : null;
+        runtimeShopUi.BindDeveloperTools(
+            backendPanel,
+            resetButton,
+            debugGoldButton,
+            debugEssenceButton,
+            debugGemsButton,
+            debugAccessoryButton,
+            debugAwakeningShardsButton,
+            debugHeroShardChestButton);
+
+        // Everything not explicitly moved into the new shop remains legacy UI and
+        // must not leak into the player-facing storefront.
+        for (var i = 0; i < legacyShopChildren.Count; i++)
+        {
+            var legacyChild = legacyShopChildren[i];
+            if (legacyChild != null && legacyChild.transform.parent == shopPanel.transform)
+            {
+                legacyChild.SetActive(false);
+            }
+        }
+
+        // The reference artwork includes its own resource bar and bottom navigation.
+        // Re-evaluate the global chrome after the runtime shop has been created so the
+        // first frame cannot show a duplicate bar over the artwork.
+        ApplyNavigationChromeVisibility();
     }
 
     private void ApplyAfkInspiredTextSkin()
