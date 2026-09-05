@@ -13,6 +13,8 @@ design into the available portrait area, keeping artwork and controls together.
   source loaded as a regular texture. Runtime `RawImage` controls crop the
   painted button and remain the live click targets. This avoids Android falling
   back to the brown default button when a generated multi-sprite cannot load.
+  The legacy `Image` component is disabled, and account buttons are excluded
+  from the global runtime button skin so the old brown layer cannot reappear.
 - Headings use [Cinzel Bold](https://github.com/google-fonts-bower/cinzel-bower),
   with its OFL license bundled beside the font in `UI/Fonts/OFL.txt`.
 

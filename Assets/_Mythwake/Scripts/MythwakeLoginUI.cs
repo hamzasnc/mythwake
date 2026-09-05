@@ -128,6 +128,7 @@ public static class MythwakeLoginUI
         image.sprite = null;
         image.color = Color.clear;
         image.raycastTarget = false;
+        image.enabled = false;
         return artwork;
     }
 }

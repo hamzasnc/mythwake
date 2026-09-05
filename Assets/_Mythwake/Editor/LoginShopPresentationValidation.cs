@@ -28,6 +28,9 @@ public static class LoginShopPresentationValidation
             var output = Path.GetFullPath("docs/screenshots/login-shop");
             Directory.CreateDirectory(output);
             Call(controller, "ShowAccountStartScreen", new object[] { null });
+            // Reproduce the player initialization order that previously restored
+            // the brown global button skin behind the login artwork.
+            Call(controller, "EnsureRuntimeArtUi");
             AssertLoginButtonArtwork(controller, "accountStartContinueButton");
             AssertLoginButtonArtwork(controller, "accountStartEmailLoginButton");
             AssertLoginButtonArtwork(controller, "accountStartEmailRegisterButton");
@@ -72,6 +75,9 @@ public static class LoginShopPresentationValidation
         var artwork = button.transform.Find("Login Button Artwork")?.GetComponent<RawImage>();
         if (artwork == null || artwork.texture == null || button.targetGraphic != artwork)
             throw new InvalidOperationException(fieldName + " should use the packed login artwork as its live target graphic.");
+        var legacyImage = button.GetComponent<Image>();
+        if (legacyImage != null && legacyImage.enabled)
+            throw new InvalidOperationException(fieldName + " should keep its legacy button image disabled.");
     }
     private static void Capture(Canvas canvas, string path)
     {
