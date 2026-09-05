@@ -34,6 +34,11 @@ Battle Pass artwork and its interactions live inside a clipped body viewport;
 its separate baked header and footer are no longer displayed. Its content fits
 inside the viewport, including the premium reward row.
 
+The shared resource bar, tabs, menu and bottom navigation use a dedicated hit
+layer above secondary tab content. The gem and gold plus controls select the
+Crystals and Bundles tabs; the crest, management menu and every bottom navigation
+destination remain usable from Crystals, Bundles, Battle Pass and Dev.
+
 ## Verification
 
 Unity menu: **Mythwake → Validate Login and Shop Presentation**.

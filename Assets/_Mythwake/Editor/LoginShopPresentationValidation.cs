@@ -47,6 +47,31 @@ public static class LoginShopPresentationValidation
             var position = layer.anchoredPosition;
             var scale = layer.localScale;
             var tabType = typeof(MythwakeShopUI).GetNestedType("ShopTab", BindingFlags.NonPublic);
+            Call(shop, "SelectTab", Enum.Parse(tabType, "Crystals"));
+            ClickShopChrome(shop, "Reference Gem Plus");
+            AssertShopTabContent(shop, 1, "Gem plus should select Crystals.");
+            ClickShopChrome(shop, "Reference Gold Plus");
+            AssertShopTabContent(shop, 2, "Gold plus should select Bundles.");
+            ClickShopChrome(shop, "Reference Management Menu");
+            if (!Field<RectTransform>(controller, "managementPopupRoot").gameObject.activeInHierarchy)
+                throw new InvalidOperationException("Shop management menu should open from a secondary tab.");
+            Call(controller, "HideManagementPopup");
+
+            var navigationButtons = new[]
+            {
+                "Reference Heroes Navigation", "Reference Village Navigation", "Reference Home Navigation",
+                "Reference Dungeons Navigation", "Reference Summon Navigation"
+            };
+            var navigationPanels = new[] { "heroesPanel", "villagePanel", "homePanel", "dungeonsPanel", "summonPanel" };
+            for (var i = 0; i < navigationButtons.Length; i++)
+            {
+                controller.ShowShop();
+                Call(shop, "SelectTab", Enum.Parse(tabType, "Crystals"));
+                ClickShopChrome(shop, navigationButtons[i]);
+                if (!Field<GameObject>(controller, navigationPanels[i]).activeInHierarchy)
+                    throw new InvalidOperationException(navigationButtons[i] + " should work from a secondary shop tab.");
+            }
+            controller.ShowShop();
             foreach (var tab in new[] { "Featured", "Crystals", "Bundles", "BattlePass", "Featured" })
             {
                 Call(shop, "SelectTab", Enum.Parse(tabType, tab));
@@ -69,6 +94,21 @@ public static class LoginShopPresentationValidation
 
     private static T Field<T>(object owner, string name) => (T)owner.GetType().GetField(name, Flags).GetValue(owner);
     private static void Call(object owner, string name, params object[] args) => owner.GetType().GetMethod(name, Flags).Invoke(owner, args);
+    private static void ClickShopChrome(MythwakeShopUI shop, string name)
+    {
+        var layer = Field<RectTransform>(shop, "referenceChromeHitLayer");
+        var button = layer.Find(name)?.GetComponent<Button>();
+        if (button == null || !button.gameObject.activeInHierarchy)
+            throw new InvalidOperationException(name + " should be active on top of secondary shop content.");
+        button.onClick.Invoke();
+        Canvas.ForceUpdateCanvases();
+    }
+    private static void AssertShopTabContent(MythwakeShopUI shop, int index, string error)
+    {
+        var roots = Field<RectTransform[]>(shop, "contentRoots");
+        if (roots == null || index >= roots.Length || !roots[index].gameObject.activeSelf)
+            throw new InvalidOperationException(error);
+    }
     private static void AssertLoginButtonArtwork(object controller, string fieldName)
     {
         var button = Field<Button>(controller, fieldName);

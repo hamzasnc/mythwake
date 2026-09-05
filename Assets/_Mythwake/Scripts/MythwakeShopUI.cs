@@ -64,6 +64,7 @@ public sealed class MythwakeShopUI : MonoBehaviour
     private TMP_Text purchaseModalBody;
     private TMP_Text purchaseModalPrice;
     private RectTransform referenceLayer;
+    private RectTransform referenceChromeHitLayer;
     private RectTransform battlePassArtworkLayer;
     private ScrollRect battlePassRewardScrollRect;
     private RectTransform battlePassRewardContent;
@@ -1114,13 +1115,26 @@ public sealed class MythwakeShopUI : MonoBehaviour
             return;
         }
 
+        var canvasParent = referenceLayer.parent != null ? referenceLayer.parent : transform;
+        referenceChromeHitLayer = new GameObject("Shop Chrome Hit Layer", typeof(RectTransform)).GetComponent<RectTransform>();
+        referenceChromeHitLayer.SetParent(canvasParent, false);
+        referenceChromeHitLayer.anchorMin = referenceChromeHitLayer.anchorMax = new Vector2(0.5f, 0.5f);
+        referenceChromeHitLayer.pivot = new Vector2(0.5f, 0.5f);
+        referenceChromeHitLayer.anchoredPosition = Vector2.zero;
+        referenceChromeHitLayer.sizeDelta = new Vector2(1080f, 1920f);
+
         // Coordinates are in the same 1080x1920 portrait reference space as the
         // CanvasScaler, so the artwork and its hit areas stay aligned on Android.
-        CreateReferenceHitArea("Reference Featured Tab", new Vector2(-401f, -226f), new Vector2(202f, 88f), () => SelectTab(ShopTab.Featured));
-        CreateReferenceHitArea("Reference Crystals Tab", new Vector2(-197f, -226f), new Vector2(196f, 88f), () => SelectTab(ShopTab.Crystals));
-        CreateReferenceHitArea("Reference Bundles Tab", new Vector2(8f, -226f), new Vector2(196f, 88f), () => SelectTab(ShopTab.Bundles));
-        CreateReferenceHitArea("Reference Battle Pass Tab", new Vector2(211f, -226f), new Vector2(210f, 88f), () => SelectTab(ShopTab.BattlePass));
-        CreateReferenceHitArea("Reference Dev Tab", new Vector2(410f, -226f), new Vector2(190f, 88f), () => SelectTab(ShopTab.Dev));
+        CreateReferenceChromeHitArea("Reference Featured Tab", new Vector2(-401f, -226f), new Vector2(202f, 88f), () => SelectTab(ShopTab.Featured));
+        CreateReferenceChromeHitArea("Reference Crystals Tab", new Vector2(-197f, -226f), new Vector2(196f, 88f), () => SelectTab(ShopTab.Crystals));
+        CreateReferenceChromeHitArea("Reference Bundles Tab", new Vector2(8f, -226f), new Vector2(196f, 88f), () => SelectTab(ShopTab.Bundles));
+        CreateReferenceChromeHitArea("Reference Battle Pass Tab", new Vector2(211f, -226f), new Vector2(210f, 88f), () => SelectTab(ShopTab.BattlePass));
+        CreateReferenceChromeHitArea("Reference Dev Tab", new Vector2(410f, -226f), new Vector2(190f, 88f), () => SelectTab(ShopTab.Dev));
+
+        CreateReferenceChromeHitArea("Reference Home Crest", new Vector2(-455f, -45f), new Vector2(170f, 150f), controller.ShowHome);
+        CreateReferenceChromeHitArea("Reference Gem Plus", new Vector2(100f, -52f), new Vector2(90f, 90f), () => SelectTab(ShopTab.Crystals));
+        CreateReferenceChromeHitArea("Reference Gold Plus", new Vector2(380f, -52f), new Vector2(90f, 90f), () => SelectTab(ShopTab.Bundles));
+        CreateReferenceChromeHitArea("Reference Management Menu", new Vector2(490f, -52f), new Vector2(100f, 100f), controller.ShowShopManagementPopup);
 
         // The hit areas intentionally cover the complete offer card rather than only
         // the printed price so taps remain forgiving on phones with different touch
@@ -1132,17 +1146,27 @@ public sealed class MythwakeShopUI : MonoBehaviour
         CreateReferenceHitArea("Reference Legendary Purchase", new Vector2(283f, -1160f), new Vector2(500f, 410f), () => ShowPurchaseNotice(new ShopOffer("legendary_chest", "Legendary Chest", "5,000 Crystals, 250K Gold and 25 Essence", "€19.99", "home_treasure_chest_button")));
         CreateReferenceHitArea("Reference Restore Purchases", new Vector2(0f, -1590f), new Vector2(420f, 86f), ShowRestorePurchasesNotice);
 
-        CreateReferenceHitArea("Reference Heroes Navigation", new Vector2(-390f, -1800f), new Vector2(220f, 180f), controller.ShowHeroes);
-        CreateReferenceHitArea("Reference Village Navigation", new Vector2(-190f, -1800f), new Vector2(220f, 180f), controller.ShowVillage);
-        CreateReferenceHitArea("Reference Home Navigation", new Vector2(0f, -1800f), new Vector2(220f, 180f), controller.ShowHome);
-        CreateReferenceHitArea("Reference Dungeons Navigation", new Vector2(205f, -1800f), new Vector2(220f, 180f), controller.ShowDungeons);
-        CreateReferenceHitArea("Reference Summon Navigation", new Vector2(405f, -1800f), new Vector2(220f, 180f), controller.ShowSummon);
+        CreateReferenceChromeHitArea("Reference Heroes Navigation", new Vector2(-390f, -1800f), new Vector2(220f, 180f), controller.ShowHeroes);
+        CreateReferenceChromeHitArea("Reference Village Navigation", new Vector2(-190f, -1800f), new Vector2(220f, 180f), controller.ShowVillage);
+        CreateReferenceChromeHitArea("Reference Home Navigation", new Vector2(0f, -1800f), new Vector2(220f, 180f), controller.ShowHome);
+        CreateReferenceChromeHitArea("Reference Dungeons Navigation", new Vector2(205f, -1800f), new Vector2(220f, 180f), controller.ShowDungeons);
+        CreateReferenceChromeHitArea("Reference Summon Navigation", new Vector2(405f, -1800f), new Vector2(220f, 180f), controller.ShowSummon);
     }
 
     private void CreateReferenceHitArea(string name, Vector2 position, Vector2 size, Action callback)
     {
+        CreateHitArea(referenceLayer, name, position, size, callback);
+    }
+
+    private void CreateReferenceChromeHitArea(string name, Vector2 position, Vector2 size, Action callback)
+    {
+        CreateHitArea(referenceChromeHitLayer, name, position, size, callback);
+    }
+
+    private static void CreateHitArea(Transform parent, string name, Vector2 position, Vector2 size, Action callback)
+    {
         var buttonObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-        buttonObject.transform.SetParent(referenceLayer, false);
+        buttonObject.transform.SetParent(parent, false);
         var rect = buttonObject.GetComponent<RectTransform>();
         PlaceTop(rect, position, size);
 
@@ -1189,6 +1213,12 @@ public sealed class MythwakeShopUI : MonoBehaviour
         if (tabContentLayer != null)
         {
             tabContentLayer.gameObject.SetActive(visible && !referenceTabSelected && !showBattlePassArtwork);
+        }
+        if (referenceChromeHitLayer != null)
+        {
+            referenceChromeHitLayer.gameObject.SetActive(visible);
+            if (visible)
+                referenceChromeHitLayer.SetAsLastSibling();
         }
         UpdateReferenceTabDecorations();
     }

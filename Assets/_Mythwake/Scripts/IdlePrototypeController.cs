@@ -2474,6 +2474,16 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         ApplyNavigationChromeVisibility();
     }
 
+    public void ShowShopManagementPopup()
+    {
+        if (topBarRoot != null)
+        {
+            topBarRoot.gameObject.SetActive(true);
+            topBarRoot.SetAsLastSibling();
+        }
+        ShowManagementPopup();
+    }
+
     // The shop UI only signals intent. Rewards must be granted by a verified
     // platform receipt once native IAP is integrated.
     public void NotifyShopPurchaseRequested(string productId, string displayName, string price)
@@ -2833,6 +2843,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void HideManagementPopup()
     {
         SetManagementPopupVisible(false);
+        ApplyNavigationChromeVisibility();
     }
 
     private void SelectManagementProfile() => SelectManagementMenuMode(ManagementMenuMode.Profile);
