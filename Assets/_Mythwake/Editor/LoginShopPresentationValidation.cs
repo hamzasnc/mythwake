@@ -55,6 +55,11 @@ public static class LoginShopPresentationValidation
             ClickShopChrome(shop, "Reference Management Menu");
             if (!Field<RectTransform>(controller, "managementPopupRoot").gameObject.activeInHierarchy)
                 throw new InvalidOperationException("Shop management menu should open from a secondary tab.");
+            if (Field<RectTransform>(controller, "topBarRoot").gameObject.activeSelf)
+                throw new InvalidOperationException("Opening the shop menu must not reveal the legacy resource bar.");
+            if (!layer.gameObject.activeInHierarchy)
+                throw new InvalidOperationException("The reference shop chrome should remain visible behind its menu.");
+            Capture(canvas, Path.Combine(output, "shop-management-menu.png"));
             Call(controller, "HideManagementPopup");
 
             var navigationButtons = new[]

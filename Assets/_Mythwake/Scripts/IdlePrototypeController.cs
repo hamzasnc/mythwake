@@ -1454,6 +1454,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private RawImage topbarFrameImage;
     private Button topManagementMenuButton;
     private RectTransform managementPopupRoot;
+    private Transform managementPopupDefaultParent;
     private Button managementCloseButton;
     private Button managementProfileButton;
     private Button managementOptionsButton;
@@ -2476,12 +2477,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
     public void ShowShopManagementPopup()
     {
-        if (topBarRoot != null)
+        if (managementPopupRoot == null || topBarRoot == null)
         {
-            topBarRoot.gameObject.SetActive(true);
-            topBarRoot.SetAsLastSibling();
+            return;
         }
+
+        managementPopupDefaultParent ??= managementPopupRoot.parent;
+        var overlayParent = topBarRoot.parent != null ? topBarRoot.parent : transform;
+        managementPopupRoot.SetParent(overlayParent, false);
+        SetRuntimeRect(managementPopupRoot, new Vector2(138, -102), new Vector2(760, 600), new Vector2(0.5f, 1f));
         ShowManagementPopup();
+        managementPopupRoot.SetAsLastSibling();
     }
 
     // The shop UI only signals intent. Rewards must be granted by a verified
@@ -26581,6 +26587,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         managementPopupRoot.gameObject.SetActive(isVisible);
         if (!isVisible)
         {
+            RestoreManagementPopupParent();
             return;
         }
 
@@ -26616,6 +26623,17 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshManagementPopupUi();
+    }
+
+    private void RestoreManagementPopupParent()
+    {
+        if (managementPopupRoot == null || managementPopupDefaultParent == null || managementPopupRoot.parent == managementPopupDefaultParent)
+        {
+            return;
+        }
+
+        managementPopupRoot.SetParent(managementPopupDefaultParent, false);
+        SetRuntimeRect(managementPopupRoot, new Vector2(138, -102), new Vector2(760, 600), new Vector2(0.5f, 1f));
     }
 
     private void ToggleHomeShortcuts()

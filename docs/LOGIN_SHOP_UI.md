@@ -38,6 +38,9 @@ The shared resource bar, tabs, menu and bottom navigation use a dedicated hit
 layer above secondary tab content. The gem and gold plus controls select the
 Crystals and Bundles tabs; the crest, management menu and every bottom navigation
 destination remain usable from Crystals, Bundles, Battle Pass and Dev.
+When opened from the shop, the management popup is temporarily hosted directly
+by the main canvas. The legacy runtime resource bar therefore remains hidden
+behind the illustrated shop header.
 
 ## Verification
 
