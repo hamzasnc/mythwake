@@ -10,8 +10,9 @@ design into the available portrait area, keeping artwork and controls together.
 - `Assets/_Mythwake/Resources/Mythwake/UI/Login/login_background.png`: three
   runtime UV slices, design rows 0–720, 720–1640, and 1640–1920.
 - `Assets/_Mythwake/Resources/Mythwake/UI/Login/login_button.png`: transparent
-  source; runtime sprite crops the button and uses nine-slice borders to retain
-  the gold ornamentation at different control widths.
+  source loaded as a regular texture. Runtime `RawImage` controls crop the
+  painted button and remain the live click targets. This avoids Android falling
+  back to the brown default button when a generated multi-sprite cannot load.
 - Headings use [Cinzel Bold](https://github.com/google-fonts-bower/cinzel-bower),
   with its OFL license bundled beside the font in `UI/Fonts/OFL.txt`.
 

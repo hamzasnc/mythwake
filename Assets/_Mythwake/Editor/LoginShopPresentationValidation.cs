@@ -28,6 +28,10 @@ public static class LoginShopPresentationValidation
             var output = Path.GetFullPath("docs/screenshots/login-shop");
             Directory.CreateDirectory(output);
             Call(controller, "ShowAccountStartScreen", new object[] { null });
+            AssertLoginButtonArtwork(controller, "accountStartContinueButton");
+            AssertLoginButtonArtwork(controller, "accountStartEmailLoginButton");
+            AssertLoginButtonArtwork(controller, "accountStartEmailRegisterButton");
+            AssertLoginButtonArtwork(controller, "accountStartGuestButton");
             Capture(canvas, Path.Combine(output, "login.png"));
             Field<Button>(controller, "accountStartEmailLoginButton").onClick.Invoke();
             Capture(canvas, Path.Combine(output, "email-login.png"));
@@ -62,6 +66,13 @@ public static class LoginShopPresentationValidation
 
     private static T Field<T>(object owner, string name) => (T)owner.GetType().GetField(name, Flags).GetValue(owner);
     private static void Call(object owner, string name, params object[] args) => owner.GetType().GetMethod(name, Flags).Invoke(owner, args);
+    private static void AssertLoginButtonArtwork(object controller, string fieldName)
+    {
+        var button = Field<Button>(controller, fieldName);
+        var artwork = button.transform.Find("Login Button Artwork")?.GetComponent<RawImage>();
+        if (artwork == null || artwork.texture == null || button.targetGraphic != artwork)
+            throw new InvalidOperationException(fieldName + " should use the packed login artwork as its live target graphic.");
+    }
     private static void Capture(Canvas canvas, string path)
     {
         Canvas.ForceUpdateCanvases();

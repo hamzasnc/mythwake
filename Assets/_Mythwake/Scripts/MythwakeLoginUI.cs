@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public static class MythwakeLoginUI
 {
     private static TMP_FontAsset headingFont;
-    private static Sprite buttonSprite;
+    private static Texture2D buttonTexture;
     public static TMP_FontAsset HeadingFont
     {
         get
@@ -66,8 +66,9 @@ public static class MythwakeLoginUI
 
     public static void StyleButton(Button button, bool primary)
     {
-        ApplyLoginButton(button.GetComponent<Image>());
-        button.GetComponent<Image>().color = primary ? Color.white : new Color(.8f, .88f, .92f);
+        var artwork = ApplyLoginButton(button.GetComponent<Image>());
+        artwork.color = primary ? Color.white : new Color(.8f, .88f, .92f);
+        button.targetGraphic = artwork;
         var colors = button.colors;
         colors.normalColor = Color.white;
         colors.highlightedColor = new Color(1f, .94f, .76f);
@@ -84,8 +85,8 @@ public static class MythwakeLoginUI
 
     public static void StyleInput(TMP_InputField input)
     {
-        ApplyLoginButton(input.GetComponent<Image>());
-        input.GetComponent<Image>().color = new Color(.6f, .75f, .85f);
+        var artwork = ApplyLoginButton(input.GetComponent<Image>());
+        artwork.color = new Color(.6f, .75f, .85f);
         input.textComponent.color = new Color(.9f, .96f, 1f);
         if (input.placeholder is TMP_Text placeholder) placeholder.color = new Color(.62f, .75f, .8f);
         if (input.textViewport != null)
@@ -95,19 +96,38 @@ public static class MythwakeLoginUI
         }
     }
 
-    private static void ApplyLoginButton(Image image)
+    private static RawImage ApplyLoginButton(Image image)
     {
-        if (buttonSprite == null)
+        if (buttonTexture == null)
         {
-            var texture = Resources.Load<Texture2D>("Mythwake/UI/Login/login_button");
-            if (texture == null) return;
-            // Slice the painted button out of the transparent source canvas.
-            var x = texture.width / 2172f;
-            var y = texture.height / 724f;
-            buttonSprite = Sprite.Create(texture, new Rect(8*x, (724-522)*y, 2156*x, 340*y), new Vector2(.5f, .5f), 100, 0, SpriteMeshType.FullRect, new Vector4(290*x, 55*y, 290*x, 55*y));
+            buttonTexture = Resources.Load<Texture2D>("Mythwake/UI/Login/login_button");
+            if (buttonTexture == null)
+                throw new MissingReferenceException("Mythwake login button texture is missing from Resources.");
         }
-        image.sprite = buttonSprite;
-        image.type = Image.Type.Sliced;
-        image.pixelsPerUnitMultiplier = 3.6f;
+
+        // RawImage consumes the packed texture directly in Android players. The
+        // former runtime Sprite.Create path could fall back to the brown default
+        // button when Unity imported this file as a multi-sprite texture.
+        var artwork = image.transform.Find("Login Button Artwork")?.GetComponent<RawImage>();
+        if (artwork == null)
+        {
+            var artworkObject = new GameObject("Login Button Artwork", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+            artworkObject.transform.SetParent(image.transform, false);
+            artwork = artworkObject.GetComponent<RawImage>();
+            var rect = artwork.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            artwork.transform.SetAsFirstSibling();
+        }
+
+        artwork.texture = buttonTexture;
+        artwork.uvRect = new Rect(8f / 2172f, 202f / 724f, 2156f / 2172f, 340f / 724f);
+        artwork.raycastTarget = true;
+        image.sprite = null;
+        image.color = Color.clear;
+        image.raycastTarget = false;
+        return artwork;
     }
 }
