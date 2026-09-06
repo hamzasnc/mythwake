@@ -10081,6 +10081,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         RefreshGameplayInteractivity();
         RefreshAccountStartUi();
+        // Gameplay refreshes update colors and interactability. Re-apply the
+        // presentation kit last so runtime state cannot restore placeholder art.
+        EnsureRuntimeCoreScreenFrames();
     }
 
     private void RefreshRuntimeArtUi()
@@ -23117,9 +23120,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
 
         var villageViewportSize = GetTallPhoneVillageMapViewportSize();
         var villageContentSize = GetTallPhoneScrollableMapContentSize(VillageMapSize, villageViewportSize);
-        MoveUiElement(villageHeaderText, villagePanel, new Vector2(0f, -112f), new Vector2(760f, 54f));
-        MoveUiElement(villageHintText, villagePanel, new Vector2(0f, -154f), new Vector2(940f, 36f));
-        MoveUiElement(villageMapViewportRoot, villagePanel, VillageMapPosition, villageViewportSize);
+        MoveUiElement(villageHeaderText, villagePanel, new Vector2(0f, -46f), new Vector2(760f, 54f));
+        MoveUiElement(villageHintText, villagePanel, new Vector2(0f, -84f), new Vector2(940f, 36f));
+        MoveUiElement(villageMapViewportRoot, villagePanel, new Vector2(0f, -122f), villageViewportSize + new Vector2(0f, 70f));
         if (villageMapRoot != null && villageMapViewportRoot != null)
         {
             villageMapRoot.SetParent(villageMapViewportRoot, false);
@@ -23312,9 +23315,9 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         HideRuntimeDungeonWorldMap();
-        MoveUiElement(dungeonsHeaderText, dungeonsPanel, new Vector2(0, -130), new Vector2(860, 48));
-        MoveUiElement(dungeonsSubtitleText, dungeonsPanel, new Vector2(0, -176), new Vector2(840, 34));
-        MoveUiElement(dungeonSelectorPanelRoot, dungeonsPanel, new Vector2(0f, -224f), new Vector2(940f, 1046f));
+        MoveUiElement(dungeonsHeaderText, dungeonsPanel, new Vector2(0, -42), new Vector2(860, 48));
+        MoveUiElement(dungeonsSubtitleText, dungeonsPanel, new Vector2(0, -82), new Vector2(840, 34));
+        MoveUiElement(dungeonSelectorPanelRoot, dungeonsPanel, new Vector2(0f, -124f), new Vector2(940f, 1160f));
         MoveUiElement(dungeonSelectorTitleText, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(0f, -28f), new Vector2(820f, 42f));
         MoveUiElement(dungeonSelectorCardsRoot, dungeonSelectorPanelRoot != null ? dungeonSelectorPanelRoot.gameObject : dungeonsPanel, new Vector2(0f, -108f), new Vector2(890f, 166f));
         LayoutDungeonSelectorCard(goldDungeonButton, -352f);
@@ -23385,7 +23388,13 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             heroCleanBackdropRoot.SetAsFirstSibling();
         }
 
-        MoveUiElement(heroRosterFilterRoot, heroesPanel, new Vector2(0, -186), new Vector2(1080, 104));
+        MoveUiElement(heroRosterFilterRoot, heroesPanel, new Vector2(0, -18), new Vector2(1040, 104));
+        MoveUiElement(heroRosterCountText, heroRosterFilterRoot != null ? heroRosterFilterRoot.gameObject : heroesPanel, new Vector2(-414, -20), new Vector2(112, 56));
+        if (heroRosterCountText != null)
+        {
+            heroRosterCountText.alignment = TextAlignmentOptions.Center;
+            heroRosterCountText.fontSize = 28f;
+        }
         MoveUiElement(heroSortToggleButton, heroRosterFilterRoot != null ? heroRosterFilterRoot.gameObject : heroesPanel, new Vector2(-130, -20), new Vector2(142, 58));
         MoveUiElement(heroAttackTypeFilterButton, heroRosterFilterRoot != null ? heroRosterFilterRoot.gameObject : heroesPanel, new Vector2(250, -20), new Vector2(300, 58));
         MoveUiElement(heroSubTabRoot, heroesPanel, new Vector2(0, -1390), new Vector2(820, 82));
@@ -23409,8 +23418,8 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         const float cardHeight = 278f;
         var xPositions = new[] { -330f, -110f, 110f, 330f };
         var yPositions = heroesTabMode == HeroesTabMode.SetTeam
-            ? new[] { -700f, -996f, -1292f }
-            : new[] { -342f, -638f, -934f };
+            ? new[] { -520f, -816f, -1112f }
+            : new[] { -150f, -446f, -742f };
 
         for (var i = 0; i < heroSelectButtons.Length; i++)
         {
@@ -23563,23 +23572,23 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         var summonHeader = summonPanel != null ? summonPanel.transform.Find("Summon Header")?.GetComponent<RectTransform>() : null;
         if (summonTitle != null)
         {
-            SetRuntimeRect(summonTitle, new Vector2(0f, 118f), new Vector2(820f, 60f), new Vector2(0.5f, 1f));
+            SetRuntimeRect(summonTitle, new Vector2(0f, -42f), new Vector2(820f, 60f), new Vector2(0.5f, 1f));
         }
         if (summonHeader != null)
         {
-            SetRuntimeRect(summonHeader, new Vector2(0f, 54f), new Vector2(900f, 44f), new Vector2(0.5f, 1f));
+            SetRuntimeRect(summonHeader, new Vector2(0f, -88f), new Vector2(900f, 44f), new Vector2(0.5f, 1f));
         }
-        MoveUiElement(summonOfferRoot, summonPanel, new Vector2(0, -20), new Vector2(900, 560));
-        MoveUiElement(summonButton, summonPanel, new Vector2(-210, -606), new Vector2(340, 88));
-        MoveUiElement(summonTenButton, summonPanel, new Vector2(210, -606), new Vector2(340, 88));
+        MoveUiElement(summonOfferRoot, summonPanel, new Vector2(0, -124), new Vector2(900, 560));
+        MoveUiElement(summonButton, summonPanel, new Vector2(-210, -696), new Vector2(340, 88));
+        MoveUiElement(summonTenButton, summonPanel, new Vector2(210, -696), new Vector2(340, 88));
         MoveUiElement(summonSingleCostText, summonButton != null ? summonButton.gameObject : null, new Vector2(-122, -50), new Vector2(58, 18));
         MoveUiElement(summonTenCostText, summonTenButton != null ? summonTenButton.gameObject : null, new Vector2(-122, -50), new Vector2(58, 18));
-        MoveUiElement(summonCarouselRoot, summonPanel, new Vector2(0, -720), new Vector2(900, 164));
+        MoveUiElement(summonCarouselRoot, summonPanel, new Vector2(0, -810), new Vector2(900, 164));
         MoveUiElement(summonCarouselPreviousButton, summonCarouselRoot != null ? summonCarouselRoot.gameObject : null, new Vector2(-366, -40), new Vector2(58, 78));
         MoveUiElement(summonCarouselNextButton, summonCarouselRoot != null ? summonCarouselRoot.gameObject : null, new Vector2(366, -40), new Vector2(58, 78));
-        MoveUiElement(summonResultBoxRoot, summonPanel, new Vector2(0, -898), new Vector2(840, 72));
-        MoveUiElement(summonCountChipRoot, summonPanel, new Vector2(-310, -990), new Vector2(220, 58));
-        MoveUiElement(summonRatesBoxRoot, summonPanel, new Vector2(142, -990), new Vector2(560, 128));
+        MoveUiElement(summonResultBoxRoot, summonPanel, new Vector2(0, -988), new Vector2(840, 72));
+        MoveUiElement(summonCountChipRoot, summonPanel, new Vector2(-310, -1080), new Vector2(220, 58));
+        MoveUiElement(summonRatesBoxRoot, summonPanel, new Vector2(142, -1080), new Vector2(560, 128));
         MoveUiElement(summonResultText, summonResultBoxRoot != null ? summonResultBoxRoot.gameObject : summonPanel, new Vector2(0, -10), new Vector2(700, 50));
         MoveUiElement(summonCountText, summonCountChipRoot != null ? summonCountChipRoot.gameObject : summonPanel, new Vector2(4, -11), new Vector2(176, 32));
         MoveUiElement(summonRatesText, summonRatesBoxRoot != null ? summonRatesBoxRoot.gameObject : summonPanel, new Vector2(0, -22), new Vector2(470, 84));
@@ -26639,16 +26648,229 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
     private void EnsureRuntimeCoreScreenFrames()
     {
         var frameSprite = Resources.Load<Sprite>("Mythwake/UI/Core/ui_screen_frame");
+        var buttonSprite = Resources.Load<Sprite>("Mythwake/UI/Core/ui_action_button");
+        var heroCardSprite = Resources.Load<Sprite>("Mythwake/UI/Core/ui_hero_card_frame");
+        var mapNodeSprite = Resources.Load<Sprite>("Mythwake/UI/Core/ui_map_node");
         if (frameSprite == null)
         {
             return;
         }
 
-        EnsureRuntimeCoreScreenFrame(homeActionRoot != null ? homeActionRoot.gameObject : homePanel, "Campaign Screen Frame", frameSprite, new Vector2(0f, -8f), new Vector2(1060f, 1502f), false);
-        EnsureRuntimeCoreScreenFrame(heroesPanel, "Heroes Screen Frame", frameSprite, new Vector2(0f, -176f), new Vector2(1040f, 1434f), true);
-        EnsureRuntimeCoreScreenFrame(villagePanel, "Village Screen Frame", frameSprite, new Vector2(0f, -176f), new Vector2(1040f, 1434f), false);
-        EnsureRuntimeCoreScreenFrame(dungeonsPanel, "Dungeons Screen Frame", frameSprite, new Vector2(0f, -176f), new Vector2(1040f, 1434f), true);
-        EnsureRuntimeCoreScreenFrame(summonPanel, "Summon Screen Frame", frameSprite, new Vector2(0f, 54f), new Vector2(1040f, 1664f), true);
+        NormalizeRuntimeCorePanel(homePanel);
+        NormalizeRuntimeCorePanel(heroesPanel);
+        NormalizeRuntimeCorePanel(villagePanel);
+        NormalizeRuntimeCorePanel(dungeonsPanel);
+        NormalizeRuntimeCorePanel(summonPanel);
+        EnsureRuntimeCoreScreenFrame(homeActionRoot != null ? homeActionRoot.gameObject : homePanel, "Campaign Screen Frame", frameSprite, Vector2.zero, new Vector2(1060f, 1540f), false);
+        EnsureRuntimeCoreScreenFrame(heroesPanel, "Heroes Screen Frame", frameSprite, Vector2.zero, new Vector2(1040f, 1540f), true);
+        EnsureRuntimeCoreScreenFrame(villagePanel, "Village Screen Frame", frameSprite, Vector2.zero, new Vector2(1040f, 1540f), false);
+        EnsureRuntimeCoreScreenFrame(dungeonsPanel, "Dungeons Screen Frame", frameSprite, Vector2.zero, new Vector2(1040f, 1540f), true);
+        EnsureRuntimeCoreScreenFrame(summonPanel, "Summon Screen Frame", frameSprite, Vector2.zero, new Vector2(1040f, 1540f), true);
+
+        ApplyRuntimeCorePanelSkin(heroRosterFilterRoot, buttonSprite);
+        ApplyRuntimeCorePanelSkin(heroSubTabRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(heroTeamRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(heroDetailRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(heroDetailGearListRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(heroDetailGearConfirmRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(villageBuildPanelRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(villageDemolishPanelRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(dungeonSelectorPanelRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(dungeonDetailRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(dungeonFlowHintRoot, buttonSprite);
+        ApplyRuntimeCorePanelSkin(homeIdleInfoPopupRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(summonOfferRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(summonCarouselRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(summonResultBoxRoot, buttonSprite);
+        ApplyRuntimeCorePanelSkin(summonCountChipRoot, buttonSprite);
+        ApplyRuntimeCorePanelSkin(summonRatesBoxRoot, buttonSprite);
+        ApplyRuntimeCorePanelSkin(summonResultPopupRoot, frameSprite);
+
+        ApplyRuntimeCoreButtonSkin(heroSortToggleButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(heroAttackTypeFilterButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(heroRosterTabButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(heroSetTeamTabButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(heroAutoSetTeamButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(heroDetailLevelButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(heroDetailEquipGearButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(heroDetailRemoveGearButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(heroDetailStarButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(heroDetailOpenChestButton, buttonSprite);
+        ApplyRuntimeCoreCardSkin(heroSelectButtons, heroCardSprite);
+        ApplyRuntimeCoreMapNodeSkin(campaignStageButtons, mapNodeSprite);
+        ApplyRuntimeCoreMapNodeSkin(villagePlotButtons, mapNodeSprite);
+
+        ApplyRuntimeCoreButtonSkin(villageBuildButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(villageBuildCloseButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(villageUpgradeButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(villageDemolishButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(villageDemolishCloseButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(villageBuildOptionButtons, buttonSprite);
+
+        ApplyRuntimeCoreButtonSkin(goldDungeonButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(essenceDungeonButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(gearDungeonButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(shardRiftDungeonButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(ancientTowerDungeonButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(dungeonDetailRunButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(dungeonFloorButtons, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(dungeonMapZoomInButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(dungeonMapZoomOutButton, buttonSprite);
+
+        ApplyRuntimeCoreButtonSkin(summonButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(summonTenButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(summonResultCloseButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(summonResultTenButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(summonResultMaxButton, buttonSprite);
+        ApplyRuntimeCoreButtonSkin(summonAutoToggleButton, buttonSprite);
+
+        ApplyRuntimeCoreButtonSkin(homeIdleInfoCloseButton, buttonSprite);
+    }
+
+    private static void NormalizeRuntimeCorePanel(GameObject panel)
+    {
+        if (panel == null)
+        {
+            return;
+        }
+
+        var rect = panel.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(0f, 65f);
+        rect.sizeDelta = new Vector2(0f, -350f);
+    }
+
+    private static void ApplyRuntimeCorePanelSkin(RectTransform panel, Sprite sprite)
+    {
+        if (panel == null || sprite == null)
+        {
+            return;
+        }
+
+        var image = panel.GetComponent<Image>();
+        if (image == null)
+        {
+            image = panel.gameObject.AddComponent<Image>();
+        }
+
+        image.sprite = sprite;
+        image.type = sprite.name == "ui_action_button" ? Image.Type.Simple : Image.Type.Sliced;
+        image.preserveAspect = false;
+        image.color = Color.white;
+        image.enabled = true;
+        image.raycastTarget = false;
+    }
+
+    private static void ApplyRuntimeCoreButtonSkin(Button[] buttons, Sprite sprite)
+    {
+        if (buttons == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < buttons.Length; i++)
+        {
+            ApplyRuntimeCoreButtonSkin(buttons[i], sprite);
+        }
+    }
+
+    private static void ApplyRuntimeCoreButtonSkin(Button button, Sprite sprite)
+    {
+        if (button == null || sprite == null)
+        {
+            return;
+        }
+
+        var image = button.GetComponent<Image>();
+        if (image == null)
+        {
+            return;
+        }
+
+        image.sprite = sprite;
+        image.type = Image.Type.Simple;
+        image.preserveAspect = false;
+        image.color = Color.white;
+        image.enabled = true;
+        button.targetGraphic = image;
+        var colors = button.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = new Color(1.08f, 1.08f, 1.08f, 1f);
+        colors.pressedColor = new Color(0.72f, 0.9f, 0.94f, 1f);
+        colors.selectedColor = new Color(1f, 0.88f, 0.54f, 1f);
+        colors.disabledColor = new Color(0.34f, 0.38f, 0.4f, 0.72f);
+        button.colors = colors;
+
+        var label = button.GetComponentInChildren<TMP_Text>(includeInactive: true);
+        if (label != null)
+        {
+            label.color = new Color(1f, 0.91f, 0.64f);
+            label.fontStyle = FontStyles.Bold;
+            label.outlineColor = new Color32(34, 15, 5, 220);
+            label.outlineWidth = 0.16f;
+        }
+    }
+
+    private static void ApplyRuntimeCoreCardSkin(Button[] cards, Sprite sprite)
+    {
+        if (cards == null || sprite == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < cards.Length; i++)
+        {
+            var card = cards[i];
+            if (card == null)
+            {
+                continue;
+            }
+
+            var image = card.GetComponent<Image>();
+            if (image == null)
+            {
+                continue;
+            }
+
+            image.sprite = sprite;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = false;
+            image.color = Color.white;
+            image.enabled = true;
+            card.targetGraphic = image;
+        }
+    }
+
+    private static void ApplyRuntimeCoreMapNodeSkin(Button[] nodes, Sprite sprite)
+    {
+        if (nodes == null || sprite == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < nodes.Length; i++)
+        {
+            var node = nodes[i];
+            if (node == null)
+            {
+                continue;
+            }
+
+            var image = node.GetComponent<Image>();
+            if (image == null)
+            {
+                continue;
+            }
+
+            image.sprite = sprite;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = false;
+            image.color = Color.white;
+            image.enabled = true;
+            node.targetGraphic = image;
+        }
     }
 
     private static void EnsureRuntimeCoreScreenFrame(GameObject panel, string frameName, Sprite frameSprite, Vector2 position, Vector2 size, bool addBackdrop)
