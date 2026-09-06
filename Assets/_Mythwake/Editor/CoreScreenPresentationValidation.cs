@@ -38,6 +38,10 @@ public static class CoreScreenPresentationValidation
             Capture(controller, canvas, output, "village", controller.ShowVillage);
             Capture(controller, canvas, output, "dungeons", controller.ShowDungeons);
             Capture(controller, canvas, output, "summon", controller.ShowSummon);
+            Capture(controller, canvas, output, "heroes-team", () => { controller.ShowHeroes(); Call(controller, "ShowHeroesSetTeamTab"); });
+            Capture(controller, canvas, output, "hero-detail", () => { controller.ShowHeroes(); Call(controller, "ShowHeroesRosterTab"); Call(controller, "ShowHeroDetail", 0); });
+            Capture(controller, canvas, output, "village-build", () => { controller.ShowVillage(); Call(controller, "SelectVillagePlot", 0); });
+            Capture(controller, canvas, output, "summon-result", () => { controller.ShowSummon(); Call(controller, "ShowSummonResultPopup", new[] { 1, 0, 0, 0, 0, 0, 0 }, 1); });
             Debug.Log("CORE_SCREEN_PRESENTATION_VALIDATED: panels, cards, map nodes and buttons are live. Screenshots: " + output);
         }
         catch (Exception ex)
@@ -86,8 +90,82 @@ public static class CoreScreenPresentationValidation
         show();
         Call(controller, "RefreshUi");
         Canvas.ForceUpdateCanvases();
+        var panel = Field<GameObject>(controller, name == "campaign" ? "homePanel" : name.StartsWith("hero") ? "heroesPanel" : name.StartsWith("village") ? "villagePanel" : name == "dungeons" ? "dungeonsPanel" : "summonPanel");
+        var lines = new System.Collections.Generic.List<string>();
+        foreach (var rect in panel.GetComponentsInChildren<RectTransform>(true))
+            lines.Add(rect.name + " | active=" + rect.gameObject.activeSelf + " | parent=" + rect.parent.name + " | " + rect.anchoredPosition + " | " + rect.rect.size);
+        File.WriteAllLines(Path.Combine(output, name + "-hierarchy.txt"), lines);
         typeof(PortraitScreenshotAutomation).GetMethod("CaptureCanvas", BindingFlags.Static | BindingFlags.NonPublic)
             .Invoke(null, new object[] { canvas, Path.Combine(output, name + ".png") });
+        if (name == "campaign" || name == "heroes" || name == "village" || name == "dungeons" || name == "summon")
+            CapturePhone(controller, canvas, Path.Combine(output, name + "-phone.png"));
+        if (name == "heroes")
+        {
+            var cards = Field<Button[]>(controller, "heroSelectButtons");
+            for (var i = 0; i < cards.Length; i++)
+            {
+                var rect = cards[i].GetComponent<RectTransform>();
+                if (!cards[i].gameObject.activeInHierarchy || rect.rect.width < 280 || rect.rect.height < 360)
+                    throw new InvalidOperationException("Roster card is hidden or too small: " + i);
+                for (var j = i + 1; j < cards.Length; j++)
+                    if (Bounds(rect).Overlaps(Bounds(cards[j].GetComponent<RectTransform>())))
+                        throw new InvalidOperationException("Roster cards overlap: " + i + "/" + j);
+            }
+            var equipment = panel.transform.Find("Equipment Panel");
+            if (equipment != null && equipment.gameObject.activeInHierarchy)
+                throw new InvalidOperationException("Legacy equipment panel is still visible.");
+        }
+    }
+
+    private static Rect Bounds(RectTransform rect)
+    {
+        var corners = new Vector3[4];
+        rect.GetWorldCorners(corners);
+        return Rect.MinMaxRect(corners[0].x + .1f, corners[0].y + .1f, corners[2].x - .1f, corners[2].y - .1f);
+    }
+
+    private static void CapturePhone(IdlePrototypeController controller, Canvas canvas, string path)
+    {
+        const int width = 540, height = 960;
+        var oldCamera = canvas.worldCamera;
+        var oldMode = canvas.renderMode;
+        var oldScale = canvas.scaleFactor;
+        var oldActive = RenderTexture.active;
+        var cameraObject = new GameObject("Core UI Phone Preview Camera");
+        var camera = cameraObject.AddComponent<Camera>();
+        var target = new RenderTexture(width, height, 24);
+        var texture = new Texture2D(width, height, TextureFormat.RGB24, false);
+        try
+        {
+            camera.targetTexture = target;
+            camera.orthographic = true;
+            camera.orthographicSize = height / 2f;
+            camera.transform.position = new Vector3(0, 0, -10);
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = camera;
+            canvas.planeDistance = 10;
+            canvas.scaleFactor = .5f;
+            Canvas.ForceUpdateCanvases();
+            Call(controller, "RefreshUi");
+            Canvas.ForceUpdateCanvases();
+            camera.Render();
+            RenderTexture.active = target;
+            texture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+            texture.Apply();
+            File.WriteAllBytes(path, texture.EncodeToPNG());
+        }
+        finally
+        {
+            RenderTexture.active = oldActive;
+            canvas.renderMode = oldMode;
+            canvas.worldCamera = oldCamera;
+            canvas.scaleFactor = oldScale;
+            UnityEngine.Object.DestroyImmediate(texture);
+            UnityEngine.Object.DestroyImmediate(target);
+            UnityEngine.Object.DestroyImmediate(cameraObject);
+            Canvas.ForceUpdateCanvases();
+        }
     }
 
     private static T Field<T>(object owner, string name) => (T)owner.GetType().GetField(name, Flags).GetValue(owner);

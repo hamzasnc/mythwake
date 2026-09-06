@@ -9,7 +9,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem.UI;
 #endif
 
-public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
+public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
     public const string PrototypeVersion = "0.2.176";
     public const int CurrentSaveVersion = 2;
@@ -11715,6 +11715,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         RefreshHeroTeamUi();
         RefreshHeroCardVisuals();
         RefreshHeroDetailUi();
+        RefreshReadableCorePresentation();
     }
 
     private void RefreshHeroRosterCardText(int cardIndex, int heroIndex)
@@ -15021,6 +15022,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         {
             runtimeDungeonResultText.text = Tr("dungeon.default_result");
         }
+        RefreshReadableCorePresentation();
     }
 
     private static bool IsDefaultDungeonResultText(string text)
@@ -15916,6 +15918,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshSummonAutoToggle();
+        RefreshReadableCorePresentation();
     }
 
     private void RefreshSummonOfferHeroes(SummonBannerDefinition banner)
@@ -20765,6 +20768,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             villageHintText.text = selectedVillagePlotIndex >= 0
                 ? $"{GetVillagePlotName(selectedVillagePlotIndex)} ausgewaehlt | {bonusSummaryText}"
                 : bonusSummaryText;
+            LayoutReadableVillageHeader();
         }
 
         for (var i = 0; i < VillagePlotCount; i++)
@@ -20864,6 +20868,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             SetButtonLabel(villageUpgradeButton, "Aufwerten");
         }
         RefreshVillageBuildInteractivity(CanInteractWithVillage());
+        RefreshReadableCorePresentation();
     }
 
     private void RefreshVillageBuildOptions(bool hasSelection)
@@ -26725,6 +26730,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         ApplyRuntimeCoreButtonSkin(summonAutoToggleButton, buttonSprite);
 
         ApplyRuntimeCoreButtonSkin(homeIdleInfoCloseButton, buttonSprite);
+        ApplyReadableCoreLayout(frameSprite, buttonSprite, heroCardSprite, mapNodeSprite);
     }
 
     private static void NormalizeRuntimeCorePanel(GameObject panel)
