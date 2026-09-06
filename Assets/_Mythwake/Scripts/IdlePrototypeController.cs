@@ -17365,6 +17365,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         LayoutSummonScreen();
         LayoutShopScreen();
         LayoutPrototypeTools();
+        EnsureRuntimeCoreScreenFrames();
         ApplyAfkInspiredTextSkin();
         EnsureRuntimeShopUi();
     }
@@ -23378,7 +23379,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         HideLegacyHeroesOverviewElements();
 
         MoveUiElement(selectedHeroText, heroesPanel, new Vector2(0, -142), new Vector2(760, 82));
-        MoveUiElement(heroCleanBackdropRoot, heroesPanel, new Vector2(0, -176), new Vector2(1080, 1040));
+        MoveUiElement(heroCleanBackdropRoot, heroesPanel, new Vector2(0, -176), new Vector2(1080, 1434));
         if (heroCleanBackdropRoot != null)
         {
             heroCleanBackdropRoot.SetAsFirstSibling();
@@ -23387,7 +23388,7 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         MoveUiElement(heroRosterFilterRoot, heroesPanel, new Vector2(0, -186), new Vector2(1080, 104));
         MoveUiElement(heroSortToggleButton, heroRosterFilterRoot != null ? heroRosterFilterRoot.gameObject : heroesPanel, new Vector2(-130, -20), new Vector2(142, 58));
         MoveUiElement(heroAttackTypeFilterButton, heroRosterFilterRoot != null ? heroRosterFilterRoot.gameObject : heroesPanel, new Vector2(250, -20), new Vector2(300, 58));
-        MoveUiElement(heroSubTabRoot, heroesPanel, new Vector2(0, -1050), new Vector2(820, 82));
+        MoveUiElement(heroSubTabRoot, heroesPanel, new Vector2(0, -1390), new Vector2(820, 82));
         MoveUiElement(heroRosterTabButton, heroSubTabRoot != null ? heroSubTabRoot.gameObject : heroesPanel, new Vector2(-206, -9), new Vector2(290, 64));
         MoveUiElement(heroSetTeamTabButton, heroSubTabRoot != null ? heroSubTabRoot.gameObject : heroesPanel, new Vector2(136, -9), new Vector2(360, 64));
         MoveUiElement(heroTeamRoot, heroesPanel, new Vector2(0, -288), new Vector2(900, 350));
@@ -23404,12 +23405,12 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
             return;
         }
 
-        const float cardWidth = 154f;
-        const float cardHeight = 226f;
-        var xPositions = new[] { -348f, -174f, 0f, 174f, 348f };
+        const float cardWidth = 190f;
+        const float cardHeight = 278f;
+        var xPositions = new[] { -330f, -110f, 110f, 330f };
         var yPositions = heroesTabMode == HeroesTabMode.SetTeam
-            ? new[] { -670f, -910f, -1150f }
-            : new[] { -332f, -572f, -812f };
+            ? new[] { -700f, -996f, -1292f }
+            : new[] { -342f, -638f, -934f };
 
         for (var i = 0; i < heroSelectButtons.Length; i++)
         {
@@ -23558,17 +23559,27 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         SetComponentActive(summonCostText, false);
         var summonBackdrop = summonPanel != null ? summonPanel.transform.Find("Summon Parchment Backdrop")?.GetComponent<RectTransform>() : null;
         SetComponentActive(summonBackdrop, false);
-        MoveUiElement(summonOfferRoot, summonPanel, new Vector2(0, -312), new Vector2(820, 458));
-        MoveUiElement(summonButton, summonPanel, new Vector2(-190, -786), new Vector2(300, 82));
-        MoveUiElement(summonTenButton, summonPanel, new Vector2(190, -786), new Vector2(300, 82));
+        var summonTitle = summonPanel != null ? summonPanel.transform.Find("Summon Title")?.GetComponent<RectTransform>() : null;
+        var summonHeader = summonPanel != null ? summonPanel.transform.Find("Summon Header")?.GetComponent<RectTransform>() : null;
+        if (summonTitle != null)
+        {
+            SetRuntimeRect(summonTitle, new Vector2(0f, 118f), new Vector2(820f, 60f), new Vector2(0.5f, 1f));
+        }
+        if (summonHeader != null)
+        {
+            SetRuntimeRect(summonHeader, new Vector2(0f, 54f), new Vector2(900f, 44f), new Vector2(0.5f, 1f));
+        }
+        MoveUiElement(summonOfferRoot, summonPanel, new Vector2(0, -20), new Vector2(900, 560));
+        MoveUiElement(summonButton, summonPanel, new Vector2(-210, -606), new Vector2(340, 88));
+        MoveUiElement(summonTenButton, summonPanel, new Vector2(210, -606), new Vector2(340, 88));
         MoveUiElement(summonSingleCostText, summonButton != null ? summonButton.gameObject : null, new Vector2(-122, -50), new Vector2(58, 18));
         MoveUiElement(summonTenCostText, summonTenButton != null ? summonTenButton.gameObject : null, new Vector2(-122, -50), new Vector2(58, 18));
-        MoveUiElement(summonCarouselRoot, summonPanel, new Vector2(0, -900), new Vector2(820, 142));
+        MoveUiElement(summonCarouselRoot, summonPanel, new Vector2(0, -720), new Vector2(900, 164));
         MoveUiElement(summonCarouselPreviousButton, summonCarouselRoot != null ? summonCarouselRoot.gameObject : null, new Vector2(-366, -40), new Vector2(58, 78));
         MoveUiElement(summonCarouselNextButton, summonCarouselRoot != null ? summonCarouselRoot.gameObject : null, new Vector2(366, -40), new Vector2(58, 78));
-        MoveUiElement(summonResultBoxRoot, summonPanel, new Vector2(0, -1046), new Vector2(760, 64));
-        MoveUiElement(summonCountChipRoot, summonPanel, new Vector2(-286, -1128), new Vector2(210, 52));
-        MoveUiElement(summonRatesBoxRoot, summonPanel, new Vector2(130, -1128), new Vector2(510, 118));
+        MoveUiElement(summonResultBoxRoot, summonPanel, new Vector2(0, -898), new Vector2(840, 72));
+        MoveUiElement(summonCountChipRoot, summonPanel, new Vector2(-310, -990), new Vector2(220, 58));
+        MoveUiElement(summonRatesBoxRoot, summonPanel, new Vector2(142, -990), new Vector2(560, 128));
         MoveUiElement(summonResultText, summonResultBoxRoot != null ? summonResultBoxRoot.gameObject : summonPanel, new Vector2(0, -10), new Vector2(700, 50));
         MoveUiElement(summonCountText, summonCountChipRoot != null ? summonCountChipRoot.gameObject : summonPanel, new Vector2(4, -11), new Vector2(176, 32));
         MoveUiElement(summonRatesText, summonRatesBoxRoot != null ? summonRatesBoxRoot.gameObject : summonPanel, new Vector2(0, -22), new Vector2(470, 84));
@@ -26623,6 +26634,62 @@ public class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateServic
         }
 
         RefreshManagementPopupUi();
+    }
+
+    private void EnsureRuntimeCoreScreenFrames()
+    {
+        var frameSprite = Resources.Load<Sprite>("Mythwake/UI/Core/ui_screen_frame");
+        if (frameSprite == null)
+        {
+            return;
+        }
+
+        EnsureRuntimeCoreScreenFrame(homeActionRoot != null ? homeActionRoot.gameObject : homePanel, "Campaign Screen Frame", frameSprite, new Vector2(0f, -8f), new Vector2(1060f, 1502f), false);
+        EnsureRuntimeCoreScreenFrame(heroesPanel, "Heroes Screen Frame", frameSprite, new Vector2(0f, -176f), new Vector2(1040f, 1434f), true);
+        EnsureRuntimeCoreScreenFrame(villagePanel, "Village Screen Frame", frameSprite, new Vector2(0f, -176f), new Vector2(1040f, 1434f), false);
+        EnsureRuntimeCoreScreenFrame(dungeonsPanel, "Dungeons Screen Frame", frameSprite, new Vector2(0f, -176f), new Vector2(1040f, 1434f), true);
+        EnsureRuntimeCoreScreenFrame(summonPanel, "Summon Screen Frame", frameSprite, new Vector2(0f, 54f), new Vector2(1040f, 1664f), true);
+    }
+
+    private static void EnsureRuntimeCoreScreenFrame(GameObject panel, string frameName, Sprite frameSprite, Vector2 position, Vector2 size, bool addBackdrop)
+    {
+        if (panel == null)
+        {
+            return;
+        }
+
+        var frame = panel.transform.Find(frameName)?.GetComponent<Image>();
+        if (frame == null)
+        {
+            frame = CreateRuntimeSpriteImage(panel.transform, frameName, frameSprite, position, size, new Vector2(0.5f, 1f));
+        }
+
+        SetRuntimeRect(frame.rectTransform, position, size, new Vector2(0.5f, 1f));
+        frame.sprite = frameSprite;
+        frame.type = Image.Type.Sliced;
+        frame.preserveAspect = false;
+        frame.raycastTarget = false;
+        frame.color = Color.white;
+        frame.rectTransform.SetAsFirstSibling();
+
+        if (!addBackdrop)
+        {
+            return;
+        }
+
+        var backdropName = frameName + " Backdrop";
+        var backdrop = panel.transform.Find(backdropName)?.GetComponent<RectTransform>();
+        if (backdrop == null)
+        {
+            backdrop = CreateRuntimePanel(panel.transform, backdropName, position, size - new Vector2(54f, 54f), new Color(0.018f, 0.035f, 0.052f, 0.985f));
+        }
+        else
+        {
+            SetRuntimeRect(backdrop, position, size - new Vector2(54f, 54f), new Vector2(0.5f, 1f));
+        }
+
+        backdrop.SetAsFirstSibling();
+        frame.rectTransform.SetSiblingIndex(1);
     }
 
     private void RestoreManagementPopupParent()
