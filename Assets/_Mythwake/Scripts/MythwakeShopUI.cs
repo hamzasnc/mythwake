@@ -45,7 +45,6 @@ public sealed class MythwakeShopUI : MonoBehaviour
     private const string RuntimeArtResourceRoot = "Mythwake/Art/Runtime/";
     private const string HomeUiResourceRoot = "Mythwake/UI/HomeScreen/Generated/";
     private const string CurrencyResourceRoot = "Mythwake/UI/icons/";
-    private const string BagUiResourceRoot = "Mythwake/UI/Bag/";
     private const string ShopIconResourceRoot = "Mythwake/UI/Shop/Icons/";
     private const string BattlePassUiResourceRoot = "Mythwake/UI/Shop/BattlePass/";
     private const string ReferenceArtworkResource = "Mythwake/UI/Shop/shop_reference_featured";
