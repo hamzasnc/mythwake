@@ -2,7 +2,7 @@
 
 Mobile idle RPG prototype built with Unity.
 
-Prototype version: 0.2.176
+Prototype version: 0.2.177 internal alpha
 Local save version: 2
 
 Current prototype:

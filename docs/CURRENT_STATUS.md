@@ -1,16 +1,26 @@
 # Mythwake Current Status
 
-Last updated: 2026-06-01
+Last updated: 2026-09-07
 
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at Prototype `0.2.176`, save version `2`.
-- Backend API default version is `0.2.62`.
+- Unity client code is at the internal alpha candidate Prototype `0.2.177`, save version `2`.
+- Backend API default version is `0.2.63`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, Email + Password backend auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
 - Client has moved beyond the older roadmap notes: Dungeons have their own map screen, Village has a scrollable map with 12 build plots, building art is imported, and Paladin/Ravik art plus combat presentation hooks exist.
 - Local Fast Rewards already stores continuous AFK time up to 24h. The backend AFK definition has now been aligned to the same 24h cap.
+
+## Current Alpha Candidate
+
+- Candidate: Prototype `0.2.177` / Backend `0.2.63`, Android Version Code `2177`.
+- P0 Current Slice is green, including shop tab switching and the generated Bag runtime path.
+- Shop offers are catalog/snapshot data only; no client-side purchase or reward grant exists.
+- Bag uses the single generated `Assets/Art/UI/BagGenerated` asset/catalog pipeline. Inventory quantity parsing/filtering is covered by pure rules and an EditMode menu test.
+- Tower has server definitions, PostgreSQL progress persistence, authenticated idempotent runs, replay-safe action ledger results, restart/relogin coverage, and Unity Server Mode snapshot/run integration. A client-side manual stop only stops the visual presentation; the already accepted server result remains authoritative.
+- Automated gates: `go test ./...`, `go vet ./...`, `scripts/check-unity-csharp.ps1`, `scripts/check-unity-current-slice.ps1`, and `git diff --check`. Unity/Android packaging gates are listed in `docs/RELEASE_GATES.md`.
+- The current candidate artifacts and compact manual route are tracked in `docs/TESTER_BUILD_NOTES.md` and `docs/ALPHA_TEST_PLAN.md`.
 
 ## What Was Behind The Notes
 

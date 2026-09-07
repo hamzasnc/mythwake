@@ -1,6 +1,6 @@
 # Mythwake Next Chat Context
 
-Last updated: 2026-06-01
+Last updated: 2026-09-07
 
 This file is meant to be pasted/read first in a new Codex chat so the project can continue without re-explaining everything.
 
@@ -21,6 +21,13 @@ Current direction:
 
 Current branch:
 - `codex/batch-1-stabilize-prototype`
+
+Current internal alpha candidate:
+- Prototype `0.2.177`, Android Version Code `2177`, Backend `0.2.63`.
+- P0 Current Slice is green. Shop definitions/migration/DTO/tests/docs are complete.
+- Bag now has one generated runtime asset pipeline under `Assets/Art/UI/BagGenerated`; legacy Bag Resources/prefabs and their builder were removed after reference checks. Pure inventory rules plus EditMode checks cover filtering and chest quantity selection.
+- Tower server mode is enabled through the authenticated idempotent Tower action, server catalog definitions, PostgreSQL player progress, action ledger replay, snapshot/bootstrap, and Unity client integration. A manual stop during the client combat presentation does not grant or revoke economy; the accepted server result is applied on callback.
+- Release gates and the compact manual test plan are `docs/RELEASE_GATES.md` and `docs/ALPHA_TEST_PLAN.md`. APK/AAB outputs for this candidate are documented in `docs/TESTER_BUILD_NOTES.md`.
 
 Remote:
 - `https://github.com/hamzasnc/mythwake.git`
