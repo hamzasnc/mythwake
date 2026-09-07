@@ -8,7 +8,10 @@ using UnityEngine.Networking;
 public sealed class MythwakeBackendClient : MonoBehaviour
 {
 #if UNITY_ANDROID && !UNITY_EDITOR
-    private const string DefaultBackendBaseUrl = "http://127.0.0.1:8080";
+    // Android emulators expose the Windows host through 10.0.2.2. Using the
+    // device loopback (127.0.0.1) only works when an external adb reverse
+    // tunnel is configured, which is not available to normal players.
+    private const string DefaultBackendBaseUrl = "http://10.0.2.2:8080";
 #else
     private const string DefaultBackendBaseUrl = "http://localhost:8080";
 #endif

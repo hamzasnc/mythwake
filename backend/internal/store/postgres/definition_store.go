@@ -68,9 +68,46 @@ func (store *DefinitionStore) Snapshot(ctx context.Context, apiVersion string) (
 	if snapshot.BattlePassRewards, err = store.battlePassRewardDefinitions(ctx); err != nil {
 		return api.DefinitionSnapshot{}, err
 	}
+	if snapshot.ShopOffers, err = store.shopOfferDefinitions(ctx); err != nil {
+		return api.DefinitionSnapshot{}, err
+	}
 
 	snapshot.ContentHash = definitions.ContentHash(snapshot)
 	return snapshot, nil
+}
+
+func (store *DefinitionStore) shopOfferDefinitions(ctx context.Context) ([]api.ShopOfferDefinition, error) {
+	rows, err := store.db.QueryContext(ctx, `
+		SELECT tab, id, display_name, contents, price, icon_key, sort_order, top_pick, badge_label
+		FROM common.shop_offer_definitions
+		WHERE active = true
+		ORDER BY tab, sort_order, id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	response := []api.ShopOfferDefinition{}
+	for rows.Next() {
+		var definition api.ShopOfferDefinition
+		if err := rows.Scan(
+			&definition.Tab,
+			&definition.OfferID,
+			&definition.DisplayName,
+			&definition.Contents,
+			&definition.Price,
+			&definition.IconKey,
+			&definition.SortOrder,
+			&definition.TopPick,
+			&definition.BadgeLabel,
+		); err != nil {
+			return nil, err
+		}
+		response = append(response, definition)
+	}
+
+	return response, rows.Err()
 }
 
 func (store *DefinitionStore) currencyDefinitions(ctx context.Context) ([]api.CurrencyDefinition, error) {

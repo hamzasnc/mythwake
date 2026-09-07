@@ -959,6 +959,8 @@ public static class PortraitScreenshotAutomation
                 throw new InvalidOperationException("Missing IdlePrototypeController in SampleScene.");
             }
 
+            InvokePrivate(controller, "EnsureRuntimeDebugUi");
+            InvokePrivate(controller, "EnsureRuntimeBackendUi");
             InvokePrivate(controller, "EnsureRuntimeScreenLayout");
             InvokePrivate(controller, "RegisterNavigation");
             Canvas.ForceUpdateCanvases();
@@ -1008,6 +1010,18 @@ public static class PortraitScreenshotAutomation
                 InvokePrivate(controller, "RefreshFightArenaBackground", false);
                 InvokePrivate(controller, "PrepareFightAnimationTextures", 1, false, null);
                 InvokePrivate(controller, "InitializeFightSkillState");
+            }, canvas);
+            CaptureState(outputDirectory, "12-shop", controller, controller.ShowShop, canvas);
+            CaptureState(outputDirectory, "13-shop-dev", controller, () =>
+            {
+                controller.ShowShop();
+                var shopPanel = FindSceneComponent<MythwakeShopUI>();
+                if (shopPanel == null)
+                {
+                    throw new InvalidOperationException("Runtime shop UI is missing for the developer tab screenshot.");
+                }
+
+                shopPanel.ShowDeveloperTools();
             }, canvas);
 
             Debug.Log($"Portrait screenshot set captured to {outputDirectory}.");

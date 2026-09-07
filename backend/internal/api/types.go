@@ -227,6 +227,7 @@ type DefinitionSnapshot struct {
 	SummonBanners     []SummonBannerDefinition     `json:"summonBanners"`
 	DailyMissions     []DailyMissionDefinition     `json:"dailyMissions"`
 	BattlePassRewards []BattlePassRewardDefinition `json:"battlePassRewards"`
+	ShopOffers        []ShopOfferDefinition        `json:"shopOffers"`
 	GameplayActions   []GameplayActionDefinition   `json:"gameplayActions"`
 }
 
@@ -416,6 +417,18 @@ type BattlePassRewardDefinition struct {
 	RewardID       string `json:"rewardId"`
 	RequiredPassXP int    `json:"requiredPassXp"`
 	Reward         Reward `json:"reward"`
+}
+
+type ShopOfferDefinition struct {
+	OfferID     string `json:"offerId"`
+	Tab         string `json:"tab"`
+	DisplayName string `json:"displayName"`
+	Contents    string `json:"contents"`
+	Price       string `json:"price"`
+	IconKey     string `json:"iconKey"`
+	SortOrder   int    `json:"sortOrder"`
+	TopPick     bool   `json:"topPick"`
+	BadgeLabel  string `json:"badgeLabel"`
 }
 
 type GameplayActionDefinition struct {

@@ -85,7 +85,7 @@ For a Windows-hosted backend with MuMuPlayer, Android emulator, or USB device:
 adb reverse tcp:8080 tcp:8080
 ```
 
-The Android client uses `http://127.0.0.1:8080`, so `adb reverse` is the expected local bridge.
+The Android emulator client uses `http://10.0.2.2:8080`, so MuMuPlayer and standard emulators reach the Windows backend without an adb reverse bridge.
 
 ## Signing Status
 

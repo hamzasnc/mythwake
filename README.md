@@ -192,7 +192,7 @@ Backend:
 - `/player/state` returns a full client-ready player snapshot with heroes, equipment, accessories, claims, and summon count
 - Guest auth and action responses include the full player snapshot for direct client UI updates
 - Email + Password auth now has backend register/login endpoints and a simple Unity Backend-panel UI; it creates or reuses one player state per email account, stores only PBKDF2 password hashes, and issues the same Bearer sessions as Guest auth
-- Android builds use `http://127.0.0.1:8080` as the default backend URL for local tester APKs; run `adb reverse tcp:8080 tcp:8080` when testing against the Windows backend. Editor/Desktop use `http://localhost:8080`. Server builds can pass `-BackendBaseUrl "https://api.example.com"` to `scripts/build-android.cmd`.
+- Android emulator builds use `http://10.0.2.2:8080` as the default backend URL, so MuMuPlayer and standard Android emulators reach the Windows backend without an adb tunnel. Editor/Desktop use `http://localhost:8080`. Physical-device or server builds can pass `-BackendBaseUrl "https://api.example.com"` to `scripts/build-android.cmd`.
 - `scripts/build-android.cmd` builds APKs by default and AABs with `-AppBundle` for Play Internal Testing preparation
 - Redis is optional: when `MYTHWAKE_REDIS_ADDR` is set, sessions and rate limits can use Redis while PostgreSQL remains the durable source of truth
 - Windows helper scripts:

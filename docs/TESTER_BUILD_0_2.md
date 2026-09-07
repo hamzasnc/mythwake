@@ -32,13 +32,7 @@ Google Play login is not part of this build. It remains a later Play Store / Goo
 4. Use `Continue` when the app already shows a cached server account or local save.
 5. Use `Play as Guest` only for a short smoke test where durable progress is not important.
 
-For a local Windows backend test, start the API on `localhost:8080` and run this before launching the APK:
-
-```powershell
-adb reverse tcp:8080 tcp:8080
-```
-
-The Android tester APK points to `http://127.0.0.1:8080`, so `adb reverse` lets MuMuPlayer, Android emulators, and USB devices reach the Windows backend. Without a reachable backend, Email auth should fail with a readable server/network message instead of hanging.
+For a local Windows backend test, start the API on `localhost:8080` and launch the current APK. The Android emulator build points to `http://10.0.2.2:8080`, which reaches the Windows host directly without opening a terminal inside the emulator. Without a reachable backend, Email auth should fail with a readable server/network message instead of hanging.
 
 ## Account Setup
 

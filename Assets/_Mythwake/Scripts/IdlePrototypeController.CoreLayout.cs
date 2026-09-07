@@ -324,7 +324,13 @@ public partial class IdlePrototypeController
             SetNamedChildRuntimeRect(homeIdleCombatRoot, "Idle Combat Map Dim", Vector2.zero, new Vector2(1040, idleHeight), new Vector2(.5f, 1));
             CoreText(homeIdleCombatText, 30);
             CoreRect(homeIdleCombatText, 0, 24, 850, 52);
-            CoreText(homeIdleRewardText, 27);
+            CoreText(homeIdleRewardText, 24);
+            CoreRect(homeIdleRewardText, 0, 204, 820, 66);
+            var rewardProgressBackground = homeIdleRewardFill != null
+                ? homeIdleRewardFill.transform.parent as RectTransform
+                : null;
+            if (rewardProgressBackground != null)
+                rewardProgressBackground.sizeDelta = new Vector2(850, 66);
             CoreRect(campaignStagePreviewRoot, 0, 800, 840, 164);
             CoreRect(campaignStagePreviewText, 0, 10, 794, 144);
             CoreText(campaignStagePreviewText, 26);

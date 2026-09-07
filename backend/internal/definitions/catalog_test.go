@@ -80,11 +80,37 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if len(snapshot.BattlePassRewards) != 5 {
 		t.Fatalf("expected 5 battle pass rewards, got %#v", snapshot.BattlePassRewards)
 	}
+	if len(snapshot.ShopOffers) != 24 {
+		t.Fatalf("expected 24 shop offers, got %d", len(snapshot.ShopOffers))
+	}
+	if snapshot.ShopOffers[0].Tab != "featured" || snapshot.ShopOffers[0].OfferID != "starter_pack" {
+		t.Fatalf("expected featured shop offers first in fallback catalog, got %#v", snapshot.ShopOffers[0])
+	}
+	if snapshot.ShopOffers[6].Tab != "crystals" || !snapshot.ShopOffers[6].TopPick || snapshot.ShopOffers[6].BadgeLabel != "BEST VALUE" {
+		t.Fatalf("expected authoritative crystal merchandising flags, got %#v", snapshot.ShopOffers[6])
+	}
 	if !hasAction(snapshot, gameplay.ActionCampaignFight) {
 		t.Fatalf("expected action catalog to include %s", gameplay.ActionCampaignFight)
 	}
 	if !hasAction(snapshot, gameplay.ActionAFKRewardClaim) {
 		t.Fatalf("expected action catalog to include %s", gameplay.ActionAFKRewardClaim)
+	}
+}
+
+func TestShopOfferCatalogUsesUniqueOrderedKeys(t *testing.T) {
+	snapshot := Snapshot("test-version")
+	seen := map[string]bool{}
+	lastOrder := map[string]int{}
+	for _, offer := range snapshot.ShopOffers {
+		key := offer.Tab + ":" + offer.OfferID
+		if seen[key] {
+			t.Fatalf("duplicate shop offer key %s", key)
+		}
+		seen[key] = true
+		if previous, ok := lastOrder[offer.Tab]; ok && offer.SortOrder <= previous {
+			t.Fatalf("shop offers in tab %s are not strictly ordered: %d after %d", offer.Tab, offer.SortOrder, previous)
+		}
+		lastOrder[offer.Tab] = offer.SortOrder
 	}
 }
 

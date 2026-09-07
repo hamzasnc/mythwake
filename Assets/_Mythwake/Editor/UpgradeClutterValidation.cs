@@ -42,8 +42,8 @@ public static class UpgradeClutterValidation
         }
 
         InvokePrivate(controller, "EnsureRuntimeDebugUi");
-        InvokePrivate(controller, "EnsureRuntimeScreenLayout");
         InvokePrivate(controller, "EnsureRuntimeBackendUi");
+        InvokePrivate(controller, "EnsureRuntimeScreenLayout");
         InvokePrivate(controller, "EnsureRuntimeInputStack");
         InvokePrivate(controller, "RegisterNavigation");
         InvokePrivate(controller, "RegisterHeroDetailGearButtons");
@@ -1490,13 +1490,93 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException("Shop panel should be active after ShowShop.");
         }
 
-        RequireToolButtonInPanel(controller, "debugGoldButton", shopPanel);
-        RequireToolButtonInPanel(controller, "debugEssenceButton", shopPanel);
-        RequireToolButtonInPanel(controller, "debugGemsButton", shopPanel);
-        RequireToolButtonInPanel(controller, "debugAccessoryButton", shopPanel);
-        RequireToolButtonInPanel(controller, "debugAwakeningShardsButton", shopPanel);
-        RequireToolButtonInPanel(controller, "debugHeroShardChestButton", shopPanel);
-        ValidateBackendAccountPanel(controller, shopPanel);
+        var runtimeShop = shopPanel.GetComponent<MythwakeShopUI>();
+        if (runtimeShop == null)
+        {
+            throw new InvalidOperationException("Shop should use the runtime tab storefront.");
+        }
+
+        var debugGold = RequireButtonField(controller, "debugGoldButton");
+        if (debugGold.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Developer tools should stay hidden in the player-facing Featured shop tab.");
+        }
+
+        ValidatePlayerStorefrontTabs(shopPanel);
+
+        runtimeShop.ShowDeveloperTools();
+        Canvas.ForceUpdateCanvases();
+
+        var developerContent = FindSceneObject("Shop Dev Content");
+        if (developerContent == null || !developerContent.activeSelf)
+        {
+            throw new InvalidOperationException("Developer shop content should be selected after ShowDeveloperTools.");
+        }
+
+        RequireToolButtonInPanel(controller, "debugGoldButton", developerContent);
+        RequireToolButtonInPanel(controller, "debugEssenceButton", developerContent);
+        RequireToolButtonInPanel(controller, "debugGemsButton", developerContent);
+        RequireToolButtonInPanel(controller, "debugAccessoryButton", developerContent);
+        RequireToolButtonInPanel(controller, "debugAwakeningShardsButton", developerContent);
+        RequireToolButtonInPanel(controller, "debugHeroShardChestButton", developerContent);
+        ValidateBackendAccountPanel(controller, developerContent);
+    }
+
+    private static void ValidatePlayerStorefrontTabs(GameObject shopPanel)
+    {
+        var root = shopPanel.transform.Find("Premium Shop Experience");
+        if (root == null)
+        {
+            throw new InvalidOperationException("Runtime shop root is missing.");
+        }
+
+        AssertShopTabSwitches(root, "Shop Tab CRYSTALS", "Shop Crystals Content", "Crystal shop tab");
+        AssertShopTabSwitches(root, "Shop Tab BUNDLES", "Shop Bundles Content", "Bundle shop tab");
+        AssertShopTabSwitches(root, "Shop Tab BATTLE PASS", "Shop BattlePass Content", "Battle Pass tab");
+        AssertShopTabSwitches(root, "Shop Tab FEATURED", "Shop Featured Content", "Featured shop tab");
+        // Secondary storefront content is moved into the shared scroll layer at
+        // runtime. Resolve it from the scene rather than assuming it remains a
+        // direct child of the generated shop root.
+        var featuredContent = FindSceneObject("Shop Featured Content")?.transform;
+        if (featuredContent == null || !featuredContent.gameObject.activeSelf)
+        {
+            throw new InvalidOperationException("Featured shop tab should restore the featured storefront.");
+        }
+
+        var purchaseButtonObject = FindSceneObject("myth_crystal_bundle Purchase");
+        var purchaseButton = purchaseButtonObject?.GetComponent<Button>();
+        if (purchaseButton == null || featuredContent == null || !purchaseButton.transform.IsChildOf(featuredContent))
+        {
+            throw new InvalidOperationException("Featured bundle purchase button is missing.");
+        }
+
+        purchaseButton.onClick.Invoke();
+        var purchasePreview = shopPanel.transform.Find("Shop Purchase Preview");
+        if (purchasePreview == null || !purchasePreview.gameObject.activeInHierarchy)
+        {
+            throw new InvalidOperationException("Shop purchase buttons should open a non-transactional checkout preview.");
+        }
+
+        purchasePreview.gameObject.SetActive(false);
+    }
+
+    private static void AssertShopTabSwitches(Transform root, string buttonName, string contentName, string label)
+    {
+        var tab = root.Find(buttonName)?.GetComponent<Button>();
+        if (tab == null)
+        {
+            throw new InvalidOperationException($"{label} is missing.");
+        }
+
+        tab.onClick.Invoke();
+        var content = FindSceneObject(contentName)?.transform;
+        // The reference artwork and Battle Pass artwork intentionally hide the
+        // generated content layer while keeping the selected content root active
+        // as the source of the selected tab state.
+        if (content == null || !content.gameObject.activeSelf)
+        {
+            throw new InvalidOperationException($"{label} should reveal its matching content.");
+        }
     }
 
     private static void ValidateBackendAccountPanel(IdlePrototypeController controller, GameObject shopPanel)

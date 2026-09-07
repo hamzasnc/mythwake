@@ -13,7 +13,7 @@ import (
 	"github.com/hamzasnc/mythwake/backend/internal/gameplay"
 )
 
-const SchemaVersion = 8
+const SchemaVersion = 9
 
 func Snapshot(apiVersion string) api.DefinitionSnapshot {
 	snapshot := api.DefinitionSnapshot{
@@ -36,6 +36,7 @@ func Snapshot(apiVersion string) api.DefinitionSnapshot {
 		SummonBanners:     summonBannerDefinitions(),
 		DailyMissions:     dailyMissionDefinitions(),
 		BattlePassRewards: battlePassRewardDefinitions(),
+		ShopOffers:        shopOfferDefinitions(),
 		GameplayActions:   gameplayActionDefinitions(),
 	}
 	snapshot.ContentHash = ContentHash(snapshot)
@@ -368,6 +369,35 @@ func battlePassRewardDefinitions() []api.BattlePassRewardDefinition {
 		})
 	}
 	return response
+}
+
+func shopOfferDefinitions() []api.ShopOfferDefinition {
+	return []api.ShopOfferDefinition{
+		{OfferID: "starter_pack", Tab: "featured", DisplayName: "Starter Pack", Contents: "500 Crystals\n25K Gold · 5 Essence", Price: "€2.99", IconKey: "icon_gold", SortOrder: 10},
+		{OfferID: "crystal_cache", Tab: "featured", DisplayName: "Crystal Cache", Contents: "1,100 Crystals\n60K Gold · 5 Essence", Price: "€4.99", IconKey: "icon_gems", SortOrder: 20},
+		{OfferID: "adventurer_bundle", Tab: "featured", DisplayName: "Adventurer Bundle", Contents: "2,200 Crystals\n120K Gold · 15 Essence", Price: "€14.99", IconKey: "home_shop_button", SortOrder: 30},
+		{OfferID: "legendary_chest", Tab: "featured", DisplayName: "Legendary Chest", Contents: "5,000 Crystals\n250K Gold · 25 Essence", Price: "€19.99", IconKey: "home_treasure_chest_button", SortOrder: 40},
+		{OfferID: "crystal_pouch", Tab: "crystals", DisplayName: "Crystal Pouch", Contents: "100 Myth Crystals\nStarter stash", Price: "€0.99", IconKey: "shop_icon_crystal_altar", SortOrder: 10},
+		{OfferID: "crystal_pack", Tab: "crystals", DisplayName: "Crystal Pack", Contents: "500 Myth Crystals\n+ 5% bonus", Price: "€3.99", IconKey: "shop_icon_crystal_vault", SortOrder: 20},
+		{OfferID: "crystal_cache", Tab: "crystals", DisplayName: "Crystal Cache", Contents: "1,100 Myth Crystals\n+ 10% bonus", Price: "€7.99", IconKey: "shop_icon_crystal_altar", SortOrder: 30, TopPick: true, BadgeLabel: "BEST VALUE"},
+		{OfferID: "crystal_vault", Tab: "crystals", DisplayName: "Crystal Vault", Contents: "2,500 Myth Crystals\n+ 25% bonus", Price: "€14.99", IconKey: "shop_icon_crystal_vault", SortOrder: 40},
+		{OfferID: "crystal_reserve", Tab: "crystals", DisplayName: "Crystal Reserve", Contents: "5,000 Myth Crystals\n+ 35% bonus", Price: "€24.99", IconKey: "shop_icon_crystal_altar", SortOrder: 50},
+		{OfferID: "crystal_treasury", Tab: "crystals", DisplayName: "Crystal Treasury", Contents: "12,000 Myth Crystals\n+ 45% bonus", Price: "€49.99", IconKey: "shop_icon_crystal_vault", SortOrder: 60, TopPick: true, BadgeLabel: "BEST VALUE"},
+		{OfferID: "crystal_hoard", Tab: "crystals", DisplayName: "Crystal Hoard", Contents: "25,000 Myth Crystals\n+ 55% bonus", Price: "€89.99", IconKey: "shop_icon_crystal_altar", SortOrder: 70},
+		{OfferID: "crystal_relic", Tab: "crystals", DisplayName: "Ancient Relic Cache", Contents: "50,000 Myth Crystals\n+ 70% bonus", Price: "€149.99", IconKey: "shop_icon_crystal_vault", SortOrder: 80},
+		{OfferID: "crystal_ascendant", Tab: "crystals", DisplayName: "Ascendant Crystals", Contents: "100,000 Myth Crystals\n+ 90% bonus", Price: "€249.99", IconKey: "shop_icon_crystal_altar", SortOrder: 90},
+		{OfferID: "crystal_eternal", Tab: "crystals", DisplayName: "Eternal Crystal Vault", Contents: "250,000 Myth Crystals\n+ 120% bonus", Price: "€499.99", IconKey: "shop_icon_crystal_vault", SortOrder: 100},
+		{OfferID: "daily_deal", Tab: "bundles", DisplayName: "Daily Deal", Contents: "250 Crystals\n15K Gold · 2 Essence", Price: "€1.99", IconKey: "shop_icon_adventurer_satchel", SortOrder: 10},
+		{OfferID: "hero_bundle", Tab: "bundles", DisplayName: "Hero Bundle", Contents: "1,000 Crystals\nHero Shard Chest ×2", Price: "€8.99", IconKey: "shop_icon_bundle_chest", SortOrder: 20},
+		{OfferID: "adventurer_bundle", Tab: "bundles", DisplayName: "Adventurer Bundle", Contents: "2,200 Crystals\n120K Gold · 15 Essence", Price: "€14.99", IconKey: "shop_icon_adventurer_satchel", SortOrder: 30, TopPick: true, BadgeLabel: "TOP PICK"},
+		{OfferID: "legendary_chest", Tab: "bundles", DisplayName: "Legendary Chest", Contents: "5,000 Crystals\n250K Gold · 25 Essence", Price: "€19.99", IconKey: "shop_icon_bundle_chest", SortOrder: 40},
+		{OfferID: "dungeon_expedition", Tab: "bundles", DisplayName: "Dungeon Expedition", Contents: "3,500 Crystals\n150K Gold · 20 Essence", Price: "€24.99", IconKey: "shop_icon_adventurer_satchel", SortOrder: 50},
+		{OfferID: "guild_foundry", Tab: "bundles", DisplayName: "Guild Foundry Pack", Contents: "4,500 Crystals\n200K Gold · 30 Essence", Price: "€34.99", IconKey: "shop_icon_bundle_chest", SortOrder: 60},
+		{OfferID: "royal_war_chest", Tab: "bundles", DisplayName: "Royal War Chest", Contents: "8,000 Crystals\n400K Gold · 45 Essence", Price: "€49.99", IconKey: "shop_icon_bundle_chest", SortOrder: 70, TopPick: true, BadgeLabel: "TOP PICK"},
+		{OfferID: "mythic_arsenal", Tab: "bundles", DisplayName: "Mythic Arsenal", Contents: "12,000 Crystals\n650K Gold · 60 Essence", Price: "€69.99", IconKey: "shop_icon_adventurer_satchel", SortOrder: 80},
+		{OfferID: "worldbreaker_cache", Tab: "bundles", DisplayName: "Worldbreaker Cache", Contents: "20,000 Crystals\n1M Gold · 90 Essence", Price: "€99.99", IconKey: "shop_icon_bundle_chest", SortOrder: 90},
+		{OfferID: "founder_legacy", Tab: "bundles", DisplayName: "Founder’s Legacy", Contents: "35,000 Crystals\n2M Gold · 120 Essence", Price: "€149.99", IconKey: "shop_icon_adventurer_satchel", SortOrder: 100},
+	}
 }
 
 func gameplayActionDefinitions() []api.GameplayActionDefinition {

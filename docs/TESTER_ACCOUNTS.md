@@ -34,7 +34,7 @@ Email auth errors are structured for tester-facing UI: missing email, invalid em
 
 The Account Start screen maps those backend errors into tester-readable copy: duplicate Email points testers to Login, wrong password/unknown Email asks them to check both fields, backend/network failures explain that Email progress needs the server, and local validation catches invalid Email or passwords shorter than 8 characters before sending a request.
 
-Android local tester builds point at `http://127.0.0.1:8080`; run `adb reverse tcp:8080 tcp:8080` before MuMuPlayer/emulator/USB account tests against the Windows backend. Backend requests also have a client-side timeout guard so a missing server returns a readable message instead of leaving the Start screen in a loading state.
+Android emulator tester builds point at `http://10.0.2.2:8080`, so MuMuPlayer and standard emulators reach the Windows backend without an adb tunnel. Backend requests also have a client-side timeout guard so a missing server returns a readable message instead of leaving the Start screen in a loading state.
 
 Starting with Prototype `0.2.170`, Android tester builds use package `com.xmiepsen.mythwake`, Version Name `0.2.170`, and Version Code `2170`. Older local saves from APKs with Unity's previous default package identity may not appear after installing this package, because Android treats it as a different app. Email Login can still recover server progress when the backend uses PostgreSQL.
 
