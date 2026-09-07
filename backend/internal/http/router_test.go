@@ -969,6 +969,60 @@ func TestCampaignFightEndpoint(t *testing.T) {
 	}
 }
 
+func TestTowerRunEndpointAdvancesServerProgress(t *testing.T) {
+	handler := newTestHandler()
+	login := loginGuest(t, handler)
+	response := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/dungeons/tower_dungeon/run?floor=1", nil)
+	addAuth(request, login.SessionToken)
+	addIdempotencyKey(request, "tower-run-001")
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d body=%s", response.Code, response.Body.String())
+	}
+
+	var body api.ActionResult
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if !body.Success || body.ActionID != gameplay.ActionTowerRun {
+		t.Fatalf("expected successful tower action, got %#v", body)
+	}
+	if body.Combat == nil || body.Combat.Mode != "tower" || body.Combat.TargetLevel != 1 {
+		t.Fatalf("expected tower combat receipt, got %#v", body.Combat)
+	}
+	if body.PlayerSnapshot.Tower.HighestClearedFloor != 1 || body.PlayerSnapshot.Tower.HighestUnlockedFloor != 2 {
+		t.Fatalf("expected server tower progress to advance, got %#v", body.PlayerSnapshot.Tower)
+	}
+
+	rejectedResponse := httptest.NewRecorder()
+	rejectedRequest := httptest.NewRequest(http.MethodPost, "/dungeons/tower_dungeon/run?floor=1", nil)
+	addAuth(rejectedRequest, login.SessionToken)
+	addIdempotencyKey(rejectedRequest, "tower-run-002")
+	handler.ServeHTTP(rejectedResponse, rejectedRequest)
+	var rejected api.ActionResult
+	if err := json.NewDecoder(rejectedResponse.Body).Decode(&rejected); err != nil {
+		t.Fatalf("decode rejected response: %v", err)
+	}
+	if rejected.Success || rejected.ErrorCode != "tower_floor_not_ready" {
+		t.Fatalf("expected cleared floor rejection, got %#v", rejected)
+	}
+}
+
+func TestTowerRunEndpointRequiresValidFloor(t *testing.T) {
+	handler := newTestHandler()
+	for _, path := range []string{"/dungeons/tower_dungeon/run", "/dungeons/tower_dungeon/run?floor=0", "/dungeons/tower_dungeon/run?floor=1001"} {
+		response := httptest.NewRecorder()
+		request := httptest.NewRequest(http.MethodPost, path, nil)
+		handler.ServeHTTP(response, request)
+		if response.Code != http.StatusBadRequest {
+			t.Fatalf("expected invalid tower floor status 400 for %s, got %d", path, response.Code)
+		}
+	}
+}
+
 func TestOfflineClaimEndpoint(t *testing.T) {
 	handler := newTestHandler()
 	login := loginGuest(t, handler)

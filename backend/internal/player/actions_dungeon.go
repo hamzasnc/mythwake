@@ -15,6 +15,9 @@ func (service *Service) RunDungeon(dungeonID string) api.ActionResult {
 }
 
 func (service *Service) RunDungeonWithRequest(ctx context.Context, request ActionRequest, dungeonID string) api.ActionResult {
+	if dungeonID == towerDungeonID {
+		return service.RunTowerWithRequest(ctx, request, service.GetSnapshot().Tower.SelectedFloor)
+	}
 	return service.dungeonActions.RunDungeon(ctx, request, dungeonID)
 }
 
@@ -49,6 +52,8 @@ func dungeonActionID(dungeonID string) string {
 		return gameplay.ActionGearDungeonRun
 	case shardRiftDungeonID:
 		return gameplay.ActionShardRiftRun
+	case towerDungeonID:
+		return gameplay.ActionTowerRun
 	default:
 		return gameplay.ActionDungeonRun
 	}

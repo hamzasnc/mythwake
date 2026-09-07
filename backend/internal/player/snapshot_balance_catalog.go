@@ -20,6 +20,7 @@ type SnapshotBalanceCatalog struct {
 	rewards               map[string]api.Reward
 	afkReward             *balance.AFKRewardDefinition
 	dungeons              map[string]balance.DungeonDefinition
+	towers                map[string]balance.TowerDefinition
 	progressionCosts      []api.ProgressionCostDefinition
 	summonBanners         map[string]api.SummonBannerDefinition
 	accessories           map[string]balance.AccessoryDefinition
@@ -41,6 +42,7 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 		equipmentByID:         map[string]balance.EquipmentDefinition{},
 		rewards:               map[string]api.Reward{},
 		dungeons:              map[string]balance.DungeonDefinition{},
+		towers:                map[string]balance.TowerDefinition{},
 		summonBanners:         map[string]api.SummonBannerDefinition{},
 		accessories:           map[string]balance.AccessoryDefinition{},
 		accessoryRarities:     map[string]balance.AccessoryRarityDefinition{},
@@ -146,6 +148,49 @@ func NewSnapshotBalanceCatalog(snapshot api.DefinitionSnapshot) *SnapshotBalance
 			EnemyDamagePerFloor:   definition.EnemyDamagePerFloor,
 			EnemyDamagePowerDiv:   definition.EnemyDamagePowerDivisor,
 			MaxCombatSeconds:      definition.MaxCombatSeconds,
+		}
+	}
+
+	for _, definition := range snapshot.Towers {
+		catalog.towers[definition.TowerID] = balance.TowerDefinition{
+			ID:                                 definition.TowerID,
+			DisplayName:                        definition.DisplayName,
+			MaxFloor:                           definition.MaxFloor,
+			SectionSize:                        definition.SectionSize,
+			MiniBossInterval:                   definition.MiniBossInterval,
+			BigBossInterval:                    definition.BigBossInterval,
+			ShardInterval:                      definition.ShardInterval,
+			BaseRequiredPower:                  definition.BaseRequiredPower,
+			RequiredPowerScale:                 definition.RequiredPowerScale,
+			RequiredPowerGrowth:                definition.RequiredPowerGrowth,
+			BaseRewardGold:                     definition.BaseRewardGold,
+			RewardGoldScale:                    definition.RewardGoldScale,
+			RewardGoldGrowth:                   definition.RewardGoldGrowth,
+			BaseRewardEssence:                  definition.BaseRewardEssence,
+			RewardEssenceScale:                 definition.RewardEssenceScale,
+			RewardEssenceGrowth:                definition.RewardEssenceGrowth,
+			BaseEnemyHP:                        definition.BaseEnemyHP,
+			EnemyHPScale:                       definition.EnemyHPScale,
+			EnemyHPGrowth:                      definition.EnemyHPGrowth,
+			BaseEnemyDamage:                    definition.BaseEnemyDamage,
+			EnemyDamageScale:                   definition.EnemyDamageScale,
+			EnemyDamageGrowth:                  definition.EnemyDamageGrowth,
+			NormalEnemyHPMultiplier:            definition.NormalEnemyHPMultiplier,
+			MiniBossEnemyHPMultiplier:          definition.MiniBossEnemyHPMultiplier,
+			BigBossEnemyHPMultiplier:           definition.BigBossEnemyHPMultiplier,
+			NormalEnemyDamageMultiplier:        definition.NormalEnemyDamageMultiplier,
+			MiniBossEnemyDamageMultiplier:      definition.MiniBossEnemyDamageMultiplier,
+			BigBossEnemyDamageMultiplier:       definition.BigBossEnemyDamageMultiplier,
+			NormalRecommendedPowerMultiplier:   definition.NormalRecommendedPowerMultiplier,
+			MiniBossRecommendedPowerMultiplier: definition.MiniBossRecommendedPowerMultiplier,
+			BigBossRecommendedPowerMultiplier:  definition.BigBossRecommendedPowerMultiplier,
+			NormalShardBase:                    definition.NormalShardBase,
+			NormalShardEveryFloors:             definition.NormalShardEveryFloors,
+			MiniBossShardBase:                  definition.MiniBossShardBase,
+			MiniBossShardEveryFloors:           definition.MiniBossShardEveryFloors,
+			BigBossShardBase:                   definition.BigBossShardBase,
+			BigBossShardEveryFloors:            definition.BigBossShardEveryFloors,
+			MaxCombatSeconds:                   definition.MaxCombatSeconds,
 		}
 	}
 
@@ -340,6 +385,22 @@ func (catalog *SnapshotBalanceCatalog) DungeonReward(definition balance.DungeonD
 	}
 
 	return reward
+}
+
+func (catalog *SnapshotBalanceCatalog) TowerDefinitionByID(towerID string) (balance.TowerDefinition, bool) {
+	if definition, ok := catalog.towers[towerID]; ok {
+		return definition, true
+	}
+
+	return catalog.fallback.TowerDefinitionByID(towerID)
+}
+
+func (catalog *SnapshotBalanceCatalog) TowerEnemyCombatStats(definition balance.TowerDefinition, floor int) balance.EnemyCombatStats {
+	return balance.TowerEnemyCombatStats(definition, floor)
+}
+
+func (catalog *SnapshotBalanceCatalog) TowerReward(definition balance.TowerDefinition, floor int) api.Reward {
+	return balance.TowerReward(definition, floor)
 }
 
 func (catalog *SnapshotBalanceCatalog) GearDungeonDropAccessoryID(floor int) string {

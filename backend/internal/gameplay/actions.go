@@ -12,6 +12,7 @@ const (
 	ActionEssenceDungeonRun  = "essence_dungeon_run"
 	ActionGearDungeonRun     = "gear_dungeon_run"
 	ActionShardRiftRun       = "shard_rift_run"
+	ActionTowerRun           = "tower_run"
 	ActionHeroLevel          = "hero_level"
 	ActionHeroAscend         = "hero_ascend"
 	ActionHeroStarUpgrade    = "hero_star_upgrade"
@@ -45,6 +46,7 @@ func ActionCatalog() []ActionDefinition {
 		{ID: ActionEssenceDungeonRun, Domain: "dungeon", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionGearDungeonRun, Domain: "dungeon", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionShardRiftRun, Domain: "dungeon", RequiresIdempotency: true, MaterializedByFlush: true},
+		{ID: ActionTowerRun, Domain: "tower", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionHeroLevel, Domain: "hero", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionHeroAscend, Domain: "hero", RequiresIdempotency: true, MaterializedByFlush: true},
 		{ID: ActionHeroStarUpgrade, Domain: "hero", RequiresIdempotency: true, MaterializedByFlush: true},

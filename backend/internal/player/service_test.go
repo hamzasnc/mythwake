@@ -47,6 +47,126 @@ func TestDungeonActionIDUsesSpecificActionForKnownDungeons(t *testing.T) {
 	if actionID := dungeonActionID("unknown"); actionID != gameplay.ActionDungeonRun {
 		t.Fatalf("expected generic dungeon action id, got %s", actionID)
 	}
+	if actionID := dungeonActionID(towerDungeonID); actionID != gameplay.ActionTowerRun {
+		t.Fatalf("expected tower action id, got %s", actionID)
+	}
+}
+
+func TestTowerRunAdvancesOnlyTheActiveFloor(t *testing.T) {
+	service := NewService()
+	for heroID := range service.heroLevels {
+		service.heroLevels[heroID] = 100
+	}
+	service.recalculatePower()
+
+	first := service.RunTowerWithRequest(context.Background(), ActionRequest{}, 1)
+	if !first.Success || first.ActionID != gameplay.ActionTowerRun {
+		t.Fatalf("expected floor 1 tower run to succeed, got %#v", first)
+	}
+	if first.Combat == nil || first.Combat.Mode != "tower" || first.Combat.TargetLevel != 1 {
+		t.Fatalf("expected tower combat receipt, got %#v", first.Combat)
+	}
+	if first.PlayerSnapshot.Tower.HighestClearedFloor != 1 || first.PlayerSnapshot.Tower.HighestUnlockedFloor != 2 {
+		t.Fatalf("expected floor 2 to unlock after floor 1, got %#v", first.PlayerSnapshot.Tower)
+	}
+
+	replayFloor := service.RunTowerWithRequest(context.Background(), ActionRequest{}, 1)
+	if replayFloor.Success || replayFloor.ErrorCode != "tower_floor_not_ready" {
+		t.Fatalf("expected cleared floor to be rejected, got %#v", replayFloor)
+	}
+
+	second := service.RunTowerWithRequest(context.Background(), ActionRequest{}, 2)
+	if !second.Success || second.PlayerSnapshot.Tower.HighestClearedFloor != 2 || second.PlayerSnapshot.Tower.HighestUnlockedFloor != 3 {
+		t.Fatalf("expected active floor 2 to clear, got %#v", second)
+	}
+}
+
+func TestTowerRunIdempotencyReplaysWithoutUnlockingTwice(t *testing.T) {
+	store := newIdempotentStateStore()
+	service := NewService()
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+	for heroID := range service.heroLevels {
+		service.heroLevels[heroID] = 100
+	}
+	service.recalculatePower()
+
+	request := ActionRequest{IdempotencyKey: "tower-key-1", RequestHash: "tower-hash-1"}
+	first := service.RunTowerWithRequest(context.Background(), request, 1)
+	if !first.Success {
+		t.Fatalf("expected first tower run to succeed, got %#v", first)
+	}
+	replay := service.RunTowerWithRequest(context.Background(), request, 1)
+	if !replay.Success || !replay.Replay {
+		t.Fatalf("expected idempotent tower replay, got %#v", replay)
+	}
+	if replay.PlayerSnapshot.Tower.HighestClearedFloor != 1 || service.GetSnapshot().Tower.HighestUnlockedFloor != 2 {
+		t.Fatalf("expected replay to preserve one clear, replay=%#v current=%#v", replay.PlayerSnapshot.Tower, service.GetSnapshot().Tower)
+	}
+}
+
+func TestTowerRunDefeatPersistsFailureWithoutRewardOrProgress(t *testing.T) {
+	store := newIdempotentStateStore()
+	service := NewServiceForPlayer("tower-defeat", withServiceBalanceCatalog(towerDefeatCatalog{}))
+	if err := service.UseStateStore(context.Background(), store); err != nil {
+		t.Fatalf("attach store: %v", err)
+	}
+
+	before := service.GetState()
+	result := service.RunTowerWithRequest(context.Background(), ActionRequest{IdempotencyKey: "tower-defeat-1", RequestHash: "tower-defeat-hash"}, 1)
+	if result.Success || result.ErrorCode != "combat_lost" || result.Combat == nil || result.Combat.Won {
+		t.Fatalf("expected a persisted tower defeat, got %#v", result)
+	}
+	if result.PlayerSnapshot.Tower.HighestClearedFloor != 0 || result.PlayerSnapshot.Tower.HighestUnlockedFloor != 1 {
+		t.Fatalf("defeat must not advance tower progress, got %#v", result.PlayerSnapshot.Tower)
+	}
+	if result.PlayerState.Gold != before.Gold || result.PlayerState.MythEssence != before.MythEssence {
+		t.Fatalf("defeat must not grant economy rewards, before=%#v after=%#v", before, result.PlayerState)
+	}
+	if service.GetSnapshot().DailyProgress == nil {
+		t.Fatal("expected a valid snapshot after a persisted defeat")
+	}
+}
+
+func TestTowerProgressSurvivesFlushManagerRestartAndRelogin(t *testing.T) {
+	store := newDurableTowerStateStore()
+	manager := NewManager(store)
+	service, err := manager.ServiceForPlayer(context.Background(), "tower-restart-player")
+	if err != nil {
+		t.Fatalf("load first player service: %v", err)
+	}
+	for heroID := range service.heroLevels {
+		service.heroLevels[heroID] = 100
+	}
+	service.recalculatePower()
+
+	request := ActionRequest{IdempotencyKey: "tower-restart-1", RequestHash: "tower-restart-hash"}
+	first := service.RunTowerWithRequest(context.Background(), request, 1)
+	if !first.Success {
+		t.Fatalf("expected first tower run to succeed, got %#v", first)
+	}
+	if err := manager.FlushAll(context.Background()); err != nil {
+		t.Fatalf("flush tower state: %v", err)
+	}
+
+	restarted := NewManager(store)
+	relogged, err := restarted.ServiceForPlayer(context.Background(), "tower-restart-player")
+	if err != nil {
+		t.Fatalf("reload player service: %v", err)
+	}
+	snapshot := relogged.GetSnapshot()
+	if snapshot.Tower.HighestClearedFloor != 1 || snapshot.Tower.HighestUnlockedFloor != 2 {
+		t.Fatalf("expected Tower progress after restart/relogin, got %#v", snapshot.Tower)
+	}
+
+	replay := relogged.RunTowerWithRequest(context.Background(), request, 1)
+	if !replay.Success || !replay.Replay {
+		t.Fatalf("expected action-ledger replay after restart, got %#v", replay)
+	}
+	if replay.PlayerSnapshot.Tower.HighestClearedFloor != 1 || relogged.GetSnapshot().Tower.HighestUnlockedFloor != 2 {
+		t.Fatalf("replay must not unlock twice, replay=%#v current=%#v", replay.PlayerSnapshot.Tower, relogged.GetSnapshot().Tower)
+	}
 }
 
 func TestShardRiftRunKeepsRewardsAfterFailedEnd(t *testing.T) {
@@ -1025,6 +1145,57 @@ func (store *idempotentStateStore) SaveState(_ context.Context, _ string, state 
 func (store *idempotentStateStore) LoadActionResult(_ context.Context, _ string, idempotencyKey string) (StoredActionResult, bool, error) {
 	record, ok := store.records[idempotencyKey]
 	return record, ok, nil
+}
+
+type towerDefeatCatalog struct {
+	StaticBalanceCatalog
+}
+
+func (towerDefeatCatalog) TowerEnemyCombatStats(balance.TowerDefinition, int) balance.EnemyCombatStats {
+	return balance.EnemyCombatStats{MaxHP: 1000000, Damage: 1, MaxSeconds: 1}
+}
+
+type durableTowerStateStore struct {
+	states  map[string]PersistentState
+	records map[string]StoredActionResult
+}
+
+func newDurableTowerStateStore() *durableTowerStateStore {
+	return &durableTowerStateStore{
+		states:  map[string]PersistentState{},
+		records: map[string]StoredActionResult{},
+	}
+}
+
+func (store *durableTowerStateStore) LoadState(_ context.Context, playerID string) (PersistentState, bool, error) {
+	state, ok := store.states[playerID]
+	if !ok {
+		return PersistentState{}, false, nil
+	}
+
+	return ClonePersistentState(state), true, nil
+}
+
+func (store *durableTowerStateStore) SaveState(_ context.Context, playerID string, state PersistentState, source StateSaveSource) error {
+	store.states[playerID] = ClonePersistentState(state)
+	if source.IdempotencyKey != "" && source.ActionResult != nil {
+		store.records[playerID+"\x00"+source.IdempotencyKey] = StoredActionResult{
+			ActionID:     source.ActionID,
+			RequestHash:  source.RequestHash,
+			ActionResult: *source.ActionResult,
+		}
+	}
+
+	return nil
+}
+
+func (store *durableTowerStateStore) LoadActionResult(_ context.Context, playerID string, idempotencyKey string) (StoredActionResult, bool, error) {
+	record, ok := store.records[playerID+"\x00"+idempotencyKey]
+	return record, ok, nil
+}
+
+func (store *durableTowerStateStore) Flush(context.Context) error {
+	return nil
 }
 
 type failingAfterSeedStore struct {

@@ -30,29 +30,33 @@ func (service *Service) saveState(ctx context.Context, request ActionRequest, ac
 
 func (service *Service) persistentState() PersistentState {
 	return ClonePersistentState(PersistentState{
-		Revision:           service.revision,
-		UpdatedAt:          service.updatedAt,
-		PlayerState:        service.state,
-		HeroLevels:         service.heroLevels,
-		HeroShards:         service.heroShards,
-		HeroAscensions:     service.heroAscensions,
-		HeroStars:          service.heroStars,
-		EquipmentLevels:    service.equipmentLevels,
-		AccessoryInventory: service.accessoryInventory,
-		AccessoryLevels:    service.accessoryLevels,
-		EquippedAccessory:  service.equippedAccessory,
-		VillageBuildings:   service.villageBuildings,
-		ClaimedDaily:       service.claimedDaily,
-		ClaimedBattlePass:  service.claimedBattlePass,
-		SummonCount:        service.summonCount,
-		HeroShardChests:    service.heroShardChests,
-		ShardRiftBest:      service.shardRiftBest,
-		ShardRiftTotal:     service.shardRiftTotal,
-		LastAFKClaimedAt:   service.lastAFKClaimedAt,
-		DailyDate:          service.dailyDate,
-		DailyFightCount:    service.dailyFightCount,
-		DailyStageClears:   service.dailyStageClears,
-		DailySummonCount:   service.dailySummonCount,
+		Revision:                  service.revision,
+		UpdatedAt:                 service.updatedAt,
+		PlayerState:               service.state,
+		HeroLevels:                service.heroLevels,
+		HeroShards:                service.heroShards,
+		HeroAscensions:            service.heroAscensions,
+		HeroStars:                 service.heroStars,
+		EquipmentLevels:           service.equipmentLevels,
+		AccessoryInventory:        service.accessoryInventory,
+		AccessoryLevels:           service.accessoryLevels,
+		EquippedAccessory:         service.equippedAccessory,
+		VillageBuildings:          service.villageBuildings,
+		ClaimedDaily:              service.claimedDaily,
+		ClaimedBattlePass:         service.claimedBattlePass,
+		SummonCount:               service.summonCount,
+		HeroShardChests:           service.heroShardChests,
+		ShardRiftBest:             service.shardRiftBest,
+		ShardRiftTotal:            service.shardRiftTotal,
+		TowerHighestUnlockedFloor: service.towerHighestUnlockedFloor,
+		TowerHighestClearedFloor:  service.towerHighestClearedFloor,
+		TowerSelectedFloor:        service.towerSelectedFloor,
+		TowerSectionStartFloor:    service.towerSectionStartFloor,
+		LastAFKClaimedAt:          service.lastAFKClaimedAt,
+		DailyDate:                 service.dailyDate,
+		DailyFightCount:           service.dailyFightCount,
+		DailyStageClears:          service.dailyStageClears,
+		DailySummonCount:          service.dailySummonCount,
 	})
 }
 
@@ -81,6 +85,10 @@ func (service *Service) applyPersistentState(state PersistentState) {
 	service.heroShardChests = max(0, state.HeroShardChests)
 	service.shardRiftBest = max(0, state.ShardRiftBest)
 	service.shardRiftTotal = max(0, state.ShardRiftTotal)
+	service.towerHighestUnlockedFloor = max(1, state.TowerHighestUnlockedFloor)
+	service.towerHighestClearedFloor = max(0, state.TowerHighestClearedFloor)
+	service.towerSelectedFloor = max(1, state.TowerSelectedFloor)
+	service.towerSectionStartFloor = max(1, state.TowerSectionStartFloor)
 	service.lastAFKClaimedAt = state.LastAFKClaimedAt
 	if service.lastAFKClaimedAt.IsZero() {
 		service.lastAFKClaimedAt = service.now().UTC()
@@ -89,6 +97,7 @@ func (service *Service) applyPersistentState(state PersistentState) {
 	service.dailyFightCount = state.DailyFightCount
 	service.dailyStageClears = state.DailyStageClears
 	service.dailySummonCount = state.DailySummonCount
+	service.normalizeTowerProgress()
 	service.ensureDailyWindow()
 	service.recalculatePower()
 }

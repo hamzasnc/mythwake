@@ -20,6 +20,7 @@ const (
 	essenceDungeonID   = balance.DungeonEssence
 	gearDungeonID      = balance.DungeonGear
 	shardRiftDungeonID = balance.DungeonShardRift
+	towerDungeonID     = balance.TowerDungeon
 	heroBannerID       = balance.BannerHeroShardStandard
 	weaponID           = balance.EquipmentWeapon
 	armorID            = balance.EquipmentArmor
@@ -47,29 +48,33 @@ type StateResetter interface {
 }
 
 type PersistentState struct {
-	Revision           int64
-	UpdatedAt          time.Time
-	PlayerState        api.PlayerState
-	HeroLevels         map[string]int
-	HeroShards         map[string]int
-	HeroAscensions     map[string]int
-	HeroStars          map[string]int
-	EquipmentLevels    map[string]int
-	AccessoryInventory map[string]int
-	AccessoryLevels    map[string]int
-	EquippedAccessory  map[string]string
-	VillageBuildings   map[int]api.VillageBuilding
-	ClaimedDaily       map[string]bool
-	ClaimedBattlePass  map[string]bool
-	SummonCount        int
-	HeroShardChests    int
-	ShardRiftBest      int
-	ShardRiftTotal     int
-	LastAFKClaimedAt   time.Time
-	DailyDate          string
-	DailyFightCount    int
-	DailyStageClears   int
-	DailySummonCount   int
+	Revision                  int64
+	UpdatedAt                 time.Time
+	PlayerState               api.PlayerState
+	HeroLevels                map[string]int
+	HeroShards                map[string]int
+	HeroAscensions            map[string]int
+	HeroStars                 map[string]int
+	EquipmentLevels           map[string]int
+	AccessoryInventory        map[string]int
+	AccessoryLevels           map[string]int
+	EquippedAccessory         map[string]string
+	VillageBuildings          map[int]api.VillageBuilding
+	ClaimedDaily              map[string]bool
+	ClaimedBattlePass         map[string]bool
+	SummonCount               int
+	HeroShardChests           int
+	ShardRiftBest             int
+	ShardRiftTotal            int
+	TowerHighestUnlockedFloor int
+	TowerHighestClearedFloor  int
+	TowerSelectedFloor        int
+	TowerSectionStartFloor    int
+	LastAFKClaimedAt          time.Time
+	DailyDate                 string
+	DailyFightCount           int
+	DailyStageClears          int
+	DailySummonCount          int
 }
 
 type StateSaveSource struct {
@@ -109,71 +114,79 @@ func (request ActionRequest) HasIdempotency() bool {
 
 func ClonePersistentState(state PersistentState) PersistentState {
 	return PersistentState{
-		Revision:           state.Revision,
-		UpdatedAt:          state.UpdatedAt,
-		PlayerState:        state.PlayerState,
-		HeroLevels:         cloneIntMap(state.HeroLevels),
-		HeroShards:         cloneIntMap(state.HeroShards),
-		HeroAscensions:     cloneIntMap(state.HeroAscensions),
-		HeroStars:          cloneIntMap(state.HeroStars),
-		EquipmentLevels:    cloneIntMap(state.EquipmentLevels),
-		AccessoryInventory: cloneIntMap(state.AccessoryInventory),
-		AccessoryLevels:    cloneIntMap(state.AccessoryLevels),
-		EquippedAccessory:  cloneStringMap(state.EquippedAccessory),
-		VillageBuildings:   cloneVillageBuildingMap(state.VillageBuildings),
-		ClaimedDaily:       cloneBoolMap(state.ClaimedDaily),
-		ClaimedBattlePass:  cloneBoolMap(state.ClaimedBattlePass),
-		SummonCount:        state.SummonCount,
-		HeroShardChests:    state.HeroShardChests,
-		ShardRiftBest:      state.ShardRiftBest,
-		ShardRiftTotal:     state.ShardRiftTotal,
-		LastAFKClaimedAt:   state.LastAFKClaimedAt,
-		DailyDate:          state.DailyDate,
-		DailyFightCount:    state.DailyFightCount,
-		DailyStageClears:   state.DailyStageClears,
-		DailySummonCount:   state.DailySummonCount,
+		Revision:                  state.Revision,
+		UpdatedAt:                 state.UpdatedAt,
+		PlayerState:               state.PlayerState,
+		HeroLevels:                cloneIntMap(state.HeroLevels),
+		HeroShards:                cloneIntMap(state.HeroShards),
+		HeroAscensions:            cloneIntMap(state.HeroAscensions),
+		HeroStars:                 cloneIntMap(state.HeroStars),
+		EquipmentLevels:           cloneIntMap(state.EquipmentLevels),
+		AccessoryInventory:        cloneIntMap(state.AccessoryInventory),
+		AccessoryLevels:           cloneIntMap(state.AccessoryLevels),
+		EquippedAccessory:         cloneStringMap(state.EquippedAccessory),
+		VillageBuildings:          cloneVillageBuildingMap(state.VillageBuildings),
+		ClaimedDaily:              cloneBoolMap(state.ClaimedDaily),
+		ClaimedBattlePass:         cloneBoolMap(state.ClaimedBattlePass),
+		SummonCount:               state.SummonCount,
+		HeroShardChests:           state.HeroShardChests,
+		ShardRiftBest:             state.ShardRiftBest,
+		ShardRiftTotal:            state.ShardRiftTotal,
+		TowerHighestUnlockedFloor: state.TowerHighestUnlockedFloor,
+		TowerHighestClearedFloor:  state.TowerHighestClearedFloor,
+		TowerSelectedFloor:        state.TowerSelectedFloor,
+		TowerSectionStartFloor:    state.TowerSectionStartFloor,
+		LastAFKClaimedAt:          state.LastAFKClaimedAt,
+		DailyDate:                 state.DailyDate,
+		DailyFightCount:           state.DailyFightCount,
+		DailyStageClears:          state.DailyStageClears,
+		DailySummonCount:          state.DailySummonCount,
 	}
 }
 
 type Service struct {
-	mu                 sync.Mutex
-	playerID           string
-	stateStore         StateStore
-	actionResultStore  ActionResultStore
-	balanceCatalog     BalanceCatalog
-	campaignActions    campaignActions
-	dungeonActions     dungeonActions
-	heroActions        heroProgressionActions
-	equipmentActions   equipmentActions
-	accessoryActions   accessoryActions
-	summonActions      summonActions
-	villageActions     villageActions
-	missionActions     missionActions
-	afkActions         afkActions
-	state              api.PlayerState
-	heroLevels         map[string]int
-	heroShards         map[string]int
-	heroAscensions     map[string]int
-	heroStars          map[string]int
-	equipmentLevels    map[string]int
-	accessoryInventory map[string]int
-	accessoryLevels    map[string]int
-	equippedAccessory  map[string]string
-	villageBuildings   map[int]api.VillageBuilding
-	claimedDaily       map[string]bool
-	claimedBattlePass  map[string]bool
-	summonCount        int
-	heroShardChests    int
-	shardRiftBest      int
-	shardRiftTotal     int
-	revision           int64
-	updatedAt          time.Time
-	lastAFKClaimedAt   time.Time
-	dailyDate          string
-	dailyFightCount    int
-	dailyStageClears   int
-	dailySummonCount   int
-	now                func() time.Time
+	mu                        sync.Mutex
+	playerID                  string
+	stateStore                StateStore
+	actionResultStore         ActionResultStore
+	balanceCatalog            BalanceCatalog
+	campaignActions           campaignActions
+	dungeonActions            dungeonActions
+	heroActions               heroProgressionActions
+	equipmentActions          equipmentActions
+	accessoryActions          accessoryActions
+	summonActions             summonActions
+	villageActions            villageActions
+	missionActions            missionActions
+	afkActions                afkActions
+	state                     api.PlayerState
+	heroLevels                map[string]int
+	heroShards                map[string]int
+	heroAscensions            map[string]int
+	heroStars                 map[string]int
+	equipmentLevels           map[string]int
+	accessoryInventory        map[string]int
+	accessoryLevels           map[string]int
+	equippedAccessory         map[string]string
+	villageBuildings          map[int]api.VillageBuilding
+	claimedDaily              map[string]bool
+	claimedBattlePass         map[string]bool
+	summonCount               int
+	heroShardChests           int
+	shardRiftBest             int
+	shardRiftTotal            int
+	towerHighestUnlockedFloor int
+	towerHighestClearedFloor  int
+	towerSelectedFloor        int
+	towerSectionStartFloor    int
+	revision                  int64
+	updatedAt                 time.Time
+	lastAFKClaimedAt          time.Time
+	dailyDate                 string
+	dailyFightCount           int
+	dailyStageClears          int
+	dailySummonCount          int
+	now                       func() time.Time
 }
 
 type ServiceOption func(*Service)
@@ -216,23 +229,27 @@ func NewServiceForPlayer(playerID string, options ...ServiceOption) *Service {
 			TeamAttack:          96,
 			TeamHealth:          780,
 		},
-		heroLevels:         map[string]int{},
-		heroShards:         map[string]int{},
-		heroAscensions:     map[string]int{},
-		heroStars:          map[string]int{},
-		equipmentLevels:    map[string]int{},
-		accessoryInventory: map[string]int{},
-		accessoryLevels:    map[string]int{},
-		equippedAccessory:  map[string]string{},
-		villageBuildings:   map[int]api.VillageBuilding{},
-		claimedDaily:       map[string]bool{},
-		claimedBattlePass:  map[string]bool{},
-		revision:           1,
-		updatedAt:          now,
+		heroLevels:                map[string]int{},
+		heroShards:                map[string]int{},
+		heroAscensions:            map[string]int{},
+		heroStars:                 map[string]int{},
+		equipmentLevels:           map[string]int{},
+		accessoryInventory:        map[string]int{},
+		accessoryLevels:           map[string]int{},
+		equippedAccessory:         map[string]string{},
+		villageBuildings:          map[int]api.VillageBuilding{},
+		claimedDaily:              map[string]bool{},
+		claimedBattlePass:         map[string]bool{},
+		towerHighestUnlockedFloor: 1,
+		towerSelectedFloor:        1,
+		towerSectionStartFloor:    1,
+		revision:                  1,
+		updatedAt:                 now,
 	}
 	for _, option := range options {
 		option(service)
 	}
+	service.normalizeTowerProgress()
 	service.seedInitialHeroes()
 	service.seedInitialEquipment()
 	service.recalculatePower()
