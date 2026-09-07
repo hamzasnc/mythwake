@@ -40,6 +40,7 @@ public partial class IdlePrototypeController
         ReadableSummon(frame, card);
         ReadableMaps();
         ReadableDialogs(frame, card);
+        ReadableHeroDetails(frame);
         ReadableTopBar(button, node);
         corePresentationReady = true;
     }
@@ -404,6 +405,75 @@ public partial class IdlePrototypeController
             image.color = Color.white;
             image.type = Image.Type.Simple;
         }
+    }
+
+    private void ReadableHeroDetails(Sprite frame)
+    {
+        if (heroDetailRoot == null) return;
+        SetComponentActive(heroSubTabRoot, !heroDetailRoot.gameObject.activeSelf);
+        // Detail and equipment are opaque pages inside the content area.
+        // Their backgrounds also intercept clicks aimed at the roster underneath.
+        CoreRect(heroDetailRoot, 0, 0, 1040, 1450);
+        var available = heroesPanel.GetComponent<RectTransform>().rect;
+        var scale = Mathf.Min(1f, available.height / 1450f, available.width / 1040f);
+        heroDetailRoot.localScale = Vector3.one * Mathf.Max(.1f, scale);
+        var pageHeight = Mathf.Max(1450, available.height / Mathf.Max(.1f, scale));
+        heroDetailRoot.sizeDelta = new Vector2(1040, pageHeight);
+        CorePanel(heroDetailRoot, frame);
+        var fill = heroDetailRoot.Find("Core Inset Fill").GetComponent<Image>();
+        fill.rectTransform.offsetMin = Vector2.zero;
+        fill.rectTransform.offsetMax = Vector2.zero;
+        fill.raycastTarget = true;
+        CoreRect(heroDetailRoot.Find("Hero Detail Armory Background"), 0, 0, 1040, pageHeight);
+        CoreHide(heroDetailRoot, "Hero Detail Right Edge Scrim", "Hero Detail Tabs Backplate");
+        CoreRect(heroDetailCloseButton, 454, 24, 80, 80);
+        for (var i = 0; i < heroDetailGearSlotButtons.Length; i++)
+        {
+            CoreRect(heroDetailGearSlotButtons[i], i < 4 ? -330 : 330, 184 + (i % 4) * 142, 180, 132);
+            CoreRect(heroDetailGearSlotIcons[i], 0, 8, 84, 56);
+            CoreRect(heroDetailGearSlotTexts[i], 0, 70, 168, 58);
+            CoreText(heroDetailGearSlotTexts[i], 20);
+        }
+        CoreRect(heroDetailStatsText, 0, 808, 900, 110);
+        CoreText(heroDetailStatsText, 25);
+        CoreRect(heroDetailResourceText, 0, 936, 900, 90);
+        CoreText(heroDetailResourceText, 26);
+        CoreRect(heroDetailLevelButton, -226, 1050, 420, 94);
+        CoreRect(heroDetailStarButton, 226, 1050, 420, 94);
+        CoreRect(heroDetailRemoveGearButton, -226, 1160, 420, 94);
+        CoreRect(heroDetailEquipGearButton, 226, 1160, 420, 94);
+        CoreRect(heroDetailOpenChestButton, 0, 1270, 540, 94);
+        foreach (var b in new[] { heroDetailLevelButton, heroDetailStarButton, heroDetailRemoveGearButton, heroDetailEquipGearButton, heroDetailOpenChestButton })
+            CoreText(b.GetComponentInChildren<TMP_Text>(), 28);
+
+        if (heroDetailGearListRoot == null) return;
+        CoreRect(heroDetailGearListRoot, 0, 0, 1040, pageHeight);
+        CorePanel(heroDetailGearListRoot, frame);
+        var gearFill = heroDetailGearListRoot.Find("Core Inset Fill").GetComponent<Image>();
+        gearFill.rectTransform.offsetMin = Vector2.zero;
+        gearFill.rectTransform.offsetMax = Vector2.zero;
+        gearFill.raycastTarget = true;
+        CoreHide(heroDetailGearListRoot, "Divider");
+        CoreRect(heroDetailGearListTitleText, -40, 34, 800, 72);
+        CoreText(heroDetailGearListTitleText, 38);
+        CoreRect(heroDetailGearListCloseButton, 454, 24, 80, 80);
+        for (var i = 0; i < heroDetailGearOptionButtons.Length; i++)
+        {
+            CoreRect(heroDetailGearOptionButtons[i], 0, 132 + i * 104, 920, 94);
+            CoreRect(heroDetailGearOptionButtons[i].transform.Find("Icon Back"), -390, 15, 70, 64);
+            CoreRect(heroDetailGearOptionTexts[i], 45, 12, 740, 70);
+            CoreText(heroDetailGearOptionTexts[i], 28);
+        }
+        CoreRect(heroDetailGearConfirmRoot, 0, 790, 920, 600);
+        CorePanel(heroDetailGearConfirmRoot, frame);
+        CoreHide(heroDetailGearConfirmRoot, "Selected Gear Detail Inner");
+        CoreRect(heroDetailGearConfirmIcon, 0, 32, 144, 116);
+        CoreRect(heroDetailGearConfirmTitleText, 0, 172, 850, 72);
+        CoreText(heroDetailGearConfirmTitleText, 32);
+        CoreRect(heroDetailGearConfirmStatsText, 0, 256, 850, 170);
+        CoreText(heroDetailGearConfirmStatsText, 28);
+        CoreRect(heroDetailGearConfirmEquipButton, 0, 466, 650, 100);
+        CoreText(heroDetailGearConfirmEquipButton.GetComponentInChildren<TMP_Text>(), 32);
     }
 
     private void ReadableTopBar(Sprite button, Sprite node)

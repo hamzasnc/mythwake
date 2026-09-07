@@ -5,7 +5,7 @@ Last updated: 2026-09-07
 ## Where We Are
 
 - Current branch: `codex/batch-1-stabilize-prototype`.
-- Unity client code is at the internal alpha candidate Prototype `0.2.177`, save version `2`.
+- Unity client code is at the internal alpha candidate Prototype `0.2.178`, save version `2`.
 - Backend API default version is `0.2.63`.
 - Backend core tests for balance, player, and HTTP routes are green.
 - Server-authoritative core is already broad: guest auth, Email + Password backend auth, sessions, idempotent gameplay actions, PostgreSQL state, definition snapshots, AFK, daily progress, combat results, dungeons, summons, gear, and village building state.
@@ -14,7 +14,8 @@ Last updated: 2026-09-07
 
 ## Current Alpha Candidate
 
-- Candidate: Prototype `0.2.177` / Backend `0.2.63`, Android Version Code `2177`.
+- Candidate: Prototype `0.2.178` / Backend `0.2.63`, Android Version Code `2178`.
+- Hero detail and equipment now cover the underlying roster with opaque, input-blocking pages. Equipment rows and labels are enlarged; the detail page fits the available portrait content area. Screen captures and regression checks live in `Builds/Validation/core-screens`.
 - P0 Current Slice is green, including shop tab switching and the generated Bag runtime path.
 - Shop offers are catalog/snapshot data only; no client-side purchase or reward grant exists.
 - Bag uses the single generated `Assets/Art/UI/BagGenerated` asset/catalog pipeline. Inventory quantity parsing/filtering is covered by pure rules and an EditMode menu test.

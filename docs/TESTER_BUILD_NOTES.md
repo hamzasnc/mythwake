@@ -4,17 +4,19 @@ Last updated: 2026-09-07
 
 ## Current Candidate
 
-- Tester build label: `0.4 internal alpha tower-server`
-- Prototype / Android Version Name: `0.2.177`
-- Android Version Code: `2177`
+- Tester build label: `internal alpha UI overlap fix`
+- Prototype / Android Version Name: `0.2.178`
+- Android Version Code: `2178`
 - Package: `com.xmiepsen.mythwake`
 - Backend: `0.2.63`
 - Save version: `2`
-- APK target: `Builds/Android/Mythwake-0.2.177-internal-alpha.apk`
-- AAB target: `Builds/Android/Mythwake-0.2.177-internal-alpha.aab`
+- APK target: `Builds/Android/Mythwake-0.2.178-ui-fix.apk`
+- AAB target: `Builds/Android/Mythwake-0.2.178-ui-fix.aab`
 
 ## What Is New
 
+- Hero details replace the visible roster; equipment opens an opaque page with larger rows, readable details and a separate close button. Decorative, nonfunctional Story/Skills labels were removed from this page.
+- Regression check: open a hero, tap each of the eight equipment slots, select/equip an available item, close equipment, switch hero, close details and switch main tabs. Check empty slots and long German labels on a narrow portrait screen. Existing account and economy behavior is unchanged.
 - Android PlayerSettings now have an explicit package name and no longer use the Unity `DefaultCompany` placeholder.
 - Android Version Name follows the visible Prototype version.
 - Android Version Code is derived from the Prototype version and is validator-checked.
@@ -96,7 +98,10 @@ Last updated: 2026-09-07
 
 ## Latest Verification
 
-- Current candidate packaging passed on 2026-09-07:
+- `0.2.178` UI fix: APK and AAB builds passed; package/version metadata is `com.xmiepsen.mythwake` / `0.2.178` / `2178`. Both signatures verified with the existing local signing certificate. Unity C# and Current Slice passed. Core-screen rendering passed, including hero/equipment captures at 540x864, 540x960 and 540x1170. Actual emulator touch testing remains a manual tester check.
+- Build helper now ignores only the known Unity internal pipe-shutdown warning, matching the Current Slice helper; real build exceptions still fail the gate.
+
+- Previous candidate `0.2.177` packaging passed on 2026-09-07 (superseded by the UI fix above):
   - APK `Builds/Android/Mythwake-0.2.177-internal-alpha.apk` (`203,617,797` bytes).
   - AAB `Builds/Android/Mythwake-0.2.177-internal-alpha.aab` (`203,500,756` bytes).
   - APK metadata: package `com.xmiepsen.mythwake`, versionCode `2177`, versionName `0.2.177`, label `Mythwake`, minSdk `25`, targetSdk `36`.

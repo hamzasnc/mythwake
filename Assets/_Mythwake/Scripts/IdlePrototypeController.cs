@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.177";
+    public const string PrototypeVersion = "0.2.178";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -24113,6 +24113,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         selectedHeroIndex = Mathf.Clamp(index, 0, HeroCount - 1);
         heroDetailRoot.SetAsLastSibling();
         heroDetailRoot.gameObject.SetActive(true);
+        SetComponentActive(heroSubTabRoot, false);
         RefreshHeroDetailUi();
     }
 
@@ -24122,6 +24123,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         if (heroDetailRoot != null)
         {
             heroDetailRoot.gameObject.SetActive(false);
+            SetComponentActive(heroSubTabRoot, true);
         }
     }
 
@@ -24471,7 +24473,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             return;
         }
 
-        rect.anchoredPosition = new Vector2(-142, -92 - rowIndex * 58);
+        CoreRect(optionButton, 0, 132 + rowIndex * 104, 920, 94);
     }
 
     private void RefreshHeroDetailEquipmentTrackList(EquipmentTrackDefinition track, int level, int heroIndex)

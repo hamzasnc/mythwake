@@ -23,7 +23,8 @@ Current branch:
 - `codex/batch-1-stabilize-prototype`
 
 Current internal alpha candidate:
-- Prototype `0.2.177`, Android Version Code `2177`, Backend `0.2.63`.
+- Prototype `0.2.178`, Android Version Code `2178`, Backend `0.2.63`.
+- Hero/gear overlap fix: opaque full-content pages, larger equipment rows and action buttons; screenshot regression output is `Builds/Validation/core-screens`. Use the `0.2.178-ui-fix` APK/AAB for testing.
 - P0 Current Slice is green. Shop definitions/migration/DTO/tests/docs are complete.
 - Bag now has one generated runtime asset pipeline under `Assets/Art/UI/BagGenerated`; legacy Bag Resources/prefabs and their builder were removed after reference checks. Pure inventory rules plus EditMode checks cover filtering and chest quantity selection.
 - Tower server mode is enabled through the authenticated idempotent Tower action, server catalog definitions, PostgreSQL player progress, action ledger replay, snapshot/bootstrap, and Unity client integration. A manual stop during the client combat presentation does not grant or revoke economy; the accepted server result is applied on callback.
