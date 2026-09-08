@@ -99,7 +99,7 @@ Last updated: 2026-09-08
 
 ## Latest Verification
 
-- `0.2.182` empty-gear modal cleanup: when the picker opens, the underlying hero labels, slot cards and action controls are hidden; only the armory backdrop and the active equipment modal remain visible. The card is opaque and high-contrast.
+- `0.2.182` empty-gear modal cleanup: when the picker opens, the underlying hero labels, slot cards and action controls are hidden; only the armory backdrop and the active equipment modal remain visible. The card is opaque and high-contrast. APK (203,619,289 bytes) and AAB (203,502,223 bytes) passed; metadata is `com.xmiepsen.mythwake` / `0.2.182` / `2182`; APK v2 and AAB JAR signatures verify with the existing local Android Debug certificate. Unity C# validation, Current Slice validation, Core Screen Presentation validation, `go test ./...`, `go vet ./...`, and `git diff --check` passed.
 
 - `0.2.179` hero-screen fix: APK and AAB builds passed; package/version metadata is `com.xmiepsen.mythwake` / `0.2.179` / `2179`. Both signatures verified with the existing local signing certificate. Unity C# and Current Slice passed. Core-screen rendering passed with legacy hero layers disabled and hero/equipment captures at 540x864, 540x960 and 540x1170. Actual emulator touch testing remains a manual tester check.
 

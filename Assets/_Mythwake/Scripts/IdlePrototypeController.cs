@@ -24383,7 +24383,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
                 SetComponentActive(slotButton.transform.Find("Inner"), !modalVisible);
                 SetComponentActive(heroDetailGearSlotTexts != null && i < heroDetailGearSlotTexts.Length ? heroDetailGearSlotTexts[i] : null, !modalVisible);
-                SetComponentActive(heroDetailGearSlotIcons != null && i < heroDetailGearSlotIcons.Length ? heroDetailGearSlotIcons[i] : null, true);
+                SetComponentActive(heroDetailGearSlotIcons != null && i < heroDetailGearSlotIcons.Length ? heroDetailGearSlotIcons[i] : null, !modalVisible);
             }
         }
     }
