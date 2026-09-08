@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.178";
+    public const string PrototypeVersion = "0.2.179";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -2432,6 +2432,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             return;
         }
 
+        HideLegacyHeroLayers();
         ShowScreen(AppScreen.Heroes);
     }
 
@@ -11687,6 +11688,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         activeScreen = screen;
 
+        HideLegacyHeroLayers();
+
         SetPanel(homePanel, screen == AppScreen.Home);
         SetPanel(villagePanel, screen == AppScreen.Village);
         SetPanel(battlePanel, screen == AppScreen.Battle);
@@ -19712,6 +19715,23 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         }
     }
 
+    private void HideLegacyHeroLayers()
+    {
+        if (heroesPanel == null)
+        {
+            return;
+        }
+
+        foreach (var childName in new[] { "Hero Header", "Selected Hero Card", "Equipment Panel" })
+        {
+            var child = heroesPanel.transform.Find(childName);
+            if (child != null)
+            {
+                child.gameObject.SetActive(false);
+            }
+        }
+    }
+
     private void AddMiscInventoryItems(List<InventoryItemViewData> items)
     {
         EnsureHeroShards();
@@ -24110,6 +24130,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             return;
         }
 
+        HideLegacyHeroLayers();
         selectedHeroIndex = Mathf.Clamp(index, 0, HeroCount - 1);
         heroDetailRoot.SetAsLastSibling();
         heroDetailRoot.gameObject.SetActive(true);
@@ -24120,6 +24141,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private void HideHeroDetail()
     {
         HideHeroDetailGearList();
+        HideLegacyHeroLayers();
         if (heroDetailRoot != null)
         {
             heroDetailRoot.gameObject.SetActive(false);

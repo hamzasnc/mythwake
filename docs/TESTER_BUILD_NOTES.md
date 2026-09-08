@@ -4,18 +4,18 @@ Last updated: 2026-09-07
 
 ## Current Candidate
 
-- Tester build label: `internal alpha UI overlap fix`
-- Prototype / Android Version Name: `0.2.178`
-- Android Version Code: `2178`
+- Tester build label: `internal alpha hero-screen fix`
+- Prototype / Android Version Name: `0.2.179`
+- Android Version Code: `2179`
 - Package: `com.xmiepsen.mythwake`
 - Backend: `0.2.63`
 - Save version: `2`
-- APK target: `Builds/Android/Mythwake-0.2.178-ui-fix.apk`
-- AAB target: `Builds/Android/Mythwake-0.2.178-ui-fix.aab`
+- APK target: `Builds/Android/Mythwake-0.2.179-hero-screen-fix.apk`
+- AAB target: `Builds/Android/Mythwake-0.2.179-hero-screen-fix.aab`
 
 ## What Is New
 
-- Hero details replace the visible roster; equipment opens an opaque page with larger rows, readable details and a separate close button. Decorative, nonfunctional Story/Skills labels were removed from this page.
+- Hero details replace the visible roster; legacy scene pages are disabled, equipment opens an opaque page with larger rows, readable details and a separate close button. Decorative, nonfunctional Story/Skills labels were removed from this page.
 - Regression check: open a hero, tap each of the eight equipment slots, select/equip an available item, close equipment, switch hero, close details and switch main tabs. Check empty slots and long German labels on a narrow portrait screen. Existing account and economy behavior is unchanged.
 - Android PlayerSettings now have an explicit package name and no longer use the Unity `DefaultCompany` placeholder.
 - Android Version Name follows the visible Prototype version.
@@ -97,6 +97,8 @@ Last updated: 2026-09-07
 - What exact Player ID and build version were visible when the issue happened?
 
 ## Latest Verification
+
+- `0.2.179` hero-screen fix: APK and AAB builds passed; package/version metadata is `com.xmiepsen.mythwake` / `0.2.179` / `2179`. Both signatures verified with the existing local signing certificate. Unity C# and Current Slice passed. Core-screen rendering passed with legacy hero layers disabled and hero/equipment captures at 540x864, 540x960 and 540x1170. Actual emulator touch testing remains a manual tester check.
 
 - `0.2.178` UI fix: APK and AAB builds passed; package/version metadata is `com.xmiepsen.mythwake` / `0.2.178` / `2178`. Both signatures verified with the existing local signing certificate. Unity C# and Current Slice passed. Core-screen rendering passed, including hero/equipment captures at 540x864, 540x960 and 540x1170. Actual emulator touch testing remains a manual tester check.
 - Build helper now ignores only the known Unity internal pipe-shutdown warning, matching the Current Slice helper; real build exceptions still fail the gate.

@@ -198,6 +198,15 @@ public static class UpgradeClutterValidation
             throw new InvalidOperationException("Heroes panel should be active after ShowHeroes.");
         }
 
+        foreach (var legacyName in new[] { "Hero Header", "Selected Hero Card", "Equipment Panel" })
+        {
+            var legacy = heroesPanel.transform.Find(legacyName);
+            if (legacy != null && legacy.gameObject.activeInHierarchy)
+            {
+                throw new InvalidOperationException($"Legacy hero layer {legacyName} must stay hidden while the runtime hero screens are active.");
+            }
+        }
+
         RequireInactive(RequireButtonField(controller, "heroUpgradeButton"), "Legacy hero upgrade button");
         RequireInactive(RequireButtonField(controller, "heroAscendButton"), "Legacy hero ascend button");
 
