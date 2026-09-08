@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.180";
+    public const string PrototypeVersion = "0.2.182";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -24323,6 +24323,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         selectedHeroDetailGearOptionRarity = GetDefaultHeroDetailGearOptionRarity();
         heroDetailGearListRoot.gameObject.SetActive(true);
         heroDetailGearListRoot.SetAsLastSibling();
+        SetHeroDetailGearModalBackdrop(true);
         RefreshHeroDetailGearSlots();
         RefreshHeroDetailGearList();
         RefreshHeroDetailGearActionButtons(!backendRequestInProgress && !IsDungeonBattleFocusLocked());
@@ -24332,6 +24333,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         selectedHeroDetailGearSlotIndex = -1;
         selectedHeroDetailGearOptionRarity = -1;
+        SetHeroDetailGearModalBackdrop(false);
         if (heroDetailGearListRoot != null)
         {
             heroDetailGearListRoot.gameObject.SetActive(false);
@@ -24339,6 +24341,51 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
         RefreshHeroDetailGearSlots();
         RefreshHeroDetailGearActionButtons(!backendRequestInProgress && !IsDungeonBattleFocusLocked());
+    }
+
+    private void SetHeroDetailGearModalBackdrop(bool modalVisible)
+    {
+        // The gear picker is a modal screen. Keep only the armory illustration behind it;
+        // hero labels, slot cards and action controls must not bleed through the picker.
+        SetComponentActive(heroDetailPortrait, !modalVisible);
+        SetComponentActive(heroDetailRarityText, !modalVisible);
+        SetComponentActive(heroDetailTitleText, !modalVisible);
+        SetComponentActive(heroDetailNameText, !modalVisible);
+        SetComponentActive(heroDetailPowerText, !modalVisible);
+        SetComponentActive(heroDetailStatsText, !modalVisible);
+        SetComponentActive(heroDetailResourceText, !modalVisible);
+        SetComponentActive(heroDetailCloseButton, !modalVisible);
+        SetComponentActive(heroDetailPreviousButton, !modalVisible);
+        SetComponentActive(heroDetailNextButton, !modalVisible);
+        SetComponentActive(heroDetailLevelButton, !modalVisible);
+        SetComponentActive(heroDetailEquipGearButton, !modalVisible);
+        SetComponentActive(heroDetailRemoveGearButton, !modalVisible);
+        SetComponentActive(heroDetailStarButton, !modalVisible);
+        SetComponentActive(heroDetailOpenChestButton, !modalVisible);
+
+        if (heroDetailGearSlotButtons != null)
+        {
+            for (var i = 0; i < heroDetailGearSlotButtons.Length; i++)
+            {
+                var slotButton = heroDetailGearSlotButtons[i];
+                if (slotButton == null)
+                {
+                    continue;
+                }
+
+                // Keep the slot hierarchy alive for icon/layout validation, but remove
+                // the clickable card chrome and label while the modal is open.
+                slotButton.interactable = !modalVisible;
+                if (heroDetailGearSlotFrames != null && i < heroDetailGearSlotFrames.Length && heroDetailGearSlotFrames[i] != null)
+                {
+                    heroDetailGearSlotFrames[i].enabled = !modalVisible;
+                }
+
+                SetComponentActive(slotButton.transform.Find("Inner"), !modalVisible);
+                SetComponentActive(heroDetailGearSlotTexts != null && i < heroDetailGearSlotTexts.Length ? heroDetailGearSlotTexts[i] : null, !modalVisible);
+                SetComponentActive(heroDetailGearSlotIcons != null && i < heroDetailGearSlotIcons.Length ? heroDetailGearSlotIcons[i] : null, true);
+            }
+        }
     }
 
     private void RefreshHeroDetailGearList()

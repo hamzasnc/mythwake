@@ -5,13 +5,13 @@ Last updated: 2026-09-08
 ## Current Candidate
 
 - Tester build label: `internal alpha empty-gear-state`
-- Prototype / Android Version Name: `0.2.180`
-- Android Version Code: `2180`
+- Prototype / Android Version Name: `0.2.182`
+- Android Version Code: `2182`
 - Package: `com.xmiepsen.mythwake`
 - Backend: `0.2.63`
 - Save version: `2`
-- APK target: `Builds/Android/Mythwake-0.2.180-empty-gear-state.apk`
-- AAB target: `Builds/Android/Mythwake-0.2.180-empty-gear-state.aab`
+- APK target: `Builds/Android/Mythwake-0.2.182-empty-gear-state.apk`
+- AAB target: `Builds/Android/Mythwake-0.2.182-empty-gear-state.aab`
 
 ## What Is New
 
@@ -99,7 +99,7 @@ Last updated: 2026-09-08
 
 ## Latest Verification
 
-- `0.2.180` empty-gear-state UI: APK `Builds/Android/Mythwake-0.2.180-empty-gear-state.apk` (203,617,597 bytes) and AAB `Builds/Android/Mythwake-0.2.180-empty-gear-state.aab` (203,500,537 bytes) passed. APK metadata is `com.xmiepsen.mythwake` / `0.2.180` / `2180`; APK v2 and AAB JAR signatures verify with the existing local Android Debug certificate. Unity C# validation, Current Slice validation, and Core Screen Presentation validation passed. The generated 540x960/540x1170/540x864 equipment captures use an empty Headgear slot and verify the dedicated sliced empty state plus localized message. Actual emulator touch testing remains a manual tester check.
+- `0.2.182` empty-gear modal cleanup: when the picker opens, the underlying hero labels, slot cards and action controls are hidden; only the armory backdrop and the active equipment modal remain visible. The card is opaque and high-contrast.
 
 - `0.2.179` hero-screen fix: APK and AAB builds passed; package/version metadata is `com.xmiepsen.mythwake` / `0.2.179` / `2179`. Both signatures verified with the existing local signing certificate. Unity C# and Current Slice passed. Core-screen rendering passed with legacy hero layers disabled and hero/equipment captures at 540x864, 540x960 and 540x1170. Actual emulator touch testing remains a manual tester check.
 

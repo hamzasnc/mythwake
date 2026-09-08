@@ -452,7 +452,9 @@ public partial class IdlePrototypeController
         var gearFill = heroDetailGearListRoot.Find("Core Inset Fill").GetComponent<Image>();
         gearFill.rectTransform.offsetMin = Vector2.zero;
         gearFill.rectTransform.offsetMax = Vector2.zero;
-        gearFill.color = new Color(0.012f, 0.038f, 0.047f, 0.62f);
+        // This is a modal page. Keep only a small amount of the armory visible behind it;
+        // the empty-state copy must not compete with the hero stats underneath.
+        gearFill.color = new Color(0.006f, 0.018f, 0.024f, 0.92f);
         gearFill.raycastTarget = true;
         CoreHide(heroDetailGearListRoot, "Divider");
         CoreRect(heroDetailGearListTitleText, -40, 34, 800, 72);
@@ -480,14 +482,14 @@ public partial class IdlePrototypeController
         var emptyFill = heroDetailGearEmptyRoot.Find("Core Inset Fill")?.GetComponent<Image>();
         if (emptyFill != null)
         {
-            emptyFill.color = new Color(0.015f, 0.045f, 0.055f, 0.86f);
+            emptyFill.color = new Color(0.006f, 0.018f, 0.024f, 1f);
             emptyFill.raycastTarget = false;
         }
         CoreRect(heroDetailGearEmptyIcon, 0, 54, 132, 108);
         CoreRect(heroDetailGearEmptyTitleText, 0, 188, 680, 64);
-        CoreText(heroDetailGearEmptyTitleText, 34);
+        CoreText(heroDetailGearEmptyTitleText, 40);
         CoreRect(heroDetailGearEmptyMessageText, 0, 282, 680, 100);
-        CoreText(heroDetailGearEmptyMessageText, 26);
+        CoreText(heroDetailGearEmptyMessageText, 30);
     }
 
     private void ReadableTopBar(Sprite button, Sprite node)

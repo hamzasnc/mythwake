@@ -23,7 +23,7 @@ Current branch:
 - `codex/batch-1-stabilize-prototype`
 
 Current internal alpha candidate:
-- Prototype `0.2.180`, Android Version Code `2180`, Backend `0.2.63`.
+- Prototype `0.2.182`, Android Version Code `2182`, Backend `0.2.63`.
 - Hero/gear overlap fix: legacy scene panels are disabled, opaque full-content pages and explicit runtime hiding prevent three simultaneous hero layers; screenshot regression output is `Builds/Validation/core-screens`. Use the `0.2.180-empty-gear-state` APK/AAB for testing.
 - Empty accessory slots now show a dedicated sliced frame with the slot icon and localized empty-state copy over the armory instead of a black full-page block. The presentation regression uses an empty Headgear slot.
 - P0 Current Slice is green. Shop definitions/migration/DTO/tests/docs are complete.
