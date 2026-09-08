@@ -1,6 +1,6 @@
 # Mythwake Next Chat Context
 
-Last updated: 2026-09-07
+Last updated: 2026-09-08
 
 This file is meant to be pasted/read first in a new Codex chat so the project can continue without re-explaining everything.
 
@@ -23,8 +23,9 @@ Current branch:
 - `codex/batch-1-stabilize-prototype`
 
 Current internal alpha candidate:
-- Prototype `0.2.179`, Android Version Code `2179`, Backend `0.2.63`.
-- Hero/gear overlap fix: legacy scene panels are disabled, opaque full-content pages and explicit runtime hiding prevent three simultaneous hero layers; screenshot regression output is `Builds/Validation/core-screens`. Use the `0.2.179-hero-screen-fix` APK/AAB for testing.
+- Prototype `0.2.180`, Android Version Code `2180`, Backend `0.2.63`.
+- Hero/gear overlap fix: legacy scene panels are disabled, opaque full-content pages and explicit runtime hiding prevent three simultaneous hero layers; screenshot regression output is `Builds/Validation/core-screens`. Use the `0.2.180-empty-gear-state` APK/AAB for testing.
+- Empty accessory slots now show a dedicated sliced frame with the slot icon and localized empty-state copy over the armory instead of a black full-page block. The presentation regression uses an empty Headgear slot.
 - P0 Current Slice is green. Shop definitions/migration/DTO/tests/docs are complete.
 - Bag now has one generated runtime asset pipeline under `Assets/Art/UI/BagGenerated`; legacy Bag Resources/prefabs and their builder were removed after reference checks. Pure inventory rules plus EditMode checks cover filtering and chest quantity selection.
 - Tower server mode is enabled through the authenticated idempotent Tower action, server catalog definitions, PostgreSQL player progress, action ledger replay, snapshot/bootstrap, and Unity client integration. A manual stop during the client combat presentation does not grant or revoke economy; the accepted server result is applied on callback.

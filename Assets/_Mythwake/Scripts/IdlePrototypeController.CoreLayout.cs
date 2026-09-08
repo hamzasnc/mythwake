@@ -452,6 +452,7 @@ public partial class IdlePrototypeController
         var gearFill = heroDetailGearListRoot.Find("Core Inset Fill").GetComponent<Image>();
         gearFill.rectTransform.offsetMin = Vector2.zero;
         gearFill.rectTransform.offsetMax = Vector2.zero;
+        gearFill.color = new Color(0.012f, 0.038f, 0.047f, 0.62f);
         gearFill.raycastTarget = true;
         CoreHide(heroDetailGearListRoot, "Divider");
         CoreRect(heroDetailGearListTitleText, -40, 34, 800, 72);
@@ -474,6 +475,19 @@ public partial class IdlePrototypeController
         CoreText(heroDetailGearConfirmStatsText, 28);
         CoreRect(heroDetailGearConfirmEquipButton, 0, 466, 650, 100);
         CoreText(heroDetailGearConfirmEquipButton.GetComponentInChildren<TMP_Text>(), 32);
+        CoreRect(heroDetailGearEmptyRoot, 0, 430, 820, 470);
+        CorePanel(heroDetailGearEmptyRoot, frame);
+        var emptyFill = heroDetailGearEmptyRoot.Find("Core Inset Fill")?.GetComponent<Image>();
+        if (emptyFill != null)
+        {
+            emptyFill.color = new Color(0.015f, 0.045f, 0.055f, 0.86f);
+            emptyFill.raycastTarget = false;
+        }
+        CoreRect(heroDetailGearEmptyIcon, 0, 54, 132, 108);
+        CoreRect(heroDetailGearEmptyTitleText, 0, 188, 680, 64);
+        CoreText(heroDetailGearEmptyTitleText, 34);
+        CoreRect(heroDetailGearEmptyMessageText, 0, 282, 680, 100);
+        CoreText(heroDetailGearEmptyMessageText, 26);
     }
 
     private void ReadableTopBar(Sprite button, Sprite node)

@@ -40,14 +40,18 @@ public static class CoreScreenPresentationValidation
             Capture(controller, canvas, output, "summon", controller.ShowSummon);
             Capture(controller, canvas, output, "heroes-team", () => { controller.ShowHeroes(); Call(controller, "ShowHeroesSetTeamTab"); });
             Capture(controller, canvas, output, "hero-detail", () => { controller.ShowHeroes(); Call(controller, "ShowHeroesRosterTab"); Call(controller, "ShowHeroDetail", 0); });
-            Capture(controller, canvas, output, "hero-equipment", () => { Call(controller, "ShowHeroDetailGearSlot", 5); });
+            Capture(controller, canvas, output, "hero-equipment", () => { Call(controller, "ShowHeroDetailGearSlot", 7); });
             foreach (var field in new[] { "heroDetailRoot", "heroDetailGearListRoot" })
             {
                 var page = Field<RectTransform>(controller, field);
                 var fill = page.Find("Core Inset Fill")?.GetComponent<Image>();
-                if (fill == null || fill.color.a < 1 || !fill.raycastTarget || page.rect.width < 1000)
-                    throw new InvalidOperationException(field + " must be an opaque, input-blocking content page.");
+                if (fill == null || fill.color.a < .5f || !fill.raycastTarget || page.rect.width < 1000)
+                    throw new InvalidOperationException(field + " must be a visible, input-blocking content page.");
             }
+            var emptyGearState = Field<RectTransform>(controller, "heroDetailGearEmptyRoot");
+            var emptyGearMessage = Field<TMPro.TMP_Text>(controller, "heroDetailGearEmptyMessageText");
+            if (emptyGearState == null || !emptyGearState.gameObject.activeInHierarchy || emptyGearMessage == null || string.IsNullOrWhiteSpace(emptyGearMessage.text))
+                throw new InvalidOperationException("Empty accessory gear state is missing or has no message.");
             Call(controller, "HideHeroDetailGearList");
             if (!Field<RectTransform>(controller, "heroDetailRoot").gameObject.activeSelf)
                 throw new InvalidOperationException("Closing equipment must return to the hero.");

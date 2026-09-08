@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 
 public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerStateService, IMythwakePlayerSnapshotService, IMythwakeDefinitionService, IMythwakeEconomyService, IMythwakeBattleService, IMythwakeSummonService, IMythwakeInventoryService, IMythwakeProgressionService, IMythwakeMissionService
 {
-    public const string PrototypeVersion = "0.2.179";
+    public const string PrototypeVersion = "0.2.180";
     public const int CurrentSaveVersion = 2;
 
     [Serializable]
@@ -1689,6 +1689,10 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private Image[] heroDetailGearOptionIcons;
     private Button[] heroDetailGearOptionButtons;
     private Button heroDetailGearListCloseButton;
+    private RectTransform heroDetailGearEmptyRoot;
+    private Image heroDetailGearEmptyIcon;
+    private TMP_Text heroDetailGearEmptyTitleText;
+    private TMP_Text heroDetailGearEmptyMessageText;
     private RectTransform heroDetailGearConfirmRoot;
     private Image heroDetailGearConfirmIcon;
     private TMP_Text heroDetailGearConfirmTitleText;
@@ -20481,6 +20485,20 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         heroDetailGearConfirmEquipButton = CreateRuntimeButton(heroDetailGearConfirmRoot, "Confirm Equip", Tr("gear.equip_confirm"), 0, -260, 214, 54);
         ConfigureRuntimeButtonLabelFit(heroDetailGearConfirmEquipButton, 10f, 16f);
 
+        heroDetailGearEmptyRoot = CreateRuntimePanel(heroDetailGearListRoot, "Empty Gear State", Vector2.zero, new Vector2(820, 470), new Color(0.025f, 0.055f, 0.065f, 0.96f));
+        heroDetailGearEmptyRoot.gameObject.SetActive(false);
+        heroDetailGearEmptyIcon = CreateRuntimeSpriteImage(heroDetailGearEmptyRoot, "Slot Icon", null, new Vector2(0, -54), new Vector2(112, 92), new Vector2(0.5f, 1f));
+        heroDetailGearEmptyIcon.raycastTarget = false;
+        heroDetailGearEmptyTitleText = CreateRuntimeText(heroDetailGearEmptyRoot, "Empty Title", Tr("gear.no_item"), 30, new Vector2(0, -166), new Vector2(680, 56));
+        heroDetailGearEmptyTitleText.fontStyle = FontStyles.Bold;
+        heroDetailGearEmptyTitleText.color = new Color(1f, 0.88f, 0.58f);
+        heroDetailGearEmptyMessageText = CreateRuntimeText(heroDetailGearEmptyRoot, "Empty Message", Tr("gear.no_slot_items"), 23, new Vector2(0, -246), new Vector2(680, 92));
+        heroDetailGearEmptyMessageText.color = new Color(0.84f, 0.9f, 1f);
+        heroDetailGearEmptyMessageText.enableAutoSizing = true;
+        heroDetailGearEmptyMessageText.fontSizeMin = 16;
+        heroDetailGearEmptyMessageText.fontSizeMax = 23;
+        heroDetailGearEmptyMessageText.textWrappingMode = TextWrappingModes.Normal;
+
         heroDetailGearListRoot.gameObject.SetActive(false);
     }
 
@@ -24340,6 +24358,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         var heroIndex = GetSelectedHeroIndex();
         if (selectedHeroDetailGearSlotIndex < 2)
         {
+            SetComponentActive(heroDetailGearEmptyRoot, false);
             RefreshHeroDetailEquipmentTrackList(
                 selectedHeroDetailGearSlotIndex == 0 ? WeaponTrack : ArmorTrack,
                 selectedHeroDetailGearSlotIndex == 0 ? GetHeroEquipmentLevel(heroIndex, isWeapon: true) : GetHeroEquipmentLevel(heroIndex, isWeapon: false),
@@ -24363,6 +24382,25 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         {
             selectedHeroDetailGearOptionRarity = GetDefaultHeroDetailGearOptionRarity();
         }
+
+        var hasItemsForSlot = false;
+        for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
+        {
+            if (GetAccessoryInventoryCount(accessorySlot, rarity) > 0
+                || GetHeroEquippedAccessoryRarity(heroIndex, accessorySlot) == rarity)
+            {
+                hasItemsForSlot = true;
+                break;
+            }
+        }
+
+        if (!hasItemsForSlot)
+        {
+            ShowHeroDetailEmptyGearState(accessorySlot);
+            return;
+        }
+
+        SetComponentActive(heroDetailGearEmptyRoot, false);
 
         for (var rarity = 0; rarity < AccessoryRarityCount; rarity++)
         {
@@ -24418,6 +24456,43 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         }
 
         RefreshHeroDetailGearConfirmation(canInteract);
+    }
+
+    private void ShowHeroDetailEmptyGearState(int accessorySlot)
+    {
+        selectedHeroDetailGearOptionRarity = -1;
+        SetComponentActive(heroDetailGearEmptyRoot, true);
+        SetComponentActive(heroDetailGearConfirmRoot, false);
+
+        if (heroDetailGearEmptyIcon != null)
+        {
+            var icon = LoadRuntimeSprite(GetInventoryAccessoryIconTextureName(accessorySlot, 0));
+            SetRuntimeImageSprite(heroDetailGearEmptyIcon, icon, new Vector2(112f, 92f));
+            heroDetailGearEmptyIcon.color = icon == null
+                ? new Color(1f, 1f, 1f, 0f)
+                : new Color(0.72f, 0.82f, 0.88f, 0.72f);
+        }
+
+        if (heroDetailGearEmptyTitleText != null)
+        {
+            heroDetailGearEmptyTitleText.text = Tr("gear.no_item");
+        }
+
+        if (heroDetailGearEmptyMessageText != null)
+        {
+            heroDetailGearEmptyMessageText.text = Tr("gear.no_slot_items");
+        }
+
+        if (heroDetailGearOptionButtons != null)
+        {
+            for (var i = 0; i < heroDetailGearOptionButtons.Length; i++)
+            {
+                if (heroDetailGearOptionButtons[i] != null)
+                {
+                    heroDetailGearOptionButtons[i].gameObject.SetActive(false);
+                }
+            }
+        }
     }
 
     private int GetHeroDetailAccessoryOptionRowIndex(int accessorySlot, int heroIndex, int rarity)
@@ -26921,6 +26996,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         ApplyRuntimeCorePanelSkin(heroTeamRoot, frameSprite);
         ApplyRuntimeCorePanelSkin(heroDetailRoot, frameSprite);
         ApplyRuntimeCorePanelSkin(heroDetailGearListRoot, frameSprite);
+        ApplyRuntimeCorePanelSkin(heroDetailGearEmptyRoot, frameSprite);
         ApplyRuntimeCorePanelSkin(heroDetailGearConfirmRoot, frameSprite);
         ApplyRuntimeCorePanelSkin(villageBuildPanelRoot, frameSprite);
         ApplyRuntimeCorePanelSkin(villageDemolishPanelRoot, frameSprite);
