@@ -2,6 +2,8 @@ param(
     [string]$UnityPath = "C:\Program Files\Unity\Hub\Editor\6000.4.5f1\Editor\Unity.exe",
     [string]$ProjectPath = "",
     [string]$LogFile = "",
+    [ValidatePattern('^[A-Za-z0-9_-]{1,64}$')]
+    [string]$TestProfileId = ("current-slice-" + [Guid]::NewGuid().ToString("N")),
     [switch]$DryRun
 )
 
@@ -33,6 +35,8 @@ $arguments = @(
     "1920",
     "-projectPath",
     $ProjectPath,
+    "-mythwakeTestProfile",
+    $TestProfileId,
     "-executeMethod",
     "CurrentSliceValidation.RunCurrentSliceValidation",
     "-logFile",
@@ -43,6 +47,7 @@ Write-Host "Unity current slice validation"
 Write-Host "Project: $ProjectPath"
 Write-Host "Unity:   $UnityPath"
 Write-Host "Log:     $LogFile"
+Write-Host "QA profile: $TestProfileId"
 
 if ($DryRun) {
     Write-Host "Dry run only. Command:"

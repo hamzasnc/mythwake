@@ -23,8 +23,12 @@ func (actions campaignActions) FightCampaign(ctx context.Context, request Action
 	defer service.mu.Unlock()
 
 	return service.executeAction(ctx, request, gameplay.ActionCampaignFight, func() actionOutcome {
+		formation, err := service.resolveCombatFormation(request.HeroIDs)
+		if err != nil {
+			return actionFailure("invalid_formation", err.Error())
+		}
 		stage := service.state.CampaignStage
-		combat := service.simulateCombat(service.campaignEnemy(stage))
+		combat := service.simulateCombat(service.campaignEnemy(stage), formation...)
 		service.dailyFightCount++
 		label := fmt.Sprintf("Campaign Stage %d", stage)
 		if !combat.Won {

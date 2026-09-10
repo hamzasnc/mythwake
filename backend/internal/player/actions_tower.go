@@ -20,11 +20,15 @@ func (actions dungeonActions) RunTower(ctx context.Context, request ActionReques
 	defer service.mu.Unlock()
 
 	return service.executeAction(ctx, request, gameplay.ActionTowerRun, func() actionOutcome {
-		return actions.runTower(floor)
+		formation, err := service.resolveCombatFormation(request.HeroIDs)
+		if err != nil {
+			return actionFailure("invalid_formation", err.Error())
+		}
+		return actions.runTower(floor, formation)
 	})
 }
 
-func (actions dungeonActions) runTower(floor int) actionOutcome {
+func (actions dungeonActions) runTower(floor int, formation []string) actionOutcome {
 	service := actions.service
 	service.normalizeTowerProgress()
 	definition, ok := service.balanceCatalog.TowerDefinitionByID(towerDungeonID)
@@ -45,7 +49,7 @@ func (actions dungeonActions) runTower(floor int) actionOutcome {
 		maxHP:       stats.MaxHP,
 		damage:      stats.Damage,
 		maxSeconds:  stats.MaxSeconds,
-	})
+	}, formation...)
 	service.dailyFightCount++
 	label := fmt.Sprintf("%s Floor %d", definition.DisplayName, floor)
 	if bossType := balance.TowerBossType(definition, floor); bossType != balance.TowerBossNone {

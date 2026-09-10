@@ -1,0 +1,1521 @@
+{
+  "version": 4,
+  "pixelsPerUnit": 256,
+  "weaponLength": 1.75,
+  "joints": [
+    {
+      "name": "Hip",
+      "x": 0.0,
+      "y": 1.4
+    },
+    {
+      "name": "Torso",
+      "x": 0.0,
+      "y": 1.4
+    },
+    {
+      "name": "Neck",
+      "x": -0.05723684210526315,
+      "y": 1.97421875
+    },
+    {
+      "name": "Head",
+      "x": -0.05723684210526315,
+      "y": 1.97421875
+    },
+    {
+      "name": "UpperArmNear",
+      "x": -0.2826069078947368,
+      "y": 1.845822010869565
+    },
+    {
+      "name": "ForearmNear",
+      "x": -0.3859597724780701,
+      "y": 1.515863910310906
+    },
+    {
+      "name": "HandNear",
+      "x": -0.3199346200390457,
+      "y": 1.1945669082783856
+    },
+    {
+      "name": "ThighNear",
+      "x": -0.14453125000000003,
+      "y": 1.275
+    },
+    {
+      "name": "ShinNear",
+      "x": -0.22311580882352944,
+      "y": 0.7314416273584905
+    },
+    {
+      "name": "FootNear",
+      "x": -0.22311580882352944,
+      "y": 0.21391628952065267
+    },
+    {
+      "name": "UpperArmFar",
+      "x": 0.28618421052631576,
+      "y": 1.845822010869565
+    },
+    {
+      "name": "ForearmFar",
+      "x": 0.31801723291437545,
+      "y": 1.4838624244033998
+    },
+    {
+      "name": "HandFar",
+      "x": 0.40926479150812545,
+      "y": 1.1890398608440778
+    },
+    {
+      "name": "ThighFar",
+      "x": 0.11718750000000001,
+      "y": 1.275
+    },
+    {
+      "name": "ShinFar",
+      "x": 0.17826704545454547,
+      "y": 0.7314416273584905
+    },
+    {
+      "name": "FootFar",
+      "x": 0.17826704545454547,
+      "y": 0.21391628952065267
+    },
+    {
+      "name": "Hair",
+      "x": -0.28490923601670226,
+      "y": 2.23392333984375
+    },
+    {
+      "name": "ScarfLong",
+      "x": -0.14,
+      "y": 1.41
+    },
+    {
+      "name": "ScarfShort",
+      "x": 0.12,
+      "y": 1.41
+    }
+  ],
+  "viewJoints": [
+    {
+      "view": "front",
+      "name": "Hip",
+      "x": 0.0,
+      "y": 1.4
+    },
+    {
+      "view": "front",
+      "name": "Torso",
+      "x": 0.0,
+      "y": 1.4
+    },
+    {
+      "view": "front",
+      "name": "Neck",
+      "x": -0.05723684210526315,
+      "y": 1.97421875
+    },
+    {
+      "view": "front",
+      "name": "Head",
+      "x": -0.05723684210526315,
+      "y": 1.97421875
+    },
+    {
+      "view": "front",
+      "name": "UpperArmNear",
+      "x": -0.2826069078947368,
+      "y": 1.845822010869565
+    },
+    {
+      "view": "front",
+      "name": "ForearmNear",
+      "x": -0.3859597724780701,
+      "y": 1.515863910310906
+    },
+    {
+      "view": "front",
+      "name": "HandNear",
+      "x": -0.3199346200390457,
+      "y": 1.1945669082783856
+    },
+    {
+      "view": "front",
+      "name": "ThighNear",
+      "x": -0.14453125000000003,
+      "y": 1.275
+    },
+    {
+      "view": "front",
+      "name": "ShinNear",
+      "x": -0.22311580882352944,
+      "y": 0.7314416273584905
+    },
+    {
+      "view": "front",
+      "name": "FootNear",
+      "x": -0.22311580882352944,
+      "y": 0.21391628952065267
+    },
+    {
+      "view": "front",
+      "name": "UpperArmFar",
+      "x": 0.28618421052631576,
+      "y": 1.845822010869565
+    },
+    {
+      "view": "front",
+      "name": "ForearmFar",
+      "x": 0.31801723291437545,
+      "y": 1.4838624244033998
+    },
+    {
+      "view": "front",
+      "name": "HandFar",
+      "x": 0.40926479150812545,
+      "y": 1.1890398608440778
+    },
+    {
+      "view": "front",
+      "name": "ThighFar",
+      "x": 0.11718750000000001,
+      "y": 1.275
+    },
+    {
+      "view": "front",
+      "name": "ShinFar",
+      "x": 0.17826704545454547,
+      "y": 0.7314416273584905
+    },
+    {
+      "view": "front",
+      "name": "FootFar",
+      "x": 0.17826704545454547,
+      "y": 0.21391628952065267
+    },
+    {
+      "view": "front",
+      "name": "Hair",
+      "x": -0.28490923601670226,
+      "y": 2.23392333984375
+    },
+    {
+      "view": "front",
+      "name": "ScarfLong",
+      "x": -0.14,
+      "y": 1.41
+    },
+    {
+      "view": "front",
+      "name": "ScarfShort",
+      "x": 0.12,
+      "y": 1.41
+    },
+    {
+      "view": "rear",
+      "name": "Hip",
+      "x": 0.0,
+      "y": 1.4
+    },
+    {
+      "view": "rear",
+      "name": "Torso",
+      "x": 0.0,
+      "y": 1.4
+    },
+    {
+      "view": "rear",
+      "name": "Neck",
+      "x": -0.0037417763157894853,
+      "y": 1.9706521739130434
+    },
+    {
+      "view": "rear",
+      "name": "Head",
+      "x": -0.0037417763157894853,
+      "y": 1.9706521739130434
+    },
+    {
+      "view": "rear",
+      "name": "UpperArmNear",
+      "x": 0.26940789473684207,
+      "y": 1.8137228260869565
+    },
+    {
+      "view": "rear",
+      "name": "ForearmNear",
+      "x": 0.38903680098684207,
+      "y": 1.5085115830701967
+    },
+    {
+      "view": "rear",
+      "name": "HandNear",
+      "x": 0.4550619534258664,
+      "y": 1.1872145810376764
+    },
+    {
+      "view": "rear",
+      "name": "ThighNear",
+      "x": 0.15276287553648066,
+      "y": 1.2707843848996832
+    },
+    {
+      "view": "rear",
+      "name": "ShinNear",
+      "x": 0.18752790778230768,
+      "y": 0.7286532990134688
+    },
+    {
+      "view": "rear",
+      "name": "FootNear",
+      "x": 0.19981996313056638,
+      "y": 0.23671963475354102
+    },
+    {
+      "view": "rear",
+      "name": "UpperArmFar",
+      "x": -0.31056743421052635,
+      "y": 1.8137228260869565
+    },
+    {
+      "view": "rear",
+      "name": "ForearmFar",
+      "x": -0.2787344118224666,
+      "y": 1.451763239620791
+    },
+    {
+      "view": "rear",
+      "name": "HandFar",
+      "x": -0.1874868532287166,
+      "y": 1.1569406760614689
+    },
+    {
+      "view": "rear",
+      "name": "ThighFar",
+      "x": -0.12084227467811162,
+      "y": 1.2707843848996832
+    },
+    {
+      "view": "rear",
+      "name": "ShinFar",
+      "x": -0.10993425581018709,
+      "y": 0.7124453236270988
+    },
+    {
+      "view": "rear",
+      "name": "FootFar",
+      "x": -0.11238723270592169,
+      "y": 0.2333181463730004
+    },
+    {
+      "view": "rear",
+      "name": "Hair",
+      "x": -0.20179297557778214,
+      "y": 2.1917520274286684
+    },
+    {
+      "view": "rear",
+      "name": "ScarfLong",
+      "x": -0.14,
+      "y": 1.41
+    },
+    {
+      "view": "rear",
+      "name": "ScarfShort",
+      "x": 0.12,
+      "y": 1.41
+    },
+    {
+      "view": "side",
+      "name": "Hip",
+      "x": 0.0,
+      "y": 1.4
+    },
+    {
+      "view": "side",
+      "name": "Torso",
+      "x": 0.0,
+      "y": 1.4
+    },
+    {
+      "view": "side",
+      "name": "Neck",
+      "x": -0.09313322368421052,
+      "y": 1.9599524456521737
+    },
+    {
+      "view": "side",
+      "name": "Head",
+      "x": -0.09313322368421052,
+      "y": 1.9599524456521737
+    },
+    {
+      "view": "side",
+      "name": "UpperArmNear",
+      "x": -0.16143092105263157,
+      "y": 1.8137228260869565
+    },
+    {
+      "view": "side",
+      "name": "ForearmNear",
+      "x": -0.04587102521929824,
+      "y": 1.5085115830701967
+    },
+    {
+      "view": "side",
+      "name": "HandNear",
+      "x": 0.020154127219726134,
+      "y": 1.1872145810376764
+    },
+    {
+      "view": "side",
+      "name": "ThighNear",
+      "x": -0.11125395569620254,
+      "y": 1.275
+    },
+    {
+      "view": "side",
+      "name": "ShinNear",
+      "x": -0.18983851451973197,
+      "y": 0.7314416273584905
+    },
+    {
+      "view": "side",
+      "name": "FootNear",
+      "x": -0.18983851451973197,
+      "y": 0.21391628952065267
+    },
+    {
+      "view": "side",
+      "name": "UpperArmFar",
+      "x": 0.10244654605263157,
+      "y": 1.8315557065217392
+    },
+    {
+      "view": "side",
+      "name": "ForearmFar",
+      "x": 0.13427956844069128,
+      "y": 1.4695961200555736
+    },
+    {
+      "view": "side",
+      "name": "HandFar",
+      "x": 0.22552712703444128,
+      "y": 1.1747735564962516
+    },
+    {
+      "view": "side",
+      "name": "ThighFar",
+      "x": 0.07787776898734178,
+      "y": 1.275
+    },
+    {
+      "view": "side",
+      "name": "ShinFar",
+      "x": 0.13895731444188725,
+      "y": 0.7314416273584905
+    },
+    {
+      "view": "side",
+      "name": "FootFar",
+      "x": 0.13895731444188725,
+      "y": 0.21391628952065267
+    },
+    {
+      "view": "side",
+      "name": "Hair",
+      "x": -0.3387513048650223,
+      "y": 2.1845618206521737
+    },
+    {
+      "view": "side",
+      "name": "ScarfLong",
+      "x": -0.14,
+      "y": 1.41
+    },
+    {
+      "view": "side",
+      "name": "ScarfShort",
+      "x": 0.12,
+      "y": 1.41
+    }
+  ],
+  "parts": [
+    {
+      "name": "Head",
+      "bone": "Head",
+      "variant": "front",
+      "x": 16,
+      "y": 1802,
+      "width": 243,
+      "height": 230,
+      "pivotX": 0.4059040590405904,
+      "pivotY": 0.078125,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "hair",
+          "x": -0.22767239391143912,
+          "y": 0.25970458984375
+        }
+      ]
+    },
+    {
+      "name": "Torso",
+      "bone": "Torso",
+      "variant": "front",
+      "x": 283,
+      "y": 1822,
+      "width": 174,
+      "height": 210,
+      "pivotX": 0.5263157894736842,
+      "pivotY": 0.08260869565217388,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "neck",
+          "x": -0.05723684210526315,
+          "y": 0.57421875
+        },
+        {
+          "name": "shoulderNear",
+          "x": -0.2826069078947368,
+          "y": 0.4458220108695652
+        },
+        {
+          "name": "shoulderFar",
+          "x": 0.28618421052631576,
+          "y": 0.4458220108695652
+        }
+      ]
+    },
+    {
+      "name": "Pelvis",
+      "bone": "Pelvis",
+      "variant": "front",
+      "x": 481,
+      "y": 1894,
+      "width": 158,
+      "height": 138,
+      "pivotX": 0.5,
+      "pivotY": 0.8695652173913043,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "hipNear",
+          "x": -0.14453125000000003,
+          "y": -0.12500000000000003
+        },
+        {
+          "name": "hipFar",
+          "x": 0.11718750000000001,
+          "y": -0.12500000000000003
+        }
+      ]
+    },
+    {
+      "name": "Collar",
+      "bone": "Collar",
+      "variant": "front",
+      "x": 663,
+      "y": 1955,
+      "width": 124,
+      "height": 77,
+      "pivotX": 0.45,
+      "pivotY": 0.57,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    {
+      "name": "UpperArmNear",
+      "bone": "UpperArmNear",
+      "variant": "front",
+      "x": 811,
+      "y": 1843,
+      "width": 127,
+      "height": 189,
+      "pivotX": 0.575,
+      "pivotY": 0.6145251396648045,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": -0.10335286458333333,
+          "y": -0.3299581005586592
+        }
+      ]
+    },
+    {
+      "name": "ForearmNear",
+      "bone": "ForearmNear",
+      "variant": "front",
+      "x": 962,
+      "y": 1881,
+      "width": 63,
+      "height": 151,
+      "pivotX": 0.43902439024390244,
+      "pivotY": 0.7317073170731707,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.06602515243902438,
+          "y": -0.3212970020325203
+        }
+      ]
+    },
+    {
+      "name": "HandNear",
+      "bone": "HandNear",
+      "variant": "front",
+      "x": 1049,
+      "y": 1955,
+      "width": 52,
+      "height": 77,
+      "pivotX": 0.5641025641025641,
+      "pivotY": 0.6753246753246753,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "grip",
+          "x": -0.005208333333333337,
+          "y": -0.109375
+        }
+      ]
+    },
+    {
+      "name": "Sword",
+      "bone": "Sword",
+      "variant": "front",
+      "x": 1125,
+      "y": 1507,
+      "width": 127,
+      "height": 525,
+      "pivotX": 0.49,
+      "pivotY": 0.145,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    {
+      "name": "UpperArmFar",
+      "bone": "UpperArmFar",
+      "variant": "front",
+      "x": 1276,
+      "y": 1876,
+      "width": 78,
+      "height": 156,
+      "pivotX": 0.47761194029850745,
+      "pivotY": 0.7744360902255639,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.03183302238805971,
+          "y": -0.36195958646616544
+        }
+      ]
+    },
+    {
+      "name": "ForearmFar",
+      "bone": "ForearmFar",
+      "variant": "front",
+      "x": 1378,
+      "y": 1886,
+      "width": 65,
+      "height": 146,
+      "pivotX": 0.390625,
+      "pivotY": 0.6949152542372881,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.09124755859375,
+          "y": -0.294822563559322
+        }
+      ]
+    },
+    {
+      "name": "HandFar",
+      "bone": "HandFar",
+      "variant": "front",
+      "x": 1467,
+      "y": 1958,
+      "width": 46,
+      "height": 74,
+      "pivotX": 0.6231884057971014,
+      "pivotY": 0.6756756756756757,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Hair",
+      "bone": "Hair",
+      "variant": "front",
+      "x": 1537,
+      "y": 1976,
+      "width": 32,
+      "height": 56,
+      "pivotX": 0.3,
+      "pivotY": 0.96,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ],
+      "softX": 6.4,
+      "softY": -25.6
+    },
+    {
+      "name": "ThighNear",
+      "bone": "ThighNear",
+      "variant": "front",
+      "x": 1593,
+      "y": 1855,
+      "width": 95,
+      "height": 177,
+      "pivotX": 0.5294117647058824,
+      "pivotY": 0.9308176100628931,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": -0.07858455882352942,
+          "y": -0.5435583726415094
+        }
+      ]
+    },
+    {
+      "name": "ShinNear",
+      "bone": "ShinNear",
+      "variant": "front",
+      "x": 1712,
+      "y": 1860,
+      "width": 67,
+      "height": 172,
+      "pivotX": 0.5172413793103449,
+      "pivotY": 0.8783783783783784,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.0,
+          "y": -0.5175253378378378
+        }
+      ]
+    },
+    {
+      "name": "FootNear",
+      "bone": "FootNear",
+      "variant": "front",
+      "x": 1803,
+      "y": 1958,
+      "width": 95,
+      "height": 74,
+      "pivotX": 0.3263157894736842,
+      "pivotY": 0.7432432432432432,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    {
+      "name": "ScarfLong",
+      "bone": "ScarfLong",
+      "variant": "front",
+      "x": 16,
+      "y": 1189,
+      "width": 222,
+      "height": 294,
+      "pivotX": 0.9,
+      "pivotY": 0.97,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ],
+      "softX": -66.56,
+      "softY": -102.4
+    },
+    {
+      "name": "ThighFar",
+      "bone": "ThighFar",
+      "variant": "front",
+      "x": 262,
+      "y": 1306,
+      "width": 86,
+      "height": 177,
+      "pivotX": 0.45454545454545453,
+      "pivotY": 0.9308176100628931,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.061079545454545456,
+          "y": -0.5435583726415094
+        }
+      ]
+    },
+    {
+      "name": "ShinFar",
+      "bone": "ShinFar",
+      "variant": "front",
+      "x": 372,
+      "y": 1311,
+      "width": 67,
+      "height": 172,
+      "pivotX": 0.5172413793103449,
+      "pivotY": 0.8783783783783784,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.0,
+          "y": -0.5175253378378378
+        }
+      ]
+    },
+    {
+      "name": "FootFar",
+      "bone": "FootFar",
+      "variant": "front",
+      "x": 463,
+      "y": 1409,
+      "width": 97,
+      "height": 74,
+      "pivotX": 0.31958762886597936,
+      "pivotY": 0.7432432432432432,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    {
+      "name": "ScarfShort",
+      "bone": "ScarfShort",
+      "variant": "front",
+      "x": 584,
+      "y": 1247,
+      "width": 132,
+      "height": 236,
+      "pivotX": 0.38,
+      "pivotY": 0.97,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ],
+      "softX": 15.36,
+      "softY": -87.04
+    },
+    {
+      "name": "Head_Rear",
+      "bone": "Head",
+      "variant": "rear",
+      "x": 740,
+      "y": 1253,
+      "width": 229,
+      "height": 230,
+      "pivotX": 0.5387453874538746,
+      "pivotY": 0.0625,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "hair",
+          "x": -0.19805119926199266,
+          "y": 0.221099853515625
+        }
+      ]
+    },
+    {
+      "name": "Torso_Rear",
+      "bone": "Torso",
+      "variant": "rear",
+      "x": 993,
+      "y": 1273,
+      "width": 182,
+      "height": 210,
+      "pivotX": 0.5052631578947369,
+      "pivotY": 0.08260869565217388,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "neck",
+          "x": -0.0037417763157894853,
+          "y": 0.5706521739130435
+        },
+        {
+          "name": "shoulderNear",
+          "x": 0.26940789473684207,
+          "y": 0.4137228260869565
+        },
+        {
+          "name": "shoulderFar",
+          "x": -0.31056743421052635,
+          "y": 0.4137228260869565
+        }
+      ]
+    },
+    {
+      "name": "Pelvis_Rear",
+      "bone": "Pelvis",
+      "variant": "rear",
+      "x": 1199,
+      "y": 1345,
+      "width": 170,
+      "height": 138,
+      "pivotX": 0.4995708154506438,
+      "pivotY": 0.8701161562829989,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "hipNear",
+          "x": 0.15276287553648066,
+          "y": -0.12921561510031673
+        },
+        {
+          "name": "hipFar",
+          "x": -0.12084227467811162,
+          "y": -0.12921561510031673
+        }
+      ]
+    },
+    {
+      "name": "Collar_Rear",
+      "bone": "Collar",
+      "variant": "rear",
+      "x": 1393,
+      "y": 1406,
+      "width": 117,
+      "height": 77,
+      "pivotX": 0.45,
+      "pivotY": 0.57,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Hair_Rear",
+      "bone": "Hair",
+      "variant": "rear",
+      "x": 1534,
+      "y": 1427,
+      "width": 53,
+      "height": 56,
+      "pivotX": 0.3,
+      "pivotY": 0.96,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ],
+      "softX": 6.4,
+      "softY": -25.6
+    },
+    {
+      "name": "UpperArmNear_Rear",
+      "bone": "UpperArmNear",
+      "variant": "rear",
+      "x": 1611,
+      "y": 1294,
+      "width": 147,
+      "height": 189,
+      "pivotX": 0.3,
+      "pivotY": 0.4860335195530726,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.11962890624999999,
+          "y": -0.3052112430167598
+        }
+      ]
+    },
+    {
+      "name": "Head_Side",
+      "bone": "Head",
+      "variant": "side",
+      "x": 1782,
+      "y": 1253,
+      "width": 240,
+      "height": 230,
+      "pivotX": 0.46494464944649444,
+      "pivotY": 0.078125,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "hair",
+          "x": -0.2456180811808118,
+          "y": 0.224609375
+        }
+      ]
+    },
+    {
+      "name": "Torso_Side",
+      "bone": "Torso",
+      "variant": "side",
+      "x": 16,
+      "y": 955,
+      "width": 151,
+      "height": 210,
+      "pivotX": 0.5631578947368421,
+      "pivotY": 0.08260869565217388,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "neck",
+          "x": -0.09313322368421052,
+          "y": 0.559952445652174
+        },
+        {
+          "name": "shoulderNear",
+          "x": -0.16143092105263157,
+          "y": 0.4137228260869565
+        },
+        {
+          "name": "shoulderFar",
+          "x": 0.10244654605263157,
+          "y": 0.4315557065217392
+        }
+      ]
+    },
+    {
+      "name": "Pelvis_Side",
+      "bone": "Pelvis",
+      "variant": "side",
+      "x": 191,
+      "y": 968,
+      "width": 225,
+      "height": 197,
+      "pivotX": 0.5063291139240507,
+      "pivotY": 0.9086294416243654,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "hipNear",
+          "x": -0.11125395569620254,
+          "y": -0.125
+        },
+        {
+          "name": "hipFar",
+          "x": 0.07787776898734178,
+          "y": -0.125
+        }
+      ]
+    },
+    {
+      "name": "Collar_Side",
+      "bone": "Collar",
+      "variant": "side",
+      "x": 440,
+      "y": 1088,
+      "width": 109,
+      "height": 77,
+      "pivotX": 0.45,
+      "pivotY": 0.57,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Hair_Side",
+      "bone": "Hair",
+      "variant": "side",
+      "x": 573,
+      "y": 1109,
+      "width": 50,
+      "height": 56,
+      "pivotX": 0.3,
+      "pivotY": 0.96,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ],
+      "softX": 6.4,
+      "softY": -25.6
+    },
+    {
+      "name": "UpperArmNear_Side",
+      "bone": "UpperArmNear",
+      "variant": "side",
+      "x": 647,
+      "y": 976,
+      "width": 142,
+      "height": 189,
+      "pivotX": 0.3,
+      "pivotY": 0.4860335195530726,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.11555989583333333,
+          "y": -0.3052112430167598
+        }
+      ]
+    },
+    {
+      "name": "Head_Action",
+      "bone": "Head",
+      "variant": "action",
+      "x": 813,
+      "y": 935,
+      "width": 231,
+      "height": 230,
+      "pivotX": 0.4095940959409594,
+      "pivotY": 0.0625,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "hair",
+          "x": -0.223088676199262,
+          "y": 0.270233154296875
+        }
+      ]
+    },
+    {
+      "name": "Head_Blink",
+      "bone": "Head",
+      "variant": "blink",
+      "x": 1068,
+      "y": 935,
+      "width": 229,
+      "height": 230,
+      "pivotX": 0.39114391143911437,
+      "pivotY": 0.06640625,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "hair",
+          "x": -0.20795375922509224,
+          "y": 0.263214111328125
+        }
+      ]
+    },
+    {
+      "name": "ThighNear_Rear",
+      "bone": "ThighNear",
+      "variant": "rear",
+      "x": 1321,
+      "y": 988,
+      "width": 85,
+      "height": 177,
+      "pivotX": 0.456752655538695,
+      "pivotY": 0.9161196207148067,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.03476503224582703,
+          "y": -0.5421310858862144
+        }
+      ]
+    },
+    {
+      "name": "ThighFar_Rear",
+      "bone": "ThighFar",
+      "variant": "rear",
+      "x": 1430,
+      "y": 988,
+      "width": 74,
+      "height": 177,
+      "pivotX": 0.5754716981132075,
+      "pivotY": 0.9096622152395915,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.010908018867924526,
+          "y": -0.5583390612725844
+        }
+      ]
+    },
+    {
+      "name": "ShinNear_Rear",
+      "bone": "ShinNear",
+      "variant": "rear",
+      "x": 1528,
+      "y": 1012,
+      "width": 55,
+      "height": 153,
+      "pivotX": 0.4527363184079602,
+      "pivotY": 0.9025270758122743,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.012292055348258698,
+          "y": -0.49193366425992774
+        }
+      ]
+    },
+    {
+      "name": "ShinFar_Rear",
+      "bone": "ShinFar",
+      "variant": "rear",
+      "x": 1607,
+      "y": 1014,
+      "width": 53,
+      "height": 151,
+      "pivotX": 0.48578199052132703,
+      "pivotY": 0.9024590163934426,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": -0.0024529768957345993,
+          "y": -0.47912717725409837
+        }
+      ]
+    },
+    {
+      "name": "FootNear_Rear",
+      "bone": "FootNear",
+      "variant": "rear",
+      "x": 1684,
+      "y": 1091,
+      "width": 64,
+      "height": 74,
+      "pivotX": 0.3700564971751412,
+      "pivotY": 0.8189219796879257,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    {
+      "name": "FootFar_Rear",
+      "bone": "FootFar",
+      "variant": "rear",
+      "x": 1772,
+      "y": 1091,
+      "width": 68,
+      "height": 74,
+      "pivotX": 0.34711964549483015,
+      "pivotY": 0.807154668533623,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+    {
+      "name": "PauldronNear",
+      "bone": "PauldronNear",
+      "variant": "front",
+      "x": 1864,
+      "y": 976,
+      "width": 127,
+      "height": 189,
+      "pivotX": 0.575,
+      "pivotY": 0.6145251396648045,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": -0.10335286458333333,
+          "y": -0.3299581005586592
+        }
+      ]
+    },
+    {
+      "name": "PauldronNear_Rear",
+      "bone": "PauldronNear",
+      "variant": "rear",
+      "x": 16,
+      "y": 722,
+      "width": 147,
+      "height": 189,
+      "pivotX": 0.3,
+      "pivotY": 0.4860335195530726,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.11962890624999999,
+          "y": -0.3052112430167598
+        }
+      ]
+    },
+    {
+      "name": "PauldronNear_Side",
+      "bone": "PauldronNear",
+      "variant": "side",
+      "x": 187,
+      "y": 722,
+      "width": 142,
+      "height": 189,
+      "pivotX": 0.3,
+      "pivotY": 0.4860335195530726,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "end",
+          "x": 0.11555989583333333,
+          "y": -0.3052112430167598
+        }
+      ]
+    },
+    {
+      "name": "TorsoBack",
+      "bone": "TorsoBack",
+      "variant": "front",
+      "x": 353,
+      "y": 701,
+      "width": 174,
+      "height": 210,
+      "pivotX": 0.5263157894736842,
+      "pivotY": 0.08260869565217388,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "neck",
+          "x": -0.05723684210526315,
+          "y": 0.57421875
+        },
+        {
+          "name": "shoulderNear",
+          "x": -0.2826069078947368,
+          "y": 0.4458220108695652
+        },
+        {
+          "name": "shoulderFar",
+          "x": 0.28618421052631576,
+          "y": 0.4458220108695652
+        }
+      ]
+    },
+    {
+      "name": "TorsoBack_Rear",
+      "bone": "TorsoBack",
+      "variant": "rear",
+      "x": 551,
+      "y": 701,
+      "width": 182,
+      "height": 210,
+      "pivotX": 0.5052631578947369,
+      "pivotY": 0.08260869565217388,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "neck",
+          "x": -0.0037417763157894853,
+          "y": 0.5706521739130435
+        },
+        {
+          "name": "shoulderNear",
+          "x": 0.26940789473684207,
+          "y": 0.4137228260869565
+        },
+        {
+          "name": "shoulderFar",
+          "x": -0.31056743421052635,
+          "y": 0.4137228260869565
+        }
+      ]
+    },
+    {
+      "name": "TorsoBack_Side",
+      "bone": "TorsoBack",
+      "variant": "side",
+      "x": 757,
+      "y": 701,
+      "width": 151,
+      "height": 210,
+      "pivotX": 0.5631578947368421,
+      "pivotY": 0.08260869565217388,
+      "landmarks": [
+        {
+          "name": "attach",
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "name": "neck",
+          "x": -0.09313322368421052,
+          "y": 0.559952445652174
+        },
+        {
+          "name": "shoulderNear",
+          "x": -0.16143092105263157,
+          "y": 0.4137228260869565
+        },
+        {
+          "name": "shoulderFar",
+          "x": 0.10244654605263157,
+          "y": 0.4315557065217392
+        }
+      ]
+    }
+  ]
+}

@@ -109,6 +109,12 @@ type HeroShardReward struct {
 	Shards int    `json:"shards"`
 }
 
+// CombatRequest freezes the ordered, owned formation for one combat action.
+// An omitted heroIds field preserves the legacy formation for older clients.
+type CombatRequest struct {
+	HeroIDs []string `json:"heroIds,omitempty"`
+}
+
 type CombatResult struct {
 	Mode             string            `json:"mode"`
 	TargetID         string            `json:"targetId"`
@@ -142,7 +148,18 @@ type CombatHeroState struct {
 }
 
 type CombatEvent struct {
+	// TimeMS is resolution time. action_start records have no damage; a later
+	// impact uses the same ActionID and is absent if combat ended first.
 	TimeMS           int    `json:"timeMs"`
+	ActionStartMS    int    `json:"actionStartMs"`
+	ActionID         string `json:"actionId"`
+	AnimationVariant string `json:"animationVariant,omitempty"`
+	ActionDurationMS int    `json:"actionDurationMs,omitempty"`
+	ContactID        string `json:"contactId,omitempty"`
+	ContactIndex     int    `json:"contactIndex"`
+	ContactCount     int    `json:"contactCount,omitempty"`
+	ContactTimeMS    int    `json:"contactTimeMs,omitempty"`
+	CooldownUntilMS  int    `json:"cooldownUntilMs"`
 	EventType        string `json:"eventType"`
 	ActorID          string `json:"actorId,omitempty"`
 	ActorIndex       int    `json:"actorIndex"`

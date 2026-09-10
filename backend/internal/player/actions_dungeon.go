@@ -27,15 +27,19 @@ func (actions dungeonActions) RunDungeon(ctx context.Context, request ActionRequ
 	defer service.mu.Unlock()
 
 	return service.executeAction(ctx, request, dungeonActionID(dungeonID), func() actionOutcome {
+		formation, err := service.resolveCombatFormation(request.HeroIDs)
+		if err != nil {
+			return actionFailure("invalid_formation", err.Error())
+		}
 		switch dungeonID {
 		case goldDungeonID:
-			return actions.runResourceDungeon(dungeonID, service.state.GoldDungeonFloor, true)
+			return actions.runResourceDungeon(dungeonID, service.state.GoldDungeonFloor, true, formation)
 		case essenceDungeonID:
-			return actions.runResourceDungeon(dungeonID, service.state.EssenceDungeonFloor, false)
+			return actions.runResourceDungeon(dungeonID, service.state.EssenceDungeonFloor, false, formation)
 		case gearDungeonID:
-			return actions.runGearDungeon()
+			return actions.runGearDungeon(formation)
 		case shardRiftDungeonID:
-			return actions.runShardRiftDungeon()
+			return actions.runShardRiftDungeon(formation)
 		default:
 			return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", dungeonID))
 		}
@@ -59,14 +63,14 @@ func dungeonActionID(dungeonID string) string {
 	}
 }
 
-func (actions dungeonActions) runResourceDungeon(dungeonID string, floor int, isGold bool) actionOutcome {
+func (actions dungeonActions) runResourceDungeon(dungeonID string, floor int, isGold bool, formation []string) actionOutcome {
 	service := actions.service
 	definition, ok := service.balanceCatalog.DungeonDefinitionByID(dungeonID)
 	if !ok {
 		return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", dungeonID))
 	}
 
-	combat := service.simulateCombat(service.dungeonEnemy(definition, floor))
+	combat := service.simulateCombat(service.dungeonEnemy(definition, floor), formation...)
 	service.dailyFightCount++
 	label := fmt.Sprintf("%s Floor %d", definition.DisplayName, floor)
 	if !combat.Won {
@@ -91,7 +95,7 @@ func (actions dungeonActions) runResourceDungeon(dungeonID string, floor int, is
 	return actionSuccessWithCombat(message, reward, combat)
 }
 
-func (actions dungeonActions) runGearDungeon() actionOutcome {
+func (actions dungeonActions) runGearDungeon(formation []string) actionOutcome {
 	service := actions.service
 	floor := service.state.GearDungeonFloor
 	definition, ok := service.balanceCatalog.DungeonDefinitionByID(gearDungeonID)
@@ -99,7 +103,7 @@ func (actions dungeonActions) runGearDungeon() actionOutcome {
 		return actionFailure("invalid_dungeon", fmt.Sprintf("Unknown dungeon: %s", gearDungeonID))
 	}
 
-	combat := service.simulateCombat(service.dungeonEnemy(definition, floor))
+	combat := service.simulateCombat(service.dungeonEnemy(definition, floor), formation...)
 	service.dailyFightCount++
 	label := fmt.Sprintf("%s Floor %d", definition.DisplayName, floor)
 	if !combat.Won {
@@ -113,7 +117,7 @@ func (actions dungeonActions) runGearDungeon() actionOutcome {
 	return actionSuccessWithCombat(message, service.balanceCatalog.GearDungeonReward(), combat)
 }
 
-func (actions dungeonActions) runShardRiftDungeon() actionOutcome {
+func (actions dungeonActions) runShardRiftDungeon(formation []string) actionOutcome {
 	service := actions.service
 	definition, ok := service.balanceCatalog.DungeonDefinitionByID(shardRiftDungeonID)
 	if !ok {
@@ -126,7 +130,7 @@ func (actions dungeonActions) runShardRiftDungeon() actionOutcome {
 		enemy := service.dungeonEnemy(definition, encounter)
 		enemy.mode = "shard_rift"
 		enemy.targetID = shardRiftDungeonID
-		finalCombat = service.simulateCombat(enemy)
+		finalCombat = service.simulateCombat(enemy, formation...)
 		if !finalCombat.Won {
 			break
 		}

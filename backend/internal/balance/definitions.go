@@ -232,6 +232,7 @@ var heroDefinitions = []HeroDefinition{
 	{ID: "hero_elowen", DisplayName: "Elowen", SortOrder: 50, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 12, AttackPerLevel: 4, AttackPerAscension: 14, BaseHealth: 165, HealthPerLevel: 34, HealthPerAscension: 90},
 	{ID: "hero_paladin", DisplayName: "Paladin", SortOrder: 60, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 17, AttackPerLevel: 5, AttackPerAscension: 12, BaseHealth: 210, HealthPerLevel: 38, HealthPerAscension: 74},
 	{ID: "hero_ravik", DisplayName: "Ravik", SortOrder: 70, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 24, AttackPerLevel: 7, AttackPerAscension: 12, BaseHealth: 118, HealthPerLevel: 22, HealthPerAscension: 70},
+	{ID: "hero_kael", DisplayName: "Kael", SortOrder: 80, StarterOwned: true, MaxLevel: 100, MaxAscension: 10, BaseAttack: 18, AttackPerLevel: 5, AttackPerAscension: 11, BaseHealth: 150, HealthPerLevel: 28, HealthPerAscension: 70},
 }
 
 var equipmentDefinitions = []EquipmentDefinition{
@@ -434,6 +435,7 @@ var heroShardStandardPool = []SummonShardDrop{
 	{HeroID: "hero_elowen", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
 	{HeroID: "hero_paladin", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
 	{HeroID: "hero_ravik", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
+	{HeroID: "hero_kael", Shards: 1, Reward: api.Reward{RewardID: RewardSummonShards}},
 }
 
 var progressionCostDefinitions = []ProgressionCostDefinition{

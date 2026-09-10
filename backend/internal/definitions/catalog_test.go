@@ -26,8 +26,8 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if len(snapshot.Currencies) != 6 {
 		t.Fatalf("expected 6 currency definitions, got %#v", snapshot.Currencies)
 	}
-	if len(snapshot.Heroes) != 7 {
-		t.Fatalf("expected 7 hero definitions, got %#v", snapshot.Heroes)
+	if len(snapshot.Heroes) != 8 {
+		t.Fatalf("expected 8 hero definitions, got %#v", snapshot.Heroes)
 	}
 	if snapshot.Heroes[0].MaxLevel != 100 || snapshot.Heroes[0].BaseAttack <= 0 || snapshot.Heroes[0].BaseHealth <= 0 {
 		t.Fatalf("expected hero stat definitions, got %#v", snapshot.Heroes[0])
@@ -74,8 +74,8 @@ func TestSnapshotIncludesCoreDefinitionSets(t *testing.T) {
 	if len(snapshot.ProgressionCosts) == 0 {
 		t.Fatal("expected progression cost definitions")
 	}
-	if len(snapshot.SummonBanners) != 1 || len(snapshot.SummonBanners[0].ShardDrops) != 7 {
-		t.Fatalf("expected standard summon banner with 7 shard drops, got %#v", snapshot.SummonBanners)
+	if len(snapshot.SummonBanners) != 1 || len(snapshot.SummonBanners[0].ShardDrops) != 8 {
+		t.Fatalf("expected standard summon banner with 8 shard drops, got %#v", snapshot.SummonBanners)
 	}
 	if len(snapshot.DailyMissions) != 3 {
 		t.Fatalf("expected 3 daily missions, got %#v", snapshot.DailyMissions)

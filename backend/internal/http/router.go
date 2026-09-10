@@ -460,7 +460,12 @@ func (router *Router) handleLogout(response http.ResponseWriter, request *http.R
 }
 
 func (router *Router) handleCampaignFight(response http.ResponseWriter, request *http.Request) {
-	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+	combatRequest, rawBody, ok := decodeCombatRequest(response, request)
+	if !ok {
+		return
+	}
+	router.writeGameplayAction(response, request, rawBody, func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		action.HeroIDs = combatRequest.HeroIDs
 		return playerService.FightCampaignWithRequest(request.Context(), action)
 	})
 }
@@ -472,19 +477,25 @@ func (router *Router) handleOfflineClaim(response http.ResponseWriter, request *
 }
 
 func (router *Router) handleDungeonRun(response http.ResponseWriter, request *http.Request) {
+	combatRequest, rawBody, ok := decodeCombatRequest(response, request)
+	if !ok {
+		return
+	}
 	dungeonID := request.PathValue("dungeon_id")
 	if dungeonID == "tower_dungeon" {
 		floor, ok := towerRunFloor(response, request)
 		if !ok {
 			return
 		}
-		router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		router.writeGameplayAction(response, request, rawBody, func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+			action.HeroIDs = combatRequest.HeroIDs
 			return playerService.RunTowerWithRequest(request.Context(), action, floor)
 		})
 		return
 	}
 
-	router.writeGameplayAction(response, request, "", func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+	router.writeGameplayAction(response, request, rawBody, func(playerService *player.Service, action player.ActionRequest) api.ActionResult {
+		action.HeroIDs = combatRequest.HeroIDs
 		return playerService.RunDungeonWithRequest(request.Context(), action, dungeonID)
 	})
 }
@@ -870,6 +881,23 @@ func validIdempotencyKey(key string) bool {
 	}
 
 	return true
+}
+
+func decodeCombatRequest(response http.ResponseWriter, request *http.Request) (api.CombatRequest, string, bool) {
+	rawBody, err := io.ReadAll(http.MaxBytesReader(response, request.Body, 8192))
+	if err != nil {
+		writeError(response, request, http.StatusBadRequest, "invalid_body", "Could not read combat request body (maximum 8192 bytes).")
+		return api.CombatRequest{}, "", false
+	}
+	var combatRequest api.CombatRequest
+	if strings.TrimSpace(string(rawBody)) == "" {
+		return combatRequest, string(rawBody), true
+	}
+	if err := json.Unmarshal(rawBody, &combatRequest); err != nil || strings.TrimSpace(string(rawBody)) == "null" {
+		writeError(response, request, http.StatusBadRequest, "invalid_json", "Expected JSON object with an optional ordered heroIds array.")
+		return combatRequest, string(rawBody), false
+	}
+	return combatRequest, string(rawBody), true
 }
 
 func decodeEmailAuthRequest(response http.ResponseWriter, request *http.Request) (api.EmailAuthRequest, bool) {

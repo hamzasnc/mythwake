@@ -10,7 +10,6 @@ import (
 const (
 	combatAutoAttackManaGain = 2
 	combatReplayStepMS       = 100
-	combatMaxReplayEvents    = 180
 )
 
 type combatEnemy struct {
@@ -37,6 +36,10 @@ type combatHeroRuntime struct {
 	nextUltimateMS     int
 	ultimateCooldownMS int
 	autoAttackCount    int
+	basicActionCount   int
+	actionSequence     int
+	readyAtMS          int
+	pendingAction      *kaelCombatAction
 }
 
 func (service *Service) campaignEnemy(stage int) combatEnemy {
@@ -66,11 +69,14 @@ func (service *Service) dungeonEnemy(definition balance.DungeonDefinition, floor
 	}
 }
 
-func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
-	teamHP := max(1, service.state.TeamHealth)
+func (service *Service) simulateCombat(enemy combatEnemy, selectedHeroIDs ...string) api.CombatResult {
+	if len(selectedHeroIDs) == 0 {
+		selectedHeroIDs, _ = service.resolveCombatFormation(nil)
+	}
+	teamAttack, teamHP := service.combatTeamStats(selectedHeroIDs)
 	enemyHP := max(1, enemy.maxHP)
 	enemyDamage := max(1, enemy.damage)
-	heroes := service.combatHeroes()
+	heroes := service.combatHeroes(selectedHeroIDs...)
 	teamDefense := 0
 	for _, hero := range heroes {
 		teamDefense += hero.defense
@@ -81,7 +87,7 @@ func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
 		TargetID:         enemy.targetID,
 		TargetLevel:      enemy.targetLevel,
 		MaxSeconds:       max(1, enemy.maxSeconds),
-		TeamAttack:       max(1, service.state.TeamAttack),
+		TeamAttack:       teamAttack,
 		TeamMaxHP:        teamHP,
 		TeamHPRemaining:  teamHP,
 		EnemyMaxHP:       enemyHP,
@@ -93,12 +99,21 @@ func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
 	enemyNextAttackMS := 900
 	enemyAttackIntervalMS := 1450
 	lastSecond := 0
-	for timeMS := 0; timeMS <= result.MaxSeconds*1000; timeMS += combatReplayStepMS {
+	// Kael needs exact 10ms contacts. Existing actors retain their 100ms scheduling grid.
+	for timeMS := 0; timeMS <= result.MaxSeconds*1000; timeMS += 10 {
 		lastSecond = max(1, (timeMS+999)/1000)
 
 		for i := range heroes {
 			hero := &heroes[i]
-			if enemyHP <= 0 || timeMS < hero.nextAttackMS {
+			if hero.id == "hero_kael" {
+				advanceKaelCombat(hero, timeMS, &result, &enemyHP, teamHP)
+				if enemyHP <= 0 {
+					result.Won = true
+					break
+				}
+				continue
+			}
+			if timeMS%combatReplayStepMS != 0 || enemyHP <= 0 || timeMS < hero.nextAttackMS {
 				continue
 			}
 
@@ -190,15 +205,16 @@ func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
 					enemyHP -= ultimateDamage
 					result.DamageDealt += ultimateDamage
 				}
-				if ultimateHeal > 0 && teamHP < result.TeamMaxHP {
-					ultimateHeal = min(ultimateHeal, result.TeamMaxHP-teamHP)
-					teamHP += ultimateHeal
-				}
+				// Replay amounts describe applied results, including zero healing
+				// when the shared team pool is already full.
+				ultimateHeal = min(ultimateHeal, max(0, result.TeamMaxHP-teamHP))
+				teamHP += ultimateHeal
 				result.EnemyHPRemaining = enemyHP
 				result.TeamHPRemaining = teamHP
 				result.Events = appendCombatEvent(result.Events, api.CombatEvent{
 					TimeMS:           timeMS,
 					EventType:        "ultimate",
+					CooldownUntilMS:  hero.nextUltimateMS,
 					ActorID:          hero.id,
 					ActorIndex:       hero.index,
 					TargetID:         "enemy",
@@ -222,7 +238,7 @@ func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
 			break
 		}
 
-		if timeMS >= enemyNextAttackMS {
+		if timeMS%combatReplayStepMS == 0 && timeMS >= enemyNextAttackMS {
 			incomingDamage := min(mitigateEnemyDamage(enemyDamage, teamDefense), teamHP)
 			teamHP -= incomingDamage
 			result.DamageTaken += incomingDamage
@@ -252,15 +268,25 @@ func (service *Service) simulateCombat(enemy combatEnemy) api.CombatResult {
 	return result
 }
 
-func (service *Service) combatHeroes() []combatHeroRuntime {
-	definitions := service.balanceCatalog.HeroDefinitions()
+func (service *Service) combatHeroes(selectedHeroIDs ...string) []combatHeroRuntime {
+	if len(selectedHeroIDs) == 0 {
+		selectedHeroIDs, _ = service.resolveCombatFormation(nil)
+	}
+	definitions := make([]balance.HeroDefinition, 0, len(selectedHeroIDs))
+	for _, heroID := range selectedHeroIDs {
+		if definition, ok := service.balanceCatalog.HeroDefinitionByID(heroID); ok && service.heroLevels[heroID] > 0 {
+			definitions = append(definitions, definition)
+		}
+	}
+	teamAttack, _ := service.combatTeamStats(selectedHeroIDs)
 	baseTotal := 0
 	for _, definition := range definitions {
 		level := service.heroLevels[definition.ID]
 		if level <= 0 {
 			continue
 		}
-		ascension := service.heroAscensions[definition.ID]
+		level = clampHeroLevel(level, definition.MaxLevel)
+		ascension := clampHeroAscension(service.heroAscensions[definition.ID], definition.MaxAscension)
 		baseTotal += heroAttackFromDefinition(definition, level, ascension) + heroStarAttackBonus(definition, service.heroStars[definition.ID])
 	}
 	baseTotal = max(1, baseTotal)
@@ -271,10 +297,11 @@ func (service *Service) combatHeroes() []combatHeroRuntime {
 		if level <= 0 {
 			continue
 		}
-		ascension := service.heroAscensions[definition.ID]
+		level = clampHeroLevel(level, definition.MaxLevel)
+		ascension := clampHeroAscension(service.heroAscensions[definition.ID], definition.MaxAscension)
 		starLevel := service.heroStars[definition.ID]
 		baseAttack := heroAttackFromDefinition(definition, level, ascension) + heroStarAttackBonus(definition, starLevel)
-		scaledAttack := max(1, baseAttack*max(1, service.state.TeamAttack)/baseTotal)
+		scaledAttack := max(1, baseAttack*teamAttack/baseTotal)
 		index := len(heroes)
 		heroes = append(heroes, combatHeroRuntime{
 			index:              index,
@@ -294,7 +321,7 @@ func (service *Service) combatHeroes() []combatHeroRuntime {
 		heroes = append(heroes, combatHeroRuntime{
 			id:                 "hero_unknown",
 			name:               "Hero",
-			attack:             max(1, service.state.TeamAttack),
+			attack:             teamAttack,
 			critChancePercent:  10,
 			accuracyPercent:    90,
 			defense:            10,
@@ -315,7 +342,7 @@ func heroAttackFromDefinition(definition balance.HeroDefinition, level int, asce
 func heroCritChancePercent(heroID string, ascension int) int {
 	base := 10
 	switch heroID {
-	case "hero_astra":
+	case "hero_astra", "hero_kael":
 		base = 12
 	case "hero_borin":
 		base = 5
@@ -336,7 +363,7 @@ func heroCritChancePercent(heroID string, ascension int) int {
 func heroAccuracyPercent(heroID string, ascension int) int {
 	base := 90
 	switch heroID {
-	case "hero_astra":
+	case "hero_astra", "hero_kael":
 		base = 92
 	case "hero_borin":
 		base = 88
@@ -357,7 +384,7 @@ func heroAccuracyPercent(heroID string, ascension int) int {
 func heroDefense(heroID string, level int, ascension int) int {
 	base := 10
 	switch heroID {
-	case "hero_astra":
+	case "hero_astra", "hero_kael":
 		base = 8
 	case "hero_borin":
 		base = 24
@@ -422,8 +449,9 @@ func combatHeroStates(heroes []combatHeroRuntime) []api.CombatHeroState {
 }
 
 func appendCombatEvent(events []api.CombatEvent, event api.CombatEvent) []api.CombatEvent {
-	if len(events) >= combatMaxReplayEvents {
-		return events
+	if event.ActionID == "" {
+		event.ActionID = fmt.Sprintf("%s:%d", event.ActorID, len(events)+1)
+		event.ActionStartMS = event.TimeMS
 	}
 	return append(events, event)
 }
@@ -432,7 +460,7 @@ func heroMaxMana(heroID string) int {
 	switch heroID {
 	case "hero_dante":
 		return 25
-	case "hero_astra":
+	case "hero_astra", "hero_kael":
 		return 26
 	case "hero_cyra":
 		return 27
@@ -455,6 +483,8 @@ func heroAutoAttackManaGain(heroID string) int {
 
 func heroAttackIntervalMS(heroID string) int {
 	switch heroID {
+	case "hero_kael":
+		return 1120
 	case "hero_dante":
 		return 950
 	case "hero_borin":
@@ -474,6 +504,8 @@ func heroAttackIntervalMS(heroID string) int {
 
 func heroUltimateCooldownMS(heroID string) int {
 	switch heroID {
+	case "hero_kael":
+		return 4500
 	case "hero_dante":
 		return 3500
 	case "hero_borin":
@@ -504,6 +536,8 @@ func heroPassiveID(heroID string) string {
 
 func heroPassiveName(heroID string) string {
 	switch heroID {
+	case "hero_kael":
+		return ""
 	case "hero_dante":
 		return "Momentum: +2 mana on successful hits"
 	case "hero_elowen":
@@ -521,6 +555,8 @@ func heroUltimateID(heroID string) string {
 
 func heroUltimateName(heroID string) string {
 	switch heroID {
+	case "hero_kael":
+		return "Crescent Tempest"
 	case "hero_astra":
 		return "Starfall Slash"
 	case "hero_borin":
@@ -542,6 +578,8 @@ func heroUltimateName(heroID string) string {
 
 func heroUltimateEffect(heroID string, attack int, teamMaxHP int) (int, int) {
 	switch heroID {
+	case "hero_kael":
+		return attack * 4, 0
 	case "hero_borin":
 		return attack * 3, max(1, teamMaxHP/12)
 	case "hero_cyra":

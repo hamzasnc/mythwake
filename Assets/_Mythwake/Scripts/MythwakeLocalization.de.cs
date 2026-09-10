@@ -98,6 +98,13 @@ public static partial class MythwakeLocalization
         { "rarity.epic.name", "Episch" },
         { "rarity.legendary.name", "Legendär" },
 
+        { "formation.bench", "Bank" },
+        { "formation.roster", "Helden" },
+        { "hero.hero_kael.name", "Kael" },
+        { "hero.hero_kael.title", "Klinge des Aufbruchs" },
+        { "hero.hero_kael.description", "Ein rastloser Klingentänzer, der seine Gegner mit schnellen Richtungswechseln und kompromisslosen Schnitten bedrängt." },
+        { "hero.hero_kael.ability.name", "Sichelsturm" },
+        { "hero.hero_kael.ability.description", "Dreht sich in einen aufsteigenden Schnitt und setzt mit einem wuchtigen Abschlusshieb nach. Beide Treffer verursachen zusammen 400 % Angriffsschaden. Benötigt volles Mana; 4,5 s Abklingzeit." },
         { "hero.hero_astra.name", "Astra" },
         { "hero.hero_astra.title", "Die Frost-Vorhut" },
         { "hero.hero_astra.description", "Eine Frontkämpferin, die Druck in stetigen Schaden verwandelt." },

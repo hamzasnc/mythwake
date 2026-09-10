@@ -672,9 +672,9 @@ func TestCombatLossReturnsResultAndPersistsFightProgress(t *testing.T) {
 		t.Fatalf("attach store: %v", err)
 	}
 
-	service.state.TeamAttack = 1
-	service.state.TeamHealth = 1
-	service.state.TeamPower = 1
+	// Combat now derives selected-team stats rather than trusting cached account
+	// totals. An unreachable stage provides a real losing encounter.
+	service.state.CampaignStage = 1000
 
 	result := service.FightCampaign()
 	if result.Success || result.ErrorCode != "combat_lost" {
@@ -686,8 +686,8 @@ func TestCombatLossReturnsResultAndPersistsFightProgress(t *testing.T) {
 	if store.saved.DailyFightCount != 1 {
 		t.Fatalf("expected failed combat attempt to persist daily fight progress, got %d", store.saved.DailyFightCount)
 	}
-	if store.saved.PlayerState.CampaignStage != 1 {
-		t.Fatalf("expected failed combat to keep campaign stage 1, got %d", store.saved.PlayerState.CampaignStage)
+	if store.saved.PlayerState.CampaignStage != 1000 {
+		t.Fatalf("expected failed combat to keep campaign stage 1000, got %d", store.saved.PlayerState.CampaignStage)
 	}
 }
 

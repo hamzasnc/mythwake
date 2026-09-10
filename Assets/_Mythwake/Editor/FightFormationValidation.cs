@@ -198,9 +198,9 @@ public static class FightFormationValidation
         var benchTexts = GetPrivateField<TMP_Text[]>(controller, "formationBenchHeroTexts");
         var filterButtons = GetPrivateField<Button[]>(controller, "formationFilterButtons");
         var filterTexts = GetPrivateField<TMP_Text[]>(controller, "formationFilterTexts");
-        RequireArray(benchButtons, 7, "formation bench buttons");
-        RequireArray(benchImages, 7, "formation bench portraits");
-        RequireArray(benchTexts, 7, "formation bench labels");
+        RequireArray(benchButtons, 8, "formation bench buttons");
+        RequireArray(benchImages, 8, "formation bench portraits");
+        RequireArray(benchTexts, 8, "formation bench labels");
         RequireArray(filterButtons, 7, "formation filter buttons");
         RequireArray(filterTexts, 7, "formation filter labels");
 
@@ -250,6 +250,7 @@ public static class FightFormationValidation
         InvokePrivate(controller, "ApplyBattleFlowVisibility");
         InvokePrivate(controller, "RefreshFightArenaBackground", false);
         InvokePrivate(controller, "PrepareFightAnimationTextures", 1, false, null);
+        InvokePrivate(controller, "ConfigureFightEnemyPresentation", false);
         InvokePrivate(controller, "InitializeFightSkillState");
         Canvas.ForceUpdateCanvases();
 
@@ -302,8 +303,8 @@ public static class FightFormationValidation
                 throw new InvalidOperationException($"Fight lane {i + 1} should have hero/enemy art and HP bars.");
             }
 
-            AssertInsideParent(fightRoot, heroImages[i].gameObject);
-            AssertInsideParent(fightRoot, enemyImages[i].gameObject);
+            if (heroImages[i].gameObject.activeSelf) AssertInsideParent(fightRoot, heroImages[i].gameObject);
+            if (enemyImages[i].gameObject.activeSelf) AssertInsideParent(fightRoot, enemyImages[i].gameObject);
             if (heroImages[i].gameObject.activeSelf && heroImages[i].texture == null)
             {
                 throw new InvalidOperationException($"Fight hero {i + 1} should have loaded fallback art when visible.");
@@ -331,12 +332,16 @@ public static class FightFormationValidation
         RequireArray(nameTexts, skillButtons.Length, "fight skill name texts");
         RequireArray(portraits, skillButtons.Length, "fight skill portraits");
 
+        var visibleCards = 0;
         for (var i = 0; i < skillButtons.Length; i++)
         {
             if (skillButtons[i] == null || manaFills[i] == null || manaTexts[i] == null || hpFills[i] == null || nameTexts[i] == null || portraits[i] == null)
             {
                 throw new InvalidOperationException($"Fight skill card {i + 1} should have button, portrait, HP, mana, and label.");
             }
+
+            if (!skillButtons[i].gameObject.activeSelf) continue;
+            visibleCards++;
 
             AssertInsideParent(fightRoot, skillButtons[i].gameObject);
             AssertMinimumSize(skillButtons[i].gameObject, 120f, 170f, $"Fight skill card {i + 1}");
@@ -351,9 +356,11 @@ public static class FightFormationValidation
 
             for (var otherIndex = i + 1; otherIndex < skillButtons.Length; otherIndex++)
             {
+                if (!skillButtons[otherIndex].gameObject.activeSelf) continue;
                 AssertNoOverlap(skillButtons[i].gameObject, skillButtons[otherIndex].gameObject, 4f, "Fight skill card spacing");
             }
         }
+        if (visibleCards != 7) throw new InvalidOperationException("Fight should display exactly seven selected hero skill cards.");
     }
 
     private static void ValidateFightToggles(IdlePrototypeController controller, Button auto, Button speed)
@@ -394,15 +401,16 @@ public static class FightFormationValidation
         RequireArray(skillButtons, 1, "fight skill buttons");
         RequireArray(manaTexts, 1, "fight mana texts");
 
-        manaValues[0] = Mathf.Max(1, maxManaValues[0]);
-        queued[0] = false;
+        var selectedHero = ((int[])InvokePrivate(controller, "GetActiveFormationHeroIndices"))[0];
+        manaValues[selectedHero] = Mathf.Max(1, maxManaValues[selectedHero]);
+        queued[selectedHero] = false;
         InvokePrivate(controller, "RefreshFightSkillUi", 0f);
         Canvas.ForceUpdateCanvases();
 
-        RequireCopy(manaTexts[0].text, $"{manaValues[0]}/{maxManaValues[0]}", "Fight ready mana text");
-        skillButtons[0].onClick.Invoke();
+        RequireCopy(manaTexts[selectedHero].text, $"{manaValues[selectedHero]}/{maxManaValues[selectedHero]}", "Fight ready mana text");
+        skillButtons[selectedHero].onClick.Invoke();
         Canvas.ForceUpdateCanvases();
-        if (!queued[0])
+        if (!queued[selectedHero])
         {
             throw new InvalidOperationException("Clicking a ready Fight skill card should queue that hero's ultimate.");
         }

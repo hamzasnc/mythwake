@@ -179,7 +179,7 @@ public static class EarlyGameLoopValidation
     {
         controller.ResetProgress();
         var powerBefore = GetPrivateIntMethod(controller, "GetTeamPower");
-        var heroResult = controller.LevelHero("hero_astra");
+        var heroResult = controller.LevelHero("hero_kael");
         if (!heroResult.success)
         {
             throw new InvalidOperationException($"Fresh Hero level-up should be reachable, got '{heroResult.message}'.");

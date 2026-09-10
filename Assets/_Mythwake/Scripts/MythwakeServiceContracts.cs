@@ -175,6 +175,16 @@ public struct MythwakeCombatHeroStateDto
 public struct MythwakeCombatEventDto
 {
     public int timeMs;
+    public int actionStartMs;
+    public string actionId;
+    // Additive contact metadata. Legacy events omit these fields (contactCount == 0).
+    public string animationVariant;
+    public int actionDurationMs;
+    public string contactId;
+    public int contactIndex;
+    public int contactCount;
+    public int contactTimeMs; // Offset from actionStartMs, not a second authoritative clock.
+    public int cooldownUntilMs;
     public string eventType;
     public string actorId;
     public int actorIndex;

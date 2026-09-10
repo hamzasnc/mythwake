@@ -1,0 +1,46 @@
+{
+  "frontPartHashesIdentical": true,
+  "frontPartsChecked": 21,
+  "atlasParts": 43,
+  "rearConnections": [
+    {
+      "parent": "ThighNear",
+      "child": "ShinNear",
+      "restWorldError": 0.0
+    },
+    {
+      "parent": "ShinNear",
+      "child": "FootNear",
+      "restWorldError": 0.0
+    },
+    {
+      "parent": "ThighFar",
+      "child": "ShinFar",
+      "restWorldError": 0.0
+    },
+    {
+      "parent": "ShinFar",
+      "child": "FootFar",
+      "restWorldError": 0.0
+    }
+  ],
+  "rearFloor": {
+    "Near": {
+      "rectMinY": 0.0,
+      "paintedMinY": 0.0,
+      "ankle": [
+        0.19981996313056638,
+        0.23671963475354102
+      ]
+    },
+    "Far": {
+      "rectMinY": 0.0,
+      "paintedMinY": 0.0,
+      "ankle": [
+        -0.11238723270592169,
+        0.2333181463730004
+      ]
+    }
+  },
+  "sourceAlpha": "Border-connected checker matte; RGBA straight alpha outputs"
+}

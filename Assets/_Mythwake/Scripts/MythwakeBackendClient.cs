@@ -1,4 +1,5 @@
 using System;
+using PlayerPrefs = MythwakePreferences;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -19,7 +20,13 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
     [SerializeField] private string baseUrl = string.Empty;
     [SerializeField] private int requestTimeoutSeconds = 10;
-    private readonly Dictionary<string, string> pendingActionKeys = new Dictionary<string, string>();
+    private sealed class PendingActionEnvelope
+    {
+        public string idempotencyKey, playerId, url, method, contentType;
+        public byte[] body;
+        public long revision;
+    }
+    private readonly Dictionary<string, PendingActionEnvelope> pendingActions = new Dictionary<string, PendingActionEnvelope>();
     private string cachedSessionToken;
     private string cachedPlayerId;
     private string cachedAccountKind;
@@ -225,7 +232,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         {
             if (success)
             {
-                pendingActionKeys.Clear();
+                pendingActions.Clear();
                 StoreStateRevision(response.playerSnapshot);
             }
 
@@ -271,6 +278,15 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         return SendAuthenticatedActionJson("campaign_fight", () => Post("/campaign/fight"), completed);
     }
 
+    [Serializable]
+    private sealed class CombatFormationRequest { public string[] heroIds; }
+
+    public IEnumerator FightCampaign(string[] heroIds, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        var body = JsonUtility.ToJson(new CombatFormationRequest { heroIds = heroIds });
+        return SendAuthenticatedActionJson("campaign_fight", () => PostJson("/campaign/fight", body), completed);
+    }
+
     public IEnumerator ClaimOfflineRewards(Action<bool, string, MythwakeActionResultDto> completed)
     {
         return SendAuthenticatedActionJson("afk_reward_claim", () => Post("/player/offline/claim"), completed);
@@ -281,10 +297,23 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         return SendAuthenticatedActionJson($"dungeon_run:{dungeonId}", () => Post($"/dungeons/{EscapePath(dungeonId)}/run"), completed);
     }
 
+    public IEnumerator RunDungeon(string dungeonId, string[] heroIds, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        var body = JsonUtility.ToJson(new CombatFormationRequest { heroIds = heroIds });
+        return SendAuthenticatedActionJson($"dungeon_run:{dungeonId}", () => PostJson($"/dungeons/{EscapePath(dungeonId)}/run", body), completed);
+    }
+
     public IEnumerator RunTower(int floor, Action<bool, string, MythwakeActionResultDto> completed)
     {
         floor = Mathf.Clamp(floor, 1, 1000);
         return SendAuthenticatedActionJson($"tower_run:{floor}", () => Post($"/dungeons/tower_dungeon/run?floor={floor}"), completed);
+    }
+
+    public IEnumerator RunTower(int floor, string[] heroIds, Action<bool, string, MythwakeActionResultDto> completed)
+    {
+        floor = Mathf.Clamp(floor, 1, 1000);
+        var body = JsonUtility.ToJson(new CombatFormationRequest { heroIds = heroIds });
+        return SendAuthenticatedActionJson($"tower_run:{floor}", () => PostJson($"/dungeons/tower_dungeon/run?floor={floor}", body), completed);
     }
 
     public IEnumerator LevelHero(string heroId, Action<bool, string, MythwakeActionResultDto> completed)
@@ -494,7 +523,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         }
     }
 
-    private IEnumerator SendAuthenticatedJson<T>(Func<UnityWebRequest> createRequest, Action<bool, string, T> completed)
+    private IEnumerator SendAuthenticatedJson<T>(Func<UnityWebRequest> createRequest, Action<bool, string, T> completed, Action<long> responseStatus = null)
     {
         var loginSuccess = true;
         var loginError = string.Empty;
@@ -522,6 +551,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
         yield return SendJsonWithStatus<T>(createRequest(), (success, error, statusCode, data) =>
         {
+            responseStatus?.Invoke(statusCode);
             requestSuccess = success;
             requestError = error;
             responseCode = statusCode;
@@ -557,6 +587,7 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
         yield return SendJsonWithStatus<T>(createRequest(), (success, error, statusCode, data) =>
         {
+            responseStatus?.Invoke(statusCode);
             completed?.Invoke(success, error, data);
         });
     }
@@ -669,26 +700,45 @@ public sealed class MythwakeBackendClient : MonoBehaviour
 
     private IEnumerator SendAuthenticatedActionJson(string actionKey, Func<UnityWebRequest> createRequest, Action<bool, string, MythwakeActionResultDto> completed)
     {
-        return SendAuthenticatedJson<MythwakeActionResultDto>(() =>
+        var status = 0L;
+        return SendAuthenticatedJson<MythwakeActionResultDto>(() => CreatePendingActionRequest(actionKey, createRequest), (success, error, result) =>
         {
-            var request = createRequest();
-            request.SetRequestHeader("Idempotency-Key", GetOrCreatePendingActionKey(actionKey));
-            if (StateRevision > 0)
-            {
-                request.SetRequestHeader("X-Player-State-Revision", StateRevision.ToString());
-            }
-
-            return request;
-        }, (success, error, result) =>
-        {
+            // Transport failures and invalid success JSON are uncertain: replay the exact original envelope.
+            // Definite client rejection lets the next action use corrected state and a new key.
+            if (success || (status >= 400 && status < 500 && status != 408 && status != 429))
+                pendingActions.Remove(actionKey);
             if (success)
             {
-                pendingActionKeys.Remove(actionKey);
                 StoreStateRevision(result.playerSnapshot);
             }
 
             completed?.Invoke(success, error, result);
-        });
+        }, receivedStatus => status = receivedStatus);
+    }
+
+    private UnityWebRequest CreatePendingActionRequest(string actionKey, Func<UnityWebRequest> createRequest)
+    {
+        UnityWebRequest request;
+        if (!pendingActions.TryGetValue(actionKey, out var pending) || pending.playerId != PlayerId)
+        {
+            request = createRequest();
+            pending = new PendingActionEnvelope { idempotencyKey = Guid.NewGuid().ToString("N"),
+                playerId = PlayerId, url = request.url, method = request.method,
+                contentType = request.GetRequestHeader("Content-Type"),
+                body = request.uploadHandler?.data, revision = StateRevision };
+            pendingActions[actionKey] = pending;
+        }
+        else
+        {
+            request = new UnityWebRequest(pending.url, pending.method) {
+                downloadHandler = new DownloadHandlerBuffer(), timeout = Mathf.Max(1, requestTimeoutSeconds) };
+            if (pending.body != null) request.uploadHandler = new UploadHandlerRaw(pending.body);
+            ApplyCommonHeaders(request);
+            if (!string.IsNullOrEmpty(pending.contentType)) request.SetRequestHeader("Content-Type", pending.contentType);
+        }
+        request.SetRequestHeader("Idempotency-Key", pending.idempotencyKey);
+        if (pending.revision > 0) request.SetRequestHeader("X-Player-State-Revision", pending.revision.ToString());
+        return request;
     }
 
     private void ApplyCommonHeaders(UnityWebRequest request)
@@ -723,18 +773,6 @@ public sealed class MythwakeBackendClient : MonoBehaviour
         }
 
         completed?.Invoke(timedOut);
-    }
-
-    private string GetOrCreatePendingActionKey(string actionKey)
-    {
-        if (pendingActionKeys.TryGetValue(actionKey, out var idempotencyKey) && !string.IsNullOrWhiteSpace(idempotencyKey))
-        {
-            return idempotencyKey;
-        }
-
-        idempotencyKey = Guid.NewGuid().ToString("N");
-        pendingActionKeys[actionKey] = idempotencyKey;
-        return idempotencyKey;
     }
 
     private void StoreStateRevision(MythwakePlayerSnapshotDto snapshot)

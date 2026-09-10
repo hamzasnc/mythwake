@@ -35,7 +35,8 @@ public sealed class MythwakeRuntimeArtPresenter
         "hero_dante",
         "hero_elowen",
         "hero_paladin",
-        "hero_ravik"
+        "hero_ravik",
+        "hero_kael"
     };
     private const string EquipmentIconTextureRoot = "";
     private static readonly string[] EquipmentWeaponIconTextureNames =

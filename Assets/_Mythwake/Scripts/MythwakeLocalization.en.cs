@@ -98,6 +98,13 @@ public static partial class MythwakeLocalization
         { "rarity.epic.name", "Epic" },
         { "rarity.legendary.name", "Legendary" },
 
+        { "formation.bench", "Bench" },
+        { "formation.roster", "Heroes" },
+        { "hero.hero_kael.name", "Kael" },
+        { "hero.hero_kael.title", "Blade of New Beginnings" },
+        { "hero.hero_kael.description", "A relentless blade dancer who presses his enemies with swift turns and uncompromising cuts." },
+        { "hero.hero_kael.ability.name", "Crescent Tempest" },
+        { "hero.hero_kael.ability.description", "Turns into a rising cut and follows with a powerful finishing strike. Both hits deal a combined 400% attack damage. Requires full mana; 4.5 s cooldown." },
         { "hero.hero_astra.name", "Astra" },
         { "hero.hero_astra.title", "The Frost Vanguard" },
         { "hero.hero_astra.description", "A front-line duelist who turns pressure into steady damage." },

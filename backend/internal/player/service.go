@@ -91,6 +91,7 @@ type ActionRequest struct {
 	IdempotencyKey   string
 	RequestHash      string
 	ExpectedRevision int64
+	HeroIDs          []string
 }
 
 type StoredActionResult struct {

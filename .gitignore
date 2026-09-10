@@ -61,3 +61,17 @@ Assets/TextMesh Pro/Examples & Extras.meta
 # Unity/Microsoft GDK generated editor metadata
 Assets/Resources/GDKEditionAutoGen/
 Assets/Resources/GDKEditionAutoGen.meta
+
+# Local QA captures, reports, videos and Python caches
+/artifacts/
+__pycache__/
+*.py[cod]
+
+# Original art and intermediate drawings stay local. Prepared game textures
+# under Assets/ remain versioned so a fresh clone can render every character.
+/ArtSource/**/*.png
+/ArtSource/**/*.jpg
+/ArtSource/**/*.jpeg
+/ArtSource/**/*.webp
+/ArtSource/Kael/Legacy-v1/
+/ArtSource/Kael/prepare_atlas.py

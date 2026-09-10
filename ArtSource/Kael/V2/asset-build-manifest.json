@@ -1,0 +1,984 @@
+{
+  "version": 4,
+  "source_sha256": {
+    "action-portrait-source.png": "1cec4707d33492ae63db5c5ea22f05c47825677e8fba5f060f16ab99ccf372d7",
+    "expressions-source.png": "5d220d962eab3f7b64a5ed3b980153c834f12113348809fb3a8619d69b68ca20",
+    "parts-front-source.png": "8da1fa926d2de8eb9a8115dfa34b320c80d1a6c19d63c74097c02725dadfd430",
+    "parts-swaps-source.png": "2b439b4f6557c51f9c293235c755c0707a208d2bd3a32d738f47b236e21425e5",
+    "portrait-source.png": "7abbea951be3d05468c1281b0e4e80c3dc552dceb0dcccdb90390a9babd0c7ca",
+    "rear-lower/FootFar_Rear-source.png": "cf98ec0f6e3139d3378c440fc5ef883ccd44604325535837b78d6a93f4f9ecc4",
+    "rear-lower/FootNear_Rear-source.png": "17fa341e5c0858c50791ecfa3dd8123143e433bf58c44f174b81de3e1284f5fa",
+    "rear-lower/Pelvis_Rear-source.png": "e92e76073ed2fadd6f4a266521dd554064fda4b4dbad5213929659600cb57244",
+    "rear-lower/ShinFar_Rear-source.png": "7476e49171df951b8f0f78fc05afa0fc7494e852fb0127cd46a98310526ac8a0",
+    "rear-lower/ShinNear_Rear-source.png": "e1880463983d41e06311d664500179948852115179d772680986f4fb350d0470",
+    "rear-lower/ThighFar_Rear-source.png": "9cfe8db48548882c843d2562c53cc7c06d19db9c270e997004737ea6d7b485e8",
+    "rear-lower/ThighNear_Rear-source.png": "773c239fef58f018c4f4a539b46d11b25e20035075a6dd1670c208bca3f830a5",
+    "shoulder-underlay/front-cloth-source.png": "cf52b05355ee98f53f731aa1be38c3767b4846dcc5bceb9132fe422702be3c11",
+    "skill-icon-source.png": "6d52b7caf35bc440c71eee93642388d1cfa88fd0923df1c90d945449bfdecda5",
+    "vfx-source.png": "3a8a87ba90adf67044acd30a84abe9a67aed6736e35a286d6cadc89629ccc8b2"
+  },
+  "output_parts": 46,
+  "pixelsPerUnit": 256,
+  "atlas": [
+    2048,
+    2048
+  ],
+  "alpha": "straight",
+  "cap_cuts": {
+    "UpperArmNear": [
+      0,
+      0.87
+    ],
+    "ForearmNear": [
+      0.11,
+      0.865
+    ],
+    "HandNear": [
+      0.18,
+      1
+    ],
+    "UpperArmFar": [
+      0,
+      0.865
+    ],
+    "ForearmFar": [
+      0.15,
+      0.865
+    ],
+    "HandFar": [
+      0.16,
+      1
+    ],
+    "ThighNear": [
+      0,
+      0.9
+    ],
+    "ThighFar": [
+      0,
+      0.9
+    ],
+    "ShinNear": [
+      0.105,
+      0.925
+    ],
+    "ShinFar": [
+      0.105,
+      0.925
+    ],
+    "FootNear": [
+      0.14,
+      1
+    ],
+    "FootFar": [
+      0.14,
+      1
+    ]
+  },
+  "measurement_reference": {
+    "Head": [
+      [
+        271,
+        256
+      ],
+      {
+        "attach": [
+          110,
+          236
+        ],
+        "hair": [
+          45,
+          162
+        ]
+      }
+    ],
+    "Torso": [
+      [
+        190,
+        230
+      ],
+      {
+        "attach": [
+          100,
+          211
+        ],
+        "neck": [
+          84,
+          50
+        ],
+        "shoulderNear": [
+          21,
+          86
+        ],
+        "shoulderFar": [
+          180,
+          86
+        ]
+      }
+    ],
+    "Pelvis": [
+      [
+        158,
+        138
+      ],
+      {
+        "attach": [
+          79,
+          18
+        ],
+        "hipNear": [
+          42,
+          50
+        ],
+        "hipFar": [
+          109,
+          50
+        ]
+      }
+    ],
+    "UpperArmNear": [
+      [
+        120,
+        179
+      ],
+      {
+        "attach": [
+          69,
+          69
+        ],
+        "end": [
+          44,
+          149
+        ]
+      }
+    ],
+    "ForearmNear": [
+      [
+        82,
+        123
+      ],
+      {
+        "attach": [
+          36,
+          33
+        ],
+        "end": [
+          58,
+          100
+        ]
+      }
+    ],
+    "HandNear": [
+      [
+        78,
+        77
+      ],
+      {
+        "attach": [
+          44,
+          25
+        ],
+        "grip": [
+          42,
+          53
+        ]
+      }
+    ],
+    "UpperArmFar": [
+      [
+        67,
+        133
+      ],
+      {
+        "attach": [
+          32,
+          30
+        ],
+        "end": [
+          39,
+          109
+        ]
+      }
+    ],
+    "ForearmFar": [
+      [
+        64,
+        118
+      ],
+      {
+        "attach": [
+          25,
+          36
+        ],
+        "end": [
+          48,
+          97
+        ]
+      }
+    ],
+    "HandFar": [
+      [
+        69,
+        74
+      ],
+      {
+        "attach": [
+          43,
+          24
+        ]
+      }
+    ],
+    "ThighNear": [
+      [
+        85,
+        159
+      ],
+      {
+        "attach": [
+          45,
+          11
+        ],
+        "end": [
+          27,
+          136
+        ]
+      }
+    ],
+    "ShinNear": [
+      [
+        58,
+        148
+      ],
+      {
+        "attach": [
+          30,
+          18
+        ],
+        "end": [
+          30,
+          132
+        ]
+      }
+    ],
+    "FootNear": [
+      [
+        95,
+        74
+      ],
+      {
+        "attach": [
+          31,
+          19
+        ]
+      }
+    ],
+    "ThighFar": [
+      [
+        77,
+        159
+      ],
+      {
+        "attach": [
+          35,
+          11
+        ],
+        "end": [
+          49,
+          136
+        ]
+      }
+    ],
+    "ShinFar": [
+      [
+        58,
+        148
+      ],
+      {
+        "attach": [
+          30,
+          18
+        ],
+        "end": [
+          30,
+          132
+        ]
+      }
+    ],
+    "FootFar": [
+      [
+        97,
+        74
+      ],
+      {
+        "attach": [
+          31,
+          19
+        ]
+      }
+    ],
+    "Head_Rear": [
+      [
+        271,
+        256
+      ],
+      {
+        "attach": [
+          146,
+          240
+        ],
+        "hair": [
+          86,
+          177
+        ]
+      }
+    ],
+    "Head_Side": [
+      [
+        271,
+        256
+      ],
+      {
+        "attach": [
+          126,
+          236
+        ],
+        "hair": [
+          55,
+          172
+        ]
+      }
+    ],
+    "Head_Action": [
+      [
+        271,
+        256
+      ],
+      {
+        "attach": [
+          111,
+          240
+        ],
+        "hair": [
+          44,
+          163
+        ]
+      }
+    ],
+    "Head_Blink": [
+      [
+        271,
+        256
+      ],
+      {
+        "attach": [
+          106,
+          239
+        ],
+        "hair": [
+          43,
+          164
+        ]
+      }
+    ],
+    "Torso_Rear": [
+      [
+        190,
+        230
+      ],
+      {
+        "attach": [
+          96,
+          211
+        ],
+        "neck": [
+          95,
+          51
+        ],
+        "shoulderNear": [
+          168,
+          95
+        ],
+        "shoulderFar": [
+          13,
+          95
+        ]
+      }
+    ],
+    "Torso_Side": [
+      [
+        190,
+        230
+      ],
+      {
+        "attach": [
+          107,
+          211
+        ],
+        "neck": [
+          77,
+          54
+        ],
+        "shoulderNear": [
+          55,
+          95
+        ],
+        "shoulderFar": [
+          140,
+          90
+        ]
+      }
+    ],
+    "Pelvis_Rear": [
+      [
+        1165,
+        947
+      ],
+      {
+        "attach": [
+          582,
+          123
+        ],
+        "hipNear": [
+          850,
+          350
+        ],
+        "hipFar": [
+          370,
+          350
+        ]
+      }
+    ],
+    "Pelvis_Side": [
+      [
+        158,
+        138
+      ],
+      {
+        "attach": [
+          80,
+          18
+        ],
+        "hipNear": [
+          60,
+          50
+        ],
+        "hipFar": [
+          94,
+          50
+        ]
+      }
+    ],
+    "UpperArmNear_Rear": [
+      [
+        120,
+        179
+      ],
+      {
+        "attach": [
+          36,
+          92
+        ],
+        "end": [
+          61,
+          166
+        ]
+      }
+    ],
+    "UpperArmNear_Side": [
+      [
+        120,
+        179
+      ],
+      {
+        "attach": [
+          36,
+          92
+        ],
+        "end": [
+          61,
+          166
+        ]
+      }
+    ],
+    "ThighNear_Rear": [
+      [
+        659,
+        1371
+      ],
+      {
+        "attach": [
+          301,
+          115
+        ],
+        "end": [
+          370,
+          1190
+        ]
+      }
+    ],
+    "ThighFar_Rear": [
+      [
+        530,
+        1273
+      ],
+      {
+        "attach": [
+          305,
+          115
+        ],
+        "end": [
+          325,
+          1143
+        ]
+      }
+    ],
+    "ShinNear_Rear": [
+      [
+        402,
+        1108
+      ],
+      {
+        "attach": [
+          182,
+          108
+        ],
+        "end": [
+          205,
+          1020
+        ]
+      }
+    ],
+    "ShinFar_Rear": [
+      [
+        422,
+        1220
+      ],
+      {
+        "attach": [
+          205,
+          119
+        ],
+        "end": [
+          200,
+          1110
+        ]
+      }
+    ],
+    "FootNear_Rear": [
+      [
+        708,
+        822
+      ],
+      {
+        "attach": [
+          262,
+          152
+        ]
+      }
+    ],
+    "FootFar_Rear": [
+      [
+        677,
+        734
+      ],
+      {
+        "attach": [
+          235,
+          139
+        ]
+      }
+    ]
+  },
+  "pauldron_outlines": {
+    "front": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        0.52
+      ],
+      [
+        0.86,
+        0.57
+      ],
+      [
+        0.66,
+        0.59
+      ],
+      [
+        0.46,
+        0.63
+      ],
+      [
+        0.25,
+        0.71
+      ],
+      [
+        0,
+        0.77
+      ]
+    ],
+    "rear": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        0.62,
+        0.79
+      ],
+      [
+        0.46,
+        0.71
+      ],
+      [
+        0.34,
+        0.62
+      ],
+      [
+        0.31,
+        0.53
+      ],
+      [
+        0.22,
+        0.44
+      ],
+      [
+        0.11,
+        0.43
+      ],
+      [
+        0,
+        0.58
+      ]
+    ],
+    "side": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        0.62,
+        0.79
+      ],
+      [
+        0.46,
+        0.71
+      ],
+      [
+        0.34,
+        0.62
+      ],
+      [
+        0.31,
+        0.53
+      ],
+      [
+        0.22,
+        0.44
+      ],
+      [
+        0.11,
+        0.43
+      ],
+      [
+        0,
+        0.58
+      ]
+    ]
+  },
+  "collar_masks": {
+    "front": {
+      "reference": [
+        174,
+        210
+      ],
+      "back": [
+        [
+          45,
+          0
+        ],
+        [
+          174,
+          0
+        ],
+        [
+          174,
+          48
+        ],
+        [
+          103,
+          47
+        ],
+        [
+          89,
+          35
+        ],
+        [
+          100,
+          19
+        ],
+        [
+          79,
+          8
+        ],
+        [
+          48,
+          5
+        ]
+      ],
+      "remove": [
+        [
+          49,
+          5
+        ],
+        [
+          57,
+          2
+        ],
+        [
+          80,
+          3
+        ],
+        [
+          98,
+          7
+        ],
+        [
+          109,
+          12
+        ],
+        [
+          106,
+          21
+        ],
+        [
+          102,
+          36
+        ],
+        [
+          93,
+          37
+        ],
+        [
+          82,
+          23
+        ],
+        [
+          65,
+          13
+        ]
+      ]
+    },
+    "rear": {
+      "reference": [
+        182,
+        210
+      ],
+      "back": [
+        [
+          61,
+          0
+        ],
+        [
+          123,
+          0
+        ],
+        [
+          123,
+          10
+        ],
+        [
+          111,
+          7
+        ],
+        [
+          86,
+          6
+        ],
+        [
+          62,
+          9
+        ]
+      ],
+      "remove": []
+    },
+    "side": {
+      "reference": [
+        151,
+        210
+      ],
+      "back": [
+        [
+          34,
+          0
+        ],
+        [
+          151,
+          0
+        ],
+        [
+          151,
+          68
+        ],
+        [
+          111,
+          59
+        ],
+        [
+          102,
+          53
+        ],
+        [
+          99,
+          46
+        ],
+        [
+          104,
+          22
+        ]
+      ],
+      "remove": []
+    }
+  },
+  "side_pelvis": "complete natural contour at original belt scale; stable hip landmarks",
+  "rear_lower_measurements": {
+    "Pelvis_Rear": [
+      0.54,
+      [
+        1165,
+        947
+      ],
+      {
+        "attach": [
+          582,
+          123
+        ],
+        "hipNear": [
+          850,
+          350
+        ],
+        "hipFar": [
+          370,
+          350
+        ]
+      }
+    ],
+    "ThighNear_Rear": [
+      0.69,
+      [
+        659,
+        1371
+      ],
+      {
+        "attach": [
+          301,
+          115
+        ],
+        "end": [
+          370,
+          1190
+        ]
+      }
+    ],
+    "ThighFar_Rear": [
+      0.69,
+      [
+        530,
+        1273
+      ],
+      {
+        "attach": [
+          305,
+          115
+        ],
+        "end": [
+          325,
+          1143
+        ]
+      }
+    ],
+    "ShinNear_Rear": [
+      0.63,
+      [
+        402,
+        1108
+      ],
+      {
+        "attach": [
+          182,
+          108
+        ],
+        "end": [
+          205,
+          1020
+        ]
+      }
+    ],
+    "ShinFar_Rear": [
+      0.63,
+      [
+        422,
+        1220
+      ],
+      {
+        "attach": [
+          205,
+          119
+        ],
+        "end": [
+          200,
+          1110
+        ]
+      }
+    ],
+    "FootNear_Rear": [
+      0.29,
+      [
+        708,
+        822
+      ],
+      {
+        "attach": [
+          262,
+          152
+        ]
+      }
+    ],
+    "FootFar_Rear": [
+      0.29,
+      [
+        677,
+        734
+      ],
+      {
+        "attach": [
+          235,
+          139
+        ]
+      }
+    ]
+  },
+  "extraction": "border-connected neutral matte; measured anatomical anchors; aspect-preserving uniform scale; explicit view joints; Lanczos resize"
+}

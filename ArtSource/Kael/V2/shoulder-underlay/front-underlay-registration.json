@@ -1,0 +1,54 @@
+{
+  "kind": "Technical registration candidate, requires visual Unity review",
+  "generator": "built-in imagegen",
+  "source": "front-cloth-source.png",
+  "source_size": [
+    1028,
+    1530
+  ],
+  "source_sha256": "cf52b05355ee98f53f731aa1be38c3767b4846dcc5bceb9132fe422702be3c11",
+  "alpha": "Generated RGBA retained. No matte extraction or new painted colors.",
+  "source_landmarks_top_left": {
+    "attach": [
+      760.0,
+      335.0
+    ],
+    "end": [
+      415.0,
+      980.0
+    ]
+  },
+  "target_size": [
+    127,
+    189
+  ],
+  "target_landmarks_top_left": {
+    "attach": [
+      73.025,
+      72.85474860335195
+    ],
+    "end": [
+      46.56666666666667,
+      157.3240223463687
+    ]
+  },
+  "transform": "Uniform similarity transform only, followed by proximal overlap alpha trim.",
+  "source_to_target_matrix": [
+    [
+      0.11888759286841569,
+      0.022570366211271436
+    ],
+    [
+      -0.022570366211271436,
+      0.11888759286841569
+    ]
+  ],
+  "uniform_scale": 0.12101107870338594,
+  "opaque_shoulder_radius_texels": 22.734438279009293,
+  "notes": [
+    "The end source landmark locates the internal cloth elbow underlap; source cuff beyond it is excluded from proximal underlay.",
+    "Use below existing visible original lower sleeve and below original unchanged pauldron.",
+    "Side/rear were not regenerated: they already contain a rounded shoulder. Their smaller seams need separate pixel cleanup.",
+    "The layered-preview includes an unchanged snapshot of the current original arm; main prepare_assets.py was not edited."
+  ]
+}

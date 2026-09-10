@@ -1,4 +1,5 @@
 using System;
+using PlayerPrefs = MythwakePreferences;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -744,7 +745,9 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private const string RareRarityId = "rare";
     private const string EpicRarityId = "epic";
     private const string LegendaryRarityId = "legendary";
-    private const int HeroCount = 7;
+    private const int HeroCount = 8;
+    private const int FormationCapacity = 7;
+    private const int KaelHeroIndex = 7;
     private const int FormationPresetCount = 5;
     private const int FormationFilterCount = 7;
     private const string FormationBackgroundTextureName = "area_map_hollow_spire_obsidian_vault";
@@ -955,7 +958,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         new HeroDefinition("hero_dante", "Dante", RangerRoleId, "Ranger", RareRarityId, "Rare", 20, 6, 125, 23, 10, 20, 15, 8, 55, 18, 95, 8),
         new HeroDefinition("hero_elowen", "Elowen", SupportRoleId, "Support", LegendaryRarityId, "Legendary", 12, 4, 165, 34, 5, 30, 15, 14, 90, 8, 90, 14),
         new HeroDefinition("hero_paladin", "Paladin", TankRoleId, "Tank", EpicRarityId, "Epic", 17, 5, 210, 38, 5, 25, 15, 12, 74, 9, 89, 21),
-        new HeroDefinition("hero_ravik", "Ravik", MageRoleId, "Mage", EpicRarityId, "Epic", 24, 7, 118, 22, 1, 25, 15, 12, 70, 17, 91, 7)
+        new HeroDefinition("hero_ravik", "Ravik", MageRoleId, "Mage", EpicRarityId, "Epic", 24, 7, 118, 22, 1, 25, 15, 12, 70, 17, 91, 7),
+        new HeroDefinition("hero_kael", "Kael", WarriorRoleId, "Warrior", EpicRarityId, "Epic", 18, 5, 150, 28, 7, 25, 15, 11, 70, 12, 92, 8)
     };
 
     private static readonly string[] FormationFilterLabels = { "UP", "ALL", "W", "T", "M", "R", "S" };
@@ -1071,7 +1075,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         new[]
         {
             new SummonRateDefinition(LegendaryRarityId, 10, new[] { 4 }),
-            new SummonRateDefinition(EpicRarityId, 45, new[] { 0, 2, 5 }),
+            new SummonRateDefinition(EpicRarityId, 45, new[] { 0, 2, 5, KaelHeroIndex }),
             new SummonRateDefinition(RareRarityId, 100, new[] { 1, 3 })
         });
 
@@ -1150,6 +1154,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     [NonSerialized] private int backendTeamPower;
     [NonSerialized] private int backendTeamAttack;
     [NonSerialized] private int backendTeamHealth;
+    private readonly HashSet<int> backendOwnedHeroIndices = new HashSet<int>();
     [SerializeField] private int selectedAccessorySlot;
     [SerializeField] private int selectedAccessoryRarity;
     [SerializeField] private int[] equippedAccessoryRarities = new int[AccessorySlotCount];
@@ -1673,6 +1678,9 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private Image[] heroCardShardFills;
     private RectTransform heroDetailRoot;
     private RawImage heroDetailPortrait;
+    private RectTransform heroDetailSkillRoot;
+    private RawImage heroDetailSkillIcon;
+    private TMP_Text heroDetailSkillText;
     private TMP_Text heroDetailRarityText;
     private TMP_Text heroDetailTitleText;
     private TMP_Text heroDetailNameText;
@@ -2150,6 +2158,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private void OnDestroy()
     {
+        CancelAuthoritativeCombat();
         if (fightButton != null)
         {
             fightButton.onClick.RemoveListener(Fight);
@@ -2967,6 +2976,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         }
 
         fightCancelRequested = true;
+        activeLocalCombat?.Cancel();
+        ResetKaelCombatViews();
         autoContinueFightsEnabled = false;
         fightAutoSkillsEnabled = false;
         if (autoContinueFightCoroutine != null)
@@ -2993,6 +3004,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             return;
         }
 
+        CancelAuthoritativeCombat();
         if (activeFightCoroutine != null)
         {
             StopCoroutine(activeFightCoroutine);
@@ -3047,7 +3059,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             {
                 campaignFightInProgress = true;
                 SetBattleFlowMode(BattleFlowMode.Fight);
-                StartCoroutine(backendClient.FightCampaign(OnBackendCampaignFightVisual));
+                StartCoroutine(backendClient.FightCampaign(GetActiveFormationHeroIds(), OnBackendCampaignFightVisual));
             }
 
             return;
@@ -3099,11 +3111,11 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
                 SetBattleFlowMode(BattleFlowMode.Fight);
                 if (IsSelectedTowerDungeon())
                 {
-                    StartCoroutine(backendClient.RunTower(towerDungeonSelectedFloor, OnBackendDungeonFightVisual));
+                    StartCoroutine(backendClient.RunTower(towerDungeonSelectedFloor, GetActiveFormationHeroIds(), OnBackendDungeonFightVisual));
                 }
                 else
                 {
-                    StartCoroutine(backendClient.RunDungeon(selectedDungeonId, OnBackendDungeonFightVisual));
+                    StartCoroutine(backendClient.RunDungeon(selectedDungeonId, GetActiveFormationHeroIds(), OnBackendDungeonFightVisual));
                 }
             }
 
@@ -3197,7 +3209,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         {
             if (TryStartBackendRequest("Server: campaign fight..."))
             {
-                StartCoroutine(backendClient.FightCampaign(OnBackendGameplayAction));
+                StartCoroutine(backendClient.FightCampaign(GetActiveFormationHeroIds(), OnBackendGameplayAction));
             }
 
             return;
@@ -4939,7 +4951,10 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         selectedAccessoryRarity = 0;
         enemyMaxHp = GetStageMaxHp(enemyLevel);
         enemyHp = enemyMaxHp;
-        selectedHeroIndex = 0;
+        selectedHeroIndex = KaelHeroIndex;
+        formationSlotHeroIndices = CreateStarterFormation();
+        formationPresetHeroIndices = null;
+        selectedFormationPresetIndex = 0;
         EnsureHeroLevels();
         for (var i = 0; i < heroLevels.Length; i++)
         {
@@ -5656,6 +5671,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private void ApplyBackendHeroes(MythwakeHeroStateDto[] heroes, MythwakeHeroShardStateDto[] shards)
     {
+        backendOwnedHeroIndices.Clear();
         EnsureHeroLevels();
         EnsureHeroShards();
         EnsureHeroAscensions();
@@ -5679,6 +5695,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
                 }
 
                 heroLevels[heroIndex] = Mathf.Max(1, heroes[i].level);
+                if (heroes[i].level > 0) backendOwnedHeroIndices.Add(heroIndex);
                 heroAscensions[heroIndex] = Mathf.Max(0, heroes[i].ascension);
                 heroStarLevels[heroIndex] = Mathf.Clamp(heroes[i].starLevel, 0, GetHeroStarLevelCap(heroIndex));
             }
@@ -5899,6 +5916,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private void OnApplicationPause(bool isPaused)
     {
+        combatApplicationPaused = isPaused;
         if (isPaused)
         {
             SaveProgress();
@@ -5958,18 +5976,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         dailyFightCount++;
         var stageNumber = enemyLevel;
         var stage = GetStageDefinition(stageNumber);
-        var result = SimulateCombat(stage.maxHp, GetCampaignEnemyDamage(stageNumber));
-        yield return PlayCampaignFightVisualRoutine(
-            result.won,
-            stageNumber,
-            stage.enemyName,
-            result.elapsedSeconds,
-            GetTeamHealth(),
-            result.teamHpRemaining,
-            stage.maxHp,
-            result.enemyHpRemaining,
-            result.damageDealt,
-            result.damageTaken);
+        yield return PlayLocalAuthoritativeCombat(stageNumber, stage.enemyName, stage.maxHp, GetCampaignEnemyDamage(stageNumber));
+        var result = completedLocalCombatResult;
         if (ConsumeFightCancelRequest())
         {
             yield break;
@@ -6007,21 +6015,9 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             ? $"{GetLocalizedDungeonName(dungeon.dungeonId)} F{floor}  VS  {GetTowerEnemyLabel(floor)}"
             : $"{GetLocalizedDungeonName(dungeon.dungeonId)} F{floor}  VS  {GetLocalizedDungeonBossName(dungeon.dungeonId)}";
         var bossTextureName = isTower ? GetTowerEnemyTextureName(floor) : GetDungeonBossTextureName(dungeon.dungeonId);
-        var result = SimulateCombat(enemyHp, enemyDamage);
-        yield return PlayCampaignFightVisualRoutine(
-            result.won,
-            floor,
-            enemyLabel,
-            result.elapsedSeconds,
-            GetTeamHealth(),
-            result.teamHpRemaining,
-            enemyHp,
-            result.enemyHpRemaining,
-            result.damageDealt,
-            result.damageTaken,
-            singleBoss: !isTower || towerBossType != TowerBossType.None,
-            bossTextureName: bossTextureName,
-            enemyDamage: enemyDamage);
+        yield return PlayLocalAuthoritativeCombat(floor, enemyLabel, enemyHp, enemyDamage,
+            singleBoss: !isTower || towerBossType != TowerBossType.None, bossTexture: bossTextureName);
+        var result = completedLocalCombatResult;
         if (ConsumeFightCancelRequest())
         {
             yield break;
@@ -6037,17 +6033,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         var combat = result.combat;
         battleTargetMode = BattleTargetMode.Campaign;
-        yield return PlayCampaignFightVisualRoutine(
-            combat.won,
-            combat.targetLevel,
-            GetServerCombatLabel(combat),
-            combat.elapsedSeconds,
-            combat.teamMaxHp,
-            combat.teamHpRemaining,
-            combat.enemyMaxHp,
-            combat.enemyHpRemaining,
-            combat.damageDealt,
-            combat.damageTaken);
+        yield return PlayServerAuthoritativeCombat(combat, GetServerCombatLabel(combat), false, null);
         if (ConsumeFightCancelRequest())
         {
             yield break;
@@ -6063,20 +6049,9 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         battleTargetMode = BattleTargetMode.Dungeon;
         selectedDungeonId = string.IsNullOrWhiteSpace(combat.targetId) ? selectedDungeonId : combat.targetId;
         EnsureSelectedDungeonBattleMap();
-        yield return PlayCampaignFightVisualRoutine(
-            combat.won,
-            combat.targetLevel,
+        yield return PlayServerAuthoritativeCombat(combat,
             $"{GetServerCombatLabel(combat)}  VS  {GetLocalizedDungeonBossName(selectedDungeonId)}",
-            combat.elapsedSeconds,
-            combat.teamMaxHp,
-            combat.teamHpRemaining,
-            combat.enemyMaxHp,
-            combat.enemyHpRemaining,
-            combat.damageDealt,
-            combat.damageTaken,
-            singleBoss: true,
-            bossTextureName: GetDungeonBossTextureName(selectedDungeonId),
-            enemyDamage: combat.enemyDamage);
+            true, GetDungeonBossTextureName(selectedDungeonId));
         if (ConsumeFightCancelRequest())
         {
             yield break;
@@ -6125,12 +6100,26 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private void LoadProgress()
     {
+        var hasExistingSave = HasLocalSaveData();
         if (TryLoadSaveJson())
         {
             return;
         }
 
+        // Set the default before normalization computes team stats.
+        formationSlotHeroIndices = hasExistingSave ? new[] { 0, 1, 2, 3, 4, 5, 6 } : CreateStarterFormation();
         LoadLegacyProgress();
+        if (!hasExistingSave)
+        {
+            selectedHeroIndex = KaelHeroIndex;
+            formationSlotHeroIndices = CreateStarterFormation();
+            formationPresetHeroIndices = null;
+        }
+        else if (formationSlotHeroIndices == null)
+        {
+            // Legacy saves predate persisted formations and retain their original team.
+            formationSlotHeroIndices = new[] { 0, 1, 2, 3, 4, 5, 6 };
+        }
     }
 
     private bool TryLoadSaveJson()
@@ -6191,8 +6180,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         heroArmorLevels = new int[HeroCount];
         for (var i = 0; i < HeroCount; i++)
         {
-            heroWeaponLevels[i] = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt($"{HeroWeaponLevelKeyPrefix}{i}", weaponLevel));
-            heroArmorLevels[i] = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt($"{HeroArmorLevelKeyPrefix}{i}", armorLevel));
+            heroWeaponLevels[i] = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt($"{HeroWeaponLevelKeyPrefix}{i}", i == KaelHeroIndex ? StarterEquipmentLevel : weaponLevel));
+            heroArmorLevels[i] = Mathf.Max(StarterEquipmentLevel, PlayerPrefs.GetInt($"{HeroArmorLevelKeyPrefix}{i}", i == KaelHeroIndex ? StarterEquipmentLevel : armorLevel));
         }
 
         selectedAccessorySlot = Mathf.Clamp(PlayerPrefs.GetInt(SelectedAccessorySlotKey, selectedAccessorySlot), 0, AccessorySlotCount - 1);
@@ -6336,9 +6325,9 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             heroShards = CopyIntArray(heroShards, HeroCount, 0),
             heroAscensions = CopyIntArray(heroAscensions, HeroCount, 0),
             heroStarLevels = CopyIntArray(heroStarLevels, HeroCount, 0),
-            formationSlotHeroIndices = CopyIntArray(this.formationSlotHeroIndices, HeroCount, -1),
+            formationSlotHeroIndices = CopyIntArray(this.formationSlotHeroIndices, FormationCapacity, -1),
             selectedFormationPresetIndex = selectedFormationPresetIndex,
-            formationPresetHeroIndices = CopyIntArray(formationPresetHeroIndices, FormationPresetCount * HeroCount, -1),
+            formationPresetHeroIndices = CopyIntArray(formationPresetHeroIndices, FormationPresetCount * FormationCapacity, -1),
             autoContinueFightsEnabled = this.autoContinueFightsEnabled,
             heroWeaponLevels = CopyIntArray(heroWeaponLevels, HeroCount, StarterEquipmentLevel),
             heroArmorLevels = CopyIntArray(heroArmorLevels, HeroCount, StarterEquipmentLevel),
@@ -6390,15 +6379,15 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         heroShards = CopyIntArray(data.heroShards, HeroCount, 0);
         heroAscensions = CopyIntArray(data.heroAscensions, HeroCount, 0);
         heroStarLevels = CopyIntArray(data.heroStarLevels, HeroCount, 0);
-        formationSlotHeroIndices = CopyIntArray(data.formationSlotHeroIndices, HeroCount, -1);
+        formationSlotHeroIndices = CopyIntArray(data.formationSlotHeroIndices, FormationCapacity, -1);
         selectedFormationPresetIndex = Mathf.Clamp(data.selectedFormationPresetIndex, 0, FormationPresetCount - 1);
-        formationPresetHeroIndices = data.formationPresetHeroIndices == null ? null : CopyIntArray(data.formationPresetHeroIndices, FormationPresetCount * HeroCount, -1);
+        formationPresetHeroIndices = data.formationPresetHeroIndices == null ? null : CopyIntArray(data.formationPresetHeroIndices, FormationPresetCount * FormationCapacity, -1);
         autoContinueFightsEnabled = data.autoContinueFightsEnabled;
         fightAutoSkillsEnabled = autoContinueFightsEnabled;
         heroWeaponLevels = data.heroWeaponLevels == null ? null : CopyIntArray(data.heroWeaponLevels, HeroCount, StarterEquipmentLevel);
         heroArmorLevels = data.heroArmorLevels == null ? null : CopyIntArray(data.heroArmorLevels, HeroCount, StarterEquipmentLevel);
-        heroEquippedAccessoryRarities = data.heroEquippedAccessoryRarities == null ? null : CopyIntArray(data.heroEquippedAccessoryRarities, HeroCount * AccessorySlotCount, -1);
-        heroEquippedAccessoryLevels = data.heroEquippedAccessoryLevels == null ? null : CopyIntArray(data.heroEquippedAccessoryLevels, HeroCount * AccessorySlotCount, 0);
+        heroEquippedAccessoryRarities = data.heroEquippedAccessoryRarities == null ? null : (int[])data.heroEquippedAccessoryRarities.Clone();
+        heroEquippedAccessoryLevels = data.heroEquippedAccessoryLevels == null ? null : (int[])data.heroEquippedAccessoryLevels.Clone();
 
         EnsureFormationOrder();
         EnsureFormationPresets();
@@ -6798,30 +6787,13 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private IEnumerator PlayLocalShardRiftFightRoutine()
     {
-        var run = SimulateShardRiftCombat(DefaultCombatDurationSeconds);
-        var enemyNumber = Mathf.Max(1, run.enemiesDefeated + 1);
-        var enemyHp = GetShardRiftEnemyHp(enemyNumber);
-        var enemyDamage = GetShardRiftEnemyDamage(enemyNumber);
-        yield return PlayCampaignFightVisualRoutine(
-            run.combat.won,
-            enemyNumber,
-            $"{GetLocalizedDungeonName(ShardRiftDungeonDefinition.dungeonId)}  Endless  VS  {GetLocalizedDungeonBossName(ShardRiftDungeonDefinition.dungeonId)}",
-            run.combat.elapsedSeconds,
-            GetTeamHealth(),
-            run.combat.teamHpRemaining,
-            enemyHp,
-            run.combat.enemyHpRemaining,
-            run.combat.damageDealt,
-            run.combat.damageTaken,
-            singleBoss: false,
-            bossTextureName: GetDungeonBossTextureName(ShardRiftDungeonDefinition.dungeonId),
-            enemyDamage: enemyDamage);
-        if (ConsumeFightCancelRequest())
-        {
-            yield break;
-        }
-
-        var actionResult = ApplyShardRiftResult(run, endedEarly: false);
+        yield return PlayLocalAuthoritativeCombat(1,
+            $"{GetLocalizedDungeonName(ShardRiftDungeonDefinition.dungeonId)}  Endless",
+            GetShardRiftEnemyHp(1), GetShardRiftEnemyDamage(1), true,
+            GetDungeonBossTextureName(ShardRiftDungeonDefinition.dungeonId), endlessRift: true);
+        var endedEarly = ConsumeFightCancelRequest();
+        var run = completedLocalRiftResult;
+        var actionResult = ApplyShardRiftResult(run, endedEarly);
         SaveProgress();
         RefreshUi();
         ShowCampaignFightResult(actionResult.success, actionResult.success ? "Rift Rewards" : "Rift Failed", actionResult.message);
@@ -6832,110 +6804,29 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         fightCancelRequested = true;
         autoContinueFightsEnabled = false;
         fightAutoSkillsEnabled = false;
+        activeLocalCombat?.Cancel();
+        ResetKaelCombatViews();
         if (autoContinueFightCoroutine != null)
         {
             StopCoroutine(autoContinueFightCoroutine);
             autoContinueFightCoroutine = null;
         }
-
-        if (activeFightCoroutine != null)
-        {
-            StopCoroutine(activeFightCoroutine);
-            activeFightCoroutine = null;
-        }
-
-        SetProjectilesVisible(fightHeroProjectileImages, false);
-        SetProjectilesVisible(fightEnemyProjectileImages, false);
-        SetRawImagesVisible(fightHeroFxImages, false);
-        HideRavikSkeletalViews(fightHeroSkeletalViews);
-        HidePaladinSkeletalViews(fightHeroPaladinViews);
-        var elapsedSeconds = Mathf.Clamp(Mathf.CeilToInt(Time.unscaledTime - fightStartedUnscaledTime), 1, DefaultCombatDurationSeconds);
-        var run = SimulateShardRiftCombat(elapsedSeconds);
-        var actionResult = ApplyShardRiftResult(run, endedEarly: true);
+        if (backendGameplayEnabled)
+            ShowCampaignFightResult(false, "Replay Ended", "The server result was already committed; playback cancellation does not apply another reward.");
         RefreshFormationAutoContinueToggle();
         RefreshFightAutoSkillButton();
-        SaveProgress();
-        RefreshUi();
-        ShowCampaignFightResult(actionResult.success, actionResult.success ? "Rift Rewards" : "Fight Ended", actionResult.message);
     }
 
     private ShardRiftRunResult SimulateShardRiftCombat(int maxSeconds)
     {
-        maxSeconds = Mathf.Clamp(maxSeconds, 1, DefaultCombatDurationSeconds);
-        var teamDps = Mathf.Max(1, GetTeamCombatDamagePerSecond());
-        var teamHp = Mathf.Max(1, GetTeamHealth());
-        var teamDefense = Mathf.Max(0, GetTeamDefense());
-        var elapsed = 0;
-        var enemiesDefeated = 0;
-        var damageDealt = 0;
-        var damageTaken = 0;
-        var criticalHits = 0;
-        var missedHits = 0;
-        var enemyRemainingHp = GetShardRiftEnemyHp(1);
-
-        while (elapsed < maxSeconds && teamHp > 0)
-        {
-            var enemyNumber = enemiesDefeated + 1;
-            var enemyHp = GetShardRiftEnemyHp(enemyNumber);
-            var enemyDamage = GetShardRiftEnemyDamage(enemyNumber);
-            var secondsToKill = Mathf.Max(1, Mathf.CeilToInt(enemyHp / (float)teamDps));
-            var availableSeconds = maxSeconds - elapsed;
-            var effectiveEnemyDamage = Mathf.Max(1, enemyDamage - Mathf.FloorToInt(teamDefense / 18f));
-            if (secondsToKill > availableSeconds)
-            {
-                var partialDamage = Mathf.Min(enemyHp, teamDps * availableSeconds);
-                damageDealt += partialDamage;
-                damageTaken += effectiveEnemyDamage * availableSeconds;
-                teamHp -= effectiveEnemyDamage * availableSeconds;
-                enemyRemainingHp = Mathf.Max(0, enemyHp - partialDamage);
-                elapsed = maxSeconds;
-                break;
-            }
-
-            damageDealt += enemyHp;
-            damageTaken += effectiveEnemyDamage * secondsToKill;
-            teamHp -= effectiveEnemyDamage * secondsToKill;
-            elapsed += secondsToKill;
-            enemyRemainingHp = 0;
-            if (teamHp <= 0)
-            {
-                break;
-            }
-
-            enemiesDefeated++;
-            criticalHits += Mathf.Max(1, secondsToKill / 3);
-            missedHits += secondsToKill / 8;
-        }
-
-        var rewardShards = 0;
-        for (var i = 1; i <= enemiesDefeated; i++)
-        {
-            rewardShards += GetShardRiftAwakeningShardReward(i);
-        }
-
-        var combat = new CombatResult
-        {
-            won = enemiesDefeated > 0 && teamHp > 0,
-            elapsedSeconds = Mathf.Max(1, elapsed),
-            teamHpRemaining = Mathf.Max(0, teamHp),
-            enemyHpRemaining = enemyRemainingHp,
-            damageDealt = damageDealt,
-            damageTaken = damageTaken,
-            healingDone = 0,
-            criticalHits = criticalHits,
-            missedHits = missedHits
-        };
-
-        return new ShardRiftRunResult
-        {
-            combat = combat,
-            enemiesDefeated = enemiesDefeated,
-            awakeningShards = rewardShards,
-            heroShardChests = GetShardRiftChestReward(enemiesDefeated),
-            elapsedSeconds = combat.elapsedSeconds
-        };
+        var session = CreateLocalCombatSession(GetShardRiftEnemyHp(1), GetShardRiftEnemyDamage(1), UnityEngine.Random.Range(1, int.MaxValue));
+        session.NextWaveHealth = GetShardRiftEnemyHp;
+        session.NextWaveIncomingDamage = (wave, hero) => GetMitigatedEnemyDamageAgainstHero(GetShardRiftEnemyDamage(wave), hero.rosterIndex);
+        session.AutoSkills = true;
+        var limitMs = Mathf.Clamp(maxSeconds, 1, DefaultCombatDurationSeconds) * 1000;
+        while (!session.Finished && session.TimeMs < limitMs) session.Step(.1f);
+        return ToShardRiftResult(session);
     }
-
     private MythwakeActionResultDto ApplyShardRiftResult(ShardRiftRunResult run, bool endedEarly)
     {
         var dungeonName = GetLocalizedDungeonName(ShardRiftDungeonDefinition.dungeonId);
@@ -7004,106 +6895,10 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private CombatResult SimulateCombat(int targetEnemyHp, int enemyDamage)
     {
-        var result = new CombatResult();
-        var maxTeamHp = GetTeamHealth();
-        var enemyHpValue = Mathf.Max(1, targetEnemyHp);
-        var heroHpValues = CreateHeroCombatHealthValues();
-        var nextHeroAttackTimes = new float[HeroCount];
-        for (var i = 0; i < nextHeroAttackTimes.Length; i++)
-        {
-            nextHeroAttackTimes[i] = 0.25f + (i * 0.17f);
-        }
-
-        var enemyNextAttackTime = 0.9f;
-        enemyDamage = Mathf.Max(1, enemyDamage);
-
-        const float simulationStep = 0.1f;
-        for (var timer = 0f; timer <= DefaultCombatDurationSeconds + 0.001f; timer += simulationStep)
-        {
-            for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
-            {
-                if (heroHpValues[heroIndex] <= 0 || timer + 0.001f < nextHeroAttackTimes[heroIndex])
-                {
-                    continue;
-                }
-
-                nextHeroAttackTimes[heroIndex] = timer + GetFightVisualAttackInterval(true, heroIndex) * UnityEngine.Random.Range(0.94f, 1.08f);
-                if (!RollPercentChance(GetHeroAccuracyPercent(heroIndex)))
-                {
-                    result.missedHits++;
-                    continue;
-                }
-
-                var hitDamage = Mathf.Max(1, GetHeroEffectiveAttack(heroIndex));
-                if (RollPercentChance(GetHeroCritChancePercent(heroIndex)))
-                {
-                    hitDamage = Mathf.Max(1, Mathf.RoundToInt(hitDamage * CritDamageMultiplier));
-                    result.criticalHits++;
-                }
-
-                hitDamage = Mathf.Min(hitDamage, enemyHpValue);
-                enemyHpValue -= hitDamage;
-                result.damageDealt += hitDamage;
-
-                if (GetHeroTextureName(heroIndex) == "hero_elowen" && RollPercentChance(25))
-                {
-                    result.healingDone += HealHeroCombatHealthValues(heroHpValues, Mathf.Max(1, Mathf.FloorToInt(maxTeamHp * 0.035f)));
-                }
-
-                if (enemyHpValue <= 0)
-                {
-                    result.won = true;
-                    result.elapsedSeconds = Mathf.Clamp(Mathf.CeilToInt(timer), 1, DefaultCombatDurationSeconds);
-                    result.teamHpRemaining = GetHeroCombatHealthTotal(heroHpValues);
-                    result.enemyHpRemaining = 0;
-                    return result;
-                }
-            }
-
-            if (enemyHpValue > 0 && ShouldExecuteEnemy(enemyHpValue, targetEnemyHp))
-            {
-                result.executed = true;
-                result.damageDealt += enemyHpValue;
-                enemyHpValue = 0;
-            }
-
-            if (enemyHpValue <= 0)
-            {
-                result.won = true;
-                result.elapsedSeconds = Mathf.Clamp(Mathf.CeilToInt(timer), 1, DefaultCombatDurationSeconds);
-                result.teamHpRemaining = GetHeroCombatHealthTotal(heroHpValues);
-                result.enemyHpRemaining = 0;
-                return result;
-            }
-
-            if (timer + 0.001f >= enemyNextAttackTime)
-            {
-                var targetHero = PickLocalCombatEnemyTarget(heroHpValues);
-                if (targetHero >= 0)
-                {
-                    var mitigatedDamage = GetMitigatedEnemyDamageAgainstHero(enemyDamage, targetHero);
-                    var damageTaken = Mathf.Min(heroHpValues[targetHero], mitigatedDamage);
-                    heroHpValues[targetHero] -= damageTaken;
-                    result.damageTaken += damageTaken;
-                }
-
-                enemyNextAttackTime = timer + 1.45f;
-                if (GetHeroCombatHealthTotal(heroHpValues) <= 0)
-                {
-                    result.won = false;
-                    result.elapsedSeconds = Mathf.Clamp(Mathf.CeilToInt(timer), 1, DefaultCombatDurationSeconds);
-                    result.teamHpRemaining = 0;
-                    result.enemyHpRemaining = Mathf.Max(0, enemyHpValue);
-                    return result;
-                }
-            }
-        }
-
-        result.won = false;
-        result.elapsedSeconds = DefaultCombatDurationSeconds;
-        result.teamHpRemaining = GetHeroCombatHealthTotal(heroHpValues);
-        result.enemyHpRemaining = Mathf.Max(0, enemyHpValue);
-        return result;
+        var session = CreateLocalCombatSession(targetEnemyHp, enemyDamage, UnityEngine.Random.Range(1, int.MaxValue));
+        session.AutoSkills = true;
+        while (!session.Finished) session.Step(0.1f);
+        return ToCombatResult(session);
     }
 
     private int[] CreateHeroCombatHealthValues()
@@ -7902,6 +7697,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private void ToggleFightAutoSkills()
     {
+        if (authoritativeServerReplay) return;
         fightAutoSkillsEnabled = !fightAutoSkillsEnabled;
         RefreshFightAutoSkillButton();
         RefreshFightSkillUi(0f);
@@ -7914,6 +7710,12 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             return;
         }
 
+        fightAutoSkillButton.interactable = !authoritativeServerReplay;
+        if (authoritativeServerReplay)
+        {
+            if (fightAutoSkillButtonText != null) fightAutoSkillButtonText.text = "SERVER\nAUTO";
+            return;
+        }
         var image = fightAutoSkillButton.GetComponent<Image>();
         if (image != null)
         {
@@ -7964,6 +7766,13 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private void QueueFightHeroUltimate(int heroIndex)
     {
+        if (authoritativeFightActive)
+        {
+            if (authoritativeServerReplay || activeLocalCombat == null || !activeLocalCombat.QueueSkill(heroIndex)) return;
+            fightHeroUltimateQueued[heroIndex] = true;
+            RefreshFightSkillUi(combatClockSeconds);
+            return;
+        }
         if (fightHeroManaValues == null || fightHeroMaxManaValues == null || fightHeroUltimateQueued == null)
         {
             return;
@@ -8143,12 +7952,25 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             return;
         }
 
+        var activeFormation = authoritativeFightActive && combatParticipantOrder != null
+            ? combatParticipantOrder : GetActiveFormationHeroIndices();
         for (var i = 0; i < HeroCount; i++)
         {
+            var slotIndex = Array.IndexOf(activeFormation, i);
+            var selected = authoritativeFightActive ? IsAuthoritativeHeroActive(i) : slotIndex >= 0;
+            if (fightSkillButtons[i] != null)
+            {
+                fightSkillButtons[i].gameObject.SetActive(selected);
+                fightSkillButtons[i].GetComponent<RectTransform>().anchoredPosition = new Vector2((slotIndex - 3f) * 140f, -1044f);
+            }
+            if (!selected) continue;
             var maxMana = i < fightHeroMaxManaValues.Length ? Mathf.Max(1, fightHeroMaxManaValues[i]) : GetHeroMaxMana(i);
             var mana = i < fightHeroManaValues.Length ? Mathf.Clamp(fightHeroManaValues[i], 0, maxMana) : 0;
-            var alive = fightHeroVisibleHpPercents == null || i >= fightHeroVisibleHpPercents.Length || fightHeroVisibleHpPercents[i] > 0.001f;
-            var ready = alive && mana >= maxMana;
+            var alive = fightHeroVisibleHpPercents == null || i >= fightHeroVisibleHpPercents.Length || fightHeroVisibleHpPercents[i] > (authoritativeFightActive ? 0f : 0.001f);
+            var cooldownSeconds = authoritativeFightActive && combatCooldownUntilMs != null
+                ? Mathf.Max(0f, combatCooldownUntilMs[i] / 1000f - combatClockSeconds) : 0f;
+            var ready = alive && mana >= maxMana && cooldownSeconds <= 0f;
+            if (fightSkillButtons[i] != null) fightSkillButtons[i].interactable = campaignFightInProgress && ready && !authoritativeServerReplay;
             var queued = alive && fightHeroUltimateQueued != null && i < fightHeroUltimateQueued.Length && fightHeroUltimateQueued[i];
             var activeAge = fightHeroUltimateStartedAt != null && i < fightHeroUltimateStartedAt.Length ? timer - fightHeroUltimateStartedAt[i] : 99f;
             var pulse = ready ? (0.5f + Mathf.Sin(Time.unscaledTime * 7.5f) * 0.5f) : 0f;
@@ -8177,7 +7999,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
                     ? new Color(0.38f, 0.38f, 0.42f, 0.72f)
                     : ready ? Color.white : new Color(0.72f, 0.78f, 0.86f, 0.94f);
                 var scale = 1f + (ready ? 0.04f * pulse : 0f) + (activePulse * 0.12f);
-                fightSkillPortraits[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(i) * scale, scale, 1f);
+                fightSkillPortraits[i].rectTransform.localScale = new Vector3((i == KaelHeroIndex ? 1f : GetHeroFacingScale(i)) * scale, scale, 1f);
             }
 
             if (fightSkillNameTexts != null && i < fightSkillNameTexts.Length && fightSkillNameTexts[i] != null)
@@ -8190,7 +8012,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
             if (fightSkillManaTexts != null && i < fightSkillManaTexts.Length && fightSkillManaTexts[i] != null)
             {
-                fightSkillManaTexts[i].text = $"{mana}/{maxMana}";
+                fightSkillManaTexts[i].text = cooldownSeconds > 0f ? $"{mana}/{maxMana} · {cooldownSeconds:0.0}s" : $"{mana}/{maxMana}";
                 fightSkillManaTexts[i].color = ready ? new Color(1f, 0.82f, 0.25f) : new Color(0.74f, 0.9f, 1f);
             }
         }
@@ -8223,7 +8045,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
             if (fightSkillHpTexts != null && i < fightSkillHpTexts.Length && fightSkillHpTexts[i] != null)
             {
-                fightSkillHpTexts[i].text = percent <= 0.001f ? "KO" : FormatPercent(percent);
+                fightSkillHpTexts[i].text = percent <= 0f ? "KO" : FormatPercent(percent);
                 fightSkillHpTexts[i].color = percent <= 0.001f ? new Color(0.86f, 0.86f, 0.9f) : Color.white;
             }
         }
@@ -8979,6 +8801,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private static int GetHeroMaxMana(int heroIndex)
     {
         var heroId = GetHeroTextureName(heroIndex);
+        if (heroId == "hero_kael") return 26;
         if (heroId == "hero_dante")
         {
             return 25;
@@ -9020,6 +8843,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private static float GetHeroUltimateDamageMultiplier(int heroIndex)
     {
         var heroId = GetHeroTextureName(heroIndex);
+        if (heroId == "hero_kael") return 4f;
         if (heroId == "hero_cyra")
         {
             return 7.5f;
@@ -9282,7 +9106,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
         for (var i = 0; i < HeroCount; i++)
         {
-            var visible = !singleBoss || i == 0;
+            var visible = i < FormationCapacity && (!singleBoss || i == 0);
             var showSmallHp = visible && !singleBoss;
             if (fightEnemyImages != null && i < fightEnemyImages.Length && fightEnemyImages[i] != null)
             {
@@ -9374,12 +9198,17 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         for (var i = 0; i < HeroCount; i++)
         {
             var state = heroStates != null && i < heroStates.Length ? heroStates[i] : default;
+            if (authoritativeFightActive && (!IsAuthoritativeHeroActive(i) || GetHeroTextureName(i) == "hero_kael"))
+            {
+                if (fightHeroImages != null && i < fightHeroImages.Length && fightHeroImages[i] != null) fightHeroImages[i].gameObject.SetActive(false);
+                continue;
+            }
             var unitAnimationTimer = ultimateCinematicActive && i != ultimateCinematicHeroIndex ? slowedWorldAnimationTimer : animationTimer;
             var isRavik = IsRavikHero(i);
             var isPaladin = IsPaladinHero(i);
             var usesRuntimeRig = isRavik || isPaladin;
             var position = state.position + new Vector2(0f, usesRuntimeRig ? 0f : Mathf.Sin(unitAnimationTimer * 5.4f + i) * 4.5f);
-            var alive = heroHpPercents != null && i < heroHpPercents.Length && heroHpPercents[i] > 0.001f;
+            var alive = heroHpPercents != null && i < heroHpPercents.Length && heroHpPercents[i] > (authoritativeFightActive ? 0f : 0.001f);
             var frames = GetFightFrameSet(fightHeroIdleFrames, i);
             var frameSpeed = 6.8f;
             var actionAge = unitAnimationTimer - state.attackStartedAt;
@@ -9533,7 +9362,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             var state = enemyStates != null && i < enemyStates.Length ? enemyStates[i] : default;
             var unitAnimationTimer = ultimateCinematicActive ? slowedWorldAnimationTimer : animationTimer;
             var position = state.position + new Vector2(0f, Mathf.Sin(unitAnimationTimer * 5.1f + i * 1.4f) * 4f);
-            var alive = enemyHpPercents != null && i < enemyHpPercents.Length && enemyHpPercents[i] > 0.001f;
+            var alive = enemyHpPercents != null && i < enemyHpPercents.Length && enemyHpPercents[i] > (authoritativeFightActive ? 0f : 0.001f);
             var frames = GetFightFrameSet(fightEnemyIdleFrames, i);
             var frameSpeed = 6.2f;
             var enemyTextureName = GetFightEnemyTextureName(i);
@@ -10444,6 +10273,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         if (heroSelectButtons.Length > 3 && heroSelectButtons[3] != null) heroSelectButtons[3].onClick.AddListener(SelectHeroCard3);
         if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.AddListener(SelectHeroCard4);
         if (heroSelectButtons.Length > 5 && heroSelectButtons[5] != null) heroSelectButtons[5].onClick.AddListener(SelectHeroCard5);
+        if (heroSelectButtons.Length > 6 && heroSelectButtons[6] != null) heroSelectButtons[6].onClick.AddListener(SelectHeroCard6);
+        if (heroSelectButtons.Length > 7 && heroSelectButtons[7] != null) heroSelectButtons[7].onClick.AddListener(SelectHeroCard7);
 
         RegisterHeroScreenControls();
         RegisterHeroDragTriggers();
@@ -10463,6 +10294,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         if (heroSelectButtons.Length > 3 && heroSelectButtons[3] != null) heroSelectButtons[3].onClick.RemoveListener(SelectHeroCard3);
         if (heroSelectButtons.Length > 4 && heroSelectButtons[4] != null) heroSelectButtons[4].onClick.RemoveListener(SelectHeroCard4);
         if (heroSelectButtons.Length > 5 && heroSelectButtons[5] != null) heroSelectButtons[5].onClick.RemoveListener(SelectHeroCard5);
+        if (heroSelectButtons.Length > 6 && heroSelectButtons[6] != null) heroSelectButtons[6].onClick.RemoveListener(SelectHeroCard6);
+        if (heroSelectButtons.Length > 7 && heroSelectButtons[7] != null) heroSelectButtons[7].onClick.RemoveListener(SelectHeroCard7);
 
         UnregisterHeroScreenControls();
     }
@@ -10516,6 +10349,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             if (heroTeamSlotButtons.Length > 2 && heroTeamSlotButtons[2] != null) heroTeamSlotButtons[2].onClick.AddListener(SelectHeroTeamSlot2);
             if (heroTeamSlotButtons.Length > 3 && heroTeamSlotButtons[3] != null) heroTeamSlotButtons[3].onClick.AddListener(SelectHeroTeamSlot3);
             if (heroTeamSlotButtons.Length > 4 && heroTeamSlotButtons[4] != null) heroTeamSlotButtons[4].onClick.AddListener(SelectHeroTeamSlot4);
+            if (heroTeamSlotButtons.Length > 5 && heroTeamSlotButtons[5] != null) heroTeamSlotButtons[5].onClick.AddListener(SelectHeroTeamSlot5);
+            if (heroTeamSlotButtons.Length > 6 && heroTeamSlotButtons[6] != null) heroTeamSlotButtons[6].onClick.AddListener(SelectHeroTeamSlot6);
         }
     }
 
@@ -10533,6 +10368,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             if (heroTeamSlotButtons.Length > 2 && heroTeamSlotButtons[2] != null) heroTeamSlotButtons[2].onClick.RemoveListener(SelectHeroTeamSlot2);
             if (heroTeamSlotButtons.Length > 3 && heroTeamSlotButtons[3] != null) heroTeamSlotButtons[3].onClick.RemoveListener(SelectHeroTeamSlot3);
             if (heroTeamSlotButtons.Length > 4 && heroTeamSlotButtons[4] != null) heroTeamSlotButtons[4].onClick.RemoveListener(SelectHeroTeamSlot4);
+            if (heroTeamSlotButtons.Length > 5 && heroTeamSlotButtons[5] != null) heroTeamSlotButtons[5].onClick.RemoveListener(SelectHeroTeamSlot5);
+            if (heroTeamSlotButtons.Length > 6 && heroTeamSlotButtons[6] != null) heroTeamSlotButtons[6].onClick.RemoveListener(SelectHeroTeamSlot6);
         }
     }
 
@@ -10662,6 +10499,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private void SelectHeroCard3() => SelectHeroCard(3);
     private void SelectHeroCard4() => SelectHeroCard(4);
     private void SelectHeroCard5() => SelectHeroCard(5);
+    private void SelectHeroCard6() => SelectHeroCard(6);
+    private void SelectHeroCard7() => SelectHeroCard(7);
     private void SelectHeroCard(int cardIndex)
     {
         var heroIndex = GetHeroCardDisplayIndex(cardIndex);
@@ -10735,16 +10574,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             return;
         }
 
-        EnsureFormationOrder();
-        var indices = CreateAllHeroIndices();
-        SortHeroIndicesByPower(indices, descending: true);
-        var changed = false;
-        for (var i = 0; i < HeroCount; i++)
-        {
-            changed |= formationSlotHeroIndices[i] != indices[i];
-            formationSlotHeroIndices[i] = indices[i];
-        }
-
+        var changed = ApplyStrongestFormation();
         selectedHeroTeamSlotIndex = -1;
         if (changed)
         {
@@ -10753,6 +10583,20 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
         SaveProgress();
         RefreshUi();
+    }
+
+    private bool ApplyStrongestFormation()
+    {
+        EnsureFormationOrder();
+        var indices = CreateAllHeroIndices();
+        SortHeroIndicesByPower(indices, descending: true);
+        var changed = false;
+        for (var i = 0; i < FormationCapacity; i++)
+        {
+            changed |= formationSlotHeroIndices[i] != indices[i];
+            formationSlotHeroIndices[i] = indices[i];
+        }
+        return changed;
     }
 
     private bool CanChangeHeroTeamNow()
@@ -10766,6 +10610,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         {
             return;
         }
+
+        CancelAuthoritativeCombat();
 
         fightCancelRequested = true;
         if (activeFightCoroutine != null)
@@ -10800,6 +10646,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private void SelectHeroTeamSlot2() => SelectHeroTeamSlot(2);
     private void SelectHeroTeamSlot3() => SelectHeroTeamSlot(3);
     private void SelectHeroTeamSlot4() => SelectHeroTeamSlot(4);
+    private void SelectHeroTeamSlot5() => SelectHeroTeamSlot(5);
+    private void SelectHeroTeamSlot6() => SelectHeroTeamSlot(6);
 
     private void SelectHeroTeamSlot(int slotIndex)
     {
@@ -10809,7 +10657,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         }
 
         EnsureFormationOrder();
-        slotIndex = Mathf.Clamp(slotIndex, 0, HeroCount - 1);
+        slotIndex = Mathf.Clamp(slotIndex, 0, FormationCapacity - 1);
         if (selectedHeroTeamSlotIndex < 0)
         {
             selectedHeroTeamSlotIndex = slotIndex;
@@ -10850,7 +10698,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             return;
         }
 
-        var targetSlot = Mathf.Clamp(selectedHeroTeamSlotIndex, 0, HeroCount - 1);
+        var targetSlot = Mathf.Clamp(selectedHeroTeamSlotIndex, 0, FormationCapacity - 1);
         if (currentSlot == targetSlot)
         {
             selectedHeroTeamSlotIndex = -1;
@@ -10858,15 +10706,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             return;
         }
 
-        if (currentSlot >= 0)
-        {
-            SwapTeamSlots(targetSlot, currentSlot);
-        }
-        else
-        {
-            formationSlotHeroIndices[targetSlot] = heroIndex;
-        }
-
+        AssignFormationHeroToSlot(heroIndex, targetSlot);
         selectedHeroTeamSlotIndex = -1;
         CancelCampaignFightForFormationChange();
         SaveProgress();
@@ -10876,8 +10716,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private void SwapTeamSlots(int firstSlot, int secondSlot)
     {
         EnsureFormationOrder();
-        firstSlot = Mathf.Clamp(firstSlot, 0, HeroCount - 1);
-        secondSlot = Mathf.Clamp(secondSlot, 0, HeroCount - 1);
+        firstSlot = Mathf.Clamp(firstSlot, 0, FormationCapacity - 1);
+        secondSlot = Mathf.Clamp(secondSlot, 0, FormationCapacity - 1);
         var firstHero = formationSlotHeroIndices[firstSlot];
         formationSlotHeroIndices[firstSlot] = formationSlotHeroIndices[secondSlot];
         formationSlotHeroIndices[secondSlot] = firstHero;
@@ -10913,7 +10753,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private void BeginHeroTeamSlotDrag(int slotIndex)
     {
-        draggedHeroTeamSlotIndex = Mathf.Clamp(slotIndex, 0, HeroCount - 1);
+        draggedHeroTeamSlotIndex = Mathf.Clamp(slotIndex, 0, FormationCapacity - 1);
     }
 
     private void EndHeroTeamSlotDrag(int slotIndex, BaseEventData eventData)
@@ -10925,7 +10765,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         }
 
         var targetSlot = GetPointerHeroTeamSlot(eventData);
-        var sourceSlot = draggedHeroTeamSlotIndex >= 0 ? draggedHeroTeamSlotIndex : Mathf.Clamp(slotIndex, 0, HeroCount - 1);
+        var sourceSlot = draggedHeroTeamSlotIndex >= 0 ? draggedHeroTeamSlotIndex : Mathf.Clamp(slotIndex, 0, FormationCapacity - 1);
         if (targetSlot >= 0 && targetSlot != sourceSlot)
         {
             heroesTabMode = HeroesTabMode.SetTeam;
@@ -12053,14 +11893,14 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         }
 
         EnsureFormationOrder();
-        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        for (var slotIndex = 0; slotIndex < FormationCapacity; slotIndex++)
         {
             var heroIndex = formationSlotHeroIndices[Mathf.Clamp(slotIndex, 0, formationSlotHeroIndices.Length - 1)];
             heroIndex = Mathf.Clamp(heroIndex, 0, HeroCount - 1);
             var hero = GetHeroDefinition(heroIndex);
             if (heroTeamSlotPortraits != null && slotIndex < heroTeamSlotPortraits.Length && heroTeamSlotPortraits[slotIndex] != null)
             {
-                heroTeamSlotPortraits[slotIndex].texture = LoadCombatTexture(GetHeroTextureName(heroIndex), "idle", 0, GetHeroTextureName(heroIndex));
+                heroTeamSlotPortraits[slotIndex].texture = GetHeroPortraitTexture(heroIndex);
                 heroTeamSlotPortraits[slotIndex].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
                 heroTeamSlotPortraits[slotIndex].color = Color.white;
             }
@@ -12607,7 +12447,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         if (heroLevels == null || heroLevels.Length != HeroCount)
         {
-            heroLevels = new int[HeroCount];
+            heroLevels = CopyIntArray(heroLevels, HeroCount, 1);
         }
 
         for (var i = 0; i < heroLevels.Length; i++)
@@ -12625,7 +12465,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         if (heroShards == null || heroShards.Length != HeroCount)
         {
-            heroShards = new int[HeroCount];
+            heroShards = CopyIntArray(heroShards, HeroCount, 0);
         }
 
         for (var i = 0; i < heroShards.Length; i++)
@@ -12641,7 +12481,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         if (heroAscensions == null || heroAscensions.Length != HeroCount)
         {
-            heroAscensions = new int[HeroCount];
+            heroAscensions = CopyIntArray(heroAscensions, HeroCount, 0);
         }
 
         for (var i = 0; i < heroAscensions.Length; i++)
@@ -12659,7 +12499,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         if (heroStarLevels == null || heroStarLevels.Length != HeroCount)
         {
-            heroStarLevels = new int[HeroCount];
+            heroStarLevels = CopyIntArray(heroStarLevels, HeroCount, 0);
         }
 
         for (var i = 0; i < heroStarLevels.Length; i++)
@@ -12674,12 +12514,12 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         var legacyArmorLevel = Mathf.Max(StarterEquipmentLevel, armorLevel);
         if (heroWeaponLevels == null || heroWeaponLevels.Length != HeroCount)
         {
-            heroWeaponLevels = CreateFilledIntArray(HeroCount, legacyWeaponLevel);
+            heroWeaponLevels = ResizeHeroEquipment(heroWeaponLevels, legacyWeaponLevel);
         }
 
         if (heroArmorLevels == null || heroArmorLevels.Length != HeroCount)
         {
-            heroArmorLevels = CreateFilledIntArray(HeroCount, legacyArmorLevel);
+            heroArmorLevels = ResizeHeroEquipment(heroArmorLevels, legacyArmorLevel);
         }
 
         for (var i = 0; i < HeroCount; i++)
@@ -12689,6 +12529,18 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         }
 
         SyncSelectedHeroEquipmentMirrors();
+    }
+
+    private static int[] ResizeHeroEquipment(int[] previous, int legacyLevel)
+    {
+        if (previous != null)
+        {
+            return CopyIntArray(previous, HeroCount, StarterEquipmentLevel);
+        }
+
+        var migrated = CreateFilledIntArray(HeroCount, Mathf.Max(StarterEquipmentLevel, legacyLevel));
+        migrated[KaelHeroIndex] = StarterEquipmentLevel;
+        return migrated;
     }
 
     private void EnsureAccessories()
@@ -12823,19 +12675,24 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private static bool TryCopyHeroAccessoryValues(int[] sourceRarities, int[] sourceLevels, int[] destinationRarities, int[] destinationLevels)
     {
-        if (sourceRarities == null || destinationRarities == null || destinationLevels == null || sourceRarities.Length <= 0 || sourceRarities.Length % HeroCount != 0)
+        if (sourceRarities == null || destinationRarities == null || destinationLevels == null || sourceRarities.Length <= 0)
         {
             return false;
         }
 
-        var sourceSlotCount = sourceRarities.Length / HeroCount;
+        // Published saves had five or seven heroes and five or six accessory slots.
+        // Hero count must not change the row stride of an existing save.
+        var sourceHeroCount = sourceRarities.Length == 48 || sourceRarities.Length == 40 ? 8
+            : sourceRarities.Length == 42 || sourceRarities.Length == 35 ? 7
+            : sourceRarities.Length == 30 || sourceRarities.Length == 25 ? 5 : 0;
+        var sourceSlotCount = sourceHeroCount > 0 ? sourceRarities.Length / sourceHeroCount : 0;
         if (sourceSlotCount <= 0)
         {
             return false;
         }
 
         var slotCount = Mathf.Min(sourceSlotCount, AccessorySlotCount);
-        for (var heroIndex = 0; heroIndex < HeroCount; heroIndex++)
+        for (var heroIndex = 0; heroIndex < Mathf.Min(sourceHeroCount, HeroCount); heroIndex++)
         {
             for (var slot = 0; slot < slotCount; slot++)
             {
@@ -13136,6 +12993,20 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private static string GetHeroTextureName(int index)
     {
         return GetHeroDefinition(index).heroId;
+    }
+
+    private Texture2D GetHeroPortraitTexture(int heroIndex)
+    {
+        return heroIndex == KaelHeroIndex
+            ? Resources.Load<Texture2D>("Characters/Kael/Portrait")
+            : LoadCombatTexture(GetHeroTextureName(heroIndex), "idle", 0, GetHeroTextureName(heroIndex));
+    }
+
+    private Texture2D GetHeroSkillIconTexture(int heroIndex)
+    {
+        return heroIndex == KaelHeroIndex
+            ? Resources.Load<Texture2D>("Characters/Kael/SkillIcon")
+            : GetHeroPortraitTexture(heroIndex);
     }
 
     private static string GetCampaignEnemyTextureName(int stageNumber, int enemyIndex)
@@ -14459,14 +14330,10 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private int GetTeamPower()
     {
-        if (backendGameplayEnabled && backendTeamPower > 0)
-        {
-            return backendTeamPower;
-        }
-
+        if (TryGetBackendFormationStats(out _, out _, out var backendPower)) return backendPower;
         var power = 0;
 
-        for (var i = 0; i < HeroCount; i++)
+        foreach (var i in GetActiveFormationHeroIndices())
         {
             power += GetHeroPower(i);
         }
@@ -14476,13 +14343,9 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private int GetTeamDamage()
     {
-        if (backendGameplayEnabled && backendTeamAttack > 0)
-        {
-            return backendTeamAttack;
-        }
-
+        if (TryGetBackendFormationStats(out var backendAttack, out _, out _)) return backendAttack;
         var damageTotal = 0;
-        for (var i = 0; i < HeroCount; i++)
+        foreach (var i in GetActiveFormationHeroIndices())
         {
             damageTotal += GetHeroEffectiveAttack(i);
         }
@@ -14492,14 +14355,10 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private int GetTeamHealth()
     {
-        if (backendGameplayEnabled && backendTeamHealth > 0)
-        {
-            return backendTeamHealth;
-        }
-
+        if (TryGetBackendFormationStats(out _, out var backendHealth, out _)) return backendHealth;
         var health = 0;
 
-        for (var i = 0; i < HeroCount; i++)
+        foreach (var i in GetActiveFormationHeroIndices())
         {
             health += GetHeroCombatMaxHealth(i);
         }
@@ -14507,11 +14366,42 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         return Mathf.Max(1, health + GetVillageTeamHealthBonus());
     }
 
+    private bool TryGetBackendFormationStats(out int attack, out int health, out int power)
+    {
+        attack = health = power = 0;
+        if (!UseBackendDefinitionView() || backendTeamAttack <= 0 || backendTeamHealth <= 0 || backendOwnedHeroIndices.Count == 0)
+            return false;
+
+        // Backend equipment, accessories and village bonuses are shared once per team.
+        // Keep that snapshot contribution while replacing the owned-roster base stats
+        // with the selected seven. Local per-hero gear and role rules stay local.
+        var ownedAttack = 0;
+        var ownedHealth = 0;
+        foreach (var heroIndex in backendOwnedHeroIndices)
+        {
+            ownedAttack += GetHeroAttack(heroIndex);
+            ownedHealth += GetHeroHealth(heroIndex);
+        }
+        attack = Mathf.Max(0, backendTeamAttack - ownedAttack);
+        health = Mathf.Max(0, backendTeamHealth - ownedHealth);
+        foreach (var heroIndex in GetActiveFormationHeroIndices())
+        {
+            if (!backendOwnedHeroIndices.Contains(heroIndex)) continue;
+            attack += GetHeroAttack(heroIndex);
+            health += GetHeroHealth(heroIndex);
+        }
+        attack = Mathf.Max(1, attack);
+        health = Mathf.Max(1, health);
+        var equipmentPower = Mathf.Max(0, backendTeamPower - backendTeamAttack - backendTeamHealth / 10);
+        power = Mathf.Max(1, attack + health / 10 + equipmentPower);
+        return true;
+    }
+
     private int GetTeamBaseAttack()
     {
         var attack = 0;
 
-        for (var i = 0; i < HeroCount; i++)
+        foreach (var i in GetActiveFormationHeroIndices())
         {
             attack += GetHeroAttack(i);
         }
@@ -14538,7 +14428,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private int GetEquipmentPower()
     {
         var power = 0;
-        for (var i = 0; i < HeroCount; i++)
+        foreach (var i in GetActiveFormationHeroIndices())
         {
             power += GetHeroEquipmentAttackBonus(i) + Mathf.FloorToInt(GetHeroEquipmentHealthBonus(i) / 8f);
         }
@@ -14549,7 +14439,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private int GetAccessoryPower()
     {
         var power = 0;
-        for (var i = 0; i < HeroCount; i++)
+        foreach (var i in GetActiveFormationHeroIndices())
         {
             power += GetHeroAccessoryAttackBonus(i) + Mathf.FloorToInt(GetHeroAccessoryHealthBonus(i) / 8f);
         }
@@ -14832,7 +14722,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         {
             var level = Mathf.Clamp(heroLevels[index], 1, Mathf.Max(1, backendHero.maxLevel));
             var ascension = Mathf.Clamp(heroAscensions[index], 0, Mathf.Max(0, backendHero.maxAscension));
-            return Mathf.Max(1, backendHero.baseAttack + ((level - 1) * backendHero.attackPerLevel) + (ascension * backendHero.attackPerAscension));
+            return Mathf.Max(1, backendHero.baseAttack + ((level - 1) * backendHero.attackPerLevel) + (ascension * backendHero.attackPerAscension)
+                + Mathf.CeilToInt(backendHero.baseAttack * .12f) * GetHeroStarLevel(index));
         }
 
         return hero.baseAttack
@@ -14854,7 +14745,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         {
             var level = Mathf.Clamp(heroLevels[index], 1, Mathf.Max(1, backendHero.maxLevel));
             var ascension = Mathf.Clamp(heroAscensions[index], 0, Mathf.Max(0, backendHero.maxAscension));
-            return Mathf.Max(1, backendHero.baseHealth + ((level - 1) * backendHero.healthPerLevel) + (ascension * backendHero.healthPerAscension));
+            return Mathf.Max(1, backendHero.baseHealth + ((level - 1) * backendHero.healthPerLevel) + (ascension * backendHero.healthPerAscension)
+                + Mathf.CeilToInt(backendHero.baseHealth * .09f) * GetHeroStarLevel(index));
         }
 
         return hero.baseHealth
@@ -14977,7 +14869,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     private int GetTeamDefense()
     {
         var defense = 0;
-        for (var i = 0; i < HeroCount; i++)
+        foreach (var i in GetActiveFormationHeroIndices())
         {
             defense += GetHeroDefense(i) + Mathf.FloorToInt(GetHeroGearHealthBonus(i) / 95f);
         }
@@ -14989,7 +14881,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         var totalAttack = 0f;
         var weightedCrit = 0f;
-        for (var i = 0; i < HeroCount; i++)
+        foreach (var i in GetActiveFormationHeroIndices())
         {
             var attack = Mathf.Max(1, GetHeroEffectiveAttack(i));
             totalAttack += attack;
@@ -15003,7 +14895,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         var totalAttack = 0f;
         var weightedAccuracy = 0f;
-        for (var i = 0; i < HeroCount; i++)
+        foreach (var i in GetActiveFormationHeroIndices())
         {
             var attack = Mathf.Max(1, GetHeroEffectiveAttack(i));
             totalAttack += attack;
@@ -15119,7 +15011,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         var count = 0;
 
-        for (var i = 0; i < HeroCount; i++)
+        foreach (var i in GetActiveFormationHeroIndices())
         {
             if (GetHeroDefinition(i).roleId == roleId)
             {
@@ -17594,7 +17486,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 #if UNITY_EDITOR
     private void EnsureEditorPortraitValidationCanvas()
     {
-        if (!Application.isBatchMode || homePanel == null)
+        if (Application.isPlaying || !Application.isBatchMode || homePanel == null)
         {
             return;
         }
@@ -18600,14 +18492,14 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         formationHintText.fontSizeMax = 24;
 
         EnsureFormationOrder();
-        formationSlotButtons = new Button[HeroCount];
-        formationSlotFrames = new Image[HeroCount];
-        formationHeroImages = new RawImage[HeroCount];
-        formationHeroSkeletalViews = new RavikSkeletalCombatView[HeroCount];
-        formationHeroPaladinViews = new PaladinSkeletalCombatView[HeroCount];
-        formationHeroTexts = new TMP_Text[HeroCount];
+        formationSlotButtons = new Button[FormationCapacity];
+        formationSlotFrames = new Image[FormationCapacity];
+        formationHeroImages = new RawImage[FormationCapacity];
+        formationHeroSkeletalViews = new RavikSkeletalCombatView[FormationCapacity];
+        formationHeroPaladinViews = new PaladinSkeletalCombatView[FormationCapacity];
+        formationHeroTexts = new TMP_Text[FormationCapacity];
         var heroPositions = GetFormationHeroPositions();
-        for (var i = 0; i < HeroCount; i++)
+        for (var i = 0; i < FormationCapacity; i++)
         {
             var slotObject = new GameObject($"Formation Slot {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
             slotObject.transform.SetParent(arena, false);
@@ -18670,7 +18562,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         }
 
         var bench = CreateRuntimePanel(formationRoot, "Formation Hero Bench", new Vector2(0, -1122), new Vector2(920, 220), new Color(0.77f, 0.58f, 0.31f, 0.96f));
-        var benchTitle = CreateRuntimeText(bench, "Title", Tr("formation.deployed"), 21, new Vector2(-360, -18), new Vector2(180, 30));
+        var benchTitle = CreateRuntimeText(bench, "Title", Tr("formation.roster"), 21, new Vector2(-360, -18), new Vector2(180, 30));
         benchTitle.alignment = TextAlignmentOptions.Left;
         benchTitle.fontStyle = FontStyles.Bold;
         benchTitle.color = new Color(0.16f, 0.085f, 0.035f);
@@ -18680,15 +18572,15 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         formationBenchHeroTexts = new TMP_Text[HeroCount];
         for (var i = 0; i < HeroCount; i++)
         {
-            var card = CreateRuntimeButton(bench, $"Formation Bench Hero {i + 1}", string.Empty, -390 + (i * 130), -52, 112, 150);
+            var card = CreateRuntimeButton(bench, $"Formation Bench Hero {i + 1}", string.Empty, -406 + (i * 116), -52, 108, 150);
             var cardImage = card.GetComponent<Image>();
             if (cardImage != null)
             {
                 cardImage.color = new Color(0.08f, 0.075f, 0.06f, 0.88f);
             }
 
-            var capturedSlot = i;
-            card.onClick.AddListener(() => SelectFormationSlot(capturedSlot));
+            var capturedHero = i;
+            card.onClick.AddListener(() => SelectFormationBenchHero(capturedHero));
             formationBenchButtons[i] = card;
             formationBenchFrames[i] = cardImage;
             formationBenchHeroImages[i] = CreateRuntimeRawImage(card.transform, "Portrait", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -38), new Vector2(72, 72), new Vector2(0.5f, 1f));
@@ -18799,8 +18691,10 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         fightEnemyHpFills = new Image[HeroCount];
         fightEnemyHpPercentTexts = new TMP_Text[HeroCount];
 
-        var heroPositions = GetFightHeroPositions();
+        var heroPositions = GetCurrentFightHeroPositions();
         var enemyPositions = GetFightEnemyPositions();
+        System.Array.Resize(ref enemyPositions, HeroCount);
+        enemyPositions[KaelHeroIndex] = new Vector2(-2000, -2000);
         for (var i = 0; i < HeroCount; i++)
         {
             fightHeroImages[i] = CreateRuntimeRawImage(fightRoot, $"Fight Hero {i + 1}", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), heroPositions[i], new Vector2(132, 132), new Vector2(0.5f, 1f));
@@ -18885,7 +18779,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             button.onClick.AddListener(() => QueueFightHeroUltimate(capturedIndex));
             fightSkillButtons[i] = button;
 
-            var portrait = CreateRuntimeRawImage(cardObject.transform, "Portrait", LoadCombatTexture(GetHeroTextureName(i), "idle", 0, GetHeroTextureName(i)), new Vector2(0, -12), new Vector2(104, 112), new Vector2(0.5f, 1f));
+            var portrait = CreateRuntimeRawImage(cardObject.transform, "Portrait", GetHeroSkillIconTexture(i), new Vector2(0, -12), new Vector2(104, 112), new Vector2(0.5f, 1f));
             portrait.rectTransform.localScale = new Vector3(GetHeroFacingScale(i), 1f, 1f);
             portrait.raycastTarget = false;
             fightSkillPortraits[i] = portrait;
@@ -19332,7 +19226,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         inventoryRewardTexts = new TMP_Text[HeroCount];
         for (var i = 0; i < HeroCount; i++)
         {
-            var x = -288f + i * 96f;
+            var x = (i - (HeroCount - 1) * 0.5f) * 86f;
             var y = -76f;
             var frame = CreateRuntimeBagPanel(inventoryRewardPopupRoot, $"Reward Slot {i + 1}", "bag_reward_slot", new Vector2(x, y), new Vector2(80, 88));
             inventoryRewardFrames[i] = frame.GetComponent<Image>();
@@ -20265,13 +20159,13 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
         heroAutoSetTeamButton = CreateRuntimeButton(heroTeamRoot, "Auto Set Team Button", "Auto-Set", 308, -288, 172, 48);
 
-        heroTeamSlotPortraits = new RawImage[HeroCount];
-        heroTeamSlotTexts = new TMP_Text[HeroCount];
-        heroTeamSlotFrames = new Image[HeroCount];
-        heroTeamSlotButtons = new Button[HeroCount];
+        heroTeamSlotPortraits = new RawImage[FormationCapacity];
+        heroTeamSlotTexts = new TMP_Text[FormationCapacity];
+        heroTeamSlotFrames = new Image[FormationCapacity];
+        heroTeamSlotButtons = new Button[FormationCapacity];
         const float spacing = 154f;
-        var startX = -((HeroCount - 1) * spacing * 0.5f);
-        for (var i = 0; i < HeroCount; i++)
+        var startX = -((FormationCapacity - 1) * spacing * 0.5f);
+        for (var i = 0; i < FormationCapacity; i++)
         {
             var slotObject = new GameObject($"Hero Team Slot {i + 1}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
             slotObject.transform.SetParent(heroTeamRoot, false);
@@ -20406,6 +20300,17 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         heroTabText.fontStyle = FontStyles.Bold;
         heroTabText.color = new Color(1f, 0.93f, 0.68f);
         CreateRuntimeText(tabBack, "Skills Tab", "Skills", 22, new Vector2(210, -18), new Vector2(160, 44)).color = new Color(0.86f, 0.72f, 0.52f);
+
+        heroDetailSkillRoot = CreateRuntimePanel(heroDetailRoot, "Hero Detail Active Skill", new Vector2(0, -1148), new Vector2(780, 152), new Color(0.045f, 0.027f, 0.02f, 0.98f));
+        heroDetailSkillIcon = CreateRuntimeRawImage(heroDetailSkillRoot, "Skill Icon", null, new Vector2(-324, -25), new Vector2(90, 90), new Vector2(0.5f, 1f));
+        heroDetailSkillIcon.raycastTarget = false;
+        heroDetailSkillText = CreateRuntimeText(heroDetailSkillRoot, "Skill Description", string.Empty, 20, new Vector2(56, -12), new Vector2(610, 126));
+        heroDetailSkillText.alignment = TextAlignmentOptions.Left;
+        heroDetailSkillText.enableAutoSizing = true;
+        heroDetailSkillText.fontSizeMin = 16;
+        heroDetailSkillText.fontSizeMax = 20;
+        heroDetailSkillText.raycastTarget = false;
+        heroDetailSkillRoot.gameObject.SetActive(false);
 
         heroDetailCloseButton = CreateRuntimeButton(heroDetailRoot, "Hero Detail Close Button", "X", 385, -24, 52, 52);
         CreateHeroDetailGearList();
@@ -24118,7 +24023,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             }
 
             var hero = GetHeroDefinition(heroIndex);
-            heroCardPortraits[i].texture = LoadRuntimeTexture($"hero_{hero.name.ToLowerInvariant()}");
+            heroCardPortraits[i].texture = GetHeroPortraitTexture(heroIndex);
             heroCardPortraits[i].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
             heroCardPortraits[i].color = Color.white;
         }
@@ -24208,9 +24113,22 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
         if (heroDetailPortrait != null)
         {
-            heroDetailPortrait.texture = LoadCombatTexture(GetHeroTextureName(heroIndex), "idle", 0, GetHeroTextureName(heroIndex));
+            heroDetailPortrait.texture = GetHeroPortraitTexture(heroIndex);
             heroDetailPortrait.rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
             heroDetailPortrait.color = Color.white;
+        }
+
+        if (heroDetailSkillRoot != null)
+        {
+            var hasActiveSkillPanel = heroIndex == KaelHeroIndex;
+            heroDetailSkillRoot.gameObject.SetActive(hasActiveSkillPanel);
+            var tabs = heroDetailRoot.Find("Hero Detail Tabs Backplate");
+            if (tabs != null) tabs.gameObject.SetActive(!hasActiveSkillPanel);
+            if (hasActiveSkillPanel)
+            {
+                heroDetailSkillIcon.texture = GetHeroSkillIconTexture(heroIndex);
+                heroDetailSkillText.text = $"<b>{GetLocalizedHeroAbilityName(heroIndex)}</b>\n{Tr("hero.hero_kael.ability.description")}";
+            }
         }
 
         if (heroDetailRarityText != null)
@@ -26048,16 +25966,14 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private void EnsureFormationOrder()
     {
-        if (formationSlotHeroIndices == null || formationSlotHeroIndices.Length != HeroCount)
+        if (formationSlotHeroIndices == null)
         {
-            formationSlotHeroIndices = new int[HeroCount];
-            for (var i = 0; i < HeroCount; i++)
-            {
-                formationSlotHeroIndices[i] = i;
-            }
-
+            formationSlotHeroIndices = CreateStarterFormation();
             selectedFormationSlotIndex = -1;
-            return;
+        }
+        else if (formationSlotHeroIndices.Length != FormationCapacity)
+        {
+            formationSlotHeroIndices = CopyIntArray(formationSlotHeroIndices, FormationCapacity, -1);
         }
 
         var usedHeroes = new bool[HeroCount];
@@ -26093,7 +26009,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
             }
         }
 
-        if (selectedFormationSlotIndex < 0 || selectedFormationSlotIndex >= HeroCount)
+        if (selectedFormationSlotIndex < 0 || selectedFormationSlotIndex >= FormationCapacity)
         {
             selectedFormationSlotIndex = -1;
         }
@@ -26103,12 +26019,22 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         EnsureFormationOrder();
         selectedFormationPresetIndex = Mathf.Clamp(selectedFormationPresetIndex, 0, FormationPresetCount - 1);
-        if (formationPresetHeroIndices == null || formationPresetHeroIndices.Length != FormationPresetCount * HeroCount)
+        if (formationPresetHeroIndices == null || formationPresetHeroIndices.Length != FormationPresetCount * FormationCapacity)
         {
-            formationPresetHeroIndices = new int[FormationPresetCount * HeroCount];
+            var previousPresets = formationPresetHeroIndices;
+            formationPresetHeroIndices = new int[FormationPresetCount * FormationCapacity];
             for (var presetIndex = 0; presetIndex < FormationPresetCount; presetIndex++)
             {
                 WriteDefaultFormationPreset(presetIndex);
+            }
+
+            if (previousPresets != null)
+            {
+                Array.Copy(previousPresets, formationPresetHeroIndices, Mathf.Min(previousPresets.Length, formationPresetHeroIndices.Length));
+                for (var presetIndex = 0; presetIndex < FormationPresetCount; presetIndex++)
+                {
+                    RepairFormationPreset(presetIndex);
+                }
             }
 
             SaveActiveFormationPreset();
@@ -26123,18 +26049,18 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private void WriteDefaultFormationPreset(int presetIndex)
     {
-        var offset = Mathf.Clamp(presetIndex, 0, FormationPresetCount - 1) * HeroCount;
-        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        var offset = Mathf.Clamp(presetIndex, 0, FormationPresetCount - 1) * FormationCapacity;
+        for (var slotIndex = 0; slotIndex < FormationCapacity; slotIndex++)
         {
-            formationPresetHeroIndices[offset + slotIndex] = slotIndex;
+            formationPresetHeroIndices[offset + slotIndex] = formationSlotHeroIndices[slotIndex];
         }
     }
 
     private void RepairFormationPreset(int presetIndex)
     {
-        var offset = Mathf.Clamp(presetIndex, 0, FormationPresetCount - 1) * HeroCount;
+        var offset = Mathf.Clamp(presetIndex, 0, FormationPresetCount - 1) * FormationCapacity;
         var usedHeroes = new bool[HeroCount];
-        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        for (var slotIndex = 0; slotIndex < FormationCapacity; slotIndex++)
         {
             var heroIndex = formationPresetHeroIndices[offset + slotIndex];
             if (heroIndex < 0 || heroIndex >= HeroCount || usedHeroes[heroIndex])
@@ -26147,7 +26073,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         }
 
         var nextMissingHero = 0;
-        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        for (var slotIndex = 0; slotIndex < FormationCapacity; slotIndex++)
         {
             if (formationPresetHeroIndices[offset + slotIndex] >= 0)
             {
@@ -26169,14 +26095,14 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
     private void SaveActiveFormationPreset()
     {
-        if (formationPresetHeroIndices == null || formationPresetHeroIndices.Length != FormationPresetCount * HeroCount)
+        if (formationPresetHeroIndices == null || formationPresetHeroIndices.Length != FormationPresetCount * FormationCapacity)
         {
             return;
         }
 
         EnsureFormationOrder();
-        var offset = Mathf.Clamp(selectedFormationPresetIndex, 0, FormationPresetCount - 1) * HeroCount;
-        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        var offset = Mathf.Clamp(selectedFormationPresetIndex, 0, FormationPresetCount - 1) * FormationCapacity;
+        for (var slotIndex = 0; slotIndex < FormationCapacity; slotIndex++)
         {
             formationPresetHeroIndices[offset + slotIndex] = formationSlotHeroIndices[slotIndex];
         }
@@ -26186,8 +26112,8 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
     {
         EnsureFormationPresets();
         selectedFormationPresetIndex = Mathf.Clamp(presetIndex, 0, FormationPresetCount - 1);
-        var offset = selectedFormationPresetIndex * HeroCount;
-        for (var slotIndex = 0; slotIndex < HeroCount; slotIndex++)
+        var offset = selectedFormationPresetIndex * FormationCapacity;
+        for (var slotIndex = 0; slotIndex < FormationCapacity; slotIndex++)
         {
             formationSlotHeroIndices[slotIndex] = formationPresetHeroIndices[offset + slotIndex];
         }
@@ -26232,6 +26158,28 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         return -1;
     }
 
+    private static int[] CreateStarterFormation()
+    {
+        return new[] { KaelHeroIndex, 1, 2, 3, 4, 5, 6 };
+    }
+
+    private int[] GetActiveFormationHeroIndices()
+    {
+        EnsureFormationOrder();
+        return CopyIntArray(formationSlotHeroIndices, FormationCapacity, -1);
+    }
+
+    private string[] GetActiveFormationHeroIds()
+    {
+        var indices = GetActiveFormationHeroIndices();
+        var ids = new string[indices.Length];
+        for (var i = 0; i < indices.Length; i++)
+        {
+            ids[i] = GetHeroDefinition(indices[i]).heroId;
+        }
+        return ids;
+    }
+
     private void SelectFormationSlot(int slotIndex)
     {
         if (campaignFightInProgress || backendRequestInProgress || backendLifecycleFlushInProgress)
@@ -26240,7 +26188,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         }
 
         EnsureFormationOrder();
-        slotIndex = Mathf.Clamp(slotIndex, 0, HeroCount - 1);
+        slotIndex = Mathf.Clamp(slotIndex, 0, FormationCapacity - 1);
         if (selectedFormationSlotIndex < 0)
         {
             selectedFormationSlotIndex = slotIndex;
@@ -26263,6 +26211,57 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         RefreshGameplayInteractivity();
     }
 
+    private bool AssignFormationHeroToSlot(int heroIndex, int targetSlot)
+    {
+        EnsureFormationOrder();
+        if (heroIndex < 0 || heroIndex >= HeroCount || targetSlot < 0 || targetSlot >= FormationCapacity)
+        {
+            return false;
+        }
+
+        var currentSlot = FindFormationSlotForHero(heroIndex);
+        if (currentSlot == targetSlot)
+        {
+            return false;
+        }
+        if (currentSlot >= 0)
+        {
+            SwapTeamSlots(targetSlot, currentSlot);
+        }
+        else
+        {
+            formationSlotHeroIndices[targetSlot] = heroIndex;
+        }
+        return true;
+    }
+
+    private void SelectFormationBenchHero(int heroIndex)
+    {
+        if (campaignFightInProgress || backendRequestInProgress || backendLifecycleFlushInProgress)
+        {
+            return;
+        }
+
+        EnsureFormationOrder();
+        var currentSlot = FindFormationSlotForHero(heroIndex);
+        if (selectedFormationSlotIndex < 0 && currentSlot >= 0)
+        {
+            SelectFormationSlot(currentSlot);
+            return;
+        }
+
+        // Tapping an undeployed hero without selecting a slot uses the first slot.
+        var targetSlot = selectedFormationSlotIndex >= 0 ? selectedFormationSlotIndex : 0;
+        if (AssignFormationHeroToSlot(heroIndex, targetSlot))
+        {
+            SaveActiveFormationPreset();
+            SaveProgress();
+        }
+        selectedFormationSlotIndex = -1;
+        RefreshFormationUi();
+        RefreshGameplayInteractivity();
+    }
+
     private Vector2[] GetCurrentFightHeroPositions()
     {
         EnsureFormationOrder();
@@ -26270,7 +26269,7 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         var slotPositions = GetFightHeroPositions();
         var heroPositions = new Vector2[HeroCount];
         var assignedHeroes = new bool[HeroCount];
-        for (var slotIndex = 0; slotIndex < HeroCount && slotIndex < slotPositions.Length; slotIndex++)
+        for (var slotIndex = 0; slotIndex < FormationCapacity && slotIndex < slotPositions.Length; slotIndex++)
         {
             var heroIndex = formationSlotHeroIndices[slotIndex];
             if (heroIndex < 0 || heroIndex >= HeroCount)
@@ -26331,8 +26330,9 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
         selectedFormationFilterIndex = Mathf.Clamp(selectedFormationFilterIndex, 0, FormationFilterCount - 1);
         for (var slotIndex = 0; slotIndex < formationBenchButtons.Length; slotIndex++)
         {
-            var heroIndex = formationSlotHeroIndices[Mathf.Clamp(slotIndex, 0, formationSlotHeroIndices.Length - 1)];
-            var selected = selectedFormationSlotIndex == slotIndex;
+            var heroIndex = slotIndex;
+            var deployedSlot = FindFormationSlotForHero(heroIndex);
+            var selected = selectedFormationSlotIndex >= 0 && selectedFormationSlotIndex == deployedSlot;
             var filterMatch = DoesHeroMatchFormationFilter(heroIndex);
             var alpha = filterMatch ? 1f : 0.42f;
             if (formationBenchFrames != null && slotIndex < formationBenchFrames.Length && formationBenchFrames[slotIndex] != null)
@@ -26346,14 +26346,14 @@ public partial class IdlePrototypeController : MonoBehaviour, IMythwakePlayerSta
 
             if (formationBenchHeroImages != null && slotIndex < formationBenchHeroImages.Length && formationBenchHeroImages[slotIndex] != null)
             {
-                formationBenchHeroImages[slotIndex].texture = LoadCombatTexture(GetHeroTextureName(heroIndex), "idle", 0, GetHeroTextureName(heroIndex));
+                formationBenchHeroImages[slotIndex].texture = GetHeroPortraitTexture(heroIndex);
                 formationBenchHeroImages[slotIndex].rectTransform.localScale = new Vector3(GetHeroFacingScale(heroIndex), 1f, 1f);
                 formationBenchHeroImages[slotIndex].color = new Color(1f, 1f, 1f, alpha);
             }
 
             if (formationBenchHeroTexts != null && slotIndex < formationBenchHeroTexts.Length && formationBenchHeroTexts[slotIndex] != null)
             {
-                formationBenchHeroTexts[slotIndex].text = $"{GetLocalizedHeroName(heroIndex)}\n{Tr("ui.common.level_short")} {heroLevels[heroIndex]}";
+                formationBenchHeroTexts[slotIndex].text = $"{GetLocalizedHeroName(heroIndex)}\n{(deployedSlot >= 0 ? (deployedSlot + 1).ToString() : Tr("formation.bench"))} · {Tr("ui.common.level_short")} {heroLevels[heroIndex]}";
                 formationBenchHeroTexts[slotIndex].color = selected
                     ? new Color(1f, 0.94f, 0.4f)
                     : new Color(1f, 1f, 1f, alpha);
