@@ -80,15 +80,16 @@ public static class KaelAnimationValidation
             ValidateCanvasSurface(replacement, firstPosition, 64);
             Require(second.Rig.transform.localScale.x == -1, "Cell reuse changed the other view's facing.");
             var renderedIdle = CaptureBodyPose(replacement.Rig);
+            var standing = CaptureDeathBaseline(replacement.Rig);
             foreach (var action in new[] { "attack", "skill", "death" })
             {
                 var age = action == "attack" ? .24f : action == "skill" ? .4f : .9f;
                 replacement.Present(firstPosition, action, action == "attack" ? 31 : action == "skill" ? 32 : 33, age, 1, 1);
                 RequireDifferentBodyPose(replacement.Rig, renderedIdle, action);
-                if (action == "death") RequireDeathPose(replacement.Rig);
+                if (action == "death") RequireDeathPose(replacement.Rig, standing);
                 // Observe the real atlas camera after a subsequent PlayerLoop, not the
                 // immediate Graph.Evaluate result that another Animator could overwrite.
-                yield return ValidatePoseAtNextRender(replacement.Rig, action);
+                yield return ValidatePoseAtNextRender(replacement.Rig, action, standing);
             }
             yield return ValidateCombatEffects(maskRect, replacement, second, firstPosition, secondPosition);
             Debug.Log("Kael Canvas runtime lifecycle passed: two independent live atlas views, real mesh UVs, cell placement, foot-aligned size, mask, facing, paused clock, reset, release, cell reuse and distinct attack/skill/death bone poses persisting through the next real atlas render. No scene or player preferences were changed.");
@@ -256,7 +257,7 @@ public static class KaelAnimationValidation
             Require(Vector2.SqrMagnitude(actual.uv[i] - expected.uv[i]) < .000001f, message + ": UV " + i);
     }
 
-    private static IEnumerator ValidatePoseAtNextRender(KaelRig rig, string state)
+    private static IEnumerator ValidatePoseAtNextRender(KaelRig rig, string state, DeathBaseline standing)
     {
         var camera = KaelRenderAtlas.Existing.GetComponent<Camera>();
         var expected = CapturePose(rig);
@@ -278,7 +279,7 @@ public static class KaelAnimationValidation
             }
             EqualPose(rendered, expected, state + " bones changed between manual sampling and the next real atlas render");
             EqualPose(rig, expected, state + " pose changed while its manual animation clock was paused");
-            if (state == "death") RequireDeathPose(rig);
+            if (state == "death") RequireDeathPose(rig, standing);
         }
         finally
         {
@@ -460,6 +461,7 @@ public static class KaelAnimationValidation
         second.Marker += (marker, sequence) => { if (marker.StartsWith("impact:",StringComparison.Ordinal)) secondMarkers.Add(sequence+":"+marker); };
         first.Sample("idle",0,0,0); second.Sample("idle",0,0,0);
         var idle = CaptureBodyPose(first); var otherIdle = CapturePose(second);
+        var standing = CaptureDeathBaseline(first);
         first.Sample("attack_cross",101,.23f,.23f);
         Require(firstMarkers.Count == 0, "First cross contact occurred before 240ms.");
         first.Sample("attack_cross",101,.25f,.02f);
@@ -499,7 +501,7 @@ public static class KaelAnimationValidation
         RequireDifferentBodyPose(first,idle,"skill");
         first.Sample("skill",105,.39f,.1f); first.Sample("death",106,0,.1f);
         first.Sample("death",106,2,1);
-        RequireDeathPose(first);
+        RequireDeathPose(first, standing);
         var dead = CapturePose(first); first.Sample("death",106,8,1);
         EqualPose(first,dead,"Death end pose did not hold");
         Require(firstMarkers.Count == count+2,"Death allowed a pending ultimate contact.");
@@ -549,12 +551,37 @@ public static class KaelAnimationValidation
         }
         Require(changed >= 3, state + " must visibly move at least three body bones away from idle; changed " + changed + ".");
     }
-    private static void RequireDeathPose(KaelRig rig)
+    private sealed class DeathBaseline
     {
-        var root = rig.transform.Find("Root");
-        Require(root != null, "Death pose lacks the skeleton Root.");
-        Require(Mathf.Abs(Mathf.DeltaAngle(root.localEulerAngles.z, 82f)) < .5f,
-            "Death end pose must hold its authored 82 degree Root roll; actual " + root.localEulerAngles.z + ".");
+        public float headHeight, hipHeight;
+        public Matrix4x4[] body;
+    }
+    private static DeathBaseline CaptureDeathBaseline(KaelRig rig)
+    {
+        return new DeathBaseline {
+            headHeight = rig.transform.InverseTransformPoint(rig.transform.Find("Root/Hip/Torso/Neck/Head").position).y,
+            hipHeight = rig.transform.InverseTransformPoint(rig.transform.Find("Root/Hip").position).y,
+            body = CaptureBodyPose(rig) };
+    }
+    private static void RequireDeathPose(KaelRig rig, DeathBaseline standing)
+    {
+        // Check the observable collapse, independent of how the artist divides it
+        // between Root, pelvis and spine. Rotating a rigid standing body alone must
+        // not pass. End-pose stability is checked separately with repeated samples.
+        var fallen = CaptureDeathBaseline(rig);
+        Require(fallen.headHeight < standing.headHeight * .7f && fallen.hipHeight < standing.hipHeight * .7f,
+            "Death must lower both head and pelvis substantially from the sampled standing pose.");
+        RequireDifferentBodyPose(rig, standing.body, "death");
+        var articulatedJoints = 0;
+        // Local joint angles deliberately exclude Root and hip translation: global
+        // tipping or lowering the entire illustration does not articulate a body.
+        foreach (var index in new[] { 2, 3, 4, 5, 7, 8 })
+        {
+            var before = Mathf.Atan2(standing.body[index].m10, standing.body[index].m00) * Mathf.Rad2Deg;
+            var after = Mathf.Atan2(fallen.body[index].m10, fallen.body[index].m00) * Mathf.Rad2Deg;
+            if (Mathf.Abs(Mathf.DeltaAngle(before, after)) > 8) articulatedJoints++;
+        }
+        Require(articulatedJoints >= 3, "Death must change several spine/arm/leg joints, not only tip the character root.");
     }
     private static Matrix4x4[] CapturePose(KaelRig rig)
     {

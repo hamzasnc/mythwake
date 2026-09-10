@@ -25,7 +25,8 @@ public static class KaelRenderedPoseProbe
         folder=Path.GetFullPath(args[index+1]); Directory.CreateDirectory(folder);
         var rig=view.Rig;
         var root=rig.transform.Find("Root");
-        var pose=$"At endCameraRendering: state={rig.CurrentState}, clipTime={rig.CurrentTime}, authoredRootRoll=82, actualRootRoll={Mathf.DeltaAngle(0,root.localEulerAngles.z)}, rootPosition={root.localPosition}, controller={rig.GetComponent<Animator>().runtimeAnimatorController?.name}";
+        var hip=rig.transform.Find("Root/Hip"); var head=rig.transform.Find("Root/Hip/Torso/Neck/Head");
+        var pose=$"At endCameraRendering: state={rig.CurrentState}, clipTime={rig.CurrentTime}, actualRootRoll={Mathf.DeltaAngle(0,root.localEulerAngles.z)}, rootPosition={root.localPosition}, hipPosition={rig.transform.InverseTransformPoint(hip.position)}, headPosition={rig.transform.InverseTransformPoint(head.position)}, controller={rig.GetComponent<Animator>().runtimeAnimatorController?.name}";
         File.WriteAllText(Path.Combine(folder,"rendered-pose.txt"),pose);
         var rt=camera.targetTexture;var previous=RenderTexture.active;RenderTexture.active=rt;
         var pixels=new Texture2D(rt.width,rt.height,TextureFormat.RGBA32,false);

@@ -12,7 +12,7 @@ public partial class IdlePrototypeController
     private int[] combatCooldownUntilMs;
     private int[] combatParticipantOrder;
     private FightVisualUnitState[] combatHeroStates, combatEnemyStates;
-    private float[] combatHeroHp, combatEnemyHp, combatHitUntil, combatDeathStarted;
+    private float[] combatHeroHp, combatEnemyHp, combatHitUntil, combatHitStarted, combatDeathStarted;
     private float[] combatActionDurations;
     private string[] combatActionIds, combatActionKinds;
     private long[] combatActionSequences;
@@ -103,6 +103,7 @@ public partial class IdlePrototypeController
         combatHeroHp = new float[HeroCount];
         combatEnemyHp = CreateCombatHealthPercents(combatEnemyCount);
         combatHitUntil = new float[HeroCount];
+        combatHitStarted = new float[HeroCount];
         combatDeathStarted = new float[HeroCount];
         combatActionIds = new string[HeroCount];
         combatActionKinds = new string[HeroCount];
@@ -125,6 +126,7 @@ public partial class IdlePrototypeController
             combatHeroStates[i] = new FightVisualUnitState { position = positions[slot], attackStartedAt = -99f,
                 targetIndex = slot % combatEnemyCount, lockedMeleeTargetIndex = -1 };
             combatActionKinds[i] = "idle";
+            combatHitStarted[i] = -1f;
             combatDeathStarted[i] = -1f;
         }
         SetBattleFlowMode(BattleFlowMode.Fight);
@@ -264,8 +266,10 @@ public partial class IdlePrototypeController
             state.lockedMeleePosition = GetMeleeContactPosition(state.position, target, true, i, state.targetIndex, false);
             state.lockedMeleeTargetIndex = state.targetIndex;
             state.hasLockedMeleePosition = true;
-            state.isMoving = Vector2.Distance(state.position, state.lockedMeleePosition) > 5f;
             state.position = Vector2.MoveTowards(state.position, state.lockedMeleePosition, GetHeroVisualMoveSpeed(i) * delta);
+            // An action may begin within the 8px contact tolerance. Its last small
+            // approach step must not show a full run pose after that action recovers.
+            state.isMoving = Vector2.Distance(state.position, state.lockedMeleePosition) > 5f;
             combatHeroStates[i] = state;
         }
     }
@@ -287,6 +291,8 @@ public partial class IdlePrototypeController
                 if (combatActionIds[actor] != actionId)
                 {
                     combatActionIds[actor] = actionId;
+                    combatHitStarted[actor] = -1f;
+                    combatHitUntil[actor] = 0f;
                     combatActionSequences[actor]++;
                     combatLegacyAnimations[actor] = string.IsNullOrEmpty(record.animationVariant);
                     combatActionKinds[actor] = record.eventType == "ultimate" || !string.IsNullOrEmpty(record.skillId) ? "skill" :
@@ -322,7 +328,14 @@ public partial class IdlePrototypeController
             var target = FindCombatHeroIndex(record.targetId);
             if (target >= 0 && IsAuthoritativeHeroActive(target))
             {
-                combatHitUntil[target] = combatClockSeconds + .18f;
+                // A committed attack owns its whole action window. Retain only a
+                // recent pending reaction; if it can be shown after recovery it
+                // starts at frame zero, rather than jumping into the hit clip.
+                if (combatHitStarted[target] < 0f || combatClockSeconds >= combatHitUntil[target])
+                {
+                    combatHitStarted[target] = -1f;
+                    combatHitUntil[target] = combatClockSeconds + .18f;
+                }
                 ShowAuthoritativeNumber(record.amount, combatHeroStates[target].position + new Vector2(0, -72), new Color(1f, .3f, .25f));
                 combatEnemyStates[0].attackStartedAt = record.timeMs / 1000f;
                 combatEnemyStates[0].targetIndex = target;
@@ -393,7 +406,15 @@ public partial class IdlePrototypeController
             }
             else if (age < 0 || age >= combatActionDurations[i])
             {
-                if (combatHitUntil[i] > combatClockSeconds) { kind = "hit"; age = .18f - (combatHitUntil[i] - combatClockSeconds); }
+                if (combatHitUntil[i] > combatClockSeconds)
+                {
+                    if (combatHitStarted[i] < 0f)
+                    {
+                        combatHitStarted[i] = combatClockSeconds;
+                        combatHitUntil[i] = combatClockSeconds + .20f;
+                    }
+                    kind = "hit"; age = combatClockSeconds - combatHitStarted[i];
+                }
                 else { kind = state.isMoving ? "run" : "idle"; age = combatClockSeconds; }
             }
             if (kind == "skill") age = kaelUltimateFocusClock.MapActionAge(combatActionSequences[i], age);

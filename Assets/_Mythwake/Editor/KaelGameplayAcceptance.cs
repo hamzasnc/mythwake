@@ -570,9 +570,16 @@ public static class KaelGameplayAcceptance
         phase = record.label + "-death";
         if (record.kaelDeathMs < 0) record.kaelDeathMs = session.TimeMs;
         var view = Get<KaelAnimationView>("kaelFightView");
-        if (view != null && view.Rig != null && view.Rig.CurrentState == "death" && view.Rig.CurrentTime >= .89f &&
-            Mathf.Abs(Mathf.DeltaAngle(view.Rig.transform.Find("Root").localEulerAngles.z, 82f)) < .5f)
-            record.kaelDeathPoseReached = true;
+        if (view != null && view.Rig != null && view.Rig.CurrentState == "death" && view.Rig.CurrentTime >= .89f)
+        {
+            var rig=view.Rig.transform;
+            var hip=rig.Find("Root/Hip"); var head=rig.Find("Root/Hip/Torso/Neck/Head");
+            // Observe the collapsed body in actor space. An exact Root roll would
+            // require the former rigid tipping pose and reject articulated falls.
+            if(hip!=null && head!=null && rig.InverseTransformPoint(hip.position).y<.75f &&
+                rig.InverseTransformPoint(head.position).y<1f)
+                record.kaelDeathPoseReached=true;
+        }
     }
 
     private sealed class FocusSnapshot

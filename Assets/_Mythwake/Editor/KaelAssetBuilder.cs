@@ -182,6 +182,17 @@ public static class KaelAssetBuilder
                 restRotations[bone.Key] = Mathf.DeltaAngle(0, bone.Value.localEulerAngles.z);
             }
             rig.clips = BuildClips();
+            // Death handover uses the actual exported target curves to select a
+            // continuous weapon route independently of the first rendered delta.
+            var deathClip = rig.clips.Single(clip => clip.name == "death");
+            var handPath = AnimationUtility.CalculateTransformPath(bones["NearArmTarget"], root.transform);
+            rig.deathWristAngle = AnimationUtility.GetEditorCurve(deathClip,
+                EditorCurveBinding.FloatCurve(handPath, typeof(Transform), "localEulerAnglesRaw.z"));
+            rig.deathHandHeight = AnimationUtility.GetEditorCurve(deathClip,
+                EditorCurveBinding.FloatCurve(handPath, typeof(Transform), "m_LocalPosition.y"));
+            rig.deathHandToTip = bones["HandNear"].InverseTransformPoint(rig.weaponTip.position);
+            if (rig.deathWristAngle == null || rig.deathHandHeight == null)
+                throw new InvalidOperationException("Kael death requires authored hand target rotation and height curves.");
             var trailObject = new GameObject("WeaponTrail",typeof(LineRenderer));
             trailObject.transform.SetParent(root.transform,false);
             rig.weaponTrail = trailObject.GetComponent<LineRenderer>();
@@ -441,198 +452,274 @@ public static class KaelAssetBuilder
     static Pose P(float time) => new Pose { time=time };
     static Pose Move(Pose p,string bone,float x,float y) { p.positions[bone]=new Vector3(x,y,0); return p; }
     static Pose Turn(Pose p,string bone,float z) { p.rotations[bone]=z; return p; }
-    static Pose Body(Pose p,float hipY,float lean,float head,float scarf)
+    static Pose Body(Pose p,float hipY,float lean,float head,float cloth)
     {
-        Move(p,"Hip",0,hipY); Turn(p,"Torso",lean); Turn(p,"Head",head);
-        // Independent phase offsets keep the two coat tails and hair from moving as one sheet.
-        Turn(p,"ScarfLongBend",scarf); Turn(p,"ScarfLongTip",scarf*.62f + Mathf.Sin(p.time*13.1f)*2.8f);
-        Turn(p,"ScarfShortBend",scarf*.48f + Mathf.Sin(p.time*10.7f-1.1f)*4);
-        Turn(p,"ScarfShortTip",scarf*.34f + Mathf.Sin(p.time*15.3f-1.8f)*3.6f);
-        Turn(p,"HairBend",-scarf*.23f + Mathf.Sin(p.time*9.7f-.6f)*1.8f);
-        Turn(p,"HairTip",-scarf*.15f + Mathf.Sin(p.time*12.7f-1.5f)*2.4f);
+        Move(p,"Hip",0,hipY); Turn(p,"Hip",Mathf.Clamp(lean*.25f,-8,6));
+        Turn(p,"Torso",lean); Turn(p,"Head",head);
+        // Authored drag impulses are baked into damped secondary curves below.
+        // No time-based decorative oscillation is added to combat poses.
+        Turn(p,"ScarfLongBend",cloth); Turn(p,"ScarfLongTip",cloth*.60f);
+        Turn(p,"ScarfShortBend",cloth*.48f); Turn(p,"ScarfShortTip",cloth*.32f);
+        Turn(p,"HairBend",-cloth*.12f); Turn(p,"HairTip",-cloth*.08f);
         return p;
     }
-    static Pose View(Pose p, string view) { p.view = view; return p; }
-    static Pose Strike(Pose p) { p.linearIncoming = true; p.face = "action"; return p; }
-    static Pose Guard(float time) => PlantedSword(Hand(Body(P(time),1.035f,-4,3,2),-.39f,1.23f,40),0,-.38f,.39f,.65f,1.04f,-8);
-    static Pose Fight(float time, float hipY, float lean, float handX, float handY, float bladeAngle, float cloth, float hipX = 0)
-        => PlantedSword(Hand(Body(P(time),hipY,lean,-lean*.52f,cloth),handX,handY,bladeAngle),hipX,-.46f,.47f,.60f+hipX,hipY+.12f,-lean*.35f);
-    static Pose Hand(Pose p,float x,float y,float angle)
+    static Pose View(Pose p,string view) { p.view=view; return p; }
+    static Pose Strike(Pose p) { p.linearIncoming=true; p.face="action"; return p; }
+    static Pose Feet(Pose p,float nearX,float nearY,float farX,float farY,float nearAngle=0,float farAngle=0)
     {
-        Move(p,"NearArmTarget",x,y); Turn(p,"NearArmTarget",angle); return p;
+        Move(p,"NearFootTarget",nearX,nearY); Move(p,"FarFootTarget",farX,farY);
+        Turn(p,"NearFootTarget",nearAngle); Turn(p,"FarFootTarget",farAngle); return p;
     }
-    static Pose PlantedSword(Pose p,float hipX,float nearFootX,float farFootX,float guardX,float guardY,float guardAngle)
+    // Hand positions are authored relative to the shoulder in rig space, with an
+    // intentional elbow bend. The earlier world targets often exceeded the real
+    // arm's reach, flattening different key poses into the same locked arm.
+    static Pose Reach(Pose p,string target,string shoulder,float x,float y,float angle)
     {
-        // Feet stay on the same floor while the hips load the back leg, then drive forward.
-        // The hand targets move the actual arm IK chains; the sword remains attached to its grip.
-        var hip = p.positions["Hip"]; Move(p,"Hip",hipX,hip.y);
-        Move(p,"NearFootTarget",nearFootX,.238f); Move(p,"FarFootTarget",farFootX,.214f);
-        Move(p,"FarArmTarget",guardX,guardY); Turn(p,"FarArmTarget",guardAngle);
+        var hip=PosePosition(p,"Hip");
+        var hipAngle=p.rotations.TryGetValue("Hip",out var h)?h:0;
+        var torsoAngle=p.rotations.TryGetValue("Torso",out var t)?t:0;
+        var shoulderOffset=bones[shoulder].position-bones["Torso"].position;
+        var shoulderPosition=hip + Quaternion.Euler(0,0,hipAngle)*restPositions["Torso"]
+            + Quaternion.Euler(0,0,hipAngle+torsoAngle)*shoulderOffset;
+        var position=shoulderPosition+new Vector3(x,y,0);
+        position-=restPositions[target]-canonicalControls[target];
+        Move(p,target,position.x,position.y); Turn(p,target,angle); return p;
+    }
+    static Pose Fight(float time,float hipY,float lean,float reachX,float reachY,float wrist,float cloth,float hipX=0)
+    {
+        var p=Body(P(time),hipY,lean,-lean*.42f,cloth); Move(p,"Hip",hipX,hipY);
+        Feet(p,-.50f,.238f,.50f,.214f);
+        Reach(p,"NearArmTarget","UpperArmNear",reachX,reachY,wrist);
+        Reach(p,"FarArmTarget","UpperArmFar",-.10f-lean*.002f,-.40f,-lean*.6f);
         return p;
+    }
+    static Pose Guard(float time) => Fight(time,.965f,-5,.17f,-.40f,35,0,-.025f);
+    static Pose CopyPose(Pose from,float time)
+    {
+        return new Pose {time=time,positions=new Dictionary<string,Vector3>(from.positions),
+            rotations=new Dictionary<string,float>(from.rotations),view=from.view,face=from.face,
+            swordPerspective=from.swordPerspective,ikWeight=from.ikWeight};
     }
     static AnimationClip[] BuildClips()
     {
-        var idle = new[] { Guard(0), Guard(.6f), Guard(1.2f), Guard(1.8f), Guard(1.97f), Guard(2.055f), Guard(2.4f) };
-        Move(idle[1], "Hip", -.005f, 1.048f); Turn(idle[1], "Torso", -4.8f);
-        Move(idle[2], "Hip", 0, 1.057f); Turn(idle[2], "Torso", -5.2f); Turn(idle[2], "Head", 3.5f);
-        Move(idle[3], "Hip", .004f, 1.047f); Turn(idle[3], "Torso", -4.5f);
-        // Loop endpoints use exactly the same independently authored secondary pose.
-        idle[4].face = "blink";
-        idle[idle.Length-1].positions = new Dictionary<string, Vector3>(idle[0].positions);
-        idle[idle.Length-1].rotations = new Dictionary<string, float>(idle[0].rotations);
-        var run = new List<Pose>();
-        for (var i = 0; i <= 8; i++)
+        // Quiet asymmetric guard: planted ankles, breathing through the ribcage,
+        // slight pelvis shift and delayed head/wrist response, no whole-body bob.
+        var idle=new[] {
+            Guard(0), Fight(.48f,.969f,-5.8f,.168f,-.398f,35.5f,0,-.028f),
+            Fight(1.03f,.975f,-6.1f,.174f,-.391f,36.5f,0,-.020f),
+            Fight(1.52f,.970f,-5.4f,.180f,-.389f,36.1f,0,-.014f),
+            Fight(1.94f,.966f,-4.8f,.175f,-.398f,35.2f,0,-.020f),
+            Guard(2.03f),Guard(2.11f),Guard(2.4f)
+        };
+        Turn(idle[2],"Head",3.0f); Turn(idle[3],"Head",3.2f);
+        idle[5].face="blink";
+
+        // A support leg travels backwards during stance; the opposite knee folds
+        // on recovery. Both contacts use zero foot roll, with toe-off after release.
+        var run=new List<Pose>();
+        for(var i=0;i<=16;i++)
         {
-            var phase = i * Mathf.PI / 4;
-            var p = Body(P(i * .08f), 1.005f + Mathf.Abs(Mathf.Sin(phase)) * .065f, -12, 7, -15 + Mathf.Sin(phase-.5f)*8);
-            Move(p,"NearFootTarget",-.17f+Mathf.Sin(phase)*.36f,.238f+Mathf.Max(0,Mathf.Cos(phase))*.24f);
-            Move(p,"FarFootTarget",.17f-Mathf.Sin(phase)*.36f,.214f+Mathf.Max(0,-Mathf.Cos(phase))*.24f);
-            Hand(p,-.39f-Mathf.Sin(phase)*.13f,1.28f,46+Mathf.Sin(phase)*12);
-            Move(p,"FarArmTarget",.64f+Mathf.Sin(phase)*.14f,1.04f+Mathf.Sin(phase)*.07f);
+            var time=i*.04f; var phase=(float)i/16;
+            var p=Fight(time,.915f+Mathf.Cos(phase*Mathf.PI*4)*.025f,-11,
+                .08f+Mathf.Sin(phase*Mathf.PI*2)*.04f,-.34f,39+Mathf.Sin(phase*Mathf.PI*2)*5,
+                -8,-.02f);
+            for(var leg=0;leg<2;leg++)
+            {
+                var u=Mathf.Repeat(phase+leg*.5f,1);
+                var stance=u<.6f;
+                var x=stance?Mathf.Lerp(.30f,-.30f,u/.6f):Mathf.Lerp(-.30f,.30f,(u-.6f)/.4f);
+                var lift=stance?0:Mathf.Sin((u-.6f)/.4f*Mathf.PI)*.26f;
+                Move(p,leg==0?"NearFootTarget":"FarFootTarget",(leg==0?-.22f:.22f)+x,(leg==0?.238f:.214f)+lift);
+                Turn(p,leg==0?"NearFootTarget":"FarFootTarget",stance?0:-Mathf.Sin((u-.6f)/.4f*Mathf.PI)*18);
+            }
+            Reach(p,"FarArmTarget","UpperArmFar",-.08f-Mathf.Sin(phase*Mathf.PI*2)*.15f,-.34f,-10);
             run.Add(p);
         }
-        run[8].positions = new Dictionary<string, Vector3>(run[0].positions);
-        run[8].rotations = new Dictionary<string, float>(run[0].rotations);
+        run[16]=CopyPose(run[0],.64f);
 
-        // One basic ability, three physical choreographies. Contacts are authored once
-        // and named explicitly; gameplay resolves their shared damage budget.
-        var cross = new[]
-        {
-            Guard(0),
-            Fight(.08f,.97f,13,-.67f,1.51f,140,-12,-.06f),
-            Fight(.16f,.94f,19,-.50f,1.91f,132,-25,-.07f),
-            Strike(Fight(.24f,.97f,-23,.57f,1.34f,-2,30,.12f)),
-            Fight(.29f,.93f,-29,.65f,1.11f,-37,38,.15f),
-            // Coil below the target, then reverse through a rising diagonal.
-            Fight(.37f,.91f,-15,.42f,1.04f,-73,19,.08f),
-            Fight(.45f,.94f,10,-.12f,1.08f,-131,-18,-.03f),
-            Strike(Fight(.52f,1.04f,17,.26f,1.98f,111,-39,-.045f)),
-            Fight(.59f,1.06f,10,.10f,2.09f,142,-25,-.03f),
-            Fight(.70f,1.01f,-3,-.31f,1.51f,80,11),
-            Guard(.84f)
+        // Hip loads first, shoulder follows, then the wrist releases. The feet
+        // keep their common guard anchors through both contacts and recovery.
+        var cross=new[] {
+            Guard(0),Fight(.055f,.920f,3,.11f,-.35f,61,-4,-.07f),
+            Fight(.115f,.885f,14,-.12f,.09f,112,-10,-.11f),
+            Fight(.178f,.900f,9,-.13f,.38f,139,-17,-.075f),
+            Fight(.21f,.930f,-7,.26f,.03f,56,-8,.015f),
+            Strike(Fight(.24f,.925f,-20,.49f,-.19f,-4,17,.105f)),
+            Fight(.285f,.885f,-25,.46f,-.31f,-33,23,.135f),
+            Fight(.34f,.875f,-15,.31f,-.35f,-46,17,.095f),
+            Fight(.408f,.890f,-2,.04f,-.42f,-43,2,.005f),
+            Fight(.468f,.920f,5,.09f,-.20f,12,-12,-.035f),
+            Strike(Fight(.52f,.990f,8,.32f,.34f,100,-24,-.015f)),
+            Fight(.568f,1.005f,3,.17f,.43f,122,-18,.01f),
+            Fight(.642f,.963f,-8,.10f,.09f,79,10,.035f),
+            Fight(.728f,.943f,-7,.18f,-.31f,40,5,-.01f),Guard(.84f)
         };
-        var spin = new[]
-        {
-            Guard(0),
-            Fight(.08f,.96f,9,-.62f,1.32f,95,-11,-.06f),
-            View(Fight(.16f,.91f,15,-.38f,1.19f,163,-26,-.075f),"side"),
-            View(Fight(.22f,.88f,10,.10f,1.15f,212,-37,-.035f),"rear"),
-            View(Fight(.30f,.87f,0,.43f,1.12f,252,-42,.045f),"rear"),
-            View(Strike(Fight(.36f,.88f,-15,.64f,1.12f,290,25,.12f)),"side"),
-            Strike(Fight(.42f,.90f,-27,.67f,1.24f,351,43,.16f)),
-            Fight(.50f,.87f,-30,.49f,1.10f,389,36,.14f),
-            Fight(.64f,.98f,-13,-.06f,1.19f,415,-16,.045f),
-            Guard(.84f)
-        };
-        // Maintain winding through the full turn; it is a multi-view body turn and
-        // shoulder-driven horizontal cut, not a 360 degree spin of a flat body card.
-        Turn(spin[9],"NearArmTarget",400);
-        // The blade turns into the depth plane during the low coil. It retains its
-        // full length at each actual contact; its tip and VFX anchors share the same
-        // authored perspective scale because they are children of the Sword bone.
-        cross[4].swordPerspective = .78f;
-        cross[5].swordPerspective = .50f; cross[5].view = "side";
-        cross[6].swordPerspective = .54f; cross[6].view = "side";
-        spin[3].swordPerspective = .80f;
-        spin[4].swordPerspective = spin[5].swordPerspective = .50f;
-        var jump = new[]
-        {
-            Guard(0),
-            Fight(.09f,.88f,14,-.57f,1.35f,116,-16,-.07f),
-            Fight(.17f,.86f,19,-.47f,1.70f,137,-27,-.055f),
-            View(Fight(.27f,1.38f,4,-.23f,2.02f,120,-40,.005f),"side"),
-            Fight(.37f,1.52f,-5,.07f,2.28f,93,-34,.10f),
-            Strike(Fight(.46f,1.34f,-27,.70f,1.72f,7,39,.21f)),
-            Fight(.53f,1.04f,-34,.66f,1.15f,-30,46,.20f),
-            Fight(.59f,.87f,-20,.43f,1.05f,-22,26,.13f),
-            Fight(.69f,.97f,-11,-.05f,1.16f,15,-19,.04f),
-            Guard(.84f)
-        };
-        Move(jump[3],"NearFootTarget",-.34f,.80f); Move(jump[3],"FarFootTarget",.40f,.57f);
-        Move(jump[4],"NearFootTarget",-.25f,1.05f); Move(jump[4],"FarFootTarget",.54f,.76f);
-        Move(jump[5],"NearFootTarget",-.08f,.59f); Move(jump[5],"FarFootTarget",.56f,.42f);
-        Turn(jump[3],"NearFootTarget",-21); Turn(jump[4],"NearFootTarget",-24);
-        Turn(jump[3],"FarFootTarget",27); Turn(jump[4],"FarFootTarget",20);
-        jump[6].swordPerspective = .86f; jump[7].swordPerspective = .86f;
+        // Low second-cut chamber stays in the same drawing. The previous side
+        // swap here changed the entire silhouette without a motivated body turn.
+        cross[7].swordPerspective=.72f; cross[8].swordPerspective=.72f;
 
-        // Distinct ultimate: low draw -> rear turn -> rising contact -> airborne coil
-        // -> dominant descending finish. The focus clock may dwell on the low draw.
-        var skill = new[]
-        {
-            Guard(0),
-            Fight(.08f,.88f,20,-.59f,1.12f,83,-14,-.095f),
-            View(Fight(.18f,.85f,23,-.35f,1.05f,164,-29,-.10f),"side"),
-            View(Fight(.28f,.85f,15,.17f,1.12f,218,-38,-.065f),"rear"),
-            View(Strike(Fight(.35f,.93f,-3,.58f,1.19f,282,24,.085f)),"side"),
-            Strike(Fight(.40f,1.08f,-15,.62f,1.89f,65,40,.16f)),
-            Fight(.47f,1.26f,-7,.21f,2.34f,115,26,.13f),
-            View(Fight(.58f,1.40f,11,-.32f,2.24f,169,-26,.065f),"side"),
-            View(Fight(.69f,1.46f,17,-.22f,2.16f,224,-39,.035f),"rear"),
-            View(Fight(.79f,1.37f,4,.12f,2.27f,131,-45,.065f),"side"),
-            Fight(.865f,1.27f,-3,.34f,2.28f,78,-30,.12f),
-            Strike(Fight(.92f,.96f,-32,.75f,1.32f,-10,49,.23f)),
-            Fight(.98f,.85f,-35,.67f,1.05f,-36,40,.22f),
-            Fight(1.075f,.88f,-29,.55f,1.08f,-29,11,.17f),
-            Fight(1.19f,1.00f,-12,-.04f,1.15f,16,-21,.055f),
-            Guard(1.32f)
+        var spin=new[] {
+            Guard(0),Fight(.065f,.915f,3,.08f,-.38f,65,-5,-.075f),
+            Fight(.13f,.860f,13,-.24f,-.25f,119,-13,-.11f),
+            View(Fight(.21f,.825f,12,-.12f,-.29f,174,-22,-.075f),"side"),
+            View(Fight(.28f,.840f,5,.21f,-.33f,225,-26,-.01f),"rear"),
+            View(Fight(.335f,.800f,-5,.39f,-.175f,278,-12,.065f),"rear"),
+            View(Fight(.375f,.825f,-14,.47f,-.115f,317,12,.12f),"side"),
+            Strike(Fight(.42f,.915f,-23,.51f,-.18f,355,26,.16f)),
+            Fight(.475f,.865f,-27,.42f,-.33f,385,22,.17f),
+            Fight(.555f,.870f,-19,.20f,-.38f,409,5,.105f),
+            Fight(.66f,.930f,-9,.10f,-.36f,409,-10,.015f),
+            Fight(.75f,.953f,-6,.15f,-.40f,398,-3,-.015f),Guard(.84f)
         };
-        Move(skill[6],"NearFootTarget",-.33f,.43f); Move(skill[6],"FarFootTarget",.49f,.34f);
-        Move(skill[7],"NearFootTarget",-.39f,.72f); Move(skill[7],"FarFootTarget",.42f,.58f);
-        Move(skill[8],"NearFootTarget",-.28f,.95f); Move(skill[8],"FarFootTarget",.44f,.65f);
-        Move(skill[9],"NearFootTarget",-.19f,.73f); Move(skill[9],"FarFootTarget",.53f,.52f);
-        Move(skill[10],"NearFootTarget",-.10f,.53f); Move(skill[10],"FarFootTarget",.55f,.38f);
-        Turn(skill[7],"NearFootTarget",-19); Turn(skill[8],"NearFootTarget",-26);
-        Turn(skill[8],"FarFootTarget",25);
-        // Consistent continuous blade winding on the early rear turn, then a reversal
-        // into the rising cut. Extra key below avoids interpolation through the body.
-        Turn(skill[5],"NearArmTarget",425); Turn(skill[6],"NearArmTarget",475);
-        Turn(skill[7],"NearArmTarget",529); Turn(skill[8],"NearArmTarget",584);
-        Turn(skill[9],"NearArmTarget",491); Turn(skill[10],"NearArmTarget",438);
-        Turn(skill[11],"NearArmTarget",350); Turn(skill[12],"NearArmTarget",324);
-        Turn(skill[13],"NearArmTarget",331); Turn(skill[14],"NearArmTarget",376); Turn(skill[15],"NearArmTarget",400);
-        skill[1].face = skill[6].face = skill[10].face = skill[12].face = "action";
-        skill[3].swordPerspective = .68f; skill[4].swordPerspective = .54f;
-        skill[12].swordPerspective = skill[13].swordPerspective = .66f;
+        Turn(spin[12],"NearArmTarget",395);
+        // The turning leg clears the ground before relocating; the supporting
+        // leg holds the floor. It plants before the .42 s cut, then steps home.
+        Feet(spin[2],-.50f,.238f,.50f,.244f,0,-6);
+        Feet(spin[3],-.50f,.238f,.34f,.37f,0,-18);
+        Feet(spin[4],-.50f,.238f,.43f,.39f,0,-12);
+        Feet(spin[5],-.50f,.238f,.58f,.29f);
+        Feet(spin[6],-.50f,.238f,.62f,.214f);
+        Feet(spin[7],-.50f,.238f,.62f,.214f);
+        Feet(spin[8],-.50f,.238f,.62f,.214f);
+        Feet(spin[9],-.50f,.238f,.60f,.32f,0,-9);
+        Feet(spin[10],-.50f,.238f,.53f,.29f);
+        spin[4].swordPerspective=.68f; spin[5].swordPerspective=.68f;
 
-        // Saved pre-v2 server events retain their one-contact timings. These aliases
-        // use the new drawing/pose language, with no invented second contact or trail.
-        var legacyAttack = new[] { Guard(0), Fight(.075f,.96f,15,-.62f,1.60f,135,-20,-.06f),
-            Fight(.14f,.94f,19,-.50f,1.91f,132,-25,-.07f),
-            Strike(Fight(.20f,.97f,-23,.57f,1.34f,-2,30,.12f)),
-            Fight(.27f,.93f,-29,.65f,1.11f,-37,38,.15f),
-            Fight(.43f,1.01f,-8,-.15f,1.30f,22,-13,.035f), Guard(.60f) };
-        var legacySkill = new[] { Guard(0), Fight(.08f,.88f,20,-.59f,1.12f,83,-14,-.095f),
-            View(Fight(.18f,.85f,23,-.35f,1.05f,164,-29,-.10f),"side"),
-            View(Fight(.28f,.85f,15,.17f,1.12f,218,-38,-.065f),"rear"),
-            View(Strike(Fight(.35f,.93f,-3,.58f,1.19f,282,24,.085f)),"side"),
-            Strike(Fight(.40f,1.08f,-15,.62f,1.89f,425,40,.16f)),
-            Fight(.51f,1.09f,-7,.21f,2.20f,475,26,.13f),
-            Fight(.70f,1.01f,-11,-.15f,1.42f,426,-19,.04f), Guard(1f) };
-        Turn(legacySkill[8],"NearArmTarget",400);
-        legacyAttack[4].swordPerspective = .78f;
-        legacySkill[3].swordPerspective = .68f; legacySkill[4].swordPerspective = .54f;
+        var jump=new[] {
+            Guard(0),Fight(.065f,.875f,3,.08f,-.33f,65,-5,-.06f),
+            Fight(.135f,.805f,13,-.16f,.13f,121,-12,-.07f),
+            Fight(.195f,.960f,4,-.06f,.38f,132,-23,-.04f),
+            Fight(.27f,1.235f,-1,.02f,.41f,117,-25,.015f),
+            Fight(.355f,1.325f,-6,.13f,.36f,104,-12,.075f),
+            Fight(.405f,1.285f,-12,.27f,.22f,74,0,.13f),
+            Strike(Fight(.46f,1.135f,-25,.47f,-.17f,1,22,.19f)),
+            Fight(.515f,.905f,-27,.44f,-.28f,-20,27,.19f),
+            Fight(.58f,.790f,-17,.29f,-.36f,-20,16,.14f),
+            Fight(.668f,.865f,-9,.13f,-.39f,16,-9,.06f),
+            Fight(.754f,.945f,-6,.15f,-.40f,33,-4,-.01f),Guard(.84f)
+        };
+        Feet(jump[3],-.46f,.34f,.48f,.29f,-14,-10);
+        Feet(jump[4],-.49f,.90f,.35f,.68f,-26,18);
+        Feet(jump[5],-.37f,1.04f,.47f,.89f,-22,22);
+        Feet(jump[6],-.30f,.90f,.51f,.64f,-14,11);
+        Feet(jump[7],-.30f,.56f,.56f,.36f,-5,0);
+        Feet(jump[8],-.39f,.29f,.56f,.214f);
+        Feet(jump[9],-.43f,.238f,.56f,.214f);
+        Feet(jump[10],-.43f,.238f,.56f,.214f);
+        Feet(jump[11],-.48f,.275f,.52f,.25f);
+        Turn(jump[1],"ScarfLong",-3);
+        Turn(jump[2],"ScarfLong",-4);
+        Turn(jump[3],"ScarfLong",-2);
+        jump[8].swordPerspective=.80f; jump[9].swordPerspective=.80f;
 
-        var hit = new[] { Guard(0), Fight(.05f,1.00f,8,-.51f,1.27f,58,-16,-.025f), Fight(.12f,1.015f,2,-.44f,1.24f,49,11), Guard(.2f) };
-        var death = new[] { Guard(0), Body(P(.18f),.98f,8,-8,-14), Body(P(.4f),1,5,8,20), Body(P(.66f),1,-5,5,8), Body(P(.9f),1,-5,5,0) };
-        Move(death[1],"Root",.08f,.04f); Turn(death[1],"Root",10);
-        Move(death[2],"Root",.5f,.22f); Turn(death[2],"Root",45);
-        Move(death[3],"Root",.98f,.48f); Turn(death[3],"Root",85);
-        Move(death[4],"Root",.98f,.45f); Turn(death[4],"Root",82);
-        foreach (var p in death)
+        var skill=new[] {
+            Guard(0),Fight(.07f,.87f,5,.05f,-.40f,60,-5,-.075f),
+            Fight(.14f,.79f,15,-.22f,-.25f,117,-15,-.12f),
+            View(Fight(.215f,.79f,13,-.14f,-.32f,173,-23,-.09f),"side"),
+            View(Fight(.285f,.825f,6,.16f,-.34f,228,-28,-.01f),"rear"),
+            View(Fight(.345f,.89f,-8,.40f,-.26f,295,-10,.09f),"side"),
+            Strike(Fight(.40f,1.045f,-15,.38f,.23f,425,24,.15f)),
+            Fight(.475f,1.24f,-6,.14f,.43f,477,13,.12f),
+            View(Fight(.565f,1.33f,4,-.10f,.36f,518,-13,.075f),"side"),
+            View(Fight(.66f,1.35f,9,-.19f,.25f,563,-22,.04f),"rear"),
+            View(Fight(.755f,1.32f,4,-.01f,.40f,498,-20,.06f),"side"),
+            Fight(.84f,1.275f,-4,.19f,.37f,455,-12,.105f),
+            Fight(.885f,1.17f,-16,.36f,.02f,403,4,.16f),
+            Strike(Fight(.92f,.95f,-29,.51f,-.22f,350,28,.23f)),
+            Fight(.98f,.775f,-25,.41f,-.32f,335,25,.22f),
+            Fight(1.06f,.795f,-17,.25f,-.39f,342,9,.17f),
+            Fight(1.16f,.865f,-11,.09f,-.40f,378,-11,.07f),
+            Fight(1.245f,.949f,-7,.15f,-.40f,394,-4,-.005f),Guard(1.32f)
+        };
+        Turn(skill[18],"NearArmTarget",395);
+        Feet(skill[3],-.50f,.238f,.34f,.37f,0,-18);
+        Feet(skill[4],-.50f,.238f,.48f,.34f,0,-9);
+        Feet(skill[5],-.50f,.238f,.56f,.214f);
+        Feet(skill[6],-.46f,.36f,.52f,.29f,-14,-5);
+        Feet(skill[7],-.45f,.79f,.34f,.59f,-23,15);
+        Feet(skill[8],-.48f,.97f,.32f,.78f,-26,22);
+        Feet(skill[9],-.34f,1.04f,.42f,.86f,-24,19);
+        Feet(skill[10],-.31f,.94f,.48f,.75f,-20,16);
+        Feet(skill[11],-.24f,.83f,.53f,.60f,-15,9);
+        Feet(skill[12],-.23f,.58f,.58f,.32f,-8,0);
+        Feet(skill[13],-.32f,.30f,.60f,.214f);
+        Feet(skill[14],-.42f,.238f,.60f,.214f);
+        Feet(skill[15],-.42f,.238f,.60f,.214f);
+        Feet(skill[16],-.44f,.30f,.58f,.214f,-8,0);
+        Feet(skill[17],-.50f,.238f,.52f,.26f);
+        // The long panel moves away from the floor while the pelvis compresses.
+        Turn(skill[1],"ScarfLong",-4);
+        Turn(skill[2],"ScarfLong",-6);
+        Turn(skill[3],"ScarfLong",-5);
+        Turn(skill[4],"ScarfLong",-2);
+        skill[4].swordPerspective=.70f; skill[5].swordPerspective=.70f;
+        skill[14].swordPerspective=.76f; skill[15].swordPerspective=.76f;
+
+        var hit=new[] {Guard(0),Fight(.035f,.935f,6,.03f,-.29f,53,-9,-.065f),
+            Fight(.075f,.90f,10,-.02f,-.30f,61,-5,-.085f),
+            Fight(.135f,.931f,-2,.13f,-.36f,43,6,-.04f),Guard(.20f)};
+
+        // Loss of support -> knee collapse -> attempted brace -> shoulder/head
+        // follow -> floor settle. The root never tips the whole standing puppet.
+        var death=new[] {
+            Guard(0),Fight(.09f,.895f,8,.02f,-.26f,66,-8,-.06f),
+            Fight(.205f,.68f,-3,.17f,-.31f,45,10,-.01f),
+            Fight(.34f,.415f,-20,.31f,-.35f,22,17,.10f),
+            Fight(.465f,.21f,-31,.37f,-.29f,9,22,.24f),
+            Fight(.57f,.085f,-37,.43f,-.15f,10,16,.37f),
+            Fight(.655f,.035f,-31,.48f,-.04f,10,-9,.43f),
+            Fight(.735f,.065f,-28,.45f,-.05f,11,4,.44f),
+            Fight(.82f,.038f,-29,.46f,-.04f,10,1,.44f),
+            Fight(.90f,.038f,-29,.46f,-.04f,10,0,.44f)
+        };
+        var hipRoll=new[]{-1.25f,0,-8,-20,-32,-43,-49,-47,-49,-49};
+        for(var i=0;i<death.Length;i++)
         {
-            p.ikWeight=0; var t=p.time/.9f;
-            Turn(p,"ThighNear",t*15); Turn(p,"ShinNear",-t*20); Turn(p,"ThighFar",-t*10); Turn(p,"ShinFar",t*18);
-            Turn(p,"UpperArmNear",t*15); Turn(p,"ForearmNear",-t*20); Turn(p,"Head",5*t);
+            var p=death[i]; Turn(p,"Hip",hipRoll[i]);
+            if(i==0) continue;
+            // The pelvis lands on its painted lower edge; its bone origin is
+            // above that edge. Keep the hands and ankles on their own floor goals.
+            var settleLift=.055f*Mathf.Clamp01((i-4)/2f);
+            var hip=p.positions["Hip"]; Move(p,"Hip",hip.x,hip.y+settleLift);
+            Turn(p,"Head",i<4?5:Mathf.Lerp(-5,-13,(i-4)/5f));
+            if(i>=5) p.face="blink";
+            var nearX=i<3?-.50f:Mathf.Lerp(-.50f,-.26f,Mathf.Clamp01((i-2)/3f));
+            // Once the hip rolls onto its side the unloaded rear ankle folds up.
+            // Pinning both ankles to the floor here forces the far IK knee through
+            // the floor as the pelvis passes below it.
+            var fold=Mathf.Clamp01((i-2)/3f);
+            var farX=Mathf.Lerp(.50f,.78f,fold);
+            Feet(p,nearX,.238f,farX,Mathf.Lerp(.214f,.84f,fold),0,-24*fold);
+            // The short coat panel folds across the floor as the pelvis rolls;
+            // retaining its upright attachment angle stabbed its tip below Y=0.
+            Turn(p,"ScarfShort",i==1?-8:i==2?-28:-48);
+            Turn(p,"ScarfLong",i==2?-5:i==3 || i==4?-14:i==5?-7:0);
+            // Recompute hand anchors after the pelvis loses tension.
+            // Release the blade downwards immediately; do not lift it back into
+            // the guard while the knees are already collapsing.
+            Reach(p,"NearArmTarget","UpperArmNear",i==1?.20f:i==2?.24f:.30f,
+                (i==1?-.42f:i==2?-.43f:i==3?-.40f:-.36f)-settleLift,i==1?20:i==2?10:6);
+            Reach(p,"FarArmTarget","UpperArmFar",i<4?.22f:.33f,(i<4?-.44f:-.02f)-settleLift,i<4?-10:62);
         }
-        return new[]
-        {
-            Clip("idle",idle,true), Clip("run",run.ToArray(),true),
-            Clip("attack",legacyAttack,false,.20f), Clip("attack_cross",cross,false,.24f,.52f),
-            Clip("attack_spin",spin,false,.42f), Clip("attack_jump",jump,false,.46f),
-            Clip("skill",skill,false,.40f,.92f), Clip("skill_legacy",legacySkill,false,.40f),
-            Clip("hit",hit,false), Clip("death",death,false)
+        // The final impact is held; no autonomous sine wiggle continues after death.
+        death[death.Length-1]=CopyPose(death[death.Length-2],.9f);
+
+        var legacyAttack=new[] {Guard(0),CopyPose(cross[2],.075f),CopyPose(cross[3],.14f),
+            Strike(CopyPose(cross[5],.20f)),CopyPose(cross[6],.27f),CopyPose(cross[13],.43f),Guard(.60f)};
+        var legacySkill=new[] {Guard(0),CopyPose(skill[2],.08f),CopyPose(skill[3],.18f),
+            CopyPose(skill[4],.28f),CopyPose(skill[5],.35f),Strike(CopyPose(skill[6],.40f)),
+            CopyPose(skill[7],.51f),CopyPose(skill[17],.70f),Guard(1f)};
+        Feet(legacySkill[6],-.50f,.238f,.50f,.214f);
+        Turn(legacySkill[8],"NearArmTarget",395);
+        return new[] {
+            Clip("idle",idle,true),Clip("run",run.ToArray(),true),
+            Clip("attack",legacyAttack,false,.20f),Clip("attack_cross",cross,false,.24f,.52f),
+            Clip("attack_spin",spin,false,.42f),Clip("attack_jump",jump,false,.46f),
+            Clip("skill",skill,false,.40f,.92f),Clip("skill_legacy",legacySkill,false,.40f),
+            Clip("hit",hit,false),Clip("death",death,false)
         };
     }
+
     static Vector3 PosePosition(Pose pose, string key)
     {
         if (!pose.positions.TryGetValue(key, out var value)) return restPositions[key];
@@ -667,7 +754,12 @@ public static class KaelAssetBuilder
     static AnimationCurve PositionCurve(Pose[] poses, string key, int axis, float frameRate)
     {
         var curve = new AnimationCurve(poses.Select(p => new Keyframe(p.time, PosePosition(p, key)[axis])).ToArray());
-        Smooth(curve, poses);
+        Smooth(curve, poses, key);
+        // A planted ankle is a floor anchor, not a socket on the torso drawing.
+        // Mirroring it when the pelvis swaps to its rear drawing teleported the
+        // supporting foot by .71 world units. Horizontal steps are authored by
+        // Feet(); only the drawing-specific sole height needs Y registration.
+        if(axis==0 && (key=="NearFootTarget" || key=="FarFootTarget")) return curve;
         var registration = RegisteredTargetEffector(key) ?? key;
         if (activeLayout.viewJoints == null || !activeLayout.viewJoints.Any(value => value.name == registration)) return curve;
 
@@ -727,7 +819,7 @@ public static class KaelAssetBuilder
                 clip.SetCurve(binding,typeof(Transform),"m_LocalPosition."+"xyz"[axis],PositionCurve(poses,key,axis,clip.frameRate));
             }
             var rotation=new AnimationCurve(poses.Select(p=>new Keyframe(p.time,p.rotations.TryGetValue(key,out var value)?value:restRotations[key])).ToArray());
-            Smooth(rotation,poses); clip.SetCurve(binding,typeof(Transform),"localEulerAnglesRaw.z",rotation);
+            Smooth(rotation,poses,key); clip.SetCurve(binding,typeof(Transform),"localEulerAnglesRaw.z",rotation);
             if (key == "Sword")
             {
                 var perspective = new AnimationCurve(poses.Select(p => new Keyframe(p.time,p.swordPerspective)).ToArray());
@@ -794,6 +886,7 @@ public static class KaelAssetBuilder
                 EditorCurveBinding.PPtrCurve(binding, typeof(SpriteRenderer), "m_Sprite"), swaps);
             clip.SetCurve(binding, typeof(SpriteRenderer), "m_SortingOrder", new AnimationCurve(sort));
         }
+        BakeSecondaryMotion(clip,poses,loop);
         var events=new List<AnimationEvent>();
         for (var i = 0; i < impacts.Length; i++)
         {
@@ -841,7 +934,53 @@ public static class KaelAssetBuilder
         };
         File.WriteAllText(Fingerprints, JsonUtility.ToJson(manifest, true) + Environment.NewLine);
     }
-    static void Smooth(AnimationCurve curve,Pose[] poses)
+    static void BakeSecondaryMotion(AnimationClip clip,Pose[] poses,bool loop)
+    {
+        var channels=new[]{"ScarfLongBend","ScarfLongTip","ScarfShortBend","ScarfShortTip","HairBend","HairTip"};
+        var rates=new[]{19f,15f,24f,18f,32f,25f};
+        var damping=new[]{.70f,.68f,.76f,.72f,.82f,.78f};
+        var duration=poses.Last().time;
+        var frames=Mathf.CeilToInt(duration*60);
+        for(var channel=0;channel<channels.Length;channel++)
+        {
+            var key=channels[channel];
+            var drive=new AnimationCurve(poses.Select(p=>new Keyframe(p.time,p.rotations[key])).ToArray());
+            Smooth(drive,poses);
+            var output=new List<Keyframe>();
+            var angle=drive.Evaluate(0); var velocity=0f;
+            // Warm a cyclic clip to its periodic response; action curves start from
+            // the compatible quiet guard. This cost exists only in the exporter.
+            var cycles=loop?4:1;
+            for(var cycle=0;cycle<cycles;cycle++)
+            {
+                for(var frame=0;frame<=frames;frame++)
+                {
+                    var time=Mathf.Min(duration,frame/60f);
+                    if(frame>0) for(var substep=0;substep<4;substep++)
+                    {
+                        var dt=(time-Mathf.Min(duration,(frame-1)/60f))/4;
+                        var target=drive.Evaluate(time-dt*(3-substep));
+                        var rate=rates[channel];
+                        velocity+=((target-angle)*rate*rate-2*damping[channel]*rate*velocity)*dt;
+                        angle+=velocity*dt;
+                    }
+                    if(cycle!=cycles-1) continue;
+                    var recovery=loop?1:1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(duration*.82f,duration,time));
+                    output.Add(new Keyframe(time,angle*recovery));
+                }
+            }
+            if(loop) { var end=output[output.Count-1]; end.value=output[0].value; output[output.Count-1]=end; }
+            var curve=new AnimationCurve(output.ToArray());
+            for(var i=0;i<curve.length;i++)
+            {
+                AnimationUtility.SetKeyLeftTangentMode(curve,i,AnimationUtility.TangentMode.ClampedAuto);
+                AnimationUtility.SetKeyRightTangentMode(curve,i,AnimationUtility.TangentMode.ClampedAuto);
+            }
+            clip.SetCurve(AnimationUtility.CalculateTransformPath(bones[key],root.transform),typeof(Transform),"localEulerAnglesRaw.z",curve);
+        }
+    }
+
+    static void Smooth(AnimationCurve curve,Pose[] poses,string channel=null)
     {
         for(var i=0;i<curve.length;i++)
         {
@@ -850,7 +989,9 @@ public static class KaelAssetBuilder
         }
         for(var i=1;i<poses.Length;i++)
         {
-            if(!poses[i].linearIncoming) continue;
+            // Fast contact spacing belongs to the weapon hand. Applying this to
+            // every body channel made hips, neck and both feet change speed at once.
+            if(!poses[i].linearIncoming || channel!="NearArmTarget") continue;
             AnimationUtility.SetKeyRightTangentMode(curve,i-1,AnimationUtility.TangentMode.Linear);
             AnimationUtility.SetKeyLeftTangentMode(curve,i,AnimationUtility.TangentMode.Linear);
         }

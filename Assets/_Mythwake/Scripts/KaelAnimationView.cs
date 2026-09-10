@@ -10,6 +10,7 @@ public sealed class KaelAnimationView : MonoBehaviour
     RawImage surface;
     int cell = -1;
     float idleAge, runAge;
+    string presentedState;
     Vector2 lastPosition;
     bool hadPosition;
     float characterHeight;
@@ -39,12 +40,21 @@ public sealed class KaelAnimationView : MonoBehaviour
         if (!gameObject.activeSelf) gameObject.SetActive(true);
         if (Rig == null) throw new InvalidOperationException("Kael: required rig/prefab is unavailable.");
         delta = Mathf.Max(0, delta);
-        idleAge += delta;
-        if (state == "run" && delta > 0 && hadPosition)
+        var entered = presentedState != state;
+        // Authored actions settle into the start of the readiness loop. An idle
+        // clock that ran invisibly through the attack picked an unrelated phase;
+        // a reused run clock likewise began on an arbitrary airborne foot pose.
+        if (state == "idle") idleAge = entered ? 0f : idleAge + delta;
+        if (state == "run")
         {
-            var speed = Vector2.Distance(topPosition, lastPosition) / delta;
-            runAge += delta * Mathf.Clamp(speed / 285f, .1f, 3);
+            if (entered) runAge = 0f;
+            if (delta > 0 && hadPosition)
+            {
+                var speed = Vector2.Distance(topPosition, lastPosition) / delta;
+                runAge += delta * Mathf.Clamp(speed / 285f, 0f, 3);
+            }
         }
+        presentedState = state;
         lastPosition = topPosition;
         hadPosition = true;
         surface.rectTransform.localScale = Vector3.one;
@@ -81,6 +91,7 @@ public sealed class KaelAnimationView : MonoBehaviour
     public void ResetView()
     {
         idleAge = runAge = 0;
+        presentedState = null;
         effectSequence = -1;
         hadPosition = false;
         surface.rectTransform.localScale = Vector3.one;

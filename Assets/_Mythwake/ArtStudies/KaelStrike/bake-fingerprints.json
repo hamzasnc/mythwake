@@ -1,0 +1,12 @@
+{
+    "files": [
+        {
+            "path": "Assets/_Mythwake/ArtStudies/KaelStrike/strike_study_baked.anim",
+            "sha256": "3293a513a5166a17fdaa8cc558f1b97946955d88f5d3624d85978a0d9ed73950"
+        },
+        {
+            "path": "Assets/_Mythwake/ArtStudies/KaelStrike/KaelStrikeStudy.prefab",
+            "sha256": "526baf16e37e1649ea12b20590c7658c7ddeffb4db16cc2cae018f5b4060a25d"
+        }
+    ]
+}

@@ -2,43 +2,43 @@
     "clips": [
         {
             "path": "Assets/_Mythwake/Resources/Characters/Kael/Animations/GeneratedV2/attack.anim",
-            "sha256": "380418a55d77bc549ab973b3441290a7f090a00d448fa129d4f0c9d631b36316"
+            "sha256": "d6bd125bbe5c61e053602e878689888bb4234d2f218e9ec1e6463b01b7c9da61"
         },
         {
             "path": "Assets/_Mythwake/Resources/Characters/Kael/Animations/GeneratedV2/attack_cross.anim",
-            "sha256": "bd193e2974b845f478a445f6269e64e6f81864b0639db0b0b058c96c5b565856"
+            "sha256": "5cee3bfc6411d39d4d69eb21dce30dc6dc2e2e861390a3dc5c6275a4bd3e4d64"
         },
         {
             "path": "Assets/_Mythwake/Resources/Characters/Kael/Animations/GeneratedV2/attack_jump.anim",
-            "sha256": "b2e64d89de29c5b125820a84d339604fe7bb444f1d2073df1778bba28d430fa9"
+            "sha256": "e9a9b669e21de5635ce3de0b2b0b460d1dc339b02694a772aa0ec48fb6ea3aca"
         },
         {
             "path": "Assets/_Mythwake/Resources/Characters/Kael/Animations/GeneratedV2/attack_spin.anim",
-            "sha256": "c49e9b81020301efa373959ac04d9a4faa5e151328bc193e4470847301777abc"
+            "sha256": "fca1ce86abb1ca3076e9f020f5bc246a3dd8c554823b23e33def1b965315bd07"
         },
         {
             "path": "Assets/_Mythwake/Resources/Characters/Kael/Animations/GeneratedV2/death.anim",
-            "sha256": "3ec8345d5d5ea6bc64c5c44c87c5d8b466fcccda9672f10be41f51ebd9165b7f"
+            "sha256": "299590ac5b312b694e0d97f53217feb4ab843992305209d6e3656928958bc905"
         },
         {
             "path": "Assets/_Mythwake/Resources/Characters/Kael/Animations/GeneratedV2/hit.anim",
-            "sha256": "fe1300e6c70b4d773c7d9e14e8bf55258dbcb2b2774bb274aea28f96722a0a82"
+            "sha256": "926ce634b653fea46905fe8d715f2e60b656bd897ccf0022ca5f8598c91ca1e0"
         },
         {
             "path": "Assets/_Mythwake/Resources/Characters/Kael/Animations/GeneratedV2/idle.anim",
-            "sha256": "8e006c03ff2af358e9ed68a1a2f9589563e8873ca11e77325081d315b4ff1361"
+            "sha256": "b822b9fb998072f31a2da7642dbc1469400d697934c4c0b7ddd1118aba81d36d"
         },
         {
             "path": "Assets/_Mythwake/Resources/Characters/Kael/Animations/GeneratedV2/run.anim",
-            "sha256": "c9601abcd4d609eb6d8f075672086b20207d4107244bbdeeaf76eb63848c87b4"
+            "sha256": "dbdf70cdbb7a988d2a0668c1e83e246f861a70f08f39d5a23b7622f7d2470abe"
         },
         {
             "path": "Assets/_Mythwake/Resources/Characters/Kael/Animations/GeneratedV2/skill.anim",
-            "sha256": "791c3981ddf11bacc0b5f747c7a140c1e7e399d7c767f3665b453226ecd844e0"
+            "sha256": "d175d4f64aff4f525683934ce55a578446075fc5b9b1b04e1665138d715ef1f0"
         },
         {
             "path": "Assets/_Mythwake/Resources/Characters/Kael/Animations/GeneratedV2/skill_legacy.anim",
-            "sha256": "11bb712ae7be898cc38a3da7d026bde122b6ab3dfd9a6ee5508fddc2df32a6b3"
+            "sha256": "b895f6715fd60650c9442da1437f8bb3d188a9ffbd20567c05e9032e7ecb1316"
         }
     ]
 }

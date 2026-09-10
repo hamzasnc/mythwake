@@ -59,6 +59,8 @@ Die Ulti hält kurz die Umgebung an und fokussiert den tatsächlichen Charakter.
 
 ## Prüfung
 
+Die anschließende Überarbeitung von Haltung, Ganzkörperclips, Standfüßen, Nachbewegung und Runtime-Übergängen ist in [KAEL_ANIMATION_REWORK.de.md](../../../docs/KAEL_ANIMATION_REWORK.de.md) dokumentiert. Die folgende Körperkorrektur bleibt als vorheriger Atlas-/Montagestand erhalten; aktuelle Animationsnachweise liegen separat unter `artifacts/kael/motion-rework`.
+
 `KaelAssetReview.Run` exportiert das echte Rig, prüft seine Daten und schreibt Posen. `KaelAssetReview.CaptureMotion` erzeugt eine getrennt gekennzeichnete Bewegungsprüfung ohne VFX. `KaelValidationSuite.RunAll` benötigt ein isoliertes `-mythwakeTestProfile`. `KaelGameplayAcceptance.Run` prüft und zeichnet den tatsächlichen Spielpfad auf; angeordnete Rigbilder ersetzen diese Aufnahme nicht.
 
 `KaelAssetReview.RebuildBodyReview` kombiniert Export, Prüfbilder und Bewegungsaufnahme mit `KaelBodyAssemblyReview`: neutrale Front-/Seiten-/Rückansichten, Kopfnicken und echte Kontaktposen. Die Pose-JSONs enthalten 14 Anschlussmessungen sowohl im Rendererraum als auch nach SpriteSkin-Bindtransformation. Fehlende Messpunkte sind ausdrücklich als nicht verfügbar markiert. Die Daten prüfen Montagefehler; sie bewerten keine gezeichnete Anatomie oder Animationswirkung automatisch.

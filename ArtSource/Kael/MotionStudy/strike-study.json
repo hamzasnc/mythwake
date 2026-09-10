@@ -1,0 +1,1197 @@
+{
+  "name": "strike_study",
+  "duration": 0.84,
+  "impact": 0.42,
+  "notes": "Single front-view strike, lower guard and open under-chin hand route on one constant IK branch. Free hand counterbalances clear of the thigh. Final resolved bones are baked offline. Atlas and head geometry unchanged; single contact .42, duration .84.",
+  "tracks": [
+    {
+      "bone": "Hip",
+      "property": "m_LocalPosition.x",
+      "keys": [
+        {
+          "time": 0,
+          "value": -0.06,
+          "velocity": 0
+        },
+        {
+          "time": 0.1,
+          "value": -0.12,
+          "velocity": -0.7
+        },
+        {
+          "time": 0.18,
+          "value": -0.16,
+          "velocity": 0
+        },
+        {
+          "time": 0.23,
+          "value": -0.13,
+          "velocity": 0.8
+        },
+        {
+          "time": 0.29,
+          "value": -0.09,
+          "velocity": 1
+        },
+        {
+          "time": 0.34,
+          "value": -0.02,
+          "velocity": 2
+        },
+        {
+          "time": 0.39,
+          "value": 0.08,
+          "velocity": 2
+        },
+        {
+          "time": 0.42,
+          "value": 0.13,
+          "velocity": 1.1
+        },
+        {
+          "time": 0.47,
+          "value": 0.16,
+          "velocity": 0
+        },
+        {
+          "time": 0.53,
+          "value": 0.14,
+          "velocity": -0.5
+        },
+        {
+          "time": 0.64,
+          "value": 0.04,
+          "velocity": -1
+        },
+        {
+          "time": 0.76,
+          "value": -0.04,
+          "velocity": -0.4
+        },
+        {
+          "time": 0.84,
+          "value": -0.06,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "Hip",
+      "property": "m_LocalPosition.y",
+      "keys": [
+        {
+          "time": 0,
+          "value": 1.29,
+          "velocity": 0
+        },
+        {
+          "time": 0.1,
+          "value": 1.25,
+          "velocity": -0.5
+        },
+        {
+          "time": 0.23,
+          "value": 1.23,
+          "velocity": 0
+        },
+        {
+          "time": 0.29,
+          "value": 1.24,
+          "velocity": 0.3
+        },
+        {
+          "time": 0.36,
+          "value": 1.28,
+          "velocity": 0.4
+        },
+        {
+          "time": 0.39,
+          "value": 1.29,
+          "velocity": 0
+        },
+        {
+          "time": 0.42,
+          "value": 1.275,
+          "velocity": -0.6
+        },
+        {
+          "time": 0.47,
+          "value": 1.24,
+          "velocity": -0.5
+        },
+        {
+          "time": 0.53,
+          "value": 1.23,
+          "velocity": 0
+        },
+        {
+          "time": 0.64,
+          "value": 1.25,
+          "velocity": 0.35
+        },
+        {
+          "time": 0.76,
+          "value": 1.285,
+          "velocity": 0.1
+        },
+        {
+          "time": 0.84,
+          "value": 1.29,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "Hip",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": 0,
+          "velocity": 0
+        },
+        {
+          "time": 0.15,
+          "value": 1.5,
+          "velocity": 8
+        },
+        {
+          "time": 0.27,
+          "value": 2,
+          "velocity": 0
+        },
+        {
+          "time": 0.34,
+          "value": 1,
+          "velocity": -20
+        },
+        {
+          "time": 0.42,
+          "value": -1.5,
+          "velocity": -20
+        },
+        {
+          "time": 0.49,
+          "value": -2,
+          "velocity": 0
+        },
+        {
+          "time": 0.65,
+          "value": -0.5,
+          "velocity": 8
+        },
+        {
+          "time": 0.84,
+          "value": 0,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "Torso",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": -5,
+          "velocity": 0
+        },
+        {
+          "time": 0.1,
+          "value": 0,
+          "velocity": 65
+        },
+        {
+          "time": 0.18,
+          "value": 8,
+          "velocity": 0
+        },
+        {
+          "time": 0.23,
+          "value": 6,
+          "velocity": -40
+        },
+        {
+          "time": 0.3,
+          "value": 0,
+          "velocity": -85
+        },
+        {
+          "time": 0.35,
+          "value": -6,
+          "velocity": -130
+        },
+        {
+          "time": 0.39,
+          "value": -11,
+          "velocity": -80
+        },
+        {
+          "time": 0.42,
+          "value": -13,
+          "velocity": -50
+        },
+        {
+          "time": 0.47,
+          "value": -17,
+          "velocity": 0
+        },
+        {
+          "time": 0.55,
+          "value": -15,
+          "velocity": 40
+        },
+        {
+          "time": 0.67,
+          "value": -8,
+          "velocity": 45
+        },
+        {
+          "time": 0.78,
+          "value": -5.2,
+          "velocity": 7
+        },
+        {
+          "time": 0.84,
+          "value": -5,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "Head",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": 1,
+          "velocity": 0
+        },
+        {
+          "time": 0.12,
+          "value": -1,
+          "velocity": -15
+        },
+        {
+          "time": 0.25,
+          "value": -5,
+          "velocity": 0
+        },
+        {
+          "time": 0.32,
+          "value": -5,
+          "velocity": 0
+        },
+        {
+          "time": 0.39,
+          "value": 2,
+          "velocity": 150
+        },
+        {
+          "time": 0.445,
+          "value": 10,
+          "velocity": 0
+        },
+        {
+          "time": 0.49,
+          "value": 11,
+          "velocity": 0
+        },
+        {
+          "time": 0.61,
+          "value": 6,
+          "velocity": -40
+        },
+        {
+          "time": 0.74,
+          "value": 2,
+          "velocity": -15
+        },
+        {
+          "time": 0.84,
+          "value": 1,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "NearArmTarget",
+      "property": "m_LocalPosition.x",
+      "keys": [
+        {
+          "time": 0,
+          "value": -0.25,
+          "velocity": 0
+        },
+        {
+          "time": 0.1,
+          "value": -0.26,
+          "velocity": -0.05555555555555561
+        },
+        {
+          "time": 0.18,
+          "value": -0.26,
+          "velocity": 0.6153846153846155
+        },
+        {
+          "time": 0.23,
+          "value": -0.18,
+          "velocity": 2.181818181818182
+        },
+        {
+          "time": 0.29,
+          "value": -0.02,
+          "velocity": 2.9090909090909087
+        },
+        {
+          "time": 0.34,
+          "value": 0.14,
+          "velocity": 3.7647058823529402
+        },
+        {
+          "time": 0.375,
+          "value": 0.3,
+          "velocity": 5.166666666666667
+        },
+        {
+          "time": 0.4,
+          "value": 0.45,
+          "velocity": 5.111111111111113
+        },
+        {
+          "time": 0.42,
+          "value": 0.53,
+          "velocity": 1.6666666666666672
+        },
+        {
+          "time": 0.46,
+          "value": 0.55,
+          "velocity": -0.11111111111111117
+        },
+        {
+          "time": 0.51,
+          "value": 0.52,
+          "velocity": -1.500000000000001
+        },
+        {
+          "time": 0.58,
+          "value": 0.37,
+          "velocity": -2.9285714285714284
+        },
+        {
+          "time": 0.65,
+          "value": 0.11,
+          "velocity": -3.333333333333333
+        },
+        {
+          "time": 0.73,
+          "value": -0.13,
+          "velocity": -2.4285714285714284
+        },
+        {
+          "time": 0.79,
+          "value": -0.23,
+          "velocity": -1.090909090909091
+        },
+        {
+          "time": 0.84,
+          "value": -0.25,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "NearArmTarget",
+      "property": "m_LocalPosition.y",
+      "keys": [
+        {
+          "time": 0,
+          "value": 1.5,
+          "velocity": 0
+        },
+        {
+          "time": 0.1,
+          "value": 1.43,
+          "velocity": -0.555555555555556
+        },
+        {
+          "time": 0.18,
+          "value": 1.4,
+          "velocity": -0.07692307692307698
+        },
+        {
+          "time": 0.23,
+          "value": 1.42,
+          "velocity": 0.45454545454545503
+        },
+        {
+          "time": 0.29,
+          "value": 1.45,
+          "velocity": 0.45454545454545486
+        },
+        {
+          "time": 0.34,
+          "value": 1.47,
+          "velocity": 0.470588235294118
+        },
+        {
+          "time": 0.375,
+          "value": 1.49,
+          "velocity": 0.5000000000000004
+        },
+        {
+          "time": 0.4,
+          "value": 1.5,
+          "velocity": 0.2222222222222225
+        },
+        {
+          "time": 0.42,
+          "value": 1.5,
+          "velocity": -1.6666666666666683
+        },
+        {
+          "time": 0.46,
+          "value": 1.4,
+          "velocity": -1.7777777777777763
+        },
+        {
+          "time": 0.51,
+          "value": 1.34,
+          "velocity": -0.8333333333333326
+        },
+        {
+          "time": 0.58,
+          "value": 1.3,
+          "velocity": 0.14285714285714296
+        },
+        {
+          "time": 0.65,
+          "value": 1.36,
+          "velocity": 0.9333333333333326
+        },
+        {
+          "time": 0.73,
+          "value": 1.44,
+          "velocity": 0.9285714285714277
+        },
+        {
+          "time": 0.79,
+          "value": 1.49,
+          "velocity": 0.545454545454546
+        },
+        {
+          "time": 0.84,
+          "value": 1.5,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "NearArmTarget",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": 112,
+          "velocity": 0
+        },
+        {
+          "time": 0.1,
+          "value": 118,
+          "velocity": 66.66666666666667
+        },
+        {
+          "time": 0.18,
+          "value": 124,
+          "velocity": 0.0
+        },
+        {
+          "time": 0.23,
+          "value": 118,
+          "velocity": -254.5454545454546
+        },
+        {
+          "time": 0.29,
+          "value": 96,
+          "velocity": -436.3636363636363
+        },
+        {
+          "time": 0.34,
+          "value": 70,
+          "velocity": -541.1764705882351
+        },
+        {
+          "time": 0.375,
+          "value": 50,
+          "velocity": -633.3333333333334
+        },
+        {
+          "time": 0.4,
+          "value": 32,
+          "velocity": -555.5555555555558
+        },
+        {
+          "time": 0.42,
+          "value": 25,
+          "velocity": -366.6666666666667
+        },
+        {
+          "time": 0.46,
+          "value": 10,
+          "velocity": -277.7777777777777
+        },
+        {
+          "time": 0.51,
+          "value": 0,
+          "velocity": -41.666666666666686
+        },
+        {
+          "time": 0.58,
+          "value": 5,
+          "velocity": 307.1428571428571
+        },
+        {
+          "time": 0.65,
+          "value": 43,
+          "velocity": 533.3333333333333
+        },
+        {
+          "time": 0.73,
+          "value": 85,
+          "velocity": 464.2857142857142
+        },
+        {
+          "time": 0.79,
+          "value": 108,
+          "velocity": 245.4545454545455
+        },
+        {
+          "time": 0.84,
+          "value": 112,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "FarArmTarget",
+      "property": "m_LocalPosition.x",
+      "keys": [
+        {
+          "time": 0,
+          "value": 0.61,
+          "velocity": 0
+        },
+        {
+          "time": 0.12,
+          "value": 0.5,
+          "velocity": -1
+        },
+        {
+          "time": 0.23,
+          "value": 0.42,
+          "velocity": 0
+        },
+        {
+          "time": 0.3,
+          "value": 0.5,
+          "velocity": 2
+        },
+        {
+          "time": 0.38,
+          "value": 0.73,
+          "velocity": 3
+        },
+        {
+          "time": 0.45,
+          "value": 0.855,
+          "velocity": 0.3
+        },
+        {
+          "time": 0.5,
+          "value": 0.86,
+          "velocity": 0
+        },
+        {
+          "time": 0.58,
+          "value": 0.78,
+          "velocity": -1.4
+        },
+        {
+          "time": 0.7,
+          "value": 0.64,
+          "velocity": -1
+        },
+        {
+          "time": 0.78,
+          "value": 0.61,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": 0.61,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "FarArmTarget",
+      "property": "m_LocalPosition.y",
+      "keys": [
+        {
+          "time": 0,
+          "value": 1.18,
+          "velocity": 0
+        },
+        {
+          "time": 0.12,
+          "value": 1.22,
+          "velocity": 0.5
+        },
+        {
+          "time": 0.23,
+          "value": 1.25,
+          "velocity": 0
+        },
+        {
+          "time": 0.3,
+          "value": 1.24,
+          "velocity": -0.8
+        },
+        {
+          "time": 0.38,
+          "value": 1.13,
+          "velocity": -1.0
+        },
+        {
+          "time": 0.45,
+          "value": 1.04,
+          "velocity": -1.1
+        },
+        {
+          "time": 0.5,
+          "value": 0.98,
+          "velocity": 0
+        },
+        {
+          "time": 0.58,
+          "value": 1.015,
+          "velocity": 0.7
+        },
+        {
+          "time": 0.7,
+          "value": 1.16,
+          "velocity": 0.4
+        },
+        {
+          "time": 0.78,
+          "value": 1.18,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": 1.18,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "FarArmTarget",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": -15,
+          "velocity": 0
+        },
+        {
+          "time": 0.12,
+          "value": -2,
+          "velocity": 100
+        },
+        {
+          "time": 0.23,
+          "value": 5,
+          "velocity": 0
+        },
+        {
+          "time": 0.3,
+          "value": -2,
+          "velocity": -100
+        },
+        {
+          "time": 0.38,
+          "value": -8,
+          "velocity": -40
+        },
+        {
+          "time": 0.45,
+          "value": -10,
+          "velocity": 0
+        },
+        {
+          "time": 0.5,
+          "value": -10,
+          "velocity": 0
+        },
+        {
+          "time": 0.58,
+          "value": -10,
+          "velocity": 0
+        },
+        {
+          "time": 0.7,
+          "value": -14,
+          "velocity": -20
+        },
+        {
+          "time": 0.78,
+          "value": -15,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": -15,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "NearFootTarget",
+      "property": "m_LocalPosition.x",
+      "keys": [
+        {
+          "time": 0,
+          "value": -0.42,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": -0.42,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "NearFootTarget",
+      "property": "m_LocalPosition.y",
+      "keys": [
+        {
+          "time": 0,
+          "value": 0.214,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": 0.214,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "NearFootTarget",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": 0,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": 0,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "FarFootTarget",
+      "property": "m_LocalPosition.x",
+      "keys": [
+        {
+          "time": 0,
+          "value": 0.49,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": 0.49,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "FarFootTarget",
+      "property": "m_LocalPosition.y",
+      "keys": [
+        {
+          "time": 0,
+          "value": 0.214,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": 0.214,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "FarFootTarget",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": 0,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": 0,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "ScarfLong",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": -6,
+          "velocity": 0
+        },
+        {
+          "time": 0.14,
+          "value": -8,
+          "velocity": -10
+        },
+        {
+          "time": 0.3,
+          "value": -8,
+          "velocity": 0
+        },
+        {
+          "time": 0.42,
+          "value": -5,
+          "velocity": 20
+        },
+        {
+          "time": 0.5,
+          "value": -4,
+          "velocity": 0
+        },
+        {
+          "time": 0.67,
+          "value": -7,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": -6,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "ScarfLongBend",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": -3,
+          "velocity": 0
+        },
+        {
+          "time": 0.14,
+          "value": -1,
+          "velocity": 20
+        },
+        {
+          "time": 0.28,
+          "value": 5,
+          "velocity": 0
+        },
+        {
+          "time": 0.36,
+          "value": 3,
+          "velocity": -20
+        },
+        {
+          "time": 0.43,
+          "value": -5,
+          "velocity": -140
+        },
+        {
+          "time": 0.52,
+          "value": -12,
+          "velocity": 0
+        },
+        {
+          "time": 0.64,
+          "value": -4,
+          "velocity": 70
+        },
+        {
+          "time": 0.74,
+          "value": -1,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": -3,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "ScarfLongTip",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": -2,
+          "velocity": 0
+        },
+        {
+          "time": 0.17,
+          "value": -1,
+          "velocity": 15
+        },
+        {
+          "time": 0.32,
+          "value": 6,
+          "velocity": 0
+        },
+        {
+          "time": 0.4,
+          "value": 5,
+          "velocity": -40
+        },
+        {
+          "time": 0.49,
+          "value": -7,
+          "velocity": -150
+        },
+        {
+          "time": 0.58,
+          "value": -11,
+          "velocity": 0
+        },
+        {
+          "time": 0.7,
+          "value": 0,
+          "velocity": 0
+        },
+        {
+          "time": 0.78,
+          "value": -1,
+          "velocity": -15
+        },
+        {
+          "time": 0.84,
+          "value": -2,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "ScarfShortBend",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": -2,
+          "velocity": 0
+        },
+        {
+          "time": 0.19,
+          "value": 0,
+          "velocity": 20
+        },
+        {
+          "time": 0.31,
+          "value": 4,
+          "velocity": 0
+        },
+        {
+          "time": 0.42,
+          "value": -1,
+          "velocity": -100
+        },
+        {
+          "time": 0.5,
+          "value": -9,
+          "velocity": 0
+        },
+        {
+          "time": 0.64,
+          "value": -2,
+          "velocity": 40
+        },
+        {
+          "time": 0.74,
+          "value": 0,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": -2,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "ScarfShortTip",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": -1,
+          "velocity": 0
+        },
+        {
+          "time": 0.24,
+          "value": 1,
+          "velocity": 20
+        },
+        {
+          "time": 0.36,
+          "value": 5,
+          "velocity": 0
+        },
+        {
+          "time": 0.48,
+          "value": -5,
+          "velocity": -120
+        },
+        {
+          "time": 0.57,
+          "value": -8,
+          "velocity": 0
+        },
+        {
+          "time": 0.72,
+          "value": 1,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": -1,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "HairBend",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": 0,
+          "velocity": 0
+        },
+        {
+          "time": 0.16,
+          "value": -1.5,
+          "velocity": 0
+        },
+        {
+          "time": 0.31,
+          "value": -1.3,
+          "velocity": 0
+        },
+        {
+          "time": 0.4,
+          "value": 1.5,
+          "velocity": 60
+        },
+        {
+          "time": 0.49,
+          "value": 3,
+          "velocity": 0
+        },
+        {
+          "time": 0.62,
+          "value": -1,
+          "velocity": 0
+        },
+        {
+          "time": 0.74,
+          "value": 0.4,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": 0,
+          "velocity": 0
+        }
+      ]
+    },
+    {
+      "bone": "HairTip",
+      "property": "localEulerAnglesRaw.z",
+      "keys": [
+        {
+          "time": 0,
+          "value": 0,
+          "velocity": 0
+        },
+        {
+          "time": 0.2,
+          "value": -1,
+          "velocity": 0
+        },
+        {
+          "time": 0.34,
+          "value": -1.7,
+          "velocity": 0
+        },
+        {
+          "time": 0.44,
+          "value": 2,
+          "velocity": 50
+        },
+        {
+          "time": 0.53,
+          "value": 3.2,
+          "velocity": 0
+        },
+        {
+          "time": 0.67,
+          "value": -1,
+          "velocity": 0
+        },
+        {
+          "time": 0.78,
+          "value": 0.3,
+          "velocity": 0
+        },
+        {
+          "time": 0.84,
+          "value": 0,
+          "velocity": 0
+        }
+      ]
+    }
+  ],
+  "nearArmFlip": true,
+  "shoulderArmorFollow": 0,
+  "drawingOrders": [
+    {
+      "drawing": "ForearmFar Art",
+      "order": 43
+    },
+    {
+      "drawing": "HandFar Art",
+      "order": 44
+    },
+    {
+      "drawing": "Sword Art",
+      "order": 65
+    },
+    {
+      "drawing": "HandNear Art",
+      "order": 66
+    }
+  ]
+}

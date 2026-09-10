@@ -161,6 +161,17 @@ public static class KaelAssetReview
         CaptureMotionFrames("artifacts/kael/pixel-repair-2/motion-final", 1024, 60);
     }
 
+    public static void RebuildMotionReview()
+    {
+        Run();
+        var args=Environment.GetCommandLineArgs();
+        var index=Array.IndexOf(args,"-kaelMotionReviewFolder");
+        var slug=index>=0 && index+1<args.Length?args[index+1]:"iteration1";
+        if(!System.Text.RegularExpressions.Regex.IsMatch(slug,"^[a-zA-Z0-9_-]+$"))
+            throw new ArgumentException("Use one simple motion review folder name.");
+        CaptureMotionFrames("artifacts/kael/motion-rework/"+slug,1024,60);
+    }
+
     static void CaptureMotionFrames(string outputFolder, int resolution, int frameRate)
     {
         var folder = Path.GetFullPath(outputFolder);
