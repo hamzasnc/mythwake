@@ -327,14 +327,14 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 5f54b83060f34694caced85effef4b43, type: 3}
   - id: corrupted_boar
     definition: {fileID: 4900000, guid: 91903f4aca551c9468fc84824cbeb840, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 024ce7e8c01a1374ab803465661a0292, type: 2}
     portrait: {fileID: 2800000, guid: 8825fc241fe339a4e8e267c66f45bd4e, type: 3}
     full: {fileID: 2800000, guid: 597b326f194e7d64fb86f288e0a628b7, type: 3}
     cutIn: {fileID: 0}
     sprite: {fileID: 21300000, guid: 597b326f194e7d64fb86f288e0a628b7, type: 3}
   - id: corrupted_crow
     definition: {fileID: 4900000, guid: 92c0905d593031c43b2c23adc002372a, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 4639844065bdfad46beae2bd81f4d786, type: 2}
     portrait: {fileID: 2800000, guid: d5374f990348bab4e887b02f524580a9, type: 3}
     full: {fileID: 2800000, guid: 5cf75194013f79f4c82538261d95f5e0, type: 3}
     cutIn: {fileID: 0}
@@ -348,7 +348,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 02865af0ee363534f91e950e34c86e82, type: 3}
   - id: corrupted_wolf
     definition: {fileID: 4900000, guid: a07a3c4b16329b0488e7edc8555cbe73, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 8bbd214c35b4fe9439204be5d627e301, type: 2}
     portrait: {fileID: 2800000, guid: cbf47f122b89f0547ab39afa353bac86, type: 3}
     full: {fileID: 2800000, guid: 932b3b02f88acce40a7adf405493a077, type: 3}
     cutIn: {fileID: 0}
@@ -362,7 +362,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 842271f3a24690d4b918995749a68486, type: 3}
   - id: crimson_wraith
     definition: {fileID: 4900000, guid: 4d2947b38df7520499328e2fbe53fc40, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: f0deb57c43137bd4987f3ccc29ef36a2, type: 2}
     portrait: {fileID: 2800000, guid: 71998f8242489974cb495e095b566535, type: 3}
     full: {fileID: 2800000, guid: b941bf6ab0ed0994fa0aa64ea430ed7e, type: 3}
     cutIn: {fileID: 0}
@@ -397,14 +397,14 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: df940e3c4d62e834cac17518e2b7e618, type: 3}
   - id: forest_wolf
     definition: {fileID: 4900000, guid: 5d3c94896cc0a7349bec2159547e7b95, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 2b7a05d96b64273419b71f49cf3e598e, type: 2}
     portrait: {fileID: 2800000, guid: e62aedb8eb95d2348be33dccc4305105, type: 3}
     full: {fileID: 2800000, guid: 510bcf45e8aa4f044ad2e5972ecb4953, type: 3}
     cutIn: {fileID: 0}
     sprite: {fileID: 21300000, guid: 510bcf45e8aa4f044ad2e5972ecb4953, type: 3}
   - id: fragment_construct
     definition: {fileID: 4900000, guid: caf17d54b0562a84396d9b73c168840a, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 61b017701dc048a49b6b31fc4af88475, type: 2}
     portrait: {fileID: 2800000, guid: c4f80ce28edf60349b9663688db0fb63, type: 3}
     full: {fileID: 2800000, guid: 74ee143f9cde7734aa1e95068bde832c, type: 3}
     cutIn: {fileID: 0}
@@ -425,7 +425,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 35ff071ed84ae874cbec144ea0028fd6, type: 3}
   - id: hollowed_archer
     definition: {fileID: 4900000, guid: 1181a30847d3572468d969d5539cbe25, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 22e84421b9318604db448157a9507b39, type: 2}
     portrait: {fileID: 2800000, guid: 5d0f5b97b5696a243a1945626d854dc7, type: 3}
     full: {fileID: 2800000, guid: e60aeeb2cf56899449d17f0560ad0e82, type: 3}
     cutIn: {fileID: 0}
@@ -439,7 +439,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 8e2f2aa35878d1047bc76d5cf6ce96e4, type: 3}
   - id: hollowed_soldier
     definition: {fileID: 4900000, guid: b640d21bdd98fdf459a7b23550a83ba7, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: ec6c90c7853512b47b5f08c60cd75a73, type: 2}
     portrait: {fileID: 2800000, guid: 201131a28cce66c419bd7bdaaec73c26, type: 3}
     full: {fileID: 2800000, guid: 56a76fdacf844a84ea43ef89f7d565a2, type: 3}
     cutIn: {fileID: 0}
@@ -460,7 +460,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: b326bb0e507b2bc4097afa1a4af1d1e4, type: 3}
   - id: riftborn_stalker
     definition: {fileID: 4900000, guid: c4941a331a9d13748807dce7c584a9d6, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 187d9ddc4c34d354c996197a69e3de3c, type: 2}
     portrait: {fileID: 2800000, guid: b368b80a2ec23df4e86c00194c65f6fd, type: 3}
     full: {fileID: 2800000, guid: 1ce8c851b7c1dd445baa84c1a3a8f824, type: 3}
     cutIn: {fileID: 0}
@@ -474,7 +474,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 574e65d46e4b3834ea17698e0c35cc75, type: 3}
   - id: riftborn_wisp
     definition: {fileID: 4900000, guid: ad95c7a8d5953d443b15a58182a56a35, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 26e9f3dc18f8f4143a7b6c24b8d51ed5, type: 2}
     portrait: {fileID: 2800000, guid: 335b32e93f94b3d4aa3b62d97248406f, type: 3}
     full: {fileID: 2800000, guid: 841ff79bcb1545a43b6cbb21745efe0e, type: 3}
     cutIn: {fileID: 0}
@@ -488,7 +488,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: bbbd8000e534e904389b734db6d908a7, type: 3}
   - id: wild_boar
     definition: {fileID: 4900000, guid: 7e8b680585a1f1d469dc928e977c27c8, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: ba37731f844216d4fa7bb7458621d5b0, type: 2}
     portrait: {fileID: 2800000, guid: c0024b3aeb429aa48a31ddd10446f088, type: 3}
     full: {fileID: 2800000, guid: 726065cb64856f04c82dc87e5025f76c, type: 3}
     cutIn: {fileID: 0}

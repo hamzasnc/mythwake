@@ -29,8 +29,6 @@ before the Unity check. `_setup_check.png` in each package compares the setup po
 
 ## State
 
-Rigged: all 9 bosses of the Boss System (Hollowtusk Alpha, Riftborn Treant, Crimson Wraith Adept, Hollow Spire
-Warden, Obsidian Vault Sentinel, Fragment Devourer, Corrupted Guardian of the Deep, Dragon Echo of the Sky, False
-Guardian Construct) and the 5 Guardian Raid bosses (Celestial Turtle, Dragon of the Sky, Hollowed Leviathan,
-Six-Legged Worldbearer, Craterborn Guardian).
-Next: the 11 monsters (part lists are in `PARTS`).
+All 25 are rigged: the 11 monsters of the Enemy System, the 9 bosses of the Boss System and the 5 Guardian Raid
+bosses. Known weak spots for a later polish pass: the Riftborn Wisp barely moves in its skill (its crescents could
+orbit), and the Hollowed Soldier lifts its shield overhead with the arm swing.
