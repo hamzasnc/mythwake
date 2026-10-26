@@ -80,15 +80,17 @@ namespace Mythwake.Core.Meta
             var gear = Gear.StatsFor(state, content, owned.HeroId);
             var hero = content.Hero(owned.HeroId);
             var relic = Relics.SlotOpen(state, content) ? Relics.Equipped(state, owned.HeroId) : null;
+            var awakened = Awakening.StatPermille(content, owned);
             var fragments = Fragments.BonusFor(state, content, owned.HeroId, hero.Aspect, Relics.FragmentBoost(content, relic));
             var passives = fragments.Passives;
             if (relic != null)
                 passives.AddRange(Relics.Passives(content, relic));
+            passives.AddRange(Awakening.Passives(content, owned));
             return new HeroProgress
             {
                 Hero = hero, Level = owned.Level, Stars = owned.Stars,
                 Flat = new Stats { Hp = gear.Hp, Attack = gear.Attack, Defense = gear.Defense, CritRate = gear.CritRate },
-                AttackPermille = fragments.AttackPermille, HpPermille = fragments.HpPermille, Passives = passives
+                AttackPermille = fragments.AttackPermille + awakened, HpPermille = fragments.HpPermille + awakened, Passives = passives
             };
         }
     }
@@ -306,6 +308,10 @@ namespace Mythwake.Core.Meta
     {
         public static int LevelCap(GameContent content, OwnedHero hero) =>
             content.Progression.LevelCapBase + content.Progression.LevelCapPerStar * (hero.Stars - 1);
+
+        /// <summary>Star cap of an owned hero: awakened heroes count as Transcendent.</summary>
+        public static int MaxStars(GameContent content, OwnedHero hero) =>
+            MaxStars(content, hero.Awakened ? Grade.Transcendent : content.Hero(hero.HeroId).Grade);
 
         public static int MaxStars(GameContent content, Grade grade)
         {

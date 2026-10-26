@@ -15,6 +15,7 @@ Lore and names still come only from the doc; everything here is structure, balan
 | 2026-10-26 | Relics: one per doc boss, named object + boss name, slot opens with Fragment Shrine level 2, numbers in `docs/systems/RELICS.md`. | Developer |
 | 2026-10-26 | Trial of Fragments: five towers (one per Aspect), no daily limit, no Hero Leader, opens with Fragment Shrine level 4 (`docs/systems/TRIALS.md`). | Developer |
 | 2026-10-26 | Shattered Realms: two free entries per day shared by all realms, "Shattered Realm Key" for more (the doc's key), Portal Chamber level 5 (`docs/systems/SHATTERED_REALMS.md`). | Developer |
+| 2026-10-26 | Guardian Awakening for the doc's four examples first; awakened = Transcendent with a Trait (combat design §7); no one-per-formation limit yet (`docs/systems/AWAKENING.md`). | Developer |
 | 2026-10-26 | Open balancing and gameplay numbers are decided by the developer, documented in `docs/systems/*.md` and pinned by tests. | Lead |
 
 ## Navigation (from 2026-10-26)

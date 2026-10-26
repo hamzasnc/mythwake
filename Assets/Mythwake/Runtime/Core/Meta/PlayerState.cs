@@ -8,6 +8,8 @@ namespace Mythwake.Core.Meta
         public string HeroId;
         public int Level = 1;
         public int Stars = 1;
+        /// <summary>Guardian Awakening done (docs/systems/AWAKENING.md): counts as Transcendent.</summary>
+        public bool Awakened;
     }
 
     public sealed class CampaignState

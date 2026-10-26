@@ -239,8 +239,7 @@ namespace Mythwake.Core.Meta
         {
             var hero = ctx.State.FindHero(HeroId);
             ctx.Require(hero != null, "hero_not_owned", HeroId);
-            var def = ctx.Content.Hero(HeroId);
-            var max = Progression.MaxStars(ctx.Content, def.Grade);
+            var max = Progression.MaxStars(ctx.Content, hero);
             ctx.Require(hero.Stars < max, "max_stars");
             var cost = new[] { Progression.StarCost(ctx.Content, hero.Stars, HeroId) };
             ctx.RequireFunds(cost);

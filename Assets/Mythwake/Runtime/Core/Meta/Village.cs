@@ -10,6 +10,8 @@ namespace Mythwake.Core.Meta
     {
         /// <summary>Fragment Shrine: Fragment slots, stabilizing, upgrades (docs/systems/FRAGMENTS.md).</summary>
         Shrine,
+        /// <summary>Guardian Shrine: Guardian Awakening (docs/systems/AWAKENING.md).</summary>
+        Awakening,
         /// <summary>The building's system is not in the game yet; shown as a ruin to rebuild later.</summary>
         None,
         /// <summary>Produces resources over time (Survivor Camp).</summary>

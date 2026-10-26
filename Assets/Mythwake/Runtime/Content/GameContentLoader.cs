@@ -9,7 +9,7 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials", "realms" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials", "realms", "awakenings" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
@@ -32,7 +32,8 @@ namespace Mythwake.Content
                 Fragments = ContentJson.Parse<FragmentConfig>(readData("fragments")),
                 Relics = ContentJson.Parse<RelicConfig>(readData("relics")),
                 Trials = ContentJson.Parse<TrialConfig>(readData("trials")),
-                Realms = ContentJson.Parse<RealmConfig>(readData("realms"))
+                Realms = ContentJson.Parse<RealmConfig>(readData("realms")),
+                Awakening = ContentJson.Parse<AwakeningConfig>(readData("awakenings"))
             };
             foreach (var json in heroJsons)
             {
@@ -70,6 +71,9 @@ namespace Mythwake.Content
                     if (!content.Monsters.Values.Concat(content.Heroes.Values).Any(h => h.Aspect == a && !h.Boss && h.Role != Role.HeroLeader))
                         errors.Add($"trials.json: no enemies of {a}");
                 }
+            foreach (var a in content.Awakening.Heroes)
+                if (!content.Heroes.ContainsKey(a.HeroId ?? ""))
+                    errors.Add($"awakenings.json: unknown hero '{a.HeroId}'");
             var relicIds = new HashSet<string>();
             foreach (var r in content.Relics.Relics)
             {

@@ -59,7 +59,8 @@ namespace Mythwake.UI
         /// <summary>Card with portrait, stars, aspect dot, name and level. Used by lists, formation and summon results.</summary>
         public static VisualElement HeroCard(ContentCatalog catalog, HeroDefinition hero, OwnedHero owned)
         {
-            var card = Box("hero-card", "hero-card--" + GradeClass(hero.Grade));
+            var card = Box("hero-card", "hero-card--" + GradeClass(owned != null && owned.Awakened ? Grade.Transcendent : hero.Grade));
+            card.EnableInClassList("hero-card--awakened", owned != null && owned.Awakened);
             var art = catalog.Hero(hero.Id)?.portrait;
             if (art != null)
                 Box("hero-card__portrait").Into(card).style.backgroundImage = new StyleBackground(art);

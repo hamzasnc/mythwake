@@ -205,6 +205,21 @@ namespace Mythwake.UI
             ui.Router.Reset(new RelicScreen());
             yield return Shot("relics", 0.6f);
 
+            // Guardian Awakening: Elara at max stars, Guardian Shrine rebuilt, awaken her
+            ui.State.Campaign.HighestCleared = System.Math.Max(ui.State.Campaign.HighestCleared, 60);
+            foreach (var id in new[] { Ids.GuardianSigil, Ids.FragmentDust, Ids.RelicMaterials, Ids.Gold, Ids.Wood, Ids.Stone })
+                ui.State.Add(id, 500_000);
+            if (ui.State.FindHero("elara") == null)
+                ui.State.Heroes.Add(new OwnedHero { HeroId = "elara", Level = 80, Stars = 6 });
+            ui.Authority.Execute(new UpgradeBuilding { BuildingId = "guardianShrine" });
+            ui.Router.Reset(new HeroesScreen());
+            ui.Router.Push(new HeroDetailScreen("elara"));
+            ui.Router.Current.Root.Q<ScrollView>().scrollOffset = new Vector2(0, 2600);
+            yield return Shot("awakening_before", 0.6f);
+            ui.Authority.Execute(new AwakenHero { HeroId = "elara" });
+            ui.Router.Current.Refresh();
+            yield return Shot("awakening_after", 0.6f);
+
             ui.Router.Reset(new HeroesScreen());
             yield return Shot("heroes", 0.6f);
             ui.Router.Push(new HeroDetailScreen(hero));

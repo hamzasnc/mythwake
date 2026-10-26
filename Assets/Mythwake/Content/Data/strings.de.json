@@ -324,5 +324,21 @@
   "summon.pickAspect": "Wähle einen Aspekt",
   "error.banner_locked": "Baue das Summoning Gate weiter aus.",
   "error.bad_focus": "Wähle zuerst eine Fraktion oder einen Aspekt.",
-  "battle.leader": "Leader: {0}"
+  "battle.leader": "Leader: {0}",
+  "awaken.title": "Guardian Awakening",
+  "awaken.button": "Erwecken",
+  "awaken.done": "Erweckt",
+  "awaken.awakened": "Guardian Awakening abgeschlossen",
+  "awaken.req.shrine": "Guardian Shrine wiederaufgebaut",
+  "awaken.req.stage": "Stage {0} abgeschlossen",
+  "awaken.req.stars": "{0} Sterne",
+  "awaken.heroes": "Erweckbare Helden",
+  "awaken.none": "Keiner deiner Helden kann erwachen. Die Guardian Awakening gibt es für Elara, Kaelen, Veyl und Arion.",
+  "village.effect.awakening": "Guardian Awakening freigeschaltet",
+  "error.awakening_locked": "Baue den Guardian Shrine wieder auf.",
+  "error.awakening_stage": "Schließe zuerst Stage 60 ab.",
+  "error.awakening_stars": "Der Held braucht seine maximalen Sterne.",
+  "error.already_awakened": "Dieser Held ist schon erwacht.",
+  "error.no_awakening": "Dieser Held hat keine Guardian Awakening.",
+  "error.not_enough": "Nicht genug Ressourcen."
 }

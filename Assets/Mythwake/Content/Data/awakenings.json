@@ -1,0 +1,143 @@
+{
+  "minStage": 60,
+  "cost": [
+    {
+      "id": "guardianSigil",
+      "value": 120
+    },
+    {
+      "id": "fragmentDust",
+      "value": 2000
+    },
+    {
+      "id": "relicMaterials",
+      "value": 300
+    },
+    {
+      "id": "gold",
+      "value": 200000
+    }
+  ],
+  "heroes": [
+    {
+      "heroId": "elara",
+      "statPermille": 200,
+      "description": "Erwacht zu einer stärkeren Heilerin und Beschützerin, verbunden mit der Celestial Turtle.",
+      "passiveText": "+25 % Heilung; nach ihrer Ultimate bekommt das Team einen Schild über 150 % ATK.",
+      "traitText": "Trait: Das ganze Team erleidet 8 % weniger Schaden.",
+      "passives": [
+        {
+          "kind": "healingBonus",
+          "value": 250
+        },
+        {
+          "kind": "onUltimate",
+          "target": "allyAll",
+          "effect": {
+            "kind": "shield",
+            "multiplier": 1500,
+            "scaling": "attack",
+            "shieldDurationMs": 6000
+          }
+        }
+      ],
+      "trait": [
+        {
+          "kind": "damageReduction",
+          "value": 80,
+          "team": true
+        }
+      ]
+    },
+    {
+      "heroId": "kaelen",
+      "statPermille": 200,
+      "description": "Erwacht zu einem kontrollierten, verdorbenen Feuerkrieger.",
+      "passiveText": "12 % Lebensraub, +20 % Schaden unter 50 % HP.",
+      "traitText": "Trait: Das ganze Team macht 6 % mehr Schaden.",
+      "passives": [
+        {
+          "kind": "lifesteal",
+          "value": 120
+        },
+        {
+          "kind": "damageBonus",
+          "value": 200,
+          "belowHp": 500
+        }
+      ],
+      "trait": [
+        {
+          "kind": "damageBonus",
+          "value": 60,
+          "team": true
+        }
+      ]
+    },
+    {
+      "heroId": "veyl",
+      "statPermille": 200,
+      "description": "Erwacht zu einem Herrscher, der künstliche Guardian-Konstrukte erschafft.",
+      "passiveText": "Alle 12 s schirmt ein Konstrukt die vordere Reihe ab (Schild über 120 % ATK).",
+      "traitText": "Trait: Das ganze Team hat im Kampf 15 % mehr Verteidigung.",
+      "passives": [
+        {
+          "kind": "periodic",
+          "intervalMs": 12000,
+          "target": "allyFrontRow",
+          "effect": {
+            "kind": "shield",
+            "multiplier": 1200,
+            "scaling": "attack",
+            "shieldDurationMs": 6000
+          }
+        }
+      ],
+      "trait": [
+        {
+          "kind": "battleStart",
+          "target": "allyAll",
+          "effect": {
+            "kind": "applyStatus",
+            "status": {
+              "kind": "defenseUp",
+              "durationMs": 90000,
+              "value": 150
+            }
+          }
+        }
+      ]
+    },
+    {
+      "heroId": "arion",
+      "statPermille": 200,
+      "description": "Erwacht zu einem Magier, der seinen zersplitterten Geist über mehrere Realitäten steuert.",
+      "passiveText": "+40 % Ultimate-Schaden; nach seiner Ultimate bekommt er 350 Energie zurück.",
+      "traitText": "Trait: Das ganze Team startet mit 150 Energie.",
+      "passives": [
+        {
+          "kind": "ultimateDamage",
+          "value": 400
+        },
+        {
+          "kind": "onUltimate",
+          "target": "self",
+          "effect": {
+            "kind": "gainEnergy",
+            "multiplier": 350
+          }
+        }
+      ],
+      "trait": [
+        {
+          "kind": "battleStart",
+          "target": "allyAll",
+          "effect": {
+            "kind": "gainEnergy",
+            "multiplier": 150
+          }
+        }
+      ]
+    }
+  ]
+}

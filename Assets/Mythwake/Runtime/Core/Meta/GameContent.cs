@@ -157,6 +157,7 @@ namespace Mythwake.Core.Meta
         public RelicConfig Relics = new RelicConfig();
         public TrialConfig Trials = new TrialConfig();
         public RealmConfig Realms = new RealmConfig();
+        public AwakeningConfig Awakening = new AwakeningConfig();
 
         /// <summary>A hero or monster by id (battle setups and team snapshots can contain both).</summary>
         public HeroDefinition Hero(string id) =>

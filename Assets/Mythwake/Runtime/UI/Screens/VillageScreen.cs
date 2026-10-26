@@ -221,6 +221,8 @@ namespace Mythwake.UI
                 card.Add(Forge());
             if (level > 0 && def.Effect == BuildingEffect.Shrine)
                 card.Add(Shrine());
+            if (level > 0 && def.Effect == BuildingEffect.Awakening)
+                card.Add(AwakeningList());
             if (level > 0 && def.Effect == BuildingEffect.Hunting)
                 UiKit.Btn("Hunt Board", () => _ui.Router.Push(new HuntScreen())).Into(card);
             if (level > 0 && def.Effect == BuildingEffect.Portal)
@@ -287,6 +289,8 @@ namespace Mythwake.UI
                     return Loc.T("village.effect.summon");
                 case BuildingEffect.Portal:
                     return Loc.T("village.effect.portal", _ui.Content.Dungeons.Dungeons.Count(d => d.PortalLevel <= level));
+                case BuildingEffect.Awakening:
+                    return Loc.T("village.effect.awakening");
                 case BuildingEffect.Shrine:
                     return Loc.T("village.effect.shrine", string.Join(", ", System.Enum.GetValues(typeof(FragmentSlot)).Cast<FragmentSlot>()
                         .Where(s => Fragments.SlotOpen(_ui.State, _ui.Content, s)).Select(FragmentUi.SlotName)));
@@ -406,6 +410,29 @@ namespace Mythwake.UI
             var lists = UiKit.Box("row").Into(box);
             UiKit.Btn(Loc.T("fragment.title") + $" ({_ui.State.Fragments.Count})", () => _ui.Router.Push(new FragmentScreen())).Into(lists).style.flexGrow = 1;
             UiKit.Btn(Loc.T("relic.title") + $" ({_ui.State.Relics.Count})", () => _ui.Router.Push(new RelicScreen())).Into(lists).style.flexGrow = 1;
+            return box;
+        }
+
+        private VisualElement AwakeningList()
+        {
+            var box = UiKit.Box("forge");
+            UiKit.Text(Loc.T("awaken.heroes"), "subtitle").Into(box);
+            var grid = UiKit.Box("hero-grid").Into(box);
+            var any = false;
+            foreach (var a in _ui.Content.Awakening.Heroes)
+            {
+                var owned = _ui.State.FindHero(a.HeroId);
+                if (owned == null)
+                    continue;
+                any = true;
+                var card = UiKit.HeroCard(_ui.Catalog, _ui.Content.Hero(a.HeroId), owned).Into(grid);
+                if (owned.Awakened)
+                    UiKit.Text(Loc.T("awaken.done"), "new-badge").Into(card);
+                var id = a.HeroId;
+                card.RegisterCallback<ClickEvent>(_ => _ui.Router.Push(new HeroDetailScreen(id)));
+            }
+            if (!any)
+                UiKit.Text(Loc.T("awaken.none"), "label--small").Into(box).style.whiteSpace = WhiteSpace.Normal;
             return box;
         }
 

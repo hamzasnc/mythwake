@@ -1043,3 +1043,12 @@
     -unity-background-scale-mode: scale-and-crop;
 }
 .leader-banner__text { font-size: 30px; -unity-font-style: bold; color: var(--gold); }
+
+/* ---------------------------------------------------------------- guardian awakening */
+
+.hero-card--awakened {
+    border-color: #ff5e7e;
+    border-width: 4px;
+    background-color: rgba(255, 94, 126, 0.18);
+}
+.awakening { border-color: rgba(255, 94, 126, 0.6); }

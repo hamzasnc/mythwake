@@ -55,6 +55,7 @@ namespace Mythwake.UI
         private VisualElement _gear;
         private Label _setBonus;
         private VisualElement _fragments;
+        private VisualElement _awakening;
 
         public HeroDetailScreen(string heroId) => _heroId = heroId;
 
@@ -114,6 +115,8 @@ namespace Mythwake.UI
             UiKit.Text(Loc.T("fragment.titleRelic"), "title").Into(fragments);
             _fragments = UiKit.Box("gear-row").Into(fragments);
 
+            _awakening = UiKit.Box("panel", "awakening").Into(safe);
+
             var skills = UiKit.Box("panel").Into(safe);
             UiKit.Text(Loc.T("hero.skills"), "title").Into(skills);
             foreach (var skill in hero.Skills())
@@ -155,9 +158,10 @@ namespace Mythwake.UI
 
             RefreshGear();
             FragmentUi.Slots(Ui, _fragments, Root, _heroId, Refresh);
+            RefreshAwakening(owned);
             _fragments.Add(RelicUi.Slot(Ui, Root, _heroId, Refresh));
 
-            var maxStars = Progression.MaxStars(content, hero.Grade);
+            var maxStars = Progression.MaxStars(content, owned);
             if (owned.Stars >= maxStars)
             {
                 _shards.text = Loc.T("hero.maxStars");
@@ -170,6 +174,42 @@ namespace Mythwake.UI
                 _shards.text = Loc.T("hero.shards", have, starCost.Value);
                 _starUp.SetEnabled(have >= starCost.Value);
             }
+        }
+
+        /// <summary>Guardian Awakening panel: the doc's form, requirements and cost, or the awakened passive and Trait.</summary>
+        private void RefreshAwakening(OwnedHero owned)
+        {
+            _awakening.Clear();
+            var def = Awakening.Of(Ui.Content, _heroId);
+            _awakening.style.display = def == null ? DisplayStyle.None : DisplayStyle.Flex;
+            if (def == null)
+                return;
+            var head = UiKit.Box("row").Into(_awakening);
+            UiKit.Text(Loc.T("awaken.title"), "title").Into(head);
+            UiKit.Box("spacer").Into(head);
+            if (owned.Awakened)
+                UiKit.Text(Loc.T("grade.transcendent"), "tag", "grade--transcendent").Into(head);
+            UiKit.Text(def.Description, "skill__text").Into(_awakening);
+            UiKit.Text(def.PassiveText, owned.Awakened ? "label--good" : "label--small").Into(_awakening).style.whiteSpace = WhiteSpace.Normal;
+            UiKit.Text(def.TraitText, owned.Awakened ? "label--good" : "label--small").Into(_awakening).style.whiteSpace = WhiteSpace.Normal;
+            if (owned.Awakened)
+            {
+                UiKit.Text(Loc.T("awaken.awakened"), "subtitle").Into(_awakening);
+                return;
+            }
+            var content = Ui.Content;
+            void Req(bool ok, string text) => UiKit.Text((ok ? "✓ " : "✗ ") + text, ok ? "label--good" : "label--bad").Into(_awakening);
+            Req(Awakening.ShrineLevel(Ui.State, content) > 0, Loc.T("awaken.req.shrine"));
+            Req(Ui.State.Campaign.HighestCleared >= content.Awakening.MinStage, Loc.T("awaken.req.stage", content.Awakening.MinStage));
+            var stars = Progression.MaxStars(content, content.Hero(_heroId).Grade);
+            Req(owned.Stars >= stars, Loc.T("awaken.req.stars", stars));
+            _awakening.Add(GearUi.CostRow(Ui.State, content.Awakening.Cost));
+            var button = UiKit.Btn(Loc.T("awaken.button"), () =>
+            {
+                if (Ui.Try(new AwakenHero { HeroId = _heroId }, out bool _))
+                    Refresh();
+            }, "btn--big").Into(_awakening);
+            button.SetEnabled(Awakening.Blocker(Ui.State, content, _heroId) == null);
         }
 
         private void RefreshGear()

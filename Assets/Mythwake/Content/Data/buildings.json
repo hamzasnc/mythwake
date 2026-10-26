@@ -190,8 +190,24 @@
     {
       "id": "guardianShrine",
       "name": "Guardian Shrine",
-      "description": "Schaltet Awakening-Systeme frei.",
-      "effect": "none"
+      "description": "Schaltet Guardian Awakening frei: Helden werden mit den alten Guardians verbunden und erwachen zu stärkeren Formen.",
+      "effect": "awakening",
+      "unlockStage": 60,
+      "maxLevel": 1,
+      "baseCost": [
+        {
+          "id": "gold",
+          "value": 60000
+        },
+        {
+          "id": "wood",
+          "value": 20000
+        },
+        {
+          "id": "stone",
+          "value": 20000
+        }
+      ]
     },
     {
       "id": "portalChamber",
