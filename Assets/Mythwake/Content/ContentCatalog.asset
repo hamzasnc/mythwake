@@ -56,7 +56,7 @@ MonoBehaviour:
     skeleton: {fileID: 11400000, guid: 730841be7cbbeb644a7cb0adfa36096e, type: 2}
     portrait: {fileID: 2800000, guid: fca78c28aad5bc34f80ba153cd8f740d, type: 3}
     full: {fileID: 2800000, guid: ce13ca3249282b141a5b83a6c5c48587, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: 6919a3140586da749b976884d833c4bb, type: 3}
     sprite: {fileID: 0}
   - id: cassian
     definition: {fileID: 4900000, guid: f6f3bd2c31f2e8d438192c12247d73b4, type: 3}
@@ -77,7 +77,7 @@ MonoBehaviour:
     skeleton: {fileID: 11400000, guid: a3f3449aebf48cd469c51a193d4a16de, type: 2}
     portrait: {fileID: 2800000, guid: cc2912dc1b9aae849914f1a1fd9fe9a4, type: 3}
     full: {fileID: 2800000, guid: 78d5dd17cecf49143b371f9279aa68da, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: 210ff3258ddd00a48b40aac7cbbb9b18, type: 3}
     sprite: {fileID: 0}
   - id: durgan
     definition: {fileID: 4900000, guid: f37870433d1ac364195eac3e1dfa4de3, type: 3}
@@ -161,21 +161,21 @@ MonoBehaviour:
     skeleton: {fileID: 11400000, guid: 89377bf839e3b3d469a6ba823af16147, type: 2}
     portrait: {fileID: 2800000, guid: 95de356a161411f4db01725271f44b75, type: 3}
     full: {fileID: 2800000, guid: 1aa08c06a3906dd49969163837d64190, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: d93d654ec47d01640b747c3274580a70, type: 3}
     sprite: {fileID: 0}
   - id: malachar
     definition: {fileID: 4900000, guid: 620cec2c22a2f11479a95a240e27ce24, type: 3}
     skeleton: {fileID: 11400000, guid: 4bcbada83e8c52b43b0dad5a4d629532, type: 2}
     portrait: {fileID: 2800000, guid: b22bdb2ca478bee4f9557920c531d467, type: 3}
     full: {fileID: 2800000, guid: 78c1774365ee41647960e9efdf6a5580, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: c3b09b00ced1b0e47bd7c003da051073, type: 3}
     sprite: {fileID: 0}
   - id: maren
     definition: {fileID: 4900000, guid: fc56ae82a9f7c0641880ba97d94fa01b, type: 3}
     skeleton: {fileID: 11400000, guid: 9a192caa46c0fb647a79b3b903e7734e, type: 2}
     portrait: {fileID: 2800000, guid: e1073e1d025824a41905d142b8c6b8a6, type: 3}
     full: {fileID: 2800000, guid: 91d7f2af61d80584583d09112a1efe93, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: 655d3d45e927567458e758472fbd5d0a, type: 3}
     sprite: {fileID: 0}
   - id: mawrek
     definition: {fileID: 4900000, guid: cd38b0fa3d77d624bacfc58369251b1c, type: 3}
@@ -196,7 +196,7 @@ MonoBehaviour:
     skeleton: {fileID: 11400000, guid: 0c375938a6fc1604e9d68cad2edf1581, type: 2}
     portrait: {fileID: 2800000, guid: 7aab3c365b6cf1f45a9361d15fd56e34, type: 3}
     full: {fileID: 2800000, guid: ce159e15e66083340b8d4a57b7e6822a, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: 6068d78711097604db23cb75f6732e7a, type: 3}
     sprite: {fileID: 0}
   - id: noxia
     definition: {fileID: 4900000, guid: 9adb4f585c42a454693989bd32b3192b, type: 3}
@@ -224,14 +224,14 @@ MonoBehaviour:
     skeleton: {fileID: 11400000, guid: 76cb49ba655e5de4faff17c1dada3f04, type: 2}
     portrait: {fileID: 2800000, guid: ece1cb817689ca5479d6d3aca859ccd7, type: 3}
     full: {fileID: 2800000, guid: 556b1de1061ad4b4090d0e4acde1ced5, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: b47b1b59cba745a428db6de47ea64cb7, type: 3}
     sprite: {fileID: 0}
   - id: pyra
     definition: {fileID: 4900000, guid: d8ff267175fa8234eb5f1e9ebe22835f, type: 3}
     skeleton: {fileID: 11400000, guid: 40f37ef0a170f7843aeedb39eaf04065, type: 2}
     portrait: {fileID: 2800000, guid: 6d09ad94d2157f54badeedfd9dc0f5a2, type: 3}
     full: {fileID: 2800000, guid: 0e60cd09851578e499a600091e57de54, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: 4f7c610fed566a849a6bd27527f64fd5, type: 3}
     sprite: {fileID: 0}
   - id: seraphine
     definition: {fileID: 4900000, guid: 55be3a66c9805da418fab0d95b684869, type: 3}
@@ -245,7 +245,7 @@ MonoBehaviour:
     skeleton: {fileID: 11400000, guid: 3cb30c363943c9d45be74b9258c5eac0, type: 2}
     portrait: {fileID: 2800000, guid: 5efc52acbe9923b4da22f132ee149ad6, type: 3}
     full: {fileID: 2800000, guid: c662b887ddebfae4795f1dada939fa58, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: ad1736595d2dc494495716d2274a2bfc, type: 3}
     sprite: {fileID: 0}
   - id: thalindra
     definition: {fileID: 4900000, guid: 0fc702162a1b80648bf28a81ee62fb7f, type: 3}
@@ -273,14 +273,14 @@ MonoBehaviour:
     skeleton: {fileID: 11400000, guid: 26f8a646e92056741a9aeb561df00825, type: 2}
     portrait: {fileID: 2800000, guid: 562d1a867f1f9984783e44f6ef357020, type: 3}
     full: {fileID: 2800000, guid: b85fcdb4eca2a3a48bc95237d1297698, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: 8f3bf0a8dfab053499f7fa9ae0f125e5, type: 3}
     sprite: {fileID: 0}
   - id: vex
     definition: {fileID: 4900000, guid: 5c74b9b12af2fc440a755cdbe51587af, type: 3}
     skeleton: {fileID: 11400000, guid: 9a00567a76ee0914db3a8e6650673158, type: 2}
     portrait: {fileID: 2800000, guid: e17c552a72eacfb43999510180e77cf4, type: 3}
     full: {fileID: 2800000, guid: 97608c27e9a3bee44b4f0f2277d316fb, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: 97899bf420079744a8102f9733304626, type: 3}
     sprite: {fileID: 0}
   - id: veyl
     definition: {fileID: 4900000, guid: 3c11152b790b19f4f97f0015784296a3, type: 3}
@@ -294,7 +294,7 @@ MonoBehaviour:
     skeleton: {fileID: 11400000, guid: 009de2d1a7c4a6345994ba204458c79c, type: 2}
     portrait: {fileID: 2800000, guid: 077b975c5eb571641afa62920d196a14, type: 3}
     full: {fileID: 2800000, guid: ddf44400aa76aed45a7a784bc1d91f13, type: 3}
-    cutIn: {fileID: 0}
+    cutIn: {fileID: 2800000, guid: 5018cc8c3c95ed24babc0e4171485648, type: 3}
     sprite: {fileID: 0}
   - id: ysolde
     definition: {fileID: 4900000, guid: d572ea1f0904c3f49a0f0d13835bf0cc, type: 3}
@@ -512,6 +512,30 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 1def13465fec391409f991036cab5928, type: 3}
   - {fileID: 2800000, guid: b8bbe11ba22796742ae7c476808e9e35, type: 3}
   - {fileID: 2800000, guid: 5e8bcf2630ecf114f9ab34e382ab95f9, type: 3}
+  - {fileID: 2800000, guid: 8ccc4250a1ad53d41afebe13ce1795f4, type: 3}
+  - {fileID: 2800000, guid: 288ce27e5ca84714bbbf4ae256f75d10, type: 3}
+  - {fileID: 2800000, guid: 35af4a086b3d70649aef2948073000ac, type: 3}
+  - {fileID: 2800000, guid: 7c48cb1090a02df4a9f82b14a6a012e0, type: 3}
+  - {fileID: 2800000, guid: 5422222238695cc49829129f503d10c6, type: 3}
+  - {fileID: 2800000, guid: 680182f8d99d5d74086c3d1023d6ba17, type: 3}
+  - {fileID: 2800000, guid: e5c48aec1389e5b4db0fc5ff9ad071e2, type: 3}
+  - {fileID: 2800000, guid: c10d5567223cc834ca24b1643c77d330, type: 3}
+  - {fileID: 2800000, guid: 195e5780eb8b1364a957b548016fca90, type: 3}
+  - {fileID: 2800000, guid: 3f3c73e17e1000747b52b071186868b9, type: 3}
+  - {fileID: 2800000, guid: 06312bd9c3663e34b97bbe9452a1f659, type: 3}
+  - {fileID: 2800000, guid: c56989bd035a0c044aee1ed33ebfc20f, type: 3}
+  - {fileID: 2800000, guid: 5eccd514f0b270a48b54b27cef9fa133, type: 3}
+  - {fileID: 2800000, guid: 988ac13777bb898439fedd9eae74123b, type: 3}
+  - {fileID: 2800000, guid: e185c47508cdab3489f00b2f42f98077, type: 3}
+  - {fileID: 2800000, guid: 2c1656960b8393a4687efba435a09e70, type: 3}
+  - {fileID: 2800000, guid: 4b75aea394f91cc41b385e8c8eb157a3, type: 3}
+  - {fileID: 2800000, guid: d0d493884cce00c45b33d7d3e7839ba9, type: 3}
+  - {fileID: 2800000, guid: 4b7223a63aa5bf74e86be6b92506cb83, type: 3}
+  - {fileID: 2800000, guid: bda48ce5eb5dce94aad79723f0cbdae7, type: 3}
+  - {fileID: 2800000, guid: 00ab7e5ed2a48764dadd184ea8d50ede, type: 3}
+  - {fileID: 2800000, guid: 36793d44f8a7f11459d691b4f040f8cf, type: 3}
+  - {fileID: 2800000, guid: 27130300ff675164eb5ccc77a02c9244, type: 3}
+  - {fileID: 2800000, guid: 8be3adf29826e46438b92a0fe25e586d, type: 3}
   - {fileID: 2800000, guid: 45dc610947625c44abfe085c99a049ec, type: 3}
   - {fileID: 2800000, guid: 7beea644593b5dd478992aecb1bea204, type: 3}
   - {fileID: 2800000, guid: 99877baf396a5874db136be1838cc9f4, type: 3}

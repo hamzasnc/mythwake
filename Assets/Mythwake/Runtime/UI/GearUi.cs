@@ -25,8 +25,11 @@ namespace Mythwake.UI
             };
         }
 
-        /// <summary>Compact gear tile: grade frame, slot, enhance level, main stat, set.</summary>
-        public static VisualElement Tile(GameContent content, GearItem item)
+        /// <summary>Icon of a gear piece: one picture per set and slot (Content/Icons/gear_&lt;set&gt;_&lt;slot&gt;.png).</summary>
+        public static string IconName(GearItem item) => $"gear_{UiKit.Lower(item.Set)}_{UiKit.Lower(item.Slot)}";
+
+        /// <summary>Compact gear tile: grade frame, icon, slot, enhance level, main stat, set.</summary>
+        public static VisualElement Tile(UiContext ui, GearItem item)
         {
             var tile = UiKit.Box("gear", "hero-card--" + UiKit.GradeClass(item.Grade));
             var head = UiKit.Box("row").Into(tile);
@@ -34,7 +37,10 @@ namespace Mythwake.UI
             UiKit.Box("spacer").Into(head);
             if (item.Level > 0)
                 UiKit.Text("+" + item.Level, "gear__level").Into(head);
-            UiKit.Text(StatText(content, item), "gear__stat").Into(tile);
+            var icon = ui.Catalog.Icon(IconName(item));
+            if (icon != null)
+                UiKit.Box("gear__icon").Into(tile).style.backgroundImage = new StyleBackground(icon);
+            UiKit.Text(StatText(ui.Content, item), "gear__stat").Into(tile);
             UiKit.Text(Loc.T("faction." + UiKit.Lower(item.Set)), "gear__set").Into(tile);
             return tile;
         }
@@ -75,7 +81,7 @@ namespace Mythwake.UI
             var worn = Gear.Equipped(ui.State, heroId, slot);
             if (worn != null)
             {
-                popup.Add(Tile(ui.Content, worn));
+                popup.Add(Tile(ui, worn));
                 var maxLevel = Gear.GradeStats(ui.Content, worn.Grade).MaxLevel;
                 var row = UiKit.Box("row", "center").Into(popup);
                 if (worn.Level < maxLevel)
@@ -111,7 +117,7 @@ namespace Mythwake.UI
                 .OrderByDescending(g => Gear.MainValue(ui.Content, g)).ToList();
             foreach (var item in options)
             {
-                var tile = Tile(ui.Content, item).Into(grid);
+                var tile = Tile(ui, item).Into(grid);
                 if (item.EquippedBy != null)
                     UiKit.Text(ui.Content.Hero(item.EquippedBy).Name, "gear__owner").Into(tile);
                 var uid = item.Uid;

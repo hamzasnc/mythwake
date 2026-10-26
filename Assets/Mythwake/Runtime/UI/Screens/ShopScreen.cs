@@ -118,7 +118,7 @@ namespace Mythwake.UI
             {
                 var overlay = UiKit.Box("overlay").Into(Root);
                 var popup = UiKit.Box("panel", "popup").Into(overlay);
-                popup.Add(GearUi.Tile(Ui.Content, purchase.Gear));
+                popup.Add(GearUi.Tile(Ui, purchase.Gear));
                 UiKit.Btn(Loc.T("battle.continue"), () => overlay.RemoveFromHierarchy()).Into(popup);
                 return;
             }

@@ -7,7 +7,7 @@ Ground-up rebuild on branch `rebuild/v2` (orphan branch, no v1 code). As of 26.1
 | Area | State |
 |---|---|
 | Combat rules (`Mythwake.Core.Combat`) | Deterministic simulation: energy/ultimates (Auto + manual taps + Auto toggled mid-fight), multi-hit, crit, accuracy/evasion, Fragment Aspect cycle, 21 statuses, shields, passives as components (auras, on-hit, periodic …), taunt/provoke/charm/confuse targeting |
-| Heroes | 40 heroes as data (`Content/Heroes/<id>/<id>.hero.json`) migrated from the kit design, with Spine rigs, portraits and full-body renders from the rig, 28 cut-ins |
+| Heroes | 40 heroes as data (`Content/Heroes/<id>/<id>.hero.json`) migrated from the kit design, with Spine rigs, portraits and full-body renders from the rig, ultimate cut-ins for all 40 |
 | Team building | Skill upgrades with Upgrade stones (`docs/systems/SKILLS.md`), target priority per hero (front first, weakest, strongest, back row, supports, damage dealers), level, stars, faction synergy (2/3/5), race synergy, Hero Leader aura and leader abilities cast from off the field (Seraphine: Stimme der Wahrheit, Schleiersegen) |
 | Meta rules (`Mythwake.Core.Meta`) | New player, formation (slots unlock by stage), campaign (200 stages, boss every 10th, server-checkable re-simulation), idle rewards (12 h cap), level up, star up with Hero Shards, Normal Summon, Faction Summon and Fragment Summon (Summoning Gate levels 1–3, `docs/systems/SUMMONING.md`) with pity per banner (Legendary at 50, Epic+ every 10), duplicates → shards |
 | Village (`Mythwake.Core.Meta.Village`) | Dawnhollow rebuild: Survivor Camp produces Gold/Wood/Stone (12 h storage), Summoning Gate unlocks summoning (stage 2), Healer's Tent adds healing in battle (stage 5); hero slots per building (Village Style, hero bonus by grade/stars/level, heroes keep fighting); all nine doc buildings now have their system |
@@ -65,7 +65,8 @@ Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscr
 4. Item icons (Fragments, Relics) → `Tools/ContentPipeline/town/make_fragment_icon_jobs.py` / `make_relic_icon_jobs.py`, then `import_icons.py <jobs dir>`.
 5. Town and world map art → `Tools/ContentPipeline/town/make_town_jobs.py` (Codex jobs), then `import_town.py <jobs dir>`.
 6. Battle backgrounds and intro pictures → `Tools/ContentPipeline/backgrounds/make_background_jobs.py <dir> <style> [story]` (Codex jobs), then `import_backgrounds.py <jobs dirs>`.
-7. Monster Spine rigs → `Tools/ContentPipeline/monsters/make_peel_jobs.py <masters dir> <id,id>` (Codex peels the master into layers + `layers.json`), then `monsters/spine/build_all.py <masters dirs> [--only id,id]` → `Content/Monsters/<id>/`; see `docs/MONSTER_RIGS.md`.
+7. Ultimate cut-ins for heroes without one → `Tools/ContentPipeline/make_cutin_jobs.py <dir>` (Codex, the hero's full render as reference), then `import_cutin_jobs.py <dir>`. Gear icons (set × slot) → `town/make_gear_icon_jobs.py`, then `town/import_icons.py`.
+8. Monster Spine rigs → `Tools/ContentPipeline/monsters/make_peel_jobs.py <masters dir> <id,id>` (Codex peels the master into layers + `layers.json`), then `monsters/spine/build_all.py <masters dirs> [--only id,id]` → `Content/Monsters/<id>/`; see `docs/MONSTER_RIGS.md`.
 
 ## Open points
 
@@ -87,7 +88,7 @@ Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscr
   boss sleep immunity, rank-gated skills).
 - Balance is a first pass everywhere (`Content/Data/*.json`, numbers in `docs/systems/*.md`); pacing tests pin the
   early game.
-- Missing art: cut-ins for 12 heroes, item icons for gear, UI icons and fonts, sound.
+- Missing art: UI icons and fonts, sound.
 - Village buildings upgrade instantly (no build timers).
 - Server for production: TLS, platform logins (Google/Apple), Redis rate limits for several API instances, guild
   moderation (kick, reports), cross-guild ranking.

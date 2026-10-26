@@ -661,6 +661,7 @@
 }
 
 .gear__slot { font-size: 24px; -unity-font-style: bold; }
+.gear__icon { width: 96px; height: 96px; align-self: center; margin-top: 4px; -unity-background-scale-mode: scale-to-fit; }
 .gear__level { font-size: 24px; color: var(--gold); -unity-font-style: bold; }
 .gear__stat { font-size: 24px; margin-top: 8px; white-space: normal; }
 .gear__set { font-size: 18px; color: var(--muted); margin-top: 6px; white-space: normal; }

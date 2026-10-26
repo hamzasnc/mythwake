@@ -363,7 +363,7 @@ namespace Mythwake.UI
                     UiKit.Text(Loc.T("gear.drop"), "subtitle").Into(popup);
                     var drops = UiKit.Box("row").Into(popup);
                     foreach (var item in report.Gear)
-                        drops.Add(GearUi.Tile(Ui.Content, item));
+                        drops.Add(GearUi.Tile(Ui, item));
                 }
                 if (report.Fragments.Count > 0)
                 {

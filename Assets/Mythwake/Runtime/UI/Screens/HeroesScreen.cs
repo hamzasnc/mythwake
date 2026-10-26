@@ -278,7 +278,7 @@ namespace Mythwake.UI
             foreach (GearSlot slot in System.Enum.GetValues(typeof(GearSlot)))
             {
                 var worn = Gear.Equipped(Ui.State, _heroId, slot);
-                var tile = worn != null ? GearUi.Tile(Ui.Content, worn) : GearUi.EmptyTile(slot);
+                var tile = worn != null ? GearUi.Tile(Ui, worn) : GearUi.EmptyTile(slot);
                 var s = slot;
                 tile.RegisterCallback<ClickEvent>(_ => GearUi.OpenSlot(Ui, Root, _heroId, s, Refresh));
                 _gear.Add(tile);
