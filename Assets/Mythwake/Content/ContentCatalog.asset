@@ -325,10 +325,10 @@ MonoBehaviour:
   - id: corrupted_guardian_of_the_deep
     definition: {fileID: 4900000, guid: edf864b7acbba1c4088027c877e540df, type: 3}
     skeleton: {fileID: 0}
-    portrait: {fileID: 0}
-    full: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 5f3978661e603f740a0afeee22976f52, type: 3}
+    full: {fileID: 2800000, guid: 02865af0ee363534f91e950e34c86e82, type: 3}
     cutIn: {fileID: 0}
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 02865af0ee363534f91e950e34c86e82, type: 3}
   - id: corrupted_wolf
     definition: {fileID: 4900000, guid: a07a3c4b16329b0488e7edc8555cbe73, type: 3}
     skeleton: {fileID: 0}
@@ -353,17 +353,17 @@ MonoBehaviour:
   - id: dragon_echo_of_the_sky
     definition: {fileID: 4900000, guid: 973615f6037bda44d925af23fce440a6, type: 3}
     skeleton: {fileID: 0}
-    portrait: {fileID: 0}
-    full: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 332792540b64bd94fa2fd5abe170bb3a, type: 3}
+    full: {fileID: 2800000, guid: 14b9b2c223768644baa73b98f2b4a8cb, type: 3}
     cutIn: {fileID: 0}
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 14b9b2c223768644baa73b98f2b4a8cb, type: 3}
   - id: false_guardian_construct
     definition: {fileID: 4900000, guid: ed72a8e165767da4a89633ce52c83f6a, type: 3}
     skeleton: {fileID: 0}
-    portrait: {fileID: 0}
-    full: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 2e64bb150ee6a4645bff4a18018c8ff5, type: 3}
+    full: {fileID: 2800000, guid: df940e3c4d62e834cac17518e2b7e618, type: 3}
     cutIn: {fileID: 0}
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: df940e3c4d62e834cac17518e2b7e618, type: 3}
   - id: forest_wolf
     definition: {fileID: 4900000, guid: 5d3c94896cc0a7349bec2159547e7b95, type: 3}
     skeleton: {fileID: 0}
@@ -381,10 +381,10 @@ MonoBehaviour:
   - id: fragment_devourer
     definition: {fileID: 4900000, guid: 3ea851d68bdad6942a02ad11e29b0c61, type: 3}
     skeleton: {fileID: 0}
-    portrait: {fileID: 0}
-    full: {fileID: 0}
+    portrait: {fileID: 2800000, guid: ab894b4d0d73f8e4f9b91dd6da2f968a, type: 3}
+    full: {fileID: 2800000, guid: 6ca0b0b9b9c1fc943a6db42d89a0d9a3, type: 3}
     cutIn: {fileID: 0}
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 6ca0b0b9b9c1fc943a6db42d89a0d9a3, type: 3}
   - id: hollow_spire_warden
     definition: {fileID: 4900000, guid: 46dbe8ae5db219b4e976e766646c3e10, type: 3}
     skeleton: {fileID: 0}
