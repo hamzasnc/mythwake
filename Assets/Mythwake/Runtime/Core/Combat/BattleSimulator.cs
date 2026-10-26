@@ -98,6 +98,8 @@ namespace Mythwake.Core.Combat
                 u.Passives.AddRange(s.Hero.PassiveComponents());
                 if (s.Passives != null)
                     u.Passives.AddRange(s.Passives);
+                if (side == Side.Enemies && _setup.Rules?.EnemyPassives != null)
+                    u.Passives.AddRange(_setup.Rules.EnemyPassives);
                 // stagger first attacks a little so a team does not swing in perfect unison
                 u.NextNormalMs = 300 + s.Slot * 90 + (side == Side.Enemies ? 150 : 0);
                 foreach (var skill in s.Hero.Skills())

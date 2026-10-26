@@ -9,7 +9,7 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
@@ -30,7 +30,8 @@ namespace Mythwake.Content
                 Arena = ContentJson.Parse<ArenaConfig>(readData("arena")),
                 Dungeons = ContentJson.Parse<DungeonConfig>(readData("dungeons")),
                 Fragments = ContentJson.Parse<FragmentConfig>(readData("fragments")),
-                Relics = ContentJson.Parse<RelicConfig>(readData("relics"))
+                Relics = ContentJson.Parse<RelicConfig>(readData("relics")),
+                Trials = ContentJson.Parse<TrialConfig>(readData("trials"))
             };
             foreach (var json in heroJsons)
             {
@@ -60,6 +61,14 @@ namespace Mythwake.Content
                     if (!content.Monsters.ContainsKey(id))
                         errors.Add($"dungeons.json/{d.Id}: unknown escort '{id}'");
             }
+            if (content.Trials.Trials.Count > 0)
+                foreach (Aspect a in System.Enum.GetValues(typeof(Aspect)))
+                {
+                    if (!content.Trials.Trials.Any(t => t.Aspect == a))
+                        errors.Add($"trials.json: no trial for {a}");
+                    if (!content.Monsters.Values.Concat(content.Heroes.Values).Any(h => h.Aspect == a && !h.Boss && h.Role != Role.HeroLeader))
+                        errors.Add($"trials.json: no enemies of {a}");
+                }
             var relicIds = new HashSet<string>();
             foreach (var r in content.Relics.Relics)
             {

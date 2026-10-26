@@ -7,9 +7,28 @@ using UnityEngine.UIElements;
 
 namespace Mythwake.UI
 {
-    /// <summary>Pick up to 5 heroes (2 front, 3 back) and a Hero Leader, then start the stage.</summary>
+    /// <summary>What a formation is picked for when it is not the campaign (e.g. a Trial of Fragments tower).</summary>
+    public interface IFormationMode
+    {
+        string Title { get; }
+        /// <summary>Rule shown under the title ("only heroes of Aspect …").</summary>
+        string Hint { get; }
+        bool AllowLeader { get; }
+        bool Allows(HeroDefinition hero);
+        string[] Initial(UiContext ui);
+        string[] Auto(UiContext ui);
+        void Fight(UiContext ui, string[] slots, string leader);
+    }
+
+    /// <summary>Pick up to 5 heroes (2 front, 3 back) and a Hero Leader, then start the stage (or the mode's fight).</summary>
     public sealed class FormationScreen : UiScreen
     {
+        private readonly IFormationMode _mode;
+
+        public FormationScreen() { }
+
+        public FormationScreen(IFormationMode mode) => _mode = mode;
+
         private readonly string[] _slots = new string[5];
         private string _leader;
         private VisualElement[] _slotViews;
@@ -23,7 +42,9 @@ namespace Mythwake.UI
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
             UiKit.Btn("‹", () => Ui.Router.Pop(), "btn--secondary", "btn--small").Into(head);
-            UiKit.Text(Loc.T("formation.title"), "title").Into(head);
+            UiKit.Text(_mode?.Title ?? Loc.T("formation.title"), "title").Into(head);
+            if (_mode != null)
+                UiKit.Text(_mode.Hint, "label--small").Into(safe);
 
             var formation = UiKit.Box("formation").Into(safe);
             // enemies stand to the right, so the back row is the left column and the front row the right column
@@ -41,6 +62,7 @@ namespace Mythwake.UI
             }
 
             var leaderRow = UiKit.Box("row", "center").Into(safe);
+            leaderRow.style.display = _mode == null || _mode.AllowLeader ? DisplayStyle.Flex : DisplayStyle.None;
             UiKit.Text(Loc.T("formation.leader") + "  ", "label--small").Into(leaderRow);
             _leaderSlot = UiKit.Box("slot").Into(leaderRow);
             _leaderSlot.style.width = 130;
@@ -64,8 +86,8 @@ namespace Mythwake.UI
 
         public override void OnShow()
         {
-            System.Array.Copy(Ui.State.Formation, _slots, 5);
-            _leader = Ui.State.Leader;
+            System.Array.Copy(_mode != null ? _mode.Initial(Ui) : Ui.State.Formation, _slots, 5);
+            _leader = _mode == null || _mode.AllowLeader ? Ui.State.Leader : null;
             base.OnShow();
         }
 
@@ -113,6 +135,8 @@ namespace Mythwake.UI
             foreach (var owned in state.Heroes.OrderByDescending(h => UiKit.Power(state, content, h)))
             {
                 var hero = content.Hero(owned.HeroId);
+                if (_mode != null && !_mode.Allows(hero))
+                    continue;
                 var card = UiKit.HeroCard(Ui.Catalog, hero, owned);
                 var inTeam = _slots.Contains(owned.HeroId) || _leader == owned.HeroId;
                 card.EnableInClassList("hero-card--selected", inTeam);
@@ -144,6 +168,8 @@ namespace Mythwake.UI
             }
             else if (hero.Role == Role.HeroLeader)
             {
+                if (_mode != null && !_mode.AllowLeader)
+                    return;
                 _leader = heroId;
             }
             else
@@ -173,6 +199,12 @@ namespace Mythwake.UI
 
         private void AutoFill()
         {
+            if (_mode != null)
+            {
+                System.Array.Copy(_mode.Auto(Ui), _slots, 5);
+                Redraw();
+                return;
+            }
             var copy = Mythwake.Content.SaveJson.Read(Mythwake.Content.SaveJson.Write(Ui.State));
             Formations.AutoFill(copy, Ui.Content);
             System.Array.Copy(copy.Formation, _slots, 5);
@@ -181,6 +213,11 @@ namespace Mythwake.UI
 
         private void Fight()
         {
+            if (_mode != null)
+            {
+                _mode.Fight(Ui, (string[])_slots.Clone(), _leader);
+                return;
+            }
             if (!Ui.Try(new SetFormation { Slots = (string[])_slots.Clone(), Leader = _leader }, out _))
                 return;
             if (!Ui.Try(new BeginStageBattle(), out var setup))

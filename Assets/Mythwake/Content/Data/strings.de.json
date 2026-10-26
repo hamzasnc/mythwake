@@ -289,5 +289,20 @@
   "error.relic_slot_locked": "Der Relic-Slot öffnet mit Fragment Shrine Stufe 2.",
   "error.relic_max_level": "Maximale Stufe erreicht.",
   "error.relic_equipped": "Lege das Relic zuerst ab.",
-  "fragment.titleRelic": "Fragmente & Relic"
+  "fragment.titleRelic": "Fragmente & Relic",
+  "trial.title": "Trial of Fragments",
+  "trial.teaser": "Fünf Türme, einer pro Aspekt. Nur Helden des passenden Aspekts.",
+  "trial.locked": "Fragment Shrine Lv. {0}",
+  "trial.floor": "Etage {0}",
+  "trial.highest": "Höchste Etage: {0}/{1}",
+  "trial.heroes": "{0} Helden dieses Aspekts",
+  "trial.enter": "Betreten",
+  "trial.complete": "Abgeschlossen",
+  "trial.team": "Team für {0}",
+  "trial.onlyAspect": "Nur Helden mit Aspekt {0}",
+  "trial.milestone": "Etage {0}: Aspect Fragment ({1})",
+  "error.trial_locked": "Baue den Fragment Shrine auf Stufe 4 aus.",
+  "error.trial_complete": "Dieser Turm ist abgeschlossen.",
+  "error.trial_wrong_aspect": "In diesem Turm kämpfen nur Helden des passenden Aspekts.",
+  "error.unknown_trial": "Unbekannter Turm."
 }

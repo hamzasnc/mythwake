@@ -225,9 +225,9 @@ namespace Mythwake.Core.Meta
         }
 
         /// <summary>The player's side of any battle: formation, Hero Leader and village bonuses.</summary>
-        public static List<UnitSetup> Allies(PlayerState state, GameContent content, string[] formation)
+        public static List<UnitSetup> Allies(PlayerState state, GameContent content, string[] formation, bool withLeader = true)
         {
-            var leader = string.IsNullOrEmpty(state.Leader) ? null : state.FindHero(state.Leader);
+            var leader = !withLeader || string.IsNullOrEmpty(state.Leader) ? null : state.FindHero(state.Leader);
             var leaderProgress = leader == null ? null : new HeroProgress { Hero = content.Hero(leader.HeroId), Level = leader.Level, Stars = leader.Stars };
             return TeamBuilder.Build(Formations.ToProgress(state, content, formation), leaderProgress, Village.CombatBonus(state, content));
         }

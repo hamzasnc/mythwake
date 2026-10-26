@@ -1,22 +1,108 @@
 {
   "buildings": [
-    { "id": "survivorCamp",   "x": 0.500, "y": 0.490, "size": 0.27 },
-    { "id": "summoningGate",  "x": 0.205, "y": 0.355, "size": 0.25 },
-    { "id": "healersTent",    "x": 0.780, "y": 0.355, "size": 0.26 },
-    { "id": "brokenForge",    "x": 0.205, "y": 0.490, "size": 0.27 },
-    { "id": "huntersHut",     "x": 0.780, "y": 0.490, "size": 0.26 },
-    { "id": "watchtower",     "x": 0.500, "y": 0.355, "size": 0.20 },
-    { "id": "fragmentShrine", "x": 0.200, "y": 0.635, "size": 0.26 },
-    { "id": "guardianShrine", "x": 0.800, "y": 0.635, "size": 0.25 },
-    { "id": "portalChamber",  "x": 0.500, "y": 0.635, "size": 0.27 }
+    {
+      "id": "survivorCamp",
+      "x": 0.5,
+      "y": 0.49,
+      "size": 0.27
+    },
+    {
+      "id": "summoningGate",
+      "x": 0.205,
+      "y": 0.355,
+      "size": 0.25
+    },
+    {
+      "id": "healersTent",
+      "x": 0.78,
+      "y": 0.355,
+      "size": 0.26
+    },
+    {
+      "id": "brokenForge",
+      "x": 0.205,
+      "y": 0.49,
+      "size": 0.27
+    },
+    {
+      "id": "huntersHut",
+      "x": 0.78,
+      "y": 0.49,
+      "size": 0.26
+    },
+    {
+      "id": "watchtower",
+      "x": 0.5,
+      "y": 0.355,
+      "size": 0.2
+    },
+    {
+      "id": "fragmentShrine",
+      "x": 0.2,
+      "y": 0.635,
+      "size": 0.26
+    },
+    {
+      "id": "guardianShrine",
+      "x": 0.8,
+      "y": 0.635,
+      "size": 0.25
+    },
+    {
+      "id": "portalChamber",
+      "x": 0.5,
+      "y": 0.635,
+      "size": 0.27
+    }
   ],
   "world": [
-    { "id": "campaign", "x": 0.250, "y": 0.430, "size": 0.16 },
-    { "id": "town",     "x": 0.400, "y": 0.700, "size": 0.16 },
-    { "id": "hunts",    "x": 0.790, "y": 0.420, "size": 0.16 },
-    { "id": "dungeons", "x": 0.200, "y": 0.190, "size": 0.16 },
-    { "id": "arena",    "x": 0.780, "y": 0.200, "size": 0.16 },
-    { "id": "realms",   "x": 0.500, "y": 0.240, "size": 0.16 },
-    { "id": "raids",    "x": 0.800, "y": 0.700, "size": 0.16 }
+    {
+      "id": "campaign",
+      "x": 0.25,
+      "y": 0.43,
+      "size": 0.16
+    },
+    {
+      "id": "town",
+      "x": 0.4,
+      "y": 0.7,
+      "size": 0.16
+    },
+    {
+      "id": "hunts",
+      "x": 0.79,
+      "y": 0.42,
+      "size": 0.16
+    },
+    {
+      "id": "dungeons",
+      "x": 0.2,
+      "y": 0.19,
+      "size": 0.16
+    },
+    {
+      "id": "arena",
+      "x": 0.78,
+      "y": 0.2,
+      "size": 0.16
+    },
+    {
+      "id": "realms",
+      "x": 0.5,
+      "y": 0.24,
+      "size": 0.16
+    },
+    {
+      "id": "raids",
+      "x": 0.8,
+      "y": 0.7,
+      "size": 0.16
+    },
+    {
+      "id": "trials",
+      "x": 0.56,
+      "y": 0.355,
+      "size": 0.16
+    }
   ]
 }

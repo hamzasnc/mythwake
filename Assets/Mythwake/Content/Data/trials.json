@@ -1,0 +1,173 @@
+{
+  "shrineLevel": 4,
+  "maxFloor": 100,
+  "enemyLevelBase": 25,
+  "enemyLevelPerFloor": 3,
+  "starsEveryFloors": 20,
+  "bossEvery": 10,
+  "bossStatBonusPermille": 300,
+  "enemyCountFloors": [
+    1,
+    5,
+    10
+  ],
+  "rewards": [
+    {
+      "id": "fragmentDust",
+      "base": 60,
+      "perStage": 6
+    },
+    {
+      "id": "gold",
+      "base": 3000,
+      "perStage": 400
+    }
+  ],
+  "milestoneEvery": 10,
+  "milestoneRewards": [
+    {
+      "id": "gems",
+      "value": 100
+    }
+  ],
+  "milestoneGrades": [
+    {
+      "fromFloor": 0,
+      "grade": "rare"
+    },
+    {
+      "fromFloor": 30,
+      "grade": "epic"
+    },
+    {
+      "fromFloor": 60,
+      "grade": "legendary"
+    }
+  ],
+  "trials": [
+    {
+      "aspect": "ravak",
+      "name": "Trial of Ravak",
+      "description": "Gegner machen hohen Feuerschaden und werden bei wenig HP stärker (+15 % Schaden, +30 % unter 50 % HP).",
+      "enemyDamageModifier": 150,
+      "enemyPassives": [
+        {
+          "kind": "damageBonus",
+          "value": 300,
+          "belowHp": 500
+        }
+      ]
+    },
+    {
+      "aspect": "somnara",
+      "name": "Trial of Somnara",
+      "description": "Gegner verlangsamen das Team, verzögern Fähigkeiten und schicken in den Schlaf.",
+      "enemyPassives": [
+        {
+          "kind": "onHit",
+          "chance": 300,
+          "effect": {
+            "kind": "applyStatus",
+            "status": {
+              "kind": "slow",
+              "durationMs": 3000,
+              "value": 300
+            }
+          }
+        },
+        {
+          "kind": "onHit",
+          "chance": 200,
+          "effect": {
+            "kind": "delayAction",
+            "multiplier": 500
+          }
+        },
+        {
+          "kind": "onHit",
+          "chance": 60,
+          "effect": {
+            "kind": "applyStatus",
+            "status": {
+              "kind": "sleep",
+              "durationMs": 1500,
+              "value": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "aspect": "envyra",
+      "name": "Trial of Envyra",
+      "description": "Gegner stehlen Buffs und rauben Energie.",
+      "enemyPassives": [
+        {
+          "kind": "onHit",
+          "chance": 300,
+          "effect": {
+            "kind": "stealBuff",
+            "multiplier": 1
+          }
+        },
+        {
+          "kind": "onHit",
+          "chance": 300,
+          "effect": {
+            "kind": "drainEnergy",
+            "multiplier": 100
+          }
+        }
+      ]
+    },
+    {
+      "aspect": "gorath",
+      "name": "Trial of Gorath",
+      "description": "Gegner regenerieren 1,5 % max. HP pro Sekunde und werden mit jeder Kampfminute stärker.",
+      "enemyPassives": [
+        {
+          "kind": "regen",
+          "value": 15
+        },
+        {
+          "kind": "damageBonus",
+          "value": 0,
+          "growth": 50,
+          "growthIntervalMs": 10000,
+          "cap": 400
+        }
+      ]
+    },
+    {
+      "aspect": "veloria",
+      "name": "Trial of Veloria",
+      "description": "Gegner bezaubern und verwirren, sodass Helden die falschen Ziele angreifen.",
+      "enemyPassives": [
+        {
+          "kind": "onHit",
+          "chance": 120,
+          "effect": {
+            "kind": "applyStatus",
+            "status": {
+              "kind": "charm",
+              "durationMs": 1500,
+              "value": 0
+            }
+          }
+        },
+        {
+          "kind": "onHit",
+          "chance": 150,
+          "effect": {
+            "kind": "applyStatus",
+            "status": {
+              "kind": "confuse",
+              "durationMs": 2000,
+              "value": 0
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

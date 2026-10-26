@@ -169,6 +169,30 @@ namespace Mythwake.UI
             yield return Shot("fragment_shrine", 0.8f);
             ui.Router.Push(new FragmentScreen());
             yield return Shot("fragments", 0.6f);
+
+            // Trial of Fragments: Shrine level 4 opens the towers; climb one floor of the first tower with heroes
+            ui.State.Add(Ids.Gold, 500_000);
+            ui.State.Add(Ids.Wood, 500_000);
+            ui.State.Add(Ids.Stone, 500_000);
+            ui.Router.Reset(new TrialScreen());
+            yield return Shot("trials", 0.8f);
+            var trial = ui.Content.Trials.Trials.First(t => ui.State.Heroes.Any(h => ui.Content.Hero(h.HeroId).Aspect == t.Aspect));
+            ui.Router.Push(new FormationScreen(new TrialFormation(trial)));
+            yield return Shot("trial_team", 0.6f);
+            var trialSetup = ui.Authority.Execute(new BeginTrial { Aspect = trial.Aspect, Slots = Trials.SuggestedTeam(ui.State, ui.Content, trial.Aspect) }).Value;
+            if (trialSetup != null)
+            {
+                ui.Router.Push(new BattleScreen(trialSetup, new TrialBattle(trial.Name, ui.State.Battle.Floor)));
+                ui.Battle.Speed = 2f;
+                yield return Shot("trial_battle", 2.5f);
+                timeout = 120f;
+                while (ui.Battle.Running && timeout > 0f)
+                {
+                    timeout -= Time.deltaTime;
+                    yield return null;
+                }
+                yield return Shot("trial_result", 0.6f);
+            }
             foreach (var relicId in new[] { "relic_hollowtusk_tusk", "relic_treant_root", "relic_dragon_scale" })
                 Relics.Create(ui.State, relicId);
             ui.Authority.Execute(new EquipRelic { HeroId = hero, Uid = ui.State.Relics[ui.State.Relics.Count - 1].Uid });

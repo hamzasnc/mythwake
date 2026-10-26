@@ -29,6 +29,8 @@ namespace Mythwake.Core.Combat
         public int EnergyGainModifier;   // permille
         /// <summary>Enemies heal this permille of max HP every second.</summary>
         public int EnemyRegenPermille;
+        /// <summary>Passive components every enemy gets (Trial of Fragments mechanics).</summary>
+        public List<PassiveDefinition> EnemyPassives = new List<PassiveDefinition>();
         public int MaxDurationMs = 90_000;
     }
 

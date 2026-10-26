@@ -156,7 +156,7 @@ namespace Mythwake.Core.Meta
         public StageResult Apply(CommandContext ctx)
         {
             var state = ctx.State;
-            ctx.Require(state.Battle != null && state.Battle.HuntId == null && state.Battle.DungeonId == null, "no_battle");
+            ctx.Require(state.Battle != null && state.Battle.HuntId == null && state.Battle.DungeonId == null && state.Battle.TrialAspect == null, "no_battle");
             var pending = state.Battle;
             var setup = Campaign.BuildBattle(state, ctx.Content, pending);
             setup.AutoUltimates = AutoUltimates;

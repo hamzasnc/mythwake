@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Mythwake.Core.Content;
 
 namespace Mythwake.Core.Meta
 {
@@ -37,6 +38,8 @@ namespace Mythwake.Core.Meta
         public string HuntId;
         /// <summary>Set when the battle is a dungeon level (Floor) instead of a campaign stage.</summary>
         public string DungeonId;
+        /// <summary>Set when the battle is a floor (Floor) of the Trial of Fragments tower of this Aspect.</summary>
+        public Aspect? TrialAspect;
         public int Floor;
         public ulong Seed;
         public string[] Formation;
@@ -64,6 +67,7 @@ namespace Mythwake.Core.Meta
         public QuestState Quests = new QuestState();
         public HuntState Hunts = new HuntState();
         public DungeonState Dungeons = new DungeonState();
+        public TrialState Trials = new TrialState();
         public int GearUidCounter;
         public List<FragmentItem> Fragments = new List<FragmentItem>();
         public int FragmentUidCounter;

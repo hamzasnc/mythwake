@@ -36,6 +36,8 @@ namespace Mythwake.UI
                 () => Ui.Router.Push(new DungeonScreen()), Art("obsidian_vault_sentinel"), 0.26f, 0.3f);
             Pin("arena", "Arena", state.Campaign.HighestCleared >= content.Arena.UnlockStage, Loc.T("arena.locked", content.Arena.UnlockStage),
                 () => Ui.Router.Push(new ArenaScreen()), Art("dragon_echo_of_the_sky"), 0.74f, 0.27f);
+            Pin("trials", Loc.T("trial.title"), Trials.Open(state, content), Loc.T("trial.locked", content.Trials.ShrineLevel),
+                () => Ui.Router.Push(new TrialScreen()), Ui.Catalog.Icon("aspect_fragment"), 0.55f, 0.36f);
             Pin("realms", "Shattered Realms", false, Loc.T("village.planned"), null, Art("fragment_devourer"), 0.5f, 0.12f);
             Pin("raids", "Guardian Raids", false, Loc.T("village.planned"), null, Art("corrupted_guardian_of_the_deep"), 0.78f, 0.78f);
         }
