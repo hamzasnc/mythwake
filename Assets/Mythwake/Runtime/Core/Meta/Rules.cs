@@ -90,7 +90,8 @@ namespace Mythwake.Core.Meta
             {
                 Hero = hero, Level = owned.Level, Stars = owned.Stars,
                 Flat = new Stats { Hp = gear.Hp, Attack = gear.Attack, Defense = gear.Defense, CritRate = gear.CritRate },
-                AttackPermille = fragments.AttackPermille + awakened, HpPermille = fragments.HpPermille + awakened, Passives = passives
+                AttackPermille = fragments.AttackPermille + awakened, HpPermille = fragments.HpPermille + awakened, Passives = passives,
+                Priority = owned.Target
             };
         }
     }

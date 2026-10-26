@@ -63,6 +63,11 @@ Disadvantage: −15 % damage. The doc mentions seven Aspects; the team decided t
 
 ## Targeting
 
+**Target priority per hero** (doc: "options for heroes to target specific enemies", e.g. mages or the weakest first):
+the player sets it on the hero (front first, weakest, strongest, back row, healers & supports, damage dealers). It
+replaces the default front-first choice of single-target attacks (`enemyFront`); skills with their own selector keep
+it; taunt, provoke, charm and confusion still win. Arena defense snapshots keep the priority.
+
 | Selector | Picks |
 |---|---|
 | enemyFront / enemyBack | front-most unit of that row, else the other row (`targetCount` > 1 continues in that order) |

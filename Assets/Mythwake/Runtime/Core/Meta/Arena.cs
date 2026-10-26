@@ -19,6 +19,7 @@ namespace Mythwake.Core.Meta
         public Stats Stats;
         /// <summary>Fragment components at the time the snapshot was taken.</summary>
         public List<PassiveDefinition> Passives = new List<PassiveDefinition>();
+        public TargetPriority Priority;
     }
 
     /// <summary>A team frozen at the moment it was set (Arena defense). Battles against it use exactly these stats.</summary>
@@ -35,7 +36,7 @@ namespace Mythwake.Core.Meta
                 snap.Units.Add(new UnitSnapshot
                 {
                     HeroId = u.Hero.Id, Level = u.Level, Slot = u.Slot, Stats = u.Stats.Clone(),
-                    Passives = u.Passives.ConvertAll(p => p.Clone())
+                    Passives = u.Passives.ConvertAll(p => p.Clone()), Priority = u.Priority
                 });
                 snap.Power += TeamBuilder.Power(u.Stats);
             }
@@ -49,7 +50,7 @@ namespace Mythwake.Core.Meta
                 list.Add(new UnitSetup
                 {
                     Hero = content.Hero(u.HeroId), Level = u.Level, Slot = u.Slot, Stats = u.Stats.Clone(),
-                    Passives = u.Passives?.ConvertAll(p => p.Clone()) ?? new List<PassiveDefinition>()
+                    Passives = u.Passives?.ConvertAll(p => p.Clone()) ?? new List<PassiveDefinition>(), Priority = u.Priority
                 });
             return list;
         }

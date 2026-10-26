@@ -56,6 +56,7 @@ namespace Mythwake.UI
         private Label _setBonus;
         private VisualElement _fragments;
         private VisualElement _awakening;
+        private VisualElement _targets;
 
         public HeroDetailScreen(string heroId) => _heroId = heroId;
 
@@ -115,6 +116,11 @@ namespace Mythwake.UI
             UiKit.Text(Loc.T("fragment.titleRelic"), "title").Into(fragments);
             _fragments = UiKit.Box("gear-row").Into(fragments);
 
+            var target = UiKit.Box("panel").Into(safe);
+            UiKit.Text(Loc.T("target.title"), "title").Into(target);
+            UiKit.Text(Loc.T("target.hint"), "label--small").Into(target).style.whiteSpace = WhiteSpace.Normal;
+            _targets = UiKit.Box("row", "focus-row").Into(target);
+
             _awakening = UiKit.Box("panel", "awakening").Into(safe);
 
             var skills = UiKit.Box("panel").Into(safe);
@@ -159,6 +165,7 @@ namespace Mythwake.UI
             RefreshGear();
             FragmentUi.Slots(Ui, _fragments, Root, _heroId, Refresh);
             RefreshAwakening(owned);
+            RefreshTargets(owned);
             _fragments.Add(RelicUi.Slot(Ui, Root, _heroId, Refresh));
 
             var maxStars = Progression.MaxStars(content, owned);
@@ -173,6 +180,21 @@ namespace Mythwake.UI
                 var have = Ui.State.Get(starCost.Id);
                 _shards.text = Loc.T("hero.shards", have, starCost.Value);
                 _starUp.SetEnabled(have >= starCost.Value);
+            }
+        }
+
+        private void RefreshTargets(OwnedHero owned)
+        {
+            _targets.Clear();
+            foreach (Core.Combat.TargetPriority p in System.Enum.GetValues(typeof(Core.Combat.TargetPriority)))
+            {
+                var priority = p;
+                var chip = UiKit.Btn(Loc.T("target." + UiKit.Lower(p)), () =>
+                {
+                    if (Ui.Try(new SetTargetPriority { HeroId = _heroId, Priority = priority }, out bool _))
+                        Refresh();
+                }, "btn--secondary", "btn--small", "focus-chip").Into(_targets);
+                chip.EnableInClassList("focus-chip--active", owned.Target == p);
             }
         }
 

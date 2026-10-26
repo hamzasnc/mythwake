@@ -10,6 +10,8 @@ namespace Mythwake.Core.Meta
         public int Stars = 1;
         /// <summary>Guardian Awakening done (docs/systems/AWAKENING.md): counts as Transcendent.</summary>
         public bool Awakened;
+        /// <summary>Who this hero attacks first (doc: target priorities).</summary>
+        public Combat.TargetPriority Target;
     }
 
     public sealed class CampaignState

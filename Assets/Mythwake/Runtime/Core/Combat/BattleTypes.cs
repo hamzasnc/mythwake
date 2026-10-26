@@ -7,6 +7,10 @@ namespace Mythwake.Core.Combat
 
     public enum BattleOutcome { Victory, Defeat }
 
+    /// <summary>Doc: options for heroes to target specific enemies ("target mages first, the weakest first").
+    /// Applies to the hero's default (front-first) single-target attacks; skills with their own targeting keep it.</summary>
+    public enum TargetPriority { Default, Weakest, Strongest, BackRow, Supports, Dps }
+
     /// <summary>One combatant entering a battle. Stats are final (level, stars, gear and synergies already applied).</summary>
     public sealed class UnitSetup
     {
@@ -19,6 +23,7 @@ namespace Mythwake.Core.Combat
         public string Variant;
         /// <summary>HP at battle start (0 = full), e.g. carried over between defense waves.</summary>
         public long StartHp;
+        public TargetPriority Priority;
         public int StartEnergy;
         /// <summary>Passive components from outside the hero's kit (Fragments), on top of its own passive.</summary>
         public List<PassiveDefinition> Passives = new List<PassiveDefinition>();

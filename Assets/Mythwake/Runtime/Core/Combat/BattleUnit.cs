@@ -35,6 +35,7 @@ namespace Mythwake.Core.Combat
         /// <summary>The hero's passive components plus the extra ones of its setup (Fragments).</summary>
         public readonly List<PassiveDefinition> Passives = new List<PassiveDefinition>();
         public Stats Stats;
+        public TargetPriority Priority;
         public long MaxHp;
         public long Hp;
         public long Shield;

@@ -393,5 +393,14 @@
   "shop.today": "heute: {0}",
   "error.shop_locked": "Dieser Shop ist noch gesperrt.",
   "error.unknown_shop": "Unbekannter Shop.",
-  "error.unknown_item": "Unbekanntes Angebot."
+  "error.unknown_item": "Unbekanntes Angebot.",
+  "target.title": "Zielwahl",
+  "target.hint": "Gilt für die normalen Angriffe gegen ein Ziel; Fähigkeiten mit eigener Zielwahl bleiben, wie sie sind.",
+  "target.default": "Vorne zuerst",
+  "target.weakest": "Schwächste zuerst",
+  "target.strongest": "Stärkste zuerst",
+  "target.backRow": "Hintere Reihe",
+  "target.supports": "Heiler & Supports",
+  "target.dps": "Schadensdealer",
+  "error.bad_priority": "Unbekannte Zielwahl."
 }

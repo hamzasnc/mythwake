@@ -18,6 +18,7 @@ namespace Mythwake.Core.Progression
         public int HpPermille;
         /// <summary>Extra passive components (Aspect and Echo Fragments).</summary>
         public List<PassiveDefinition> Passives = new List<PassiveDefinition>();
+        public TargetPriority Priority;
     }
 
     /// <summary>Account-wide combat bonuses from outside the formation (village buildings, later relics and guild buffs), permille.</summary>
@@ -113,7 +114,7 @@ namespace Mythwake.Core.Progression
                 }
                 stats.Attack = stats.Attack * (Permille.One + atk) / Permille.One;
                 stats.Hp = stats.Hp * (Permille.One + hp) / Permille.One;
-                result.Add(new UnitSetup { Hero = h.Hero, Level = h.Level, Slot = slot, Stats = stats, Passives = new List<PassiveDefinition>(h.Passives) });
+                result.Add(new UnitSetup { Hero = h.Hero, Level = h.Level, Slot = slot, Stats = stats, Passives = new List<PassiveDefinition>(h.Passives), Priority = h.Priority });
             }
             return result;
         }

@@ -249,6 +249,22 @@ namespace Mythwake.Core.Meta
         }
     }
 
+    /// <summary>Sets who a hero attacks first (doc: "target mages first, target the weakest units first").</summary>
+    public sealed class SetTargetPriority : ICommand<bool>
+    {
+        public string HeroId;
+        public TargetPriority Priority;
+
+        public bool Apply(CommandContext ctx)
+        {
+            var hero = ctx.State.FindHero(HeroId);
+            ctx.Require(hero != null, "hero_not_owned", HeroId);
+            ctx.Require(System.Enum.IsDefined(typeof(TargetPriority), Priority), "bad_priority");
+            hero.Target = Priority;
+            return true;
+        }
+    }
+
     // ------------------------------------------------------------------ summon
 
     public sealed class SummonResult

@@ -102,7 +102,7 @@ namespace Mythwake.Core.Combat
             {
                 var u = new BattleUnit
                 {
-                    Index = _units.Count, Side = side, Slot = s.Slot, Hero = s.Hero, Stats = s.Stats.Clone()
+                    Index = _units.Count, Side = side, Slot = s.Slot, Hero = s.Hero, Stats = s.Stats.Clone(), Priority = s.Priority
                 };
                 u.MaxHp = u.Hp = System.Math.Max(1, u.Stats.Hp);
                 if (s.StartHp > 0)
@@ -873,6 +873,27 @@ namespace Mythwake.Core.Combat
             s == TargetSelector.EnemyFront || s == TargetSelector.EnemyBack || s == TargetSelector.EnemyLowestHp ||
             s == TargetSelector.EnemyHighestAttack || s == TargetSelector.EnemyRandom;
 
+        /// <summary>Higher is picked first; ties fall back to the default front-first order.</summary>
+        private static long PriorityScore(TargetPriority priority, BattleUnit u)
+        {
+            long front = -(u.Row == Row.Front ? 0 : 10) - u.Slot;
+            switch (priority)
+            {
+                case TargetPriority.Weakest:
+                    return -(u.Hp * Permille.One / u.MaxHp) * 100 + front;
+                case TargetPriority.Strongest:
+                    return u.Stats.Attack * 100 + front;
+                case TargetPriority.BackRow:
+                    return -(u.Row == Row.Back ? 0 : 10) - u.Slot;
+                case TargetPriority.Supports:
+                    return (u.Hero.Role == Role.Support || u.Hero.Role == Role.Debuffer ? 1000 : 0) + front;
+                case TargetPriority.Dps:
+                    return (u.Hero.Role == Role.Dps ? 1000 : 0) + front;
+                default:
+                    return front;
+            }
+        }
+
         private List<BattleUnit> SelectTargets(BattleUnit caster, TargetSelector selector, int count)
         {
             var result = new List<BattleUnit>();
@@ -909,7 +930,10 @@ namespace Mythwake.Core.Combat
                     result.Add(caster);
                     break;
                 case TargetSelector.EnemyFront:
-                    TakeBest(result, enemySide, count, u => -(u.Row == Row.Front ? 0 : 10) - u.Slot);
+                    if (caster.Priority != TargetPriority.Default && !charmed)
+                        TakeBest(result, enemySide, count, u => PriorityScore(caster.Priority, u));
+                    else
+                        TakeBest(result, enemySide, count, u => -(u.Row == Row.Front ? 0 : 10) - u.Slot);
                     break;
                 case TargetSelector.EnemyBack:
                     TakeBest(result, enemySide, count, u => -(u.Row == Row.Back ? 0 : 10) - u.Slot);
