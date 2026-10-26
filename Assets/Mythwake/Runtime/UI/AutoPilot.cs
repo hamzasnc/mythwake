@@ -255,6 +255,24 @@ namespace Mythwake.UI
             ui.Router.Current.Refresh();
             yield return Shot("awakening_after", 0.6f);
 
+            // rigged monsters: a preview battle against every monster that has a Spine rig (art check only)
+            var rigged = ui.Content.Monsters.Values.Where(m => ui.Catalog.HasRig(m.Id)).Select(m => m.Id).OrderBy(id => id).ToList();
+            foreach (var id in rigged)
+            {
+                // one monster per battle, tough heroes so its attack, skill and hit animations get played
+                var preview = new Core.Combat.BattleSetup { Seed = 7, Allies = Campaign.Allies(ui.State, ui.Content, ui.State.Formation) };
+                foreach (var a in preview.Allies)
+                    a.Stats.Hp *= 200;
+                var enemies = Campaign.Arrange(new System.Collections.Generic.List<Core.Content.HeroDefinition> { ui.Content.Hero(id) }, 60, 1);
+                enemies[0].Stats.Hp *= 50;
+                preview.Enemies.AddRange(enemies);
+                ui.Router.Reset(new HomeScreen());
+                ui.Router.Push(new BattleScreen(preview, new PreviewBattle()));
+                ui.Battle.Speed = 1f;
+                yield return Shot($"rig_{id}_a", 1.2f);
+                yield return Shot($"rig_{id}_b", 1.6f);
+            }
+
             ui.Router.Reset(new HeroesScreen());
             yield return Shot("heroes", 0.6f);
             ui.Router.Push(new HeroDetailScreen(hero));
@@ -354,5 +372,14 @@ namespace Mythwake.UI
 
             Debug.Log($"[AutoPilot] online done, resyncs {resyncs}");
         }
+    }
+
+    /// <summary>Plays a battle without settling it (autopilot art checks).</summary>
+    internal sealed class PreviewBattle : IBattleMode
+    {
+        public bool Replay => true;
+        public string Title(UiContext ui) => "Preview";
+        public BattleReport Finish(UiContext ui, Presentation.BattleView battle) => new BattleReport { Outcome = Core.Combat.BattleOutcome.Victory };
+        public UiScreen After() => new HomeScreen();
     }
 }

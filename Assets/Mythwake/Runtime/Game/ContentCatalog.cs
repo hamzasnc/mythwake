@@ -91,6 +91,9 @@ namespace Mythwake.Game
                 _byId = heroes.Concat(monsters).ToDictionary(h => h.id);
             return _byId.TryGetValue(id, out var h) ? h : null;
         }
+
+        /// <summary>True when the hero or monster has a Spine rig (lets assemblies without spine-unity ask).</summary>
+        public bool HasRig(string id) => Hero(id)?.skeleton != null;
     }
 
     /// <summary>Where things sit on the hub pictures, as fractions of the picture (0..1, origin top left).</summary>

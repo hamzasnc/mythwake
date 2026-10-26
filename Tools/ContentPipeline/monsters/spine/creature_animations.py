@@ -89,12 +89,25 @@ def build_animations(WORLD, LOCAL, PARENT, bones, slots, slot_bone, own, chain, 
     mid_up = limbs("leg_2", "upper")
     single_legs = [b for b in limbs("leg") if "upper" not in b and "lower" not in b]
     hands = limbs("hand")
-    props = [own[n] for n, r in role.items() if r == "prop" and n in own and own[n] == n]
+    # floating props (halos, orbiting shards) move on their own; carried ones (shell, shields, weapons) stay rigid
+    CARRIED = ("shell", "shield", "halberd", "weapon", "crown", "cape", "quiver", "hat")
+    props = [own[n] for n, r in role.items() if r == "prop" and n in own and own[n] == n and not any(w in n for w in CARRIED)]
     glows = [s for s in slots if s.startswith("glow")]
     eyes = [s for s in slots if s in variants.values()]
     humanoid = any("arm_" in b for b in front_up) and not any("leg_front" in b or "leg_1" in b for b in front_up)
+    # heavy creatures move less; legs of four- and six-legged bodies only swing a little (their joints are covered
+    # by the body, a big swing would open the cut)
+    MASS = 0.65 if height >= 250 else 1.0
+    LEG = 1.0 if humanoid else 0.5
+
+    def leg(keys):
+        return [(t, v * LEG, e) for t, v, e in keys]
+
+    def mass(keys):
+        return [(t, v * MASS, e) for t, v, e in keys]
 
     def body_keys(B, keys):
+        keys = mass(keys)
         if body_chain:
             for k, b in enumerate(body_chain):
                 B[b] = {"rotate": rot(scale_keys(keys, 0.6 + 0.25 * k, 0.03 * k))}
@@ -108,7 +121,8 @@ def build_animations(WORLD, LOCAL, PARENT, bones, slots, slot_bone, own, chain, 
                 continue
             sgn = 0.6 if n in necks else -1.0
             for k, b in enumerate(ch):
-                B[b] = {"rotate": rot(scale_keys(impulse, sgn * (0.45 + 0.35 * k) * strength, 0.04 * (k + 1) + 0.01 * (i % 3)))}
+                # chain rotations add up bone by bone: keep each link small
+                B[b] = {"rotate": rot(scale_keys(impulse, sgn * (0.22 + 0.08 * k) * strength, 0.04 * (k + 1) + 0.01 * (i % 3)))}
 
     def events(names_times):
         return [{"time": round(t, 4), "name": n} for n, t in sorted(names_times, key=lambda x: x[1])]
@@ -135,7 +149,7 @@ def build_animations(WORLD, LOCAL, PARENT, bones, slots, slot_bone, own, chain, 
             B[b] = {"rotate": wave(1.6 + 0.8 * k, D, math.pi * (0.3 + 0.2 * k), D)}
     for i, (n, ch) in enumerate(sorted(wings.items())):
         for k, b in enumerate(ch):
-            B[b] = {"rotate": wave((6.0 + 4.0 * k), D / 2, math.pi * (0.15 * k + 0.5 * i), D)}
+            B[b] = {"rotate": wave(max(1.0, 4.0 - 1.2 * k), D / 2, math.pi * (0.15 * k + 0.5 * i), D)}
     for b in rigid_wings:
         B[b] = {"rotate": wave(7.0, D / 2, 0.0, D)}
     for b in front_up + hind_up + mid_up:
@@ -169,16 +183,17 @@ def build_animations(WORLD, LOCAL, PARENT, bones, slots, slot_bone, own, chain, 
         if humanoid:
             keys = [(0, 0, "smooth"), (t_w, -55 if main else -15, "snap"), (t_hit, 70 if main else 20, "out"), (t_hit + 0.25, 25 if main else 8, "smooth"), (dur_a, 0, "linear")]
         else:
-            keys = [(0, 0, "smooth"), (t_w, 22, "snap"), (t_hit, -18, "out"), (dur_a, 0, "linear")]
+            keys = leg([(0, 0, "smooth"), (t_w, 22, "snap"), (t_hit, -18, "out"), (dur_a, 0, "linear")])
         B[b] = {"rotate": rot(keys)}
     for b in front_lo:
-        B[b] = {"rotate": rot([(0, 0, "smooth"), (t_w, 20 if humanoid else -25, "snap"), (t_hit, -10 if humanoid else 8, "out"), (dur_a, 0, "linear")])}
+        B[b] = {"rotate": rot(leg([(0, 0, "smooth"), (t_w, 20 if humanoid else -25, "snap"), (t_hit, -10 if humanoid else 8, "out"), (dur_a, 0, "linear")]))}
     for b in hind_up:
-        B[b] = {"rotate": rot([(0, 0, "smooth"), (t_w, 6, "snap"), (t_hit, -14, "out"), (dur_a, 0, "linear")])}
+        B[b] = {"rotate": rot(leg([(0, 0, "smooth"), (t_w, 6, "snap"), (t_hit, -14, "out"), (dur_a, 0, "linear")]))}
     secondary(B, lean)
     for n, ch in wings.items():
         for k, b in enumerate(ch):
-            B[b] = {"rotate": rot([(0, 0, "smooth"), (t_w, 22 + 6 * k, "snap"), (t_hit, -18 - 6 * k, "out"), (dur_a, 0, "linear")])}
+            w_ = max(1.5, 7 - 2.5 * k)
+            B[b] = {"rotate": rot([(0, 0, "smooth"), (t_w, w_, "snap"), (t_hit, -w_, "out"), (dur_a, 0, "linear")])}
     A["attack"] = {"bones": B, "events": events([("hit", t) for t in hits_a])}
 
     # ------------------------------------------------------------ skill: rear up / roar, then slam
@@ -194,15 +209,16 @@ def build_animations(WORLD, LOCAL, PARENT, bones, slots, slot_bone, own, chain, 
     if jaw:
         B[jaw] = {"rotate": rot([(0, 0, "smooth"), (t_c * 0.6, -10, "smooth"), (t_c, -38, "snap"), (t_hit + 0.2, -20, "smooth"), (dur_s, 0, "linear")])}
     for b in front_up:
-        B[b] = {"rotate": rot([(0, 0, "smooth"), (t_c, 110 if humanoid else 30, "smooth"), (t_hit, 35 if humanoid else -20, "snap"), (dur_s, 0, "linear")])}
+        B[b] = {"rotate": rot(leg([(0, 0, "smooth"), (t_c, 110 if humanoid else 30, "smooth"), (t_hit, 35 if humanoid else -20, "snap"), (dur_s, 0, "linear")]))}
     for b in front_lo:
-        B[b] = {"rotate": rot([(0, 0, "smooth"), (t_c, 25 if humanoid else -35, "smooth"), (t_hit, 0, "snap"), (dur_s, 0, "linear")])}
+        B[b] = {"rotate": rot(leg([(0, 0, "smooth"), (t_c, 25 if humanoid else -35, "smooth"), (t_hit, 0, "snap"), (dur_s, 0, "linear")]))}
     for b in hind_up:
-        B[b] = {"rotate": rot([(0, 0, "smooth"), (t_c, -10, "smooth"), (t_hit, 8, "snap"), (dur_s, 0, "linear")])}
+        B[b] = {"rotate": rot(leg([(0, 0, "smooth"), (t_c, -10, "smooth"), (t_hit, 8, "snap"), (dur_s, 0, "linear")]))}
     secondary(B, lean, 1.2)
     for n, ch in wings.items():
         for k, b in enumerate(ch):
-            B[b] = {"rotate": rot([(0, 0, "smooth"), (t_c, 30 + 8 * k, "smooth"), (t_hit, -26 - 8 * k, "snap"), (dur_s, 0, "linear")])}
+            w_ = max(2.0, 10 - 3 * k)
+            B[b] = {"rotate": rot([(0, 0, "smooth"), (t_c, w_, "smooth"), (t_hit, -w_, "snap"), (dur_s, 0, "linear")])}
     S = {g: {"rgba": [{"time": 0, "color": "ffffffff"}, {"time": t_c, "color": "ffffff66"}, {"time": t_hit, "color": "ffffffff"},
                       {"time": dur_s, "color": "ffffffff"}]} for g in glows}
     A["skill"] = {"bones": B, "slots": S, "events": events([("cast", t_c)] + [("hit", t) for t in hits_s])}
@@ -211,11 +227,11 @@ def build_animations(WORLD, LOCAL, PARENT, bones, slots, slot_bone, own, chain, 
     dur_u, hits_u = timing.get("ultimate", (1.95, [1.3]))
     t1 = hits_u[0]
     t_c = t1 * 0.62
-    lean = [(0, 0, "smooth"), (t_c, 20, "smooth"), (t1 - 0.08, 24, "in"), (t1, -14, "snap")]
+    lean = [(0, 0, "smooth"), (t_c, 11, "smooth"), (t1 - 0.08, 13, "in"), (t1, -10, "snap")]
     for k, t in enumerate(hits_u[1:]):
-        lean.append((t, -14 + (4 if k % 2 == 0 else -2), "snap"))
+        lean.append((t, -10 + (3 if k % 2 == 0 else -2), "snap"))
     lean += [(min(dur_u - 0.05, hits_u[-1] + 0.3), -4, "smooth"), (dur_u, 0, "linear")]
-    root_keys = [(0, 0, 0, "smooth"), (t_c, -10 * H, 20 * H, "smooth"), (t1, 26 * H, -3 * H, "snap")]
+    root_keys = [(0, 0, 0, "smooth"), (t_c, -8 * H, 10 * H, "smooth"), (t1, 24 * H, -3 * H, "snap")]
     for k, t in enumerate(hits_u[1:]):
         root_keys.append((t, (26 - 4 * (k + 1)) * H, (-3 if k % 2 else 3) * H, "snap"))
     root_keys += [(min(dur_u - 0.05, hits_u[-1] + 0.3), 8 * H, 0, "smooth"), (dur_u, 0, 0, "linear")]
@@ -230,13 +246,14 @@ def build_animations(WORLD, LOCAL, PARENT, bones, slots, slot_bone, own, chain, 
         for k, t in enumerate(hits_u[1:]):
             k_.append((t, (70 if k % 2 == 0 else 40) if humanoid else (-8 if k % 2 == 0 else -24), "snap"))
         k_.append((dur_u, 0, "linear"))
-        B[b] = {"rotate": rot(k_)}
+        B[b] = {"rotate": rot(leg(k_))}
     for b in hind_up:
-        B[b] = {"rotate": rot([(0, 0, "smooth"), (t_c, -14, "smooth"), (t1, 10, "snap"), (dur_u, 0, "linear")])}
+        B[b] = {"rotate": rot(leg([(0, 0, "smooth"), (t_c, -14, "smooth"), (t1, 10, "snap"), (dur_u, 0, "linear")]))}
     secondary(B, lean, 1.4)
     for n, ch in wings.items():
         for k, b in enumerate(ch):
-            flap = [(0, 0, "smooth"), (t_c * 0.5, 28 + 8 * k, "smooth"), (t_c, -20 - 6 * k, "smooth"), (t1 - 0.05, 36 + 8 * k, "in"), (t1, -30 - 8 * k, "snap"),
+            w_ = max(2.0, 12 - 3.5 * k)
+            flap = [(0, 0, "smooth"), (t_c * 0.5, w_, "smooth"), (t_c, -w_ * 0.7, "smooth"), (t1 - 0.05, w_ * 1.2, "in"), (t1, -w_, "snap"),
                     (dur_u, 0, "linear")]
             B[b] = {"rotate": rot(flap)}
     for b in props:
@@ -271,10 +288,10 @@ def build_animations(WORLD, LOCAL, PARENT, bones, slots, slot_bone, own, chain, 
     if jaw:
         B[jaw] = {"rotate": rot([(0, 0, "smooth"), (0.2, -26, "out"), (0.8, -14, "smooth"), (D, -14, "linear")])}
     for b in front_up + hind_up + mid_up + single_legs:
-        B[b] = {"rotate": rot([(0, 0, "smooth"), (0.7, 18 if b in front_up else -14, "in"), (D, 18 if b in front_up else -14, "linear")])}
+        B[b] = {"rotate": rot(leg([(0, 0, "smooth"), (0.7, 18 if b in front_up else -14, "in"), (D, 18 if b in front_up else -14, "linear")]))}
     for n, ch in sorted(tails.items()) + sorted(wings.items()):
         for k, b in enumerate(ch):
-            B[b] = {"rotate": rot([(0, 0, "smooth"), (0.75, -12 - 6 * k, "in"), (D, -14 - 6 * k, "linear")])}
+            B[b] = {"rotate": rot([(0, 0, "smooth"), (0.75, -6 - 2 * k, "in"), (D, -7 - 2 * k, "linear")])}
     for b in props:
         B[b] = {"translate": xy([(0, 0, 0, "smooth"), (0.9, 0, -40 * H, "in"), (D, 0, -40 * H, "linear")])}
     S = {s: {"rgba": [{"time": 0, "color": "ffffffff"}, {"time": 0.75, "color": "ffffffff"}, {"time": D, "color": "ffffff00"}]} for s in slots}

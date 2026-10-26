@@ -62,6 +62,7 @@ Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscr
 3. Unity imports the Spine export; **Mythwake ▸ Render Hero Portraits**, then **Rebuild Content Catalog**.
 4. Item icons (Fragments, Relics) → `Tools/ContentPipeline/town/make_fragment_icon_jobs.py` / `make_relic_icon_jobs.py`, then `import_icons.py <jobs dir>`.
 5. Town and world map art → `Tools/ContentPipeline/town/make_town_jobs.py` (Codex jobs), then `import_town.py <jobs dir>`.
+6. Monster Spine rigs → `Tools/ContentPipeline/monsters/make_peel_jobs.py <masters dir> <id,id>` (Codex peels the master into layers + `layers.json`), then `monsters/spine/build_all.py <masters dirs> [--only id,id]` → `Content/Monsters/<id>/`; see `docs/MONSTER_RIGS.md`.
 
 ## Open points
 
@@ -83,7 +84,7 @@ Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscr
   boss sleep immunity, rank-gated skills).
 - Balance is a first pass everywhere (`Content/Data/*.json`, numbers in `docs/systems/*.md`); pacing tests pin the
   early game.
-- Missing art: cut-ins for 12 heroes, Spine rigs for the 25 monsters (they move as cut-out sprites), battle
+- Missing art: cut-ins for 12 heroes, Spine rigs for 20 of the 25 monsters (they move as cut-out sprites until rigged), battle
   backgrounds, item icons for gear, UI icons and fonts, sound.
 - Village buildings upgrade instantly (no build timers).
 - Server for production: TLS, platform logins (Google/Apple), Redis rate limits for several API instances, guild
