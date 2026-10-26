@@ -84,6 +84,8 @@ namespace Mythwake.Core.Meta
         public BossFragmentState BossFragments = new BossFragmentState();
         public DefenseState Defense = new DefenseState();
         public ShopState Shops = new ShopState();
+        /// <summary>Guild the player belongs to; set only by the server (docs/systems/GUILDS.md).</summary>
+        public string GuildId;
         public int GearUidCounter;
         public List<FragmentItem> Fragments = new List<FragmentItem>();
         public int FragmentUidCounter;

@@ -10,6 +10,7 @@
   "grade": "rare",
   "group": "crimsonWraith",
   "boss": true,
+  "raidBoss": false,
   "sizePermille": 1350,
   "body": "humanoid",
   "spineId": "crimson_wraith_adept",

@@ -10,6 +10,7 @@
   "grade": "rare",
   "group": "corruptedBeast",
   "boss": true,
+  "raidBoss": false,
   "sizePermille": 1350,
   "body": "quadruped",
   "spineId": "hollowtusk_alpha",

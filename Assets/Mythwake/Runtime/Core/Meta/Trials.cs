@@ -93,7 +93,7 @@ namespace Mythwake.Core.Meta
         {
             var pool = new List<HeroDefinition>();
             foreach (var m in content.Monsters.Values)
-                if (m.Aspect == aspect && !m.Boss)
+                if (m.Aspect == aspect && !m.Boss && !m.RaidBoss)
                     pool.Add(m);
             foreach (var h in content.Heroes.Values)
                 if (h.Aspect == aspect && h.Role != Role.HeroLeader)
@@ -101,7 +101,7 @@ namespace Mythwake.Core.Meta
             pool.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
             var bosses = new List<HeroDefinition>();
             foreach (var m in content.Monsters.Values)
-                if (m.Aspect == aspect && m.Boss)
+                if (m.Aspect == aspect && m.Boss && !m.RaidBoss)
                     bosses.Add(m);
             bosses.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
 

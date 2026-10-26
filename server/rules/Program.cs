@@ -38,6 +38,8 @@ namespace Mythwake.Rules
             app.MapGet("/config/arena", (Func<IResult>)(() => Reply(rules.ArenaConfig())));
             app.MapPost("/arena/bot", (Func<HttpRequest, Task<IResult>>)(async req => Reply(rules.ArenaBot(await Body(req)))));
             app.MapPost("/arena/battle", (Func<HttpRequest, Task<IResult>>)(async req => Reply(rules.ArenaBattle(await Body(req)))));
+            app.MapGet("/config/guild", (Func<IResult>)(() => Reply(rules.GuildConfig())));
+            app.MapPost("/raid/battle", (Func<HttpRequest, Task<IResult>>)(async req => Reply(rules.RaidBattle(await Body(req)))));
 
             app.Run(Environment.GetEnvironmentVariable("MYTHWAKE_RULES_ADDR") ?? "http://127.0.0.1:5081");
         }

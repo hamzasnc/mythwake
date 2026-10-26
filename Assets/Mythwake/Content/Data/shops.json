@@ -315,6 +315,98 @@
           "weekly": true
         }
       ]
+    },
+    {
+      "id": "guild",
+      "name": "Guild Shop",
+      "description": "Raid-Materialien, Relics und Gilden-Belohnungen.",
+      "requiresGuild": true,
+      "items": [
+        {
+          "id": "guardianSigil",
+          "name": "Guardian Sigils",
+          "price": [
+            {
+              "id": "guildCoins",
+              "value": 300
+            }
+          ],
+          "gives": [
+            {
+              "id": "guardianSigil",
+              "value": 10
+            }
+          ],
+          "limit": 3,
+          "weekly": true
+        },
+        {
+          "id": "relicMaterials",
+          "name": "Relic materials",
+          "price": [
+            {
+              "id": "guildCoins",
+              "value": 120
+            }
+          ],
+          "gives": [
+            {
+              "id": "relicMaterials",
+              "value": 30
+            }
+          ],
+          "limit": 3
+        },
+        {
+          "id": "summonScroll",
+          "name": "Summon Scroll",
+          "price": [
+            {
+              "id": "guildCoins",
+              "value": 250
+            }
+          ],
+          "gives": [
+            {
+              "id": "summonScroll",
+              "value": 1
+            }
+          ],
+          "limit": 2,
+          "weekly": true
+        },
+        {
+          "id": "upgradeStones",
+          "name": "Upgrade stones",
+          "price": [
+            {
+              "id": "guildCoins",
+              "value": 100
+            }
+          ],
+          "gives": [
+            {
+              "id": "upgradeStones",
+              "value": 25
+            }
+          ],
+          "limit": 2
+        },
+        {
+          "id": "gearLegendary",
+          "name": "Legendary Gear",
+          "price": [
+            {
+              "id": "guildCoins",
+              "value": 2500
+            }
+          ],
+          "gives": [],
+          "gearGrade": "legendary",
+          "limit": 1,
+          "weekly": true
+        }
+      ]
     }
   ]
 }

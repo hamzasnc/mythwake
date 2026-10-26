@@ -79,3 +79,16 @@ See `server/api/internal/db/migrations`.
 `server/dev.ps1` (Windows) or `server/dev.sh`: creates a private Postgres cluster in `server/.local/pg` on port 55432
 (uses the installed PostgreSQL binaries, does not touch an installed server), starts the rules service and the API.
 Alternative with Docker: `docker compose -f server/docker-compose.yml up`.
+
+## Guilds (docs/systems/GUILDS.md)
+
+| Endpoint | |
+|---|---|
+| `GET /v1/guilds?q=` | list / search guilds |
+| `POST /v1/guilds` | found a guild `{name}` (pays the cost, sets the guild in the save) |
+| `POST /v1/guilds/{id}/join` | join |
+| `GET /v1/guild` | own guild: members, donation state, raid boss / HP / attempts; pays pending raid kill rewards |
+| `POST /v1/guild/leave` | leave (leader hands over, empty guilds are removed) |
+| `GET /v1/guild/chat?after=` · `POST /v1/guild/chat` | chat |
+| `POST /v1/guild/donate` | daily donation `{donationId}` |
+| `POST /v1/guild/raid` | Guardian Raid attempt: the rules service simulates it (`/raid/battle`), the client replays it |

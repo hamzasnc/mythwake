@@ -10,6 +10,7 @@
   "grade": "rare",
   "group": "corruptedBeast",
   "boss": false,
+  "raidBoss": false,
   "sizePermille": 1000,
   "body": "quadruped",
   "spineId": "corrupted_boar",

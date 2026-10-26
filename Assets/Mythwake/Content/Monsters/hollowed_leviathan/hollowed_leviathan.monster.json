@@ -1,0 +1,171 @@
+{
+  "id": "hollowed_leviathan",
+  "name": "Hollowed Leviathan",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "somnara",
+  "role": "dps",
+  "row": "front",
+  "grade": "rare",
+  "group": "corruptedGuardian",
+  "boss": true,
+  "raidBoss": true,
+  "sizePermille": 1600,
+  "body": "huge",
+  "spineId": "hollowed_leviathan",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 2500,
+    "attack": 120,
+    "defense": 60,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "hollowed_leviathan.normal",
+    "name": "Tiefenbiss",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1200
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "hollowed_leviathan.special",
+    "name": "Hohle Strömung",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1300
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "slow",
+          "durationMs": 3000,
+          "value": 300
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "hollowed_leviathan.special2",
+    "name": "Verschlingende Tiefe",
+    "description": "",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 14000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3000
+      },
+      {
+        "kind": "lifesteal",
+        "multiplier": 600
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "sleep",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "hollowed_leviathan.passive",
+    "name": "Hohler Leib",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "lifesteal",
+        "value": 100
+      },
+      {
+        "kind": "onHitTaken",
+        "chance": 200,
+        "effect": {
+          "kind": "delayAction",
+          "multiplier": 400
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "hollowed_leviathan.ultimate",
+    "name": "Mahlstrom",
+    "description": "",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 6000
+      },
+      {
+        "kind": "drainEnergy",
+        "multiplier": 400
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1300,
+      1420,
+      1540
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

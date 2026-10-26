@@ -1,0 +1,182 @@
+{
+  "id": "craterborn_guardian",
+  "name": "Craterborn Guardian",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "veloria",
+  "role": "dps",
+  "row": "front",
+  "grade": "rare",
+  "group": "corruptedGuardian",
+  "boss": true,
+  "raidBoss": true,
+  "sizePermille": 1600,
+  "body": "huge",
+  "spineId": "craterborn_guardian",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 2500,
+    "attack": 120,
+    "defense": 60,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "craterborn_guardian.normal",
+    "name": "Meteorfaust",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1250
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "craterborn_guardian.special",
+    "name": "Kratersplitter",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyBackRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 2000
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "confuse",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "craterborn_guardian.special2",
+    "name": "Glühender Kern",
+    "description": "",
+    "slot": "special2",
+    "trigger": {
+      "kind": "selfBelowHp",
+      "hpThresholdPermille": 500,
+      "cooldownMs": 0,
+      "oncePerBattle": true
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "attackUp",
+          "durationMs": 10000,
+          "value": 400
+        }
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "immune",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "craterborn_guardian.passive",
+    "name": "Kratergeboren",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHitTaken",
+        "chance": 250,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "charm",
+            "durationMs": 1500,
+            "value": 0
+          }
+        }
+      },
+      {
+        "kind": "damageBonus",
+        "value": 300,
+        "belowHp": 500
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "craterborn_guardian.ultimate",
+    "name": "Einschlag",
+    "description": "",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 6800
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "charm",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1300,
+      1420,
+      1540
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

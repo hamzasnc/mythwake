@@ -10,6 +10,7 @@
   "grade": "rare",
   "group": "riftborn",
   "boss": false,
+  "raidBoss": false,
   "sizePermille": 1000,
   "body": "humanoid",
   "spineId": "riftborn_stalker",

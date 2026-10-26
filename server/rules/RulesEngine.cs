@@ -157,6 +157,39 @@ namespace Mythwake.Rules
             return config;
         }
 
+        /// <summary>Guild settings the API needs (costs, levels, donations, raid) plus the daily reset hour.</summary>
+        public JObject GuildConfig()
+        {
+            var config = JObject.Parse(JsonConvert.SerializeObject(Content.Guilds, SaveJson.Settings));
+            config["ok"] = true;
+            config["resetHourUtc"] = Content.Quests.ResetHourUtc;
+            return config;
+        }
+
+        /// <summary>{ team, raidLevel, hpLeft, seed } → damage dealt to the Guardian, whether it fell, the attempt rewards.</summary>
+        public JObject RaidBattle(JObject body)
+        {
+            var team = JsonConvert.DeserializeObject<TeamSnapshot>(body.Value<string>("team"), SaveJson.Settings);
+            var level = Math.Max(1, body.Value<int>("raidLevel"));
+            var hpLeft = Math.Max(1, body.Value<long>("hpLeft"));
+            var setup = Guilds.RaidSetup(Content, team, level, hpLeft, Seed(body["seed"]));
+            var result = BattleSimulator.Run(setup);
+            var boss = result.Units.First(u => u.Side == Side.Enemies);
+            // damage dealt counts, not net HP lost: a Guardian's regeneration must not erase a member's contribution
+            var damage = Math.Min(hpLeft, boss.DamageTaken);
+            return new JObject
+            {
+                ["ok"] = true,
+                ["boss"] = Guilds.RaidBoss(Content, level),
+                ["damage"] = damage,
+                ["killed"] = boss.FinalHp <= 0,
+                ["durationMs"] = result.DurationMs,
+                ["rewards"] = JArray.FromObject(Guilds.AttemptRewards(Content, damage).Select(a => new { id = a.Id, value = a.Value })),
+                ["killRewards"] = JArray.FromObject(Guilds.KillRewards(Content, level).Select(a => new { id = a.Id, value = a.Value })),
+                ["nextHp"] = Guilds.RaidBossHp(Content, level + 1)
+            };
+        }
+
         /// <summary>{ stage, seed } → a bot defense team as strong as the campaign enemies of that stage.</summary>
         public JObject ArenaBot(JObject body)
         {

@@ -161,6 +161,8 @@ namespace Mythwake.Core.Content
         public EnemyGroup Group;
         /// <summary>Monsters only: a named boss (doc: Boss System).</summary>
         public bool Boss;
+        /// <summary>Monsters only: a Guardian Raid boss (doc: Guardian Raid System), fought only by guilds.</summary>
+        public bool RaidBoss;
         /// <summary>Visual size on the battlefield, permille (bosses are drawn larger).</summary>
         public int SizePermille = 1000;
         /// <summary>Design-only notes (where the data approximates a kit mechanic the rules do not model yet). Never shown in game.</summary>

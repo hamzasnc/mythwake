@@ -173,6 +173,7 @@ namespace Mythwake.Core.Meta
         public DefenseConfig Defense = new DefenseConfig();
         public ShopConfig Shops = new ShopConfig();
         public SkillConfig Skills = new SkillConfig();
+        public GuildConfig Guilds = new GuildConfig();
 
         /// <summary>A hero or monster by id (battle setups and team snapshots can contain both).</summary>
         public HeroDefinition Hero(string id) =>

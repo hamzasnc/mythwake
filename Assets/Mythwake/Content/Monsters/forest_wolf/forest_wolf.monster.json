@@ -10,6 +10,7 @@
   "grade": "rare",
   "group": "wildBeast",
   "boss": false,
+  "raidBoss": false,
   "sizePermille": 1000,
   "body": "quadruped",
   "spineId": "forest_wolf",

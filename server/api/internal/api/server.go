@@ -27,6 +27,8 @@ type Rules interface {
 	ArenaBattle(ctx context.Context, attacker, defender string, seed uint64, attackerRating, defenderRating int) (rules.ArenaBattle, error)
 	ArenaConfig(ctx context.Context) (rules.ArenaConfig, error)
 	BotTeam(ctx context.Context, stage int, seed uint64) (rules.ArenaTeam, error)
+	GuildConfig(ctx context.Context) (rules.GuildConfig, error)
+	RaidBattle(ctx context.Context, team string, raidLevel int, hpLeft int64, seed uint64) (rules.RaidBattle, error)
 }
 
 type Server struct {
@@ -40,6 +42,10 @@ type Server struct {
 	arenaMu     sync.Mutex
 	arenaLoaded bool
 	arena       rules.ArenaConfig
+
+	guildMu     sync.Mutex
+	guildLoaded bool
+	guild       rules.GuildConfig
 }
 
 func New(st *store.Store, r Rules, tokens *auth.Tokens, log *slog.Logger) *Server {
@@ -63,6 +69,15 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("POST /v1/arena/defense", s.authed(s.setDefense))
 	mux.Handle("POST /v1/arena/fight", s.authed(s.fight))
 	mux.Handle("GET /v1/arena/ranking", s.authed(s.ranking))
+	mux.Handle("GET /v1/guilds", s.authed(s.listGuilds))
+	mux.Handle("POST /v1/guilds", s.authed(s.createGuild))
+	mux.Handle("POST /v1/guilds/{id}/join", s.authed(s.joinGuild))
+	mux.Handle("GET /v1/guild", s.authed(s.getGuild))
+	mux.Handle("POST /v1/guild/leave", s.authed(s.leaveGuild))
+	mux.Handle("GET /v1/guild/chat", s.authed(s.guildChat))
+	mux.Handle("POST /v1/guild/chat", s.authed(s.postGuildChat))
+	mux.Handle("POST /v1/guild/donate", s.authed(s.donate))
+	mux.Handle("POST /v1/guild/raid", s.authed(s.raid))
 	return s.middleware(mux)
 }
 

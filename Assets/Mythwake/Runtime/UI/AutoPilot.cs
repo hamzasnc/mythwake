@@ -326,6 +326,32 @@ namespace Mythwake.UI
                     yield return shot("arena_result", 1.0f);
                 }
             }
+            // guild: found one (or keep the existing), raid the Guardian once
+            yield return server.Flush();
+            yield return server.Api.Send("POST", "/v1/guilds", new Newtonsoft.Json.Linq.JObject { ["name"] = "Autopilot " + UnityEngine.Random.Range(1000, 9999) }, _ => { });
+            yield return server.Resync("autopilot");
+            ui.Router.Reset(new GuildScreen());
+            yield return shot("guild_members", 2.0f);
+            ui.Router.Reset(new GuildScreen(GuildScreen.Page.Raid));
+            yield return shot("guild_raid", 2.0f);
+            var raid = ui.Router.Current.Root.Query<Button>().ToList().FirstOrDefault(b => b.text == Loc.T("home.fight") && b.enabledSelf);
+            if (raid != null)
+            {
+                using (var click = NavigationSubmitEvent.GetPooled())
+                {
+                    click.target = raid;
+                    raid.SendEvent(click);
+                }
+                yield return shot("guild_raid_battle", 4.0f);
+                var raidTimeout = 120f;
+                while ((ui.Battle.Running || !(ui.Router.Current is BattleScreen)) && raidTimeout > 0f)
+                {
+                    raidTimeout -= Time.deltaTime;
+                    yield return null;
+                }
+                yield return shot("guild_raid_result", 1.0f);
+            }
+
             Debug.Log($"[AutoPilot] online done, resyncs {resyncs}");
         }
     }

@@ -19,6 +19,8 @@ namespace Mythwake.Core.Meta
         public const string RealmKey = "realmKey";
         /// <summary>Doc: "Upgrade stones" (Trial of Fragments reward), used for skill upgrades.</summary>
         public const string UpgradeStones = "upgradeStones";
+        /// <summary>Doc: "Guild Coins" (Guardian Raid reward), spent in the Guild Shop.</summary>
+        public const string GuildCoins = "guildCoins";
 
         /// <summary>Hero shards are per hero: "shards.&lt;heroId&gt;".</summary>
         public static string Shards(string heroId) => "shards." + heroId;

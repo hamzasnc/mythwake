@@ -29,7 +29,7 @@ ROLE_STATS = {
 BOSS = dict(hp=2.5, attack=1.2, defense=1.2)
 # normal monsters fight next to early (Common/Rare) heroes: slightly below the Rare hero baseline
 NORMAL = dict(hp=0.85, attack=0.85, defense=0.85)
-SIZE = {"normal": 1000, "boss": 1350}
+SIZE = {"normal": 1000, "boss": 1350, "raid": 1600}
 
 
 def N(name, mult, target="enemyFront", hits=1, effects=None):
@@ -144,6 +144,37 @@ K = {
         special2=S("Spiegelschilde", cd(12), "self", [shield(20, 6000, scaling="casterMaxHp")]),
         passive=("Trugbild der Heiligkeit", [P("onHitTaken", chance=250, effect=status("confuse", 1500))]),
         ultimate=U("Zerbrochene Heiligkeit", "enemyAll", [dmg(550), status("confuse", 3000)], hits=3)),
+    # Guardian Raid bosses (doc: Guardian Raid System). Their HP comes from the raid level, not from these stats.
+    "celestial_turtle": dict(
+        normal=N("Sternenflosse", 110, target="enemyFrontRow"),
+        special=S("Gezeitenpanzer", cd(10), "self", [shield(10, 6000, scaling="casterMaxHp"), status("damageTakenDown", 6000, 250)]),
+        special2=S("Sternenregen", cd(14), "enemyAll", [dmg(140), status("slow", 3000, 250)]),
+        passive=("Uralter Schutz", [P("regen", value=5), P("damageReduction", value=200)]),
+        ultimate=U("Flut der Himmel", "enemyAll", [dmg(520), status("sleep", 2000)], hits=3)),
+    "dragon_of_the_sky": dict(
+        normal=N("Gewitterklaue", 130, hits=2),
+        special=S("Donneratem", cd(8), "enemyBackRow", [dmg(220), status("burn", 4000, 180)]),
+        special2=S("Sturmflügel", cd(13), "enemyAll", [dmg(150), status("stun", 1000)]),
+        passive=("Zorn des Himmels", [P("damageBonus", growth=60, cap=600), P("critRate", value=150)]),
+        ultimate=U("Himmelsbruch", "enemyAll", [dmg(700), status("burn", 5000, 200)], hits=4)),
+    "hollowed_leviathan": dict(
+        normal=N("Tiefenbiss", 120),
+        special=S("Hohle Strömung", cd(9), "enemyAll", [dmg(130), status("slow", 3000, 300)]),
+        special2=S("Verschlingende Tiefe", cd(14), "enemyHighestAttack", [dmg(300), lifesteal(60), status("sleep", 2000)]),
+        passive=("Hohler Leib", [P("lifesteal", value=100), P("onHitTaken", chance=200, effect=delay(400))]),
+        ultimate=U("Mahlstrom", "enemyAll", [dmg(600), drain(40)], hits=3)),
+    "six_legged_worldbearer": dict(
+        normal=N("Stampfen", 110, target="enemyFrontRow"),
+        special=S("Erdbeben", cd(9), "enemyAll", [dmg(130), status("stun", 1000)]),
+        special2=S("Gestohlene Welt", cd(13), "enemyAll", [steal(2), status("defenseDown", 6000, 250)]),
+        passive=("Last der Welt", [P("damageReduction", value=250), P("regen", value=5)]),
+        ultimate=U("Weltenlast", "enemyAll", [dmg(560), status("defenseDown", 6000, 300)], hits=3)),
+    "craterborn_guardian": dict(
+        normal=N("Meteorfaust", 125),
+        special=S("Kratersplitter", cd(8), "enemyBackRow", [dmg(200), status("confuse", 2000)]),
+        special2=S("Glühender Kern", self_below(50, once=True), "self", [status("attackUp", 10000, 400), status("immune", 2000)]),
+        passive=("Kratergeboren", [P("onHitTaken", chance=250, effect=status("charm", 1500)), P("damageBonus", value=300, belowHp=500)]),
+        ultimate=U("Einschlag", "enemyAll", [dmg(680), status("charm", 2000)], hits=3)),
 }
 
 TIMING = {"attack": (950, 400), "skill": (1400, 800), "ultimate": (1950, 1300)}
@@ -168,13 +199,13 @@ def main():
     for m in roster:
         mid, kit = m["id"], K[m["id"]]
         base = ROLE_STATS[m["role"]]
-        boss = m["tier"] == "boss"
+        boss = m["tier"] in ("boss", "raid")
         f = BOSS if boss else NORMAL
         front = m["row"] == "front"
         data = {
             "id": mid, "name": m["name"], "title": "", "faction": "theHollowed", "race": "hollowed",
             "aspect": m["aspect"], "role": m["role"], "row": m["row"], "grade": "rare",
-            "group": m["group"], "boss": boss, "sizePermille": SIZE[m["tier"]], "body": m["body"],
+            "group": m["group"], "boss": boss, "raidBoss": m["tier"] == "raid", "sizePermille": SIZE[m["tier"]], "body": m["body"],
             "spineId": mid, "growthPermille": 80,
             "baseStats": {
                 "hp": round(base["hp"] * f["hp"]), "attack": round(base["attack"] * f["attack"]),

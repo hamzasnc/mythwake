@@ -78,7 +78,8 @@ namespace Mythwake.Core.Meta
             var pool = new List<HeroDefinition>();
             var bosses = new List<HeroDefinition>();
             foreach (var m in content.Monsters.Values)
-                (m.Boss ? bosses : pool).Add(m);
+                if (!m.RaidBoss)
+                    (m.Boss ? bosses : pool).Add(m);
             pool.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
             bosses.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
             var rng = new Pcg32(seed + (ulong)wave * 7_919UL, 13);

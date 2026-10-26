@@ -10,6 +10,7 @@
   "grade": "rare",
   "group": "hollowed",
   "boss": true,
+  "raidBoss": false,
   "sizePermille": 1350,
   "body": "humanoid",
   "spineId": "hollow_spire_warden",

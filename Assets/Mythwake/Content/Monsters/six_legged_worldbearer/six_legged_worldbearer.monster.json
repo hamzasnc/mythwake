@@ -1,0 +1,167 @@
+{
+  "id": "six_legged_worldbearer",
+  "name": "Six-Legged Worldbearer",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "envyra",
+  "role": "tank",
+  "row": "front",
+  "grade": "rare",
+  "group": "corruptedGuardian",
+  "boss": true,
+  "raidBoss": true,
+  "sizePermille": 1600,
+  "body": "huge",
+  "spineId": "six_legged_worldbearer",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 4250,
+    "attack": 84,
+    "defense": 108,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "six_legged_worldbearer.normal",
+    "name": "Stampfen",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1100
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "six_legged_worldbearer.special",
+    "name": "Erdbeben",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1300
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 1000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "six_legged_worldbearer.special2",
+    "name": "Gestohlene Welt",
+    "description": "",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 13000
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "stealBuff",
+        "multiplier": 2
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "defenseDown",
+          "durationMs": 6000,
+          "value": 250
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "six_legged_worldbearer.passive",
+    "name": "Last der Welt",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageReduction",
+        "value": 250
+      },
+      {
+        "kind": "regen",
+        "value": 5
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "six_legged_worldbearer.ultimate",
+    "name": "Weltenlast",
+    "description": "",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 5600
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "defenseDown",
+          "durationMs": 6000,
+          "value": 300
+        }
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1300,
+      1420,
+      1540
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

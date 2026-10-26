@@ -9,7 +9,7 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials", "realms", "awakenings", "bossFragments", "defense", "shops", "skills" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials", "realms", "awakenings", "bossFragments", "defense", "shops", "skills", "guilds" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
@@ -37,7 +37,8 @@ namespace Mythwake.Content
                 BossFragments = ContentJson.Parse<BossFragmentConfig>(readData("bossFragments")),
                 Defense = ContentJson.Parse<DefenseConfig>(readData("defense")),
                 Shops = ContentJson.Parse<ShopConfig>(readData("shops")),
-                Skills = ContentJson.Parse<SkillConfig>(readData("skills"))
+                Skills = ContentJson.Parse<SkillConfig>(readData("skills")),
+                Guilds = ContentJson.Parse<GuildConfig>(readData("guilds"))
             };
             foreach (var json in heroJsons)
             {
@@ -88,6 +89,9 @@ namespace Mythwake.Content
                 if (shop.Items.Select(i => i.Id).Distinct().Count() != shop.Items.Count)
                     errors.Add($"shops.json/{shop.Id}: duplicate item ids");
             }
+            foreach (var id in content.Guilds.Raid.Bosses)
+                if (!content.Monsters.TryGetValue(id, out var raidBoss) || !raidBoss.RaidBoss)
+                    errors.Add($"guilds.json: '{id}' is not a raid boss monster");
             var relicIds = new HashSet<string>();
             foreach (var r in content.Relics.Relics)
             {

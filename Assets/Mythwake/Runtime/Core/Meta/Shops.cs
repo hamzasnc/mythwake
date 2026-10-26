@@ -33,6 +33,8 @@ namespace Mythwake.Core.Meta
         public string Building;
         /// <summary>Opens after this campaign stage.</summary>
         public int UnlockStage;
+        /// <summary>Only for guild members (Guild Shop).</summary>
+        public bool RequiresGuild;
         public List<ShopItem> Items = new List<ShopItem>();
     }
 
@@ -79,6 +81,8 @@ namespace Mythwake.Core.Meta
         public static bool Open(PlayerState state, GameContent content, ShopDefinition shop)
         {
             if (state.Campaign.HighestCleared < shop.UnlockStage)
+                return false;
+            if (shop.RequiresGuild && string.IsNullOrEmpty(state.GuildId))
                 return false;
             if (string.IsNullOrEmpty(shop.Building))
                 return true;

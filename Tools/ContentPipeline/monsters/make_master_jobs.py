@@ -3,7 +3,7 @@
 Output: <out>/<NN>_<id>/run_prompt.txt, style_reference.png
 Then run run_masters.sh to generate the masters in parallel.
 
-usage: py -3 make_master_jobs.py <out dir> <style reference sheet>
+usage: py -3 make_master_jobs.py <out dir> <style reference sheet> [comma-separated ids]
 """
 import json
 import shutil
@@ -43,6 +43,7 @@ POSE = {
 }
 TIER = {
     "normal": "Normaler Gegner: einfache, klar lesbare Silhouette, wenige Details, mittlere Größe.",
+    "raid": "GUARDIAN-RAID-BOSS: der größte und eindrucksvollste Gegner des Spiels, ein ganzes Gilde bekämpft ihn; unverwechselbare, monumentale Silhouette – aber dieselbe Linienstärke und dasselbe Cel-Shading wie die Referenz.",
     "boss": "BOSS: deutlich größer und detailreicher als normale Gegner, imposante, unverwechselbare Silhouette, mehr Leuchtakzente – aber dieselbe Linienstärke und dasselbe Cel-Shading wie die Referenz.",
 }
 
@@ -79,9 +80,12 @@ ROWS = {"front": "vorne", "back": "hinten"}
 def main():
     out, ref1 = Path(sys.argv[1]), Path(sys.argv[2])
     roster = json.loads((HERE / "roster.json").read_text(encoding="utf-8"))["monsters"]
+    only = set(sys.argv[3].split(",")) if len(sys.argv) > 3 else None
     out.mkdir(parents=True, exist_ok=True)
     jobs = []
     for i, m in enumerate(roster, 1):
+        if only and m["id"] not in only:
+            continue
         folder = out / f"{i:02d}_{m['id']}"
         folder.mkdir(exist_ok=True)
         shutil.copyfile(ref1, folder / "style_reference.png")

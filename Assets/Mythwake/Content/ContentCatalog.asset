@@ -24,6 +24,7 @@ MonoBehaviour:
   - {fileID: 4900000, guid: dd6af7d81e9fd60419bf2966f479fa37, type: 3}
   - {fileID: 4900000, guid: 12d1e14c9f8fc0e44bbcc0e6393a6526, type: 3}
   - {fileID: 4900000, guid: e49223b613a50b148a2dad9539e2ddf5, type: 3}
+  - {fileID: 4900000, guid: 01de0027bd470ee40ba800795aaae510, type: 3}
   - {fileID: 4900000, guid: 774c9b4a6499d99489b12993bbec8a80, type: 3}
   - {fileID: 4900000, guid: cf3de2865b8df7046835cdb6fd5f7892, type: 3}
   - {fileID: 4900000, guid: b97a6d67953afe64e9dd56053b622803, type: 3}
@@ -317,6 +318,13 @@ MonoBehaviour:
     cutIn: {fileID: 2800000, guid: eb40c8a3109e0e147bbbd8ea6bbfec0a, type: 3}
     sprite: {fileID: 0}
   monsters:
+  - id: celestial_turtle
+    definition: {fileID: 4900000, guid: bf1363b945ce3a646b6ab67d372cb97b, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 09286f1029c44a844be5df6aea7be73b, type: 3}
+    full: {fileID: 2800000, guid: 5f54b83060f34694caced85effef4b43, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 5f54b83060f34694caced85effef4b43, type: 3}
   - id: corrupted_boar
     definition: {fileID: 4900000, guid: 91903f4aca551c9468fc84824cbeb840, type: 3}
     skeleton: {fileID: 0}
@@ -345,6 +353,13 @@ MonoBehaviour:
     full: {fileID: 2800000, guid: 932b3b02f88acce40a7adf405493a077, type: 3}
     cutIn: {fileID: 0}
     sprite: {fileID: 21300000, guid: 932b3b02f88acce40a7adf405493a077, type: 3}
+  - id: craterborn_guardian
+    definition: {fileID: 4900000, guid: db59584ff806ffa4695b68522cf34988, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 4ddeaf2bd5b2fbd4ca010ada317cae52, type: 3}
+    full: {fileID: 2800000, guid: 842271f3a24690d4b918995749a68486, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 842271f3a24690d4b918995749a68486, type: 3}
   - id: crimson_wraith
     definition: {fileID: 4900000, guid: 4d2947b38df7520499328e2fbe53fc40, type: 3}
     skeleton: {fileID: 0}
@@ -366,6 +381,13 @@ MonoBehaviour:
     full: {fileID: 2800000, guid: 14b9b2c223768644baa73b98f2b4a8cb, type: 3}
     cutIn: {fileID: 0}
     sprite: {fileID: 21300000, guid: 14b9b2c223768644baa73b98f2b4a8cb, type: 3}
+  - id: dragon_of_the_sky
+    definition: {fileID: 4900000, guid: c25a49259d8a7a6488136a33bf170919, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 848b02857fdeefc44885e80d2eae9c5d, type: 3}
+    full: {fileID: 2800000, guid: 808d395a5fe62544da28f835dc29037f, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 808d395a5fe62544da28f835dc29037f, type: 3}
   - id: false_guardian_construct
     definition: {fileID: 4900000, guid: ed72a8e165767da4a89633ce52c83f6a, type: 3}
     skeleton: {fileID: 0}
@@ -408,6 +430,13 @@ MonoBehaviour:
     full: {fileID: 2800000, guid: e60aeeb2cf56899449d17f0560ad0e82, type: 3}
     cutIn: {fileID: 0}
     sprite: {fileID: 21300000, guid: e60aeeb2cf56899449d17f0560ad0e82, type: 3}
+  - id: hollowed_leviathan
+    definition: {fileID: 4900000, guid: ddc3fe3e8e055ca46bdfe418787dc2db, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 20eaa07b5fdd1a1488f127cf577464e6, type: 3}
+    full: {fileID: 2800000, guid: 8e2f2aa35878d1047bc76d5cf6ce96e4, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 8e2f2aa35878d1047bc76d5cf6ce96e4, type: 3}
   - id: hollowed_soldier
     definition: {fileID: 4900000, guid: b640d21bdd98fdf459a7b23550a83ba7, type: 3}
     skeleton: {fileID: 0}
@@ -450,6 +479,13 @@ MonoBehaviour:
     full: {fileID: 2800000, guid: 841ff79bcb1545a43b6cbb21745efe0e, type: 3}
     cutIn: {fileID: 0}
     sprite: {fileID: 21300000, guid: 841ff79bcb1545a43b6cbb21745efe0e, type: 3}
+  - id: six_legged_worldbearer
+    definition: {fileID: 4900000, guid: 25f0ea9c15c1043408689456b2cd0af2, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: e220dee4925134343b4bc298b1916dcb, type: 3}
+    full: {fileID: 2800000, guid: bbbd8000e534e904389b734db6d908a7, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: bbbd8000e534e904389b734db6d908a7, type: 3}
   - id: wild_boar
     definition: {fileID: 4900000, guid: 7e8b680585a1f1d469dc928e977c27c8, type: 3}
     skeleton: {fileID: 0}

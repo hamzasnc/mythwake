@@ -1,0 +1,108 @@
+{
+  "createCost": [
+    {
+      "id": "gems",
+      "value": 300
+    }
+  ],
+  "nameMinLength": 3,
+  "nameMaxLength": 20,
+  "membersBase": 20,
+  "membersPerLevel": 1,
+  "levelExp": [
+    600,
+    1500,
+    3000,
+    5000,
+    8000,
+    12000,
+    17000,
+    23000,
+    30000
+  ],
+  "donations": [
+    {
+      "id": "gold",
+      "name": "Gold-Spende",
+      "cost": [
+        {
+          "id": "gold",
+          "value": 20000
+        }
+      ],
+      "guildExp": 20,
+      "gives": [
+        {
+          "id": "guildCoins",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "gems",
+      "name": "Gems-Spende",
+      "cost": [
+        {
+          "id": "gems",
+          "value": 100
+        }
+      ],
+      "guildExp": 60,
+      "gives": [
+        {
+          "id": "guildCoins",
+          "value": 60
+        }
+      ]
+    }
+  ],
+  "raid": {
+    "attemptsPerDay": 2,
+    "battleMs": 60000,
+    "bosses": [
+      "celestial_turtle",
+      "dragon_of_the_sky",
+      "hollowed_leviathan",
+      "six_legged_worldbearer",
+      "craterborn_guardian"
+    ],
+    "bossHpBase": 3000000,
+    "hpGrowthPermille": 1350,
+    "bossLevelBase": 40,
+    "bossLevelPerRaid": 6,
+    "attemptRewardsBase": [
+      {
+        "id": "guildCoins",
+        "value": 30
+      }
+    ],
+    "damagePerReward": 50000,
+    "attemptRewardsPerDamage": [
+      {
+        "id": "guildCoins",
+        "value": 2
+      },
+      {
+        "id": "gold",
+        "value": 500
+      }
+    ],
+    "killRewards": [
+      {
+        "id": "guardianSigil",
+        "base": 10,
+        "perStage": 2
+      },
+      {
+        "id": "gems",
+        "base": 100,
+        "perStage": 10
+      },
+      {
+        "id": "guildCoins",
+        "base": 150,
+        "perStage": 20
+      }
+    ]
+  }
+}

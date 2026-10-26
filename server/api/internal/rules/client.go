@@ -144,6 +144,60 @@ func (c *Client) ArenaConfig(ctx context.Context) (ArenaConfig, error) {
 	return out, err
 }
 
+// GuildConfig is the guild part of the game content (costs, levels, donations, raid).
+type GuildConfig struct {
+	CreateCost      []Amount        `json:"createCost"`
+	NameMinLength   int             `json:"nameMinLength"`
+	NameMaxLength   int             `json:"nameMaxLength"`
+	MembersBase     int             `json:"membersBase"`
+	MembersPerLevel int             `json:"membersPerLevel"`
+	LevelExp        []int64         `json:"levelExp"`
+	Donations       []GuildDonation `json:"donations"`
+	Raid            GuildRaid       `json:"raid"`
+	ResetHourUtc    int             `json:"resetHourUtc"`
+}
+
+type GuildDonation struct {
+	ID       string   `json:"id"`
+	Name     string   `json:"name"`
+	Cost     []Amount `json:"cost"`
+	GuildExp int64    `json:"guildExp"`
+	Gives    []Amount `json:"gives"`
+}
+
+type GuildRaid struct {
+	AttemptsPerDay int      `json:"attemptsPerDay"`
+	Bosses         []string `json:"bosses"`
+	BossHpBase     int64    `json:"bossHpBase"`
+	HpGrowth       int64    `json:"hpGrowthPermille"`
+}
+
+func (c *Client) GuildConfig(ctx context.Context) (GuildConfig, error) {
+	var out GuildConfig
+	err := c.call(ctx, http.MethodGet, "/config/guild", nil, &out)
+	return out, err
+}
+
+type RaidBattle struct {
+	OK          bool     `json:"ok"`
+	Boss        string   `json:"boss"`
+	Damage      int64    `json:"damage"`
+	Killed      bool     `json:"killed"`
+	DurationMs  int      `json:"durationMs"`
+	Rewards     []Amount `json:"rewards"`
+	KillRewards []Amount `json:"killRewards"`
+	NextHp      int64    `json:"nextHp"`
+}
+
+// RaidBattle simulates one Guardian Raid attempt of a team against the boss of a raid level with the HP it has left.
+func (c *Client) RaidBattle(ctx context.Context, team string, raidLevel int, hpLeft int64, seed uint64) (RaidBattle, error) {
+	var out RaidBattle
+	err := c.call(ctx, http.MethodPost, "/raid/battle", map[string]any{
+		"team": team, "raidLevel": raidLevel, "hpLeft": hpLeft, "seed": fmt.Sprint(seed),
+	}, &out)
+	return out, err
+}
+
 // BotTeam returns a generated defense team for an arena bot at the given campaign stage.
 func (c *Client) BotTeam(ctx context.Context, stage int, seed uint64) (ArenaTeam, error) {
 	var out ArenaTeam
