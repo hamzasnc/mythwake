@@ -1,0 +1,191 @@
+{
+  "grades": [
+    {
+      "maxLevel": 5,
+      "dissolve": 10
+    },
+    {
+      "maxLevel": 10,
+      "dissolve": 30
+    },
+    {
+      "maxLevel": 15,
+      "dissolve": 80
+    },
+    {
+      "maxLevel": 20,
+      "dissolve": 200
+    }
+  ],
+  "levelGrowthPermille": 80,
+  "shrineLevel": 2,
+  "upgradeCostBase": [
+    {
+      "id": "relicMaterials",
+      "value": 10
+    },
+    {
+      "id": "gold",
+      "value": 1000
+    }
+  ],
+  "relics": [
+    {
+      "id": "relic_hollowtusk_tusk",
+      "name": "Tusk of the Hollowtusk Alpha",
+      "grade": "rare",
+      "source": "hollowtusk_alpha",
+      "description": "+{0} % Schaden gegen Wild Beasts und Corrupted Beasts.",
+      "components": [
+        {
+          "passive": {
+            "kind": "damageVsGroup",
+            "value": 120,
+            "vsGroup": "wildBeast"
+          },
+          "scale": "value"
+        },
+        {
+          "passive": {
+            "kind": "damageVsGroup",
+            "value": 120,
+            "vsGroup": "corruptedBeast"
+          },
+          "scale": "value"
+        }
+      ]
+    },
+    {
+      "id": "relic_treant_root",
+      "name": "Root of the Riftborn Treant",
+      "grade": "epic",
+      "source": "riftborn_treant",
+      "description": "Nach seiner Ultimate heilt der Held das ganze Team um {0} % seiner ATK.",
+      "components": [
+        {
+          "passive": {
+            "kind": "onUltimate",
+            "target": "allyAll",
+            "effect": {
+              "kind": "heal",
+              "multiplier": 150,
+              "scaling": "attack"
+            }
+          },
+          "scale": "multiplier"
+        }
+      ]
+    },
+    {
+      "id": "relic_wraith_sigil",
+      "name": "Sigil of the Crimson Wraith Adept",
+      "grade": "epic",
+      "source": "crimson_wraith_adept",
+      "description": "Startet den Kampf mit {0} Energie (Ultimate bei 1000).",
+      "raw": true,
+      "components": [
+        {
+          "passive": {
+            "kind": "battleStart",
+            "target": "self",
+            "effect": {
+              "kind": "gainEnergy",
+              "multiplier": 200
+            }
+          },
+          "scale": "multiplier"
+        }
+      ]
+    },
+    {
+      "id": "relic_warden_lantern",
+      "name": "Lantern of the Hollow Spire Warden",
+      "grade": "epic",
+      "source": "hollow_spire_warden",
+      "description": "+{0} % Schaden gegen Hollowed.",
+      "components": [
+        {
+          "passive": {
+            "kind": "damageVsGroup",
+            "value": 150,
+            "vsGroup": "hollowed"
+          },
+          "scale": "value"
+        }
+      ]
+    },
+    {
+      "id": "relic_vault_key",
+      "name": "Key of the Obsidian Vault Sentinel",
+      "grade": "epic",
+      "source": "obsidian_vault_sentinel",
+      "description": "+{0} % Belohnungen im Material Dungeon, wenn der Held mitkämpft.",
+      "rewardDungeon": "material",
+      "rewardBonus": 200
+    },
+    {
+      "id": "relic_devourer_core",
+      "name": "Core of the Fragment Devourer",
+      "grade": "legendary",
+      "source": "fragment_devourer",
+      "description": "Die Fragmente des Helden wirken {0} % stärker.",
+      "fragmentBoost": 150
+    },
+    {
+      "id": "relic_deep_shell",
+      "name": "Shell of the Corrupted Guardian of the Deep",
+      "grade": "legendary",
+      "source": "corrupted_guardian_of_the_deep",
+      "description": "Schilde, die der Held gibt und bekommt, sind {0} % stärker; er erleidet etwas weniger Schaden.",
+      "components": [
+        {
+          "passive": {
+            "kind": "shieldBonus",
+            "value": 200
+          },
+          "scale": "value"
+        },
+        {
+          "passive": {
+            "kind": "damageReduction",
+            "value": 40
+          },
+          "scale": "value"
+        }
+      ]
+    },
+    {
+      "id": "relic_dragon_scale",
+      "name": "Scale of the Dragon Echo of the Sky",
+      "grade": "legendary",
+      "source": "dragon_echo_of_the_sky",
+      "description": "+{0} % Schaden mit der Ultimate.",
+      "components": [
+        {
+          "passive": {
+            "kind": "ultimateDamage",
+            "value": 150
+          },
+          "scale": "value"
+        }
+      ]
+    },
+    {
+      "id": "relic_construct_heart",
+      "name": "Heart of the False Guardian Construct",
+      "grade": "legendary",
+      "source": "false_guardian_construct",
+      "description": "Das ganze Team macht {0} % mehr Schaden.",
+      "components": [
+        {
+          "passive": {
+            "kind": "damageBonus",
+            "value": 40,
+            "team": true
+          },
+          "scale": "value"
+        }
+      ]
+    }
+  ]
+}

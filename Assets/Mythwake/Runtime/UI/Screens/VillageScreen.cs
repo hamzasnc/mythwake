@@ -403,7 +403,9 @@ namespace Mythwake.UI
                 var b = UiKit.Btn(FragmentUi.SlotName(slot), () => Stabilize(s), "btn--secondary", "btn--small").Into(row);
                 b.SetEnabled(affordable && Fragments.SlotOpen(_ui.State, _ui.Content, slot));
             }
-            UiKit.Btn(Loc.T("fragment.title") + $" ({_ui.State.Fragments.Count})", () => _ui.Router.Push(new FragmentScreen())).Into(box);
+            var lists = UiKit.Box("row").Into(box);
+            UiKit.Btn(Loc.T("fragment.title") + $" ({_ui.State.Fragments.Count})", () => _ui.Router.Push(new FragmentScreen())).Into(lists).style.flexGrow = 1;
+            UiKit.Btn(Loc.T("relic.title") + $" ({_ui.State.Relics.Count})", () => _ui.Router.Push(new RelicScreen())).Into(lists).style.flexGrow = 1;
             return box;
         }
 

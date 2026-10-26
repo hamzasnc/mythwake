@@ -133,6 +133,62 @@
         }
       ],
       "fragmentEveryLevels": 5
+    },
+    {
+      "id": "relic",
+      "name": "Relic Dungeon",
+      "description": "Relic materials und Relics. Sonderregel: Ultimates laden 30 % langsamer.",
+      "portalLevel": 4,
+      "boss": "corrupted_guardian_of_the_deep",
+      "escort": [
+        "riftborn_wisp",
+        "hollowed_soldier"
+      ],
+      "escorts": 2,
+      "maxLevel": 100,
+      "enemyLevelBase": 30,
+      "enemyLevelPerFloor": 2,
+      "attemptsPerDay": 3,
+      "rules": {
+        "energyGainModifier": -300,
+        "maxDurationMs": 90000
+      },
+      "clearRewards": [
+        {
+          "id": "relicMaterials",
+          "base": 40,
+          "perStage": 4
+        },
+        {
+          "id": "gold",
+          "base": 5000,
+          "perStage": 700
+        }
+      ],
+      "firstClearRewards": [
+        {
+          "id": "relicMaterials",
+          "base": 80,
+          "perStage": 8
+        },
+        {
+          "id": "gems",
+          "base": 20,
+          "perStage": 0
+        }
+      ],
+      "relicEveryLevels": 5,
+      "relicPool": [
+        "relic_hollowtusk_tusk",
+        "relic_treant_root",
+        "relic_wraith_sigil",
+        "relic_warden_lantern",
+        "relic_vault_key",
+        "relic_devourer_core",
+        "relic_deep_shell",
+        "relic_dragon_scale",
+        "relic_construct_heart"
+      ]
     }
   ]
 }

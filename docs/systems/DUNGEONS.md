@@ -13,7 +13,8 @@ Rebuilt after stage 20 (end of chapter 1). Its level opens dungeon types:
 | 1 | Material Dungeon (Gold, Hero EXP) |
 | 2 | Gear Dungeon (Gear materials, gear) |
 | 3 | Fragment Dungeon (Fragment Dust, Fragments; see FRAGMENTS.md) |
-| later | Relic Dungeon, Endless Dungeon |
+| 4 | Relic Dungeon (Relic materials, Relics; see RELICS.md) |
+| later | Endless Dungeon |
 
 ## How a dungeon works
 
@@ -23,6 +24,7 @@ Rebuilt after stage 20 (end of chapter 1). Its level opens dungeon types:
   - Material Dungeon: enemies regenerate over time (1.5 % max HP per second).
   - Gear Dungeon: healing is reduced by 50 %.
   - Fragment Dungeon: enemies deal 30 % more damage.
+  - Relic Dungeon: ultimates charge 30 % slower.
 - **Attempts:** 3 per dungeon per day, reset at the daily reset (04:00 UTC), unused attempts do not stack (doc).
   Only a won fight uses an attempt.
 - **Rewards:** every clear pays the level's reward; the first clear of a level pays a bigger one-time reward.
@@ -36,6 +38,7 @@ Rebuilt after stage 20 (end of chapter 1). Its level opens dungeon types:
 | Material Dungeon | Obsidian Vault Sentinel (guards a vault) | Fragment Construct, Riftborn Wisp |
 | Gear Dungeon | Hollow Spire Warden | Hollowed Soldier, Hollowed Archer |
 | Fragment Dungeon | Fragment Devourer | Fragment Construct, Riftborn Stalker |
+| Relic Dungeon | Corrupted Guardian of the Deep | Riftborn Wisp, Hollowed Soldier |
 
 ## UI
 

@@ -17,6 +17,7 @@ namespace Mythwake.UI
         public List<Amount> Rewards = new List<Amount>();
         public List<GearItem> Gear = new List<GearItem>();
         public List<FragmentItem> Fragments = new List<FragmentItem>();
+        public List<RelicItem> Relics = new List<RelicItem>();
         public string Note;
     }
 
@@ -53,7 +54,7 @@ namespace Mythwake.UI
             var slotsBefore = Formations.UnlockedSlots(ui.State, ui.Content);
             if (!ui.Try(finish, out var stage))
                 return null;
-            var report = new BattleReport { Outcome = stage.Outcome, Rewards = stage.Rewards, Gear = stage.Gear, Fragments = stage.Fragments };
+            var report = new BattleReport { Outcome = stage.Outcome, Rewards = stage.Rewards, Gear = stage.Gear, Fragments = stage.Fragments, Relics = stage.Relics };
             if (stage.UnlockedSlots > slotsBefore)
                 report.Note = Loc.T("battle.slotUnlocked");
             return report;
@@ -326,6 +327,13 @@ namespace Mythwake.UI
                     var drops = UiKit.Box("row").Into(popup);
                     foreach (var item in report.Fragments)
                         drops.Add(FragmentUi.Tile(Ui, item));
+                }
+                if (report.Relics.Count > 0)
+                {
+                    UiKit.Text(Loc.T("relic.drop"), "subtitle").Into(popup);
+                    var drops = UiKit.Box("row").Into(popup);
+                    foreach (var item in report.Relics)
+                        drops.Add(RelicUi.Tile(Ui, item));
                 }
             }
             if (!string.IsNullOrEmpty(report.Note))

@@ -146,6 +146,7 @@ namespace Mythwake.Core.Meta
         public ArenaConfig Arena = new ArenaConfig();
         public DungeonConfig Dungeons = new DungeonConfig();
         public FragmentConfig Fragments = new FragmentConfig();
+        public RelicConfig Relics = new RelicConfig();
 
         /// <summary>A hero or monster by id (battle setups and team snapshots can contain both).</summary>
         public HeroDefinition Hero(string id) =>

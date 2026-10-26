@@ -79,12 +79,16 @@ namespace Mythwake.Core.Meta
         {
             var gear = Gear.StatsFor(state, content, owned.HeroId);
             var hero = content.Hero(owned.HeroId);
-            var fragments = Fragments.BonusFor(state, content, owned.HeroId, hero.Aspect);
+            var relic = Relics.SlotOpen(state, content) ? Relics.Equipped(state, owned.HeroId) : null;
+            var fragments = Fragments.BonusFor(state, content, owned.HeroId, hero.Aspect, Relics.FragmentBoost(content, relic));
+            var passives = fragments.Passives;
+            if (relic != null)
+                passives.AddRange(Relics.Passives(content, relic));
             return new HeroProgress
             {
                 Hero = hero, Level = owned.Level, Stars = owned.Stars,
                 Flat = new Stats { Hp = gear.Hp, Attack = gear.Attack, Defense = gear.Defense, CritRate = gear.CritRate },
-                AttackPermille = fragments.AttackPermille, HpPermille = fragments.HpPermille, Passives = fragments.Passives
+                AttackPermille = fragments.AttackPermille, HpPermille = fragments.HpPermille, Passives = passives
             };
         }
     }

@@ -297,7 +297,13 @@ namespace Mythwake.Core.Combat
                 durationMs: skill.DurationMs, animation: skill.Animation);
 
             if (skill.Slot == SkillSlot.Ultimate)
+            {
                 SetEnergy(caster, 0);
+                foreach (var p in caster.Passives)
+                    if (p.Kind == PassiveKind.OnUltimate && p.Effect != null)
+                        foreach (var target in SelectTargets(caster, p.Target ?? TargetSelector.AllyAll, 1))
+                            ApplyPassiveEffect(caster, target, p.Effect);
+            }
             else
                 AddEnergy(caster, EnergyPerCast * (Permille.One + caster.Stats.EnergyRegen) / Permille.One);
 
@@ -661,6 +667,8 @@ namespace Mythwake.Core.Combat
         {
             if (!target.Alive || amount <= 0)
                 return;
+            var bonus = source.Sum(PassiveKind.ShieldBonus, _now) + (target == source ? 0 : target.Sum(PassiveKind.ShieldBonus, _now));
+            amount = amount * System.Math.Max(0, Permille.One + bonus) / Permille.One;
             target.Shield = System.Math.Max(target.Shield, amount);
             target.ShieldUntilMs = _now + durationMs;
             Emit(BattleEventType.ShieldGained, source.Index, target.Index, slot, amount, durationMs: durationMs);

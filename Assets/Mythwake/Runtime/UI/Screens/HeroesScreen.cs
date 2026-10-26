@@ -111,7 +111,7 @@ namespace Mythwake.UI
             _gear = UiKit.Box("gear-row").Into(gear);
 
             var fragments = UiKit.Box("panel").Into(safe);
-            UiKit.Text(Loc.T("fragment.title"), "title").Into(fragments);
+            UiKit.Text(Loc.T("fragment.titleRelic"), "title").Into(fragments);
             _fragments = UiKit.Box("gear-row").Into(fragments);
 
             var skills = UiKit.Box("panel").Into(safe);
@@ -155,6 +155,7 @@ namespace Mythwake.UI
 
             RefreshGear();
             FragmentUi.Slots(Ui, _fragments, Root, _heroId, Refresh);
+            _fragments.Add(RelicUi.Slot(Ui, Root, _heroId, Refresh));
 
             var maxStars = Progression.MaxStars(content, hero.Grade);
             if (owned.Stars >= maxStars)

@@ -67,6 +67,8 @@ namespace Mythwake.Core.Meta
         public int GearUidCounter;
         public List<FragmentItem> Fragments = new List<FragmentItem>();
         public int FragmentUidCounter;
+        public List<RelicItem> Relics = new List<RelicItem>();
+        public int RelicUidCounter;
         public PendingBattle Battle;
         /// <summary>Server-side randomness (summons, battle seeds): seed + how many draws were made.</summary>
         public ulong RngSeed;

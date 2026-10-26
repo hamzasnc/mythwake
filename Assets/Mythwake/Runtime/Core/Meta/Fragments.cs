@@ -157,13 +157,13 @@ namespace Mythwake.Core.Meta
         }
 
         /// <summary>The battle components of an Aspect or Echo Fragment, scaled to its grade and level.</summary>
-        public static List<PassiveDefinition> Passives(GameContent content, FragmentItem item)
+        public static List<PassiveDefinition> Passives(GameContent content, FragmentItem item, int boostPermille = 0)
         {
             var list = new List<PassiveDefinition>();
             var effect = Effect(content, item.Effect);
             if (effect == null)
                 return list;
-            var scale = Scale(content, item);
+            var scale = Scale(content, item) * (Permille.One + boostPermille) / Permille.One;
             foreach (var c in effect.Components)
                 list.Add(Scaled(c, scale));
             foreach (var d in effect.Drawbacks)
@@ -191,7 +191,8 @@ namespace Mythwake.Core.Meta
             };
         }
 
-        private static PassiveDefinition Scaled(FragmentComponent c, long scale)
+        /// <summary>A component with its scaled number (shared with Relics).</summary>
+        internal static PassiveDefinition Scaled(FragmentComponent c, long scale)
         {
             var p = c.Passive.Clone();
             int S(int v) => (int)(v * scale / Permille.One);
@@ -219,7 +220,8 @@ namespace Mythwake.Core.Meta
         }
 
         /// <summary>Everything a hero's equipped Fragments add. Slots the Shrine has not opened (yet) do nothing.</summary>
-        public static FragmentBonus BonusFor(PlayerState state, GameContent content, string heroId, Aspect heroAspect)
+        /// <param name="boostPermille">Relic "boost Fragment effects": all numbers this much stronger.</param>
+        public static FragmentBonus BonusFor(PlayerState state, GameContent content, string heroId, Aspect heroAspect, int boostPermille = 0)
         {
             var bonus = new FragmentBonus();
             if (content.Fragments.Grades.Count == 0)
@@ -231,11 +233,11 @@ namespace Mythwake.Core.Meta
                 if (f.Slot == FragmentSlot.Core)
                 {
                     var (atk, hp) = CoreBonus(content, f, heroAspect);
-                    bonus.AttackPermille += atk;
-                    bonus.HpPermille += hp;
+                    bonus.AttackPermille += atk * (Permille.One + boostPermille) / Permille.One;
+                    bonus.HpPermille += hp * (Permille.One + boostPermille) / Permille.One;
                 }
                 else
-                    bonus.Passives.AddRange(Passives(content, f));
+                    bonus.Passives.AddRange(Passives(content, f, boostPermille));
             }
             return bonus;
         }

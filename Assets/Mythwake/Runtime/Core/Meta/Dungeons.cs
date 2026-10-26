@@ -28,6 +28,9 @@ namespace Mythwake.Core.Meta
         public int GearEveryLevels;
         /// <summary>Fragment on first clear of every N-th level (0 = none).</summary>
         public int FragmentEveryLevels;
+        /// <summary>A Relic from RelicPool on first clear of every N-th level (0 = none).</summary>
+        public int RelicEveryLevels;
+        public List<string> RelicPool = new List<string>();
     }
 
     public sealed class DungeonConfig
@@ -49,6 +52,7 @@ namespace Mythwake.Core.Meta
         public List<Amount> Rewards = new List<Amount>();
         public List<GearItem> Gear = new List<GearItem>();
         public List<FragmentItem> Fragments = new List<FragmentItem>();
+        public List<RelicItem> Relics = new List<RelicItem>();
         public bool FirstClear;
     }
 
@@ -94,6 +98,17 @@ namespace Mythwake.Core.Meta
                 if (u.Hero.Boss)
                     u.Variant = "boss";
             return team;
+        }
+
+        /// <summary>Clear rewards with a Relic reward bonus (doc: "bonus rewards from certain areas").</summary>
+        public static List<Amount> ClearRewards(PlayerState state, GameContent content, DungeonDefinition d, int level, string[] formation)
+        {
+            var bonus = Relics.TeamRewardBonus(state, content, formation, d.Id);
+            var list = Rewards(d.ClearRewards, level);
+            if (bonus > 0)
+                for (var i = 0; i < list.Count; i++)
+                    list[i] = new Amount(list[i].Id, list[i].Value * (Permille.One + bonus) / Permille.One);
+            return list;
         }
 
         public static List<Amount> Rewards(List<AfkRate> table, int level)
@@ -185,7 +200,7 @@ namespace Mythwake.Core.Meta
             if (Dungeons.AttemptsLeft(state, ctx.Content, d, ctx.NowMs) <= 0)
                 throw new RuleViolation("dungeon_no_attempts");
             Dungeons.UseAttempt(ctx, d);
-            result.Rewards.AddRange(Dungeons.Rewards(d.ClearRewards, pending.Floor));
+            result.Rewards.AddRange(Dungeons.ClearRewards(state, ctx.Content, d, pending.Floor, pending.Formation));
             if (pending.Floor > Dungeons.Highest(state, d.Id))
             {
                 result.FirstClear = true;
@@ -195,6 +210,12 @@ namespace Mythwake.Core.Meta
                     result.Gear.Add(Gear.Drop(ctx));
                 if (d.FragmentEveryLevels > 0 && pending.Floor % d.FragmentEveryLevels == 0)
                     result.Fragments.Add(Fragments.Drop(ctx));
+                if (d.RelicEveryLevels > 0 && pending.Floor % d.RelicEveryLevels == 0)
+                {
+                    var relic = Relics.DropFrom(ctx, d.RelicPool);
+                    if (relic != null)
+                        result.Relics.Add(relic);
+                }
             }
             ctx.Grant(result.Rewards);
             Quests.Track(ctx, Stat.BattleWon);
@@ -215,7 +236,7 @@ namespace Mythwake.Core.Meta
             var level = Dungeons.Highest(ctx.State, d.Id);
             ctx.Require(level > 0, "dungeon_nothing_to_sweep");
             Dungeons.UseAttempt(ctx, d);
-            var rewards = Dungeons.Rewards(d.ClearRewards, level);
+            var rewards = Dungeons.ClearRewards(ctx.State, ctx.Content, d, level, ctx.State.Formation);
             ctx.Grant(rewards);
             Quests.Track(ctx, Stat.DungeonCleared);
             return rewards;

@@ -31,6 +31,12 @@
       "base": 8,
       "perStage": 1,
       "fromStage": 15
+    },
+    {
+      "id": "relicMaterials",
+      "base": 3,
+      "perStage": 0,
+      "fromStage": 25
     }
   ]
 }

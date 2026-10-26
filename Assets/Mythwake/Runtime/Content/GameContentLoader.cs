@@ -9,7 +9,7 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
@@ -29,7 +29,8 @@ namespace Mythwake.Content
                 Hunts = ContentJson.Parse<HuntConfig>(readData("hunts")),
                 Arena = ContentJson.Parse<ArenaConfig>(readData("arena")),
                 Dungeons = ContentJson.Parse<DungeonConfig>(readData("dungeons")),
-                Fragments = ContentJson.Parse<FragmentConfig>(readData("fragments"))
+                Fragments = ContentJson.Parse<FragmentConfig>(readData("fragments")),
+                Relics = ContentJson.Parse<RelicConfig>(readData("relics"))
             };
             foreach (var json in heroJsons)
             {
@@ -59,6 +60,20 @@ namespace Mythwake.Content
                     if (!content.Monsters.ContainsKey(id))
                         errors.Add($"dungeons.json/{d.Id}: unknown escort '{id}'");
             }
+            var relicIds = new HashSet<string>();
+            foreach (var r in content.Relics.Relics)
+            {
+                if (!relicIds.Add(r.Id ?? ""))
+                    errors.Add($"relics.json: duplicate relic '{r.Id}'");
+                if (!content.Monsters.ContainsKey(r.Source ?? ""))
+                    errors.Add($"relics.json/{r.Id}: unknown source boss '{r.Source}'");
+                if (r.Components.Count == 0 && r.FragmentBoost <= 0 && r.RewardBonus <= 0)
+                    errors.Add($"relics.json/{r.Id}: no effect");
+            }
+            foreach (var d in content.Dungeons.Dungeons)
+                foreach (var id in d.RelicPool)
+                    if (!relicIds.Contains(id))
+                        errors.Add($"dungeons.json/{d.Id}: unknown relic '{id}'");
             var effectIds = new HashSet<string>();
             foreach (var e in content.Fragments.Effects)
             {

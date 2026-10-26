@@ -161,7 +161,7 @@
     {
       "id": "fragmentShrine",
       "name": "Fragment Shrine",
-      "description": "Schaltet Fragmente frei: Stabilisieren, Upgraden und Fusionieren. Stufe 1: Core Fragment, Stufe 3: Aspect Fragment, Stufe 5: Echo Fragment. Höhere Stufen stabilisieren seltenere Fragmente.",
+      "description": "Schaltet Fragmente und Relics frei: Stabilisieren, Upgraden und Fusionieren. Stufe 1: Core Fragment, Stufe 2: Relic, Stufe 3: Aspect Fragment, Stufe 5: Echo Fragment. Höhere Stufen stabilisieren seltenere Fragmente.",
       "effect": "shrine",
       "unlockStage": 15,
       "maxLevel": 10,
@@ -195,10 +195,10 @@
     {
       "id": "portalChamber",
       "name": "Portal Chamber",
-      "description": "Schaltet Dungeons, Events und den Zugang zu den Shattered Realms frei. Stufe 1: Material Dungeon, Stufe 2: Gear Dungeon, Stufe 3: Fragment Dungeon.",
+      "description": "Schaltet Dungeons, Events und den Zugang zu den Shattered Realms frei. Stufe 1: Material Dungeon, Stufe 2: Gear Dungeon, Stufe 3: Fragment Dungeon, Stufe 4: Relic Dungeon.",
       "effect": "portal",
       "unlockStage": 20,
-      "maxLevel": 3,
+      "maxLevel": 4,
       "baseCost": [
         {
           "id": "gold",

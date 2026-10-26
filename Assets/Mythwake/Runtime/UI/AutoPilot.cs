@@ -169,6 +169,11 @@ namespace Mythwake.UI
             yield return Shot("fragment_shrine", 0.8f);
             ui.Router.Push(new FragmentScreen());
             yield return Shot("fragments", 0.6f);
+            foreach (var relicId in new[] { "relic_hollowtusk_tusk", "relic_treant_root", "relic_dragon_scale" })
+                Relics.Create(ui.State, relicId);
+            ui.Authority.Execute(new EquipRelic { HeroId = hero, Uid = ui.State.Relics[ui.State.Relics.Count - 1].Uid });
+            ui.Router.Reset(new RelicScreen());
+            yield return Shot("relics", 0.6f);
 
             ui.Router.Reset(new HeroesScreen());
             yield return Shot("heroes", 0.6f);

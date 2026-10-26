@@ -995,3 +995,16 @@
 }
 .fragment-details { align-self: stretch; margin-bottom: 10px; }
 .icon--fragmentDust { background-color: #ff8fb1; }
+
+/* ---------------------------------------------------------------- relics */
+
+.gear-row .fragment { width: 23%; min-width: 0; }
+.relic__icon--placeholder { background-color: rgba(232, 194, 106, 0.4); border-radius: 60px; }
+.relic-card--missing { opacity: 0.5; }
+.relic-copy {
+    margin-top: 8px;
+    padding: 6px 12px;
+    background-color: rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+}
+.icon--relicMaterials { background-color: #e0a65a; }

@@ -152,6 +152,10 @@ namespace Mythwake.Core.Content
         /// <summary>+Value permille damage dealt by ultimates.</summary>
         UltimateDamage,
         /// <summary>+Value permille damage against enemies of VsGroup.</summary>
-        DamageVsGroup
+        DamageVsGroup,
+        /// <summary>Applies Effect to Target whenever the owner casts its ultimate.</summary>
+        OnUltimate,
+        /// <summary>+Value permille strength of shields this unit gives and receives.</summary>
+        ShieldBonus
     }
 }
