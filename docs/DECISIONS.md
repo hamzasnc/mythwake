@@ -20,6 +20,7 @@ Lore and names still come only from the doc; everything here is structure, balan
 | 2026-10-26 | Intro story from the doc's lore sneak-peek (five pictures, German text with the doc's English terms) and progress-driven coach marks for the first steps; the player character is never shown from the front (`docs/systems/TUTORIAL.md`). | Developer |
 | 2026-10-26 | Painted battle backgrounds per campaign chapter and per game mode; chapters without a doc name are drawn as their boss's lair, without inventing place names. | Developer |
 | 2026-10-26 | Full painted UI kit (icons, 9-slice chrome, screen backgrounds, logo, app icon) made with Codex from the game's own item icons as style reference; pictures never carry text, labels stay localized UI text (`docs/UI_KIT.md`). | Developer |
+| 2026-10-26 | UI v2 after studying AFK Arena and 7DS Idle screens (`docs/UI_STYLE.md`): world-first campaign hub, parchment content with dark text, one glowing teal primary button, wooden dock with one-tone relief icons, full-screen results, hero detail as a stage. | Developer |
 
 ## Navigation (from 2026-10-26)
 

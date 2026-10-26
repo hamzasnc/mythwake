@@ -72,41 +72,43 @@ namespace Mythwake.UI
             scroll.style.flexGrow = 1;
             var safe = UiKit.Box("safe").Into(scroll);
 
-            var head = UiKit.Box("row").Into(safe);
-            UiKit.IconBtn("back", () => Ui.Router.Pop()).Into(head);
-            var names = UiKit.Box().Into(head);
-            UiKit.Text(hero.Name, "title").Into(names);
-            UiKit.Text(hero.Title, "subtitle").Into(names);
-
-            var art = UiKit.Box("hero-art").Into(safe);
+            // the hero on a stage, AFK Arena style (docs/UI_STYLE.md); details further down
+            var stage = UiKit.Box("hero-stage").Into(safe);
+            UiKit.IconBtn("back", () => Ui.Router.Pop(), "hero-stage__back").Into(stage);
+            var names = UiKit.Box("hero-stage__names").Into(stage);
+            var gradeRow = UiKit.Box("row", "center").Into(names);
+            UiKit.Icon("grade" + hero.Grade, "hero-stage__grade").Into(gradeRow);
+            UiKit.Text(Loc.T("grade." + UiKit.Lower(hero.Grade)), "hero-stage__grade-text", "grade--" + UiKit.GradeClass(hero.Grade)).Into(gradeRow);
+            UiKit.Text(hero.Name, "hero-stage__name").Into(names);
+            UiKit.Text(hero.Title, "hero-stage__title").Into(names);
+            var art = UiKit.Box("hero-art").Into(stage);
             var assets = Ui.Catalog.Hero(_heroId);
             var image = assets?.full != null ? assets.full : assets?.portrait;
             if (image != null)
                 art.style.backgroundImage = new StyleBackground(image);
+            // Aspect, role, faction, race as emblems on both sides of the hero
+            var leftEmblems = UiKit.Box("hero-stage__emblems", "hero-stage__emblems--left").Into(stage);
+            Emblem(leftEmblems, "aspect" + hero.Aspect, Loc.T("aspect." + UiKit.Lower(hero.Aspect)));
+            Emblem(leftEmblems, "role" + hero.Role, Loc.T("role." + UiKit.Lower(hero.Role)));
+            var rightEmblems = UiKit.Box("hero-stage__emblems", "hero-stage__emblems--right").Into(stage);
+            Emblem(rightEmblems, "faction" + hero.Faction, Loc.T("faction." + UiKit.Lower(hero.Faction)));
+            Emblem(rightEmblems, "race" + hero.Race, Loc.T("race." + UiKit.Lower(hero.Race)));
 
-            var tags = UiKit.Box("row").Into(safe);
-            tags.style.flexWrap = Wrap.Wrap;
-            UiKit.IconTag("grade" + hero.Grade, Loc.T("grade." + UiKit.Lower(hero.Grade)), "grade--" + UiKit.GradeClass(hero.Grade)).Into(tags);
-            UiKit.IconTag("aspect" + hero.Aspect, Loc.T("aspect." + UiKit.Lower(hero.Aspect))).Into(tags);
-            UiKit.IconTag("role" + hero.Role, Loc.T("role." + UiKit.Lower(hero.Role))).Into(tags);
-            UiKit.IconTag("faction" + hero.Faction, Loc.T("faction." + UiKit.Lower(hero.Faction))).Into(tags);
-            UiKit.IconTag("race" + hero.Race, Loc.T("race." + UiKit.Lower(hero.Race))).Into(tags);
-
-            var progress = UiKit.Box("panel").Into(safe);
-            var levelRow = UiKit.Box("row").Into(progress);
-            _level = UiKit.Text("", "title").Into(levelRow);
+            var progress = UiKit.Box("hero-stats").Into(safe);
+            var levelRow = UiKit.Box("row", "center").Into(progress);
+            UiKit.Icon("power", "hero-stats__power-icon").Into(levelRow);
+            _power = UiKit.Text("", "hero-stats__power").Into(levelRow);
             UiKit.Box("spacer").Into(levelRow);
-            _stars = UiKit.Text("", "title").Into(levelRow);
-            _stars.style.color = new StyleColor(new UnityEngine.Color(1f, 0.73f, 0.23f));
-            _power = UiKit.Text("", "subtitle").Into(progress);
-            _stats = UiKit.Box().Into(progress);
-            _levelCost = UiKit.Text("", "label--small").Into(progress);
-            var buttons = UiKit.Box("row").Into(progress);
-            _levelUp = UiKit.Btn(Loc.T("hero.levelUp"), () => LevelUp(1)).Into(buttons);
+            _level = UiKit.Text("", "hero-stats__level").Into(levelRow);
+            UiKit.Box("spacer").Into(levelRow);
+            _stars = UiKit.Text("", "hero-stats__stars").Into(levelRow);
+            _stats = UiKit.Box("row", "hero-stats__row").Into(progress);
+            _levelCost = UiKit.Text("", "hero-stats__cost").Into(progress);
+            var buttons = UiKit.Box("row", "center").Into(progress);
             _levelUp5 = UiKit.Btn(Loc.T("hero.levelUp5"), () => LevelUp(5), "btn--secondary").Into(buttons);
-            UiKit.Box("spacer").Into(buttons);
+            _levelUp = UiKit.Btn(Loc.T("hero.levelUp"), () => LevelUp(1), "btn--big").Into(buttons);
             _starUp = UiKit.Btn(Loc.T("hero.starUp"), StarUp, "btn--secondary").Into(buttons);
-            _shards = UiKit.Text("", "label--small").Into(progress);
+            _shards = UiKit.Text("", "hero-stats__cost").Into(progress);
 
             var gear = UiKit.Box("panel").Into(safe);
             var gearHead = UiKit.Box("row").Into(gear);
@@ -144,7 +146,7 @@ namespace Mythwake.UI
             _level.text = $"{Loc.T("heroes.level", owned.Level)} / {cap}";
             _stars.text = UiKit.Stars(owned.Stars);
             var stats = TeamBuilder.StatsOf(Formations.Progress(Ui.State, content, owned));
-            _power.text = Loc.T("heroes.power", UiKit.Short(TeamBuilder.Power(stats)));
+            _power.text = UiKit.Short(TeamBuilder.Power(stats));
             _stats.Clear();
             Stat("statHp", Loc.T("hero.hp"), stats.Hp);
             Stat("statAttack", Loc.T("hero.attack"), stats.Attack);
@@ -289,12 +291,19 @@ namespace Mythwake.UI
             _setBonus.text = stats.SetBonusActive ? Loc.T("gear.setActive") : "";
         }
 
+        /// <summary>Round emblem with the name underneath (Aspect, role, faction, race on the hero stage).</summary>
+        private static void Emblem(VisualElement column, string icon, string name)
+        {
+            var e = UiKit.Box("emblem").Into(column);
+            UiKit.Icon(icon, "emblem__icon").Into(e);
+            UiKit.Text(name, "emblem__label").Into(e);
+        }
+
         private void Stat(string icon, string name, long value)
         {
-            var row = UiKit.Box("stat-row").Into(_stats);
-            var label = UiKit.Box("row").Into(row);
-            UiKit.Icon(icon, "stat-row__icon").Into(label);
-            UiKit.Text(name).Into(label);
+            var row = UiKit.Box("stat-chip").Into(_stats);
+            row.tooltip = name;
+            UiKit.Icon(icon, "stat-chip__icon").Into(row);
             UiKit.Text(UiKit.Short(value)).Into(row);
         }
 

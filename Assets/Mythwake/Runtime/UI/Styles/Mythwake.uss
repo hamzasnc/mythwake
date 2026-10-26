@@ -1376,6 +1376,18 @@
 .ui-icon--realms { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/realms.png"); }
 .ui-icon--relicMaterials { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/relicMaterials.png"); }
 .ui-icon--relics { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/relics.png"); }
+.ui-icon--reliefAdventure { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefAdventure.png"); }
+.ui-icon--reliefBag { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefBag.png"); }
+.ui-icon--reliefCampaign { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefCampaign.png"); }
+.ui-icon--reliefEvents { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefEvents.png"); }
+.ui-icon--reliefGuild { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefGuild.png"); }
+.ui-icon--reliefHeroes { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefHeroes.png"); }
+.ui-icon--reliefMail { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefMail.png"); }
+.ui-icon--reliefMap { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefMap.png"); }
+.ui-icon--reliefQuests { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefQuests.png"); }
+.ui-icon--reliefShop { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefShop.png"); }
+.ui-icon--reliefSummon { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefSummon.png"); }
+.ui-icon--reliefTown { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefTown.png"); }
 .ui-icon--roleDebuffer { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/roleDebuffer.png"); }
 .ui-icon--roleDps { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/roleDps.png"); }
 .ui-icon--roleHeroLeader { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/roleHeroLeader.png"); }
@@ -1521,3 +1533,135 @@
 .afk__chest { width: 72px; height: 72px; margin-right: 12px; }
 .result-title--victory, .result-title--defeat { color: #fff8e6; -unity-text-outline-width: 3px; -unity-text-outline-color: #4a2a08; }
 .result-title--defeat { -unity-text-outline-color: #2a0d10; }
+
+
+/* ================================================================ UI v2: AFK Arena / 7DS Idle style (docs/UI_STYLE.md) */
+
+/* warm parchment for content, dark brown text; dark tiles keep light text */
+.panel { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/popupParchment.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 46; -unity-slice-right: 46; -unity-slice-top: 46; -unity-slice-bottom: 46; -unity-slice-scale: 0.62px; padding: 30px 30px; --text: #3d2a17; --muted: #7a5c3a; --gold: #7a3b0c; --good: #2e7d32; --bad: #b3261e; color: var(--text); }
+.popup { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/popupParchment.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 46; -unity-slice-right: 46; -unity-slice-top: 46; -unity-slice-bottom: 46; -unity-slice-scale: 0.8px; padding: 44px 40px; }
+.gear, .fragment, .hero-card, .ult-button, .item-slot, .tag, .reward, .btn, .coach__bubble { --text: #f6efdd; --muted: #c9bfa6; --gold: #ffd36b; --good: #8ff08a; --bad: #ff8a7a; }
+.panel .reward { background-color: rgba(70, 42, 18, 0.82); color: #f6efdd; }
+.panel .tag { color: #f6efdd; }
+.section-title { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/sectionRibbon.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 40; -unity-slice-bottom: 40; -unity-slice-scale: 0.45px; color: #fff1cf; font-size: 26px; -unity-font-style: bold; padding: 10px 70px 12px 70px; margin: 18px 0 10px 0; -unity-text-align: middle-center; align-self: stretch; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+
+/* one glowing teal primary action, wooden secondary buttons */
+.btn { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnTeal.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 60; -unity-slice-bottom: 60; -unity-slice-scale: 0.55px; color: #ffffff; padding: 20px 46px; -unity-text-outline-width: 2px; -unity-text-outline-color: #0b4a5c; }
+.btn:hover { background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgb(255, 255, 255); }
+.btn:active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnTealPressed.png"); scale: 0.96 0.96; }
+.btn:disabled { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnTealDisabled.png"); color: #e2e6ea; -unity-text-outline-color: #3a4450; }
+.btn--secondary { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnWood.png"); color: #fff2d8; -unity-text-outline-color: #2c1606; }
+.btn--secondary:active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnWoodPressed.png"); }
+.btn--small { padding: 12px 28px; -unity-slice-scale: 0.42px; font-size: 26px; }
+.btn--big { padding: 26px 72px; -unity-slice-scale: 0.72px; font-size: 46px; }
+.tab { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnWood.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 60; -unity-slice-bottom: 60; -unity-slice-scale: 0.4px; color: #e8d6b4; -unity-background-image-tint-color: rgb(150, 130, 110); -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; }
+.tab--active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnTeal.png"); -unity-background-image-tint-color: rgb(255, 255, 255); color: #ffffff; -unity-text-outline-color: #0b4a5c; }
+
+/* bottom dock: wooden tiles, one-tone relief icons, outlined labels */
+.nav { padding: 4px 6px 22px 6px; }
+.nav__item { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/navTile.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 50; -unity-slice-right: 50; -unity-slice-top: 50; -unity-slice-bottom: 50; -unity-slice-scale: 0.5px; margin: 0 3px; padding-top: 100px; padding-bottom: 8px; color: #fff2d8; font-size: 24px; -unity-font-style: bold; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.nav__item--active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/navTileActive.png"); color: #ffe08a; }
+.nav__item--main { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/navTile.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 50; -unity-slice-right: 50; -unity-slice-top: 50; -unity-slice-bottom: 50; -unity-slice-scale: 0.5px; flex-grow: 1; height: auto; margin: 0 3px; border-width: 0; }
+.nav__item--main.nav__item--active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/navTileActive.png"); }
+.nav__icon { top: 6px; width: 92px; height: 92px; }
+.nav__item--main .nav__icon { width: 92px; height: 92px; top: 6px; }
+.nav__icon--town { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefTown.png"); }
+.nav__icon--adventure { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefAdventure.png"); }
+.nav__icon--campaign { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefCampaign.png"); }
+.nav__icon--heroes { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefHeroes.png"); }
+.nav__icon--summon { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/reliefSummon.png"); }
+.nav .badge { position: absolute; top: 6px; right: 10px; width: 30px; height: 30px; }
+
+/* item slots */
+.item-slot { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/slotDark.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 60; -unity-slice-right: 60; -unity-slice-top: 60; -unity-slice-bottom: 60; -unity-slice-scale: 0.28px; width: 104px; height: 104px; margin: 6px; align-items: center; justify-content: center; }
+.item-slot__icon { width: 70px; height: 70px; margin: 0; }
+.item-slot__count { position: absolute; right: 8px; bottom: 4px; font-size: 24px; -unity-font-style: bold; color: #ffffff; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.item-slots { flex-wrap: wrap; justify-content: center; }
+
+/* campaign hub: the world full-screen, UI on the edges */
+.hub { flex-grow: 1; padding: 10px 20px 8px 20px; }
+.hub__head { align-items: center; margin-top: 6px; }
+.hub__chapter { font-size: 26px; color: #ffeec8; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.hub__stage { font-size: 66px; -unity-font-style: bold; color: #ffffff; -unity-text-outline-width: 3px; -unity-text-outline-color: #241307; }
+.hub__side { position: absolute; top: 230px; }
+.hub__side--left { left: 14px; }
+.hub__side--right { right: 14px; }
+.side-btn { width: 128px; align-items: center; margin-bottom: 20px; }
+.side-btn__icon { width: 104px; height: 104px; }
+.side-btn__label { font-size: 23px; -unity-font-style: bold; color: #ffffff; margin-top: -6px; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.side-btn .badge { position: absolute; top: 2px; right: 10px; width: 30px; height: 30px; }
+.hub__quest { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/plate.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 54; -unity-slice-right: 54; -unity-slice-top: 44; -unity-slice-bottom: 44; -unity-slice-scale: 0.45px; flex-direction: row; align-items: center; align-self: center; max-width: 76%; margin-top: 10px; padding: 10px 26px 10px 14px; }
+.hub__quest-icon { width: 48px; height: 48px; margin-right: 10px; }
+.hub__quest-text { color: #fff1cf; font-size: 24px; white-space: normal; flex-shrink: 1; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.hub__afk { align-items: center; margin-bottom: 4px; }
+.hub__pile { width: 360px; height: 220px; background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/chestPile.png"); -unity-background-scale-mode: scale-to-fit; margin-bottom: -26px; }
+.hub__loot { flex-direction: row; justify-content: center; }
+.hub__loot .item-slot { width: 88px; height: 88px; margin: 3px; }
+.hub__loot .item-slot__icon { width: 58px; height: 58px; }
+.hub__afk-empty { font-size: 22px; color: #ffeec8; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.hub__afk-bar { flex-direction: row; align-items: center; width: 460px; margin-top: 4px; }
+.hub__afk-bar .afk-progress { flex-grow: 1; height: 34px; padding: 6px 10px; }
+.hub__afk-time { font-size: 22px; color: #ffffff; margin-left: 10px; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.hub__claim { margin-top: 4px; }
+.hub__powers { flex-direction: row; justify-content: center; align-items: center; margin-top: 6px; }
+.hub__power-icon { width: 44px; height: 44px; margin-right: 6px; }
+.hub__power { font-size: 30px; -unity-font-style: bold; color: #ffe08a; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.hub__power--danger { color: #ff8a7a; }
+.hub__vs { margin: 0 14px; color: #ffffff; font-size: 22px; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.hub__fight { align-self: center; width: 74%; margin-top: 4px; }
+.hub .boss-tag { margin-top: 4px; }
+
+/* full-screen battle result */
+.result { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgb(8, 6, 4); background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_victory.png"); -unity-background-scale-mode: scale-and-crop; }
+.result--defeat { background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_defeat.png"); }
+.result__content { position: absolute; left: 0; right: 0; top: 30%; align-items: center; padding: 0 30px; }
+.result .result-title { font-size: 92px; }
+.result__tip { white-space: normal; color: #eadfc6; -unity-text-align: middle-center; margin: 14px 20px; font-size: 26px; }
+.result__buttons { margin-top: 26px; justify-content: center; }
+.result .gear, .result .fragment { width: 210px; }
+
+/* hero detail: the hero on a stage */
+.hero-stage { height: 1180px; margin: -24px -28px 0 -28px; background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_hero_stage.png"); -unity-background-scale-mode: scale-and-crop; }
+.hero-stage__back { position: absolute; top: 18px; left: 18px; }
+.hero-stage__names { position: absolute; top: 20px; left: 110px; right: 110px; align-items: center; }
+.hero-stage__grade { width: 46px; height: 46px; margin-right: 8px; }
+.hero-stage__grade-text { font-size: 26px; -unity-font-style: bold; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.hero-stage__name { font-size: 58px; -unity-font-style: bold; color: #ffffff; -unity-text-outline-width: 3px; -unity-text-outline-color: #241307; }
+.hero-stage__title { font-size: 26px; color: #ffeec8; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.hero-stage .hero-art { position: absolute; left: 12%; right: 12%; top: 200px; bottom: 30px; height: auto; margin: 0; }
+.hero-stage__emblems { position: absolute; top: 360px; }
+.hero-stage__emblems--left { left: 16px; }
+.hero-stage__emblems--right { right: 16px; }
+.emblem { width: 128px; align-items: center; margin-bottom: 30px; }
+.emblem__icon { width: 86px; height: 86px; }
+.emblem__label { font-size: 20px; color: #ffffff; white-space: normal; -unity-text-align: middle-center; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.hero-stats { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/popupParchment.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 46; -unity-slice-right: 46; -unity-slice-top: 46; -unity-slice-bottom: 46; -unity-slice-scale: 0.62px; margin: -60px 0 24px 0; padding: 26px 30px; color: #3d2a17; }
+.hero-stats__power-icon { width: 52px; height: 52px; margin-right: 6px; }
+.hero-stats__power { font-size: 40px; -unity-font-style: bold; color: #7a3b0c; }
+.hero-stats__level { font-size: 32px; -unity-font-style: bold; color: #3d2a17; }
+.hero-stats__stars { font-size: 34px; color: #e09a12; -unity-text-outline-width: 1px; -unity-text-outline-color: #5a3205; }
+.hero-stats__row { justify-content: space-around; margin: 16px 0 10px 0; }
+.stat-chip { flex-direction: row; align-items: center; font-size: 32px; -unity-font-style: bold; color: #3d2a17; }
+.stat-chip__icon { width: 50px; height: 50px; margin-right: 8px; }
+.hero-stats__cost { -unity-text-align: middle-center; font-size: 22px; color: #7a5c3a; margin: 4px 0; }
+
+/* text on painted art: white with a dark outline */
+.screen > .safe > .row > .title, .map-title { color: #ffffff; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.currency__value { color: #ffffff; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.coach__text { -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+
+/* fixes after the first v2 screenshots */
+.side-btn__icon { background-color: rgba(34, 20, 8, 0.82); border-radius: 52px; border-width: 3px; border-color: #c9953a; -unity-background-scale-mode: scale-to-fit; }
+.btn:disabled { opacity: 0.9; }
+.hub__afk-empty { margin-top: 26px; }
+.town-side { top: 150px; }
+.side-btn { width: 150px; }
+.side-btn__icon { width: 128px; height: 128px; }
+.side-btn__label { font-size: 25px; }
+.emblem { width: 150px; }
+.emblem__icon { width: 112px; height: 112px; }
+.emblem__label { font-size: 22px; }
+.title { color: #ffffff; -unity-text-outline-width: 2px; -unity-text-outline-color: #241307; }
+.panel .title, .popup .title { color: var(--gold); -unity-text-outline-width: 0; }
+.shop-item__icon .shop-item__currency { width: 104px; height: 104px; }
+.shop-item__icon { width: 132px; height: 132px; }

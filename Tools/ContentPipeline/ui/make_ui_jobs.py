@@ -318,6 +318,59 @@ APP_ICON = """BILD: App-Icon des Spiels, quadratisch 1024x1024, randlos bemalt (
 - Kein Text."""
 
 
+# fourth wave, after studying AFK Arena / 7DS Idle screens (docs/UI_STYLE.md): light parchment popups, a glowing teal
+# primary button, wooden dock, one-tone relief menu icons, full-screen result art and a hero stage
+WAVE4_CHROME = [
+    ("chrome_parchment", (1536, 1024), 2, 2, [
+        ("popupParchment", "Popup-Fenster: helle Pergament-/Cremefläche (warm, sauber, ganz leichte Papierstruktur) mit prächtigem dunkelbraunem Holzrahmen und goldenen Eckbeschlägen"),
+        ("sectionRibbon", "Abschnitts-Überschrift: schmales, langes dunkelbraunes Band mit dünner Goldkante und kleinen spitzen Enden (ca. 10:1), Mitte frei für Text"),
+        ("rowParchment", "Listenzeile: breite helle Pergament-Leiste mit dünnem braunem Rand und leicht abgerundeten Ecken (ca. 5:1)"),
+        ("slotDark", "dunkle, leicht vertiefte Mulde mit weichem Innenschatten und dünnem Goldrand, quadratisch (Hintergrund für Items)"),
+    ], "Alle Flächen ruhig und gleichmäßig für 9-Slice."),
+    ("chrome_buttons2", (1024, 1536), 2, 4, [
+        ("btnTeal", "Haupt-Aktions-Button wie 'Begin'/'Level Up' bei AFK Arena: breite, leicht sechseckige Taste in leuchtendem Türkis/Cyan mit hellem Glanz, Goldrand und weichem Leuchten"),
+        ("btnTealPressed", "derselbe türkise Button gedrückt (etwas dunkler, kein Glanz)"),
+        ("btnWood", "Neben-Button: dieselbe Form aus dunklem poliertem Holz mit Bronze-Rand"),
+        ("btnWoodPressed", "derselbe Holz-Button gedrückt"),
+        ("btnTealDisabled", "derselbe sechseckige Button entsättigt grau-blau (deaktiviert)"),
+        ("pillCost", "kleine dunkle Pille für Kosten/Anzahl mit dünnem Goldrand (ca. 3:1)"),
+        ("navTile", "Kachel der unteren Navigationsleiste: hochkant, dunkles Holz mit Bronze-Kante, ruhig (inaktiv)"),
+        ("navTileActive", "dieselbe Kachel aktiv: helleres warmes Holz, goldener Rand, sanftes Leuchten von unten"),
+    ], "Die fünf Buttons gleiche Form und Größe (Seitenverhältnis ca. 3:1)."),
+    ("chrome_hub", (1536, 1024), 3, 2, [
+        ("sideButton", "Rahmen für einen Seitenleisten-Knopf auf dem Hauptbildschirm: kleine rautenförmige/achteckige Bronze-Plakette mit dunkler Mitte (Mitte rein weiß lassen, dort kommt ein Icon hin)"),
+        ("avatarFrame", "runder Spieler-Avatar-Rahmen aus Gold mit kleinem Wappen-Schild unten für die Stufe (Innenfläche rein weiß)"),
+        ("stageTrack", "Stage-Fortschrittsleiste: lange dünne goldene Schiene mit kleinen runden Knotenpunkten (ca. 10:1)"),
+        ("chestPile", "AFK-Beute: Haufen Goldmünzen mit einer kleinen Schatztruhe und zwei Edelsteinen davor, breit und flach (für unter das Team)"),
+        ("closeRound", "runder Schließen-Knopf: rote Kugel mit goldenem Rand und weißem X"),
+        ("starBig", "großer goldener Bewertungsstern mit Glanz"),
+    ], "Rahmen mit weißer Innenfläche lassen innen alles weiß."),
+]
+
+WAVE4_ICONS = [
+    ("icons_relief", [
+        ("reliefTown", "Dorf (Dawnhollow): kleines Haus mit Fahne"),
+        ("reliefAdventure", "Abenteuer: Karte mit Kompass"),
+        ("reliefCampaign", "Kampagne: zwei gekreuzte Schwerter vor Schild"),
+        ("reliefHeroes", "Helden: Helm mit Federbusch"),
+        ("reliefSummon", "Beschwörung: rundes Portal"),
+        ("reliefQuests", "Quests: Schriftrolle mit Feder"),
+        ("reliefMail", "Post: Briefumschlag"),
+        ("reliefBag", "Inventar: Lederbeutel"),
+        ("reliefEvents", "Events: Stern im Portal"),
+        ("reliefShop", "Shop: Marktstand"),
+        ("reliefGuild", "Gilde: Banner"),
+        ("reliefMap", "Weltkarte: gefaltete Karte"),
+    ], "ALLE im selben einheitlichen Stil wie die Menü-Icons von AFK Arena: einfarbiges, warmes Sepia/Bronze-Relief (helles Elfenbein-Beige mit brauner Schattierung und dunkelbrauner Outline), KEINE bunten Farben, wie aus Holz oder Messing geschnitzt."),
+]
+
+WAVE4_BACKGROUNDS = [
+    ("bg_hero_stage", "Helden-Bühne (wie der Hintergrund der Heldenansicht in AFK Arena): eine runde, leicht erhöhte Steinbühne mit magischem goldenen Kreis-Siegel am Boden in der unteren Bildmitte, dahinter ein großer verzierter Torbogen mit weichem Licht und Vorhängen, symmetrisch, ruhig, mittig viel Platz für eine Figur."),
+    ("bg_victory", "Sieg-Bildschirm-Kunst (wie bei AFK Arena): warme orange-goldene Gegenlicht-Szene, Silhouetten einer siegreichen Heldengruppe auf einem Hügel mit wehender Fahne vor einer strahlenden Sonne, dunkle Vignette; die untere Hälfte fast schwarz und ruhig (dort liegen Belohnungen)."),
+    ("bg_defeat", "Niederlage-Bildschirm-Kunst: kalte blau-graue Szene, zerbrochene Fahne und Schwert im Boden, Regen, dunkle Vignette; die untere Hälfte fast schwarz und ruhig."),
+]
+
+
 def write(out, style, folder, body, cells):
     d = out / folder
     d.mkdir(exist_ok=True)
@@ -365,6 +418,9 @@ def main():
     specs += [(id, *background_job(id, text)) for id, text in WAVE3_BACKGROUNDS]
     specs += [("logo", f"{LOGO}\n{STYLE}", {"kind": "chrome", "cols": 1, "rows": 1, "names": ["logo"]}),
               ("app_icon", APP_ICON, {"kind": "appicon", "names": ["app_icon"]})]
+    specs += [(id, *chrome_job(w, h, cols, rows, items, extra)) for id, (w, h), cols, rows, items, extra in WAVE4_CHROME]
+    specs += [(s[0], *icon_job(s[1], s[2] if len(s) > 2 else "")) for s in WAVE4_ICONS]
+    specs += [(id, *background_job(id, text)) for id, text in WAVE4_BACKGROUNDS]
     jobs =[write(out, style, f"{n:02d}_{id}", body, cells) for n, (id, body, cells) in enumerate(specs, start=1)]
     (out / "_jobs.txt").write_text("\n".join(jobs) + "\n", encoding="utf-8", newline="\n")
     (out / "run_jobs.sh").write_text(RUNNER.replace("xargs -P 5", "xargs -P 8"), encoding="utf-8", newline="\n")

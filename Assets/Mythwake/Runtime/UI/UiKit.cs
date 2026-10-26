@@ -120,6 +120,26 @@ namespace Mythwake.UI
             return row;
         }
 
+        /// <summary>Round relief icon with a short outlined label, the side buttons of the hubs (docs/UI_STYLE.md).</summary>
+        public static VisualElement SideButton(VisualElement column, string icon, string label, Action onClick)
+        {
+            var b = Box("side-btn").Into(column);
+            Icon(icon, "side-btn__icon").Into(b);
+            Text(label, "side-btn__label").Into(b);
+            b.RegisterCallback<ClickEvent>(_ => onClick());
+            return b;
+        }
+
+        /// <summary>Reward as a square item slot: currency icon, amount bottom right (AFK Arena style, docs/UI_STYLE.md).</summary>
+        public static VisualElement Slot(string currency, long value)
+        {
+            var slot = Box("item-slot");
+            Box("item-slot__icon", "currency__icon", "icon--" + currency).Into(slot);
+            Text(Short(value), "item-slot__count").Into(slot);
+            slot.tooltip = CurrencyName(currency);
+            return slot;
+        }
+
         public static string CurrencyName(string id) =>
             id.StartsWith("shards.") ? "Hero Shards" : Loc.T("currency." + id);
     }

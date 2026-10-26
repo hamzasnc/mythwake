@@ -27,8 +27,9 @@ namespace Mythwake.UI
             _currencies = new CurrencyBar(Ids.Gold, Ids.Wood, Ids.Stone).Into(root);
             var titleRow = UiKit.Box("row", "center", "map-title-row").Into(root);
             UiKit.Text("Dawnhollow", "map-title").Into(titleRow);
-            UiKit.Btn(Loc.T("shop.button"), () => Ui.Router.Push(new ShopScreen()), "btn--small", "map-shop").Into(titleRow);
-            UiKit.Btn(Loc.T("guild.button"), () => Ui.Router.Push(new GuildScreen()), "btn--small", "map-shop").Into(titleRow);
+            var side = UiKit.Box("hub__side", "hub__side--right", "town-side").Into(root);
+            UiKit.SideButton(side, "reliefShop", Loc.T("shop.button"), () => Ui.Router.Push(new ShopScreen()));
+            UiKit.SideButton(side, "reliefGuild", Loc.T("guild.button"), () => Ui.Router.Push(new GuildScreen()));
             UiKit.Box("spacer").Into(root).pickingMode = PickingMode.Ignore;
             root.Add(MainNav.Build(Ui, Tab.Town));
             _popupLayer = UiKit.Box("popup-layer").Into(root);

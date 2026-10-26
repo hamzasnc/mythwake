@@ -112,7 +112,7 @@ namespace Mythwake.Presentation
             var index = 0;
             // centre the team on screen instead of on the left half
             foreach (var u in team)
-                Spawn(u, index++, Side.Allies, new Vector3(1.6f, 1.1f, 0f));
+                Spawn(u, index++, Side.Allies, new Vector3(1.6f, -0.3f, 0f));
         }
 
         public void Begin(ContentCatalog catalog, BattleSetup setup, bool autoUltimates)

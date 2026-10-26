@@ -26,48 +26,48 @@ namespace Mythwake.UI
 
         protected override void Build(VisualElement root)
         {
-            // no solid background: the team idles on the battlefield behind the home screen
+            // AFK Arena / 7DS style (docs/UI_STYLE.md): the team idles full-screen, UI only on the edges
             _currencies = new CurrencyBar(Ids.Gold, Ids.HeroExp, Ids.Gems, Ids.SummonScroll).Into(root);
-            var safe = UiKit.Box("safe").Into(root);
-            var quest = UiKit.Box("panel", "quest-strip").Into(safe);
-            quest.RegisterCallback<ClickEvent>(_ => Ui.Router.Push(new QuestScreen()));
-            var questText = UiKit.Box("grow").Into(quest);
-            UiKit.Text(Loc.T("quests.current"), "label--small").Into(questText);
-            _mainQuest = UiKit.Text("", "quest__title").Into(questText);
-            // the whole strip is the button; the pill only labels it
-            var questButton = UiKit.Text(Loc.T("quests.title") + "  ›", "pill").Into(quest);
-            questButton.style.width = 210;
-            questButton.style.height = 56;
-            questButton.style.flexShrink = 0;
-            questButton.style.unityTextAlign = UnityEngine.TextAnchor.MiddleCenter;
-            questText.style.flexBasis = 0;
-            questText.style.flexShrink = 1;
-            _questBadge = UiKit.Box("badge").Into(questButton);
-            UiKit.Box("spacer").Into(safe);
+            var hub = UiKit.Box("hub").Into(root);
 
-            var card = UiKit.Box("panel", "stage-card").Into(safe);
-            _chapter = UiKit.Text("", "subtitle").Into(card);
-            _stage = UiKit.Text("", "stage-card__number").Into(card);
-            _boss = UiKit.Text(Loc.T("home.boss"), "boss-tag").Into(card);
-            var powers = UiKit.Box("row").Into(card);
-            _teamPower = UiKit.Text("", "label--small").Into(powers);
-            UiKit.Text("   ·   ", "label--small").Into(powers);
-            _enemyPower = UiKit.Text("", "label--small").Into(powers);
-            _fight = UiKit.Btn(Loc.T("home.fight"), () => Ui.Router.Push(new FormationScreen()), "btn--big").Into(card);
-            _fight.style.marginTop = 20;
-            _fight.name = "coach-fight";
+            var head = UiKit.Box("hub__head").Into(hub);
+            _chapter = UiKit.Text("", "hub__chapter").Into(head);
+            _stage = UiKit.Text("", "hub__stage").Into(head);
+            _boss = UiKit.Text(Loc.T("home.boss"), "boss-tag").Into(head);
 
-            var afk = UiKit.Box("panel").Into(safe);
-            var head = UiKit.Box("row").Into(afk);
-            UiKit.Icon("chestGold", "afk__chest").Into(head);
-            UiKit.Text(Loc.T("afk.title"), "title").Into(head);
-            UiKit.Box("spacer").Into(head);
-            _afkTime = UiKit.Text("", "subtitle").Into(head);
-            var progress = UiKit.Box("afk-progress").Into(afk);
+            var left = UiKit.Box("hub__side", "hub__side--left").Into(hub);
+            var quest = UiKit.SideButton(left, "reliefQuests", Loc.T("quests.title"), () => Ui.Router.Push(new QuestScreen()));
+            _questBadge = UiKit.Box("badge").Into(quest);
+            var right = UiKit.Box("hub__side", "hub__side--right").Into(hub);
+            UiKit.SideButton(right, "reliefMap", Loc.T("nav.adventure"), () => Ui.Router.Reset(new AdventureScreen()));
+
+            // current main quest as a slim strip under the stage name
+            var strip = UiKit.Box("hub__quest").Into(hub);
+            strip.RegisterCallback<ClickEvent>(_ => Ui.Router.Push(new QuestScreen()));
+            UiKit.Icon("questMain", "hub__quest-icon").Into(strip);
+            _mainQuest = UiKit.Text("", "hub__quest-text").Into(strip);
+
+            UiKit.Box("spacer").Into(hub);
+
+            // idle loot pile in front of the team: tap to collect
+            var afk = UiKit.Box("hub__afk").Into(hub);
+            var pile = UiKit.Box("hub__pile").Into(afk);
+            _afkRewards = UiKit.Box("hub__loot").Into(afk);
+            var bar = UiKit.Box("hub__afk-bar").Into(afk);
+            var progress = UiKit.Box("afk-progress").Into(bar);
             _afkFill = UiKit.Box("afk-progress__fill").Into(progress);
-            _afkRewards = UiKit.Box("afk-rewards").Into(afk);
-            _claim = UiKit.Btn(Loc.T("afk.claim"), Claim).Into(afk);
+            _afkTime = UiKit.Text("", "hub__afk-time").Into(bar);
+            _claim = UiKit.Btn(Loc.T("afk.claim"), Claim, "btn--secondary", "btn--small", "hub__claim").Into(afk);
             _claim.name = "coach-afk";
+            pile.RegisterCallback<ClickEvent>(_ => Claim());
+
+            var powers = UiKit.Box("hub__powers").Into(hub);
+            UiKit.Icon("power", "hub__power-icon").Into(powers);
+            _teamPower = UiKit.Text("", "hub__power").Into(powers);
+            UiKit.Text("vs", "hub__vs").Into(powers);
+            _enemyPower = UiKit.Text("", "hub__power", "hub__power--enemy").Into(powers);
+            _fight = UiKit.Btn(Loc.T("home.fight"), () => Ui.Router.Push(new FormationScreen()), "btn--big", "hub__fight").Into(hub);
+            _fight.name = "coach-fight";
 
             root.Add(MainNav.Build(Ui, Tab.Campaign));
         }
@@ -106,12 +106,13 @@ namespace Mythwake.UI
             {
                 var (chapter, index, number) = Campaign.Locate(content, next);
                 _chapter.text = string.IsNullOrEmpty(chapter?.Name) ? Loc.T("home.chapter", number) : $"{Loc.T("home.chapter", number)} · {chapter.Name}";
+                _enemyPower.EnableInClassList("hub__power--danger", Campaign.Enemies(content, next).Sum(u => TeamBuilder.Power(u.Stats)) > TeamBuilder.Build(Formations.ToProgress(state, content, state.Formation)).Sum(u => TeamBuilder.Power(u.Stats)));
                 _stage.text = Loc.T("home.stage", number, index);
                 _boss.style.display = Campaign.IsBoss(content, next) ? DisplayStyle.Flex : DisplayStyle.None;
                 var enemy = Campaign.Enemies(content, next).Sum(u => TeamBuilder.Power(u.Stats));
                 var team = TeamBuilder.Build(Formations.ToProgress(state, content, state.Formation)).Sum(u => TeamBuilder.Power(u.Stats));
-                _enemyPower.text = Loc.T("home.enemyPower", UiKit.Short(enemy));
-                _teamPower.text = Loc.T("home.teamPower", UiKit.Short(team));
+                _enemyPower.text = UiKit.Short(enemy);
+                _teamPower.text = UiKit.Short(team);
                 _fight.SetEnabled(true);
             }
             RefreshAfk();
@@ -132,9 +133,9 @@ namespace Mythwake.UI
             _afkRewards.Clear();
             var pending = Afk.Pending(state, content, now);
             foreach (var a in pending)
-                _afkRewards.Add(UiKit.Amount(a.Id, a.Value));
+                _afkRewards.Add(UiKit.Slot(a.Id, a.Value));
             if (pending.Count == 0)
-                _afkRewards.Add(UiKit.Text(Loc.T("afk.empty"), "label--small"));
+                _afkRewards.Add(UiKit.Text(Loc.T("afk.empty"), "hub__afk-empty"));
             _claim.SetEnabled(pending.Count > 0);
         }
 

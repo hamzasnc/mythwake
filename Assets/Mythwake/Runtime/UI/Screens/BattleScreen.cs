@@ -347,35 +347,34 @@ namespace Mythwake.UI
         private void ShowResult(BattleReport report)
         {
             var victory = report.Outcome == BattleOutcome.Victory;
-            var overlay = UiKit.Box("overlay").Into(Root);
-            var popup = UiKit.Box("panel", "popup").Into(overlay);
+            // full-screen result like AFK Arena (docs/UI_STYLE.md): illustrated backdrop, banner, rewards in slots
+            var overlay = UiKit.Box("result", victory ? "result--victory" : "result--defeat").Into(Root);
+            var popup = UiKit.Box("result__content").Into(overlay);
             UiKit.Text(Loc.T(victory ? "battle.victory" : "battle.defeat"), "result-title", victory ? "result-title--victory" : "result-title--defeat").Into(popup);
             if (victory || report.Rewards.Count > 0)
             {
-                UiKit.Text(Loc.T("battle.rewards"), "subtitle").Into(popup);
-                var rewards = UiKit.Box("row").Into(popup);
-                rewards.style.flexWrap = Wrap.Wrap;
-                rewards.style.justifyContent = Justify.Center;
+                UiKit.Text(Loc.T("battle.rewards"), "section-title").Into(popup);
+                var rewards = UiKit.Box("row", "item-slots").Into(popup);
                 foreach (var r in report.Rewards)
-                    rewards.Add(UiKit.Amount(r.Id, r.Value));
+                    rewards.Add(UiKit.Slot(r.Id, r.Value));
                 if (report.Gear.Count > 0)
                 {
-                    UiKit.Text(Loc.T("gear.drop"), "subtitle").Into(popup);
-                    var drops = UiKit.Box("row").Into(popup);
+                    UiKit.Text(Loc.T("gear.drop"), "section-title").Into(popup);
+                    var drops = UiKit.Box("row", "item-slots").Into(popup);
                     foreach (var item in report.Gear)
                         drops.Add(GearUi.Tile(Ui, item));
                 }
                 if (report.Fragments.Count > 0)
                 {
-                    UiKit.Text(Loc.T("fragment.drop"), "subtitle").Into(popup);
-                    var drops = UiKit.Box("row").Into(popup);
+                    UiKit.Text(Loc.T("fragment.drop"), "section-title").Into(popup);
+                    var drops = UiKit.Box("row", "item-slots").Into(popup);
                     foreach (var item in report.Fragments)
                         drops.Add(FragmentUi.Tile(Ui, item));
                 }
                 if (report.Relics.Count > 0)
                 {
-                    UiKit.Text(Loc.T("relic.drop"), "subtitle").Into(popup);
-                    var drops = UiKit.Box("row").Into(popup);
+                    UiKit.Text(Loc.T("relic.drop"), "section-title").Into(popup);
+                    var drops = UiKit.Box("row", "item-slots").Into(popup);
                     foreach (var item in report.Relics)
                         drops.Add(RelicUi.Tile(Ui, item));
                 }
@@ -384,9 +383,9 @@ namespace Mythwake.UI
                 UiKit.Text(report.Note, victory ? "label--good" : "label--bad").Into(popup);
             if (!victory && !_mode.Replay)
             {
-                UiKit.Text(Loc.T("battle.tip.defeat"), "subtitle").Into(popup).style.whiteSpace = WhiteSpace.Normal;
+                UiKit.Text(Loc.T("battle.tip.defeat"), "result__tip").Into(popup);
             }
-            var buttons = UiKit.Box("row").Into(popup);
+            var buttons = UiKit.Box("row", "result__buttons").Into(popup);
             if (!victory)
                 UiKit.Btn(Loc.T("nav.heroes"), () => Ui.Router.Reset(new HeroesScreen()), "btn--secondary").Into(buttons);
             UiKit.Btn(Loc.T("battle.continue"), () => Ui.Router.Reset(_mode.After())).Into(buttons);
