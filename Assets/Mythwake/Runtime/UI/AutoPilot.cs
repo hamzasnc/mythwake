@@ -1,7 +1,9 @@
 using System.Collections;
+using System.Linq;
 using System.IO;
 using Mythwake.Core.Meta;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Mythwake.UI
 {
@@ -64,10 +66,27 @@ namespace Mythwake.UI
             ui.Authority.Execute(new AssignVillageHero { BuildingId = "survivorCamp", Slot = 0, HeroId = ui.State.Heroes[0].HeroId });
             yield return Shot("village_built", 0.8f);
 
+            // jump ahead on the throwaway save to reach the Broken Forge, craft and equip a piece
+            ui.State.Campaign.HighestCleared = 10;
+            foreach (var id in new[] { Ids.Gold, Ids.Wood, Ids.Stone, Ids.GearMaterials })
+                ui.State.Add(id, 100_000);
+            ui.Authority.Execute(new UpgradeBuilding { BuildingId = "brokenForge" });
+            ui.Router.Reset(new VillageScreen());
+            yield return Shot("forge", 0.8f);
+            var hero = ui.State.Formation.First(h => !string.IsNullOrEmpty(h));
+            foreach (GearSlot slot in System.Enum.GetValues(typeof(GearSlot)))
+            {
+                var item = ui.Authority.Execute(new CraftGear { Slot = slot }).Value;
+                ui.Authority.Execute(new EquipGear { HeroId = hero, Uid = item.Uid });
+            }
+
             ui.Router.Reset(new HeroesScreen());
             yield return Shot("heroes", 0.6f);
-            ui.Router.Push(new HeroDetailScreen(ui.State.Heroes[0].HeroId));
+            ui.Router.Push(new HeroDetailScreen(hero));
             yield return Shot("hero_detail", 0.6f);
+            var detail = ui.Router.Current;
+            detail.Root.Q<ScrollView>().scrollOffset = new Vector2(0, 1400);
+            yield return Shot("hero_gear", 0.6f);
 
             ui.Router.Reset(new SummonScreen());
             yield return Shot("summon", 0.6f);

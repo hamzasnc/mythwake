@@ -53,6 +53,8 @@ namespace Mythwake.Core.Meta
         public AfkState Afk = new AfkState();
         public SummonState Summon = new SummonState();
         public VillageState Village = new VillageState();
+        public List<GearItem> Gear = new List<GearItem>();
+        public int GearUidCounter;
         public PendingBattle Battle;
         /// <summary>Server-side randomness (summons, battle seeds): seed + how many draws were made.</summary>
         public ulong RngSeed;

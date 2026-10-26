@@ -128,6 +128,7 @@ namespace Mythwake.Core.Meta
         public List<BannerDefinition> Banners = new List<BannerDefinition>();
         public StartingState Start = new StartingState();
         public VillageConfig Village = new VillageConfig();
+        public GearConfig Gear = new GearConfig();
 
         public HeroDefinition Hero(string id) =>
             Heroes.TryGetValue(id, out var h) ? h : throw new RuleViolation("unknown_hero", id);

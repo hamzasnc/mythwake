@@ -238,6 +238,13 @@ namespace Mythwake.UI
                 rewards.style.justifyContent = Justify.Center;
                 foreach (var r in stage.Rewards)
                     rewards.Add(UiKit.Amount(r.Id, r.Value));
+                if (stage.Gear.Count > 0)
+                {
+                    UiKit.Text(Loc.T("gear.drop"), "subtitle").Into(popup);
+                    var drops = UiKit.Box("row").Into(popup);
+                    foreach (var item in stage.Gear)
+                        drops.Add(GearUi.Tile(Ui.Content, item));
+                }
                 if (newSlot)
                     UiKit.Text(Loc.T("battle.slotUnlocked"), "label--good").Into(popup);
             }

@@ -15,7 +15,9 @@ namespace Mythwake.Core.Meta
         /// <summary>Improves healing of every hero (Healer's Tent).</summary>
         Healing,
         /// <summary>Unlocks hero recruitment (Summoning Gate).</summary>
-        UnlockSummon
+        UnlockSummon,
+        /// <summary>Unlocks gear crafting and upgrades; higher levels craft higher grades (Broken Forge).</summary>
+        Forge
     }
 
     public sealed class BuildingDefinition

@@ -11,6 +11,8 @@ namespace Mythwake.Core.Progression
         public HeroDefinition Hero;
         public int Level = 1;
         public int Stars = 1;
+        /// <summary>Flat stats from equipment (HP, ATK, DEF, crit rate), added before percentage bonuses.</summary>
+        public Stats Flat;
     }
 
     /// <summary>Account-wide combat bonuses from outside the formation (village buildings, later relics and guild buffs), permille.</summary>
@@ -39,6 +41,20 @@ namespace Mythwake.Core.Progression
             s.Hp = s.Hp * growth / Permille.One * star / Permille.One;
             s.Attack = s.Attack * growth / Permille.One * star / Permille.One;
             s.Defense = s.Defense * growth / Permille.One * star / Permille.One;
+            return s;
+        }
+
+        /// <summary>Level/star stats plus flat equipment stats.</summary>
+        public static Stats StatsOf(HeroProgress h)
+        {
+            var s = StatsAt(h.Hero, h.Level, h.Stars);
+            if (h.Flat != null)
+            {
+                s.Hp += h.Flat.Hp;
+                s.Attack += h.Flat.Attack;
+                s.Defense += h.Flat.Defense;
+                s.CritRate += h.Flat.CritRate;
+            }
             return s;
         }
 
@@ -79,7 +95,7 @@ namespace Mythwake.Core.Progression
                 var h = formation[slot];
                 if (h == null)
                     continue;
-                var stats = StatsAt(h.Hero, h.Level, h.Stars);
+                var stats = StatsOf(h);
                 var synergy = FactionBonus(factions[h.Hero.Faction]) + (races[h.Hero.Race] >= 2 ? RaceSynergyPermille : 0);
                 var atk = synergy + (bonus?.Attack ?? 0);
                 var hp = synergy + (bonus?.Hp ?? 0);

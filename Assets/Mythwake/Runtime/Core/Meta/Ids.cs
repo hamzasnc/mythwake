@@ -11,6 +11,7 @@ namespace Mythwake.Core.Meta
         public const string SummonScroll = "summonScroll";
         public const string FragmentDust = "fragmentDust";
         public const string GuardianSigil = "guardianSigil";
+        public const string GearMaterials = "gearMaterials";
 
         /// <summary>Hero shards are per hero: "shards.&lt;heroId&gt;".</summary>
         public static string Shards(string heroId) => "shards." + heroId;

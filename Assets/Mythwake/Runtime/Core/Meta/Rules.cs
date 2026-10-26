@@ -37,8 +37,8 @@ namespace Mythwake.Core.Meta
                     candidates.Add(h);
             candidates.Sort((a, b) =>
             {
-                var pa = TeamBuilder.Power(TeamBuilder.StatsAt(content.Hero(a.HeroId), a.Level, a.Stars));
-                var pb = TeamBuilder.Power(TeamBuilder.StatsAt(content.Hero(b.HeroId), b.Level, b.Stars));
+                var pa = TeamBuilder.Power(TeamBuilder.StatsOf(Progress(state, content, a)));
+                var pb = TeamBuilder.Power(TeamBuilder.StatsOf(Progress(state, content, b)));
                 return pb != pa ? pb.CompareTo(pa) : string.CompareOrdinal(a.HeroId, b.HeroId);
             });
             if (candidates.Count > unlocked)
@@ -69,9 +69,20 @@ namespace Mythwake.Core.Meta
             {
                 var id = formation != null && i < formation.Length ? formation[i] : null;
                 var owned = string.IsNullOrEmpty(id) ? null : state.FindHero(id);
-                list.Add(owned == null ? null : new HeroProgress { Hero = content.Hero(id), Level = owned.Level, Stars = owned.Stars });
+                list.Add(owned == null ? null : Progress(state, content, owned));
             }
             return list;
+        }
+
+        /// <summary>An owned hero as the rules see it: level, stars and worn gear.</summary>
+        public static HeroProgress Progress(PlayerState state, GameContent content, OwnedHero owned)
+        {
+            var gear = Gear.StatsFor(state, content, owned.HeroId);
+            return new HeroProgress
+            {
+                Hero = content.Hero(owned.HeroId), Level = owned.Level, Stars = owned.Stars,
+                Flat = new Stats { Hp = gear.Hp, Attack = gear.Attack, Defense = gear.Defense, CritRate = gear.CritRate }
+            };
         }
     }
 

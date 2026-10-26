@@ -110,7 +110,7 @@ namespace Mythwake.UI
                 _leaderSlot.Add(UiKit.HeroCard(Ui.Catalog, content.Hero(_leader), state.FindHero(_leader)));
 
             _list.Clear();
-            foreach (var owned in state.Heroes.OrderByDescending(h => UiKit.Power(content, h)))
+            foreach (var owned in state.Heroes.OrderByDescending(h => UiKit.Power(state, content, h)))
             {
                 var hero = content.Hero(owned.HeroId);
                 var card = UiKit.HeroCard(Ui.Catalog, hero, owned);

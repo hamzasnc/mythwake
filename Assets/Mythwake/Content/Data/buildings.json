@@ -99,8 +99,30 @@
     {
       "id": "brokenForge",
       "name": "Broken Forge",
-      "description": "Schaltet Gear-Crafting und Upgrades frei.",
-      "effect": "none"
+      "description": "Schaltet Gear-Crafting und Upgrades frei. Höhere Stufen schmieden seltenere Ausrüstung.",
+      "effect": "forge",
+      "unlockStage": 8,
+      "maxLevel": 10,
+      "baseCost": [
+        {
+          "id": "gold",
+          "value": 800
+        },
+        {
+          "id": "wood",
+          "value": 400
+        },
+        {
+          "id": "stone",
+          "value": 400
+        }
+      ],
+      "costGrowthPermille": 1500,
+      "slotLevels": [
+        1,
+        5
+      ],
+      "heroBonus": 60
     },
     {
       "id": "huntersHut",

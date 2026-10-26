@@ -71,7 +71,7 @@ namespace Mythwake.Content.Tests
         {
             var ctx = NewPlayer();
             ctx.State.Campaign.HighestCleared = 999;
-            Assert.That(Assert.Throws<RuleViolation>(() => new UpgradeBuilding { BuildingId = "brokenForge" }.Apply(ctx)).Code, Is.EqualTo("building_planned"));
+            Assert.That(Assert.Throws<RuleViolation>(() => new UpgradeBuilding { BuildingId = "huntersHut" }.Apply(ctx)).Code, Is.EqualTo("building_planned"));
         }
 
         [Test]

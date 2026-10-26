@@ -29,7 +29,7 @@ namespace Mythwake.UI
         {
             _currencies.Refresh(Ui.State);
             _grid.Clear();
-            foreach (var owned in Ui.State.Heroes.OrderByDescending(h => UiKit.Power(Ui.Content, h)).ThenBy(h => h.HeroId))
+            foreach (var owned in Ui.State.Heroes.OrderByDescending(h => UiKit.Power(Ui.State, Ui.Content, h)).ThenBy(h => h.HeroId))
             {
                 var id = owned.HeroId;
                 var card = UiKit.HeroCard(Ui.Catalog, Ui.Content.Hero(id), owned).Into(_grid);
@@ -52,6 +52,8 @@ namespace Mythwake.UI
         private Button _starUp;
         private Label _shards;
         private Label _stars;
+        private VisualElement _gear;
+        private Label _setBonus;
 
         public HeroDetailScreen(string heroId) => _heroId = heroId;
 
@@ -100,6 +102,13 @@ namespace Mythwake.UI
             _starUp = UiKit.Btn(Loc.T("hero.starUp"), StarUp, "btn--secondary").Into(buttons);
             _shards = UiKit.Text("", "label--small").Into(progress);
 
+            var gear = UiKit.Box("panel").Into(safe);
+            var gearHead = UiKit.Box("row").Into(gear);
+            UiKit.Text(Loc.T("gear.title"), "title").Into(gearHead);
+            UiKit.Box("spacer").Into(gearHead);
+            _setBonus = UiKit.Text("", "label--good").Into(gearHead);
+            _gear = UiKit.Box("gear-row").Into(gear);
+
             var skills = UiKit.Box("panel").Into(safe);
             UiKit.Text(Loc.T("hero.skills"), "title").Into(skills);
             foreach (var skill in hero.Skills())
@@ -123,7 +132,7 @@ namespace Mythwake.UI
             var cap = Progression.LevelCap(content, owned);
             _level.text = $"{Loc.T("heroes.level", owned.Level)} / {cap}";
             _stars.text = UiKit.Stars(owned.Stars);
-            var stats = TeamBuilder.StatsAt(hero, owned.Level, owned.Stars);
+            var stats = TeamBuilder.StatsOf(Formations.Progress(Ui.State, content, owned));
             _power.text = Loc.T("heroes.power", UiKit.Short(TeamBuilder.Power(stats)));
             _stats.Clear();
             Stat(Loc.T("hero.hp"), stats.Hp);
@@ -139,6 +148,8 @@ namespace Mythwake.UI
             _levelUp.SetEnabled(!atCap && affordable);
             _levelUp5.SetEnabled(owned.Level + 5 <= cap && Progression.LevelCost(content, owned.Level, 5).All(c => Ui.State.Get(c.Id) >= c.Value));
 
+            RefreshGear();
+
             var maxStars = Progression.MaxStars(content, hero.Grade);
             if (owned.Stars >= maxStars)
             {
@@ -152,6 +163,21 @@ namespace Mythwake.UI
                 _shards.text = Loc.T("hero.shards", have, starCost.Value);
                 _starUp.SetEnabled(have >= starCost.Value);
             }
+        }
+
+        private void RefreshGear()
+        {
+            _gear.Clear();
+            foreach (GearSlot slot in System.Enum.GetValues(typeof(GearSlot)))
+            {
+                var worn = Gear.Equipped(Ui.State, _heroId, slot);
+                var tile = worn != null ? GearUi.Tile(Ui.Content, worn) : GearUi.EmptyTile(slot);
+                var s = slot;
+                tile.RegisterCallback<ClickEvent>(_ => GearUi.OpenSlot(Ui, Root, _heroId, s, Refresh));
+                _gear.Add(tile);
+            }
+            var stats = Gear.StatsFor(Ui.State, Ui.Content, _heroId);
+            _setBonus.text = stats.SetBonusActive ? Loc.T("gear.setActive") : "";
         }
 
         private void Stat(string name, long value)

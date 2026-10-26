@@ -20,6 +20,11 @@
       "id": "stone",
       "base": 60,
       "perStage": 6
+    },
+    {
+      "id": "gearMaterials",
+      "base": 3,
+      "perStage": 1
     }
   ]
 }

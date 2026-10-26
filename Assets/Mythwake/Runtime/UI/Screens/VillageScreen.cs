@@ -93,6 +93,8 @@ namespace Mythwake.UI
 
             if (level > 0 && def.SlotLevels.Length > 0)
                 card.Add(Slots(def, level));
+            if (level > 0 && def.Effect == BuildingEffect.Forge)
+                card.Add(Forge());
 
             if (!Village.Unlocked(state, def))
             {
@@ -129,6 +131,13 @@ namespace Mythwake.UI
                     return Loc.T("village.effect.healing", (Village.TotalBonus(Ui.State, Ui.Content, def) / 10f).ToString("0.#"));
                 case BuildingEffect.UnlockSummon:
                     return Loc.T("village.effect.summon");
+                case BuildingEffect.Forge:
+                    var w = Gear.CraftWeights(Ui.State, Ui.Content);
+                    if (w == null)
+                        return null;
+                    var total = (float)w.Sum();
+                    return Loc.T("village.effect.forge", string.Join("  ·  ", w.Select((x, g) => (x, g)).Where(t => t.x > 0)
+                        .Select(t => $"{Loc.T("grade." + UiKit.Lower((Core.Content.Grade)t.g))} {100f * t.x / total:0.#}%")));
                 default:
                     return null;
             }
@@ -200,6 +209,35 @@ namespace Mythwake.UI
                         overlay.RemoveFromHierarchy();
                 }, "btn--secondary").Into(buttons);
             UiKit.Btn(Loc.T("village.close"), () => overlay.RemoveFromHierarchy(), "btn--secondary").Into(buttons);
+        }
+
+        private VisualElement Forge()
+        {
+            var box = UiKit.Box("forge");
+            UiKit.Text(Loc.T("gear.craft"), "subtitle").Into(box);
+            box.Add(GearUi.CostRow(Ui.State, Ui.Content.Gear.CraftCost));
+            var row = UiKit.Box("row").Into(box);
+            row.style.flexWrap = Wrap.Wrap;
+            var affordable = Ui.Content.Gear.CraftCost.All(c => Ui.State.Get(c.Id) >= c.Value);
+            foreach (GearSlot slot in System.Enum.GetValues(typeof(GearSlot)))
+            {
+                var s = slot;
+                var b = UiKit.Btn(GearUi.SlotName(slot), () => Craft(s), "btn--secondary", "btn--small").Into(row);
+                b.SetEnabled(affordable);
+            }
+            return box;
+        }
+
+        private void Craft(GearSlot slot)
+        {
+            if (!Ui.Try(new CraftGear { Slot = slot }, out GearItem item))
+                return;
+            Refresh();
+            var overlay = UiKit.Box("overlay").Into(Root);
+            var popup = UiKit.Box("panel", "popup").Into(overlay);
+            UiKit.Text(Loc.T("gear.crafted"), "title").Into(popup);
+            popup.Add(GearUi.Tile(Ui.Content, item));
+            UiKit.Btn(Loc.T("battle.continue"), () => overlay.RemoveFromHierarchy()).Into(popup);
         }
 
         private void Upgrade(string id)

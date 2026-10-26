@@ -74,8 +74,8 @@ namespace Mythwake.UI
             return card;
         }
 
-        public static long Power(GameContent content, OwnedHero owned) =>
-            TeamBuilder.Power(TeamBuilder.StatsAt(content.Hero(owned.HeroId), owned.Level, owned.Stars));
+        public static long Power(PlayerState state, GameContent content, OwnedHero owned) =>
+            TeamBuilder.Power(TeamBuilder.StatsOf(Formations.Progress(state, content, owned)));
 
         public static VisualElement Amount(string currency, long value)
         {

@@ -1,0 +1,115 @@
+{
+  "grades": [
+    {
+      "weapon": 12,
+      "armor": 120,
+      "boots": 8,
+      "accessory": 15,
+      "maxLevel": 5,
+      "setBonus": 100,
+      "salvage": 5
+    },
+    {
+      "weapon": 20,
+      "armor": 200,
+      "boots": 13,
+      "accessory": 25,
+      "maxLevel": 10,
+      "setBonus": 150,
+      "salvage": 10
+    },
+    {
+      "weapon": 32,
+      "armor": 320,
+      "boots": 21,
+      "accessory": 40,
+      "maxLevel": 15,
+      "setBonus": 200,
+      "salvage": 20
+    },
+    {
+      "weapon": 50,
+      "armor": 500,
+      "boots": 33,
+      "accessory": 60,
+      "maxLevel": 20,
+      "setBonus": 300,
+      "salvage": 40
+    }
+  ],
+  "levelGrowthPermille": 100,
+  "enhanceCostBase": [
+    {
+      "id": "gold",
+      "value": 100
+    },
+    {
+      "id": "gearMaterials",
+      "value": 5
+    }
+  ],
+  "craftCost": [
+    {
+      "id": "gold",
+      "value": 1500
+    },
+    {
+      "id": "gearMaterials",
+      "value": 40
+    },
+    {
+      "id": "wood",
+      "value": 100
+    },
+    {
+      "id": "stone",
+      "value": 100
+    }
+  ],
+  "craftTiers": [
+    {
+      "forgeLevel": 1,
+      "weights": [
+        700,
+        300,
+        0,
+        0
+      ]
+    },
+    {
+      "forgeLevel": 3,
+      "weights": [
+        450,
+        420,
+        130,
+        0
+      ]
+    },
+    {
+      "forgeLevel": 6,
+      "weights": [
+        250,
+        420,
+        280,
+        50
+      ]
+    },
+    {
+      "forgeLevel": 10,
+      "weights": [
+        120,
+        380,
+        380,
+        120
+      ]
+    }
+  ],
+  "materialsBase": 10,
+  "materialsPerStage": 2,
+  "bossDropWeights": [
+    300,
+    450,
+    220,
+    30
+  ]
+}

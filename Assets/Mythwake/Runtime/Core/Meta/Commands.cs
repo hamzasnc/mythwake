@@ -134,6 +134,8 @@ namespace Mythwake.Core.Meta
         public BattleOutcome Outcome;
         public int Stage;
         public List<Amount> Rewards = new List<Amount>();
+        /// <summary>Gear dropped by a boss stage.</summary>
+        public List<GearItem> Gear = new List<GearItem>();
         public int UnlockedSlots;
     }
 
@@ -163,7 +165,12 @@ namespace Mythwake.Core.Meta
             if (battle.Outcome == BattleOutcome.Victory)
             {
                 result.Rewards.AddRange(Campaign.ClearRewards(ctx.Content, pending.Stage));
+                var g = ctx.Content.Gear;
+                if (g.MaterialsBase + g.MaterialsPerStage > 0)
+                    result.Rewards.Add(new Amount(Mythwake.Core.Meta.Gear.Materials, g.MaterialsBase + g.MaterialsPerStage * pending.Stage));
                 ctx.Grant(result.Rewards);
+                if (Campaign.IsBoss(ctx.Content, pending.Stage) && g.Grades.Count > 0)
+                    result.Gear.Add(Mythwake.Core.Meta.Gear.Drop(ctx));
                 state.Campaign.HighestCleared = pending.Stage;
             }
             result.UnlockedSlots = Formations.UnlockedSlots(state, ctx.Content);

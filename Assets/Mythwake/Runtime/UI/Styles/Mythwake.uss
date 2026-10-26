@@ -39,6 +39,7 @@
 /* ---------------------------------------------------------------- top bar */
 
 .currency-bar {
+    flex-shrink: 0;
     flex-direction: row;
     justify-content: flex-end;
     flex-wrap: wrap;
@@ -146,6 +147,7 @@
 /* ---------------------------------------------------------------- bottom navigation */
 
 .nav {
+    flex-shrink: 0;
     flex-direction: row;
     background-color: rgba(10, 13, 24, 0.97);
     border-top-width: 2px;
@@ -629,3 +631,41 @@
 }
 
 .cost__value { color: var(--text); }
+
+/* ---------------------------------------------------------------- gear */
+
+.gear-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.gear {
+    width: 23%;
+    min-width: 200px;
+    min-height: 150px;
+    margin: 6px 0;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border-width: 3px;
+    border-color: var(--common);
+    background-color: #1d2540;
+}
+
+.hero-grid .gear { width: 220px; margin: 6px; }
+
+.gear--empty {
+    border-color: rgba(255, 255, 255, 0.15);
+    align-items: center;
+    justify-content: center;
+}
+
+.gear__slot { font-size: 24px; -unity-font-style: bold; }
+.gear__level { font-size: 24px; color: var(--gold); -unity-font-style: bold; }
+.gear__stat { font-size: 24px; margin-top: 8px; white-space: normal; }
+.gear__set { font-size: 18px; color: var(--muted); margin-top: 6px; white-space: normal; }
+.gear__owner { font-size: 18px; color: var(--gold); margin-top: 4px; }
+
+.forge { margin-top: 12px; }
+
+.icon--gearMaterials { background-color: #7fb0c9; }
