@@ -150,5 +150,20 @@
   "error.forge_locked": "Baue zuerst die Broken Forge wieder auf.",
   "error.gear_max_level": "Maximale Verstärkung erreicht.",
   "error.gear_equipped": "Lege die Ausrüstung zuerst ab.",
-  "error.not_enough:gearMaterials": "Nicht genug Gear materials."
+  "error.not_enough:gearMaterials": "Nicht genug Gear materials.",
+  "quests.title": "Aufgaben",
+  "quests.current": "Aktuelle Aufgabe",
+  "quests.tab.main": "Haupt",
+  "quests.tab.daily": "Täglich",
+  "quests.tab.weekly": "Wöchentlich",
+  "quests.main": "Hauptaufgabe {0}",
+  "quests.mainDone": "Alle Hauptaufgaben erledigt",
+  "quests.claim": "Abholen",
+  "quests.activity": "Aktivität",
+  "quests.points": "Aktivität",
+  "quests.reset": "Neu in {0}",
+  "error.quest_not_done": "Aufgabe noch nicht erfüllt.",
+  "error.quest_claimed": "Bereits abgeholt.",
+  "error.chest_locked": "Noch nicht genug Aktivität.",
+  "error.chest_claimed": "Bereits abgeholt."
 }

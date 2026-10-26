@@ -1,0 +1,611 @@
+{
+  "resetHourUtc": 4,
+  "daily": [
+    {
+      "id": "afk",
+      "text": "Sammle Idle-Belohnungen ein",
+      "stat": "afkClaimed",
+      "target": 2,
+      "points": 20
+    },
+    {
+      "id": "battles",
+      "text": "Gewinne Kämpfe",
+      "stat": "battleWon",
+      "target": 3,
+      "points": 20
+    },
+    {
+      "id": "levels",
+      "text": "Steigere Helden-Level",
+      "stat": "heroLevelUps",
+      "target": 3,
+      "points": 20
+    },
+    {
+      "id": "village",
+      "text": "Sammle das Lager in Dawnhollow ein",
+      "stat": "villageCollected",
+      "target": 1,
+      "points": 20
+    },
+    {
+      "id": "enhance",
+      "text": "Verstärke Ausrüstung",
+      "stat": "gearEnhanced",
+      "target": 1,
+      "points": 20
+    },
+    {
+      "id": "summon",
+      "text": "Beschwöre einen Helden",
+      "stat": "summons",
+      "target": 1,
+      "points": 20
+    }
+  ],
+  "dailyChests": [
+    {
+      "points": 20,
+      "rewards": [
+        {
+          "id": "gold",
+          "value": 2000
+        }
+      ]
+    },
+    {
+      "points": 40,
+      "rewards": [
+        {
+          "id": "heroExp",
+          "value": 1500
+        }
+      ]
+    },
+    {
+      "points": 60,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "points": 80,
+      "rewards": [
+        {
+          "id": "gearMaterials",
+          "value": 30
+        }
+      ]
+    },
+    {
+      "points": 100,
+      "rewards": [
+        {
+          "id": "summonScroll",
+          "value": 1
+        }
+      ]
+    }
+  ],
+  "weekly": [
+    {
+      "id": "dailies",
+      "text": "Erfülle alle täglichen Aufgaben an 5 Tagen",
+      "stat": "dailyCompleted",
+      "target": 5,
+      "points": 40
+    },
+    {
+      "id": "battles",
+      "text": "Gewinne Kämpfe",
+      "stat": "battleWon",
+      "target": 30,
+      "points": 20
+    },
+    {
+      "id": "afk",
+      "text": "Sammle Idle-Belohnungen ein",
+      "stat": "afkClaimed",
+      "target": 10,
+      "points": 20
+    },
+    {
+      "id": "summon",
+      "text": "Beschwöre Helden",
+      "stat": "summons",
+      "target": 10,
+      "points": 20
+    }
+  ],
+  "weeklyChests": [
+    {
+      "points": 40,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 200
+        }
+      ]
+    },
+    {
+      "points": 70,
+      "rewards": [
+        {
+          "id": "summonScroll",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "points": 100,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 300
+        },
+        {
+          "id": "summonScroll",
+          "value": 5
+        }
+      ]
+    }
+  ],
+  "main": [
+    {
+      "id": "first_fight",
+      "text": "Schließe Stage 1-1 ab",
+      "condition": "stageCleared",
+      "value": 1,
+      "rewards": [
+        {
+          "id": "gold",
+          "value": 500
+        }
+      ]
+    },
+    {
+      "id": "stage_3",
+      "text": "Schließe Stage 1-3 ab",
+      "condition": "stageCleared",
+      "value": 3,
+      "rewards": [
+        {
+          "id": "heroExp",
+          "value": 600
+        }
+      ]
+    },
+    {
+      "id": "hero_lv5",
+      "text": "Bringe einen Helden auf Lv. 5",
+      "condition": "heroLevel",
+      "value": 5,
+      "rewards": [
+        {
+          "id": "gold",
+          "value": 800
+        }
+      ]
+    },
+    {
+      "id": "summoning_gate",
+      "text": "Baue das Summoning Gate in Dawnhollow wieder auf",
+      "condition": "buildingLevel",
+      "value": 1,
+      "rewards": [
+        {
+          "id": "summonScroll",
+          "value": 2
+        }
+      ],
+      "target": "summoningGate"
+    },
+    {
+      "id": "heroes_6",
+      "text": "Besitze 6 Helden",
+      "condition": "heroesOwned",
+      "value": 6,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 100
+        }
+      ]
+    },
+    {
+      "id": "stage_5",
+      "text": "Schließe Stage 1-5 ab",
+      "condition": "stageCleared",
+      "value": 5,
+      "rewards": [
+        {
+          "id": "heroExp",
+          "value": 1500
+        }
+      ]
+    },
+    {
+      "id": "healers_tent",
+      "text": "Baue das Healer's Tent wieder auf",
+      "condition": "buildingLevel",
+      "value": 1,
+      "rewards": [
+        {
+          "id": "wood",
+          "value": 500
+        },
+        {
+          "id": "stone",
+          "value": 500
+        }
+      ],
+      "target": "healersTent"
+    },
+    {
+      "id": "camp_3",
+      "text": "Baue das Survivor Camp auf Lv. 3 aus",
+      "condition": "buildingLevel",
+      "value": 3,
+      "rewards": [
+        {
+          "id": "gold",
+          "value": 2000
+        }
+      ],
+      "target": "survivorCamp"
+    },
+    {
+      "id": "broken_forge",
+      "text": "Baue die Broken Forge wieder auf",
+      "condition": "buildingLevel",
+      "value": 1,
+      "rewards": [
+        {
+          "id": "gearMaterials",
+          "value": 80
+        }
+      ],
+      "target": "brokenForge"
+    },
+    {
+      "id": "full_gear",
+      "text": "Rüste einen Helden in allen vier Slots aus",
+      "condition": "fullyEquipped",
+      "value": 1,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 150
+        }
+      ]
+    },
+    {
+      "id": "chapter1_boss",
+      "text": "Besiege den Boss von Stage 1-10",
+      "condition": "stageCleared",
+      "value": 10,
+      "rewards": [
+        {
+          "id": "summonScroll",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "hero_lv20",
+      "text": "Bringe einen Helden auf Lv. 20",
+      "condition": "heroLevel",
+      "value": 20,
+      "rewards": [
+        {
+          "id": "heroExp",
+          "value": 4000
+        }
+      ]
+    },
+    {
+      "id": "chapter1",
+      "text": "Schließe Kapitel 1 ab",
+      "condition": "stageCleared",
+      "value": 20,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 300
+        }
+      ]
+    },
+    {
+      "id": "stage_30",
+      "text": "Schließe Stage 30 ab",
+      "condition": "stageCleared",
+      "value": 30,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 130
+        },
+        {
+          "id": "summonScroll",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "stage_40",
+      "text": "Schließe Stage 40 ab",
+      "condition": "stageCleared",
+      "value": 40,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 140
+        },
+        {
+          "id": "summonScroll",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "stage_50",
+      "text": "Schließe Stage 50 ab",
+      "condition": "stageCleared",
+      "value": 50,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 150
+        },
+        {
+          "id": "summonScroll",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "stage_60",
+      "text": "Schließe Stage 60 ab",
+      "condition": "stageCleared",
+      "value": 60,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 160
+        },
+        {
+          "id": "summonScroll",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "stage_70",
+      "text": "Schließe Stage 70 ab",
+      "condition": "stageCleared",
+      "value": 70,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 170
+        },
+        {
+          "id": "summonScroll",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "stage_80",
+      "text": "Schließe Stage 80 ab",
+      "condition": "stageCleared",
+      "value": 80,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 180
+        },
+        {
+          "id": "summonScroll",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "stage_90",
+      "text": "Schließe Stage 90 ab",
+      "condition": "stageCleared",
+      "value": 90,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 190
+        },
+        {
+          "id": "summonScroll",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "stage_100",
+      "text": "Schließe Stage 100 ab",
+      "condition": "stageCleared",
+      "value": 100,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 200
+        },
+        {
+          "id": "summonScroll",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "stage_110",
+      "text": "Schließe Stage 110 ab",
+      "condition": "stageCleared",
+      "value": 110,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 210
+        },
+        {
+          "id": "summonScroll",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "stage_120",
+      "text": "Schließe Stage 120 ab",
+      "condition": "stageCleared",
+      "value": 120,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 220
+        },
+        {
+          "id": "summonScroll",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "stage_130",
+      "text": "Schließe Stage 130 ab",
+      "condition": "stageCleared",
+      "value": 130,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 230
+        },
+        {
+          "id": "summonScroll",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "stage_140",
+      "text": "Schließe Stage 140 ab",
+      "condition": "stageCleared",
+      "value": 140,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 240
+        },
+        {
+          "id": "summonScroll",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "stage_150",
+      "text": "Schließe Stage 150 ab",
+      "condition": "stageCleared",
+      "value": 150,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 250
+        },
+        {
+          "id": "summonScroll",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "stage_160",
+      "text": "Schließe Stage 160 ab",
+      "condition": "stageCleared",
+      "value": 160,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 260
+        },
+        {
+          "id": "summonScroll",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "stage_170",
+      "text": "Schließe Stage 170 ab",
+      "condition": "stageCleared",
+      "value": 170,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 270
+        },
+        {
+          "id": "summonScroll",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "stage_180",
+      "text": "Schließe Stage 180 ab",
+      "condition": "stageCleared",
+      "value": 180,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 280
+        },
+        {
+          "id": "summonScroll",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "stage_190",
+      "text": "Schließe Stage 190 ab",
+      "condition": "stageCleared",
+      "value": 190,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 290
+        },
+        {
+          "id": "summonScroll",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "stage_200",
+      "text": "Schließe Stage 200 ab",
+      "condition": "stageCleared",
+      "value": 200,
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 300
+        },
+        {
+          "id": "summonScroll",
+          "value": 5
+        }
+      ]
+    }
+  ]
+}

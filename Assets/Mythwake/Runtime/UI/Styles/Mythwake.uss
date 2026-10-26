@@ -669,3 +669,84 @@
 .forge { margin-top: 12px; }
 
 .icon--gearMaterials { background-color: #7fb0c9; }
+
+/* ---------------------------------------------------------------- quests */
+
+.quest-strip {
+    flex-direction: row;
+    align-items: center;
+    padding: 14px 18px;
+}
+
+.quest__title { font-size: 30px; -unity-font-style: bold; white-space: normal; }
+.quest__points { font-size: 30px; color: var(--gold); -unity-font-style: bold; }
+.quest__done { font-size: 44px; color: var(--good); margin: 0 18px; }
+.quest--claimed { opacity: 0.55; }
+
+.badge {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 22px; height: 22px;
+    border-radius: 11px;
+    background-color: var(--bad);
+    border-width: 2px;
+    border-color: white;
+}
+
+.tabs {
+    flex-direction: row;
+    flex-shrink: 0;
+    margin: 10px 0 14px 0;
+}
+
+.tab {
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: var(--panel-light);
+    color: var(--muted);
+    border-width: 2px;
+    border-color: var(--line);
+    font-size: 28px;
+    padding: 12px 0;
+}
+
+.tab--active {
+    background-color: var(--gold);
+    color: #2a1d05;
+}
+
+.chests {
+    justify-content: space-between;
+    margin-top: 6px;
+}
+
+.chest {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin: 0 4px;
+    padding: 8px;
+    border-radius: 14px;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.1);
+    align-items: center;
+}
+
+.chest--ready { border-color: var(--gold); background-color: rgba(232, 194, 106, 0.18); }
+.chest--claimed { opacity: 0.4; }
+.chest__points { font-size: 26px; -unity-font-style: bold; color: var(--gold); }
+.chest__value { font-size: 22px; }
+
+.quest-strip .btn { flex-shrink: 0; }
+.quest-strip .grow { flex-shrink: 1; min-width: 0; }
+
+.pill {
+    flex-shrink: 0;
+    background-color: var(--panel-light);
+    border-radius: 16px;
+    border-width: 2px;
+    border-color: var(--line);
+    padding: 10px 20px;
+    font-size: 26px;
+    -unity-font-style: bold;
+}

@@ -260,6 +260,7 @@ namespace Mythwake.Core.Meta
             var b = Village.Ensure(state, def);
             b.Level = level + 1;
             Village.Ensure(state, def);
+            Quests.Track(ctx, Stat.BuildingUpgraded);
             return b.Level;
         }
     }
@@ -306,6 +307,8 @@ namespace Mythwake.Core.Meta
             list.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
             ctx.Grant(list);
             state.Village.Stored.Clear();
+            if (list.Count > 0)
+                Quests.Track(ctx, Stat.VillageCollected);
             return list;
         }
     }

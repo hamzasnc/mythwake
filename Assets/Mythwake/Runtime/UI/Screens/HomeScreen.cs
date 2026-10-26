@@ -49,6 +49,8 @@ namespace Mythwake.UI
         private Label _afkTime;
         private VisualElement _afkFill;
         private Button _claim;
+        private Label _mainQuest;
+        private VisualElement _questBadge;
         private IVisualElementScheduledItem _ticker;
 
         protected override void Build(VisualElement root)
@@ -56,6 +58,21 @@ namespace Mythwake.UI
             // no solid background: the team idles on the battlefield behind the home screen
             _currencies = new CurrencyBar(Ids.Gold, Ids.HeroExp, Ids.Gems, Ids.SummonScroll).Into(root);
             var safe = UiKit.Box("safe").Into(root);
+            var quest = UiKit.Box("panel", "quest-strip").Into(safe);
+            quest.RegisterCallback<ClickEvent>(_ => Ui.Router.Push(new QuestScreen()));
+            var questText = UiKit.Box("grow").Into(quest);
+            UiKit.Text(Loc.T("quests.current"), "label--small").Into(questText);
+            _mainQuest = UiKit.Text("", "quest__title").Into(questText);
+            // the whole strip is the button; the pill only labels it
+            var questButton = UiKit.Text(Loc.T("quests.title") + "  ›", "pill").Into(quest);
+            questButton.style.width = 210;
+            questButton.style.height = 56;
+            questButton.style.flexShrink = 0;
+            questButton.style.flexShrink = 0;
+            questButton.style.unityTextAlign = UnityEngine.TextAnchor.MiddleCenter;
+            questText.style.flexBasis = 0;
+            questText.style.flexShrink = 1;
+            _questBadge = UiKit.Box("badge").Into(questButton);
             UiKit.Box("spacer").Into(safe);
 
             var card = UiKit.Box("panel", "stage-card").Into(safe);
@@ -123,6 +140,9 @@ namespace Mythwake.UI
                 _fight.SetEnabled(true);
             }
             RefreshAfk();
+            var main = Quests.CurrentMain(state, content);
+            _mainQuest.text = main == null ? Loc.T("quests.mainDone") : main.Text;
+            _questBadge.style.display = Quests.AnyClaimable(state, content, Ui.Authority.NowMs) ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void RefreshAfk()

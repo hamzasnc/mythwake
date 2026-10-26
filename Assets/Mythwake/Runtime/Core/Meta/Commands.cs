@@ -169,6 +169,8 @@ namespace Mythwake.Core.Meta
                 if (g.MaterialsBase + g.MaterialsPerStage > 0)
                     result.Rewards.Add(new Amount(Mythwake.Core.Meta.Gear.Materials, g.MaterialsBase + g.MaterialsPerStage * pending.Stage));
                 ctx.Grant(result.Rewards);
+                Quests.Track(ctx, Stat.BattleWon);
+                Quests.Track(ctx, Stat.StageCleared);
                 if (Campaign.IsBoss(ctx.Content, pending.Stage) && g.Grades.Count > 0)
                     result.Gear.Add(Mythwake.Core.Meta.Gear.Drop(ctx));
                 state.Campaign.HighestCleared = pending.Stage;
@@ -187,6 +189,8 @@ namespace Mythwake.Core.Meta
             var rewards = Afk.Pending(ctx.State, ctx.Content, ctx.NowMs);
             ctx.Grant(rewards);
             ctx.State.Afk.LastClaimMs = ctx.NowMs;
+            if (rewards.Count > 0)
+                Quests.Track(ctx, Stat.AfkClaimed);
             return rewards;
         }
     }
@@ -209,6 +213,7 @@ namespace Mythwake.Core.Meta
             ctx.RequireFunds(costs);
             ctx.Pay(costs);
             hero.Level += Levels;
+            Quests.Track(ctx, Stat.HeroLevelUps, Levels);
             return hero.Level;
         }
     }
@@ -263,7 +268,9 @@ namespace Mythwake.Core.Meta
             var cost = new[] { new Amount(unit.Id, total) };
             ctx.RequireFunds(cost);
             ctx.Pay(cost);
-            return Summoning.Pull(ctx, banner, Count);
+            var results = Summoning.Pull(ctx, banner, Count);
+            Quests.Track(ctx, Stat.Summons, Count);
+            return results;
         }
     }
 }

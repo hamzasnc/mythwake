@@ -54,6 +54,9 @@ namespace Mythwake.Core.Meta
         public SummonState Summon = new SummonState();
         public VillageState Village = new VillageState();
         public List<GearItem> Gear = new List<GearItem>();
+        /// <summary>Lifetime counters (see <see cref="Stat"/>), measured by quests.</summary>
+        public Dictionary<string, long> Stats = new Dictionary<string, long>();
+        public QuestState Quests = new QuestState();
         public int GearUidCounter;
         public PendingBattle Battle;
         /// <summary>Server-side randomness (summons, battle seeds): seed + how many draws were made.</summary>

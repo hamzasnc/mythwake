@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using Mythwake.Core.Content;
 using Mythwake.Core.Meta;
@@ -8,7 +9,7 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
@@ -22,7 +23,8 @@ namespace Mythwake.Content
                 Banners = ContentJson.Parse<List<BannerDefinition>>(readData("banners")),
                 Start = ContentJson.Parse<StartingState>(readData("start")),
                 Village = ContentJson.Parse<VillageConfig>(readData("buildings")),
-                Gear = ContentJson.Parse<GearConfig>(readData("gear"))
+                Gear = ContentJson.Parse<GearConfig>(readData("gear")),
+                Quests = ContentJson.Parse<QuestConfig>(readData("quests"))
             };
             foreach (var json in heroJsons)
             {
@@ -40,6 +42,19 @@ namespace Mythwake.Content
                 foreach (var id in b.Pool)
                     if (!content.Heroes.ContainsKey(id))
                         errors.Add($"banners.json/{b.Id}: unknown hero '{id}'");
+            var buildingIds = new HashSet<string>();
+            foreach (var b in content.Village.Buildings)
+                if (!buildingIds.Add(b.Id))
+                    errors.Add($"buildings.json: duplicate building '{b.Id}'");
+            foreach (var q in content.Quests.Main)
+                if (q.Condition == MainCondition.BuildingLevel && !buildingIds.Contains(q.Target ?? ""))
+                    errors.Add($"quests.json/{q.Id}: unknown building '{q.Target}'");
+            var stats = new HashSet<string>();
+            foreach (var f in typeof(Stat).GetFields())
+                stats.Add((string)f.GetValue(null));
+            foreach (var t in content.Quests.Daily.Concat(content.Quests.Weekly))
+                if (!stats.Contains(t.Stat))
+                    errors.Add($"quests.json/{t.Id}: unknown stat '{t.Stat}'");
             if (errors.Count > 0)
                 throw new ContentException(string.Join("\n", errors));
             return content;

@@ -12,9 +12,10 @@ Ground-up rebuild on branch `rebuild/v2` (orphan branch, no v1 code). As of 26.1
 | Meta rules (`Mythwake.Core.Meta`) | New player, formation (slots unlock by stage), campaign (200 stages, boss every 10th, server-checkable re-simulation), idle rewards (12 h cap), level up, star up with Hero Shards, Normal Summon with pity (Legendary at 50, Epic+ every 10), duplicates → shards |
 | Village (`Mythwake.Core.Meta.Village`) | Dawnhollow rebuild: Survivor Camp produces Gold/Wood/Stone (12 h storage), Summoning Gate unlocks summoning (stage 2), Healer's Tent adds healing in battle (stage 5); hero slots per building (Village Style, hero bonus by grade/stars/level, heroes keep fighting); the other doc buildings are shown as ruins for later updates |
 | Gear (`Mythwake.Core.Meta.Gear`) | Weapon / Armor / Boots / Accessory in four grades, enhancing with Gear materials + Gold, set bonus for four pieces of one set (sets = the doc's factions, bonus scales with the lowest grade), Broken Forge crafting (forge level raises the grade odds, forge heroes improve them), boss stages drop gear, Gear materials from stages and idle, salvage |
-| Client | Home (idle chest, next stage, team idling), Dawnhollow (buildings, storage, hero slots, forge crafting), Formation, Battle (Spine playback, hit-stop, camera shake, cut-ins, damage numbers, ultimate portraits, Auto/x2), Result (with gear drops), Heroes, Hero detail (with equipment, enhancing), Summon |
+| Quests (`Mythwake.Core.Meta.Quests`) | Concept: `docs/systems/QUESTS.md`. Daily (6 tasks, activity chests at 20–100) and weekly quests with fixed reset (04:00 UTC, Monday), measured by lifetime stats; main/village quest chain (31 steps) through every unlock up to stage 200 |
+| Client | Home (idle chest, next stage, team idling, current quest with badge), Quests (Main/Daily/Weekly), Dawnhollow (buildings, storage, hero slots, forge crafting), Formation, Battle (Spine playback, hit-stop, camera shake, cut-ins, damage numbers, ultimate portraits, Auto/x2), Result (with gear drops), Heroes, Hero detail (with equipment, enhancing), Summon |
 | Save | Local JSON, atomic write + backup, version field for migrations |
-| Tests | 63 tests (rules, every hero's kit, content validity, economy pacing), green in dotnet and in Unity |
+| Tests | 72 tests (rules, every hero's kit, content validity, economy pacing), green in dotnet and in Unity |
 
 ## How to run
 

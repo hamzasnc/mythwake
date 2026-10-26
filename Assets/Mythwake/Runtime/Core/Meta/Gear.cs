@@ -256,6 +256,7 @@ namespace Mythwake.Core.Meta
             ctx.RequireFunds(cost);
             ctx.Pay(cost);
             item.Level++;
+            Quests.Track(ctx, Stat.GearEnhanced);
             return item.Level;
         }
     }
@@ -296,6 +297,7 @@ namespace Mythwake.Core.Meta
             var rng = ctx.NextRng();
             var grade = Gear.Roll(rng, weights);
             var set = (Faction)rng.Range(6);
+            Quests.Track(ctx, Stat.GearCrafted);
             return Gear.Create(ctx.State, Slot, grade, set);
         }
     }

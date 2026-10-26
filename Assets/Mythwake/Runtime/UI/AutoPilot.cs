@@ -55,6 +55,19 @@ namespace Mythwake.UI
             }
             yield return Shot("result", 0.6f);
 
+            ui.Router.Reset(new HomeScreen());
+            yield return Shot("home_quest", 0.6f);
+            ui.Router.Push(new QuestScreen());
+            yield return Shot("quests_main", 0.6f);
+            ui.Authority.Execute(new ClaimMainQuest());
+            var tabs = ui.Router.Current.Root.Query<Button>(className: "tab").ToList();
+            using (var click = NavigationSubmitEvent.GetPooled())
+            {
+                click.target = tabs[1];
+                tabs[1].SendEvent(click);
+            }
+            yield return Shot("quests_daily", 0.6f);
+
             // second stage straight through the rules (no playback), then rebuild the Summoning Gate
             ui.Authority.Execute(new BeginStageBattle());
             ui.Authority.Execute(new FinishStageBattle());
