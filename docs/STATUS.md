@@ -65,20 +65,26 @@ Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscr
 
 ## Open points
 
-- **Questions for the team (doc gaps, not invented):** region names after
-  Dawnhollow and Mossveil Woods (chapters 3–10 show "Kapitel N"); enemy art for the doc's enemy groups
-  (done for 11 monsters + 9 bosses as masters; normal monster names are descriptive working names and need the team's OK; Spine rigs for monsters are next).
+**Need the team's input (doc gaps or undecided ideas, not invented):**
+- Region names after Dawnhollow and Mossveil Woods (chapters 3–10 show "Kapitel N"); normal monster names are
+  descriptive working names and need an OK.
+- Event Portals (events, event currency, Event Shop, Event Summon, event heroes): which events and what content.
+- Faction reputation (doc: unlocks heroes, quests, shops, cosmetics): how players earn it.
+- Gear playstyle variants (doc: shield → tank, wand → mage; kits list variants A/B/C): needs per-hero skill design
+  and extra animations.
+- Hero Rank (doc lists it; the combat design proposes rank-gated Special II / Passive): adopt or not.
+- Guild Castle, multiple villages, cosmetics, monetization (cash shop, battle pass "Guild Contract", VIP / premium
+  idle time): the doc leaves these to later decisions.
+- Guardian Awakening for more heroes than the doc's four examples, and new artwork for awakened forms.
+- One Transcendent per formation (combat design proposal) – not enforced yet.
+
+**Technical / art follow-ups:**
 - Kit mechanics approximated in data are listed per hero in `designNotes` (slot swap, summons, copying skills,
-  boss sleep immunity, rank-gated skills). 
-- Balance is a first pass: base stats per role/grade, economy numbers in `Content/Data/*.json`. The pacing test
-  (`EarlyGamePacing`) keeps chapter 1 at a few hours of idle time.
-- Missing art: cut-ins for 12 heroes, Spellblade skill/ultimate animations, battle/home backgrounds (placeholder
-  gradient now), UI icons and fonts, sound.
-- Village buildings upgrade instantly (no build timers yet). Broken Forge, Hunter's Hut, Watchtower, Fragment Shrine,
-  Guardian Shrine and Portal Chamber are ruins until their systems exist.
-- Gear: no item art yet (tiles show slot, stat and set), playstyle-changing gear variants from the doc (shield → tank,
-  wand → mage) need extra animations per hero and are not built; refining is not built.
-- Hunts use heroes as stand-in monsters; "Gather Fragment Dust" waits for Fragments.
-- Server: Arena Shop, guilds, chat and Guardian Raids are next; production needs TLS, platform logins (Google/Apple) and Redis for rate limits with several API instances.
-- Next systems from the doc (open questions first): Fragments (Fragment Shrine), relics, Hunt Board,
-  dungeons, Arena, guilds, server.
+  boss sleep immunity, rank-gated skills).
+- Balance is a first pass everywhere (`Content/Data/*.json`, numbers in `docs/systems/*.md`); pacing tests pin the
+  early game.
+- Missing art: cut-ins for 12 heroes, Spine rigs for the 25 monsters (they move as cut-out sprites), battle
+  backgrounds, item icons for gear, UI icons and fonts, sound.
+- Village buildings upgrade instantly (no build timers).
+- Server for production: TLS, platform logins (Google/Apple), Redis rate limits for several API instances, guild
+  moderation (kick, reports), cross-guild ranking.
