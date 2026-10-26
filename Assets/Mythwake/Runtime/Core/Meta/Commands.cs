@@ -249,6 +249,30 @@ namespace Mythwake.Core.Meta
         }
     }
 
+    /// <summary>Raises one skill of a hero by a level (Upgrade stones + Gold); the cap grows with the hero's stars.</summary>
+    public sealed class UpgradeSkill : ICommand<int>
+    {
+        public string HeroId;
+        public SkillSlot Slot;
+
+        public int Apply(CommandContext ctx)
+        {
+            var hero = ctx.State.FindHero(HeroId);
+            ctx.Require(hero != null, "hero_not_owned", HeroId);
+            ctx.Require(System.Array.IndexOf(Skills.Upgradable, Slot) >= 0 && Skills.Skill(ctx.Content.Hero(HeroId), Slot) != null, "no_skill");
+            var level = Skills.Level(hero, Slot);
+            ctx.Require(level < Skills.MaxLevel(ctx.Content, hero), "skill_max_level");
+            var cost = Skills.Cost(ctx.Content, level);
+            ctx.RequireFunds(cost);
+            ctx.Pay(cost);
+            if (hero.SkillLevels == null)
+                hero.SkillLevels = new[] { 1, 1, 1, 1, 1 };
+            hero.SkillLevels[(int)Slot] = level + 1;
+            Quests.Track(ctx, Stat.SkillUpgraded);
+            return level + 1;
+        }
+    }
+
     /// <summary>Sets who a hero attacks first (doc: "target mages first, target the weakest units first").</summary>
     public sealed class SetTargetPriority : ICommand<bool>
     {

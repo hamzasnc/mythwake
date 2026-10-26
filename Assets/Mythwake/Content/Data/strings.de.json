@@ -402,5 +402,12 @@
   "target.backRow": "Hintere Reihe",
   "target.supports": "Heiler & Supports",
   "target.dps": "Schadensdealer",
-  "error.bad_priority": "Unbekannte Zielwahl."
+  "error.bad_priority": "Unbekannte Zielwahl.",
+  "currency.upgradeStones": "Upgrade stones",
+  "skill.level": "Lv. {0}/{1}",
+  "skill.upgrade": "Verbessern",
+  "skill.bonus": "+{0} % Wirkung",
+  "skill.max": "Max. Stufe für diese Sterne",
+  "error.no_skill": "Diese Fähigkeit kann nicht verbessert werden.",
+  "error.skill_max_level": "Mehr Sterne erhöhen die maximale Fähigkeitsstufe."
 }

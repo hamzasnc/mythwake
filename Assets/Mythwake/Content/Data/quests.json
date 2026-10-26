@@ -69,6 +69,10 @@
         {
           "id": "gems",
           "value": 50
+        },
+        {
+          "id": "upgradeStones",
+          "value": 10
         }
       ]
     },

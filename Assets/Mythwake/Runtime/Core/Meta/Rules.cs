@@ -91,7 +91,7 @@ namespace Mythwake.Core.Meta
                 Hero = hero, Level = owned.Level, Stars = owned.Stars,
                 Flat = new Stats { Hp = gear.Hp, Attack = gear.Attack, Defense = gear.Defense, CritRate = gear.CritRate },
                 AttackPermille = fragments.AttackPermille + awakened, HpPermille = fragments.HpPermille + awakened, Passives = passives,
-                Priority = owned.Target
+                Priority = owned.Target, SkillPower = Skills.Power(content, owned)
             };
         }
     }
@@ -305,6 +305,46 @@ namespace Mythwake.Core.Meta
             }
             return list;
         }
+    }
+
+    /// <summary>Skill upgrades (doc: Hero Upgrade System – Skills; docs/systems/SKILLS.md).</summary>
+    public static class Skills
+    {
+        public static readonly SkillSlot[] Upgradable = { SkillSlot.Normal, SkillSlot.Special, SkillSlot.Special2, SkillSlot.Ultimate };
+
+        public static int Level(OwnedHero hero, SkillSlot slot) =>
+            hero.SkillLevels != null && (int)slot < hero.SkillLevels.Length ? System.Math.Max(1, hero.SkillLevels[(int)slot]) : 1;
+
+        /// <summary>Highest skill level for the hero's stars.</summary>
+        public static int MaxLevel(GameContent content, OwnedHero hero) =>
+            System.Math.Min(content.Skills.MaxLevel, content.Skills.MaxLevelBase + hero.Stars);
+
+        public static List<Amount> Cost(GameContent content, int level)
+        {
+            var list = new List<Amount>();
+            foreach (var c in content.Skills.CostBase)
+                list.Add(new Amount(c.Id, c.Id == Ids.Gold ? c.Value * level * level : c.Value * level));
+            return list;
+        }
+
+        public static int[] Power(GameContent content, OwnedHero hero)
+        {
+            if (hero.SkillLevels == null)
+                return null;
+            var power = new int[5];
+            foreach (var slot in Upgradable)
+                power[(int)slot] = content.Skills.PowerPerLevelPermille * (Level(hero, slot) - 1);
+            return power;
+        }
+
+        public static SkillDefinition Skill(HeroDefinition hero, SkillSlot slot) => slot switch
+        {
+            SkillSlot.Normal => hero.Normal,
+            SkillSlot.Special => hero.Special,
+            SkillSlot.Special2 => hero.Special2,
+            SkillSlot.Ultimate => hero.Ultimate,
+            _ => null
+        };
     }
 
     public static class Progression

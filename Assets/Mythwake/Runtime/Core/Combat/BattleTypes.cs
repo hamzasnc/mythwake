@@ -23,8 +23,10 @@ namespace Mythwake.Core.Combat
         public string Variant;
         /// <summary>HP at battle start (0 = full), e.g. carried over between defense waves.</summary>
         public long StartHp;
-        public TargetPriority Priority;
         public int StartEnergy;
+        public TargetPriority Priority;
+        /// <summary>Extra power per skill slot from skill upgrades, permille (index = SkillSlot; null = none).</summary>
+        public int[] SkillPower;
         /// <summary>Passive components from outside the hero's kit (Fragments), on top of its own passive.</summary>
         public List<PassiveDefinition> Passives = new List<PassiveDefinition>();
     }

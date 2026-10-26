@@ -21,6 +21,11 @@
       "id": "gold",
       "base": 3000,
       "perStage": 400
+    },
+    {
+      "id": "upgradeStones",
+      "base": 5,
+      "perStage": 1
     }
   ],
   "milestoneEvery": 10,

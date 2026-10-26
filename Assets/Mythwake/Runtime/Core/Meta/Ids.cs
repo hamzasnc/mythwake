@@ -17,6 +17,8 @@ namespace Mythwake.Core.Meta
         public const string RelicMaterials = "relicMaterials";
         /// <summary>Doc: a key that opens a Shattered Realm for one more entry.</summary>
         public const string RealmKey = "realmKey";
+        /// <summary>Doc: "Upgrade stones" (Trial of Fragments reward), used for skill upgrades.</summary>
+        public const string UpgradeStones = "upgradeStones";
 
         /// <summary>Hero shards are per hero: "shards.&lt;heroId&gt;".</summary>
         public static string Shards(string heroId) => "shards." + heroId;

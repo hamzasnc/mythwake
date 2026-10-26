@@ -46,6 +46,17 @@ namespace Mythwake.Core.Meta
         public List<AfkRate> Rates = new List<AfkRate>();
     }
 
+    public sealed class SkillConfig
+    {
+        /// <summary>Each level above 1 adds this permille to the skill's damage, heals and shields.</summary>
+        public int PowerPerLevelPermille = 80;
+        /// <summary>Max level = base + stars, capped at MaxLevel.</summary>
+        public int MaxLevelBase = 3;
+        public int MaxLevel = 10;
+        /// <summary>Cost from level L: Gold × L², everything else × L.</summary>
+        public List<Amount> CostBase = new List<Amount>();
+    }
+
     public sealed class AfkRate
     {
         public string Id;
@@ -161,6 +172,7 @@ namespace Mythwake.Core.Meta
         public BossFragmentConfig BossFragments = new BossFragmentConfig();
         public DefenseConfig Defense = new DefenseConfig();
         public ShopConfig Shops = new ShopConfig();
+        public SkillConfig Skills = new SkillConfig();
 
         /// <summary>A hero or monster by id (battle setups and team snapshots can contain both).</summary>
         public HeroDefinition Hero(string id) =>

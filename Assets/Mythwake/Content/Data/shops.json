@@ -57,6 +57,23 @@
           "limit": 3
         },
         {
+          "id": "upgradeStones",
+          "name": "Upgrade stones",
+          "price": [
+            {
+              "id": "gold",
+              "value": 15000
+            }
+          ],
+          "gives": [
+            {
+              "id": "upgradeStones",
+              "value": 20
+            }
+          ],
+          "limit": 3
+        },
+        {
           "id": "summonScroll",
           "name": "Summon Scroll",
           "price": [

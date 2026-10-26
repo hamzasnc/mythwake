@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Mythwake.Core.Content;
+using Mythwake.Core.Math;
 
 namespace Mythwake.Core.Combat
 {
@@ -36,6 +37,11 @@ namespace Mythwake.Core.Combat
         public readonly List<PassiveDefinition> Passives = new List<PassiveDefinition>();
         public Stats Stats;
         public TargetPriority Priority;
+        public int[] SkillPower;
+
+        /// <summary>Multiplier for damage, heals and shields of a skill slot (skill upgrades), permille.</summary>
+        public int Power(SkillSlot slot) =>
+            Permille.One + (SkillPower != null && (int)slot < SkillPower.Length ? SkillPower[(int)slot] : 0);
         public long MaxHp;
         public long Hp;
         public long Shield;

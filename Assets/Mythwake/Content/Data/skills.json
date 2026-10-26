@@ -1,0 +1,15 @@
+{
+  "powerPerLevelPermille": 80,
+  "maxLevelBase": 3,
+  "maxLevel": 10,
+  "costBase": [
+    {
+      "id": "upgradeStones",
+      "value": 5
+    },
+    {
+      "id": "gold",
+      "value": 2000
+    }
+  ]
+}

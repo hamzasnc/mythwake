@@ -102,7 +102,7 @@ namespace Mythwake.Core.Combat
             {
                 var u = new BattleUnit
                 {
-                    Index = _units.Count, Side = side, Slot = s.Slot, Hero = s.Hero, Stats = s.Stats.Clone(), Priority = s.Priority
+                    Index = _units.Count, Side = side, Slot = s.Slot, Hero = s.Hero, Stats = s.Stats.Clone(), Priority = s.Priority, SkillPower = s.SkillPower
                 };
                 u.MaxHp = u.Hp = System.Math.Max(1, u.Stats.Hp);
                 if (s.StartHp > 0)
@@ -449,10 +449,11 @@ namespace Mythwake.Core.Combat
                     DealDamage(caster, target, skill, e, portion, hitIndex, last);
                     break;
                 case EffectKind.Heal:
-                    Heal(caster, target, Base(caster, target, e) * portion / Permille.One, slot);
+                    Heal(caster, target, Base(caster, target, e) * portion / Permille.One * caster.Power(slot) / Permille.One, slot);
                     break;
                 case EffectKind.Shield:
-                    GrantShield(caster, target, Base(caster, target, e) * (Permille.One + caster.Stats.HealPower) / Permille.One, e.ShieldDurationMs, slot);
+                    GrantShield(caster, target, Base(caster, target, e) * (Permille.One + caster.Stats.HealPower) / Permille.One * caster.Power(slot) / Permille.One,
+                        e.ShieldDurationMs, slot);
                     break;
                 case EffectKind.ApplyStatus:
                     TryApplyStatus(caster, target, e.Status, slot);
@@ -563,7 +564,7 @@ namespace Mythwake.Core.Combat
                 return;
             }
 
-            var amount = Base(caster, target, e) * portion / Permille.One;
+            var amount = Base(caster, target, e) * portion / Permille.One * caster.Power(slot) / Permille.One;
             var bonus = 0;
             if (e.ExecuteBonus > 0 && Below(target, e.ExecuteBelowHp))
             {

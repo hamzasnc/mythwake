@@ -12,6 +12,8 @@ namespace Mythwake.Core.Meta
         public bool Awakened;
         /// <summary>Who this hero attacks first (doc: target priorities).</summary>
         public Combat.TargetPriority Target;
+        /// <summary>Skill level per SkillSlot (null = all level 1).</summary>
+        public int[] SkillLevels;
     }
 
     public sealed class CampaignState

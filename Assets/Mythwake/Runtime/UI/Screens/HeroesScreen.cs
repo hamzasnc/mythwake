@@ -57,6 +57,7 @@ namespace Mythwake.UI
         private VisualElement _fragments;
         private VisualElement _awakening;
         private VisualElement _targets;
+        private VisualElement _skills;
 
         public HeroDetailScreen(string heroId) => _heroId = heroId;
 
@@ -125,13 +126,7 @@ namespace Mythwake.UI
 
             var skills = UiKit.Box("panel").Into(safe);
             UiKit.Text(Loc.T("hero.skills"), "title").Into(skills);
-            foreach (var skill in hero.Skills())
-            {
-                var row = UiKit.Box("skill").Into(skills);
-                UiKit.Text(Loc.T("slot." + UiKit.Lower(skill.Slot)), "skill__slot").Into(row);
-                UiKit.Text(skill.Name, "skill__name").Into(row);
-                UiKit.Text(skill.Description, "skill__text").Into(row);
-            }
+            _skills = UiKit.Box().Into(skills);
         }
 
         public override void Refresh()
@@ -166,6 +161,7 @@ namespace Mythwake.UI
             FragmentUi.Slots(Ui, _fragments, Root, _heroId, Refresh);
             RefreshAwakening(owned);
             RefreshTargets(owned);
+            RefreshSkills(owned);
             _fragments.Add(RelicUi.Slot(Ui, Root, _heroId, Refresh));
 
             var maxStars = Progression.MaxStars(content, owned);
@@ -180,6 +176,48 @@ namespace Mythwake.UI
                 var have = Ui.State.Get(starCost.Id);
                 _shards.text = Loc.T("hero.shards", have, starCost.Value);
                 _starUp.SetEnabled(have >= starCost.Value);
+            }
+        }
+
+        /// <summary>Skills with their level; Normal, Special, Special II and Ultimate can be upgraded (docs/systems/SKILLS.md).</summary>
+        private void RefreshSkills(OwnedHero owned)
+        {
+            _skills.Clear();
+            var content = Ui.Content;
+            var hero = content.Hero(_heroId);
+            var max = Skills.MaxLevel(content, owned);
+            foreach (var skill in hero.Skills())
+            {
+                var row = UiKit.Box("skill").Into(_skills);
+                var head = UiKit.Box("row").Into(row);
+                UiKit.Text(Loc.T("slot." + UiKit.Lower(skill.Slot)), "skill__slot").Into(head);
+                UiKit.Box("spacer").Into(head);
+                var upgradable = System.Array.IndexOf(Skills.Upgradable, skill.Slot) >= 0;
+                var level = Skills.Level(owned, skill.Slot);
+                if (upgradable)
+                    UiKit.Text(Loc.T("skill.level", level, max), "gear__level").Into(head);
+                UiKit.Text(skill.Name, "skill__name").Into(row);
+                UiKit.Text(skill.Description, "skill__text").Into(row);
+                if (!upgradable)
+                    continue;
+                var line = UiKit.Box("row").Into(row);
+                if (level > 1)
+                    UiKit.Text(Loc.T("skill.bonus", content.Skills.PowerPerLevelPermille * (level - 1) / 10), "label--good").Into(line);
+                UiKit.Box("spacer").Into(line);
+                if (level >= max)
+                {
+                    UiKit.Text(Loc.T("skill.max"), "label--small").Into(line);
+                    continue;
+                }
+                var cost = Skills.Cost(content, level);
+                line.Add(GearUi.CostRow(Ui.State, cost));
+                var slot = skill.Slot;
+                var button = UiKit.Btn(Loc.T("skill.upgrade"), () =>
+                {
+                    if (Ui.Try(new UpgradeSkill { HeroId = _heroId, Slot = slot }, out int _))
+                        Refresh();
+                }, "btn--secondary", "btn--small").Into(line);
+                button.SetEnabled(cost.All(c => Ui.State.Get(c.Id) >= c.Value));
             }
         }
 

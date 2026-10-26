@@ -154,6 +154,10 @@
     {
       "id": "summonScroll",
       "value": 1
+    },
+    {
+      "id": "upgradeStones",
+      "value": 10
     }
   ],
   "slotUnlocks": [
