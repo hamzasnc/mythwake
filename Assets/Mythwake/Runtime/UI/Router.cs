@@ -97,6 +97,15 @@ namespace Mythwake.UI
             Push(screen);
         }
 
+        /// <summary>Back button: previous screen if there is one, else <paramref name="fallback"/> (e.g. after a battle reset the stack).</summary>
+        public void Back(System.Func<UiScreen> fallback)
+        {
+            if (_stack.Count > 1)
+                Pop();
+            else
+                Reset(fallback());
+        }
+
         public void Pop()
         {
             if (_stack.Count <= 1)

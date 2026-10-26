@@ -83,6 +83,19 @@ namespace Mythwake.Editor
                     monsters.Add(entry);
                 }
             catalog.monsters = monsters.ToArray();
+
+            var town = ContentRoot + "/Town";
+            catalog.town = new ContentCatalog.TownAssets
+            {
+                layout = AssetDatabase.LoadAssetAtPath<TextAsset>(town + "/town.json"),
+                background = AssetDatabase.LoadAssetAtPath<Texture2D>(town + "/town_background.png"),
+                worldMap = AssetDatabase.LoadAssetAtPath<Texture2D>(town + "/world_map.png"),
+                ruin = AssetDatabase.LoadAssetAtPath<Texture2D>(town + "/ruin.png"),
+                buildings = Directory.Exists(town + "/Buildings")
+                    ? Directory.GetFiles(town + "/Buildings", "*.png").OrderBy(p => p, System.StringComparer.Ordinal)
+                        .Select(p => AssetDatabase.LoadAssetAtPath<Texture2D>(p.Replace('\\', '/'))).Where(t => t != null).ToArray()
+                    : new Texture2D[0]
+            };
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
 
@@ -90,7 +103,8 @@ namespace Mythwake.Editor
             var content = catalog.LoadContent();
             Debug.Log($"[Content] catalog rebuilt: {catalog.dataFiles.Length} data files, {content.Heroes.Count} heroes, " +
                       $"{content.Monsters.Count} monsters ({monsters.Count(m => m.sprite != null || m.skeleton != null)} with art), " +
-                      $"{heroes.Count(h => h.portrait != null)} portraits, {heroes.Count(h => h.cutIn != null)} cut-ins");
+                      $"{heroes.Count(h => h.portrait != null)} portraits, {heroes.Count(h => h.cutIn != null)} cut-ins, " +
+                      $"{catalog.town.buildings.Length} building images");
         }
     }
 }

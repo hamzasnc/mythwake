@@ -18,7 +18,8 @@ Ground-up rebuild on branch `rebuild/v2` (orphan branch, no v1 code). As of 26.1
 | Arena | Concept: `docs/systems/ARENA.md`. Defense snapshots, opponents by rating, server-simulated fights replayed in the client, Elo, ranks from the doc, daily fights, rewards, 14-day seasons with rank rewards, ranking, 30 training bots |
 | Monsters & bosses | Roster from the doc's Enemy System and Boss System (`Tools/ContentPipeline/monsters/roster.json`): 11 monsters in 6 groups, the 9 named bosses; kits as data (`Content/Monsters`); chapters mix monsters with corrupted heroes and end with their boss; art via Codex masters, drawn as cut-out sprites with procedural motion until rigged |
 | Dungeons | Concept: `docs/systems/DUNGEONS.md`. Portal Chamber (stage 20): Material and Gear Dungeon, 100 difficulty levels, doc bosses + escort, special rules (enemy regeneration, halved healing), 3 attempts per day, first-clear rewards, sweep |
-| Client | Home (idle chest, next stage, team idling, current quest with badge), Quests (Main/Daily/Weekly), Adventure hub, Hunt Board + Hunt Shop, Dungeons, Arena (online), Dawnhollow (buildings, storage, hero slots, forge crafting), Formation, Battle (Spine playback, hit-stop, camera shake, cut-ins, damage numbers, ultimate portraits, Auto/x2), Result (with gear drops), Heroes, Hero detail (with equipment, enhancing), Summon |
+| Hubs (AFK Arena / 7DS Idle style, `docs/DECISIONS.md`) | Bottom bar Dawnhollow · Abenteuer · Kampagne (centre) · Helden · Beschwörung. Dawnhollow is a painted town: the doc's 9 buildings on their plots (ruins until rebuilt, name plates, red dots when an upgrade is affordable, collect bubble over the Survivor Camp), tap opens the building panel. Abenteuer is a painted world map with pins for Kampagne, Dawnhollow, Hunt Board, Dungeons, Arena and the locked Shattered Realms / Guardian Raids. Pictures can be dragged where they overflow; positions in `Content/Town/town.json`, art via `Tools/ContentPipeline/town` |
+| Client | Home (idle chest, next stage, team idling, current quest with badge), Quests (Main/Daily/Weekly), world map, Hunt Board + Hunt Shop, Dungeons, Arena (online), Dawnhollow (buildings, storage, hero slots, forge crafting), Formation, Battle (Spine playback, hit-stop, camera shake, cut-ins, damage numbers, ultimate portraits, Auto/x2), Result (with gear drops), Heroes, Hero detail (with equipment, enhancing), Summon |
 | Save | Online: on the server (PostgreSQL). Offline/dev: local JSON, atomic write + backup, version field for migrations |
 | Tests | 103 C# tests (dotnet + Unity), Go unit tests, end-to-end tests against the running server, online autopilot; (rules, every hero's kit, content validity, economy pacing), green in dotnet and in Unity |
 
@@ -50,10 +51,11 @@ Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscr
 1. Kit design → `Tools/ContentPipeline/migrate_kits.py` (done once; the `.hero.json` files are now the source of truth).
 2. Cut-in art → `Tools/ContentPipeline/import_cutins.py <art package roots>`.
 3. Unity imports the Spine export; **Mythwake ▸ Render Hero Portraits**, then **Rebuild Content Catalog**.
+4. Town and world map art → `Tools/ContentPipeline/town/make_town_jobs.py` (Codex jobs), then `import_town.py <jobs dir>`.
 
 ## Open points
 
-- **Questions for the team (doc gaps, not invented):** names of Fragment Aspects 6 and 7; region names after
+- **Questions for the team (doc gaps, not invented):** region names after
   Dawnhollow and Mossveil Woods (chapters 3–10 show "Kapitel N"); enemy art for the doc's enemy groups
   (done for 11 monsters + 9 bosses as masters; normal monster names are descriptive working names and need the team's OK; Spine rigs for monsters are next).
 - Kit mechanics approximated in data are listed per hero in `designNotes` (slot swap, summons, copying skills,

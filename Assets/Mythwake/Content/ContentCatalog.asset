@@ -448,3 +448,18 @@ MonoBehaviour:
     full: {fileID: 2800000, guid: 726065cb64856f04c82dc87e5025f76c, type: 3}
     cutIn: {fileID: 0}
     sprite: {fileID: 21300000, guid: 726065cb64856f04c82dc87e5025f76c, type: 3}
+  town:
+    layout: {fileID: 4900000, guid: c72e886f75332f3459b5f4b8729538c0, type: 3}
+    background: {fileID: 2800000, guid: e0e957f4b013a7f498d592a4c66d56d5, type: 3}
+    worldMap: {fileID: 2800000, guid: 5c3cb6386666c7b449b32017a2e14322, type: 3}
+    ruin: {fileID: 2800000, guid: 7ba4085e213d39a4397631d74b40b9fc, type: 3}
+    buildings:
+    - {fileID: 2800000, guid: 6665b4680d2878e4d94ee14efe48634e, type: 3}
+    - {fileID: 2800000, guid: f287708d604f5cb41a86bbad6765de28, type: 3}
+    - {fileID: 2800000, guid: 4535f36f034b7284cbc1e25baf095d0a, type: 3}
+    - {fileID: 2800000, guid: d90690bdb49982a4a904925c93aaa06b, type: 3}
+    - {fileID: 2800000, guid: 5e62ac3c47e10f14781b2ab030bb7485, type: 3}
+    - {fileID: 2800000, guid: a205283088dbe734c911f15ca78a7f30, type: 3}
+    - {fileID: 2800000, guid: 9b7c448de9ff1954585ed404f01d0b91, type: 3}
+    - {fileID: 2800000, guid: 4580ead5bceaa2a4887a08faa9d0040d, type: 3}
+    - {fileID: 2800000, guid: 76885946ee00a084eab6bfa082c25a5a, type: 3}

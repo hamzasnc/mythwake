@@ -1,0 +1,22 @@
+{
+  "buildings": [
+    { "id": "survivorCamp",   "x": 0.500, "y": 0.490, "size": 0.27 },
+    { "id": "summoningGate",  "x": 0.205, "y": 0.355, "size": 0.25 },
+    { "id": "healersTent",    "x": 0.780, "y": 0.355, "size": 0.26 },
+    { "id": "brokenForge",    "x": 0.205, "y": 0.490, "size": 0.27 },
+    { "id": "huntersHut",     "x": 0.780, "y": 0.490, "size": 0.26 },
+    { "id": "watchtower",     "x": 0.500, "y": 0.355, "size": 0.20 },
+    { "id": "fragmentShrine", "x": 0.200, "y": 0.635, "size": 0.26 },
+    { "id": "guardianShrine", "x": 0.800, "y": 0.635, "size": 0.25 },
+    { "id": "portalChamber",  "x": 0.500, "y": 0.635, "size": 0.27 }
+  ],
+  "world": [
+    { "id": "campaign", "x": 0.250, "y": 0.430, "size": 0.16 },
+    { "id": "town",     "x": 0.400, "y": 0.700, "size": 0.16 },
+    { "id": "hunts",    "x": 0.790, "y": 0.420, "size": 0.16 },
+    { "id": "dungeons", "x": 0.200, "y": 0.190, "size": 0.16 },
+    { "id": "arena",    "x": 0.780, "y": 0.200, "size": 0.16 },
+    { "id": "realms",   "x": 0.500, "y": 0.240, "size": 0.16 },
+    { "id": "raids",    "x": 0.800, "y": 0.700, "size": 0.16 }
+  ]
+}

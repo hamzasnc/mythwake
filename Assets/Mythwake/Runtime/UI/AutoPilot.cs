@@ -85,13 +85,18 @@ namespace Mythwake.UI
             ui.Authority.Execute(new UpgradeBuilding { BuildingId = "summoningGate" });
             ui.Authority.Execute(new AssignVillageHero { BuildingId = "survivorCamp", Slot = 0, HeroId = ui.State.Heroes[0].HeroId });
             yield return Shot("village_built", 0.8f);
+            if (ui.Router.Current is VillageScreen camp)
+                camp.OpenBuilding("survivorCamp");
+            yield return Shot("village_camp", 0.6f);
 
             // jump ahead on the throwaway save to reach the Broken Forge, craft and equip a piece
             ui.State.Campaign.HighestCleared = 10;
             foreach (var id in new[] { Ids.Gold, Ids.Wood, Ids.Stone, Ids.GearMaterials })
                 ui.State.Add(id, 100_000);
             ui.Authority.Execute(new UpgradeBuilding { BuildingId = "brokenForge" });
-            ui.Router.Reset(new VillageScreen());
+            var forgeScreen = new VillageScreen();
+            ui.Router.Reset(forgeScreen);
+            forgeScreen.OpenBuilding("brokenForge");
             yield return Shot("forge", 0.8f);
             var hero = ui.State.Formation.First(h => !string.IsNullOrEmpty(h));
             foreach (GearSlot slot in System.Enum.GetValues(typeof(GearSlot)))

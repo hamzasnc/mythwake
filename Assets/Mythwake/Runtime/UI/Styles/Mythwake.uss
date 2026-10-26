@@ -794,3 +794,162 @@
     background-color: rgba(0, 0, 0, 0.25);
     border-radius: 16px;
 }
+
+/* ---------------------------------------------------------------- hub maps (town, world map) */
+
+.map {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    overflow: hidden;
+}
+.map__canvas {
+    position: absolute;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+/* until the painted pictures exist */
+.map__canvas--town { background-color: #2f4a2b; }
+.map__canvas--world { background-color: #1e3247; }
+
+.map-title {
+    align-self: center;
+    font-size: 40px;
+    -unity-font-style: bold;
+    color: var(--gold);
+    background-color: rgba(10, 13, 24, 0.78);
+    border-radius: 24px;
+    border-width: 2px;
+    border-color: var(--line);
+    padding: 6px 36px;
+}
+
+.popup-layer {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+.town-building {
+    align-items: center;
+    justify-content: flex-end;
+}
+.town-building__art {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    -unity-background-scale-mode: scale-to-fit;
+    transition-duration: 0.1s;
+    transition-property: scale;
+}
+.town-building:active .town-building__art { scale: 0.96 0.96; }
+.town-building--ruin .town-building__art { -unity-background-image-tint-color: rgb(170, 160, 150); }
+.town-building__placeholder {
+    position: absolute;
+    left: 8%; top: 25%; right: 8%; bottom: 0;
+    background-color: rgba(120, 90, 60, 0.85);
+    border-radius: 24px;
+    border-width: 3px;
+    border-color: rgba(40, 25, 10, 0.9);
+}
+.town-building--ruin .town-building__placeholder { background-color: rgba(60, 55, 50, 0.85); }
+.town-building__plate {
+    align-items: center;
+    background-color: rgba(10, 13, 24, 0.86);
+    border-radius: 14px;
+    border-width: 2px;
+    border-color: var(--line);
+    padding: 2px 16px 4px 16px;
+    margin-bottom: -18px;
+}
+.town-building--ruin .town-building__plate { border-color: rgba(255, 255, 255, 0.18); }
+.town-building__name {
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: var(--gold);
+    white-space: nowrap;
+}
+.town-building--ruin .town-building__name { color: var(--muted); }
+.town-building__level { font-size: 20px; color: var(--text); white-space: nowrap; }
+
+.town-bubble {
+    background-color: rgba(255, 246, 220, 0.96);
+    color: #3a2a0a;
+    border-radius: 26px;
+    border-width: 3px;
+    border-color: var(--gold-dark);
+    font-size: 22px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    white-space: normal;
+    padding: 4px 10px;
+}
+
+.building-popup {
+    width: 92%;
+    max-width: 980px;
+    max-height: 82%;
+}
+.building-popup .building { margin-bottom: 0; }
+.building-popup__close {
+    position: absolute;
+    right: 8px; top: 8px;
+    width: 64px; height: 64px;
+    padding: 0;
+    font-size: 38px;
+}
+.building__art {
+    height: 340px;
+    -unity-background-scale-mode: scale-to-fit;
+    margin-bottom: 8px;
+}
+
+.map-pin { align-items: center; }
+.map-pin__frame {
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    border-width: 5px;
+    border-color: var(--gold);
+    background-color: rgba(10, 13, 24, 0.82);
+    overflow: hidden;
+    transition-duration: 0.1s;
+    transition-property: scale;
+}
+.map-pin:active .map-pin__frame { scale: 0.95 0.95; }
+.map-pin__art {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    -unity-background-scale-mode: scale-and-crop;
+}
+.map-pin--locked .map-pin__frame { border-color: #5b5544; }
+.map-pin--locked .map-pin__art { -unity-background-image-tint-color: rgb(90, 90, 100); }
+.map-pin__under {
+    position: absolute;
+    left: -60%; right: -60%; top: 86%;
+    align-items: center;
+}
+.map-pin__plate {
+    align-items: center;
+    background-color: rgba(10, 13, 24, 0.88);
+    border-radius: 14px;
+    border-width: 2px;
+    border-color: var(--line);
+    padding: 2px 16px 4px 16px;
+}
+.map-pin__name { font-size: 26px; -unity-font-style: bold; color: var(--gold); white-space: nowrap; }
+.map-pin--locked .map-pin__name { color: var(--muted); }
+.map-pin__hint { font-size: 18px; color: var(--muted); white-space: normal; -unity-text-align: middle-center; max-width: 300px; }
+
+/* centre campaign button, raised like AFK Arena */
+.nav { align-items: flex-end; }
+.nav__item { font-size: 24px; }
+.nav__item--main {
+    flex-grow: 1.3;
+    height: 128px;
+    margin-top: -46px;
+    border-radius: 64px;
+    border-width: 4px;
+    border-color: var(--gold);
+    background-color: #2a2312;
+    color: var(--gold);
+    font-size: 27px;
+    -unity-font-style: bold;
+}
+.nav__item--main.nav__item--active { background-color: var(--gold-dark); color: white; }

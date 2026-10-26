@@ -6,35 +6,6 @@ using UnityEngine.UIElements;
 
 namespace Mythwake.UI
 {
-    public enum Tab { Campaign, Village, Heroes, Summon }
-
-    /// <summary>Bottom navigation shared by the main screens.</summary>
-    public static class MainNav
-    {
-        public static VisualElement Build(UiContext ui, Tab active)
-        {
-            var nav = UiKit.Box("nav");
-            Item(nav, ui, Tab.Campaign, "nav.campaign", active, () => new HomeScreen());
-            Item(nav, ui, Tab.Village, "nav.village", active, () => new VillageScreen());
-            Item(nav, ui, Tab.Heroes, "nav.heroes", active, () => new HeroesScreen());
-            Item(nav, ui, Tab.Summon, "nav.summon", active, () => new SummonScreen());
-            return nav;
-        }
-
-        private static void Item(VisualElement nav, UiContext ui, Tab tab, string key, Tab active, System.Func<UiScreen> make)
-        {
-            var b = new Button(() =>
-            {
-                if (tab != active)
-                    ui.Router.Reset(make());
-            }) { text = Loc.T(key) };
-            b.AddToClassList("nav__item");
-            if (tab == active)
-                b.AddToClassList("nav__item--active");
-            nav.Add(b);
-        }
-    }
-
     /// <summary>Campaign hub: next stage, idle reward chest, currencies.</summary>
     public sealed class HomeScreen : UiScreen
     {
@@ -68,22 +39,10 @@ namespace Mythwake.UI
             questButton.style.width = 210;
             questButton.style.height = 56;
             questButton.style.flexShrink = 0;
-            questButton.style.flexShrink = 0;
             questButton.style.unityTextAlign = UnityEngine.TextAnchor.MiddleCenter;
             questText.style.flexBasis = 0;
             questText.style.flexShrink = 1;
             _questBadge = UiKit.Box("badge").Into(questButton);
-            var arena = UiKit.Box("panel", "quest-strip").Into(safe);
-            arena.RegisterCallback<ClickEvent>(_ => Ui.Router.Reset(new AdventureScreen()));
-            var arenaText = UiKit.Box("grow").Into(arena);
-            arenaText.style.flexBasis = 0;
-            UiKit.Text(Loc.T("adventure.title"), "quest__title").Into(arenaText);
-            UiKit.Text(Loc.T("adventure.teaser"), "label--small").Into(arenaText);
-            var arenaPill = UiKit.Text(Loc.T("arena.open") + "  ›", "pill").Into(arena);
-            arenaPill.style.width = 210;
-            arenaPill.style.height = 56;
-            arenaPill.style.flexShrink = 0;
-            arenaPill.style.unityTextAlign = UnityEngine.TextAnchor.MiddleCenter;
             UiKit.Box("spacer").Into(safe);
 
             var card = UiKit.Box("panel", "stage-card").Into(safe);

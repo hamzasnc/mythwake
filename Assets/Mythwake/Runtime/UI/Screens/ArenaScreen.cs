@@ -27,7 +27,7 @@ namespace Mythwake.UI
             _currencies = new CurrencyBar(Ids.ArenaCoins, Ids.Gold, Ids.Gems).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
-            UiKit.Btn("‹", () => Ui.Router.Reset(new HomeScreen()), "btn--secondary", "btn--small").Into(head);
+            UiKit.Btn("‹", () => Ui.Router.Back(() => new AdventureScreen()), "btn--secondary", "btn--small").Into(head);
             UiKit.Text("Arena", "title").Into(head);
             _tabs = UiKit.Box("tabs").Into(safe);
             var scroll = new ScrollView(ScrollViewMode.Vertical).Into(safe);

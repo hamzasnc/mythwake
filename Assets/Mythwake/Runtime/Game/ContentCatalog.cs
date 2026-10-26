@@ -26,12 +26,28 @@ namespace Mythwake.Game
             public Sprite sprite;
         }
 
+        /// <summary>Hub art and hotspot positions (Content/Town). Presentation only, not part of the content version.</summary>
+        [System.Serializable]
+        public sealed class TownAssets
+        {
+            public TextAsset layout;
+            public Texture2D background;
+            public Texture2D worldMap;
+            /// <summary>Stand-in for every building that is not rebuilt yet.</summary>
+            public Texture2D ruin;
+            public Texture2D[] buildings = new Texture2D[0];
+
+            public Texture2D Building(string id) => buildings.FirstOrDefault(b => b != null && b.name == id);
+        }
+
         public TextAsset[] dataFiles = new TextAsset[0];
         public TextAsset[] strings = new TextAsset[0];
         public HeroAssets[] heroes = new HeroAssets[0];
         public HeroAssets[] monsters = new HeroAssets[0];
+        public TownAssets town = new TownAssets();
 
         private Dictionary<string, HeroAssets> _byId;
+        private TownLayout _layout;
 
         public GameContent LoadContent()
         {
@@ -58,11 +74,40 @@ namespace Mythwake.Game
             return Mythwake.Content.ContentVersion.Compute(files);
         }
 
+        public TownLayout Layout()
+        {
+            if (_layout == null)
+                _layout = town?.layout != null ? JsonUtility.FromJson<TownLayout>(town.layout.text) : new TownLayout();
+            return _layout;
+        }
+
         public HeroAssets Hero(string id)
         {
             if (_byId == null)
                 _byId = heroes.Concat(monsters).ToDictionary(h => h.id);
             return _byId.TryGetValue(id, out var h) ? h : null;
         }
+    }
+
+    /// <summary>Where things sit on the hub pictures, as fractions of the picture (0..1, origin top left).</summary>
+    [System.Serializable]
+    public sealed class TownLayout
+    {
+        /// <summary>Buildings of Dawnhollow: x/y is the ground point under the building, size its width.</summary>
+        public Spot[] buildings = new Spot[0];
+        /// <summary>Pins on the world map: x/y is the pin centre.</summary>
+        public Spot[] world = new Spot[0];
+
+        public Spot Building(string id) => buildings.FirstOrDefault(s => s.id == id);
+        public Spot Pin(string id) => world.FirstOrDefault(s => s.id == id);
+    }
+
+    [System.Serializable]
+    public sealed class Spot
+    {
+        public string id;
+        public float x;
+        public float y;
+        public float size = 0.3f;
     }
 }

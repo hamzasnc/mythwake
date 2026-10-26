@@ -59,7 +59,7 @@ variance = 95 … 105 %
 ### Fragment Aspects
 
 Ravak → Gorath → Somnara → Veloria → Envyra → Ravak (each beats the next). Advantage: +25 % damage, +15 % accuracy.
-Disadvantage: −15 % damage. The doc names seven Aspects but only these five; the other two are open (ask the team).
+Disadvantage: −15 % damage. The doc mentions seven Aspects; the team decided to stay at these five (docs/DECISIONS.md).
 
 ## Targeting
 

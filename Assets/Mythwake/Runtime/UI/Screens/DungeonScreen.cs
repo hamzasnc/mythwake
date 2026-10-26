@@ -21,7 +21,7 @@ namespace Mythwake.UI
             _currencies = new CurrencyBar(Ids.Gold, Ids.HeroExp, Ids.GearMaterials).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
-            UiKit.Btn("‹", () => Ui.Router.Reset(new AdventureScreen()), "btn--secondary", "btn--small").Into(head);
+            UiKit.Btn("‹", () => Ui.Router.Back(() => new AdventureScreen()), "btn--secondary", "btn--small").Into(head);
             UiKit.Text(Loc.T("dungeon.title"), "title").Into(head);
             var scroll = new ScrollView(ScrollViewMode.Vertical).Into(safe);
             scroll.style.flexGrow = 1;
@@ -158,47 +158,5 @@ namespace Mythwake.UI
         }
 
         public UiScreen After() => new DungeonScreen();
-    }
-
-    /// <summary>All modes outside the campaign in one place (like a world map): Hunt Board, Dungeons, Arena, later more.</summary>
-    public sealed class AdventureScreen : UiScreen
-    {
-        protected override void Build(VisualElement root)
-        {
-            root.AddToClassList("screen--solid");
-            var safe = UiKit.Box("safe").Into(root);
-            var head = UiKit.Box("row").Into(safe);
-            UiKit.Btn("‹", () => Ui.Router.Reset(new HomeScreen()), "btn--secondary", "btn--small").Into(head);
-            UiKit.Text(Loc.T("adventure.title"), "title").Into(head);
-            var scroll = new ScrollView(ScrollViewMode.Vertical).Into(safe);
-            scroll.style.flexGrow = 1;
-            var list = UiKit.Box().Into(scroll);
-
-            Mode(list, "Hunt Board", Loc.T("adventure.hunts"), Hunts.HutLevel(Ui.State, Ui.Content) > 0, Loc.T("adventure.needs", "Hunter's Hut"),
-                () => Ui.Router.Push(new HuntScreen()), "hollowtusk_alpha");
-            Mode(list, Loc.T("dungeon.title"), Loc.T("adventure.dungeons"), Dungeons.PortalLevel(Ui.State, Ui.Content) > 0,
-                Loc.T("adventure.needs", "Portal Chamber"), () => Ui.Router.Push(new DungeonScreen()), "obsidian_vault_sentinel");
-            Mode(list, "Arena", Loc.T("arena.teaser"), Ui.State.Campaign.HighestCleared >= Ui.Content.Arena.UnlockStage,
-                Loc.T("arena.locked", Ui.Content.Arena.UnlockStage), () => Ui.Router.Reset(new ArenaScreen()), "dragon_echo_of_the_sky");
-            Mode(list, "Shattered Realms", Loc.T("adventure.realms"), false, Loc.T("village.planned"), null, "fragment_devourer");
-            Mode(list, "Guardian Raids", Loc.T("adventure.raids"), false, Loc.T("village.planned"), null, "corrupted_guardian_of_the_deep");
-            root.Add(MainNav.Build(Ui, Tab.Campaign));
-        }
-
-        private void Mode(VisualElement list, string name, string text, bool open, string lockedText, System.Action go, string artId)
-        {
-            var card = UiKit.Box("panel", "mode").Into(list);
-            card.EnableInClassList("building--planned", !open);
-            var art = UiKit.Box("mode__art").Into(card);
-            var assets = Ui.Catalog.Hero(artId);
-            var image = assets?.full != null ? assets.full : assets?.portrait;
-            if (image != null)
-                art.style.backgroundImage = new StyleBackground(image);
-            var texts = UiKit.Box("grow").Into(card);
-            UiKit.Text(name, "dungeon__name").Into(texts);
-            UiKit.Text(open ? text : lockedText, "skill__text").Into(texts);
-            if (open && go != null)
-                card.RegisterCallback<ClickEvent>(_ => go());
-        }
     }
 }
