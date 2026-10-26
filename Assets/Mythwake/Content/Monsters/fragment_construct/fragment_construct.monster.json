@@ -1,0 +1,96 @@
+{
+  "id": "fragment_construct",
+  "name": "Fragment Construct",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "envyra",
+  "role": "tank",
+  "row": "front",
+  "grade": "rare",
+  "group": "fragmentConstruct",
+  "boss": false,
+  "sizePermille": 1000,
+  "body": "humanoid",
+  "spineId": "fragment_construct",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1445,
+    "attack": 60,
+    "defense": 76,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "fragment_construct.normal",
+    "name": "Steinfaust",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "fragment_construct.special",
+    "name": "Kernpuls",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 10000
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1100
+      },
+      {
+        "kind": "shield",
+        "multiplier": 250,
+        "shieldDurationMs": 6000,
+        "target": "self",
+        "scaling": "casterMaxHp"
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "fragment_construct.passive",
+    "name": "Instabiler Kern",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageReduction",
+        "value": 150
+      }
+    ]
+  }
+}

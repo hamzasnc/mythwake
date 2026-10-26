@@ -139,6 +139,12 @@ namespace Mythwake.Core.Content
         public SkillDefinition Ultimate;
         /// <summary>Spine skeleton id (folder under Content/Heroes). Not called "skeleton": spine-unity sniffs that key in .json files.</summary>
         public string SpineId;
+        /// <summary>Monsters only: enemy group (doc: Enemy System). None for playable heroes.</summary>
+        public EnemyGroup Group;
+        /// <summary>Monsters only: a named boss (doc: Boss System).</summary>
+        public bool Boss;
+        /// <summary>Visual size on the battlefield, permille (bosses are drawn larger).</summary>
+        public int SizePermille = 1000;
         /// <summary>Design-only notes (where the data approximates a kit mechanic the rules do not model yet). Never shown in game.</summary>
         public List<string> DesignNotes = new List<string>();
 

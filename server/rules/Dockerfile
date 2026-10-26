@@ -11,6 +11,7 @@ WORKDIR /app
 COPY --from=build /out .
 COPY Assets/Mythwake/Content/Data /content/Data
 COPY Assets/Mythwake/Content/Heroes /content/Heroes
+COPY Assets/Mythwake/Content/Monsters /content/Monsters
 ENV MYTHWAKE_CONTENT=/content MYTHWAKE_RULES_ADDR=http://0.0.0.0:5081
 EXPOSE 5081
 ENTRYPOINT ["dotnet", "Mythwake.Rules.dll"]

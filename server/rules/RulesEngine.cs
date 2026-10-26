@@ -27,7 +27,12 @@ namespace Mythwake.Rules
             var data = Path.Combine(contentDir, "Data");
             var heroFiles = Directory.GetFiles(Path.Combine(contentDir, "Heroes"), "*.hero.json", SearchOption.AllDirectories)
                 .OrderBy(p => p, StringComparer.Ordinal).ToArray();
-            var content = GameContentLoader.Load(name => File.ReadAllText(Path.Combine(data, name + ".json")), heroFiles.Select(File.ReadAllText));
+            var monsterDir = Path.Combine(contentDir, "Monsters");
+            var monsterFiles = Directory.Exists(monsterDir)
+                ? Directory.GetFiles(monsterDir, "*.monster.json", SearchOption.AllDirectories).OrderBy(p => p, StringComparer.Ordinal).ToArray()
+                : new string[0];
+            var content = GameContentLoader.Load(name => File.ReadAllText(Path.Combine(data, name + ".json")),
+                heroFiles.Select(File.ReadAllText), monsterFiles.Select(File.ReadAllText));
             return new RulesEngine(content, ContentVersionOf(contentDir));
         }
 
@@ -36,6 +41,9 @@ namespace Mythwake.Rules
         {
             var files = Directory.GetFiles(Path.Combine(contentDir, "Data"), "*.json")
                 .Concat(Directory.GetFiles(Path.Combine(contentDir, "Heroes"), "*.hero.json", SearchOption.AllDirectories))
+                .Concat(Directory.Exists(Path.Combine(contentDir, "Monsters"))
+                    ? Directory.GetFiles(Path.Combine(contentDir, "Monsters"), "*.monster.json", SearchOption.AllDirectories)
+                    : new string[0])
                 .Select(p => new System.Collections.Generic.KeyValuePair<string, string>(
                     Path.GetRelativePath(contentDir, p).Replace('\\', '/'), File.ReadAllText(p)));
             return Mythwake.Content.ContentVersion.Compute(files);

@@ -1,0 +1,170 @@
+{
+  "id": "crimson_wraith_adept",
+  "name": "Crimson Wraith Adept",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "ravak",
+  "role": "dps",
+  "row": "back",
+  "grade": "rare",
+  "group": "crimsonWraith",
+  "boss": true,
+  "sizePermille": 1350,
+  "body": "humanoid",
+  "spineId": "crimson_wraith_adept",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 2500,
+    "attack": 120,
+    "defense": 60,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "crimson_wraith_adept.normal",
+    "name": "Purpurstrahl",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyBack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1200
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "crimson_wraith_adept.special",
+    "name": "Flammenrune",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1300
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "burn",
+          "durationMs": 4000,
+          "value": 150
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "crimson_wraith_adept.special2",
+    "name": "Wraith-Schleier",
+    "description": "",
+    "slot": "special2",
+    "trigger": {
+      "kind": "selfBelowHp",
+      "hpThresholdPermille": 500,
+      "cooldownMs": 15000,
+      "oncePerBattle": false
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "immune",
+          "durationMs": 2000,
+          "value": 0
+        }
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "damageTakenDown",
+          "durationMs": 6000,
+          "value": 300
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "crimson_wraith_adept.passive",
+    "name": "Halb verwandelt",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageBonus",
+        "value": 300,
+        "belowHp": 500
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "crimson_wraith_adept.ultimate",
+    "name": "Purpurne Feuersbrunst",
+    "description": "",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 5500
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "burn",
+          "durationMs": 5000,
+          "value": 200
+        }
+      }
+    ],
+    "hits": 4,
+    "hitTimesMs": [
+      1300,
+      1420,
+      1540,
+      1660
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

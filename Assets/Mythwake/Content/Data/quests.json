@@ -337,6 +337,19 @@
       ]
     },
     {
+      "id": "portal_chamber",
+      "text": "Baue die Portal Chamber wieder auf",
+      "condition": "buildingLevel",
+      "value": 1,
+      "target": "portalChamber",
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 150
+        }
+      ]
+    },
+    {
       "id": "stage_30",
       "text": "Schließe Stage 30 ab",
       "condition": "stageCleared",

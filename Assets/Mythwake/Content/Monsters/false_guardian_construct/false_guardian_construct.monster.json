@@ -1,0 +1,164 @@
+{
+  "id": "false_guardian_construct",
+  "name": "False Guardian Construct",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "veloria",
+  "role": "dps",
+  "row": "front",
+  "grade": "rare",
+  "group": "fragmentConstruct",
+  "boss": true,
+  "sizePermille": 1350,
+  "body": "huge",
+  "spineId": "false_guardian_construct",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 2500,
+    "attack": 120,
+    "defense": 60,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "false_guardian_construct.normal",
+    "name": "Spiegelschlag",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1200
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "false_guardian_construct.special",
+    "name": "Falscher Segen",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1200
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "charm",
+          "durationMs": 2500,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "false_guardian_construct.special2",
+    "name": "Spiegelschilde",
+    "description": "",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 12000
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 200,
+        "shieldDurationMs": 6000,
+        "scaling": "casterMaxHp"
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "false_guardian_construct.passive",
+    "name": "Trugbild der Heiligkeit",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHitTaken",
+        "chance": 250,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "confuse",
+            "durationMs": 1500,
+            "value": 0
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "false_guardian_construct.ultimate",
+    "name": "Zerbrochene Heiligkeit",
+    "description": "",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 5500
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "confuse",
+          "durationMs": 3000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1300,
+      1420,
+      1540
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

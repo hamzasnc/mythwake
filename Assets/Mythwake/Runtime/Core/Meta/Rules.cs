@@ -138,12 +138,41 @@ namespace Mythwake.Core.Meta
 
             var rng = new Pcg32((ulong)stage * 7919UL, 3);
             var count = EnemyCount(content, stage);
+            var (chapter, index, _) = Locate(content, stage);
+            var monsters = new List<HeroDefinition>();
+            if (chapter != null)
+                foreach (var id in chapter.Monsters)
+                    if (content.Monsters.TryGetValue(id, out var m))
+                        monsters.Add(m);
+
             var picked = new List<HeroDefinition>();
-            while (picked.Count < count && fighters.Count > 0)
+            // the last stage of a chapter is its boss, escorted by the chapter's monsters
+            if (chapter != null && index == chapter.Stages && chapter.Boss != null && content.Monsters.TryGetValue(chapter.Boss, out var boss))
+                picked.Add(boss);
+            // a boss counts for two places in the team
+            var places = picked.Count > 0 && picked[0].Boss ? System.Math.Max(2, count - 1) : count;
+            while (picked.Count < places)
             {
-                var i = rng.Range(fighters.Count);
-                picked.Add(fighters[i]);
-                fighters.RemoveAt(i);
+                bool useHero;
+                if (monsters.Count == 0)
+                    useHero = true;
+                else if (picked.Count > 0 && picked[0].Boss)
+                    useHero = false; // a boss is escorted by monsters only
+                else
+                    useHero = rng.Range(Permille.One) < chapter.HeroSharePermille;
+                if (useHero)
+                {
+                    if (fighters.Count == 0)
+                        break;
+                    var i = rng.Range(fighters.Count);
+                    picked.Add(fighters[i]);
+                    fighters.RemoveAt(i);
+                }
+                else
+                {
+                    // monsters come in packs: the same kind may appear more than once
+                    picked.Add(monsters[rng.Range(monsters.Count)]);
+                }
             }
 
             var team = Arrange(picked, EnemyLevel(content, stage), EnemyStars(content, stage));
@@ -160,6 +189,11 @@ namespace Mythwake.Core.Meta
             if (IsBoss(content, stage))
                 foreach (var u in team)
                 {
+                    if (u.Hero.Boss)
+                    {
+                        u.Variant = "boss";
+                        continue; // named bosses are strong enough on their own
+                    }
                     u.Stats.Hp = u.Stats.Hp * (Permille.One + content.Campaign.BossStatBonusPermille) / Permille.One;
                     u.Stats.Attack = u.Stats.Attack * (Permille.One + content.Campaign.BossStatBonusPermille) / Permille.One;
                     u.Variant = "boss";

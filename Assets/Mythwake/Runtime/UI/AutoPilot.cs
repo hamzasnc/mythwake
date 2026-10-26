@@ -126,6 +126,25 @@ namespace Mythwake.UI
             }
             yield return Shot("hunt_shop", 0.6f);
 
+            ui.State.Campaign.HighestCleared = 20;
+            ui.Authority.Execute(new UpgradeBuilding { BuildingId = "portalChamber" });
+            ui.Authority.Execute(new UpgradeBuilding { BuildingId = "portalChamber" });
+            ui.Router.Reset(new AdventureScreen());
+            yield return Shot("adventure", 0.8f);
+            ui.Router.Reset(new DungeonScreen());
+            yield return Shot("dungeons", 1.0f);
+            var dungeonSetup = ui.Authority.Execute(new BeginDungeon { DungeonId = "material", Level = 1 }).Value;
+            ui.Router.Push(new BattleScreen(dungeonSetup, new DungeonBattle("Material Dungeon", 1)));
+            ui.Battle.Speed = 2f;
+            yield return Shot("dungeon_battle", 2.5f);
+            timeout = 120f;
+            while (ui.Battle.Running && timeout > 0f)
+            {
+                timeout -= Time.deltaTime;
+                yield return null;
+            }
+            yield return Shot("dungeon_result", 0.6f);
+
             ui.Router.Reset(new HeroesScreen());
             yield return Shot("heroes", 0.6f);
             ui.Router.Push(new HeroDetailScreen(hero));

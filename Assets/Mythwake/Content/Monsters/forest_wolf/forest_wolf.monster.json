@@ -1,0 +1,91 @@
+{
+  "id": "forest_wolf",
+  "name": "Forest Wolf",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "ravak",
+  "role": "dps",
+  "row": "front",
+  "grade": "rare",
+  "group": "wildBeast",
+  "boss": false,
+  "sizePermille": 1000,
+  "body": "quadruped",
+  "spineId": "forest_wolf",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 850,
+    "attack": 85,
+    "defense": 42,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "forest_wolf.normal",
+    "name": "Biss",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "forest_wolf.special",
+    "name": "Rudeljagd",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1700
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      800,
+      920
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "forest_wolf.passive",
+    "name": "Hetzjagd",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageBonus",
+        "value": 200,
+        "belowHp": 500
+      }
+    ]
+  }
+}

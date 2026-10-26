@@ -4,12 +4,25 @@ using UnityEngine;
 
 namespace Mythwake.Presentation
 {
-    /// <summary>One hero on the battlefield: Spine skeleton, HP/energy bars, hit flash, death fade. No rules here.</summary>
+    /// <summary>What draws and animates a unit: a Spine rig, or a single image while a monster has no rig yet.</summary>
+    internal interface IUnitBody
+    {
+        /// <summary>World height of the unit (for bars and floating numbers).</summary>
+        float Height { get; }
+        bool IsBusy { get; }
+        bool DeathFinished { get; }
+        void Play(string animation, bool loop);
+        void SetTimeScale(float scale);
+        void SetColor(Color color);
+        void SetSortingOrder(int order);
+    }
+
+    /// <summary>One unit on the battlefield: body, HP/energy bars, hit flash, death fade. No rules here.</summary>
     public sealed class UnitView : MonoBehaviour
     {
         private const string Idle = "idle";
 
-        private SkeletonAnimation _skeleton;
+        private IUnitBody _body;
         private SpriteRenderer _hpFill;
         private SpriteRenderer _hpLag;
         private SpriteRenderer _shieldFill;
@@ -31,8 +44,7 @@ namespace Mythwake.Presentation
         public long Shield { get; private set; }
         public int Energy { get; private set; }
         public bool Dead { get; private set; }
-        public float Height { get; private set; }
-        public SkeletonAnimation Skeleton => _skeleton;
+        public float Height => _body.Height;
 
         public Vector3 HeadPosition => transform.position + Vector3.up * Height * 0.95f;
         public Vector3 CenterPosition => transform.position + Vector3.up * Height * 0.5f;
@@ -40,35 +52,40 @@ namespace Mythwake.Presentation
         public static UnitView Create(Transform parent, SkeletonDataAsset data, UnitSetup setup, int index, Side side, Vector3 position, float scale)
         {
             var skeleton = SkeletonAnimation.NewSkeletonAnimationGameObject(data, true);
-            var go = skeleton.gameObject;
-            go.name = $"{side}_{setup.Slot}_{setup.Hero.Id}";
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = position;
-            go.transform.localScale = Vector3.one * scale;
-            var view = go.AddComponent<UnitView>();
-            view.Init(skeleton, setup, index, side, scale);
+            var view = Place(skeleton.gameObject, parent, setup, side, position, scale);
+            view.Init(new SpineBody(skeleton, side, scale), setup, index, side);
             return view;
         }
 
-        private void Init(SkeletonAnimation skeleton, UnitSetup setup, int index, Side side, float scale)
+        /// <summary>A unit drawn from one image (monsters before their Spine rig exists).</summary>
+        public static UnitView CreateSprite(Transform parent, Sprite sprite, UnitSetup setup, int index, Side side, Vector3 position, float scale, float heightUnits)
         {
-            _skeleton = skeleton;
+            var go = new GameObject();
+            var view = Place(go, parent, setup, side, position, scale);
+            view.Init(SpriteBody.Create(go.transform, sprite, side, heightUnits), setup, index, side);
+            return view;
+        }
+
+        private static UnitView Place(GameObject go, Transform parent, UnitSetup setup, Side side, Vector3 position, float scale)
+        {
+            go.name = $"{side}_{setup.Slot}_{setup.Hero.Id}";
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = position;
+            var size = setup.Hero.SizePermille / 1000f * (setup.Variant == "boss" && !setup.Hero.Boss ? 1.15f : 1f);
+            go.transform.localScale = Vector3.one * scale * size;
+            return go.AddComponent<UnitView>();
+        }
+
+        private void Init(IUnitBody body, UnitSetup setup, int index, Side side)
+        {
+            _body = body;
             Index = index;
             Side = side;
             Slot = setup.Slot;
             HeroId = setup.Hero.Id;
             MaxHp = Hp = System.Math.Max(1, setup.Stats.Hp);
-            _skeleton.Initialize(false);
-            _skeleton.Skeleton.ScaleX = side == Side.Enemies ? -1f : 1f;
-            Height = Mathf.Max(1f, _skeleton.Skeleton.Data.Height) * _skeleton.skeletonDataAsset.scale * scale;
-            if (setup.Variant == "boss")
-                transform.localScale *= 1.15f;
             AddShadow();
             Play(Idle, true);
-            // random phase so a team does not breathe in sync
-            var entry = _skeleton.AnimationState.GetCurrent(0);
-            if (entry != null)
-                entry.TrackTime = Random.Range(0f, entry.AnimationEnd);
             BuildBars();
         }
 
@@ -77,38 +94,29 @@ namespace Mythwake.Presentation
             var shadow = new GameObject("Shadow");
             shadow.transform.SetParent(transform, false);
             var inv = 1f / transform.localScale.x;
-            shadow.transform.localScale = new Vector3(1.25f, 0.32f, 1f) * inv;
+            shadow.transform.localScale = new Vector3(1.25f, 0.32f, 1f) * inv * Mathf.Max(1f, transform.localScale.x / 0.8f);
             _shadow = shadow.AddComponent<SpriteRenderer>();
             _shadow.sprite = ShadowSprite.Get();
             _shadow.color = new Color(0f, 0f, 0f, 0.45f);
             _shadow.sortingOrder = -5000;
         }
 
-        public bool HasAnimation(string name) => _skeleton.Skeleton.Data.FindAnimation(name) != null;
-
         public void Play(string animation, bool loop = false)
         {
             if (Dead && animation != "death")
                 return;
-            if (!HasAnimation(animation))
-                animation = animation == "skill" || animation == "ultimate" ? "attack" : Idle;
-            if (!HasAnimation(animation))
-                return;
-            _skeleton.AnimationState.SetAnimation(0, animation, loop);
-            if (!loop && animation != "death")
-                _skeleton.AnimationState.AddAnimation(0, Idle, true, 0f);
+            _body.Play(animation, loop);
         }
 
         /// <summary>Short hit reaction, but never over an own action (attacks keep playing when hit).</summary>
         public void PlayHit()
         {
             _flash = 1f;
-            var current = _skeleton.AnimationState.GetCurrent(0);
-            if (current == null || current.Animation.Name == Idle || current.Animation.Name == "hit")
-                Play("hit");
+            if (!_body.IsBusy)
+                _body.Play("hit", false);
         }
 
-        public void SetTimeScale(float scale) => _skeleton.timeScale = scale;
+        public void SetTimeScale(float scale) => _body.SetTimeScale(scale);
 
         public void SetHp(long hp)
         {
@@ -127,7 +135,7 @@ namespace Mythwake.Presentation
             Dead = true;
             _dying = true;
             SetHp(0);
-            Play("death");
+            _body.Play("death", false);
         }
 
         private void BuildBars()
@@ -175,21 +183,17 @@ namespace Mythwake.Presentation
                 _flash = Mathf.Max(0f, _flash - dt * 6f);
                 var c = Color.Lerp(Color.white, new Color(1f, 0.45f, 0.45f), _flash);
                 c.a = _fade;
-                _skeleton.Skeleton.SetColor(c);
+                _body.SetColor(c);
             }
-            if (_dying)
+            if (_dying && _body.DeathFinished)
             {
-                var current = _skeleton.AnimationState.GetCurrent(0);
-                if (current == null || current.IsComplete)
-                {
-                    _fade = Mathf.Max(0f, _fade - dt * 1.5f);
-                    _skeleton.Skeleton.A = _fade;
-                    _bars.gameObject.SetActive(false);
-                    if (_shadow != null)
-                        _shadow.color = new Color(0f, 0f, 0f, 0.45f * _fade);
-                    if (_fade <= 0f)
-                        _dying = false;
-                }
+                _fade = Mathf.Max(0f, _fade - dt * 1.5f);
+                _body.SetColor(new Color(1f, 1f, 1f, _fade));
+                _bars.gameObject.SetActive(false);
+                if (_shadow != null)
+                    _shadow.color = new Color(0f, 0f, 0f, 0.45f * _fade);
+                if (_fade <= 0f)
+                    _dying = false;
             }
         }
 
@@ -203,10 +207,175 @@ namespace Mythwake.Presentation
 
         private const float BarWidth = 0.9f;
 
-        public void SetSortingOrder(int order)
+        public void SetSortingOrder(int order) => _body.SetSortingOrder(order);
+    }
+
+    /// <summary>Spine rig body: plays the rig's animations, falls back to "attack" for missing skill animations.</summary>
+    internal sealed class SpineBody : IUnitBody
+    {
+        private const string Idle = "idle";
+        private readonly SkeletonAnimation _skeleton;
+
+        public float Height { get; }
+
+        public SpineBody(SkeletonAnimation skeleton, Side side, float scale)
         {
-            var r = _skeleton.GetComponent<MeshRenderer>();
-            r.sortingOrder = order;
+            _skeleton = skeleton;
+            _skeleton.Initialize(false);
+            _skeleton.Skeleton.ScaleX = side == Side.Enemies ? -1f : 1f;
+            Height = Mathf.Max(1f, _skeleton.Skeleton.Data.Height) * _skeleton.skeletonDataAsset.scale * skeleton.transform.localScale.y;
+            // random phase so a team does not breathe in sync
+            _skeleton.AnimationState.SetAnimation(0, Idle, true).TrackTime = Random.Range(0f, 2f);
+        }
+
+        public bool IsBusy
+        {
+            get
+            {
+                var current = _skeleton.AnimationState.GetCurrent(0);
+                return current != null && current.Animation.Name != Idle && current.Animation.Name != "hit";
+            }
+        }
+
+        public bool DeathFinished
+        {
+            get
+            {
+                var current = _skeleton.AnimationState.GetCurrent(0);
+                return current == null || current.IsComplete;
+            }
+        }
+
+        private bool Has(string name) => _skeleton.Skeleton.Data.FindAnimation(name) != null;
+
+        public void Play(string animation, bool loop)
+        {
+            if (!Has(animation))
+                animation = animation == "skill" || animation == "ultimate" ? "attack" : Idle;
+            if (!Has(animation))
+                return;
+            _skeleton.AnimationState.SetAnimation(0, animation, loop);
+            if (!loop && animation != "death")
+                _skeleton.AnimationState.AddAnimation(0, Idle, true, 0f);
+        }
+
+        public void SetTimeScale(float scale) => _skeleton.timeScale = scale;
+
+        public void SetColor(Color color) => _skeleton.Skeleton.SetColor(color);
+
+        public void SetSortingOrder(int order) => _skeleton.GetComponent<MeshRenderer>().sortingOrder = order;
+    }
+
+    /// <summary>
+    /// Image body with procedural motion: breathing idle, lunge for attacks, a bigger lunge and pulse for skills and
+    /// ultimates, shake on hit, tilt-and-fade on death. Used until a monster's Spine rig exists.
+    /// </summary>
+    internal sealed class SpriteBody : MonoBehaviour, IUnitBody
+    {
+        private SpriteRenderer _renderer;
+        private Transform _pivot;
+        private float _direction;
+        private string _action;
+        private float _time;
+        private float _length;
+        private float _timeScale = 1f;
+        private float _phase;
+
+        public float Height { get; private set; }
+        public bool IsBusy => _action != null && _action != "hit";
+        public bool DeathFinished => _action == "death" && _time >= _length;
+
+        public static SpriteBody Create(Transform root, Sprite sprite, Side side, float heightUnits)
+        {
+            var pivot = new GameObject("Body").transform;
+            pivot.SetParent(root, false);
+            var art = new GameObject("Art");
+            art.transform.SetParent(pivot, false);
+            var renderer = art.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            // scale the image to the wanted height, feet on the ground
+            var spriteHeight = sprite.bounds.size.y;
+            var s = heightUnits / Mathf.Max(0.01f, spriteHeight);
+            art.transform.localScale = new Vector3(side == Side.Enemies ? -s : s, s, 1f);
+            art.transform.localPosition = new Vector3(0f, -sprite.bounds.min.y * s, 0f);
+            var body = pivot.gameObject.AddComponent<SpriteBody>();
+            body._renderer = renderer;
+            body._pivot = pivot;
+            body._direction = side == Side.Enemies ? -1f : 1f;
+            body.Height = heightUnits * root.localScale.y;
+            body._phase = Random.Range(0f, 6f);
+            return body;
+        }
+
+        public void Play(string animation, bool loop)
+        {
+            // idle is the resting motion; a dying unit only plays its death
+            if (animation == "idle" || (_action == "death" && animation != "death"))
+                return;
+            _action = animation;
+            _time = 0f;
+            _length = animation switch
+            {
+                "attack" => 0.55f,
+                "skill" => 0.9f,
+                "ultimate" => 1.3f,
+                "hit" => 0.25f,
+                "death" => 0.6f,
+                _ => 0.5f
+            };
+        }
+
+        public void SetTimeScale(float scale) => _timeScale = scale;
+
+        public void SetColor(Color color) => _renderer.color = color;
+
+        public void SetSortingOrder(int order) => _renderer.sortingOrder = order;
+
+        private void Update()
+        {
+            var dt = Time.deltaTime * _timeScale;
+            _phase += dt;
+            var breathe = 1f + Mathf.Sin(_phase * 2.2f) * 0.025f;
+            var offset = Vector3.zero;
+            var scale = new Vector3(1f, breathe, 1f);
+            var angle = 0f;
+
+            if (_action != null)
+            {
+                _time += dt;
+                var t = Mathf.Clamp01(_time / _length);
+                var arc = Mathf.Sin(t * Mathf.PI);
+                switch (_action)
+                {
+                    case "attack":
+                        offset.x = arc * 0.45f * _direction;
+                        angle = -arc * 6f * _direction;
+                        break;
+                    case "skill":
+                        offset.x = arc * 0.7f * _direction;
+                        offset.y = arc * 0.15f;
+                        scale *= 1f + arc * 0.12f;
+                        break;
+                    case "ultimate":
+                        offset.y = arc * 0.35f;
+                        scale *= 1f + arc * 0.22f;
+                        angle = Mathf.Sin(t * Mathf.PI * 6f) * 4f * (1f - t);
+                        break;
+                    case "hit":
+                        offset.x = -Mathf.Sin(t * Mathf.PI * 4f) * 0.08f * (1f - t) * _direction;
+                        break;
+                    case "death":
+                        angle = t * 25f * _direction;
+                        offset.y = -t * 0.1f;
+                        scale.y *= 1f - t * 0.15f;
+                        break;
+                }
+                if (_action != "death" && _time >= _length)
+                    _action = null;
+            }
+            _pivot.localPosition = offset;
+            _pivot.localScale = scale;
+            _pivot.localRotation = Quaternion.Euler(0f, 0f, angle);
         }
     }
 

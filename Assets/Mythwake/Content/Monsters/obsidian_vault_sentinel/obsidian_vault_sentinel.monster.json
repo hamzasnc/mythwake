@@ -1,0 +1,164 @@
+{
+  "id": "obsidian_vault_sentinel",
+  "name": "Obsidian Vault Sentinel",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "envyra",
+  "role": "tank",
+  "row": "front",
+  "grade": "rare",
+  "group": "fragmentConstruct",
+  "boss": true,
+  "sizePermille": 1350,
+  "body": "huge",
+  "spineId": "obsidian_vault_sentinel",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 4250,
+    "attack": 84,
+    "defense": 108,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "obsidian_vault_sentinel.normal",
+    "name": "Riegelschlag",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1100
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "obsidian_vault_sentinel.special",
+    "name": "Gewölbe schließen",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1600
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "obsidian_vault_sentinel.special2",
+    "name": "Obsidianpanzer",
+    "description": "",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 12000
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 250,
+        "shieldDurationMs": 6000,
+        "scaling": "casterMaxHp"
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "obsidian_vault_sentinel.passive",
+    "name": "Tresorwächter",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageReduction",
+        "value": 250
+      },
+      {
+        "kind": "onHitTaken",
+        "chance": 200,
+        "effect": {
+          "kind": "stealBuff",
+          "multiplier": 1
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "obsidian_vault_sentinel.ultimate",
+    "name": "Tresorsturz",
+    "description": "",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 4500
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "defenseDown",
+          "durationMs": 6000,
+          "value": 250
+        }
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1300,
+      1420,
+      1540
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

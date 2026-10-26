@@ -1,0 +1,93 @@
+{
+  "dungeons": [
+    {
+      "id": "material",
+      "name": "Material Dungeon",
+      "description": "Gold und Hero EXP. Sonderregel: Gegner regenerieren 1,5 % max. HP pro Sekunde.",
+      "portalLevel": 1,
+      "boss": "obsidian_vault_sentinel",
+      "escort": [
+        "fragment_construct",
+        "riftborn_wisp"
+      ],
+      "escorts": 2,
+      "maxLevel": 100,
+      "enemyLevelBase": 15,
+      "enemyLevelPerFloor": 2,
+      "attemptsPerDay": 3,
+      "rules": {
+        "enemyRegenPermille": 15,
+        "maxDurationMs": 90000
+      },
+      "clearRewards": [
+        {
+          "id": "gold",
+          "base": 8000,
+          "perStage": 1500
+        },
+        {
+          "id": "heroExp",
+          "base": 5000,
+          "perStage": 900
+        }
+      ],
+      "firstClearRewards": [
+        {
+          "id": "gold",
+          "base": 16000,
+          "perStage": 3000
+        },
+        {
+          "id": "heroExp",
+          "base": 10000,
+          "perStage": 1800
+        },
+        {
+          "id": "gems",
+          "base": 20,
+          "perStage": 0
+        }
+      ]
+    },
+    {
+      "id": "gear",
+      "name": "Gear Dungeon",
+      "description": "Gear materials und Ausrüstung. Sonderregel: Heilung um 50 % reduziert.",
+      "portalLevel": 2,
+      "boss": "hollow_spire_warden",
+      "escort": [
+        "hollowed_soldier",
+        "hollowed_archer"
+      ],
+      "escorts": 2,
+      "maxLevel": 100,
+      "enemyLevelBase": 18,
+      "enemyLevelPerFloor": 2,
+      "attemptsPerDay": 3,
+      "rules": {
+        "healingModifier": -500,
+        "maxDurationMs": 90000
+      },
+      "clearRewards": [
+        {
+          "id": "gearMaterials",
+          "base": 40,
+          "perStage": 6
+        }
+      ],
+      "firstClearRewards": [
+        {
+          "id": "gearMaterials",
+          "base": 80,
+          "perStage": 12
+        },
+        {
+          "id": "gems",
+          "base": 20,
+          "perStage": 0
+        }
+      ],
+      "gearEveryLevels": 5
+    }
+  ]
+}

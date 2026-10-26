@@ -1,0 +1,159 @@
+{
+  "id": "corrupted_guardian_of_the_deep",
+  "name": "Corrupted Guardian of the Deep",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "somnara",
+  "role": "tank",
+  "row": "front",
+  "grade": "rare",
+  "group": "corruptedGuardian",
+  "boss": true,
+  "sizePermille": 1350,
+  "body": "huge",
+  "spineId": "corrupted_guardian_of_the_deep",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 4250,
+    "attack": 84,
+    "defense": 108,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "corrupted_guardian_of_the_deep.normal",
+    "name": "Tentakelschlag",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1100
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "corrupted_guardian_of_the_deep.special",
+    "name": "Tiefenstrom",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1100
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "slow",
+          "durationMs": 3000,
+          "value": 250
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "corrupted_guardian_of_the_deep.special2",
+    "name": "Korallenpanzer",
+    "description": "",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 14000
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 150,
+        "shieldDurationMs": 6000,
+        "scaling": "casterMaxHp"
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "corrupted_guardian_of_the_deep.passive",
+    "name": "Uralter Guardian",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "regen",
+        "value": 10
+      },
+      {
+        "kind": "damageReduction",
+        "value": 150
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "corrupted_guardian_of_the_deep.ultimate",
+    "name": "Ruf der Tiefe",
+    "description": "",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 5000
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "sleep",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      1300,
+      1420
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

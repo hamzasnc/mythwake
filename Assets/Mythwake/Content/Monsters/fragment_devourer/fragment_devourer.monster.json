@@ -1,0 +1,161 @@
+{
+  "id": "fragment_devourer",
+  "name": "Fragment Devourer",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "envyra",
+  "role": "dps",
+  "row": "front",
+  "grade": "rare",
+  "group": "riftborn",
+  "boss": true,
+  "sizePermille": 1350,
+  "body": "huge",
+  "spineId": "fragment_devourer",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 2500,
+    "attack": 120,
+    "defense": 60,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "fragment_devourer.normal",
+    "name": "Kristallbiss",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1200
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      400,
+      520
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "fragment_devourer.special",
+    "name": "Verschlingen",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 2200
+      },
+      {
+        "kind": "lifesteal",
+        "multiplier": 500
+      },
+      {
+        "kind": "stealBuff",
+        "multiplier": 2
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "fragment_devourer.special2",
+    "name": "Hunger",
+    "description": "",
+    "slot": "special2",
+    "trigger": {
+      "kind": "selfBelowHp",
+      "hpThresholdPermille": 500,
+      "cooldownMs": 15000,
+      "oncePerBattle": false
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "attackSpeedUp",
+          "durationMs": 8000,
+          "value": 400
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "fragment_devourer.passive",
+    "name": "Fragmentfresser",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "lifesteal",
+        "value": 100
+      },
+      {
+        "kind": "damageBonus",
+        "growth": 40
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "fragment_devourer.ultimate",
+    "name": "Fragmentschlund",
+    "description": "",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 5000
+      },
+      {
+        "kind": "drainEnergy",
+        "multiplier": 300
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1300,
+      1420,
+      1540
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

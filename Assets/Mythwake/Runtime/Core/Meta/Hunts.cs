@@ -303,7 +303,7 @@ namespace Mythwake.Core.Meta
         public HuntResult Apply(CommandContext ctx)
         {
             var state = ctx.State;
-            ctx.Require(state.Battle != null && state.Battle.HuntId != null, "no_battle");
+            ctx.Require(state.Battle != null && state.Battle.HuntId != null && state.Battle.DungeonId == null, "no_battle");
             var pending = state.Battle;
             var offer = Hunts.Find(state, ctx.Content, ctx.NowMs, pending.HuntId);
             if (offer == null)

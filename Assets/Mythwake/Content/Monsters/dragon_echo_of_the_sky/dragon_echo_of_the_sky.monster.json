@@ -1,0 +1,167 @@
+{
+  "id": "dragon_echo_of_the_sky",
+  "name": "Dragon Echo of the Sky",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "ravak",
+  "role": "dps",
+  "row": "front",
+  "grade": "rare",
+  "group": "corruptedGuardian",
+  "boss": true,
+  "sizePermille": 1350,
+  "body": "huge",
+  "spineId": "dragon_echo_of_the_sky",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 2500,
+    "attack": 120,
+    "defense": 60,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "dragon_echo_of_the_sky.normal",
+    "name": "Sturmklaue",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1300
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      400,
+      520
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "dragon_echo_of_the_sky.special",
+    "name": "Blitzatem",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyBackRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 2000
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "burn",
+          "durationMs": 3000,
+          "value": 150
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "dragon_echo_of_the_sky.special2",
+    "name": "Wolkenflug",
+    "description": "",
+    "slot": "special2",
+    "trigger": {
+      "kind": "selfBelowHp",
+      "hpThresholdPermille": 400,
+      "cooldownMs": 0,
+      "oncePerBattle": true
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "evade",
+          "durationMs": 8000,
+          "value": 3
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "dragon_echo_of_the_sky.passive",
+    "name": "Echo des Himmels",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "critRate",
+        "value": 150
+      },
+      {
+        "kind": "damageBonus",
+        "value": 300,
+        "belowHp": 400
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "dragon_echo_of_the_sky.ultimate",
+    "name": "Himmelssturz",
+    "description": "",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 6500
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 1000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 4,
+    "hitTimesMs": [
+      1300,
+      1420,
+      1540,
+      1660
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "id": "corrupted_boar",
+  "name": "Corrupted Boar",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "gorath",
+  "role": "tank",
+  "row": "front",
+  "grade": "rare",
+  "group": "corruptedBeast",
+  "boss": false,
+  "sizePermille": 1000,
+  "body": "quadruped",
+  "spineId": "corrupted_boar",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1445,
+    "attack": 60,
+    "defense": 76,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "corrupted_boar.normal",
+    "name": "Kristallhauer",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 900
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "corrupted_boar.special",
+    "name": "Splitteransturm",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1200
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "slow",
+          "durationMs": 2000,
+          "value": 200
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "corrupted_boar.passive",
+    "name": "Wucherndes Fleisch",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "regen",
+        "value": 15
+      }
+    ]
+  }
+}

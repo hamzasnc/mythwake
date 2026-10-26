@@ -125,18 +125,30 @@ namespace Mythwake.Presentation
         private void Spawn(UnitSetup setup, int index, Side side, Vector3 offset)
         {
             var assets = _catalog.Hero(setup.Hero.SpineId ?? setup.Hero.Id);
-            if (assets?.skeleton == null)
+            if (assets?.skeleton == null && assets?.sprite == null)
             {
-                Debug.LogError($"[Battle] no skeleton for {setup.Hero.Id}");
+                Debug.LogError($"[Battle] no art for {setup.Hero.Id}");
                 _units.Add(null);
                 return;
             }
             var p = SlotPositions[Mathf.Clamp(setup.Slot, 0, 4)];
             var position = new Vector3(side == Side.Allies ? -p.x : p.x, p.y, 0f) + offset;
-            var view = UnitView.Create(transform, assets.skeleton, setup, index, side, position, unitScale);
+            var view = assets.skeleton != null
+                ? UnitView.Create(transform, assets.skeleton, setup, index, side, position, unitScale)
+                : UnitView.CreateSprite(transform, assets.sprite, setup, index, side, position, unitScale, SpriteHeight(setup.Hero.Body));
             view.SetSortingOrder(Mathf.RoundToInt(-position.y * 100f));
             _units.Add(view);
         }
+
+        /// <summary>Height in world units of a monster drawn as a sprite, by body type (heroes are about 2.4).</summary>
+        private static float SpriteHeight(string body) => body switch
+        {
+            "quadruped" => 1.6f,
+            "flying" => 2.1f,
+            "floating" => 2.1f,
+            "huge" => 2.7f,
+            _ => 2.4f
+        };
 
         private void Simulate()
         {

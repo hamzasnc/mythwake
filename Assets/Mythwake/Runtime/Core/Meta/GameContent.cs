@@ -87,6 +87,12 @@ namespace Mythwake.Core.Meta
         public string Id;
         public string Name;
         public int Stages;
+        /// <summary>Monsters met in this chapter. Each enemy slot is a monster or a hero (see HeroSharePermille).</summary>
+        public List<string> Monsters = new List<string>();
+        /// <summary>Boss of the chapter's last stage (with monsters of the chapter as escort).</summary>
+        public string Boss;
+        /// <summary>Chance per enemy slot to be a hero instead of a monster (doc: heroes corrupted by Fragments).</summary>
+        public int HeroSharePermille = 400;
     }
 
     public sealed class SlotUnlock
@@ -122,6 +128,8 @@ namespace Mythwake.Core.Meta
     public sealed class GameContent
     {
         public readonly Dictionary<string, HeroDefinition> Heroes = new Dictionary<string, HeroDefinition>();
+        /// <summary>Monsters and bosses: enemies only, never summoned or owned.</summary>
+        public readonly Dictionary<string, HeroDefinition> Monsters = new Dictionary<string, HeroDefinition>();
         public ProgressionConfig Progression = new ProgressionConfig();
         public AfkConfig Afk = new AfkConfig();
         public CampaignConfig Campaign = new CampaignConfig();
@@ -132,9 +140,13 @@ namespace Mythwake.Core.Meta
         public QuestConfig Quests = new QuestConfig();
         public HuntConfig Hunts = new HuntConfig();
         public ArenaConfig Arena = new ArenaConfig();
+        public DungeonConfig Dungeons = new DungeonConfig();
 
+        /// <summary>A hero or monster by id (battle setups and team snapshots can contain both).</summary>
         public HeroDefinition Hero(string id) =>
-            Heroes.TryGetValue(id, out var h) ? h : throw new RuleViolation("unknown_hero", id);
+            Heroes.TryGetValue(id, out var h) ? h
+            : Monsters.TryGetValue(id, out var m) ? m
+            : throw new RuleViolation("unknown_hero", id);
 
         public BannerDefinition Banner(string id)
         {

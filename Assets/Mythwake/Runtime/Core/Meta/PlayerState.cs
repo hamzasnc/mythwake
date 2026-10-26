@@ -35,6 +35,9 @@ namespace Mythwake.Core.Meta
         public int Stage;
         /// <summary>Set when the battle is a hunt from the Hunt Board instead of a campaign stage.</summary>
         public string HuntId;
+        /// <summary>Set when the battle is a dungeon level (Floor) instead of a campaign stage.</summary>
+        public string DungeonId;
+        public int Floor;
         public ulong Seed;
         public string[] Formation;
     }
@@ -60,6 +63,7 @@ namespace Mythwake.Core.Meta
         public Dictionary<string, long> Stats = new Dictionary<string, long>();
         public QuestState Quests = new QuestState();
         public HuntState Hunts = new HuntState();
+        public DungeonState Dungeons = new DungeonState();
         public int GearUidCounter;
         public PendingBattle Battle;
         /// <summary>Server-side randomness (summons, battle seeds): seed + how many draws were made.</summary>

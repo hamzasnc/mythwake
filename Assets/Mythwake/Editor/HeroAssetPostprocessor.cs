@@ -10,12 +10,29 @@ namespace Mythwake.Editor
     public sealed class HeroAssetPostprocessor : AssetPostprocessor
     {
         public const string HeroesRoot = "Assets/Mythwake/Content/Heroes/";
+        public const string MonstersRoot = "Assets/Mythwake/Content/Monsters/";
 
         private void OnPreprocessTexture()
         {
-            if (!assetPath.StartsWith(HeroesRoot))
+            if (!assetPath.StartsWith(HeroesRoot) && !assetPath.StartsWith(MonstersRoot))
                 return;
             var importer = (TextureImporter)assetImporter;
+            if (assetPath.EndsWith("_sprite.png"))
+            {
+                // monster stand-in art before its rig: a plain sprite with the pivot at the feet
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.spritePixelsPerUnit = 400;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.maxTextureSize = 1024;
+                importer.textureCompression = TextureImporterCompression.CompressedHQ;
+                var settings = new TextureImporterSettings();
+                importer.ReadTextureSettings(settings);
+                settings.spriteAlignment = (int)SpriteAlignment.BottomCenter;
+                importer.SetTextureSettings(settings);
+                return;
+            }
             importer.textureType = TextureImporterType.Default;
             importer.sRGBTexture = true;
             importer.alphaSource = TextureImporterAlphaSource.FromInput;
@@ -32,7 +49,7 @@ namespace Mythwake.Editor
         private static void OnPostprocessAllAssets(string[] imported, string[] deleted, string[] moved, string[] movedFrom)
         {
             foreach (var path in imported)
-                if (path.StartsWith(HeroesRoot) && path.EndsWith("_Material.mat"))
+                if ((path.StartsWith(HeroesRoot) || path.StartsWith(MonstersRoot)) && path.EndsWith("_Material.mat"))
                     FixMaterial(AssetDatabase.LoadAssetAtPath<Material>(path));
         }
 

@@ -19,7 +19,9 @@ namespace Mythwake.Core.Meta
         /// <summary>Unlocks gear crafting and upgrades; higher levels craft higher grades (Broken Forge).</summary>
         Forge,
         /// <summary>Unlocks the Hunt Board and Hunt Shop; higher levels add hunts, rewards and difficulty (Hunter's Hut).</summary>
-        Hunting
+        Hunting,
+        /// <summary>Unlocks dungeons; higher levels open more dungeon types (Portal Chamber).</summary>
+        Portal
     }
 
     public sealed class BuildingDefinition

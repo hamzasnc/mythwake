@@ -1,0 +1,90 @@
+{
+  "id": "riftborn_wisp",
+  "name": "Riftborn Wisp",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "somnara",
+  "role": "support",
+  "row": "back",
+  "grade": "rare",
+  "group": "riftborn",
+  "boss": false,
+  "sizePermille": 1000,
+  "body": "floating",
+  "spineId": "riftborn_wisp",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 978,
+    "attack": 72,
+    "defense": 51,
+    "attackIntervalMs": 1700,
+    "critRate": 100,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "riftborn_wisp.normal",
+    "name": "Lichtfunke",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "riftborn_wisp.special",
+    "name": "Rift-Licht",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "allyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "heal",
+        "multiplier": 2000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "riftborn_wisp.passive",
+    "name": "Schimmernde Nähe",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "regen",
+        "team": true,
+        "value": 5
+      }
+    ]
+  }
+}

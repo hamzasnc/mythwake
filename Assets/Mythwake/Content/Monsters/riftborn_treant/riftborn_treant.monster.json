@@ -1,0 +1,161 @@
+{
+  "id": "riftborn_treant",
+  "name": "Riftborn Treant",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "gorath",
+  "role": "tank",
+  "row": "front",
+  "grade": "rare",
+  "group": "riftborn",
+  "boss": true,
+  "sizePermille": 1350,
+  "body": "huge",
+  "spineId": "riftborn_treant",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 4250,
+    "attack": 84,
+    "defense": 108,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "riftborn_treant.normal",
+    "name": "Wurzelschlag",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1100
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "riftborn_treant.special",
+    "name": "Wurzelgriff",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyBackRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1400
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 1500,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "riftborn_treant.special2",
+    "name": "Rift-Saft",
+    "description": "",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 14000
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "regen",
+          "durationMs": 6000,
+          "value": 40
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "riftborn_treant.passive",
+    "name": "Uralte Rinde",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "regen",
+        "value": 15
+      },
+      {
+        "kind": "damageReduction",
+        "value": 150
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "riftborn_treant.ultimate",
+    "name": "Mossveil-Zorn",
+    "description": "",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 4200
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "poison",
+          "durationMs": 5000,
+          "value": 120
+        }
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      1300,
+      1420
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

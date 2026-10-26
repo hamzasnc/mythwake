@@ -59,12 +59,37 @@ namespace Mythwake.Editor
                 heroes.Add(entry);
             }
             catalog.heroes = heroes.ToArray();
+
+            var monsters = new List<ContentCatalog.HeroAssets>();
+            var monsterRoot = ContentRoot + "/Monsters";
+            if (Directory.Exists(monsterRoot))
+                foreach (var dir in Directory.GetDirectories(monsterRoot).OrderBy(d => d, System.StringComparer.Ordinal))
+                {
+                    var id = Path.GetFileName(dir);
+                    var folder = dir.Replace('\\', '/');
+                    var entry = new ContentCatalog.HeroAssets
+                    {
+                        id = id,
+                        definition = AssetDatabase.LoadAssetAtPath<TextAsset>($"{folder}/{id}.monster.json"),
+                        skeleton = AssetDatabase.LoadAssetAtPath<SkeletonDataAsset>($"{folder}/{id}_SkeletonData.asset"),
+                        portrait = AssetDatabase.LoadAssetAtPath<Texture2D>($"{folder}/{id}_portrait.png"),
+                        full = AssetDatabase.LoadAssetAtPath<Texture2D>($"{folder}/{id}_sprite.png"),
+                        sprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{folder}/{id}_sprite.png")
+                    };
+                    if (entry.definition == null)
+                        continue;
+                    if (entry.skeleton == null && entry.sprite == null)
+                        Debug.LogWarning($"[Content] monster {id}: no rig and no sprite yet");
+                    monsters.Add(entry);
+                }
+            catalog.monsters = monsters.ToArray();
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
 
             // validate by loading exactly as the game does
             var content = catalog.LoadContent();
             Debug.Log($"[Content] catalog rebuilt: {catalog.dataFiles.Length} data files, {content.Heroes.Count} heroes, " +
+                      $"{content.Monsters.Count} monsters ({monsters.Count(m => m.sprite != null || m.skeleton != null)} with art), " +
                       $"{heroes.Count(h => h.portrait != null)} portraits, {heroes.Count(h => h.cutIn != null)} cut-ins");
         }
     }

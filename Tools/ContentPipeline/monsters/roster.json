@@ -1,0 +1,105 @@
+{
+  "_source": "docs/GAME_DESIGN.md – Enemy System (groups), Boss System (named bosses), Hunt Board (corrupted wolves). Boss names are the doc's. Normal monster names are descriptive working names (group + creature) and need the team's OK.",
+  "monsters": [
+    {
+      "id": "forest_wolf", "name": "Forest Wolf", "group": "wildBeast", "tier": "normal", "body": "quadruped",
+      "role": "dps", "row": "front", "aspect": "ravak",
+      "art": "Ein normaler, ungezähmter Grauwolf aus den Wäldern um Dawnhollow – noch NICHT verdorben. Natürliches graues Fell mit hellem Bauch, gelbe wachsame Augen, gefletschte Zähne, buschiger Schwanz. Schlank, schnell, etwa hüfthoch zu einem Menschen. Keine Magie, kein Leuchten."
+    },
+    {
+      "id": "wild_boar", "name": "Wild Boar", "group": "wildBeast", "tier": "normal", "body": "quadruped",
+      "role": "tank", "row": "front", "aspect": "gorath",
+      "art": "Ein massiges, normales Wildschwein aus dem Wald – noch NICHT verdorben. Dunkelbraune Borsten mit Rückenkamm, zwei kurze helle Hauer, kleine wütende Augen, schlammige Hufe. Gedrungen, schwer, stur. Keine Magie, kein Leuchten."
+    },
+    {
+      "id": "corrupted_wolf", "name": "Corrupted Wolf", "group": "corruptedBeast", "tier": "normal", "body": "quadruped",
+      "role": "dps", "row": "front", "aspect": "ravak",
+      "art": "Ein Wolf, den Fragment-Energie verdreht hat (Doc: 'Animals twist into monsters, purple light spreads'). Dunkles, struppiges Fell mit Rissen, aus denen violettes Licht dringt; kleine violette Kristallsplitter wachsen entlang der Wirbelsäule; zu lange Reißzähne; Augen leuchten violett-rot. Abgemagert, aggressiv, deutlich bedrohlicher als ein normaler Wolf."
+    },
+    {
+      "id": "corrupted_boar", "name": "Corrupted Boar", "group": "corruptedBeast", "tier": "normal", "body": "quadruped",
+      "role": "tank", "row": "front", "aspect": "gorath",
+      "art": "Ein verdorbenes Wildschwein: aufgeblähte Schultern, Hauer zu violetten Kristallen verwachsen, schwarze Borsten mit violett glühenden Rissen, Rindenstücke und Moos des Mossveil-Waldes im Fell. Schwer, gepanzert, hartnäckig (regeneriert)."
+    },
+    {
+      "id": "corrupted_crow", "name": "Corrupted Crow", "group": "corruptedBeast", "tier": "normal", "body": "flying",
+      "role": "debuffer", "row": "back", "aspect": "veloria",
+      "art": "Ein übergroßer Rabe, verdorben von Fragment-Energie: zerzaustes schwarzes Gefieder mit violetten Federspitzen, ein drittes leuchtendes Auge auf der Stirn, Krallen mit Kristallsplittern. Schwebt mit ausgebreiteten Flügeln. Verwirrt und lenkt ab."
+    },
+    {
+      "id": "hollowed_soldier", "name": "Hollowed Soldier", "group": "hollowed", "tier": "normal", "body": "humanoid",
+      "role": "tank", "row": "front", "aspect": "gorath",
+      "art": "Ein von Fragmenten verdorbener ehemaliger Soldat (Doc: Hollowed – Menschen, die Fragment-Energie verändert hat). Rissige graue Haut mit violetten Kristallauswüchsen an Schulter und Arm, leere leuchtende Augen, zerbeulte alte Rüstung, zerrissener Wappenrock ohne Wappen, schartiges Schwert und rostiger Rundschild. Nicht blutig, nicht gruselig-realistisch: Chibi-Stil, aber unheimlich."
+    },
+    {
+      "id": "hollowed_archer", "name": "Hollowed Archer", "group": "hollowed", "tier": "normal", "body": "humanoid",
+      "role": "dps", "row": "back", "aspect": "somnara",
+      "art": "Ein verdorbener ehemaliger Jäger: Kapuze, zerfetzter Mantel, Kristallsplitter wachsen aus Rücken und Unterarm, Bogen mit violett leuchtender Sehne, Köcher mit Kristallpfeilen. Leuchtende leere Augen unter der Kapuze. Schlank, gebückt."
+    },
+    {
+      "id": "crimson_wraith", "name": "Crimson Wraith", "group": "crimsonWraith", "tier": "normal", "body": "floating",
+      "role": "dps", "row": "back", "aspect": "ravak",
+      "art": "Ein Crimson Wraith (Doc: mächtige verdorbene Magier, Elite-Gegner): schwebende Gestalt in zerrissener purpurroter Robe ohne sichtbare Beine, die unten in rote Rauchfetzen ausläuft; hohe Kapuze, darin nur zwei glühende Augen; knochige Hände mit roter Fragment-Flamme; schwebende Runensplitter um die Schultern."
+    },
+    {
+      "id": "riftborn_stalker", "name": "Riftborn Stalker", "group": "riftborn", "tier": "normal", "body": "humanoid",
+      "role": "dps", "row": "front", "aspect": "envyra",
+      "art": "Ein Wesen aus den Shattered Realms (Doc: Riftborn): dünner, gebückter Jäger mit zu langen Gliedern, Haut wie dunkler Kristall mit türkis-violetten Rissen, kein Gesicht außer einem leuchtenden Spalt, lange Klingenfinger. Teile seines Körpers flackern wie zerbrochenes Glas. Unheimlich, schnell."
+    },
+    {
+      "id": "riftborn_wisp", "name": "Riftborn Wisp", "group": "riftborn", "tier": "normal", "body": "floating",
+      "role": "support", "row": "back", "aspect": "somnara",
+      "art": "Ein kleines schwebendes Riftborn-Wesen: Kern aus leuchtendem violett-blauem Rift-Licht, umkreist von drei zerbrochenen Kristallringen, darunter wehende Lichtschleier wie eine Qualle. Kleine dunkle Augen im Lichtkern. Heilt und stärkt andere Monster."
+    },
+    {
+      "id": "fragment_construct", "name": "Fragment Construct", "group": "fragmentConstruct", "tier": "normal", "body": "humanoid",
+      "role": "tank", "row": "front", "aspect": "envyra",
+      "art": "Ein Fragment Construct (Doc: magische Wesen aus instabiler Fragment-Energie): wuchtiger Golem aus schwebenden Felsbrocken und Kristallen, die von violett-weißer Energie zusammengehalten werden; kein Kopf, sondern ein großer leuchtender Fragment-Kern in der Brust; Arme aus gestapelten Steinplatten. Lücken zwischen den Teilen zeigen das Leuchten."
+    },
+    {
+      "id": "hollowtusk_alpha", "name": "Hollowtusk Alpha", "group": "corruptedBeast", "tier": "boss", "body": "quadruped",
+      "role": "tank", "row": "front", "aspect": "gorath",
+      "art": "BOSS – Hollowtusk Alpha (Doc: 'First corrupted forest boss'): riesiger verdorbener Keiler, Anführer der Rotte. Gewaltige gebogene Hauer, die innen hohl und violett leuchtend sind (daher 'Hollowtusk'); ein Kamm aus großen violetten Kristallen entlang des Rückens; Narben, Wurzeln und Moos aus dem Mossveil-Wald im Fell; schnaubender violetter Atem; Hufe rissig. Dreimal so massig wie ein normales Wildschwein, imposante Boss-Silhouette."
+    },
+    {
+      "id": "riftborn_treant", "name": "Riftborn Treant", "group": "riftborn", "tier": "boss", "body": "huge",
+      "role": "tank", "row": "front", "aspect": "gorath",
+      "art": "BOSS – Riftborn Treant (Doc: 'Boss of the corrupted Mossveil Woods'): ein uralter Baum des Mossveil-Waldes, vom Rift unter dem Mossveil Shrine verschlungen. Riesiger gehender Baumriese mit Rinde voller violett leuchtender Risse, Ästen als Arme mit Krallenzweigen, Wurzeln als Beine, einem Gesicht aus Astlöchern mit leuchtenden Augen, in der Brust ein offener Riss, aus dem Rift-Licht und Kristalle wachsen; Moos, Pilze und tote Blätter."
+    },
+    {
+      "id": "crimson_wraith_adept", "name": "Crimson Wraith Adept", "group": "crimsonWraith", "tier": "boss", "body": "humanoid",
+      "role": "dps", "row": "back", "aspect": "ravak",
+      "art": "BOSS – Crimson Wraith Adept (Doc: 'First humanoid corrupted mage boss'): ein Magier, halb in einen Crimson Wraith verwandelt. Hohe, schmale Gestalt in prunkvoller zerrissener purpurroter Robe mit goldenen Rändern, ein Arm normal, der andere zu roter Flamme und Rauch geworden; Maske aus Knochen und Kristall, darunter glühende Augen; schwebender Fragment-Splitter als Fokus über der Hand; Runenkreise aus rotem Licht um die Füße."
+    },
+    {
+      "id": "hollow_spire_warden", "name": "Hollow Spire Warden", "group": "hollowed", "tier": "boss", "body": "humanoid",
+      "role": "tank", "row": "front", "aspect": "somnara",
+      "art": "BOSS – Hollow Spire Warden (Doc, Mid-game-Boss): verdorbener Wächter eines Turms, riesiger Ritter in hoher, turmartiger Rüstung (Schulterstücke wie Turmspitzen), Rüstung von innen ausgehöhlt und mit kaltem blau-violettem Licht gefüllt, kein Gesicht im Helmvisier außer Licht; riesige Hellebarde, Ketten mit Laternen am Gürtel, aus denen Schlaf-Nebel quillt."
+    },
+    {
+      "id": "obsidian_vault_sentinel", "name": "Obsidian Vault Sentinel", "group": "fragmentConstruct", "tier": "boss", "body": "huge",
+      "role": "tank", "row": "front", "aspect": "envyra",
+      "art": "BOSS – Obsidian Vault Sentinel (Doc, Mid-game-Boss): Wächter-Konstrukt eines Schatzgewölbes aus glänzendem schwarzem Obsidian mit goldenen Einlegearbeiten und Schlüsselloch-Symbolen, schwere Torflügel als Schultern, Arme wie Riegel, in der Brust ein Tresorkern aus Fragment-Licht; Goldmünzen und Edelsteine kleben in den Fugen. Wuchtig, eckig, unerschütterlich."
+    },
+    {
+      "id": "fragment_devourer", "name": "Fragment Devourer", "group": "riftborn", "tier": "boss", "body": "huge",
+      "role": "dps", "row": "front", "aspect": "envyra",
+      "art": "BOSS – Fragment Devourer (Doc, Mid-game-Boss): ein Riftborn-Raubtier, das Fragmente frisst. Gewaltiges Maul mit Kristallzähnen, das fast den halben Körper einnimmt, dahinter ein leuchtender Schlund; Körper wie ein gepanzerter Wurm-Drache auf vier krallenbewehrten Beinen; im Bauch sieht man durch rissige Panzerplatten verschluckte leuchtende Fragmente; Stacheln aus gestohlenen Kristallen."
+    },
+    {
+      "id": "corrupted_guardian_of_the_deep", "name": "Corrupted Guardian of the Deep", "group": "corruptedGuardian", "tier": "boss", "body": "huge",
+      "role": "tank", "row": "front", "aspect": "somnara",
+      "art": "BOSS – Corrupted Guardian of the Deep (Doc, Late-game-Boss, einer der verschwundenen Guardians): uraltes Tiefsee-Wesen, halb Schildkröte halb Krake, mit einem Panzer aus Korallen und versunkenen Ruinen, Tentakel mit leuchtenden Saugnäpfen, Augen tief und traurig, doch von violetten Fragment-Kristallen durchbohrt, die die Korruption zeigen. Tiefblau, Türkis, Perlweiß, durchsetzt von Violett."
+    },
+    {
+      "id": "dragon_echo_of_the_sky", "name": "Dragon Echo of the Sky", "group": "corruptedGuardian", "tier": "boss", "body": "huge",
+      "role": "dps", "row": "front", "aspect": "ravak",
+      "art": "BOSS – Dragon Echo of the Sky (Doc, Late-game-Boss): das Echo (geisterhafte Erinnerung) eines Himmelsdrachen. Majestätischer Drache aus halb durchscheinendem Sturm-Licht und Wolken, Schuppen in Gold und Himmelsblau, die zu den Rändern hin zu Licht zerfallen, Hörner wie Blitze, Flügel aus Wolkenfetzen und Federn; im Herzen ein rot glühendes Fragment, das ihn verdirbt. Imposant, auf den Hinterbeinen stehend, Flügel halb geöffnet."
+    },
+    {
+      "id": "false_guardian_construct", "name": "False Guardian Construct", "group": "fragmentConstruct", "tier": "boss", "body": "huge",
+      "role": "dps", "row": "front", "aspect": "veloria",
+      "art": "BOSS – False Guardian Construct (Doc, Late-game-Boss): ein künstlich gebauter Guardian, eine prunkvolle Fälschung eines heiligen Wächters. Engelhaft-mechanische Gestalt aus weißem Marmor und Gold mit Heiligenschein-Ringen, die falsch und zerbrochen rotieren, ein maskenhaftes, zu perfektes Gesicht mit Rissen, aus denen rosa-violettes Licht dringt; vier Arme, zwei davon halten Spiegel-Schilde. Schön und beunruhigend zugleich."
+    }
+  ]
+}

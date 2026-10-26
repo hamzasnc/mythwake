@@ -18,6 +18,7 @@ MonoBehaviour:
   - {fileID: 4900000, guid: 38878a09a155a1343804a57275ec435a, type: 3}
   - {fileID: 4900000, guid: fd0d035434ca05b499fac14e9b70fefd, type: 3}
   - {fileID: 4900000, guid: fcd0bc9b1933ea84e82079db0f56b392, type: 3}
+  - {fileID: 4900000, guid: dd6af7d81e9fd60419bf2966f479fa37, type: 3}
   - {fileID: 4900000, guid: e49223b613a50b148a2dad9539e2ddf5, type: 3}
   - {fileID: 4900000, guid: 774c9b4a6499d99489b12993bbec8a80, type: 3}
   - {fileID: 4900000, guid: cf3de2865b8df7046835cdb6fd5f7892, type: 3}
@@ -32,237 +33,418 @@ MonoBehaviour:
     portrait: {fileID: 2800000, guid: dab6bfc668bf0754487cf0460c47017a, type: 3}
     full: {fileID: 2800000, guid: 41f73f9accb66b24086ef11f1cf43233, type: 3}
     cutIn: {fileID: 2800000, guid: 2b7e241063d5b6945b2cc9f8f034c788, type: 3}
+    sprite: {fileID: 0}
   - id: arion
     definition: {fileID: 4900000, guid: f5c94ad5c2854a6478b6513b4fcd080d, type: 3}
     skeleton: {fileID: 11400000, guid: b83cfe7d926f86449a494c7d071c6710, type: 2}
     portrait: {fileID: 2800000, guid: 3739eb81605c56e4e8bdde95801b9dfe, type: 3}
     full: {fileID: 2800000, guid: 768ae19d818292043aa9f0fadb526910, type: 3}
     cutIn: {fileID: 2800000, guid: b676a4f55259ac840aae2c890c759a47, type: 3}
+    sprite: {fileID: 0}
   - id: bombo
     definition: {fileID: 4900000, guid: da88539bc8fb3ba40bbddc7b47cc8330, type: 3}
     skeleton: {fileID: 11400000, guid: 730841be7cbbeb644a7cb0adfa36096e, type: 2}
     portrait: {fileID: 2800000, guid: fca78c28aad5bc34f80ba153cd8f740d, type: 3}
     full: {fileID: 2800000, guid: ce13ca3249282b141a5b83a6c5c48587, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: cassian
     definition: {fileID: 4900000, guid: f6f3bd2c31f2e8d438192c12247d73b4, type: 3}
     skeleton: {fileID: 11400000, guid: 8e64cc212ca3e954780e523830248115, type: 2}
     portrait: {fileID: 2800000, guid: 2758242c36f565c4d99bd8b8b3bd166e, type: 3}
     full: {fileID: 2800000, guid: 7b8199adfba71d043930f057d17edfdf, type: 3}
     cutIn: {fileID: 2800000, guid: bd74a3f6b948ac740a5aad42ec241f23, type: 3}
+    sprite: {fileID: 0}
   - id: celeste
     definition: {fileID: 4900000, guid: 5743c76ea78382942b6e283c596ae9c6, type: 3}
     skeleton: {fileID: 11400000, guid: b4d0a4307b77eba4fa94b053cf11cc83, type: 2}
     portrait: {fileID: 2800000, guid: aa450059ff226d44da0d4fdaaa1a9349, type: 3}
     full: {fileID: 2800000, guid: d453b14179242d445af50471acc60594, type: 3}
     cutIn: {fileID: 2800000, guid: 127011bee5850b84381fcd7bcc0a8d35, type: 3}
+    sprite: {fileID: 0}
   - id: dorn
     definition: {fileID: 4900000, guid: 40bf6f0344f1b1842b64a5a8a9ed804e, type: 3}
     skeleton: {fileID: 11400000, guid: a3f3449aebf48cd469c51a193d4a16de, type: 2}
     portrait: {fileID: 2800000, guid: cc2912dc1b9aae849914f1a1fd9fe9a4, type: 3}
     full: {fileID: 2800000, guid: 78d5dd17cecf49143b371f9279aa68da, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: durgan
     definition: {fileID: 4900000, guid: f37870433d1ac364195eac3e1dfa4de3, type: 3}
     skeleton: {fileID: 11400000, guid: aadeaed46756b4740930983a79f3c5b4, type: 2}
     portrait: {fileID: 2800000, guid: efd3ee962fc74f648b4cd80fd00e3f96, type: 3}
     full: {fileID: 2800000, guid: 143ba7b65820a6546b5c1feb9412486c, type: 3}
     cutIn: {fileID: 2800000, guid: 30eb84711b5bf24419eff34920d848ef, type: 3}
+    sprite: {fileID: 0}
   - id: elara
     definition: {fileID: 4900000, guid: a85ffe06e14988946ac99ecce309ddff, type: 3}
     skeleton: {fileID: 11400000, guid: 285148247a27cd0449631387bbc1f57f, type: 2}
     portrait: {fileID: 2800000, guid: 8b4ec1c2a57687a4a89b0654a2d02f1b, type: 3}
     full: {fileID: 2800000, guid: a698c6f98ed0788439cd26c4942eb5b3, type: 3}
     cutIn: {fileID: 2800000, guid: 747c3c59a66c28c4691a2c0ebcfbf411, type: 3}
+    sprite: {fileID: 0}
   - id: garrick
     definition: {fileID: 4900000, guid: 653b675f9461e6e4abeebf78f2842b37, type: 3}
     skeleton: {fileID: 11400000, guid: b6cd18594fb06b5468480270b35d5519, type: 2}
     portrait: {fileID: 2800000, guid: 89f1f6b2696850a4da15892372dca8b8, type: 3}
     full: {fileID: 2800000, guid: 77a7fd5f1d8afdc42b85eb0961604082, type: 3}
     cutIn: {fileID: 2800000, guid: ba347cc24cae576438fb006506c16f5e, type: 3}
+    sprite: {fileID: 0}
   - id: grom
     definition: {fileID: 4900000, guid: 46f27d87c6baa964bb78b457966df55d, type: 3}
     skeleton: {fileID: 11400000, guid: ba38eea260f4fab458a5148ad5203a49, type: 2}
     portrait: {fileID: 2800000, guid: d2ba0b86d7e02c3448242587cea84995, type: 3}
     full: {fileID: 2800000, guid: a50fd7c3e42dcab47b8d7946e2284029, type: 3}
     cutIn: {fileID: 2800000, guid: 40e6121109ed1cb4582737c0eae4c2e2, type: 3}
+    sprite: {fileID: 0}
   - id: hilde
     definition: {fileID: 4900000, guid: 89b4f5ea249662b458456cf7fd6843fe, type: 3}
     skeleton: {fileID: 11400000, guid: e8f48eb914b0bd0428f4a017ec7de577, type: 2}
     portrait: {fileID: 2800000, guid: fff0badb7f325f043acdbb3980fee547, type: 3}
     full: {fileID: 2800000, guid: a385118a3226576498673ebe84d3e9eb, type: 3}
     cutIn: {fileID: 2800000, guid: 1d9728ce6779ff44ea3f91ffaf52d453, type: 3}
+    sprite: {fileID: 0}
   - id: ignara
     definition: {fileID: 4900000, guid: e622860627094844f804969f362cb9b6, type: 3}
     skeleton: {fileID: 11400000, guid: e697bc5a196719f4cb597a60536c31f8, type: 2}
     portrait: {fileID: 2800000, guid: 095edbfce66159746875c78cde188817, type: 3}
     full: {fileID: 2800000, guid: 58d18205c6de4fe48910165b240d28b8, type: 3}
     cutIn: {fileID: 2800000, guid: bd7f27be4db1ff1479b6b72054528418, type: 3}
+    sprite: {fileID: 0}
   - id: ilyas
     definition: {fileID: 4900000, guid: 308ac2cd7f3bc6f459307b98fa806de9, type: 3}
     skeleton: {fileID: 11400000, guid: 7955ec1d8d6da7145a3fe92316a70b1a, type: 2}
     portrait: {fileID: 2800000, guid: 4a9ac543dee0f0249a9f42ca768f480c, type: 3}
     full: {fileID: 2800000, guid: 589bdf99ee323eb41bfc0d6fcd877615, type: 3}
     cutIn: {fileID: 2800000, guid: 0625fce0655043640aeee7479a469acb, type: 3}
+    sprite: {fileID: 0}
   - id: kaelen
     definition: {fileID: 4900000, guid: 3b20c1363d9bdb74caeb3d60b1b50062, type: 3}
     skeleton: {fileID: 11400000, guid: 5fb2a3bf47749a84f93923edc311c76a, type: 2}
     portrait: {fileID: 2800000, guid: 13fe169ef0f064244b2a0a02df7a68c4, type: 3}
     full: {fileID: 2800000, guid: 87f83dc5b1233a2409a72308efb8a931, type: 3}
     cutIn: {fileID: 2800000, guid: cf13454bc6993964092e1b9e6cf94762, type: 3}
+    sprite: {fileID: 0}
   - id: kai
     definition: {fileID: 4900000, guid: 84273f6d0abcf3343ad28efc6ac83d33, type: 3}
     skeleton: {fileID: 11400000, guid: decd5b9946a9227419efd31c8f408ffc, type: 2}
     portrait: {fileID: 2800000, guid: 25c5493b7cdd96b4ea687297d7240d29, type: 3}
     full: {fileID: 2800000, guid: edbf4a1d144f94e4da4df95bd1115c83, type: 3}
     cutIn: {fileID: 2800000, guid: 2f64745bf74bece4cb70e56d329ba5cf, type: 3}
+    sprite: {fileID: 0}
   - id: kara
     definition: {fileID: 4900000, guid: 5a071446dd20d4b498ca27a9fc11998c, type: 3}
     skeleton: {fileID: 11400000, guid: da45db03272dfec46a5c6efb109917ad, type: 2}
     portrait: {fileID: 2800000, guid: e38073991f50e8b4facba5f10da949ea, type: 3}
     full: {fileID: 2800000, guid: c51952c1270e79344ac2020a6d205250, type: 3}
     cutIn: {fileID: 2800000, guid: 239418f49ce08c145801a888fe1904b0, type: 3}
+    sprite: {fileID: 0}
   - id: kiro
     definition: {fileID: 4900000, guid: 9e57e1d98ad8d9244bbb25623b30d426, type: 3}
     skeleton: {fileID: 11400000, guid: 6e4f227dfe2e83a48a01656cce48b770, type: 2}
     portrait: {fileID: 2800000, guid: c42199f00092801449cad6539ff38399, type: 3}
     full: {fileID: 2800000, guid: 4c618aa5dc840ae4584df4b3c94c1779, type: 3}
     cutIn: {fileID: 2800000, guid: 861bfa7605785ee42b4af16cfe7bcf11, type: 3}
+    sprite: {fileID: 0}
   - id: liriel
     definition: {fileID: 4900000, guid: cfca6440f4d8c5e478a3792a9195859f, type: 3}
     skeleton: {fileID: 11400000, guid: 89377bf839e3b3d469a6ba823af16147, type: 2}
     portrait: {fileID: 2800000, guid: 95de356a161411f4db01725271f44b75, type: 3}
     full: {fileID: 2800000, guid: 1aa08c06a3906dd49969163837d64190, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: malachar
     definition: {fileID: 4900000, guid: 620cec2c22a2f11479a95a240e27ce24, type: 3}
     skeleton: {fileID: 11400000, guid: 4bcbada83e8c52b43b0dad5a4d629532, type: 2}
     portrait: {fileID: 2800000, guid: b22bdb2ca478bee4f9557920c531d467, type: 3}
     full: {fileID: 2800000, guid: 78c1774365ee41647960e9efdf6a5580, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: maren
     definition: {fileID: 4900000, guid: fc56ae82a9f7c0641880ba97d94fa01b, type: 3}
     skeleton: {fileID: 11400000, guid: 9a192caa46c0fb647a79b3b903e7734e, type: 2}
     portrait: {fileID: 2800000, guid: e1073e1d025824a41905d142b8c6b8a6, type: 3}
     full: {fileID: 2800000, guid: 91d7f2af61d80584583d09112a1efe93, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: mawrek
     definition: {fileID: 4900000, guid: cd38b0fa3d77d624bacfc58369251b1c, type: 3}
     skeleton: {fileID: 11400000, guid: 19df0da9426c5104893e92b243b361da, type: 2}
     portrait: {fileID: 2800000, guid: d41ad6d8c81766549b4e503ac6804b0c, type: 3}
     full: {fileID: 2800000, guid: 3a4bb432a3ea75f4abf82a5ed86c782e, type: 3}
     cutIn: {fileID: 2800000, guid: 831dfce18707a4b4abc4e7adf4ace13b, type: 3}
+    sprite: {fileID: 0}
   - id: morrigan
     definition: {fileID: 4900000, guid: 8179eb9005b971e47a3bc7fb848469da, type: 3}
     skeleton: {fileID: 11400000, guid: ad9fd752be54ac14e93df4f725a231e1, type: 2}
     portrait: {fileID: 2800000, guid: abb60bd7a57804842b608d8ea862090d, type: 3}
     full: {fileID: 2800000, guid: c27c0760456ad4948bbbe56529ed517b, type: 3}
     cutIn: {fileID: 2800000, guid: 030327f965f9081438d1dc149307e47d, type: 3}
+    sprite: {fileID: 0}
   - id: nerissa
     definition: {fileID: 4900000, guid: 69d3d076326bcc443bfd7d94e17e436d, type: 3}
     skeleton: {fileID: 11400000, guid: 0c375938a6fc1604e9d68cad2edf1581, type: 2}
     portrait: {fileID: 2800000, guid: 7aab3c365b6cf1f45a9361d15fd56e34, type: 3}
     full: {fileID: 2800000, guid: ce159e15e66083340b8d4a57b7e6822a, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: noxia
     definition: {fileID: 4900000, guid: 9adb4f585c42a454693989bd32b3192b, type: 3}
     skeleton: {fileID: 11400000, guid: 96e9686977399584db62dc8cfbd0733c, type: 2}
     portrait: {fileID: 2800000, guid: d9a19974c874c45469d99a4fca6d787e, type: 3}
     full: {fileID: 2800000, guid: 1c19ed3d86bf6f749bee7dd14a9e569f, type: 3}
     cutIn: {fileID: 2800000, guid: 990e9fc6f2c3e894abc3839ba0492ec9, type: 3}
+    sprite: {fileID: 0}
   - id: nyssa
     definition: {fileID: 4900000, guid: 76d26b35675f34040a1a48d60dd2c6e2, type: 3}
     skeleton: {fileID: 11400000, guid: 0facf86dda43db645af454c2c5e64ec2, type: 2}
     portrait: {fileID: 2800000, guid: b9ccc70ad54e25440ae87b85f6bc2863, type: 3}
     full: {fileID: 2800000, guid: ce25187520d6f53419ee3720f7c3dbb1, type: 3}
     cutIn: {fileID: 2800000, guid: 6bcb0c74e9c0e774a9e50b40dca0018c, type: 3}
+    sprite: {fileID: 0}
   - id: ostric
     definition: {fileID: 4900000, guid: ce23a32c4f828714b8f4777217ec90c8, type: 3}
     skeleton: {fileID: 11400000, guid: 6fd794cb11659304cab7bccb2653c67b, type: 2}
     portrait: {fileID: 2800000, guid: 8adc6b4ff4ec1c84e9e3c1cc88fced6b, type: 3}
     full: {fileID: 2800000, guid: 3c69aa7091fcbf349b150fe50e0fc62c, type: 3}
     cutIn: {fileID: 2800000, guid: 45a654591f6ac9e4e8cfd711932fc6e1, type: 3}
+    sprite: {fileID: 0}
   - id: pim
     definition: {fileID: 4900000, guid: ff6792a50f7052244865c7b22554d31f, type: 3}
     skeleton: {fileID: 11400000, guid: 76cb49ba655e5de4faff17c1dada3f04, type: 2}
     portrait: {fileID: 2800000, guid: ece1cb817689ca5479d6d3aca859ccd7, type: 3}
     full: {fileID: 2800000, guid: 556b1de1061ad4b4090d0e4acde1ced5, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: pyra
     definition: {fileID: 4900000, guid: d8ff267175fa8234eb5f1e9ebe22835f, type: 3}
     skeleton: {fileID: 11400000, guid: 40f37ef0a170f7843aeedb39eaf04065, type: 2}
     portrait: {fileID: 2800000, guid: 6d09ad94d2157f54badeedfd9dc0f5a2, type: 3}
     full: {fileID: 2800000, guid: 0e60cd09851578e499a600091e57de54, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: seraphine
     definition: {fileID: 4900000, guid: 55be3a66c9805da418fab0d95b684869, type: 3}
     skeleton: {fileID: 11400000, guid: 6c535a7918730c7458cd9c8b08a15ba1, type: 2}
     portrait: {fileID: 2800000, guid: cc8d9c1893293b74f86fe9280b1afc77, type: 3}
     full: {fileID: 2800000, guid: 9224ff9c4c1ca3548bc59248c4ee7812, type: 3}
     cutIn: {fileID: 2800000, guid: 13088ad079140774c8b5aaaeac06c119, type: 3}
+    sprite: {fileID: 0}
   - id: spellblade
     definition: {fileID: 4900000, guid: c726ecc06c0617c4d946f116c71f280c, type: 3}
     skeleton: {fileID: 11400000, guid: 3cb30c363943c9d45be74b9258c5eac0, type: 2}
     portrait: {fileID: 2800000, guid: 5efc52acbe9923b4da22f132ee149ad6, type: 3}
     full: {fileID: 2800000, guid: c662b887ddebfae4795f1dada939fa58, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: thalindra
     definition: {fileID: 4900000, guid: 0fc702162a1b80648bf28a81ee62fb7f, type: 3}
     skeleton: {fileID: 11400000, guid: 2f7568c144c274d49889eb095a2af7a2, type: 2}
     portrait: {fileID: 2800000, guid: 522d2079894b1ee43b84e799b4548c31, type: 3}
     full: {fileID: 2800000, guid: 8b5430af283e41844879a027ac883d77, type: 3}
     cutIn: {fileID: 2800000, guid: f03daaf78db605b44abd56cd4f017b80, type: 3}
+    sprite: {fileID: 0}
   - id: tobias
     definition: {fileID: 4900000, guid: adef2f382c56b2c45aff8685dfb3d648, type: 3}
     skeleton: {fileID: 11400000, guid: 688281d244a8d3246a6e4f24474cb36d, type: 2}
     portrait: {fileID: 2800000, guid: 5160ac14f48ca94478129e31fbf9e5f0, type: 3}
     full: {fileID: 2800000, guid: d3fe10b7f619aa040a9012d271b079b0, type: 3}
     cutIn: {fileID: 2800000, guid: 0735d6a8a0d342743b96cca9b4951902, type: 3}
+    sprite: {fileID: 0}
   - id: vala
     definition: {fileID: 4900000, guid: 33956617404e76c40bcdd5e74a668c1a, type: 3}
     skeleton: {fileID: 11400000, guid: 5b9db37496c2a0b4f9f21e9578c8f8a3, type: 2}
     portrait: {fileID: 2800000, guid: cd614db2f6ea1de4dab418341f7fed46, type: 3}
     full: {fileID: 2800000, guid: 68566a9498ac404478488c5e979b9487, type: 3}
     cutIn: {fileID: 2800000, guid: 1aefb316876f59d4083fb7bfe094b656, type: 3}
+    sprite: {fileID: 0}
   - id: vesper
     definition: {fileID: 4900000, guid: 317b83f9a1b470c40b3130f018a8ff2e, type: 3}
     skeleton: {fileID: 11400000, guid: 26f8a646e92056741a9aeb561df00825, type: 2}
     portrait: {fileID: 2800000, guid: 562d1a867f1f9984783e44f6ef357020, type: 3}
     full: {fileID: 2800000, guid: b85fcdb4eca2a3a48bc95237d1297698, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: vex
     definition: {fileID: 4900000, guid: 5c74b9b12af2fc440a755cdbe51587af, type: 3}
     skeleton: {fileID: 11400000, guid: 9a00567a76ee0914db3a8e6650673158, type: 2}
     portrait: {fileID: 2800000, guid: e17c552a72eacfb43999510180e77cf4, type: 3}
     full: {fileID: 2800000, guid: 97608c27e9a3bee44b4f0f2277d316fb, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: veyl
     definition: {fileID: 4900000, guid: 3c11152b790b19f4f97f0015784296a3, type: 3}
     skeleton: {fileID: 11400000, guid: 2a8f24eba2710cb4ca19bcfd720e0a46, type: 2}
     portrait: {fileID: 2800000, guid: a33320e395c77b348956e65fb0f6b92b, type: 3}
     full: {fileID: 2800000, guid: b10320db7eb74b74b9cd6b768bc9b3b3, type: 3}
     cutIn: {fileID: 2800000, guid: 25f465294817e8d4284c359e797211bf, type: 3}
+    sprite: {fileID: 0}
   - id: wren
     definition: {fileID: 4900000, guid: 2bac66765114e9346abc7f5a0b4320ff, type: 3}
     skeleton: {fileID: 11400000, guid: 009de2d1a7c4a6345994ba204458c79c, type: 2}
     portrait: {fileID: 2800000, guid: 077b975c5eb571641afa62920d196a14, type: 3}
     full: {fileID: 2800000, guid: ddf44400aa76aed45a7a784bc1d91f13, type: 3}
     cutIn: {fileID: 0}
+    sprite: {fileID: 0}
   - id: ysolde
     definition: {fileID: 4900000, guid: d572ea1f0904c3f49a0f0d13835bf0cc, type: 3}
     skeleton: {fileID: 11400000, guid: 896a72cdecfec8546897ad87c4be569c, type: 2}
     portrait: {fileID: 2800000, guid: b2305a43c2361314bb63477b52e09e65, type: 3}
     full: {fileID: 2800000, guid: 83a86b57c8cae314abcd2e6f014ef715, type: 3}
     cutIn: {fileID: 2800000, guid: bd215c8ae93a9e34587f5027630714e1, type: 3}
+    sprite: {fileID: 0}
   - id: ysra
     definition: {fileID: 4900000, guid: 397c4bd760cc5034cb4c7c1ffc51cc64, type: 3}
     skeleton: {fileID: 11400000, guid: 5778169d118cc7b489af014f5297bf1d, type: 2}
     portrait: {fileID: 2800000, guid: 95739545809a06f47b6f3223c3d702e6, type: 3}
     full: {fileID: 2800000, guid: c82ba585e07de7a4da1312ab5623e25d, type: 3}
     cutIn: {fileID: 2800000, guid: 7691afd3c9239e6468cda85871bcaeab, type: 3}
+    sprite: {fileID: 0}
   - id: zephyr
     definition: {fileID: 4900000, guid: 1fcd7b281579da64a808f77a7ea4616d, type: 3}
     skeleton: {fileID: 11400000, guid: 0c2a0d8898b9a22429ddbb4b745e25c5, type: 2}
     portrait: {fileID: 2800000, guid: 3d00a0d2309051b4da2926536227e34d, type: 3}
     full: {fileID: 2800000, guid: ffa33c9932fecd144afe1644665b494e, type: 3}
     cutIn: {fileID: 2800000, guid: eb40c8a3109e0e147bbbd8ea6bbfec0a, type: 3}
+    sprite: {fileID: 0}
+  monsters:
+  - id: corrupted_boar
+    definition: {fileID: 4900000, guid: 91903f4aca551c9468fc84824cbeb840, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 8825fc241fe339a4e8e267c66f45bd4e, type: 3}
+    full: {fileID: 2800000, guid: 597b326f194e7d64fb86f288e0a628b7, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 597b326f194e7d64fb86f288e0a628b7, type: 3}
+  - id: corrupted_crow
+    definition: {fileID: 4900000, guid: 92c0905d593031c43b2c23adc002372a, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: d5374f990348bab4e887b02f524580a9, type: 3}
+    full: {fileID: 2800000, guid: 5cf75194013f79f4c82538261d95f5e0, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 5cf75194013f79f4c82538261d95f5e0, type: 3}
+  - id: corrupted_guardian_of_the_deep
+    definition: {fileID: 4900000, guid: edf864b7acbba1c4088027c877e540df, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 0}
+    full: {fileID: 0}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 0}
+  - id: corrupted_wolf
+    definition: {fileID: 4900000, guid: a07a3c4b16329b0488e7edc8555cbe73, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: cbf47f122b89f0547ab39afa353bac86, type: 3}
+    full: {fileID: 2800000, guid: 932b3b02f88acce40a7adf405493a077, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 932b3b02f88acce40a7adf405493a077, type: 3}
+  - id: crimson_wraith
+    definition: {fileID: 4900000, guid: 4d2947b38df7520499328e2fbe53fc40, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 71998f8242489974cb495e095b566535, type: 3}
+    full: {fileID: 2800000, guid: b941bf6ab0ed0994fa0aa64ea430ed7e, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: b941bf6ab0ed0994fa0aa64ea430ed7e, type: 3}
+  - id: crimson_wraith_adept
+    definition: {fileID: 4900000, guid: 1e6c0237ed9f93748bb7241c5141a916, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 97991ccc0c922894c8a566dd13f5e08d, type: 3}
+    full: {fileID: 2800000, guid: 447c6f2378629c445b55da14a368a546, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 447c6f2378629c445b55da14a368a546, type: 3}
+  - id: dragon_echo_of_the_sky
+    definition: {fileID: 4900000, guid: 973615f6037bda44d925af23fce440a6, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 0}
+    full: {fileID: 0}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 0}
+  - id: false_guardian_construct
+    definition: {fileID: 4900000, guid: ed72a8e165767da4a89633ce52c83f6a, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 0}
+    full: {fileID: 0}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 0}
+  - id: forest_wolf
+    definition: {fileID: 4900000, guid: 5d3c94896cc0a7349bec2159547e7b95, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: e62aedb8eb95d2348be33dccc4305105, type: 3}
+    full: {fileID: 2800000, guid: 510bcf45e8aa4f044ad2e5972ecb4953, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 510bcf45e8aa4f044ad2e5972ecb4953, type: 3}
+  - id: fragment_construct
+    definition: {fileID: 4900000, guid: caf17d54b0562a84396d9b73c168840a, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: c4f80ce28edf60349b9663688db0fb63, type: 3}
+    full: {fileID: 2800000, guid: 74ee143f9cde7734aa1e95068bde832c, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 74ee143f9cde7734aa1e95068bde832c, type: 3}
+  - id: fragment_devourer
+    definition: {fileID: 4900000, guid: 3ea851d68bdad6942a02ad11e29b0c61, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 0}
+    full: {fileID: 0}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 0}
+  - id: hollow_spire_warden
+    definition: {fileID: 4900000, guid: 46dbe8ae5db219b4e976e766646c3e10, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: d6cfd018bb88f004e9a125ea86d208cb, type: 3}
+    full: {fileID: 2800000, guid: 35ff071ed84ae874cbec144ea0028fd6, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 35ff071ed84ae874cbec144ea0028fd6, type: 3}
+  - id: hollowed_archer
+    definition: {fileID: 4900000, guid: 1181a30847d3572468d969d5539cbe25, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 5d0f5b97b5696a243a1945626d854dc7, type: 3}
+    full: {fileID: 2800000, guid: e60aeeb2cf56899449d17f0560ad0e82, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: e60aeeb2cf56899449d17f0560ad0e82, type: 3}
+  - id: hollowed_soldier
+    definition: {fileID: 4900000, guid: b640d21bdd98fdf459a7b23550a83ba7, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 201131a28cce66c419bd7bdaaec73c26, type: 3}
+    full: {fileID: 2800000, guid: 56a76fdacf844a84ea43ef89f7d565a2, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 56a76fdacf844a84ea43ef89f7d565a2, type: 3}
+  - id: hollowtusk_alpha
+    definition: {fileID: 4900000, guid: eacb965ad06f1524a81a54ff15227b8f, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: c8bb43193bf19674c9b7ac86239c5c3b, type: 3}
+    full: {fileID: 2800000, guid: 7bf472ed66929274ab9fa860fb0d278e, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 7bf472ed66929274ab9fa860fb0d278e, type: 3}
+  - id: obsidian_vault_sentinel
+    definition: {fileID: 4900000, guid: 63e6ed7f6d52de142938a40c625a0f93, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 7aa9576a8ded7044ea5f93cc144e4204, type: 3}
+    full: {fileID: 2800000, guid: b326bb0e507b2bc4097afa1a4af1d1e4, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: b326bb0e507b2bc4097afa1a4af1d1e4, type: 3}
+  - id: riftborn_stalker
+    definition: {fileID: 4900000, guid: c4941a331a9d13748807dce7c584a9d6, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: b368b80a2ec23df4e86c00194c65f6fd, type: 3}
+    full: {fileID: 2800000, guid: 1ce8c851b7c1dd445baa84c1a3a8f824, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 1ce8c851b7c1dd445baa84c1a3a8f824, type: 3}
+  - id: riftborn_treant
+    definition: {fileID: 4900000, guid: b784533c623b43d48855600b34bdccf5, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 797db07b5f82971439f364547a9e1f83, type: 3}
+    full: {fileID: 2800000, guid: 574e65d46e4b3834ea17698e0c35cc75, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 574e65d46e4b3834ea17698e0c35cc75, type: 3}
+  - id: riftborn_wisp
+    definition: {fileID: 4900000, guid: ad95c7a8d5953d443b15a58182a56a35, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 335b32e93f94b3d4aa3b62d97248406f, type: 3}
+    full: {fileID: 2800000, guid: 841ff79bcb1545a43b6cbb21745efe0e, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 841ff79bcb1545a43b6cbb21745efe0e, type: 3}
+  - id: wild_boar
+    definition: {fileID: 4900000, guid: 7e8b680585a1f1d469dc928e977c27c8, type: 3}
+    skeleton: {fileID: 0}
+    portrait: {fileID: 2800000, guid: c0024b3aeb429aa48a31ddd10446f088, type: 3}
+    full: {fileID: 2800000, guid: 726065cb64856f04c82dc87e5025f76c, type: 3}
+    cutIn: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 726065cb64856f04c82dc87e5025f76c, type: 3}

@@ -1,0 +1,96 @@
+{
+  "id": "riftborn_stalker",
+  "name": "Riftborn Stalker",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "envyra",
+  "role": "dps",
+  "row": "front",
+  "grade": "rare",
+  "group": "riftborn",
+  "boss": false,
+  "sizePermille": 1000,
+  "body": "humanoid",
+  "spineId": "riftborn_stalker",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 850,
+    "attack": 85,
+    "defense": 42,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "riftborn_stalker.normal",
+    "name": "Klingenfinger",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 950
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      400,
+      520
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "riftborn_stalker.special",
+    "name": "Rift-Schritt",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "enemyBack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1800
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      800,
+      920,
+      1040
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "riftborn_stalker.passive",
+    "name": "Diebischer Riss",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "chance": 200,
+        "effect": {
+          "kind": "stealBuff",
+          "multiplier": 1
+        }
+      }
+    ]
+  }
+}

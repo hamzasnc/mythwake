@@ -759,6 +759,8 @@ namespace Mythwake.Core.Combat
                 {
                     u.NextRegenTickMs += 1000;
                     var regen = u.Sum(PassiveKind.Regen, _now);
+                    if (u.Side == Side.Enemies)
+                        regen += _setup.Rules.EnemyRegenPermille;
                     var stacking = u.First(PassiveKind.StackingAttackSpeed);
                     if (stacking != null)
                         regen += stacking.StackRegen * u.StackCount;

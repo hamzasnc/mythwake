@@ -1,0 +1,97 @@
+{
+  "id": "wild_boar",
+  "name": "Wild Boar",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "gorath",
+  "role": "tank",
+  "row": "front",
+  "grade": "rare",
+  "group": "wildBeast",
+  "boss": false,
+  "sizePermille": 1000,
+  "body": "quadruped",
+  "spineId": "wild_boar",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1445,
+    "attack": 60,
+    "defense": 76,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "wild_boar.normal",
+    "name": "Hauerstoß",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 900
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "wild_boar.special",
+    "name": "Ansturm",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1500
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 1000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "wild_boar.passive",
+    "name": "Dickes Fell",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageReduction",
+        "value": 100
+      }
+    ]
+  }
+}

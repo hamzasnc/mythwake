@@ -1,0 +1,97 @@
+{
+  "id": "corrupted_crow",
+  "name": "Corrupted Crow",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "veloria",
+  "role": "debuffer",
+  "row": "back",
+  "grade": "rare",
+  "group": "corruptedBeast",
+  "boss": false,
+  "sizePermille": 1000,
+  "body": "flying",
+  "spineId": "corrupted_crow",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 892,
+    "attack": 76,
+    "defense": 47,
+    "attackIntervalMs": 1700,
+    "critRate": 120,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "corrupted_crow.normal",
+    "name": "Schnabelhieb",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyBack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "corrupted_crow.special",
+    "name": "Drittes Auge",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 10000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 800
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "confuse",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "corrupted_crow.passive",
+    "name": "Flatterflug",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "dodge",
+        "value": 150
+      }
+    ]
+  }
+}

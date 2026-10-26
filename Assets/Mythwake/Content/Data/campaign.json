@@ -3,44 +3,125 @@
     {
       "id": "dawnhollow",
       "name": "Dawnhollow",
-      "stages": 20
+      "stages": 20,
+      "monsters": [
+        "forest_wolf",
+        "wild_boar",
+        "corrupted_wolf",
+        "corrupted_boar"
+      ],
+      "boss": "hollowtusk_alpha",
+      "heroSharePermille": 400
     },
     {
       "id": "mossveil_woods",
       "name": "Mossveil Woods",
-      "stages": 20
+      "stages": 20,
+      "monsters": [
+        "corrupted_wolf",
+        "corrupted_boar",
+        "corrupted_crow",
+        "riftborn_wisp"
+      ],
+      "boss": "riftborn_treant",
+      "heroSharePermille": 400
     },
     {
       "id": "chapter_3",
-      "stages": 20
+      "stages": 20,
+      "monsters": [
+        "hollowed_soldier",
+        "hollowed_archer",
+        "crimson_wraith",
+        "corrupted_crow"
+      ],
+      "boss": "crimson_wraith_adept",
+      "heroSharePermille": 400
     },
     {
       "id": "chapter_4",
-      "stages": 20
+      "stages": 20,
+      "monsters": [
+        "hollowed_soldier",
+        "hollowed_archer",
+        "crimson_wraith",
+        "riftborn_stalker"
+      ],
+      "boss": "hollow_spire_warden",
+      "heroSharePermille": 400
     },
     {
       "id": "chapter_5",
-      "stages": 20
+      "stages": 20,
+      "monsters": [
+        "fragment_construct",
+        "riftborn_stalker",
+        "riftborn_wisp",
+        "crimson_wraith"
+      ],
+      "boss": "obsidian_vault_sentinel",
+      "heroSharePermille": 400
     },
     {
       "id": "chapter_6",
-      "stages": 20
+      "stages": 20,
+      "monsters": [
+        "riftborn_stalker",
+        "riftborn_wisp",
+        "fragment_construct",
+        "corrupted_crow"
+      ],
+      "boss": "fragment_devourer",
+      "heroSharePermille": 400
     },
     {
       "id": "chapter_7",
-      "stages": 20
+      "stages": 20,
+      "monsters": [
+        "hollowed_soldier",
+        "riftborn_wisp",
+        "fragment_construct",
+        "crimson_wraith"
+      ],
+      "boss": "corrupted_guardian_of_the_deep",
+      "heroSharePermille": 400
     },
     {
       "id": "chapter_8",
-      "stages": 20
+      "stages": 20,
+      "monsters": [
+        "crimson_wraith",
+        "riftborn_stalker",
+        "corrupted_wolf",
+        "fragment_construct"
+      ],
+      "boss": "dragon_echo_of_the_sky",
+      "heroSharePermille": 400
     },
     {
       "id": "chapter_9",
-      "stages": 20
+      "stages": 20,
+      "monsters": [
+        "fragment_construct",
+        "riftborn_stalker",
+        "hollowed_archer",
+        "crimson_wraith"
+      ],
+      "boss": "false_guardian_construct",
+      "heroSharePermille": 400
     },
     {
       "id": "chapter_10",
-      "stages": 20
+      "stages": 20,
+      "monsters": [
+        "fragment_construct",
+        "riftborn_stalker",
+        "riftborn_wisp",
+        "crimson_wraith",
+        "hollowed_soldier"
+      ],
+      "boss": "false_guardian_construct",
+      "heroSharePermille": 400
     }
   ],
   "bossEvery": 10,

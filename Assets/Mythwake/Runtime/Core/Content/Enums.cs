@@ -9,6 +9,9 @@ namespace Mythwake.Core.Content
 
     public enum Role { Dps, Tank, Support, Debuffer, HeroLeader }
 
+    /// <summary>Enemy groups from the design doc's Enemy System. None = a playable hero.</summary>
+    public enum EnemyGroup { None, WildBeast, CorruptedBeast, Hollowed, CrimsonWraith, Riftborn, FragmentConstruct, CorruptedGuardian }
+
     public enum Row { Front, Back }
 
     public enum Grade { Common, Rare, Epic, Legendary, Transcendent }

@@ -22,6 +22,10 @@ namespace Mythwake.Content.Tests
 
         public static string HeroesDir() => Path.Combine(ContentDir(), "Heroes");
 
+        public static string[] MonsterFiles() =>
+            Directory.GetFiles(Path.Combine(ContentDir(), "Monsters"), "*.monster.json", SearchOption.AllDirectories)
+                .OrderBy(p => p, System.StringComparer.Ordinal).ToArray();
+
         public static string[] HeroFiles() =>
             Directory.GetFiles(HeroesDir(), "*.hero.json", SearchOption.AllDirectories).OrderBy(p => p, System.StringComparer.Ordinal).ToArray();
 
@@ -32,7 +36,8 @@ namespace Mythwake.Content.Tests
             var data = Path.Combine(ContentDir(), "Data");
             _content = GameContentLoader.Load(
                 name => File.ReadAllText(Path.Combine(data, name + ".json")),
-                HeroFiles().Select(File.ReadAllText));
+                HeroFiles().Select(File.ReadAllText),
+                MonsterFiles().Select(File.ReadAllText));
             return _content;
         }
     }

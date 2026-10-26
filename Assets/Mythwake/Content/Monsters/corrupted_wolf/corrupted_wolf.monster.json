@@ -1,0 +1,106 @@
+{
+  "id": "corrupted_wolf",
+  "name": "Corrupted Wolf",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "ravak",
+  "role": "dps",
+  "row": "front",
+  "grade": "rare",
+  "group": "corruptedBeast",
+  "boss": false,
+  "sizePermille": 1000,
+  "body": "quadruped",
+  "spineId": "corrupted_wolf",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 850,
+    "attack": 85,
+    "defense": 42,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "corrupted_wolf.normal",
+    "name": "Fragmentbiss",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "corrupted_wolf.special",
+    "name": "Wilder Sprung",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1800
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "burn",
+          "durationMs": 2000,
+          "value": 120
+        }
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      800,
+      920
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "corrupted_wolf.passive",
+    "name": "Verdorbene Fänge",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "chance": 200,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "burn",
+            "durationMs": 2000,
+            "value": 120
+          }
+        }
+      }
+    ]
+  }
+}

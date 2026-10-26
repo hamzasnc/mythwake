@@ -9,11 +9,12 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
-        public static GameContent Load(System.Func<string, string> readData, IEnumerable<string> heroJsons)
+        /// <param name="monsterJsons">Texts of all *.monster.json files (optional).</param>
+        public static GameContent Load(System.Func<string, string> readData, IEnumerable<string> heroJsons, IEnumerable<string> monsterJsons = null)
         {
             var content = new GameContent
             {
@@ -26,7 +27,8 @@ namespace Mythwake.Content
                 Gear = ContentJson.Parse<GearConfig>(readData("gear")),
                 Quests = ContentJson.Parse<QuestConfig>(readData("quests")),
                 Hunts = ContentJson.Parse<HuntConfig>(readData("hunts")),
-                Arena = ContentJson.Parse<ArenaConfig>(readData("arena"))
+                Arena = ContentJson.Parse<ArenaConfig>(readData("arena")),
+                Dungeons = ContentJson.Parse<DungeonConfig>(readData("dungeons"))
             };
             foreach (var json in heroJsons)
             {
@@ -36,7 +38,34 @@ namespace Mythwake.Content
                 content.Heroes.Add(hero.Id, hero);
             }
 
-            var errors = ContentValidator.Validate(content.Heroes.Values);
+            foreach (var json in monsterJsons ?? Enumerable.Empty<string>())
+            {
+                var monster = ContentJson.ParseHero(json);
+                if (content.Heroes.ContainsKey(monster.Id) || content.Monsters.ContainsKey(monster.Id))
+                    throw new ContentException($"duplicate id '{monster.Id}'");
+                content.Monsters.Add(monster.Id, monster);
+            }
+
+            var errors = ContentValidator.Validate(content.Heroes.Values.Concat(content.Monsters.Values));
+            foreach (var m in content.Monsters.Values)
+                if (m.Group == EnemyGroup.None)
+                    errors.Add($"monster {m.Id}: needs an enemy group");
+            foreach (var d in content.Dungeons.Dungeons)
+            {
+                if (!content.Monsters.ContainsKey(d.Boss ?? ""))
+                    errors.Add($"dungeons.json/{d.Id}: unknown boss '{d.Boss}'");
+                foreach (var id in d.Escort)
+                    if (!content.Monsters.ContainsKey(id))
+                        errors.Add($"dungeons.json/{d.Id}: unknown escort '{id}'");
+            }
+            foreach (var c in content.Campaign.Chapters)
+            {
+                foreach (var id in c.Monsters)
+                    if (!content.Monsters.ContainsKey(id))
+                        errors.Add($"campaign.json/{c.Id}: unknown monster '{id}'");
+                if (c.Boss != null && !content.Monsters.ContainsKey(c.Boss))
+                    errors.Add($"campaign.json/{c.Id}: unknown boss '{c.Boss}'");
+            }
             foreach (var id in content.Start.Heroes)
                 if (!content.Heroes.ContainsKey(id))
                     errors.Add($"start.json: unknown hero '{id}'");

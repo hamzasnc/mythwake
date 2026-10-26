@@ -25,6 +25,8 @@ namespace Mythwake.Core.Combat
         public int HealingModifier;      // permille, e.g. -500 = healing halved
         public int EnemyDamageModifier;  // permille
         public int EnergyGainModifier;   // permille
+        /// <summary>Enemies heal this permille of max HP every second.</summary>
+        public int EnemyRegenPermille;
         public int MaxDurationMs = 90_000;
     }
 

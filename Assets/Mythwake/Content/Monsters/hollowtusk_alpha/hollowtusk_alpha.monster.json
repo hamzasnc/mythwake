@@ -1,0 +1,172 @@
+{
+  "id": "hollowtusk_alpha",
+  "name": "Hollowtusk Alpha",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "gorath",
+  "role": "tank",
+  "row": "front",
+  "grade": "rare",
+  "group": "corruptedBeast",
+  "boss": true,
+  "sizePermille": 1350,
+  "body": "quadruped",
+  "spineId": "hollowtusk_alpha",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 4250,
+    "attack": 84,
+    "defense": 108,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "hollowtusk_alpha.normal",
+    "name": "Hauerschlag",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1200
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "hollowtusk_alpha.special",
+    "name": "Rottenansturm",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1700
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 1500,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "hollowtusk_alpha.special2",
+    "name": "Hohler Schrei",
+    "description": "",
+    "slot": "special2",
+    "trigger": {
+      "kind": "selfBelowHp",
+      "hpThresholdPermille": 500,
+      "cooldownMs": 0,
+      "oncePerBattle": true
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "attackUp",
+          "durationMs": 8000,
+          "value": 300
+        }
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "regen",
+          "durationMs": 5000,
+          "value": 50
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "hollowtusk_alpha.passive",
+    "name": "Leitkeiler",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageBonus",
+        "growth": 50
+      },
+      {
+        "kind": "regen",
+        "value": 10
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "hollowtusk_alpha.ultimate",
+    "name": "Wilde Raserei",
+    "description": "",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 4500
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "slow",
+          "durationMs": 3000,
+          "value": 250
+        }
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1300,
+      1420,
+      1540
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

@@ -173,8 +173,25 @@
     {
       "id": "portalChamber",
       "name": "Portal Chamber",
-      "description": "Schaltet Dungeons, Events und den Zugang zu den Shattered Realms frei.",
-      "effect": "none"
+      "description": "Schaltet Dungeons, Events und den Zugang zu den Shattered Realms frei. Stufe 1: Material Dungeon, Stufe 2: Gear Dungeon.",
+      "effect": "portal",
+      "unlockStage": 20,
+      "maxLevel": 2,
+      "baseCost": [
+        {
+          "id": "gold",
+          "value": 3000
+        },
+        {
+          "id": "wood",
+          "value": 1200
+        },
+        {
+          "id": "stone",
+          "value": 1200
+        }
+      ],
+      "costGrowthPermille": 1800
     }
   ]
 }

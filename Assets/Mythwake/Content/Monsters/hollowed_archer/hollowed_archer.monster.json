@@ -1,0 +1,105 @@
+{
+  "id": "hollowed_archer",
+  "name": "Hollowed Archer",
+  "title": "",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "somnara",
+  "role": "dps",
+  "row": "back",
+  "grade": "rare",
+  "group": "hollowed",
+  "boss": false,
+  "sizePermille": 1000,
+  "body": "humanoid",
+  "spineId": "hollowed_archer",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 850,
+    "attack": 85,
+    "defense": 42,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "hollowed_archer.normal",
+    "name": "Kristallpfeil",
+    "description": "",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyBack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 950
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      400
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "hollowed_archer.special",
+    "name": "Schlafpfeil",
+    "description": "",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1100
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "sleep",
+          "durationMs": 1500,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "hollowed_archer.passive",
+    "name": "Lähmende Spitzen",
+    "description": "",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "chance": 150,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "slow",
+            "durationMs": 1000,
+            "value": 150
+          }
+        }
+      }
+    ]
+  }
+}
