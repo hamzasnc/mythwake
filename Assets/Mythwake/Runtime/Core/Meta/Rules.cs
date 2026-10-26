@@ -146,17 +146,7 @@ namespace Mythwake.Core.Meta
                 fighters.RemoveAt(i);
             }
 
-            var level = EnemyLevel(content, stage);
-            var stars = 1 + (content.Campaign.EnemyStarsEveryStages > 0 ? (stage - 1) / content.Campaign.EnemyStarsEveryStages : 0);
-            var front = picked.FindAll(h => h.Row == Row.Front);
-            var back = picked.FindAll(h => h.Row == Row.Back);
-            var ordered = new List<HeroProgress>();
-            for (var slot = 0; slot < 5; slot++)
-                ordered.Add(null);
-            Place(ordered, front, new[] { 0, 1, 2, 3, 4 }, level, stars);
-            Place(ordered, back, new[] { 2, 3, 4, 0, 1 }, level, stars);
-
-            var team = TeamBuilder.Build(ordered);
+            var team = Arrange(picked, EnemyLevel(content, stage), EnemyStars(content, stage));
             var c = content.Campaign;
             if (c.EarlyStatStages > 1 && stage < c.EarlyStatStages)
             {
@@ -177,6 +167,30 @@ namespace Mythwake.Core.Meta
             return team;
         }
 
+        public static int EnemyStars(GameContent content, int stage) =>
+            1 + (content.Campaign.EnemyStarsEveryStages > 0 ? (stage - 1) / content.Campaign.EnemyStarsEveryStages : 0);
+
+        /// <summary>Puts enemy heroes into a formation (front-row heroes in front) and builds their battle stats.</summary>
+        public static List<UnitSetup> Arrange(List<HeroDefinition> heroes, int level, int stars)
+        {
+            var front = heroes.FindAll(h => h.Row == Row.Front);
+            var back = heroes.FindAll(h => h.Row == Row.Back);
+            var ordered = new List<HeroProgress>();
+            for (var slot = 0; slot < 5; slot++)
+                ordered.Add(null);
+            Place(ordered, front, new[] { 0, 1, 2, 3, 4 }, level, stars);
+            Place(ordered, back, new[] { 2, 3, 4, 0, 1 }, level, stars);
+            return TeamBuilder.Build(ordered);
+        }
+
+        /// <summary>The player's side of any battle: formation, Hero Leader and village bonuses.</summary>
+        public static List<UnitSetup> Allies(PlayerState state, GameContent content, string[] formation)
+        {
+            var leader = string.IsNullOrEmpty(state.Leader) ? null : state.FindHero(state.Leader);
+            var leaderProgress = leader == null ? null : new HeroProgress { Hero = content.Hero(leader.HeroId), Level = leader.Level, Stars = leader.Stars };
+            return TeamBuilder.Build(Formations.ToProgress(state, content, formation), leaderProgress, Village.CombatBonus(state, content));
+        }
+
         private static void Place(List<HeroProgress> slots, List<HeroDefinition> heroes, int[] order, int level, int stars)
         {
             foreach (var h in heroes)
@@ -190,12 +204,10 @@ namespace Mythwake.Core.Meta
 
         public static BattleSetup BuildBattle(PlayerState state, GameContent content, PendingBattle pending)
         {
-            var leader = string.IsNullOrEmpty(state.Leader) ? null : state.FindHero(state.Leader);
-            var leaderProgress = leader == null ? null : new HeroProgress { Hero = content.Hero(leader.HeroId), Level = leader.Level, Stars = leader.Stars };
             return new BattleSetup
             {
                 Seed = pending.Seed,
-                Allies = TeamBuilder.Build(Formations.ToProgress(state, content, pending.Formation), leaderProgress, Village.CombatBonus(state, content)),
+                Allies = Allies(state, content, pending.Formation),
                 Enemies = Enemies(content, pending.Stage)
             };
         }

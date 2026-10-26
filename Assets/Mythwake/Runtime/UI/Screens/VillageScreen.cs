@@ -95,6 +95,8 @@ namespace Mythwake.UI
                 card.Add(Slots(def, level));
             if (level > 0 && def.Effect == BuildingEffect.Forge)
                 card.Add(Forge());
+            if (level > 0 && def.Effect == BuildingEffect.Hunting)
+                UiKit.Btn("Hunt Board", () => Ui.Router.Push(new HuntScreen())).Into(card);
 
             if (!Village.Unlocked(state, def))
             {
@@ -131,6 +133,8 @@ namespace Mythwake.UI
                     return Loc.T("village.effect.healing", (Village.TotalBonus(Ui.State, Ui.Content, def) / 10f).ToString("0.#"));
                 case BuildingEffect.UnlockSummon:
                     return Loc.T("village.effect.summon");
+                case BuildingEffect.Hunting:
+                    return Loc.T("village.effect.hunting", Hunts.DailyCount(Ui.Content, level), Hunts.WeeklyCount(Ui.Content, level));
                 case BuildingEffect.Forge:
                     var w = Gear.CraftWeights(Ui.State, Ui.Content);
                     if (w == null)

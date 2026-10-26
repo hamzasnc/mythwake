@@ -750,3 +750,9 @@
     font-size: 26px;
     -unity-font-style: bold;
 }
+
+/* ---------------------------------------------------------------- hunts */
+
+.hunt--elite { border-color: var(--bad); }
+.hunt__stars { font-size: 30px; color: var(--legendary); }
+.icon--huntTokens { background-color: #d9784a; }

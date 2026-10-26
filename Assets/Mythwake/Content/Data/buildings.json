@@ -127,8 +127,30 @@
     {
       "id": "huntersHut",
       "name": "Hunter's Hut",
-      "description": "Schaltet tägliche Missionen und Monsterjagden frei.",
-      "effect": "none"
+      "description": "Schaltet das Hunt Board mit täglichen und wöchentlichen Jagden sowie den Hunt Shop frei. Höhere Stufen bringen mehr Jagden, bessere Belohnungen und stärkere Gegner.",
+      "effect": "hunting",
+      "unlockStage": 12,
+      "maxLevel": 10,
+      "baseCost": [
+        {
+          "id": "gold",
+          "value": 1500
+        },
+        {
+          "id": "wood",
+          "value": 600
+        },
+        {
+          "id": "stone",
+          "value": 500
+        }
+      ],
+      "costGrowthPermille": 1500,
+      "slotLevels": [
+        1,
+        5
+      ],
+      "heroBonus": 50
     },
     {
       "id": "watchtower",

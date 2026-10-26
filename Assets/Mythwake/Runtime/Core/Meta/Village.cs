@@ -17,7 +17,9 @@ namespace Mythwake.Core.Meta
         /// <summary>Unlocks hero recruitment (Summoning Gate).</summary>
         UnlockSummon,
         /// <summary>Unlocks gear crafting and upgrades; higher levels craft higher grades (Broken Forge).</summary>
-        Forge
+        Forge,
+        /// <summary>Unlocks the Hunt Board and Hunt Shop; higher levels add hunts, rewards and difficulty (Hunter's Hut).</summary>
+        Hunting
     }
 
     public sealed class BuildingDefinition

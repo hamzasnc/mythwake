@@ -1,0 +1,219 @@
+{
+  "dailyBase": 3,
+  "dailyEveryLevels": 3,
+  "weeklyBase": 1,
+  "weeklyExtraAtLevel": 6,
+  "rewardPerLevelPermille": 100,
+  "tierRewardPermille": 250,
+  "enemyLevelEveryHutLevels": 3,
+  "tierLevelOffset": [
+    -3,
+    0,
+    3
+  ],
+  "eliteLevelBonus": 5,
+  "eliteStatBonusPermille": 300,
+  "tokensPerTier": [
+    10,
+    15,
+    20
+  ],
+  "weeklyTokens": 60,
+  "missions": [
+    {
+      "id": "corruptedWolves",
+      "name": "Defeat corrupted wolves",
+      "rewards": [
+        {
+          "id": "gold",
+          "base": 1500,
+          "perStage": 60
+        },
+        {
+          "id": "heroExp",
+          "base": 1200,
+          "perStage": 50
+        }
+      ]
+    },
+    {
+      "id": "forestPath",
+      "name": "Clear a forest path",
+      "rewards": [
+        {
+          "id": "wood",
+          "base": 300,
+          "perStage": 15
+        },
+        {
+          "id": "stone",
+          "base": 300,
+          "perStage": 15
+        }
+      ]
+    },
+    {
+      "id": "caravan",
+      "name": "Protect a caravan",
+      "rewards": [
+        {
+          "id": "gold",
+          "base": 2500,
+          "perStage": 100
+        }
+      ]
+    },
+    {
+      "id": "lostVillagers",
+      "name": "Rescue lost villagers",
+      "rewards": [
+        {
+          "id": "wood",
+          "base": 200,
+          "perStage": 10
+        },
+        {
+          "id": "stone",
+          "base": 200,
+          "perStage": 10
+        },
+        {
+          "id": "heroExp",
+          "base": 800,
+          "perStage": 30
+        }
+      ]
+    },
+    {
+      "id": "monsterMaterials",
+      "name": "Collect monster materials",
+      "rewards": [
+        {
+          "id": "gearMaterials",
+          "base": 25,
+          "perStage": 1
+        }
+      ]
+    },
+    {
+      "id": "riftborn",
+      "name": "Defeat a Riftborn enemy",
+      "enemyFaction": "circleOfAether",
+      "rewards": [
+        {
+          "id": "gearMaterials",
+          "base": 15,
+          "perStage": 1
+        },
+        {
+          "id": "gold",
+          "base": 1000,
+          "perStage": 40
+        }
+      ]
+    },
+    {
+      "id": "hollowedBeast",
+      "name": "Hunt a Hollowed beast",
+      "enemyFaction": "theHollowed",
+      "weekly": true,
+      "rewards": [
+        {
+          "id": "summonScroll",
+          "base": 1,
+          "perStage": 0
+        },
+        {
+          "id": "gearMaterials",
+          "base": 60,
+          "perStage": 2
+        },
+        {
+          "id": "gold",
+          "base": 4000,
+          "perStage": 150
+        }
+      ]
+    }
+  ],
+  "shop": [
+    {
+      "id": "gold",
+      "price": [
+        {
+          "id": "huntTokens",
+          "value": 10
+        }
+      ],
+      "gives": [
+        {
+          "id": "gold",
+          "value": 5000
+        }
+      ],
+      "limit": 5
+    },
+    {
+      "id": "heroExp",
+      "price": [
+        {
+          "id": "huntTokens",
+          "value": 10
+        }
+      ],
+      "gives": [
+        {
+          "id": "heroExp",
+          "value": 3000
+        }
+      ],
+      "limit": 5
+    },
+    {
+      "id": "gearMaterials",
+      "price": [
+        {
+          "id": "huntTokens",
+          "value": 20
+        }
+      ],
+      "gives": [
+        {
+          "id": "gearMaterials",
+          "value": 50
+        }
+      ],
+      "limit": 5
+    },
+    {
+      "id": "summonScroll",
+      "price": [
+        {
+          "id": "huntTokens",
+          "value": 60
+        }
+      ],
+      "gives": [
+        {
+          "id": "summonScroll",
+          "value": 1
+        }
+      ],
+      "limit": 3,
+      "weekly": true
+    },
+    {
+      "id": "epicGear",
+      "price": [
+        {
+          "id": "huntTokens",
+          "value": 150
+        }
+      ],
+      "gives": [],
+      "gearGrade": "epic",
+      "limit": 1,
+      "weekly": true
+    }
+  ]
+}

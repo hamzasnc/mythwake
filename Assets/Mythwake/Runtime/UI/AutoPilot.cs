@@ -93,6 +93,32 @@ namespace Mythwake.UI
                 ui.Authority.Execute(new EquipGear { HeroId = hero, Uid = item.Uid });
             }
 
+            ui.State.Campaign.HighestCleared = 12;
+            ui.Authority.Execute(new UpgradeBuilding { BuildingId = "huntersHut" });
+            ui.Router.Reset(new HuntScreen());
+            yield return Shot("hunt_board", 0.8f);
+            var hunt = Hunts.Board(ui.State, ui.Content, ui.Authority.NowMs).OrderBy(o => o.Tier).First(o => !o.Weekly);
+            var huntSetup = ui.Authority.Execute(new BeginHunt { HuntId = hunt.Id }).Value;
+            ui.Router.Push(new BattleScreen(huntSetup, new HuntBattle(hunt.Mission.Name)));
+            ui.Battle.Speed = 2f;
+            yield return Shot("hunt_battle", 2.0f);
+            timeout = 120f;
+            while (ui.Battle.Running && timeout > 0f)
+            {
+                timeout -= Time.deltaTime;
+                yield return null;
+            }
+            yield return Shot("hunt_result", 0.6f);
+            ui.State.Add(Ids.HuntTokens, 300);
+            ui.Router.Reset(new HuntScreen());
+            var huntTabs = ui.Router.Current.Root.Query<Button>(className: "tab").ToList();
+            using (var click = NavigationSubmitEvent.GetPooled())
+            {
+                click.target = huntTabs[1];
+                huntTabs[1].SendEvent(click);
+            }
+            yield return Shot("hunt_shop", 0.6f);
+
             ui.Router.Reset(new HeroesScreen());
             yield return Shot("heroes", 0.6f);
             ui.Router.Push(new HeroDetailScreen(hero));

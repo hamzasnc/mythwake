@@ -33,6 +33,8 @@ namespace Mythwake.Core.Meta
     public sealed class PendingBattle
     {
         public int Stage;
+        /// <summary>Set when the battle is a hunt from the Hunt Board instead of a campaign stage.</summary>
+        public string HuntId;
         public ulong Seed;
         public string[] Formation;
     }
@@ -57,6 +59,7 @@ namespace Mythwake.Core.Meta
         /// <summary>Lifetime counters (see <see cref="Stat"/>), measured by quests.</summary>
         public Dictionary<string, long> Stats = new Dictionary<string, long>();
         public QuestState Quests = new QuestState();
+        public HuntState Hunts = new HuntState();
         public int GearUidCounter;
         public PendingBattle Battle;
         /// <summary>Server-side randomness (summons, battle seeds): seed + how many draws were made.</summary>

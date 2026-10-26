@@ -296,6 +296,23 @@
       ]
     },
     {
+      "id": "hunters_hut",
+      "text": "Baue die Hunter's Hut wieder auf",
+      "condition": "buildingLevel",
+      "value": 1,
+      "target": "huntersHut",
+      "rewards": [
+        {
+          "id": "gold",
+          "value": 3000
+        },
+        {
+          "id": "huntTokens",
+          "value": 30
+        }
+      ]
+    },
+    {
       "id": "hero_lv20",
       "text": "Bringe einen Helden auf Lv. 20",
       "condition": "heroLevel",

@@ -10,6 +10,74 @@ using UnityEngine.UIElements;
 
 namespace Mythwake.UI
 {
+    /// <summary>What a finished battle gave, for the result popup.</summary>
+    public sealed class BattleReport
+    {
+        public BattleOutcome Outcome;
+        public List<Amount> Rewards = new List<Amount>();
+        public List<GearItem> Gear = new List<GearItem>();
+        public string Note;
+    }
+
+    /// <summary>Where a battle comes from (campaign stage, hunt, …): its title, how it is settled, where to go after.</summary>
+    public interface IBattleMode
+    {
+        string Title(UiContext ui);
+        /// <summary>Sends the finished battle to the authority. Null when the rules rejected it.</summary>
+        BattleReport Finish(UiContext ui, BattleView battle);
+        UiScreen After();
+    }
+
+    public sealed class CampaignBattle : IBattleMode
+    {
+        private readonly int _stage;
+
+        public CampaignBattle(int stage) => _stage = stage;
+
+        public string Title(UiContext ui)
+        {
+            var (_, index, number) = Campaign.Locate(ui.Content, _stage);
+            return Loc.T("home.stage", number, index);
+        }
+
+        public BattleReport Finish(UiContext ui, BattleView battle)
+        {
+            var finish = new FinishStageBattle { AutoUltimates = battle.AutoAtStart };
+            finish.AutoToggleTimesMs.AddRange(battle.AutoToggles);
+            finish.UltimateRequests.AddRange(battle.Requests);
+            var slotsBefore = Formations.UnlockedSlots(ui.State, ui.Content);
+            if (!ui.Try(finish, out var stage))
+                return null;
+            var report = new BattleReport { Outcome = stage.Outcome, Rewards = stage.Rewards, Gear = stage.Gear };
+            if (stage.UnlockedSlots > slotsBefore)
+                report.Note = Loc.T("battle.slotUnlocked");
+            return report;
+        }
+
+        public UiScreen After() => new HomeScreen();
+    }
+
+    public sealed class HuntBattle : IBattleMode
+    {
+        private readonly string _title;
+
+        public HuntBattle(string title) => _title = title;
+
+        public string Title(UiContext ui) => _title;
+
+        public BattleReport Finish(UiContext ui, BattleView battle)
+        {
+            var finish = new FinishHunt { AutoUltimates = battle.AutoAtStart };
+            finish.AutoToggleTimesMs.AddRange(battle.AutoToggles);
+            finish.UltimateRequests.AddRange(battle.Requests);
+            if (!ui.Try(finish, out var hunt))
+                return null;
+            return new BattleReport { Outcome = hunt.Outcome, Rewards = hunt.Rewards };
+        }
+
+        public UiScreen After() => new HuntScreen();
+    }
+
     /// <summary>Battle HUD over the <see cref="BattleView"/>: ultimate portraits, Auto and speed toggles, floating numbers, cut-ins, result.</summary>
     public sealed class BattleScreen : UiScreen
     {
@@ -17,7 +85,7 @@ namespace Mythwake.UI
         private const string SpeedPref = "battle.speed";
 
         private readonly BattleSetup _setup;
-        private readonly int _stage;
+        private readonly IBattleMode _mode;
         private readonly List<UltButton> _ults = new List<UltButton>();
         private readonly List<Floating> _floating = new List<Floating>();
         private VisualElement _floatLayer;
@@ -43,10 +111,12 @@ namespace Mythwake.UI
             public float Drift;
         }
 
-        public BattleScreen(BattleSetup setup, int stage)
+        public BattleScreen(BattleSetup setup, int stage) : this(setup, new CampaignBattle(stage)) { }
+
+        public BattleScreen(BattleSetup setup, IBattleMode mode)
         {
             _setup = setup;
-            _stage = stage;
+            _mode = mode;
         }
 
         private BattleView Battle => Ui.Battle;
@@ -58,8 +128,7 @@ namespace Mythwake.UI
             _floatLayer.pickingMode = PickingMode.Ignore;
 
             var top = UiKit.Box("hud-top").Into(root);
-            var (_, index, number) = Campaign.Locate(Ui.Content, _stage);
-            UiKit.Text(Loc.T("home.stage", number, index), "title").Into(top);
+            UiKit.Text(_mode.Title(Ui), "title").Into(top);
             var toggles = UiKit.Box("row").Into(top);
             _speed = UiKit.Btn("", ToggleSpeed, "btn--secondary", "btn--small").Into(toggles);
             _auto = UiKit.Btn("", ToggleAuto, "btn--secondary", "btn--small").Into(toggles);
@@ -212,21 +281,18 @@ namespace Mythwake.UI
             if (_done)
                 return;
             _done = true;
-            var finish = new FinishStageBattle { AutoUltimates = Battle.AutoAtStart };
-            finish.AutoToggleTimesMs.AddRange(Battle.AutoToggles);
-            finish.UltimateRequests.AddRange(Battle.Requests);
-            var slotsBefore = Formations.UnlockedSlots(Ui.State, Ui.Content);
-            if (!Ui.Try(finish, out var stage))
+            var report = _mode.Finish(Ui, Battle);
+            if (report == null)
             {
-                Ui.Router.Reset(new HomeScreen());
+                Ui.Router.Reset(_mode.After());
                 return;
             }
-            ShowResult(stage, stage.UnlockedSlots > slotsBefore);
+            ShowResult(report);
         }
 
-        private void ShowResult(StageResult stage, bool newSlot)
+        private void ShowResult(BattleReport report)
         {
-            var victory = stage.Outcome == BattleOutcome.Victory;
+            var victory = report.Outcome == BattleOutcome.Victory;
             var overlay = UiKit.Box("overlay").Into(Root);
             var popup = UiKit.Box("panel", "popup").Into(overlay);
             UiKit.Text(Loc.T(victory ? "battle.victory" : "battle.defeat"), "result-title", victory ? "result-title--victory" : "result-title--defeat").Into(popup);
@@ -236,17 +302,17 @@ namespace Mythwake.UI
                 var rewards = UiKit.Box("row").Into(popup);
                 rewards.style.flexWrap = Wrap.Wrap;
                 rewards.style.justifyContent = Justify.Center;
-                foreach (var r in stage.Rewards)
+                foreach (var r in report.Rewards)
                     rewards.Add(UiKit.Amount(r.Id, r.Value));
-                if (stage.Gear.Count > 0)
+                if (report.Gear.Count > 0)
                 {
                     UiKit.Text(Loc.T("gear.drop"), "subtitle").Into(popup);
                     var drops = UiKit.Box("row").Into(popup);
-                    foreach (var item in stage.Gear)
+                    foreach (var item in report.Gear)
                         drops.Add(GearUi.Tile(Ui.Content, item));
                 }
-                if (newSlot)
-                    UiKit.Text(Loc.T("battle.slotUnlocked"), "label--good").Into(popup);
+                if (!string.IsNullOrEmpty(report.Note))
+                    UiKit.Text(report.Note, "label--good").Into(popup);
             }
             else
             {
@@ -255,7 +321,7 @@ namespace Mythwake.UI
             var buttons = UiKit.Box("row").Into(popup);
             if (!victory)
                 UiKit.Btn(Loc.T("nav.heroes"), () => Ui.Router.Reset(new HeroesScreen()), "btn--secondary").Into(buttons);
-            UiKit.Btn(Loc.T("battle.continue"), () => Ui.Router.Reset(new HomeScreen())).Into(buttons);
+            UiKit.Btn(Loc.T("battle.continue"), () => Ui.Router.Reset(_mode.After())).Into(buttons);
         }
     }
 }
