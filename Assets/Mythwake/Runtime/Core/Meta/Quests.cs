@@ -23,6 +23,7 @@ namespace Mythwake.Core.Meta
         public const string FragmentStabilized = "fragmentStabilized";
         public const string RelicUpgraded = "relicUpgraded";
         public const string TrialCleared = "trialCleared";
+        public const string RealmCleared = "realmCleared";
     }
 
     public sealed class TaskDefinition

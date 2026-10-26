@@ -183,7 +183,7 @@ namespace Mythwake.Core.Meta
         public DungeonResult Apply(CommandContext ctx)
         {
             var state = ctx.State;
-            ctx.Require(state.Battle != null && state.Battle.DungeonId != null, "no_battle");
+            ctx.Require(state.Battle != null && state.Battle.DungeonId != null && state.Battle.RealmId == null, "no_battle");
             var pending = state.Battle;
             var d = Dungeons.Get(ctx.Content, pending.DungeonId);
             var setup = Dungeons.BuildBattle(state, ctx.Content, d, pending);

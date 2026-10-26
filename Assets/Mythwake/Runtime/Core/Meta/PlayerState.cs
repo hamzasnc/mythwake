@@ -40,6 +40,8 @@ namespace Mythwake.Core.Meta
         public string DungeonId;
         /// <summary>Set when the battle is a floor (Floor) of the Trial of Fragments tower of this Aspect.</summary>
         public Aspect? TrialAspect;
+        /// <summary>Set when the battle is a level (Floor) of a Shattered Realm.</summary>
+        public string RealmId;
         public int Floor;
         public ulong Seed;
         public string[] Formation;
@@ -68,6 +70,7 @@ namespace Mythwake.Core.Meta
         public HuntState Hunts = new HuntState();
         public DungeonState Dungeons = new DungeonState();
         public TrialState Trials = new TrialState();
+        public RealmState Realms = new RealmState();
         public int GearUidCounter;
         public List<FragmentItem> Fragments = new List<FragmentItem>();
         public int FragmentUidCounter;

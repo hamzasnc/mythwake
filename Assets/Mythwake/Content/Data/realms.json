@@ -1,0 +1,282 @@
+{
+  "portalLevel": 5,
+  "freeEntriesPerDay": 2,
+  "realms": [
+    {
+      "id": "ash",
+      "name": "Realm of Ash",
+      "description": "Feuerschaden ist stärker, Heilung schwächer: Gegner +25 % Schaden und können verbrennen, Heilung −40 %.",
+      "boss": "dragon_echo_of_the_sky",
+      "escort": [
+        "riftborn_stalker",
+        "riftborn_wisp"
+      ],
+      "escorts": 3,
+      "maxLevel": 60,
+      "enemyLevelBase": 45,
+      "enemyLevelPerFloor": 3,
+      "attemptsPerDay": 0,
+      "rules": {
+        "healingModifier": -400,
+        "enemyDamageModifier": 250,
+        "enemyPassives": [
+          {
+            "kind": "onHit",
+            "chance": 250,
+            "effect": {
+              "kind": "applyStatus",
+              "status": {
+                "kind": "burn",
+                "durationMs": 3000,
+                "value": 120
+              }
+            }
+          }
+        ],
+        "maxDurationMs": 90000
+      },
+      "clearRewards": [
+        {
+          "id": "guardianSigil",
+          "base": 2,
+          "perStage": 0
+        },
+        {
+          "id": "fragmentDust",
+          "base": 120,
+          "perStage": 10
+        },
+        {
+          "id": "relicMaterials",
+          "base": 20,
+          "perStage": 2
+        },
+        {
+          "id": "gold",
+          "base": 8000,
+          "perStage": 900
+        }
+      ],
+      "firstClearRewards": [
+        {
+          "id": "guardianSigil",
+          "base": 5,
+          "perStage": 0
+        },
+        {
+          "id": "gems",
+          "base": 30,
+          "perStage": 0
+        }
+      ]
+    },
+    {
+      "id": "stillness",
+      "name": "Realm of Stillness",
+      "description": "Gegner verlangsamen das Team und verzögern Fähigkeiten; Ultimates laden 25 % langsamer.",
+      "boss": "corrupted_guardian_of_the_deep",
+      "escort": [
+        "riftborn_stalker",
+        "riftborn_wisp"
+      ],
+      "escorts": 3,
+      "maxLevel": 60,
+      "enemyLevelBase": 45,
+      "enemyLevelPerFloor": 3,
+      "attemptsPerDay": 0,
+      "rules": {
+        "energyGainModifier": -250,
+        "enemyPassives": [
+          {
+            "kind": "onHit",
+            "chance": 350,
+            "effect": {
+              "kind": "applyStatus",
+              "status": {
+                "kind": "slow",
+                "durationMs": 3000,
+                "value": 300
+              }
+            }
+          },
+          {
+            "kind": "onHit",
+            "chance": 250,
+            "effect": {
+              "kind": "delayAction",
+              "multiplier": 600
+            }
+          }
+        ],
+        "maxDurationMs": 90000
+      },
+      "clearRewards": [
+        {
+          "id": "guardianSigil",
+          "base": 2,
+          "perStage": 0
+        },
+        {
+          "id": "fragmentDust",
+          "base": 120,
+          "perStage": 10
+        },
+        {
+          "id": "relicMaterials",
+          "base": 20,
+          "perStage": 2
+        },
+        {
+          "id": "gold",
+          "base": 8000,
+          "perStage": 900
+        }
+      ],
+      "firstClearRewards": [
+        {
+          "id": "guardianSigil",
+          "base": 5,
+          "perStage": 0
+        },
+        {
+          "id": "gems",
+          "base": 30,
+          "perStage": 0
+        }
+      ]
+    },
+    {
+      "id": "reflection",
+      "name": "Realm of Reflection",
+      "description": "Gegner kopieren Buffs und werfen Schaden zurück.",
+      "boss": "false_guardian_construct",
+      "escort": [
+        "riftborn_stalker",
+        "riftborn_wisp"
+      ],
+      "escorts": 3,
+      "maxLevel": 60,
+      "enemyLevelBase": 45,
+      "enemyLevelPerFloor": 3,
+      "attemptsPerDay": 0,
+      "rules": {
+        "enemyPassives": [
+          {
+            "kind": "onHit",
+            "chance": 300,
+            "effect": {
+              "kind": "stealBuff",
+              "multiplier": 1
+            }
+          },
+          {
+            "kind": "onHitTaken",
+            "chance": 350,
+            "effect": {
+              "kind": "damage",
+              "multiplier": 300,
+              "scaling": "attack"
+            }
+          }
+        ],
+        "maxDurationMs": 90000
+      },
+      "clearRewards": [
+        {
+          "id": "guardianSigil",
+          "base": 2,
+          "perStage": 0
+        },
+        {
+          "id": "fragmentDust",
+          "base": 120,
+          "perStage": 10
+        },
+        {
+          "id": "relicMaterials",
+          "base": 20,
+          "perStage": 2
+        },
+        {
+          "id": "gold",
+          "base": 8000,
+          "perStage": 900
+        }
+      ],
+      "firstClearRewards": [
+        {
+          "id": "guardianSigil",
+          "base": 5,
+          "perStage": 0
+        },
+        {
+          "id": "gems",
+          "base": 30,
+          "perStage": 0
+        }
+      ]
+    },
+    {
+      "id": "hunger",
+      "name": "Realm of Hunger",
+      "description": "Gegner regenerieren 2 % max. HP pro Sekunde und werden mit der Zeit stärker.",
+      "boss": "fragment_devourer",
+      "escort": [
+        "riftborn_stalker",
+        "riftborn_wisp"
+      ],
+      "escorts": 3,
+      "maxLevel": 60,
+      "enemyLevelBase": 45,
+      "enemyLevelPerFloor": 3,
+      "attemptsPerDay": 0,
+      "rules": {
+        "enemyRegenPermille": 20,
+        "enemyPassives": [
+          {
+            "kind": "damageBonus",
+            "value": 0,
+            "growth": 60,
+            "growthIntervalMs": 10000,
+            "cap": 500
+          }
+        ],
+        "maxDurationMs": 90000
+      },
+      "clearRewards": [
+        {
+          "id": "guardianSigil",
+          "base": 2,
+          "perStage": 0
+        },
+        {
+          "id": "fragmentDust",
+          "base": 120,
+          "perStage": 10
+        },
+        {
+          "id": "relicMaterials",
+          "base": 20,
+          "perStage": 2
+        },
+        {
+          "id": "gold",
+          "base": 8000,
+          "perStage": 900
+        }
+      ],
+      "firstClearRewards": [
+        {
+          "id": "guardianSigil",
+          "base": 5,
+          "perStage": 0
+        },
+        {
+          "id": "gems",
+          "base": 30,
+          "perStage": 0
+        }
+      ]
+    }
+  ]
+}

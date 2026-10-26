@@ -9,7 +9,7 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials", "realms" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
@@ -31,7 +31,8 @@ namespace Mythwake.Content
                 Dungeons = ContentJson.Parse<DungeonConfig>(readData("dungeons")),
                 Fragments = ContentJson.Parse<FragmentConfig>(readData("fragments")),
                 Relics = ContentJson.Parse<RelicConfig>(readData("relics")),
-                Trials = ContentJson.Parse<TrialConfig>(readData("trials"))
+                Trials = ContentJson.Parse<TrialConfig>(readData("trials")),
+                Realms = ContentJson.Parse<RealmConfig>(readData("realms"))
             };
             foreach (var json in heroJsons)
             {
@@ -53,7 +54,7 @@ namespace Mythwake.Content
             foreach (var m in content.Monsters.Values)
                 if (m.Group == EnemyGroup.None)
                     errors.Add($"monster {m.Id}: needs an enemy group");
-            foreach (var d in content.Dungeons.Dungeons)
+            foreach (var d in content.Dungeons.Dungeons.Concat(content.Realms.Realms))
             {
                 if (!content.Monsters.ContainsKey(d.Boss ?? ""))
                     errors.Add($"dungeons.json/{d.Id}: unknown boss '{d.Boss}'");

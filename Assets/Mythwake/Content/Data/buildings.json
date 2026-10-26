@@ -195,10 +195,10 @@
     {
       "id": "portalChamber",
       "name": "Portal Chamber",
-      "description": "Schaltet Dungeons, Events und den Zugang zu den Shattered Realms frei. Stufe 1: Material Dungeon, Stufe 2: Gear Dungeon, Stufe 3: Fragment Dungeon, Stufe 4: Relic Dungeon.",
+      "description": "Schaltet Dungeons, Events und den Zugang zu den Shattered Realms frei. Stufe 1: Material Dungeon, Stufe 2: Gear Dungeon, Stufe 3: Fragment Dungeon, Stufe 4: Relic Dungeon, Stufe 5: Shattered Realms.",
       "effect": "portal",
       "unlockStage": 20,
-      "maxLevel": 4,
+      "maxLevel": 5,
       "baseCost": [
         {
           "id": "gold",

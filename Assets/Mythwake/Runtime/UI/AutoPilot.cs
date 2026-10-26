@@ -176,6 +176,12 @@ namespace Mythwake.UI
             ui.State.Add(Ids.Stone, 500_000);
             ui.Router.Reset(new TrialScreen());
             yield return Shot("trials", 0.8f);
+            for (var i = 0; i < 5; i++)
+                ui.Authority.Execute(new UpgradeBuilding { BuildingId = "portalChamber" });
+            ui.Router.Reset(new RealmScreen());
+            yield return Shot("realms", 0.8f);
+            ui.Router.Reset(new AdventureScreen());
+            yield return Shot("adventure_open", 0.8f);
             var trial = ui.Content.Trials.Trials.First(t => ui.State.Heroes.Any(h => ui.Content.Hero(h.HeroId).Aspect == t.Aspect));
             ui.Router.Push(new FormationScreen(new TrialFormation(trial)));
             yield return Shot("trial_team", 0.6f);

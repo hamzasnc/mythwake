@@ -87,6 +87,10 @@
         {
           "id": "summonScroll",
           "value": 1
+        },
+        {
+          "id": "realmKey",
+          "value": 1
         }
       ]
     }

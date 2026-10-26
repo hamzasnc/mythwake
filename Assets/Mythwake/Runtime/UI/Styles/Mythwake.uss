@@ -1008,3 +1008,9 @@
     border-radius: 12px;
 }
 .icon--relicMaterials { background-color: #e0a65a; }
+
+/* ---------------------------------------------------------------- realms */
+
+.icon--realmKey { background-color: #9b6bff; }
+.icon--guardianSigil { background-color: #7ad7ff; }
+.realm { border-color: rgba(155, 107, 255, 0.55); }

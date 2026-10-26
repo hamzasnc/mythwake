@@ -230,6 +230,23 @@
       "gearGrade": "epic",
       "limit": 1,
       "weekly": true
+    },
+    {
+      "id": "realmKey",
+      "price": [
+        {
+          "id": "huntTokens",
+          "value": 80
+        }
+      ],
+      "gives": [
+        {
+          "id": "realmKey",
+          "value": 1
+        }
+      ],
+      "limit": 2,
+      "weekly": true
     }
   ]
 }

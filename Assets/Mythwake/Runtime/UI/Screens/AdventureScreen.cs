@@ -38,7 +38,8 @@ namespace Mythwake.UI
                 () => Ui.Router.Push(new ArenaScreen()), Art("dragon_echo_of_the_sky"), 0.74f, 0.27f);
             Pin("trials", Loc.T("trial.title"), Trials.Open(state, content), Loc.T("trial.locked", content.Trials.ShrineLevel),
                 () => Ui.Router.Push(new TrialScreen()), Ui.Catalog.Icon("aspect_fragment"), 0.55f, 0.36f);
-            Pin("realms", "Shattered Realms", false, Loc.T("village.planned"), null, Art("fragment_devourer"), 0.5f, 0.12f);
+            Pin("realms", "Shattered Realms", Realms.Open(state, content), Loc.T("realm.locked", content.Realms.PortalLevel),
+                () => Ui.Router.Push(new RealmScreen()), Art("fragment_devourer"), 0.5f, 0.12f);
             Pin("raids", "Guardian Raids", false, Loc.T("village.planned"), null, Art("corrupted_guardian_of_the_deep"), 0.78f, 0.78f);
         }
 

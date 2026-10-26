@@ -14,6 +14,7 @@ Rebuilt after stage 20 (end of chapter 1). Its level opens dungeon types:
 | 2 | Gear Dungeon (Gear materials, gear) |
 | 3 | Fragment Dungeon (Fragment Dust, Fragments; see FRAGMENTS.md) |
 | 4 | Relic Dungeon (Relic materials, Relics; see RELICS.md) |
+| 5 | Shattered Realms (see SHATTERED_REALMS.md) |
 | later | Endless Dungeon |
 
 ## How a dungeon works

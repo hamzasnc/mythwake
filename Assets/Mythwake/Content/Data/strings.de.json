@@ -304,5 +304,18 @@
   "error.trial_locked": "Baue den Fragment Shrine auf Stufe 4 aus.",
   "error.trial_complete": "Dieser Turm ist abgeschlossen.",
   "error.trial_wrong_aspect": "In diesem Turm kämpfen nur Helden des passenden Aspekts.",
-  "error.unknown_trial": "Unbekannter Turm."
+  "error.unknown_trial": "Unbekannter Turm.",
+  "currency.realmKey": "Shattered Realm Key",
+  "realm.title": "Shattered Realms",
+  "realm.entries": "Freie Eintritte heute: {0}/{1}  ·  Keys: {2}",
+  "realm.locked": "Portal Chamber Lv. {0}",
+  "realm.level": "Stufe {0}",
+  "realm.sweep": "Sweep Stufe {0}",
+  "realm.keyUsed": "Ein Shattered Realm Key wurde verbraucht.",
+  "realm.firstDone": "Erstabschluss!",
+  "error.realm_locked": "Baue die Portal Chamber auf Stufe 5 aus.",
+  "error.realm_no_entries": "Keine Eintritte mehr. Morgen gibt es zwei neue, oder nutze einen Shattered Realm Key.",
+  "error.realm_level_locked": "Schließe zuerst die vorherige Stufe ab.",
+  "error.realm_nothing_to_sweep": "Noch keine Stufe abgeschlossen.",
+  "error.unknown_realm": "Unbekannte Realm."
 }
