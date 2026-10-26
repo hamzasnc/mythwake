@@ -2,6 +2,7 @@ using System.Collections;
 using System.Linq;
 using System.IO;
 using Mythwake.Core.Meta;
+using Mythwake.Game;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -36,6 +37,12 @@ namespace Mythwake.UI
             }
 
             yield return Shot("home", 1.5f);
+            if (ui.Server != null)
+            {
+                yield return RunOnline(ui, Shot);
+                Application.Quit();
+                yield break;
+            }
 
             ui.Router.Push(new FormationScreen());
             yield return Shot("formation", 0.8f);
@@ -135,6 +142,55 @@ namespace Mythwake.UI
 
             Debug.Log("[AutoPilot] done");
             Application.Quit();
+        }
+
+        /// <summary>Against a running server: real commands, sync check, arena (when the account has unlocked it).</summary>
+        private static IEnumerator RunOnline(UiContext ui, System.Func<string, float, IEnumerator> shot)
+        {
+            var server = ui.Server;
+            var resyncs = 0;
+            server.Resynced += _ => resyncs++;
+            for (var i = 0; i < 3; i++)
+            {
+                ui.Authority.Execute(new BeginStageBattle());
+                ui.Authority.Execute(new FinishStageBattle());
+            }
+            ui.Authority.Execute(new ClaimAfkRewards());
+            yield return server.Flush();
+            var hash = Mythwake.Content.SaveJson.Hash(ui.State);
+            Debug.Log($"[AutoPilot] online: stage {ui.State.Campaign.HighestCleared}, pending {server.Pending}, resyncs {resyncs}, hash {hash.Substring(0, 12)}");
+
+            ui.Router.Reset(new HomeScreen());
+            yield return shot("online_home", 0.8f);
+            ui.Router.Reset(new ArenaScreen());
+            yield return shot("arena", 2.0f);
+
+            ApiResponse arena = null;
+            yield return server.Api.Send("GET", "/v1/arena", null, r => arena = r);
+            if (arena.Ok && arena.Body.Value<bool>("unlocked"))
+            {
+                yield return server.Api.Send("POST", "/v1/arena/defense", new Newtonsoft.Json.Linq.JObject(), _ => { });
+                ui.Router.Reset(new ArenaScreen());
+                yield return shot("arena_opponents", 2.0f);
+                var fight = ui.Router.Current.Root.Query<Button>().ToList().FirstOrDefault(b => b.text == Loc.T("arena.fight") && b.enabledSelf);
+                if (fight != null)
+                {
+                    using (var click = NavigationSubmitEvent.GetPooled())
+                    {
+                        click.target = fight;
+                        fight.SendEvent(click);
+                    }
+                    yield return shot("arena_battle", 3.0f);
+                    var timeout = 120f;
+                    while ((ui.Battle.Running || !(ui.Router.Current is BattleScreen)) && timeout > 0f)
+                    {
+                        timeout -= Time.deltaTime;
+                        yield return null;
+                    }
+                    yield return shot("arena_result", 1.0f);
+                }
+            }
+            Debug.Log($"[AutoPilot] online done, resyncs {resyncs}");
         }
     }
 }

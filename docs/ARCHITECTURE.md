@@ -36,7 +36,7 @@ every commit that touches rules or content.
 UI / input ──► IGameAuthority.Execute(command) ──► Core command validates + mutates PlayerState ──► result + state events ──► UI refresh
                      │
                      ├─ LocalAuthority  (now): runs Core in-process, saves to disk
-                     └─ RemoteAuthority (later): sends command to backend running the same Core, applies the returned state
+                     └─ ServerAuthority: predicts locally, sends commands to the Go API, which runs the same Core in the rules service (docs/SERVER.md)
 ```
 
 Commands are plain data (`StartStageBattle`, `LevelUpHero`, `ClaimAfkRewards`, `Summon`, …). Each command has one

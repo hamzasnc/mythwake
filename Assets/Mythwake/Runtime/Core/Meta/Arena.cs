@@ -62,6 +62,8 @@ namespace Mythwake.Core.Meta
         public List<Amount> WinRewards = new List<Amount>();
         public List<Amount> LossRewards = new List<Amount>();
         public int SeasonDays = 14;
+        /// <summary>Season 1 starts here (unix ms, a Monday 00:00 UTC).</summary>
+        public long SeasonEpochMs;
         /// <summary>End-of-season rewards per rank name.</summary>
         public Dictionary<string, List<Amount>> SeasonRewards = new Dictionary<string, List<Amount>>();
         public BattleRules Rules = new BattleRules();

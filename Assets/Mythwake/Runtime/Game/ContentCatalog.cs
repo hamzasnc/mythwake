@@ -42,6 +42,16 @@ namespace Mythwake.Game
             return GameContentLoader.Load(Read, heroes.Where(h => h.definition != null).Select(h => h.definition.text));
         }
 
+        /// <summary>Same value the rules service reports (see <see cref="Mythwake.Content.ContentVersion"/>).</summary>
+        public string ContentVersion()
+        {
+            var files = dataFiles.Concat(strings).Where(f => f != null)
+                .Select(f => new KeyValuePair<string, string>("Data/" + f.name + ".json", f.text))
+                .Concat(heroes.Where(h => h.definition != null)
+                    .Select(h => new KeyValuePair<string, string>($"Heroes/{h.id}/{h.id}.hero.json", h.definition.text)));
+            return Mythwake.Content.ContentVersion.Compute(files);
+        }
+
         public HeroAssets Hero(string id)
         {
             if (_byId == null)

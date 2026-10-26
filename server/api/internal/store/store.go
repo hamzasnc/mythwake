@@ -63,13 +63,14 @@ type Player struct {
 	StateHash      string
 	Version        int64
 	ContentVersion string
+	LastCommandMs  int64
 }
 
-const playerColumns = "account_id::text, display_name, state::text, state_hash, version, content_version"
+const playerColumns = "account_id::text, display_name, state::text, state_hash, version, content_version, last_command_ms"
 
 func scanPlayer(row pgx.Row) (*Player, error) {
 	p := &Player{}
-	err := row.Scan(&p.AccountID, &p.DisplayName, &p.State, &p.StateHash, &p.Version, &p.ContentVersion)
+	err := row.Scan(&p.AccountID, &p.DisplayName, &p.State, &p.StateHash, &p.Version, &p.ContentVersion, &p.LastCommandMs)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -110,8 +111,8 @@ func (s *Store) WithPlayer(ctx context.Context, accountID string, fn func(*Tx) e
 func (t *Tx) SavePlayer(ctx context.Context) error {
 	p := t.Player
 	_, err := t.tx.Exec(ctx, `update players set state = $2::json, state_hash = $3, version = $4, content_version = $5,
-		display_name = $6, updated_at = now() where account_id = $1`,
-		p.AccountID, p.State, p.StateHash, p.Version, p.ContentVersion, p.DisplayName)
+		display_name = $6, last_command_ms = $7, updated_at = now() where account_id = $1`,
+		p.AccountID, p.State, p.StateHash, p.Version, p.ContentVersion, p.DisplayName, p.LastCommandMs)
 	return err
 }
 

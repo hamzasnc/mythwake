@@ -756,3 +756,14 @@
 .hunt--elite { border-color: var(--bad); }
 .hunt__stars { font-size: 30px; color: var(--legendary); }
 .icon--huntTokens { background-color: #d9784a; }
+
+/* ---------------------------------------------------------------- arena */
+
+.arena__rank { font-size: 52px; -unity-font-style: bold; color: var(--gold); }
+.arena__team { flex-wrap: wrap; margin: 8px 0; }
+.hero-card--mini { width: 96px; height: 124px; margin: 4px; border-width: 3px; }
+.hero-card--mini .hero-card__stars { font-size: 14px; }
+.ranking__row { align-items: center; padding: 14px 20px; margin-bottom: 8px; }
+.ranking__place { font-size: 34px; -unity-font-style: bold; color: var(--muted); width: 80px; }
+.boot { position: absolute; top: 45%; left: 0; right: 0; -unity-text-align: middle-center; }
+.icon--arenaCoins { background-color: #e86a6a; }

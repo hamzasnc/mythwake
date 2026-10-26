@@ -33,12 +33,13 @@ func (s *Server) arenaConfig(ctx context.Context) (rules.ArenaConfig, error) {
 	return c, nil
 }
 
+// season numbers count from the content's epoch: season 1 starts at SeasonEpochMs.
 func (s *Server) season(c rules.ArenaConfig, nowMs int64) int {
-	return int(nowMs / dayMs / int64(max(1, c.SeasonDays)))
+	return 1 + int(max(0, nowMs-c.SeasonEpochMs)/dayMs/int64(max(1, c.SeasonDays)))
 }
 
 func (s *Server) seasonEndMs(c rules.ArenaConfig, season int) int64 {
-	return int64(season+1) * int64(max(1, c.SeasonDays)) * dayMs
+	return c.SeasonEpochMs + int64(season)*int64(max(1, c.SeasonDays))*dayMs
 }
 
 func dayIndex(c rules.ArenaConfig, nowMs int64) int64 {
@@ -70,7 +71,8 @@ func highestCleared(state string) int {
 // grant applies a server-only GrantRewards command to the locked player and logs it like any command.
 func (s *Server) grant(ctx context.Context, tx *store.Tx, reason string, rewards []rules.Amount) (rules.Command, error) {
 	data, _ := json.Marshal(map[string]any{"reason": reason, "rewards": rewards})
-	cmd := rules.Command{ID: newUUID(), Type: "GrantRewards", Data: data}
+	cmd := rules.Command{ID: newUUID(), Type: "GrantRewards", Data: data, AtMs: max(s.nowMs(), tx.Player.LastCommandMs)}
+	tx.Player.LastCommandMs = cmd.AtMs
 	p := tx.Player
 	result, err := s.rules.Apply(ctx, p.State, s.nowMs(), []rules.Command{cmd}, true)
 	if err != nil {

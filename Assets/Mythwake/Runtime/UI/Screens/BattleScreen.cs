@@ -23,6 +23,8 @@ namespace Mythwake.UI
     public interface IBattleMode
     {
         string Title(UiContext ui);
+        /// <summary>The result is already decided (server fight): always Auto, no ultimate taps.</summary>
+        bool Replay { get; }
         /// <summary>Sends the finished battle to the authority. Null when the rules rejected it.</summary>
         BattleReport Finish(UiContext ui, BattleView battle);
         UiScreen After();
@@ -33,6 +35,8 @@ namespace Mythwake.UI
         private readonly int _stage;
 
         public CampaignBattle(int stage) => _stage = stage;
+
+        public bool Replay => false;
 
         public string Title(UiContext ui)
         {
@@ -62,6 +66,8 @@ namespace Mythwake.UI
         private readonly string _title;
 
         public HuntBattle(string title) => _title = title;
+
+        public bool Replay => false;
 
         public string Title(UiContext ui) => _title;
 
@@ -138,7 +144,8 @@ namespace Mythwake.UI
 
         public override void OnShow()
         {
-            var auto = PlayerPrefs.GetInt(AutoPref, 1) == 1;
+            var auto = _mode.Replay || PlayerPrefs.GetInt(AutoPref, 1) == 1;
+            _auto.style.display = _mode.Replay ? DisplayStyle.None : DisplayStyle.Flex;
             Battle.Speed = PlayerPrefs.GetFloat(SpeedPref, 1f);
             Battle.FloatingText += OnFloatingText;
             Battle.UltimateCutIn += OnCutIn;
@@ -171,7 +178,8 @@ namespace Mythwake.UI
                 var energyBar = UiKit.Box("ult-button__energy").Into(b.Root);
                 b.Energy = UiKit.Box("ult-button__energy-fill").Into(energyBar);
                 var slot = unit.Slot;
-                b.Root.RegisterCallback<ClickEvent>(_ => Battle.RequestUltimate(slot));
+                if (!_mode.Replay)
+                    b.Root.RegisterCallback<ClickEvent>(_ => Battle.RequestUltimate(slot));
                 bottom.Add(b.Root);
                 _ults.Add(b);
             }
@@ -296,7 +304,7 @@ namespace Mythwake.UI
             var overlay = UiKit.Box("overlay").Into(Root);
             var popup = UiKit.Box("panel", "popup").Into(overlay);
             UiKit.Text(Loc.T(victory ? "battle.victory" : "battle.defeat"), "result-title", victory ? "result-title--victory" : "result-title--defeat").Into(popup);
-            if (victory)
+            if (victory || report.Rewards.Count > 0)
             {
                 UiKit.Text(Loc.T("battle.rewards"), "subtitle").Into(popup);
                 var rewards = UiKit.Box("row").Into(popup);
@@ -311,10 +319,10 @@ namespace Mythwake.UI
                     foreach (var item in report.Gear)
                         drops.Add(GearUi.Tile(Ui.Content, item));
                 }
-                if (!string.IsNullOrEmpty(report.Note))
-                    UiKit.Text(report.Note, "label--good").Into(popup);
             }
-            else
+            if (!string.IsNullOrEmpty(report.Note))
+                UiKit.Text(report.Note, victory ? "label--good" : "label--bad").Into(popup);
+            if (!victory && !_mode.Replay)
             {
                 UiKit.Text(Loc.T("battle.tip.defeat"), "subtitle").Into(popup).style.whiteSpace = WhiteSpace.Normal;
             }

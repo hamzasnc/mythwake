@@ -14,15 +14,25 @@ Ground-up rebuild on branch `rebuild/v2` (orphan branch, no v1 code). As of 26.1
 | Gear (`Mythwake.Core.Meta.Gear`) | Weapon / Armor / Boots / Accessory in four grades, enhancing with Gear materials + Gold, set bonus for four pieces of one set (sets = the doc's factions, bonus scales with the lowest grade), Broken Forge crafting (forge level raises the grade odds, forge heroes improve them), boss stages drop gear, Gear materials from stages and idle, salvage |
 | Quests (`Mythwake.Core.Meta.Quests`) | Concept: `docs/systems/QUESTS.md`. Daily (6 tasks, activity chests at 20–100) and weekly quests with fixed reset (04:00 UTC, Monday), measured by lifetime stats; main/village quest chain (31 steps) through every unlock up to stage 200 |
 | Hunt Board (`Mythwake.Core.Meta.Hunts`) | Concept: `docs/systems/HUNT_BOARD.md`. Hunter's Hut (stage 12, 10 levels): 3–6 daily hunts and 1–2 weekly elite hunts from the doc's mission list, ★–★★★ difficulty, rewards and difficulty grow with the hut; board is a pure function of player seed + day; Hunt Tokens and Hunt Shop with daily/weekly limits |
-| Client | Home (idle chest, next stage, team idling, current quest with badge), Quests (Main/Daily/Weekly), Hunt Board + Hunt Shop, Dawnhollow (buildings, storage, hero slots, forge crafting), Formation, Battle (Spine playback, hit-stop, camera shake, cut-ins, damage numbers, ultimate portraits, Auto/x2), Result (with gear drops), Heroes, Hero detail (with equipment, enhancing), Summon |
-| Save | Local JSON, atomic write + backup, version field for migrations |
-| Tests | 82 tests (rules, every hero's kit, content validity, economy pacing), green in dotnet and in Unity |
+| Server (`server/`) | Go API + PostgreSQL + .NET rules service running the same Core (see `docs/SERVER.md`): device login (JWT), server-authoritative commands with client prediction (state hash check, validated client timestamps, idempotent retries, optimistic versioning), content version check, one-command local start (`server/dev.ps1`) |
+| Arena | Concept: `docs/systems/ARENA.md`. Defense snapshots, opponents by rating, server-simulated fights replayed in the client, Elo, ranks from the doc, daily fights, rewards, 14-day seasons with rank rewards, ranking, 30 training bots |
+| Client | Home (idle chest, next stage, team idling, current quest with badge), Quests (Main/Daily/Weekly), Hunt Board + Hunt Shop, Arena (online), Dawnhollow (buildings, storage, hero slots, forge crafting), Formation, Battle (Spine playback, hit-stop, camera shake, cut-ins, damage numbers, ultimate portraits, Auto/x2), Result (with gear drops), Heroes, Hero detail (with equipment, enhancing), Summon |
+| Save | Online: on the server (PostgreSQL). Offline/dev: local JSON, atomic write + backup, version field for migrations |
+| Tests | 88 C# tests (dotnet + Unity), Go unit tests, end-to-end tests against the running server, online autopilot; (rules, every hero's kit, content validity, economy pacing), green in dotnet and in Unity |
 
 ## How to run
 
 ```bash
 dotnet test Tools/CoreTests
 ```
+
+Server (PostgreSQL must be installed; Docker alternative in `docs/SERVER.md`):
+
+```bash
+powershell -File server/dev.ps1
+```
+
+The client connects to `http://127.0.0.1:8080` and falls back to offline play when no server answers.
 
 Unity 6000.4.5f1: open the folder, scene `Assets/Mythwake/Scenes/Main.unity`, Play.
 Menu **Mythwake** ▸ Setup Project / Rebuild Content Catalog / Render Hero Portraits / Build.
@@ -55,5 +65,6 @@ Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscr
 - Gear: no item art yet (tiles show slot, stat and set), playstyle-changing gear variants from the doc (shield → tank,
   wand → mage) need extra animations per hero and are not built; refining is not built.
 - Hunts use heroes as stand-in monsters; "Gather Fragment Dust" waits for Fragments.
+- Server: Arena Shop, guilds, chat and Guardian Raids are next; production needs TLS, platform logins (Google/Apple) and Redis for rate limits with several API instances.
 - Next systems from the doc (open questions first): Fragments (Fragment Shrine), relics, Hunt Board,
   dungeons, Arena, guilds, server.

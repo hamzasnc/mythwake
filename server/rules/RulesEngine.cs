@@ -36,11 +36,9 @@ namespace Mythwake.Rules
         {
             var files = Directory.GetFiles(Path.Combine(contentDir, "Data"), "*.json")
                 .Concat(Directory.GetFiles(Path.Combine(contentDir, "Heroes"), "*.hero.json", SearchOption.AllDirectories))
-                .Select(p => (rel: Path.GetRelativePath(contentDir, p).Replace('\\', '/'), path: p))
-                .Where(f => !f.rel.StartsWith("Data/strings."))
-                .OrderBy(f => f.rel, StringComparer.Ordinal);
-            var all = string.Join("\n", files.Select(f => f.rel + "\n" + File.ReadAllText(f.path).Replace("\r\n", "\n")));
-            return SaveJson.HashOf(all).Substring(0, 16);
+                .Select(p => new System.Collections.Generic.KeyValuePair<string, string>(
+                    Path.GetRelativePath(contentDir, p).Replace('\\', '/'), File.ReadAllText(p)));
+            return Mythwake.Content.ContentVersion.Compute(files);
         }
 
         /// <summary>64-bit seeds travel as strings: JSON numbers above 2^63 do not survive every parser.</summary>
@@ -98,6 +96,7 @@ namespace Mythwake.Rules
                     return Fail("forbidden", i);
                 if (command is CreatePlayer)
                     return Fail("forbidden", i);
+                ctx.NowMs = c.Value<long?>("atMs") ?? body.Value<long>("nowMs");
                 try
                 {
                     CommandCodec.Run(command, ctx);

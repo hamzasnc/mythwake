@@ -10,6 +10,10 @@ namespace Mythwake.UI
     public sealed class UiContext
     {
         public IGameAuthority Authority;
+        /// <summary>Set when playing online; server-only features (Arena) need it.</summary>
+        public ServerAuthority Server;
+        /// <summary>Runs coroutines for screens (server calls).</summary>
+        public UnityEngine.MonoBehaviour Runner;
         public ContentCatalog Catalog;
         public BattleView Battle;
         public Router Router;

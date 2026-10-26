@@ -56,3 +56,33 @@ func TestNewUUIDIsV4(t *testing.T) {
 		t.Fatalf("not a v4 uuid: %s", id)
 	}
 }
+
+func TestStampCommandsKeepsClientTimeInsideTheWindow(t *testing.T) {
+	const now = 1_000_000_000
+	cmds := []rules.Command{{AtMs: now - 3_000}, {AtMs: now - 60_000}, {AtMs: now + 60_000}, {AtMs: now - 5_000}}
+	last := stampCommands(cmds, now, 0)
+	want := []int64{now - 3_000, now, now, now}
+	for i, c := range cmds {
+		if c.AtMs != want[i] {
+			t.Errorf("command %d: %d, want %d", i, c.AtMs, want[i])
+		}
+	}
+	if last != now {
+		t.Errorf("last %d", last)
+	}
+	if got := stampCommands([]rules.Command{{AtMs: now - 1}}, now, now+500); got != now+500 {
+		t.Errorf("time must not go backwards: %d", got)
+	}
+}
+
+func TestSeasonsCountFromTheEpoch(t *testing.T) {
+	c := rules.ArenaConfig{SeasonDays: 14, SeasonEpochMs: 1_767_571_200_000}
+	s := &Server{}
+	if got := s.season(c, c.SeasonEpochMs); got != 1 {
+		t.Fatalf("first day: season %d", got)
+	}
+	end := s.seasonEndMs(c, 1)
+	if s.season(c, end-1) != 1 || s.season(c, end) != 2 {
+		t.Fatal("season 2 starts exactly at the end of season 1")
+	}
+}

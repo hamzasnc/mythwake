@@ -140,5 +140,6 @@
   },
   "rules": {
     "maxDurationMs": 90000
-  }
+  },
+  "seasonEpochMs": 1767571200000
 }

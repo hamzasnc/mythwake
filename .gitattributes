@@ -11,6 +11,14 @@
 *.md text eol=lf
 *.py text eol=lf
 *.csproj text eol=lf
+*.go text eol=lf
+*.mod text eol=lf
+*.sum text eol=lf
+*.sql text eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+Dockerfile text eol=lf
+*.ps1 text eol=crlf
 
 # Unity YAML: merge with UnityYAMLMerge (Smart Merge)
 *.asset text eol=lf merge=unityyamlmerge

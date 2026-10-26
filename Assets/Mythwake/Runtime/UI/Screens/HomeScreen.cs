@@ -73,6 +73,17 @@ namespace Mythwake.UI
             questText.style.flexBasis = 0;
             questText.style.flexShrink = 1;
             _questBadge = UiKit.Box("badge").Into(questButton);
+            var arena = UiKit.Box("panel", "quest-strip").Into(safe);
+            arena.RegisterCallback<ClickEvent>(_ => Ui.Router.Reset(new ArenaScreen()));
+            var arenaText = UiKit.Box("grow").Into(arena);
+            arenaText.style.flexBasis = 0;
+            UiKit.Text("Arena", "quest__title").Into(arenaText);
+            UiKit.Text(Loc.T("arena.teaser"), "label--small").Into(arenaText);
+            var arenaPill = UiKit.Text(Loc.T("arena.open") + "  ›", "pill").Into(arena);
+            arenaPill.style.width = 210;
+            arenaPill.style.height = 56;
+            arenaPill.style.flexShrink = 0;
+            arenaPill.style.unityTextAlign = UnityEngine.TextAnchor.MiddleCenter;
             UiKit.Box("spacer").Into(safe);
 
             var card = UiKit.Box("panel", "stage-card").Into(safe);

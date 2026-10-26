@@ -186,6 +186,30 @@ type commandsConflict struct {
 
 const maxBatch = 50
 
+// Client timestamps are accepted inside this window around the server clock. Idle rewards can therefore be
+// predicted exactly by the client, and nobody can gain more than a few seconds by changing the device clock.
+const (
+	clockPastMs   = 10_000
+	clockFutureMs = 2_000
+)
+
+// stampCommands checks each command's client time: inside the window and never before the previous command,
+// otherwise the server clock is used. Returns the time of the last command.
+func stampCommands(commands []rules.Command, nowMs, lastMs int64) int64 {
+	for i := range commands {
+		at := commands[i].AtMs
+		if at < nowMs-clockPastMs || at > nowMs+clockFutureMs {
+			at = nowMs
+		}
+		if at < lastMs {
+			at = lastMs
+		}
+		commands[i].AtMs = at
+		lastMs = at
+	}
+	return lastMs
+}
+
 // postCommands applies a batch of client commands with the server clock. The batch is all or nothing.
 func (s *Server) postCommands(w http.ResponseWriter, r *http.Request) {
 	var req commandsRequest
@@ -229,6 +253,7 @@ func (s *Server) postCommands(w http.ResponseWriter, r *http.Request) {
 			conflict = &commandsConflict{Error: "version_conflict", Index: -1, State: json.RawMessage(p.State), Version: p.Version, Hash: p.StateHash}
 			return nil
 		}
+		p.LastCommandMs = stampCommands(req.Commands, s.nowMs(), p.LastCommandMs)
 		result, err := s.rules.Apply(ctx, p.State, s.nowMs(), req.Commands, false)
 		if re, ok := rules.IsRuleError(err); ok {
 			conflict = &commandsConflict{Error: re.Code, Index: re.Index, State: json.RawMessage(p.State), Version: p.Version, Hash: p.StateHash}

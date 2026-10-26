@@ -17,6 +17,8 @@ type Command struct {
 	ID   string          `json:"id,omitempty"`
 	Type string          `json:"type"`
 	Data json.RawMessage `json:"data"`
+	// AtMs is the command's time. The client sends its predicted time; the API checks it against the server clock.
+	AtMs int64 `json:"atMs,omitempty"`
 }
 
 // Result of applying commands or creating a player. State is the save JSON exactly as the rules service wrote it.
@@ -118,6 +120,7 @@ type ArenaConfig struct {
 	FreeFightsPerDay int                 `json:"freeFightsPerDay"`
 	UnlockStage      int                 `json:"unlockStage"`
 	SeasonDays       int                 `json:"seasonDays"`
+	SeasonEpochMs    int64               `json:"seasonEpochMs"`
 	Ranks            []ArenaRank         `json:"ranks"`
 	WinRewards       []Amount            `json:"winRewards"`
 	LossRewards      []Amount            `json:"lossRewards"`

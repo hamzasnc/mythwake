@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Mythwake.Game::Mythwake.Game.ContentCatalog
   dataFiles:
   - {fileID: 4900000, guid: 284ee0cfeba863e4bb911b6e4361daad, type: 3}
+  - {fileID: 4900000, guid: 0f15e0adcf388854f9aec8a05ed59a4e, type: 3}
   - {fileID: 4900000, guid: 38878a09a155a1343804a57275ec435a, type: 3}
   - {fileID: 4900000, guid: fd0d035434ca05b499fac14e9b70fefd, type: 3}
   - {fileID: 4900000, guid: fcd0bc9b1933ea84e82079db0f56b392, type: 3}
