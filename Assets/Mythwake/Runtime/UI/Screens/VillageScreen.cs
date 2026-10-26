@@ -151,7 +151,7 @@ namespace Mythwake.UI
             var scroll = new ScrollView(ScrollViewMode.Vertical).Into(overlay);
             scroll.AddToClassList("building-popup");
             var card = new BuildingPanel(Ui, Root, Refresh).Build(def).Into(scroll);
-            var close = UiKit.Btn("×", Close, "btn--secondary", "btn--small", "building-popup__close");
+            var close = UiKit.IconBtn("close", Close, "building-popup__close");
             card.Insert(0, close);
         }
 

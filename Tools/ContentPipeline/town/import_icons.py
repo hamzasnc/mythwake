@@ -19,6 +19,8 @@ MAX = 512
 # enclosed background (inside a chain or ring) is near-white and larger than a highlight
 HOLE_WHITE = 245
 HOLE_MIN_AREA = 0.004
+# at least a quarter of the pixels around a real hole are outline-dark
+HOLE_RIM_DARK = 20
 
 
 def clear_holes(icon):
@@ -29,7 +31,15 @@ def clear_holes(icon):
     if count == 0:
         return icon
     areas = ndimage.sum(white, labels, range(1, count + 1))
-    big = np.isin(labels, 1 + np.flatnonzero(areas >= HOLE_MIN_AREA * white.size))
+    # a pocket of background is fenced in by the dark outline; a big glint sits on light paint
+    luma = rgba[..., :3].mean(axis=2)
+    holes = []
+    for i in np.flatnonzero(areas >= HOLE_MIN_AREA * white.size):
+        pocket = labels == i + 1
+        ring = ndimage.binary_dilation(pocket, iterations=6) & ~ndimage.binary_dilation(pocket, iterations=2)
+        if ring.any() and np.percentile(luma[ring], 25) < HOLE_RIM_DARK:
+            holes.append(i + 1)
+    big = np.isin(labels, holes)
     # soften the rim: pixels next to a hole that are still very light become partly transparent
     rim = ndimage.binary_dilation(big, iterations=2) & ~big
     light = rgba[..., :3].min(axis=2).astype(np.float32)

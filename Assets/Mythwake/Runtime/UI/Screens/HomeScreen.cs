@@ -59,6 +59,7 @@ namespace Mythwake.UI
 
             var afk = UiKit.Box("panel").Into(safe);
             var head = UiKit.Box("row").Into(afk);
+            UiKit.Icon("chestGold", "afk__chest").Into(head);
             UiKit.Text(Loc.T("afk.title"), "title").Into(head);
             UiKit.Box("spacer").Into(head);
             _afkTime = UiKit.Text("", "subtitle").Into(head);

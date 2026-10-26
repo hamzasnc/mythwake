@@ -30,6 +30,7 @@ Ground-up rebuild on branch `rebuild/v2` (orphan branch, no v1 code). As of 26.1
 | Hubs (AFK Arena / 7DS Idle style, `docs/DECISIONS.md`) | Bottom bar Dawnhollow · Abenteuer · Kampagne (centre) · Helden · Beschwörung. Dawnhollow is a painted town: the doc's 9 buildings on their plots (ruins until rebuilt, name plates, red dots when an upgrade is affordable, collect bubble over the Survivor Camp), tap opens the building panel. Abenteuer is a painted world map with pins for Kampagne, Dawnhollow, Hunt Board, Dungeons, Arena and the locked Shattered Realms / Guardian Raids. Pictures can be dragged where they overflow; positions in `Content/Town/town.json`, art via `Tools/ContentPipeline/town` |
 | Intro & tutorial | Concept: `docs/systems/TUTORIAL.md`. New players open on a five-picture intro told with the doc's lore sneak-peek, then coach marks (gold ring + one line) lead through the first fight, ultimates, idle rewards, rebuilding the Summoning Gate, the first summon and levelling; steps follow progress and are saved on the server |
 | Battle backgrounds | Painted backgrounds per chapter (Dawnhollow, Mossveil Woods, then each chapter boss's lair) and per mode (Arena, Dungeons, the four Shattered Realms, Trials, Guardian Raids, Watchtower), also behind the idle team on the campaign hub |
+| UI kit | `docs/UI_KIT.md`. Painted UI in AFK Arena / 7DS Idle style: 170 icons (currencies, navigation, modes, controls, Fragment Aspects, roles, factions, races, stats, statuses, Arena ranks, grades, chests, dungeons, realms, quests, actions), 45 frames (9-slice buttons, panels, popups, tabs, bars, hero card and item frames per grade, battle HUD, banners), 10 painted screen backgrounds, logo and app icon |
 | Client | Home (idle chest, next stage, team idling, current quest with badge), Quests (Main/Daily/Weekly), world map, Hunt Board + Hunt Shop, Dungeons, Arena (online), Dawnhollow (buildings, storage, hero slots, forge crafting), Formation, Battle (Spine playback, hit-stop, camera shake, cut-ins, damage numbers, ultimate portraits, Auto/x2), Result (with gear drops), Heroes, Hero detail (with equipment, enhancing), Summon |
 | Save | Online: on the server (PostgreSQL). Offline/dev: local JSON, atomic write + backup, version field for migrations |
 | Tests | 189 C# tests (dotnet + Unity), Go unit tests, end-to-end tests against the running server, online autopilot; (rules, every hero's kit, content validity, economy pacing), green in dotnet and in Unity |
@@ -66,7 +67,8 @@ Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscr
 5. Town and world map art → `Tools/ContentPipeline/town/make_town_jobs.py` (Codex jobs), then `import_town.py <jobs dir>`.
 6. Battle backgrounds and intro pictures → `Tools/ContentPipeline/backgrounds/make_background_jobs.py <dir> <style> [story]` (Codex jobs), then `import_backgrounds.py <jobs dirs>`.
 7. Ultimate cut-ins for heroes without one → `Tools/ContentPipeline/make_cutin_jobs.py <dir>` (Codex, the hero's full render as reference), then `import_cutin_jobs.py <dir>`. Gear icons (set × slot) → `town/make_gear_icon_jobs.py`, then `town/import_icons.py`.
-8. Monster Spine rigs → `Tools/ContentPipeline/monsters/make_peel_jobs.py <masters dir> <id,id>` (Codex peels the master into layers + `layers.json`), then `monsters/spine/build_all.py <masters dirs> [--only id,id]` → `Content/Monsters/<id>/`; see `docs/MONSTER_RIGS.md`.
+8. UI kit → `Tools/ContentPipeline/ui/make_ui_jobs.py <dir> <style reference>` (Codex icon / frame sheets, backgrounds, logo, app icon), then `ui/import_ui.py <dir>`.
+9. Monster Spine rigs → `Tools/ContentPipeline/monsters/make_peel_jobs.py <masters dir> <id,id>` (Codex peels the master into layers + `layers.json`), then `monsters/spine/build_all.py <masters dirs> [--only id,id]` → `Content/Monsters/<id>/`; see `docs/MONSTER_RIGS.md`.
 
 ## Open points
 
@@ -88,7 +90,7 @@ Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscr
   boss sleep immunity, rank-gated skills).
 - Balance is a first pass everywhere (`Content/Data/*.json`, numbers in `docs/systems/*.md`); pacing tests pin the
   early game.
-- Missing art: UI icons and fonts, sound.
+- Missing: a licensed UI font (the default font is still used), sound.
 - Village buildings upgrade instantly (no build timers).
 - Server for production: TLS, platform logins (Google/Apple), Redis rate limits for several API instances, guild
   moderation (kick, reports), cross-guild ranking.

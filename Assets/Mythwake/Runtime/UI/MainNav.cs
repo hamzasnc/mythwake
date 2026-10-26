@@ -28,6 +28,7 @@ namespace Mythwake.UI
                     ui.Router.Reset(make());
             }) { text = Loc.T(key) };
             b.AddToClassList("nav__item");
+            UiKit.Box("nav__icon", "nav__icon--" + tab.ToString().ToLowerInvariant()).Into(b).pickingMode = PickingMode.Ignore;
             b.name = "coach-nav-" + tab.ToString().ToLowerInvariant();
             if (tab == active)
                 b.AddToClassList("nav__item--active");

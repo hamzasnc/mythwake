@@ -47,7 +47,10 @@ namespace Mythwake.UI
             IGameAuthority authority = null;
             if (!string.IsNullOrEmpty(url))
             {
-                var connecting = UiKit.Text(Loc.T("server.connecting"), "subtitle", "boot").Into(layer);
+                // splash picture while the server answers
+                var connecting = UiKit.Box("screen", "boot").Into(layer);
+                UiKit.Box("boot__logo").Into(connecting);
+                UiKit.Text(Loc.T("server.connecting"), "subtitle", "boot__text").Into(connecting);
                 ServerAuthority server = null;
                 string error = null;
                 yield return ServerAuthority.Connect(url, content, catalog.ContentVersion(), (s, e) =>

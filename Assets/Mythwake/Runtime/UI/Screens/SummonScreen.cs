@@ -30,6 +30,7 @@ namespace Mythwake.UI
         protected override void Build(VisualElement root)
         {
             root.AddToClassList("screen--solid");
+            root.AddToClassList("screen--summon");
             var banner = Ui.Content.Banner(BannerId);
             _currencies = new CurrencyBar(Ids.Gems, Ids.SummonScroll).Into(root);
             var safe = UiKit.Box("safe").Into(root);

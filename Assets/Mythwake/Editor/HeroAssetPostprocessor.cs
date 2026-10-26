@@ -15,6 +15,7 @@ namespace Mythwake.Editor
         public const string IconsRoot = "Assets/Mythwake/Content/Icons/";
         public const string BackgroundsRoot = "Assets/Mythwake/Content/Backgrounds/";
         public const string StoryRoot = "Assets/Mythwake/Content/Story/";
+        public const string UiRoot = "Assets/Mythwake/Content/UI/";
 
         private void OnPreprocessTexture()
         {
@@ -41,6 +42,19 @@ namespace Mythwake.Editor
                 bg.wrapMode = TextureWrapMode.Clamp;
                 bg.maxTextureSize = 2048;
                 bg.textureCompression = TextureImporterCompression.CompressedHQ;
+                return;
+            }
+            if (assetPath.StartsWith(UiRoot))
+            {
+                // UI kit: icons, 9-slice frames and screen backgrounds, referenced from Mythwake.uss
+                var kit = (TextureImporter)assetImporter;
+                kit.textureType = TextureImporterType.Default;
+                kit.alphaIsTransparency = true;
+                kit.mipmapEnabled = false;
+                kit.wrapMode = TextureWrapMode.Clamp;
+                kit.npotScale = TextureImporterNPOTScale.None;
+                kit.maxTextureSize = assetPath.Contains("/Backgrounds/") ? 2048 : 1024;
+                kit.textureCompression = TextureImporterCompression.CompressedHQ;
                 return;
             }
             if (assetPath.StartsWith(StoryRoot))

@@ -19,6 +19,7 @@ Lore and names still come only from the doc; everything here is structure, balan
 | 2026-10-26 | Open balancing and gameplay numbers are decided by the developer, documented in `docs/systems/*.md` and pinned by tests. | Lead |
 | 2026-10-26 | Intro story from the doc's lore sneak-peek (five pictures, German text with the doc's English terms) and progress-driven coach marks for the first steps; the player character is never shown from the front (`docs/systems/TUTORIAL.md`). | Developer |
 | 2026-10-26 | Painted battle backgrounds per campaign chapter and per game mode; chapters without a doc name are drawn as their boss's lair, without inventing place names. | Developer |
+| 2026-10-26 | Full painted UI kit (icons, 9-slice chrome, screen backgrounds, logo, app icon) made with Codex from the game's own item icons as style reference; pictures never carry text, labels stay localized UI text (`docs/UI_KIT.md`). | Developer |
 
 ## Navigation (from 2026-10-26)
 

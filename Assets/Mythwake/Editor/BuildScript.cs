@@ -13,9 +13,15 @@ namespace Mythwake.Editor
         [MenuItem("Mythwake/Build/Android (dev)")]
         public static void Android() => Build(BuildTarget.Android, "Builds/Android/Mythwake.apk");
 
+        public const string AppIconPath = "Assets/Mythwake/Content/UI/AppIcon.png";
+
         private static void Build(BuildTarget target, string output)
         {
             ContentCatalogBuilder.Rebuild();
+            // app icon from the UI kit (docs/UI_KIT.md)
+            var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(AppIconPath);
+            if (icon != null)
+                PlayerSettings.SetIcons(UnityEditor.Build.NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
                 scenes = new[] { "Assets/Mythwake/Scenes/Main.unity" },

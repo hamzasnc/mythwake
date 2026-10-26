@@ -33,10 +33,11 @@ namespace Mythwake.UI
         protected override void Build(VisualElement root)
         {
             root.AddToClassList("screen--solid");
+            root.AddToClassList("screen--guild");
             _currencies = new CurrencyBar(Ids.GuildCoins, Ids.Gold, Ids.Gems).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
-            UiKit.Btn("‹", () => Ui.Router.Back(() => new VillageScreen()), "btn--secondary", "btn--small").Into(head);
+            UiKit.IconBtn("back", () => Ui.Router.Back(() => new VillageScreen())).Into(head);
             UiKit.Text(Loc.T("guild.title"), "title").Into(head);
             var scroll = new ScrollView(ScrollViewMode.Vertical).Into(safe);
             scroll.style.flexGrow = 1;

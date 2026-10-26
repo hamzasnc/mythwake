@@ -16,6 +16,7 @@ namespace Mythwake.UI
         protected override void Build(VisualElement root)
         {
             root.AddToClassList("screen--solid");
+            root.AddToClassList("screen--heroes");
             _currencies = new CurrencyBar(Ids.Gold, Ids.HeroExp, Ids.Gems).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             UiKit.Text(Loc.T("heroes.title"), "title").Into(safe);
@@ -64,6 +65,7 @@ namespace Mythwake.UI
         protected override void Build(VisualElement root)
         {
             root.AddToClassList("screen--solid");
+            root.AddToClassList("screen--heroes");
             var hero = Ui.Content.Hero(_heroId);
             _currencies = new CurrencyBar(Ids.Gold, Ids.HeroExp).Into(root);
             var scroll = new ScrollView(ScrollViewMode.Vertical).Into(root);
@@ -71,7 +73,7 @@ namespace Mythwake.UI
             var safe = UiKit.Box("safe").Into(scroll);
 
             var head = UiKit.Box("row").Into(safe);
-            UiKit.Btn("‹", () => Ui.Router.Pop(), "btn--secondary", "btn--small").Into(head);
+            UiKit.IconBtn("back", () => Ui.Router.Pop()).Into(head);
             var names = UiKit.Box().Into(head);
             UiKit.Text(hero.Name, "title").Into(names);
             UiKit.Text(hero.Title, "subtitle").Into(names);
@@ -84,11 +86,11 @@ namespace Mythwake.UI
 
             var tags = UiKit.Box("row").Into(safe);
             tags.style.flexWrap = Wrap.Wrap;
-            UiKit.Text(Loc.T("grade." + UiKit.Lower(hero.Grade)), "tag", "grade--" + UiKit.GradeClass(hero.Grade)).Into(tags);
-            UiKit.Text(Loc.T("aspect." + UiKit.Lower(hero.Aspect)), "tag").Into(tags);
-            UiKit.Text(Loc.T("role." + UiKit.Lower(hero.Role)), "tag").Into(tags);
-            UiKit.Text(Loc.T("faction." + UiKit.Lower(hero.Faction)), "tag").Into(tags);
-            UiKit.Text(Loc.T("race." + UiKit.Lower(hero.Race)), "tag").Into(tags);
+            UiKit.IconTag("grade" + hero.Grade, Loc.T("grade." + UiKit.Lower(hero.Grade)), "grade--" + UiKit.GradeClass(hero.Grade)).Into(tags);
+            UiKit.IconTag("aspect" + hero.Aspect, Loc.T("aspect." + UiKit.Lower(hero.Aspect))).Into(tags);
+            UiKit.IconTag("role" + hero.Role, Loc.T("role." + UiKit.Lower(hero.Role))).Into(tags);
+            UiKit.IconTag("faction" + hero.Faction, Loc.T("faction." + UiKit.Lower(hero.Faction))).Into(tags);
+            UiKit.IconTag("race" + hero.Race, Loc.T("race." + UiKit.Lower(hero.Race))).Into(tags);
 
             var progress = UiKit.Box("panel").Into(safe);
             var levelRow = UiKit.Box("row").Into(progress);
@@ -144,9 +146,9 @@ namespace Mythwake.UI
             var stats = TeamBuilder.StatsOf(Formations.Progress(Ui.State, content, owned));
             _power.text = Loc.T("heroes.power", UiKit.Short(TeamBuilder.Power(stats)));
             _stats.Clear();
-            Stat(Loc.T("hero.hp"), stats.Hp);
-            Stat(Loc.T("hero.attack"), stats.Attack);
-            Stat(Loc.T("hero.defense"), stats.Defense);
+            Stat("statHp", Loc.T("hero.hp"), stats.Hp);
+            Stat("statAttack", Loc.T("hero.attack"), stats.Attack);
+            Stat("statDefense", Loc.T("hero.defense"), stats.Defense);
 
             var atCap = owned.Level >= cap;
             var cost = Progression.LevelCost(content, owned.Level, 1);
@@ -287,10 +289,12 @@ namespace Mythwake.UI
             _setBonus.text = stats.SetBonusActive ? Loc.T("gear.setActive") : "";
         }
 
-        private void Stat(string name, long value)
+        private void Stat(string icon, string name, long value)
         {
             var row = UiKit.Box("stat-row").Into(_stats);
-            UiKit.Text(name).Into(row);
+            var label = UiKit.Box("row").Into(row);
+            UiKit.Icon(icon, "stat-row__icon").Into(label);
+            UiKit.Text(name).Into(label);
             UiKit.Text(UiKit.Short(value)).Into(row);
         }
 

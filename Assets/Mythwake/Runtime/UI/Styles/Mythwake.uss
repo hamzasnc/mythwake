@@ -766,7 +766,7 @@
 .hero-card--mini .hero-card__stars { font-size: 14px; }
 .ranking__row { align-items: center; padding: 14px 20px; margin-bottom: 8px; }
 .ranking__place { font-size: 34px; -unity-font-style: bold; color: var(--muted); width: 80px; }
-.boot { position: absolute; top: 45%; left: 0; right: 0; -unity-text-align: middle-center; }
+.boot { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
 .icon--arenaCoins { background-color: #e86a6a; }
 
 /* ---------------------------------------------------------------- dungeons and adventure hub */
@@ -1202,3 +1202,322 @@
 .coach__bubble .btn {
     margin-top: 14px;
 }
+
+/* ================================================================ UI kit (Content/UI, docs/UI_KIT.md) */
+
+/* currency icons */
+.icon--gold { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/gold.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--heroExp { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/heroExp.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--gems { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/gems.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--summonScroll { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/summonScroll.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--fragmentDust { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/fragmentDust.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--wood { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/wood.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--stone { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/stone.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--guardianSigil { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/guardianSigil.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--gearMaterials { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/gearMaterials.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--relicMaterials { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/relicMaterials.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--upgradeStones { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/upgradeStones.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--huntTokens { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/huntTokens.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--arenaCoins { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/arenaCoins.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--guildCoins { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/guildCoins.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon--realmKey { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/realmKey.png"); background-color: rgba(0, 0, 0, 0); border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.currency__icon { border-radius: 0; width: 44px; height: 44px; }
+
+/* bottom navigation icons */
+.nav__item { padding-top: 92px; padding-bottom: 6px; }
+.nav__icon { position: absolute; top: 4px; left: 50%; translate: -50% 0; width: 88px; height: 88px; -unity-background-scale-mode: scale-to-fit; transition-duration: 0.12s; transition-property: scale; }
+.nav__item--active .nav__icon { scale: 1.15 1.15; }
+.nav__item--main .nav__icon { width: 108px; height: 108px; top: -18px; }
+.nav__icon--town { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/navTown.png"); }
+.nav__icon--adventure { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/navAdventure.png"); }
+.nav__icon--campaign { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/navCampaign.png"); }
+.nav__icon--heroes { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/navHeroes.png"); }
+.nav__icon--summon { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/navSummon.png"); }
+
+/* round picture buttons */
+.icon-btn { width: 84px; height: 84px; margin: 4px; padding: 0; border-width: 0; background-color: rgba(0, 0, 0, 0); -unity-background-scale-mode: scale-to-fit; transition-duration: 0.08s; transition-property: scale; }
+.icon-btn:active { scale: 0.92 0.92; }
+.icon-btn--back { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/back.png"); }
+.icon-btn--close { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/close.png"); }
+.icon-btn--info { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/info.png"); }
+
+/* Fragment Aspects */
+.aspect-dot { width: 40px; height: 40px; border-width: 0; border-radius: 0; background-color: rgba(0, 0, 0, 0); -unity-background-scale-mode: scale-to-fit; }
+.aspect-dot.aspect--ravak { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/aspectRavak.png"); background-color: rgba(0, 0, 0, 0); }
+.aspect-dot.aspect--somnara { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/aspectSomnara.png"); background-color: rgba(0, 0, 0, 0); }
+.aspect-dot.aspect--envyra { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/aspectEnvyra.png"); background-color: rgba(0, 0, 0, 0); }
+.aspect-dot.aspect--gorath { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/aspectGorath.png"); background-color: rgba(0, 0, 0, 0); }
+.aspect-dot.aspect--veloria { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/aspectVeloria.png"); background-color: rgba(0, 0, 0, 0); }
+
+/* hero card grade frames */
+.hero-card { border-width: 0; border-radius: 10px; background-color: #141a2c; }
+.hero-card__frame { position: absolute; left: -6px; top: -6px; right: -6px; bottom: -6px; -unity-background-scale-mode: stretch-to-fill; }
+.hero-card--common > .hero-card__frame { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/cardCommon.png"); }
+.hero-card--rare > .hero-card__frame { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/cardRare.png"); }
+.hero-card--epic > .hero-card__frame { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/cardEpic.png"); }
+.hero-card--legendary > .hero-card__frame { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/cardLegendary.png"); }
+.hero-card--transcendent > .hero-card__frame { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/cardTranscendent.png"); }
+
+/* painted screen backgrounds */
+.screen--solid { background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_menu.png"); -unity-background-scale-mode: scale-and-crop; }
+.screen--summon { background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_summon.png"); }
+.screen--heroes { background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_heroes.png"); }
+.screen--shop { background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_shop.png"); }
+.screen--guild { background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_guild.png"); }
+.boot { background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_splash.png"); -unity-background-scale-mode: scale-and-crop; }
+.boot__text { position: absolute; left: 0; right: 0; bottom: 140px; -unity-text-align: middle-center; color: var(--text); -unity-text-outline-width: 1px; -unity-text-outline-color: black; }
+
+/* icons from the UI kit by name */
+.ui-icon { width: 48px; height: 48px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.tag--icon { flex-direction: row; align-items: center; padding-left: 6px; }
+.tag__icon { width: 36px; height: 36px; margin-right: 6px; }
+.stat-row__icon { width: 40px; height: 40px; margin-right: 10px; }
+
+/* @generated ui-icons begin (import_ui.py) */
+.ui-icon--arena { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/arena.png"); }
+.ui-icon--arenaCoins { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/arenaCoins.png"); }
+.ui-icon--aspectEnvyra { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/aspectEnvyra.png"); }
+.ui-icon--aspectGorath { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/aspectGorath.png"); }
+.ui-icon--aspectRavak { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/aspectRavak.png"); }
+.ui-icon--aspectSomnara { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/aspectSomnara.png"); }
+.ui-icon--aspectVeloria { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/aspectVeloria.png"); }
+.ui-icon--auto { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/auto.png"); }
+.ui-icon--awakening { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/awakening.png"); }
+.ui-icon--back { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/back.png"); }
+.ui-icon--boss { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/boss.png"); }
+.ui-icon--bossFragments { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/bossFragments.png"); }
+.ui-icon--chat { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/chat.png"); }
+.ui-icon--check { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/check.png"); }
+.ui-icon--chest { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/chest.png"); }
+.ui-icon--chestEpic { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/chestEpic.png"); }
+.ui-icon--chestGold { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/chestGold.png"); }
+.ui-icon--chestLegendary { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/chestLegendary.png"); }
+.ui-icon--chestOpen { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/chestOpen.png"); }
+.ui-icon--chestOpened { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/chestOpened.png"); }
+.ui-icon--chestSilver { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/chestSilver.png"); }
+.ui-icon--chestWood { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/chestWood.png"); }
+.ui-icon--close { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/close.png"); }
+.ui-icon--craft { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/craft.png"); }
+.ui-icon--donate { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/donate.png"); }
+.ui-icon--dungeonFragment { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/dungeonFragment.png"); }
+.ui-icon--dungeonGear { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/dungeonGear.png"); }
+.ui-icon--dungeonMaterial { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/dungeonMaterial.png"); }
+.ui-icon--dungeonRelic { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/dungeonRelic.png"); }
+.ui-icon--dungeons { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/dungeons.png"); }
+.ui-icon--elite { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/elite.png"); }
+.ui-icon--enemy { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/enemy.png"); }
+.ui-icon--enhance { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/enhance.png"); }
+.ui-icon--equip { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/equip.png"); }
+.ui-icon--events { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/events.png"); }
+.ui-icon--factionCircleOfAether { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/factionCircleOfAether.png"); }
+.ui-icon--factionEmpireOfTheShatteredSky { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/factionEmpireOfTheShatteredSky.png"); }
+.ui-icon--factionGuildsOfTheHunt { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/factionGuildsOfTheHunt.png"); }
+.ui-icon--factionOrderOfTheVeil { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/factionOrderOfTheVeil.png"); }
+.ui-icon--factionTheHollowed { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/factionTheHollowed.png"); }
+.ui-icon--factionTribeOfTheCrimsonFang { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/factionTribeOfTheCrimsonFang.png"); }
+.ui-icon--filter { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/filter.png"); }
+.ui-icon--firstClear { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/firstClear.png"); }
+.ui-icon--forge { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/forge.png"); }
+.ui-icon--formation { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/formation.png"); }
+.ui-icon--fragmentDust { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/fragmentDust.png"); }
+.ui-icon--fragments { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/fragments.png"); }
+.ui-icon--gearMaterials { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/gearMaterials.png"); }
+.ui-icon--gems { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/gems.png"); }
+.ui-icon--gold { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/gold.png"); }
+.ui-icon--gradeCommon { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/gradeCommon.png"); }
+.ui-icon--gradeEpic { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/gradeEpic.png"); }
+.ui-icon--gradeLegendary { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/gradeLegendary.png"); }
+.ui-icon--gradeRare { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/gradeRare.png"); }
+.ui-icon--gradeTranscendent { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/gradeTranscendent.png"); }
+.ui-icon--guardianSigil { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/guardianSigil.png"); }
+.ui-icon--guild { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/guild.png"); }
+.ui-icon--guildCoins { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/guildCoins.png"); }
+.ui-icon--heroExp { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/heroExp.png"); }
+.ui-icon--heroShards { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/heroShards.png"); }
+.ui-icon--huntBoard { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/huntBoard.png"); }
+.ui-icon--huntTokens { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/huntTokens.png"); }
+.ui-icon--info { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/info.png"); }
+.ui-icon--levelUp { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/levelUp.png"); }
+.ui-icon--lock { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/lock.png"); }
+.ui-icon--mail { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/mail.png"); }
+.ui-icon--navAdventure { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/navAdventure.png"); }
+.ui-icon--navCampaign { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/navCampaign.png"); }
+.ui-icon--navHeroes { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/navHeroes.png"); }
+.ui-icon--navSummon { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/navSummon.png"); }
+.ui-icon--navTown { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/navTown.png"); }
+.ui-icon--plus { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/plus.png"); }
+.ui-icon--power { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/power.png"); }
+.ui-icon--questDaily { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/questDaily.png"); }
+.ui-icon--questMain { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/questMain.png"); }
+.ui-icon--questVillage { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/questVillage.png"); }
+.ui-icon--questWeekly { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/questWeekly.png"); }
+.ui-icon--quests { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/quests.png"); }
+.ui-icon--raceAetherial { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/raceAetherial.png"); }
+.ui-icon--raceDrakari { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/raceDrakari.png"); }
+.ui-icon--raceHollowed { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/raceHollowed.png"); }
+.ui-icon--raceHuman { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/raceHuman.png"); }
+.ui-icon--raceStoneborn { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/raceStoneborn.png"); }
+.ui-icon--raceThalassari { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/raceThalassari.png"); }
+.ui-icon--raceVeyr { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/raceVeyr.png"); }
+.ui-icon--raid { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/raid.png"); }
+.ui-icon--rankBronze { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/rankBronze.png"); }
+.ui-icon--rankGold { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/rankGold.png"); }
+.ui-icon--rankGuardian { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/rankGuardian.png"); }
+.ui-icon--rankMythic { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/rankMythic.png"); }
+.ui-icon--rankPlatinum { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/rankPlatinum.png"); }
+.ui-icon--rankShatteredKing { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/rankShatteredKing.png"); }
+.ui-icon--rankSilver { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/rankSilver.png"); }
+.ui-icon--ranking { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/ranking.png"); }
+.ui-icon--realmAsh { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/realmAsh.png"); }
+.ui-icon--realmHunger { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/realmHunger.png"); }
+.ui-icon--realmKey { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/realmKey.png"); }
+.ui-icon--realmReflection { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/realmReflection.png"); }
+.ui-icon--realmStillness { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/realmStillness.png"); }
+.ui-icon--realms { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/realms.png"); }
+.ui-icon--relicMaterials { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/relicMaterials.png"); }
+.ui-icon--relics { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/relics.png"); }
+.ui-icon--roleDebuffer { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/roleDebuffer.png"); }
+.ui-icon--roleDps { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/roleDps.png"); }
+.ui-icon--roleHeroLeader { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/roleHeroLeader.png"); }
+.ui-icon--roleSupport { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/roleSupport.png"); }
+.ui-icon--roleTank { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/roleTank.png"); }
+.ui-icon--salvage { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/salvage.png"); }
+.ui-icon--settings { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/settings.png"); }
+.ui-icon--shop { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/shop.png"); }
+.ui-icon--skillNormal { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/skillNormal.png"); }
+.ui-icon--skillPassive { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/skillPassive.png"); }
+.ui-icon--skillSpecial { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/skillSpecial.png"); }
+.ui-icon--skillUltimate { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/skillUltimate.png"); }
+.ui-icon--slotAccessory { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/slotAccessory.png"); }
+.ui-icon--slotArmor { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/slotArmor.png"); }
+.ui-icon--slotBoots { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/slotBoots.png"); }
+.ui-icon--slotFragment { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/slotFragment.png"); }
+.ui-icon--slotRelic { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/slotRelic.png"); }
+.ui-icon--slotWeapon { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/slotWeapon.png"); }
+.ui-icon--sort { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/sort.png"); }
+.ui-icon--speed { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/speed.png"); }
+.ui-icon--star { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/star.png"); }
+.ui-icon--starEmpty { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/starEmpty.png"); }
+.ui-icon--statAccuracy { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statAccuracy.png"); }
+.ui-icon--statAttack { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statAttack.png"); }
+.ui-icon--statCrit { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statCrit.png"); }
+.ui-icon--statCritDamage { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statCritDamage.png"); }
+.ui-icon--statDefense { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statDefense.png"); }
+.ui-icon--statEnergy { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statEnergy.png"); }
+.ui-icon--statEvasion { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statEvasion.png"); }
+.ui-icon--statHealing { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statHealing.png"); }
+.ui-icon--statHp { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statHp.png"); }
+.ui-icon--statLevel { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statLevel.png"); }
+.ui-icon--statShield { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statShield.png"); }
+.ui-icon--statSpeed { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statSpeed.png"); }
+.ui-icon--statusAccuracyDown { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusAccuracyDown.png"); }
+.ui-icon--statusAttackDown { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusAttackDown.png"); }
+.ui-icon--statusAttackSpeedUp { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusAttackSpeedUp.png"); }
+.ui-icon--statusAttackUp { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusAttackUp.png"); }
+.ui-icon--statusBurn { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusBurn.png"); }
+.ui-icon--statusCharm { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusCharm.png"); }
+.ui-icon--statusCleanse { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusCleanse.png"); }
+.ui-icon--statusConfuse { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusConfuse.png"); }
+.ui-icon--statusCritRateUp { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusCritRateUp.png"); }
+.ui-icon--statusDamageTakenDown { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusDamageTakenDown.png"); }
+.ui-icon--statusDamageTakenUp { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusDamageTakenUp.png"); }
+.ui-icon--statusDefenseDown { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusDefenseDown.png"); }
+.ui-icon--statusDefenseUp { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusDefenseUp.png"); }
+.ui-icon--statusEnergyUp { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusEnergyUp.png"); }
+.ui-icon--statusEvade { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusEvade.png"); }
+.ui-icon--statusImmune { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusImmune.png"); }
+.ui-icon--statusPoison { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusPoison.png"); }
+.ui-icon--statusProvoke { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusProvoke.png"); }
+.ui-icon--statusRegen { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusRegen.png"); }
+.ui-icon--statusShield { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusShield.png"); }
+.ui-icon--statusSleep { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusSleep.png"); }
+.ui-icon--statusSlow { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusSlow.png"); }
+.ui-icon--statusStun { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusStun.png"); }
+.ui-icon--statusTaunt { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/statusTaunt.png"); }
+.ui-icon--stone { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/stone.png"); }
+.ui-icon--summonScroll { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/summonScroll.png"); }
+.ui-icon--swap { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/swap.png"); }
+.ui-icon--sweep { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/sweep.png"); }
+.ui-icon--time { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/time.png"); }
+.ui-icon--trials { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/trials.png"); }
+.ui-icon--upgrade { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/upgrade.png"); }
+.ui-icon--upgradeStones { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/upgradeStones.png"); }
+.ui-icon--watchtower { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/watchtower.png"); }
+.ui-icon--wood { background-image: url("project://database/Assets/Mythwake/Content/UI/Icons/wood.png"); }
+/* @generated ui-icons end */
+
+/* ---------------------------------------------------------------- UI kit chrome (9-slice, docs/UI_KIT.md) */
+
+.btn { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnGold.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 52; -unity-slice-bottom: 52; -unity-slice-scale: 0.55px; color: #3a2405; padding: 20px 44px; -unity-text-outline-width: 0; }
+.btn:hover { background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgb(255, 248, 225); }
+.btn:active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnGoldPressed.png"); scale: 0.96 0.96; }
+.btn:disabled { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnGray.png"); background-color: rgba(0, 0, 0, 0); color: #d8d8d8; }
+.btn--secondary { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnBlue.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 72; -unity-slice-right: 72; -unity-slice-top: 52; -unity-slice-bottom: 52; -unity-slice-scale: 0.55px; color: var(--text); -unity-text-outline-width: 1px; -unity-text-outline-color: rgba(0, 0, 20, 0.8); }
+.btn--secondary:hover { background-color: rgba(0, 0, 0, 0); }
+.btn--secondary:active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnBluePressed.png"); }
+.btn--danger { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnRed.png"); color: white; }
+.btn--confirm { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnGreen.png"); color: white; }
+.btn--small { padding: 12px 26px; -unity-slice-scale: 0.4px; }
+.btn--big { padding: 26px 70px; -unity-slice-scale: 0.7px; }
+
+.panel { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/panel.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 50; -unity-slice-right: 50; -unity-slice-top: 50; -unity-slice-bottom: 50; -unity-slice-scale: 0.6px; }
+.popup { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/popup.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 74; -unity-slice-right: 74; -unity-slice-top: 74; -unity-slice-bottom: 74; -unity-slice-scale: 0.7px; padding: 48px 40px; }
+.panel--light { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/panelLight.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 50; -unity-slice-right: 50; -unity-slice-top: 50; -unity-slice-bottom: 50; -unity-slice-scale: 0.6px; color: #3b2a14; }
+.plate { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/plate.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 54; -unity-slice-right: 54; -unity-slice-top: 44; -unity-slice-bottom: 44; -unity-slice-scale: 0.5px; }
+
+.currency { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/chip.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 52; -unity-slice-right: 52; -unity-slice-top: 44; -unity-slice-bottom: 44; -unity-slice-scale: 0.42px; padding: 6px 18px 6px 10px; }
+.nav { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/navBar.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 44; -unity-slice-right: 44; -unity-slice-top: 44; -unity-slice-bottom: 34; -unity-slice-scale: 1px; border-top-width: 0; }
+.currency-bar { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/topBar.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 32; -unity-slice-right: 32; -unity-slice-top: 20; -unity-slice-bottom: 20; -unity-slice-scale: 1px; }
+
+.afk-progress { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/barFrame.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 44; -unity-slice-right: 44; -unity-slice-top: 44; -unity-slice-bottom: 44; -unity-slice-scale: 0.45px; padding: 8px 12px; }
+.afk-progress__fill { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/barFillGold.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 32; -unity-slice-right: 32; -unity-slice-top: 28; -unity-slice-bottom: 28; -unity-slice-scale: 0.4px; }
+
+.badge { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/badge.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; -unity-background-scale-mode: scale-to-fit; }
+.boss-tag { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/tag.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 44; -unity-slice-right: 44; -unity-slice-top: 44; -unity-slice-bottom: 44; -unity-slice-scale: 0.3px; padding: 6px 22px; }
+.tag { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/tag.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 44; -unity-slice-right: 44; -unity-slice-top: 44; -unity-slice-bottom: 44; -unity-slice-scale: 0.22px; background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgb(70, 82, 120); }
+.ribbon { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/ribbon.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 130; -unity-slice-right: 130; -unity-slice-top: 70; -unity-slice-bottom: 70; -unity-slice-scale: 0.5px; padding: 18px 90px 30px 90px; -unity-text-align: middle-center; color: #fff4d6; -unity-font-style: bold; }
+
+.hero-card__frame { left: 0; top: 0; right: 0; bottom: 0; }
+.hero-card { overflow: visible; }
+.hero-card__portrait { left: 10px; top: 10px; right: 10px; bottom: 10px; border-radius: 6px; }
+.hero-card__footer { margin: 0 10px 10px 10px; }
+.hero-card__stars { top: 14px; left: 16px; }
+.aspect-dot { top: 12px; right: 12px; }
+/* painted backgrounds stay behind the content: dimmed except the summon hall */
+.screen--solid { -unity-background-image-tint-color: rgb(120, 122, 138); }
+.screen--summon { -unity-background-image-tint-color: rgb(225, 225, 235); }
+
+/* tabs, centre nav button, coach bubble, banners */
+.tab { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnTab.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 40; -unity-slice-right: 40; -unity-slice-top: 34; -unity-slice-bottom: 24; -unity-slice-scale: 0.5px; color: #c9cfe6; -unity-background-image-tint-color: rgb(150, 155, 175); margin: 0 3px; }
+.tab--active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnTab.png"); -unity-background-image-tint-color: rgb(255, 255, 255); color: var(--gold); -unity-font-style: bold; }
+.nav__item--main { background-color: rgba(0, 0, 0, 0); border-width: 0; margin-top: -40px; }
+.nav__item--main.nav__item--active { background-color: rgba(0, 0, 0, 0); color: var(--gold); }
+.coach__bubble { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/plate.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 54; -unity-slice-right: 54; -unity-slice-top: 44; -unity-slice-bottom: 44; -unity-slice-scale: 0.5px; padding: 26px 32px; }
+.coach__text { color: #fff4d6; }
+.banner { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/summonCard.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 60; -unity-slice-right: 60; -unity-slice-top: 80; -unity-slice-bottom: 60; -unity-slice-scale: 0.6px; }
+.result-title { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/bannerVictory.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 110; -unity-slice-right: 110; -unity-slice-top: 40; -unity-slice-bottom: 40; -unity-slice-scale: 0.8px; padding: 10px 150px 24px 150px; -unity-text-outline-width: 2px; -unity-text-outline-color: #3a2405; }
+.result-title--defeat { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/bannerDefeat.png"); }
+
+/* gear, Fragment and Relic tiles: item frame per grade */
+.gear, .fragment { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/itemCommon.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 44; -unity-slice-right: 44; -unity-slice-top: 44; -unity-slice-bottom: 44; -unity-slice-scale: 0.35px; background-color: rgba(10, 14, 28, 0.85); }
+.gear.hero-card--rare, .fragment.hero-card--rare { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/itemRare.png"); }
+.gear.hero-card--epic, .fragment.hero-card--epic { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/itemEpic.png"); }
+.gear.hero-card--legendary, .fragment.hero-card--legendary { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/itemLegendary.png"); }
+.gear.hero-card--transcendent, .fragment.hero-card--transcendent { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/itemTranscendent.png"); }
+.gear--empty { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/itemEmpty.png"); }
+
+/* battle HUD: portrait frames, ready glow */
+.ult-button { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/ultFrame.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 40; -unity-slice-right: 40; -unity-slice-top: 40; -unity-slice-bottom: 40; -unity-slice-scale: 0.35px; background-color: rgba(10, 14, 28, 0.9); overflow: visible; }
+.ult-button--ready { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/ultReady.png"); }
+
+/* more painted screen backgrounds */
+.screen--quests { background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_quests.png"); }
+.screen--formation { background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_formation.png"); }
+.screen--arena { background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_arena.png"); }
+.screen--dungeon { background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_dungeon.png"); }
+
+/* splash logo */
+.boot__logo { position: absolute; left: 8%; right: 8%; top: 9%; height: 26%; background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/logo.png"); -unity-background-scale-mode: scale-to-fit; }
+.afk__chest { width: 72px; height: 72px; margin-right: 12px; }
+.result-title--victory, .result-title--defeat { color: #fff8e6; -unity-text-outline-width: 3px; -unity-text-outline-color: #4a2a08; }
+.result-title--defeat { -unity-text-outline-color: #2a0d10; }

@@ -21,10 +21,11 @@ namespace Mythwake.UI
         protected override void Build(VisualElement root)
         {
             root.AddToClassList("screen--solid");
+            root.AddToClassList("screen--quests");
             _currencies = new CurrencyBar(Ids.Gold, Ids.Gems, Ids.SummonScroll).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
-            UiKit.Btn("‹", () => Ui.Router.Pop(), "btn--secondary", "btn--small").Into(head);
+            UiKit.IconBtn("back", () => Ui.Router.Pop()).Into(head);
             UiKit.Text(Loc.T("quests.title"), "title").Into(head);
             UiKit.Box("spacer").Into(head);
             _reset = UiKit.Text("", "label--small").Into(head);

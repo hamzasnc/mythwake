@@ -38,6 +38,38 @@ namespace Mythwake.UI
             return b;
         }
 
+        /// <summary>An icon of the UI kit by name (Content/UI/Icons/&lt;name&gt;.png, class ui-icon--&lt;name&gt;).</summary>
+        public static VisualElement Icon(string name, params string[] classes)
+        {
+            var icon = Box("ui-icon", "ui-icon--" + name);
+            foreach (var c in classes)
+                icon.AddToClassList(c);
+            icon.pickingMode = PickingMode.Ignore;
+            return icon;
+        }
+
+        /// <summary>Small pill with an icon in front of the text (grade, Aspect, role, faction, race).</summary>
+        public static VisualElement IconTag(string icon, string text, params string[] classes)
+        {
+            var tag = Box("tag", "tag--icon");
+            foreach (var c in classes)
+                tag.AddToClassList(c);
+            Icon(icon, "tag__icon").Into(tag);
+            Text(text).Into(tag);
+            return tag;
+        }
+
+        /// <summary>Round picture button without text (back, close, info …): "icon-btn icon-btn--&lt;icon&gt;" in Mythwake.uss.</summary>
+        public static Button IconBtn(string icon, Action onClick, params string[] classes)
+        {
+            var b = new Button(onClick);
+            b.AddToClassList("icon-btn");
+            b.AddToClassList("icon-btn--" + icon);
+            foreach (var c in classes)
+                b.AddToClassList(c);
+            return b;
+        }
+
         public static string Short(long value)
         {
             if (value >= 10_000_000_000) return (value / 1_000_000_000) + "B";
@@ -68,6 +100,8 @@ namespace Mythwake.UI
                 Text(hero.Name.Substring(0, 1), "hero-card__initial").Into(card);
             Text(Stars(owned?.Stars ?? 1), "hero-card__stars").Into(card);
             Box("aspect-dot", "aspect--" + Lower(hero.Aspect)).Into(card);
+            // grade frame painted over the portrait (Content/UI/Chrome/card<Grade>.png)
+            Box("hero-card__frame").Into(card).pickingMode = PickingMode.Ignore;
             var footer = Box("hero-card__footer").Into(card);
             Text(hero.Name, "hero-card__name").Into(footer);
             if (owned != null)

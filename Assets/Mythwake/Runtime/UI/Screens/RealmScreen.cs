@@ -22,7 +22,7 @@ namespace Mythwake.UI
             _currencies = new CurrencyBar(Ids.RealmKey, Ids.GuardianSigil, Ids.FragmentDust, Ids.RelicMaterials).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
-            UiKit.Btn("‹", () => Ui.Router.Back(() => new AdventureScreen()), "btn--secondary", "btn--small").Into(head);
+            UiKit.IconBtn("back", () => Ui.Router.Back(() => new AdventureScreen())).Into(head);
             UiKit.Text(Loc.T("realm.title"), "title").Into(head);
             _entries = UiKit.Text("", "quest__points").Into(safe);
             var scroll = new ScrollView(ScrollViewMode.Vertical).Into(safe);
