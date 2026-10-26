@@ -137,13 +137,15 @@ namespace Mythwake.Core.Meta
             var rules = new BattleRules { EnemyDamageModifier = trial.EnemyDamageModifier };
             foreach (var p in trial.EnemyPassives)
                 rules.EnemyPassives.Add(p.Clone());
-            return new BattleSetup
+            var setup = new BattleSetup
             {
                 Seed = pending.Seed,
                 Allies = Campaign.Allies(state, content, pending.Formation, withLeader: false),
                 Enemies = Enemies(content, aspect, pending.Floor),
                 Rules = rules
             };
+            BossFragments.Apply(setup, state, content);
+            return setup;
         }
 
         public static List<Amount> FloorRewards(GameContent content, int floor)

@@ -152,6 +152,7 @@ namespace Mythwake.UI
             Battle.FloatingText += OnFloatingText;
             Battle.UltimateCutIn += OnCutIn;
             Battle.LeaderAbility += OnLeaderAbility;
+            Battle.BossFragmentAbility += OnBossFragment;
             Battle.Finished += OnFinished;
             Battle.Begin(Ui.Catalog, _setup, auto);
             BuildUltButtons();
@@ -163,6 +164,7 @@ namespace Mythwake.UI
             Battle.FloatingText -= OnFloatingText;
             Battle.UltimateCutIn -= OnCutIn;
             Battle.LeaderAbility -= OnLeaderAbility;
+            Battle.BossFragmentAbility -= OnBossFragment;
             Battle.Finished -= OnFinished;
             Battle.Clear();
         }
@@ -277,6 +279,21 @@ namespace Mythwake.UI
             if (assets?.portrait != null)
                 UiKit.Box("leader-banner__portrait").Into(banner).style.backgroundImage = new StyleBackground(assets.portrait);
             UiKit.Text(Loc.T("battle.leader", skill?.Name ?? leader.Name), "leader-banner__text").Into(banner);
+            banner.schedule.Execute(() => banner.style.opacity = 0f).StartingIn(1400);
+            banner.schedule.Execute(() => banner.RemoveFromHierarchy()).StartingIn(1800);
+        }
+
+        private void OnBossFragment()
+        {
+            var f = _setup.BossFragment?.Hero;
+            if (f == null)
+                return;
+            var banner = UiKit.Box("leader-banner", "leader-banner--boss").Into(Root);
+            var boss = Ui.Content.Dungeons.Dungeons.FirstOrDefault(d => d.Id == BossFragments.Get(Ui.Content, f.Id).Dungeon)?.Boss;
+            var assets = boss == null ? null : Ui.Catalog.Hero(boss);
+            if (assets?.portrait != null)
+                UiKit.Box("leader-banner__portrait").Into(banner).style.backgroundImage = new StyleBackground(assets.portrait);
+            UiKit.Text(f.Special?.Name ?? f.Name, "leader-banner__text").Into(banner);
             banner.schedule.Execute(() => banner.style.opacity = 0f).StartingIn(1400);
             banner.schedule.Execute(() => banner.RemoveFromHierarchy()).StartingIn(1800);
         }

@@ -24,6 +24,7 @@ namespace Mythwake.Core.Meta
         public const string RelicUpgraded = "relicUpgraded";
         public const string TrialCleared = "trialCleared";
         public const string RealmCleared = "realmCleared";
+        public const string BossRefight = "bossRefight";
     }
 
     public sealed class TaskDefinition

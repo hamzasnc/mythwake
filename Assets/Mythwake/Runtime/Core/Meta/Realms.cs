@@ -67,7 +67,7 @@ namespace Mythwake.Core.Meta
             };
             foreach (var p in rules.EnemyPassives)
                 copy.EnemyPassives.Add(p.Clone());
-            return new BattleSetup
+            var setup = new BattleSetup
             {
                 Seed = pending.Seed,
                 Allies = Campaign.Allies(state, content, pending.Formation),
@@ -75,6 +75,8 @@ namespace Mythwake.Core.Meta
                 Enemies = Dungeons.Enemies(content, realm, pending.Floor),
                 Rules = copy
             };
+            BossFragments.Apply(setup, state, content);
+            return setup;
         }
 
         /// <summary>Uses a free entry if one is left today, else a key. Returns true when a key was spent.</summary>

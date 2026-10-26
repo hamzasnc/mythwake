@@ -23,6 +23,8 @@ namespace Mythwake.UI
             var head = UiKit.Box("row").Into(safe);
             UiKit.Btn("‹", () => Ui.Router.Back(() => new AdventureScreen()), "btn--secondary", "btn--small").Into(head);
             UiKit.Text(Loc.T("dungeon.title"), "title").Into(head);
+            UiKit.Box("spacer").Into(head);
+            UiKit.Btn(Loc.T("bossfrag.title"), () => Ui.Router.Push(new BossFragmentScreen()), "btn--secondary", "btn--small").Into(head);
             var scroll = new ScrollView(ScrollViewMode.Vertical).Into(safe);
             scroll.style.flexGrow = 1;
             _body = UiKit.Box().Into(scroll);

@@ -129,6 +129,7 @@ namespace Mythwake.Core.Meta
                 Enemies = Enemies(content, d, pending.Floor),
                 Rules = d.Rules ?? new BattleRules()
             };
+            BossFragments.Apply(setup, state, content);
             return setup;
         }
 

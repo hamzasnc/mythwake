@@ -61,6 +61,8 @@ namespace Mythwake.Presentation
         public event Action<UnitView, StatusKind> StatusApplied;
         /// <summary>The off-field Hero Leader used a leader ability (its skill slot).</summary>
         public event Action<SkillSlot> LeaderAbility;
+        /// <summary>The equipped Boss Fragment fired its ability.</summary>
+        public event Action BossFragmentAbility;
         public event Action<BattleResult> Finished;
         public event Action Changed;
 
@@ -253,6 +255,8 @@ namespace Mythwake.Presentation
                     {
                         if (e.Source == _units.Count)
                             LeaderAbility?.Invoke(e.Skill);
+                        else if (e.Source == _units.Count + 1)
+                            BossFragmentAbility?.Invoke();
                         break;
                     }
                     source.Play(e.Animation ?? "attack");

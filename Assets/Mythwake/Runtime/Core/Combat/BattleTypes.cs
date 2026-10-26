@@ -54,6 +54,8 @@ namespace Mythwake.Core.Combat
         /// <summary>Hero Leader of the allies (doc: does not fight). Off the field: never targeted, casts only its leader
         /// abilities (Special Skills). Its events use the index after the last enemy.</summary>
         public UnitSetup Leader;
+        /// <summary>The equipped Boss Fragment's ability, cast from off the field like the leader. Index = last enemy + 2.</summary>
+        public UnitSetup BossFragment;
         public ulong Seed;
         public BattleRules Rules = new BattleRules();
         /// <summary>When true, allied ultimates fire automatically (the in-game "Auto" toggle) from the start.</summary>

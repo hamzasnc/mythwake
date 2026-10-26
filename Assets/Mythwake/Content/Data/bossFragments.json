@@ -1,0 +1,131 @@
+{
+  "entriesPerDay": 7,
+  "maxLevel": 10,
+  "copyChancePermille": 200,
+  "copyPity": 5,
+  "upgradeDustPerLevel": 500,
+  "chestRewards": [
+    {
+      "id": "fragmentDust",
+      "base": 80,
+      "perStage": 6
+    },
+    {
+      "id": "gold",
+      "base": 6000,
+      "perStage": 500
+    }
+  ],
+  "fragments": [
+    {
+      "id": "bf_obsidian_vault_sentinel",
+      "name": "Obsidian Vault Sentinel Fragment",
+      "dungeon": "material",
+      "description": "Alle 20 s: Schild auf dem ganzen Team über {0} % ATK.",
+      "ability": {
+        "id": "bf_vault_shield",
+        "name": "Schild des Tresors",
+        "description": "Schild auf dem ganzen Team",
+        "slot": "special",
+        "trigger": {
+          "kind": "cooldown",
+          "cooldownMs": 20000,
+          "initialDelayMs": 10000
+        },
+        "target": "allyAll",
+        "effects": [
+          {
+            "kind": "shield",
+            "multiplier": 1000,
+            "scaling": "attack",
+            "shieldDurationMs": 8000
+          }
+        ],
+        "hits": 1,
+        "hitTimesMs": [
+          300
+        ],
+        "durationMs": 600,
+        "animation": "skill"
+      }
+    },
+    {
+      "id": "bf_hollow_spire_warden",
+      "name": "Hollow Spire Warden Fragment",
+      "dungeon": "gear",
+      "description": "Alle 16 s: Schaden an allen Gegnern über {0} % ATK.",
+      "ability": {
+        "id": "bf_spire_toll",
+        "name": "Ruf des Turms",
+        "description": "Schaden an allen Gegnern",
+        "slot": "special",
+        "trigger": {
+          "kind": "cooldown",
+          "cooldownMs": 16000,
+          "initialDelayMs": 8000
+        },
+        "target": "enemyAll",
+        "effects": [
+          {
+            "kind": "damage",
+            "multiplier": 1200,
+            "scaling": "attack"
+          }
+        ],
+        "hits": 1,
+        "hitTimesMs": [
+          300
+        ],
+        "durationMs": 600,
+        "animation": "skill"
+      }
+    },
+    {
+      "id": "bf_fragment_devourer",
+      "name": "Fragment Devourer Fragment",
+      "dungeon": "fragment",
+      "description": "Passiv: Das ganze Team macht {0} % mehr Schaden.",
+      "levelGrowthPermille": 125,
+      "teamPassives": [
+        {
+          "passive": {
+            "kind": "damageBonus",
+            "value": 80
+          },
+          "scale": "value"
+        }
+      ]
+    },
+    {
+      "id": "bf_guardian_of_the_deep",
+      "name": "Corrupted Guardian of the Deep Fragment",
+      "dungeon": "relic",
+      "description": "Alle 15 s: heilt das ganze Team um {0} % ATK.",
+      "ability": {
+        "id": "bf_deep_tide",
+        "name": "Flut der Tiefe",
+        "description": "Heilt das ganze Team",
+        "slot": "special",
+        "trigger": {
+          "kind": "cooldown",
+          "cooldownMs": 15000,
+          "initialDelayMs": 7500
+        },
+        "target": "allyAll",
+        "effects": [
+          {
+            "kind": "heal",
+            "multiplier": 900,
+            "scaling": "attack"
+          }
+        ],
+        "hits": 1,
+        "hitTimesMs": [
+          300
+        ],
+        "durationMs": 600,
+        "animation": "skill"
+      }
+    }
+  ]
+}

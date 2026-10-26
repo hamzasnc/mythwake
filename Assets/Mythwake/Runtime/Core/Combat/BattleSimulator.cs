@@ -31,6 +31,7 @@ namespace Mythwake.Core.Combat
 
         private readonly BattleSetup _setup;
         private BattleUnit _leader;
+        private BattleUnit _bossFragment;
         private readonly Pcg32 _rng;
         private readonly List<BattleUnit> _units = new List<BattleUnit>();
         private readonly List<ScheduledHit> _pending = new List<ScheduledHit>();
@@ -68,6 +69,8 @@ namespace Mythwake.Core.Combat
                         TryAct(u);
                 if (_leader != null && AliveCount(Side.Allies) > 0)
                     TryAct(_leader);
+                if (_bossFragment != null && AliveCount(Side.Allies) > 0)
+                    TryAct(_bossFragment);
                 if (CheckEnd())
                     break;
             }
@@ -123,17 +126,23 @@ namespace Mythwake.Core.Combat
         /// for the battle's end), it only casts its leader abilities.</summary>
         private void SpawnLeader()
         {
-            var s = _setup.Leader;
+            _leader = OffField(_setup.Leader, _units.Count);
+            _bossFragment = OffField(_setup.BossFragment, _units.Count + 1);
+        }
+
+        private static BattleUnit OffField(UnitSetup s, int index)
+        {
             if (s?.Hero == null || (s.Hero.Special == null && s.Hero.Special2 == null))
-                return;
-            _leader = new BattleUnit { Index = _units.Count, Side = Side.Allies, Slot = -1, Hero = s.Hero, Stats = s.Stats.Clone() };
-            _leader.MaxHp = _leader.Hp = System.Math.Max(1, _leader.Stats.Hp);
-            _leader.NextNormalMs = int.MaxValue;
-            foreach (var skill in Specials(_leader))
+                return null;
+            var u = new BattleUnit { Index = index, Side = Side.Allies, Slot = -1, Hero = s.Hero, Stats = s.Stats.Clone() };
+            u.MaxHp = u.Hp = System.Math.Max(1, u.Stats.Hp);
+            u.NextNormalMs = int.MaxValue;
+            foreach (var skill in Specials(u))
             {
                 var t = skill.Trigger;
-                _leader.ReadyAtMs[skill.Slot] = t.Kind == TriggerKind.Cooldown ? (t.InitialDelayMs > 0 ? t.InitialDelayMs : t.CooldownMs / 2) : 0;
+                u.ReadyAtMs[skill.Slot] = t.Kind == TriggerKind.Cooldown ? (t.InitialDelayMs > 0 ? t.InitialDelayMs : t.CooldownMs / 2) : 0;
             }
+            return u;
         }
 
         private static bool IsTriggered(PassiveKind k) =>

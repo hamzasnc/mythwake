@@ -257,13 +257,15 @@ namespace Mythwake.Core.Meta
 
         public static BattleSetup BuildBattle(PlayerState state, GameContent content, PendingBattle pending)
         {
-            return new BattleSetup
+            var setup = new BattleSetup
             {
                 Seed = pending.Seed,
                 Allies = Allies(state, content, pending.Formation),
                 Leader = LeaderUnit(state, content),
                 Enemies = Enemies(content, pending.Stage)
             };
+            BossFragments.Apply(setup, state, content);
+            return setup;
         }
 
         public static List<Amount> ClearRewards(GameContent content, int stage)

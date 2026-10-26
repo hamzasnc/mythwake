@@ -1052,3 +1052,8 @@
     background-color: rgba(255, 94, 126, 0.18);
 }
 .awakening { border-color: rgba(255, 94, 126, 0.6); }
+
+/* ---------------------------------------------------------------- boss fragments */
+
+.boss-fragment--equipped { border-color: var(--gold); border-width: 4px; }
+.leader-banner--boss { top: 30%; border-color: #9b6bff; }

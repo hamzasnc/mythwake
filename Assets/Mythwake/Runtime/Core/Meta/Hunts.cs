@@ -225,12 +225,16 @@ namespace Mythwake.Core.Meta
             return team;
         }
 
-        public static BattleSetup BuildBattle(PlayerState state, GameContent content, HuntOffer offer, PendingBattle pending) =>
-            new BattleSetup
+        public static BattleSetup BuildBattle(PlayerState state, GameContent content, HuntOffer offer, PendingBattle pending)
+        {
+            var setup = new BattleSetup
             {
                 Seed = pending.Seed, Allies = Campaign.Allies(state, content, pending.Formation),
                 Leader = Campaign.LeaderUnit(state, content), Enemies = Enemies(state, content, offer)
             };
+            BossFragments.Apply(setup, state, content);
+            return setup;
+        }
 
         public static HuntShopItem ShopItem(GameContent content, string id)
         {

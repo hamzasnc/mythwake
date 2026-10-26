@@ -9,7 +9,7 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials", "realms", "awakenings" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials", "realms", "awakenings", "bossFragments" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
@@ -33,7 +33,8 @@ namespace Mythwake.Content
                 Relics = ContentJson.Parse<RelicConfig>(readData("relics")),
                 Trials = ContentJson.Parse<TrialConfig>(readData("trials")),
                 Realms = ContentJson.Parse<RealmConfig>(readData("realms")),
-                Awakening = ContentJson.Parse<AwakeningConfig>(readData("awakenings"))
+                Awakening = ContentJson.Parse<AwakeningConfig>(readData("awakenings")),
+                BossFragments = ContentJson.Parse<BossFragmentConfig>(readData("bossFragments"))
             };
             foreach (var json in heroJsons)
             {
@@ -74,6 +75,9 @@ namespace Mythwake.Content
             foreach (var a in content.Awakening.Heroes)
                 if (!content.Heroes.ContainsKey(a.HeroId ?? ""))
                     errors.Add($"awakenings.json: unknown hero '{a.HeroId}'");
+            foreach (var f in content.BossFragments.Fragments)
+                if (!content.Dungeons.Dungeons.Any(d => d.Id == f.Dungeon))
+                    errors.Add($"bossFragments.json/{f.Id}: unknown dungeon '{f.Dungeon}'");
             var relicIds = new HashSet<string>();
             foreach (var r in content.Relics.Relics)
             {

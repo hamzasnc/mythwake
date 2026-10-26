@@ -150,6 +150,12 @@ namespace Mythwake.UI
             }
             yield return Shot("dungeon_result", 0.6f);
 
+            // Boss Fragments: give the Vault Sentinel's Fragment, equip it, show the screen
+            ui.State.BossFragments.Owned["bf_obsidian_vault_sentinel"] = new BossFragmentProgress { Level = 2, Copies = 1 };
+            ui.Authority.Execute(new EquipBossFragment { FragmentId = "bf_obsidian_vault_sentinel" });
+            ui.Router.Reset(new BossFragmentScreen());
+            yield return Shot("boss_fragments", 0.8f);
+
             // Fragment Shrine: rebuild to level 5, stabilize one Fragment per slot, equip them on the first hero
             ui.State.Add(Ids.FragmentDust, 20_000);
             ui.State.Add(Ids.Gold, 200_000);
