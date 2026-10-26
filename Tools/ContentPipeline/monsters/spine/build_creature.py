@@ -47,7 +47,8 @@ for l in layers:
             VARIANT[l["name"]] = base
             l["visible"] = False
 
-body = next((l for l in layers if l["role"] == "body"), None) or next(l for l in layers if not l.get("parent"))
+body = (next((l for l in layers if l["role"] == "body" and not l.get("parent")), None)
+        or next((l for l in layers if l["role"] == "body"), None) or next(l for l in layers if not l.get("parent")))
 BODY = body["name"]
 
 
@@ -133,6 +134,9 @@ while pending and guard < 10:
         role = l["role"]
         if role in ("eye", "glow") and n != BODY:
             OWN[n] = par
+            continue
+        if p in L and L[p]["role"] == role and role in ("body", "head") and p not in CHAIN:
+            OWN[n] = par            # overlap piece of its parent (body_back, head_front_overlap): moves with it
             continue
         if role == "chain":
             pts = [tuple(p_) for p_ in (l.get("spine") or [])]

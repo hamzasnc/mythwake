@@ -341,7 +341,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 5cf75194013f79f4c82538261d95f5e0, type: 3}
   - id: corrupted_guardian_of_the_deep
     definition: {fileID: 4900000, guid: edf864b7acbba1c4088027c877e540df, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: c67ee80e962520244bd4420c9fc722ab, type: 2}
     portrait: {fileID: 2800000, guid: 5f3978661e603f740a0afeee22976f52, type: 3}
     full: {fileID: 2800000, guid: 02865af0ee363534f91e950e34c86e82, type: 3}
     cutIn: {fileID: 0}
@@ -355,7 +355,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 932b3b02f88acce40a7adf405493a077, type: 3}
   - id: craterborn_guardian
     definition: {fileID: 4900000, guid: db59584ff806ffa4695b68522cf34988, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: ec0efc2aa9c86df408f1377ee9a7c7a3, type: 2}
     portrait: {fileID: 2800000, guid: 4ddeaf2bd5b2fbd4ca010ada317cae52, type: 3}
     full: {fileID: 2800000, guid: 842271f3a24690d4b918995749a68486, type: 3}
     cutIn: {fileID: 0}
@@ -383,14 +383,14 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 14b9b2c223768644baa73b98f2b4a8cb, type: 3}
   - id: dragon_of_the_sky
     definition: {fileID: 4900000, guid: c25a49259d8a7a6488136a33bf170919, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 88b589005c8351a4d9e940b90cb0e087, type: 2}
     portrait: {fileID: 2800000, guid: 848b02857fdeefc44885e80d2eae9c5d, type: 3}
     full: {fileID: 2800000, guid: 808d395a5fe62544da28f835dc29037f, type: 3}
     cutIn: {fileID: 0}
     sprite: {fileID: 21300000, guid: 808d395a5fe62544da28f835dc29037f, type: 3}
   - id: false_guardian_construct
     definition: {fileID: 4900000, guid: ed72a8e165767da4a89633ce52c83f6a, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 998fee52d70fcb14bb1e5d3a49c8a0a5, type: 2}
     portrait: {fileID: 2800000, guid: 2e64bb150ee6a4645bff4a18018c8ff5, type: 3}
     full: {fileID: 2800000, guid: df940e3c4d62e834cac17518e2b7e618, type: 3}
     cutIn: {fileID: 0}
@@ -411,14 +411,14 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 74ee143f9cde7734aa1e95068bde832c, type: 3}
   - id: fragment_devourer
     definition: {fileID: 4900000, guid: 3ea851d68bdad6942a02ad11e29b0c61, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: a0be94b959591ab44b0427b883513218, type: 2}
     portrait: {fileID: 2800000, guid: ab894b4d0d73f8e4f9b91dd6da2f968a, type: 3}
     full: {fileID: 2800000, guid: 6ca0b0b9b9c1fc943a6db42d89a0d9a3, type: 3}
     cutIn: {fileID: 0}
     sprite: {fileID: 21300000, guid: 6ca0b0b9b9c1fc943a6db42d89a0d9a3, type: 3}
   - id: hollow_spire_warden
     definition: {fileID: 4900000, guid: 46dbe8ae5db219b4e976e766646c3e10, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: bdf44af04404f584abaef1bbc3ded5d4, type: 2}
     portrait: {fileID: 2800000, guid: d6cfd018bb88f004e9a125ea86d208cb, type: 3}
     full: {fileID: 2800000, guid: 35ff071ed84ae874cbec144ea0028fd6, type: 3}
     cutIn: {fileID: 0}
@@ -453,7 +453,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 7bf472ed66929274ab9fa860fb0d278e, type: 3}
   - id: obsidian_vault_sentinel
     definition: {fileID: 4900000, guid: 63e6ed7f6d52de142938a40c625a0f93, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 6153656a7c77f704f80a3fe7073c89af, type: 2}
     portrait: {fileID: 2800000, guid: 7aa9576a8ded7044ea5f93cc144e4204, type: 3}
     full: {fileID: 2800000, guid: b326bb0e507b2bc4097afa1a4af1d1e4, type: 3}
     cutIn: {fileID: 0}
@@ -467,7 +467,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 1ce8c851b7c1dd445baa84c1a3a8f824, type: 3}
   - id: riftborn_treant
     definition: {fileID: 4900000, guid: b784533c623b43d48855600b34bdccf5, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 1043cbe79a0ddda489bd45ab6e9eb859, type: 2}
     portrait: {fileID: 2800000, guid: 797db07b5f82971439f364547a9e1f83, type: 3}
     full: {fileID: 2800000, guid: 574e65d46e4b3834ea17698e0c35cc75, type: 3}
     cutIn: {fileID: 0}
@@ -481,7 +481,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 841ff79bcb1545a43b6cbb21745efe0e, type: 3}
   - id: six_legged_worldbearer
     definition: {fileID: 4900000, guid: 25f0ea9c15c1043408689456b2cd0af2, type: 3}
-    skeleton: {fileID: 0}
+    skeleton: {fileID: 11400000, guid: 58ee0dc9475d14347bf9cd42d1bcb7a8, type: 2}
     portrait: {fileID: 2800000, guid: e220dee4925134343b4bc298b1916dcb, type: 3}
     full: {fileID: 2800000, guid: bbbd8000e534e904389b734db6d908a7, type: 3}
     cutIn: {fileID: 0}

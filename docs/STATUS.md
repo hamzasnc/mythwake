@@ -84,7 +84,7 @@ Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscr
   boss sleep immunity, rank-gated skills).
 - Balance is a first pass everywhere (`Content/Data/*.json`, numbers in `docs/systems/*.md`); pacing tests pin the
   early game.
-- Missing art: cut-ins for 12 heroes, Spine rigs for 20 of the 25 monsters (they move as cut-out sprites until rigged), battle
+- Missing art: cut-ins for 12 heroes, Spine rigs for the 11 normal monsters (all 14 bosses are rigged; the rest move as cut-out sprites until rigged), battle
   backgrounds, item icons for gear, UI icons and fonts, sound.
 - Village buildings upgrade instantly (no build timers).
 - Server for production: TLS, platform logins (Google/Apple), Redis rate limits for several API instances, guild

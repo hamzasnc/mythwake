@@ -29,5 +29,8 @@ before the Unity check. `_setup_check.png` in each package compares the setup po
 
 ## State
 
-Rigged: Celestial Turtle, Hollowtusk Alpha, Dragon Echo of the Sky, Crimson Wraith Adept, Hollowed Leviathan.
-Next: the other 9 bosses and raid Guardians, then the 11 monsters (part lists are in `PARTS`).
+Rigged: all 9 bosses of the Boss System (Hollowtusk Alpha, Riftborn Treant, Crimson Wraith Adept, Hollow Spire
+Warden, Obsidian Vault Sentinel, Fragment Devourer, Corrupted Guardian of the Deep, Dragon Echo of the Sky, False
+Guardian Construct) and the 5 Guardian Raid bosses (Celestial Turtle, Dragon of the Sky, Hollowed Leviathan,
+Six-Legged Worldbearer, Craterborn Guardian).
+Next: the 11 monsters (part lists are in `PARTS`).
