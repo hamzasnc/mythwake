@@ -180,6 +180,11 @@ namespace Mythwake.UI
                 yield return Shot("defense_result", 0.6f);
             }
 
+            ui.Router.Reset(new ShopScreen());
+            yield return Shot("shop_general", 0.6f);
+            ((ShopScreen)ui.Router.Current).SelectForAutoPilot("fragment");
+            yield return Shot("shop_fragment", 0.6f);
+
             // Fragment Shrine: rebuild to level 5, stabilize one Fragment per slot, equip them on the first hero
             ui.State.Add(Ids.FragmentDust, 20_000);
             ui.State.Add(Ids.Gold, 200_000);

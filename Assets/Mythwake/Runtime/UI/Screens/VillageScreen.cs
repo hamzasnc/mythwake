@@ -25,7 +25,9 @@ namespace Mythwake.UI
             var town = Ui.Catalog.town;
             _map = new MapView(town?.background, 2f / 3f, "map__canvas--town").Into(root);
             _currencies = new CurrencyBar(Ids.Gold, Ids.Wood, Ids.Stone).Into(root);
-            UiKit.Text("Dawnhollow", "map-title").Into(root);
+            var titleRow = UiKit.Box("row", "center", "map-title-row").Into(root);
+            UiKit.Text("Dawnhollow", "map-title").Into(titleRow);
+            UiKit.Btn(Loc.T("shop.button"), () => Ui.Router.Push(new ShopScreen()), "btn--small", "map-shop").Into(titleRow);
             UiKit.Box("spacer").Into(root).pickingMode = PickingMode.Ignore;
             root.Add(MainNav.Build(Ui, Tab.Town));
             _popupLayer = UiKit.Box("popup-layer").Into(root);

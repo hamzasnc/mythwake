@@ -79,6 +79,7 @@ namespace Mythwake.Core.Meta
         public RealmState Realms = new RealmState();
         public BossFragmentState BossFragments = new BossFragmentState();
         public DefenseState Defense = new DefenseState();
+        public ShopState Shops = new ShopState();
         public int GearUidCounter;
         public List<FragmentItem> Fragments = new List<FragmentItem>();
         public int FragmentUidCounter;

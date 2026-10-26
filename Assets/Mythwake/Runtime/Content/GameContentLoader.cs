@@ -9,7 +9,7 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials", "realms", "awakenings", "bossFragments", "defense" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials", "realms", "awakenings", "bossFragments", "defense", "shops" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
@@ -35,7 +35,8 @@ namespace Mythwake.Content
                 Realms = ContentJson.Parse<RealmConfig>(readData("realms")),
                 Awakening = ContentJson.Parse<AwakeningConfig>(readData("awakenings")),
                 BossFragments = ContentJson.Parse<BossFragmentConfig>(readData("bossFragments")),
-                Defense = ContentJson.Parse<DefenseConfig>(readData("defense"))
+                Defense = ContentJson.Parse<DefenseConfig>(readData("defense")),
+                Shops = ContentJson.Parse<ShopConfig>(readData("shops"))
             };
             foreach (var json in heroJsons)
             {
@@ -79,6 +80,13 @@ namespace Mythwake.Content
             foreach (var f in content.BossFragments.Fragments)
                 if (!content.Dungeons.Dungeons.Any(d => d.Id == f.Dungeon))
                     errors.Add($"bossFragments.json/{f.Id}: unknown dungeon '{f.Dungeon}'");
+            foreach (var shop in content.Shops.Shops)
+            {
+                if (shop.Building != null && !content.Village.Buildings.Any(b => b.Id == shop.Building))
+                    errors.Add($"shops.json/{shop.Id}: unknown building '{shop.Building}'");
+                if (shop.Items.Select(i => i.Id).Distinct().Count() != shop.Items.Count)
+                    errors.Add($"shops.json/{shop.Id}: duplicate item ids");
+            }
             var relicIds = new HashSet<string>();
             foreach (var r in content.Relics.Relics)
             {

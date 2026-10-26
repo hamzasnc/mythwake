@@ -160,6 +160,7 @@ namespace Mythwake.Core.Meta
         public AwakeningConfig Awakening = new AwakeningConfig();
         public BossFragmentConfig BossFragments = new BossFragmentConfig();
         public DefenseConfig Defense = new DefenseConfig();
+        public ShopConfig Shops = new ShopConfig();
 
         /// <summary>A hero or monster by id (battle setups and team snapshots can contain both).</summary>
         public HeroDefinition Hero(string id) =>

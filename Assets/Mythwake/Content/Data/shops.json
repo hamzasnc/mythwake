@@ -1,0 +1,303 @@
+{
+  "shops": [
+    {
+      "id": "general",
+      "name": "General Shop",
+      "description": "Grundressourcen, Gear materials und tägliche Angebote.",
+      "items": [
+        {
+          "id": "heroExp",
+          "name": "Hero EXP",
+          "price": [
+            {
+              "id": "gold",
+              "value": 6000
+            }
+          ],
+          "gives": [
+            {
+              "id": "heroExp",
+              "value": 4000
+            }
+          ],
+          "limit": 5
+        },
+        {
+          "id": "gearMaterials",
+          "name": "Gear materials",
+          "price": [
+            {
+              "id": "gold",
+              "value": 8000
+            }
+          ],
+          "gives": [
+            {
+              "id": "gearMaterials",
+              "value": 40
+            }
+          ],
+          "limit": 5
+        },
+        {
+          "id": "fragmentDust",
+          "name": "Fragment Dust",
+          "price": [
+            {
+              "id": "gold",
+              "value": 10000
+            }
+          ],
+          "gives": [
+            {
+              "id": "fragmentDust",
+              "value": 120
+            }
+          ],
+          "limit": 3
+        },
+        {
+          "id": "summonScroll",
+          "name": "Summon Scroll",
+          "price": [
+            {
+              "id": "gems",
+              "value": 270
+            }
+          ],
+          "gives": [
+            {
+              "id": "summonScroll",
+              "value": 1
+            }
+          ],
+          "limit": 1
+        },
+        {
+          "id": "realmKey",
+          "name": "Shattered Realm Key",
+          "price": [
+            {
+              "id": "gems",
+              "value": 200
+            }
+          ],
+          "gives": [
+            {
+              "id": "realmKey",
+              "value": 1
+            }
+          ],
+          "limit": 1,
+          "weekly": true
+        }
+      ]
+    },
+    {
+      "id": "village",
+      "name": "Village Shop",
+      "description": "Material für den Wiederaufbau von Dawnhollow.",
+      "building": "survivorCamp",
+      "items": [
+        {
+          "id": "wood",
+          "name": "Wood",
+          "price": [
+            {
+              "id": "gold",
+              "value": 4000
+            }
+          ],
+          "gives": [
+            {
+              "id": "wood",
+              "value": 800
+            }
+          ],
+          "limit": 5
+        },
+        {
+          "id": "stone",
+          "name": "Stone",
+          "price": [
+            {
+              "id": "gold",
+              "value": 4000
+            }
+          ],
+          "gives": [
+            {
+              "id": "stone",
+              "value": 800
+            }
+          ],
+          "limit": 5
+        },
+        {
+          "id": "bundle",
+          "name": "Wiederaufbau-Bündel",
+          "price": [
+            {
+              "id": "gems",
+              "value": 150
+            }
+          ],
+          "gives": [
+            {
+              "id": "wood",
+              "value": 5000
+            },
+            {
+              "id": "stone",
+              "value": 5000
+            },
+            {
+              "id": "gold",
+              "value": 20000
+            }
+          ],
+          "limit": 1,
+          "weekly": true
+        }
+      ]
+    },
+    {
+      "id": "fragment",
+      "name": "Fragment Shop",
+      "description": "Fragmente und Aspekt-Ressourcen.",
+      "building": "fragmentShrine",
+      "items": [
+        {
+          "id": "coreRare",
+          "name": "Core Fragment (Rare)",
+          "price": [
+            {
+              "id": "fragmentDust",
+              "value": 1200
+            }
+          ],
+          "gives": [],
+          "fragmentSlot": "core",
+          "fragmentGrade": "rare",
+          "limit": 2,
+          "weekly": true
+        },
+        {
+          "id": "aspectRare",
+          "name": "Aspect Fragment (Rare)",
+          "price": [
+            {
+              "id": "fragmentDust",
+              "value": 1500
+            }
+          ],
+          "gives": [],
+          "fragmentSlot": "aspect",
+          "fragmentGrade": "rare",
+          "limit": 2,
+          "weekly": true
+        },
+        {
+          "id": "echoEpic",
+          "name": "Echo Fragment (Epic)",
+          "price": [
+            {
+              "id": "fragmentDust",
+              "value": 4000
+            }
+          ],
+          "gives": [],
+          "fragmentSlot": "echo",
+          "fragmentGrade": "epic",
+          "limit": 1,
+          "weekly": true
+        },
+        {
+          "id": "relicMaterials",
+          "name": "Relic materials",
+          "price": [
+            {
+              "id": "fragmentDust",
+              "value": 600
+            }
+          ],
+          "gives": [
+            {
+              "id": "relicMaterials",
+              "value": 40
+            }
+          ],
+          "limit": 3
+        }
+      ]
+    },
+    {
+      "id": "arena",
+      "name": "Arena Shop",
+      "description": "PvP-Belohnungen, Hero shards und Wettkampf-Gegenstände.",
+      "unlockStage": 30,
+      "items": [
+        {
+          "id": "shardsLegendary",
+          "name": "Hero Shards (Legendary)",
+          "price": [
+            {
+              "id": "arenaCoins",
+              "value": 900
+            }
+          ],
+          "gives": [],
+          "shardGrade": "legendary",
+          "shardAmount": 10,
+          "limit": 1
+        },
+        {
+          "id": "shardsEpic",
+          "name": "Hero Shards (Epic)",
+          "price": [
+            {
+              "id": "arenaCoins",
+              "value": 400
+            }
+          ],
+          "gives": [],
+          "shardGrade": "epic",
+          "shardAmount": 10,
+          "limit": 2
+        },
+        {
+          "id": "summonScroll",
+          "name": "Summon Scroll",
+          "price": [
+            {
+              "id": "arenaCoins",
+              "value": 300
+            }
+          ],
+          "gives": [
+            {
+              "id": "summonScroll",
+              "value": 1
+            }
+          ],
+          "limit": 2,
+          "weekly": true
+        },
+        {
+          "id": "gearEpic",
+          "name": "Epic Gear",
+          "price": [
+            {
+              "id": "arenaCoins",
+              "value": 1200
+            }
+          ],
+          "gives": [],
+          "gearGrade": "epic",
+          "limit": 1,
+          "weekly": true
+        }
+      ]
+    }
+  ]
+}

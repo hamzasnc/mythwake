@@ -379,5 +379,19 @@
   "error.defense_running": "Eine Verteidigung läuft bereits.",
   "error.defense_no_runs": "Keine Läufe mehr heute.",
   "error.defense_no_run": "Keine Verteidigung aktiv.",
-  "error.defense_in_battle": "Erst den laufenden Kampf beenden."
+  "error.defense_in_battle": "Erst den laufenden Kampf beenden.",
+  "shop.title": "Shops",
+  "shop.button": "Shop",
+  "shop.left": "Noch {0}",
+  "shop.leftWeek": "Noch {0} diese Woche",
+  "shop.soldOut": "Ausverkauft",
+  "shop.buy": "Kaufen",
+  "shop.locked": "Gesperrt",
+  "shop.lockedBuilding": "Benötigt: {0}",
+  "shop.lockedStage": "Ab Stage {0}",
+  "shop.bought": "Gekauft: {0}",
+  "shop.today": "heute: {0}",
+  "error.shop_locked": "Dieser Shop ist noch gesperrt.",
+  "error.unknown_shop": "Unbekannter Shop.",
+  "error.unknown_item": "Unbekanntes Angebot."
 }
