@@ -17,6 +17,8 @@ namespace Mythwake.Core.Combat
         public Stats Stats;
         /// <summary>Visual only (e.g. corrupted enemy tint), ignored by the rules.</summary>
         public string Variant;
+        /// <summary>Passive components from outside the hero's kit (Fragments), on top of its own passive.</summary>
+        public List<PassiveDefinition> Passives = new List<PassiveDefinition>();
     }
 
     /// <summary>Battle-wide modifiers (dungeon / Shattered Realm rules).</summary>

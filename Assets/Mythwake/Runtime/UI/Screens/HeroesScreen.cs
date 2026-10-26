@@ -54,6 +54,7 @@ namespace Mythwake.UI
         private Label _stars;
         private VisualElement _gear;
         private Label _setBonus;
+        private VisualElement _fragments;
 
         public HeroDetailScreen(string heroId) => _heroId = heroId;
 
@@ -109,6 +110,10 @@ namespace Mythwake.UI
             _setBonus = UiKit.Text("", "label--good").Into(gearHead);
             _gear = UiKit.Box("gear-row").Into(gear);
 
+            var fragments = UiKit.Box("panel").Into(safe);
+            UiKit.Text(Loc.T("fragment.title"), "title").Into(fragments);
+            _fragments = UiKit.Box("gear-row").Into(fragments);
+
             var skills = UiKit.Box("panel").Into(safe);
             UiKit.Text(Loc.T("hero.skills"), "title").Into(skills);
             foreach (var skill in hero.Skills())
@@ -149,6 +154,7 @@ namespace Mythwake.UI
             _levelUp5.SetEnabled(owned.Level + 5 <= cap && Progression.LevelCost(content, owned.Level, 5).All(c => Ui.State.Get(c.Id) >= c.Value));
 
             RefreshGear();
+            FragmentUi.Slots(Ui, _fragments, Root, _heroId, Refresh);
 
             var maxStars = Progression.MaxStars(content, hero.Grade);
             if (owned.Stars >= maxStars)

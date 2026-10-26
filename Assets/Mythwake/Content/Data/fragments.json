@@ -1,0 +1,435 @@
+{
+  "grades": [
+    {
+      "factor": 1000,
+      "maxLevel": 10,
+      "dissolve": 20
+    },
+    {
+      "factor": 1500,
+      "maxLevel": 15,
+      "dissolve": 60
+    },
+    {
+      "factor": 2200,
+      "maxLevel": 20,
+      "dissolve": 180
+    },
+    {
+      "factor": 3200,
+      "maxLevel": 25,
+      "dissolve": 500
+    }
+  ],
+  "levelGrowthPermille": 60,
+  "coreAttack": 30,
+  "coreHp": 30,
+  "matchingAspectPermille": 1500,
+  "slotShrineLevels": [
+    1,
+    3,
+    5
+  ],
+  "upgradeCostBase": [
+    {
+      "id": "fragmentDust",
+      "value": 15
+    },
+    {
+      "id": "gold",
+      "value": 400
+    }
+  ],
+  "stabilizeCost": [
+    {
+      "id": "fragmentDust",
+      "value": 300
+    },
+    {
+      "id": "gold",
+      "value": 8000
+    }
+  ],
+  "stabilizeTiers": [
+    {
+      "forgeLevel": 1,
+      "weights": [
+        800,
+        200,
+        0,
+        0
+      ]
+    },
+    {
+      "forgeLevel": 3,
+      "weights": [
+        650,
+        300,
+        50,
+        0
+      ]
+    },
+    {
+      "forgeLevel": 6,
+      "weights": [
+        500,
+        350,
+        130,
+        20
+      ]
+    },
+    {
+      "forgeLevel": 9,
+      "weights": [
+        400,
+        380,
+        180,
+        40
+      ]
+    }
+  ],
+  "fuseCount": 3,
+  "bossDustBase": 50,
+  "bossDustPerStage": 2,
+  "dropWeights": [
+    550,
+    330,
+    100,
+    20
+  ],
+  "effects": [
+    {
+      "id": "ravak_burn",
+      "slot": "aspect",
+      "aspect": "ravak",
+      "name": "Glut",
+      "description": "25 % Chance, das Ziel in Brand zu setzen: {0} % ATK Schaden pro Sekunde für 3 s.",
+      "components": [
+        {
+          "passive": {
+            "kind": "onHit",
+            "chance": 250,
+            "effect": {
+              "kind": "applyStatus",
+              "status": {
+                "kind": "burn",
+                "durationMs": 3000,
+                "value": 50
+              }
+            }
+          },
+          "scale": "statusValue"
+        }
+      ]
+    },
+    {
+      "id": "ravak_last_stand",
+      "slot": "aspect",
+      "aspect": "ravak",
+      "name": "Letzte Flamme",
+      "description": "+{0} % Schaden, solange der Held unter 50 % HP ist.",
+      "components": [
+        {
+          "passive": {
+            "kind": "damageBonus",
+            "value": 60,
+            "belowHp": 500
+          },
+          "scale": "value"
+        }
+      ]
+    },
+    {
+      "id": "gorath_regen",
+      "slot": "aspect",
+      "aspect": "gorath",
+      "name": "Regeneration",
+      "description": "Heilt jede Sekunde {0} % der max. HP.",
+      "components": [
+        {
+          "passive": {
+            "kind": "regen",
+            "value": 3
+          },
+          "scale": "value"
+        }
+      ]
+    },
+    {
+      "id": "gorath_growth",
+      "slot": "aspect",
+      "aspect": "gorath",
+      "name": "Wachsende Kraft",
+      "description": "+{0} % Schaden alle 10 s Kampfzeit (bis zum Sechsfachen).",
+      "components": [
+        {
+          "passive": {
+            "kind": "damageBonus",
+            "value": 0,
+            "growth": 10,
+            "growthIntervalMs": 10000,
+            "cap": 60
+          },
+          "scale": "growth"
+        }
+      ]
+    },
+    {
+      "id": "somnara_slow",
+      "slot": "aspect",
+      "aspect": "somnara",
+      "name": "Schwere Glieder",
+      "description": "{0} % Chance, das Ziel 3 s zu verlangsamen.",
+      "components": [
+        {
+          "passive": {
+            "kind": "onHit",
+            "chance": 100,
+            "effect": {
+              "kind": "applyStatus",
+              "status": {
+                "kind": "slow",
+                "durationMs": 3000,
+                "value": 250
+              }
+            }
+          },
+          "scale": "chance"
+        }
+      ]
+    },
+    {
+      "id": "somnara_delay",
+      "slot": "aspect",
+      "aspect": "somnara",
+      "name": "Verzögerung",
+      "description": "20 % Chance, die nächste Aktion des Ziels um {0} ms zu verzögern.",
+      "components": [
+        {
+          "passive": {
+            "kind": "onHit",
+            "chance": 200,
+            "effect": {
+              "kind": "delayAction",
+              "multiplier": 150
+            }
+          },
+          "scale": "multiplier"
+        }
+      ]
+    },
+    {
+      "id": "veloria_charm",
+      "slot": "aspect",
+      "aspect": "veloria",
+      "name": "Bezaubern",
+      "description": "{0} % Chance, das Ziel 1,5 s zu bezaubern.",
+      "components": [
+        {
+          "passive": {
+            "kind": "onHit",
+            "chance": 30,
+            "effect": {
+              "kind": "applyStatus",
+              "status": {
+                "kind": "charm",
+                "durationMs": 1500,
+                "value": 0
+              }
+            }
+          },
+          "scale": "chance"
+        }
+      ]
+    },
+    {
+      "id": "veloria_confuse",
+      "slot": "aspect",
+      "aspect": "veloria",
+      "name": "Verwirrung",
+      "description": "{0} % Chance, einen Angreifer 2 s zu verwirren.",
+      "components": [
+        {
+          "passive": {
+            "kind": "onHitTaken",
+            "chance": 40,
+            "effect": {
+              "kind": "applyStatus",
+              "status": {
+                "kind": "confuse",
+                "durationMs": 2000,
+                "value": 0
+              }
+            }
+          },
+          "scale": "chance"
+        }
+      ]
+    },
+    {
+      "id": "envyra_steal",
+      "slot": "aspect",
+      "aspect": "envyra",
+      "name": "Neid",
+      "description": "{0} % Chance, dem Ziel einen Buff zu stehlen.",
+      "components": [
+        {
+          "passive": {
+            "kind": "onHit",
+            "chance": 60,
+            "effect": {
+              "kind": "stealBuff",
+              "multiplier": 1
+            }
+          },
+          "scale": "chance"
+        }
+      ]
+    },
+    {
+      "id": "envyra_drain",
+      "slot": "aspect",
+      "aspect": "envyra",
+      "name": "Energieraub",
+      "description": "30 % Chance, dem Ziel {0} Energie zu entziehen.",
+      "components": [
+        {
+          "passive": {
+            "kind": "onHit",
+            "chance": 300,
+            "effect": {
+              "kind": "drainEnergy",
+              "multiplier": 20
+            }
+          },
+          "scale": "multiplier"
+        }
+      ]
+    },
+    {
+      "id": "echo_ultimate",
+      "slot": "echo",
+      "name": "Echo der Stärke",
+      "description": "+{0} % Schaden mit der Ultimate.",
+      "components": [
+        {
+          "passive": {
+            "kind": "ultimateDamage",
+            "value": 40
+          },
+          "scale": "value"
+        }
+      ]
+    },
+    {
+      "id": "echo_vs_hollowed",
+      "slot": "echo",
+      "name": "Echo gegen die Hollowed",
+      "description": "+{0} % Schaden gegen Hollowed.",
+      "components": [
+        {
+          "passive": {
+            "kind": "damageVsGroup",
+            "value": 50,
+            "vsGroup": "hollowed"
+          },
+          "scale": "value"
+        }
+      ]
+    },
+    {
+      "id": "echo_vs_riftborn",
+      "slot": "echo",
+      "name": "Echo gegen Riftborn",
+      "description": "+{0} % Schaden gegen Riftborn.",
+      "components": [
+        {
+          "passive": {
+            "kind": "damageVsGroup",
+            "value": 50,
+            "vsGroup": "riftborn"
+          },
+          "scale": "value"
+        }
+      ]
+    },
+    {
+      "id": "echo_energy",
+      "slot": "echo",
+      "name": "Echo des Erwachens",
+      "description": "Startet den Kampf mit {0} Energie.",
+      "components": [
+        {
+          "passive": {
+            "kind": "battleStart",
+            "target": "self",
+            "effect": {
+              "kind": "gainEnergy",
+              "multiplier": 50
+            }
+          },
+          "scale": "multiplier"
+        }
+      ]
+    },
+    {
+      "id": "echo_healing",
+      "slot": "echo",
+      "name": "Echo der Heilung",
+      "description": "+{0} % Heilung.",
+      "components": [
+        {
+          "passive": {
+            "kind": "healingBonus",
+            "value": 40
+          },
+          "scale": "value"
+        }
+      ]
+    },
+    {
+      "id": "echo_bulwark",
+      "slot": "echo",
+      "name": "Echo des Schutzes",
+      "description": "Das ganze Team erleidet {0} % weniger Schaden. Nachteil: dieser Held macht 15 % weniger Schaden.",
+      "components": [
+        {
+          "passive": {
+            "kind": "damageReduction",
+            "value": 15,
+            "team": true
+          },
+          "scale": "value"
+        }
+      ],
+      "drawbacks": [
+        {
+          "kind": "damageBonus",
+          "value": -150
+        }
+      ]
+    },
+    {
+      "id": "echo_sacrifice",
+      "slot": "echo",
+      "name": "Echo des Opfers",
+      "description": "Das ganze Team macht {0} % mehr Schaden. Nachteil: dieser Held erleidet 15 % mehr Schaden.",
+      "components": [
+        {
+          "passive": {
+            "kind": "damageBonus",
+            "value": 20,
+            "team": true
+          },
+          "scale": "value"
+        }
+      ],
+      "drawbacks": [
+        {
+          "kind": "damageReduction",
+          "value": -150
+        }
+      ]
+    }
+  ]
+}

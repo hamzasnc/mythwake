@@ -32,6 +32,8 @@ namespace Mythwake.Core.Combat
         public int Slot;
         public Row Row => Slot < 2 ? Row.Front : Row.Back;
         public HeroDefinition Hero;
+        /// <summary>The hero's passive components plus the extra ones of its setup (Fragments).</summary>
+        public readonly List<PassiveDefinition> Passives = new List<PassiveDefinition>();
         public Stats Stats;
         public long MaxHp;
         public long Hp;

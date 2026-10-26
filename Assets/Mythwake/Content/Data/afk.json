@@ -25,6 +25,12 @@
       "id": "gearMaterials",
       "base": 3,
       "perStage": 1
+    },
+    {
+      "id": "fragmentDust",
+      "base": 8,
+      "perStage": 1,
+      "fromStage": 15
     }
   ]
 }

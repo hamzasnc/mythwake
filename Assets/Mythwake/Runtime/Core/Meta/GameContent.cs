@@ -51,6 +51,10 @@ namespace Mythwake.Core.Meta
         public string Id;
         public long Base;
         public long PerStage;
+        /// <summary>Paid only from this stage on, counting stages from there (0 = always).</summary>
+        public int FromStage;
+
+        public long At(long stage) => stage < FromStage ? 0 : Base + PerStage * (stage - FromStage);
     }
 
     public sealed class CampaignConfig
@@ -141,6 +145,7 @@ namespace Mythwake.Core.Meta
         public HuntConfig Hunts = new HuntConfig();
         public ArenaConfig Arena = new ArenaConfig();
         public DungeonConfig Dungeons = new DungeonConfig();
+        public FragmentConfig Fragments = new FragmentConfig();
 
         /// <summary>A hero or monster by id (battle setups and team snapshots can contain both).</summary>
         public HeroDefinition Hero(string id) =>

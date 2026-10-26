@@ -84,6 +84,12 @@ namespace Mythwake.Editor
                 }
             catalog.monsters = monsters.ToArray();
 
+            var iconRoot = ContentRoot + "/Icons";
+            catalog.icons = Directory.Exists(iconRoot)
+                ? Directory.GetFiles(iconRoot, "*.png").OrderBy(p => p, System.StringComparer.Ordinal)
+                    .Select(p => AssetDatabase.LoadAssetAtPath<Texture2D>(p.Replace('\\', '/'))).Where(t => t != null).ToArray()
+                : new Texture2D[0];
+
             var town = ContentRoot + "/Town";
             catalog.town = new ContentCatalog.TownAssets
             {

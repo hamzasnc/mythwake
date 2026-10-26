@@ -150,6 +150,26 @@ namespace Mythwake.UI
             }
             yield return Shot("dungeon_result", 0.6f);
 
+            // Fragment Shrine: rebuild to level 5, stabilize one Fragment per slot, equip them on the first hero
+            ui.State.Add(Ids.FragmentDust, 20_000);
+            ui.State.Add(Ids.Gold, 200_000);
+            for (var i = 0; i < 5; i++)
+                ui.Authority.Execute(new UpgradeBuilding { BuildingId = "fragmentShrine" });
+            foreach (FragmentSlot slot in System.Enum.GetValues(typeof(FragmentSlot)))
+            {
+                var fragment = ui.Authority.Execute(new StabilizeFragment { Slot = slot }).Value;
+                if (fragment != null)
+                    ui.Authority.Execute(new EquipFragment { HeroId = hero, Uid = fragment.Uid });
+            }
+            for (var i = 0; i < 4; i++)
+                ui.Authority.Execute(new StabilizeFragment { Slot = FragmentSlot.Echo });
+            var shrineScreen = new VillageScreen();
+            ui.Router.Reset(shrineScreen);
+            shrineScreen.OpenBuilding("fragmentShrine");
+            yield return Shot("fragment_shrine", 0.8f);
+            ui.Router.Push(new FragmentScreen());
+            yield return Shot("fragments", 0.6f);
+
             ui.Router.Reset(new HeroesScreen());
             yield return Shot("heroes", 0.6f);
             ui.Router.Push(new HeroDetailScreen(hero));
@@ -157,6 +177,8 @@ namespace Mythwake.UI
             var detail = ui.Router.Current;
             detail.Root.Q<ScrollView>().scrollOffset = new Vector2(0, 1400);
             yield return Shot("hero_gear", 0.6f);
+            detail.Root.Q<ScrollView>().scrollOffset = new Vector2(0, 2000);
+            yield return Shot("hero_fragments", 0.6f);
 
             ui.Router.Reset(new SummonScreen());
             yield return Shot("summon", 0.6f);

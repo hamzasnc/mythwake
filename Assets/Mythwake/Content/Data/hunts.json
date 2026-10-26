@@ -96,6 +96,22 @@
       ]
     },
     {
+      "id": "fragmentDust",
+      "name": "Gather Fragment Dust",
+      "rewards": [
+        {
+          "id": "fragmentDust",
+          "base": 120,
+          "perStage": 4
+        },
+        {
+          "id": "gold",
+          "base": 1000,
+          "perStage": 40
+        }
+      ]
+    },
+    {
       "id": "riftborn",
       "name": "Defeat a Riftborn enemy",
       "enemyFaction": "circleOfAether",

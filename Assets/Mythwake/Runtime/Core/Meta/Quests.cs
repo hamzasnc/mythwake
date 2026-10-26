@@ -19,6 +19,8 @@ namespace Mythwake.Core.Meta
         public const string HuntCompleted = "huntCompleted";
         public const string DailyCompleted = "dailyCompleted";
         public const string DungeonCleared = "dungeonCleared";
+        public const string FragmentUpgraded = "fragmentUpgraded";
+        public const string FragmentStabilized = "fragmentStabilized";
     }
 
     public sealed class TaskDefinition

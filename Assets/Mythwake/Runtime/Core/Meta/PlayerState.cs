@@ -65,6 +65,8 @@ namespace Mythwake.Core.Meta
         public HuntState Hunts = new HuntState();
         public DungeonState Dungeons = new DungeonState();
         public int GearUidCounter;
+        public List<FragmentItem> Fragments = new List<FragmentItem>();
+        public int FragmentUidCounter;
         public PendingBattle Battle;
         /// <summary>Server-side randomness (summons, battle seeds): seed + how many draws were made.</summary>
         public ulong RngSeed;

@@ -219,6 +219,8 @@ namespace Mythwake.UI
                 card.Add(Slots(def, level));
             if (level > 0 && def.Effect == BuildingEffect.Forge)
                 card.Add(Forge());
+            if (level > 0 && def.Effect == BuildingEffect.Shrine)
+                card.Add(Shrine());
             if (level > 0 && def.Effect == BuildingEffect.Hunting)
                 UiKit.Btn("Hunt Board", () => _ui.Router.Push(new HuntScreen())).Into(card);
             if (level > 0 && def.Effect == BuildingEffect.Portal)
@@ -285,6 +287,9 @@ namespace Mythwake.UI
                     return Loc.T("village.effect.summon");
                 case BuildingEffect.Portal:
                     return Loc.T("village.effect.portal", _ui.Content.Dungeons.Dungeons.Count(d => d.PortalLevel <= level));
+                case BuildingEffect.Shrine:
+                    return Loc.T("village.effect.shrine", string.Join(", ", System.Enum.GetValues(typeof(FragmentSlot)).Cast<FragmentSlot>()
+                        .Where(s => Fragments.SlotOpen(_ui.State, _ui.Content, s)).Select(FragmentUi.SlotName)));
                 case BuildingEffect.Hunting:
                     return Loc.T("village.effect.hunting", Hunts.DailyCount(_ui.Content, level), Hunts.WeeklyCount(_ui.Content, level));
                 case BuildingEffect.Forge:
@@ -381,6 +386,37 @@ namespace Mythwake.UI
                 b.SetEnabled(affordable);
             }
             return box;
+        }
+
+        private VisualElement Shrine()
+        {
+            var box = UiKit.Box("forge");
+            UiKit.Text(Loc.T("fragment.stabilize"), "subtitle").Into(box);
+            UiKit.Text(FragmentUi.Chances(Fragments.StabilizeWeights(_ui.State, _ui.Content)), "label--small").Into(box);
+            box.Add(GearUi.CostRow(_ui.State, _ui.Content.Fragments.StabilizeCost));
+            var row = UiKit.Box("row").Into(box);
+            row.style.flexWrap = Wrap.Wrap;
+            var affordable = _ui.Content.Fragments.StabilizeCost.All(c => _ui.State.Get(c.Id) >= c.Value);
+            foreach (FragmentSlot slot in System.Enum.GetValues(typeof(FragmentSlot)))
+            {
+                var s = slot;
+                var b = UiKit.Btn(FragmentUi.SlotName(slot), () => Stabilize(s), "btn--secondary", "btn--small").Into(row);
+                b.SetEnabled(affordable && Fragments.SlotOpen(_ui.State, _ui.Content, slot));
+            }
+            UiKit.Btn(Loc.T("fragment.title") + $" ({_ui.State.Fragments.Count})", () => _ui.Router.Push(new FragmentScreen())).Into(box);
+            return box;
+        }
+
+        private void Stabilize(FragmentSlot slot)
+        {
+            if (!_ui.Try(new StabilizeFragment { Slot = slot }, out FragmentItem item))
+                return;
+            _refresh();
+            var overlay = UiKit.Box("overlay").Into(_root);
+            var popup = UiKit.Box("panel", "popup").Into(overlay);
+            UiKit.Text(Loc.T("fragment.stabilized"), "title").Into(popup);
+            popup.Add(FragmentUi.Details(_ui, item));
+            UiKit.Btn(Loc.T("battle.continue"), () => overlay.RemoveFromHierarchy()).Into(popup);
         }
 
         private void Craft(GearSlot slot)

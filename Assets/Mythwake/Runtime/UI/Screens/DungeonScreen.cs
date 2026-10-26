@@ -152,7 +152,7 @@ namespace Mythwake.UI
                 return null;
             return new BattleReport
             {
-                Outcome = result.Outcome, Rewards = result.Rewards, Gear = result.Gear,
+                Outcome = result.Outcome, Rewards = result.Rewards, Gear = result.Gear, Fragments = result.Fragments,
                 Note = result.FirstClear ? Loc.T("dungeon.firstDone") : null
             };
         }

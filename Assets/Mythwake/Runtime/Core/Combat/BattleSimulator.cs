@@ -95,6 +95,9 @@ namespace Mythwake.Core.Combat
                     Index = _units.Count, Side = side, Slot = s.Slot, Hero = s.Hero, Stats = s.Stats.Clone()
                 };
                 u.MaxHp = u.Hp = System.Math.Max(1, u.Stats.Hp);
+                u.Passives.AddRange(s.Hero.PassiveComponents());
+                if (s.Passives != null)
+                    u.Passives.AddRange(s.Passives);
                 // stagger first attacks a little so a team does not swing in perfect unison
                 u.NextNormalMs = 300 + s.Slot * 90 + (side == Side.Enemies ? 150 : 0);
                 foreach (var skill in s.Hero.Skills())
@@ -117,7 +120,7 @@ namespace Mythwake.Core.Combat
         {
             foreach (var owner in _units)
             {
-                foreach (var p in owner.Hero.PassiveComponents())
+                foreach (var p in owner.Passives)
                 {
                     if (p.Kind == PassiveKind.Periodic)
                         owner.NextPeriodicMs[p] = p.IntervalMs > 0 ? p.IntervalMs : 10_000;
@@ -138,7 +141,7 @@ namespace Mythwake.Core.Combat
         private void ApplyBattleStartPassives()
         {
             foreach (var owner in _units)
-                foreach (var p in owner.Hero.PassiveComponents())
+                foreach (var p in owner.Passives)
                     if (p.Kind == PassiveKind.BattleStart && p.Effect != null)
                         foreach (var target in SelectTargets(owner, p.Target ?? TargetSelector.Self, 1))
                             ApplyPassiveEffect(owner, target, p.Effect);
@@ -458,6 +461,23 @@ namespace Mythwake.Core.Combat
             return System.Math.Max(1, u.Stats.Attack * System.Math.Max(100, Permille.One + bonus) / Permille.One);
         }
 
+        private static int VsGroupBonus(BattleUnit caster, BattleUnit target)
+        {
+            var bonus = 0;
+            foreach (var m in caster.Modifiers)
+            {
+                var p = m.Passive;
+                if (p.Kind != PassiveKind.DamageVsGroup || !caster.IsActive(m))
+                    continue;
+                var h = target.Hero;
+                var match = h.Group == p.VsGroup ||
+                            (p.VsGroup == EnemyGroup.Hollowed && (h.Race == Race.Hollowed || h.Faction == Faction.TheHollowed));
+                if (match)
+                    bonus += p.Value;
+            }
+            return bonus;
+        }
+
         public static int AspectRelation(Aspect attacker, Aspect defender)
         {
             if (((int)attacker + 1) % 5 == (int)defender)
@@ -510,6 +530,9 @@ namespace Mythwake.Core.Combat
                 bonus += e.BonusVsStatusPermille;
             if (e.MissingHpBonus > 0)
                 bonus += (int)(e.MissingHpBonus * (caster.MaxHp - caster.Hp) / caster.MaxHp);
+            if (slot == SkillSlot.Ultimate)
+                bonus += caster.Sum(PassiveKind.UltimateDamage, _now);
+            bonus += VsGroupBonus(caster, target);
             amount = amount * (Permille.One + bonus) / Permille.One;
 
             var defenseScale = Permille.One + target.StatusValue(StatusKind.DefenseUp) - target.StatusValue(StatusKind.DefenseDown);
@@ -768,7 +791,7 @@ namespace Mythwake.Core.Combat
                         Heal(u, u, Permille.Apply(u.MaxHp, regen), SkillSlot.Passive);
                 }
 
-                foreach (var p in u.Hero.PassiveComponents())
+                foreach (var p in u.Passives)
                 {
                     if (p.Kind != PassiveKind.Periodic || p.Effect == null || _now < u.NextPeriodicMs[p])
                         continue;

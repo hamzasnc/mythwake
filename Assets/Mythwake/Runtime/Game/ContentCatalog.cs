@@ -45,6 +45,8 @@ namespace Mythwake.Game
         public HeroAssets[] heroes = new HeroAssets[0];
         public HeroAssets[] monsters = new HeroAssets[0];
         public TownAssets town = new TownAssets();
+        /// <summary>Item icons (Content/Icons), looked up by file name.</summary>
+        public Texture2D[] icons = new Texture2D[0];
 
         private Dictionary<string, HeroAssets> _byId;
         private TownLayout _layout;
@@ -73,6 +75,8 @@ namespace Mythwake.Game
                     .Select(m => new KeyValuePair<string, string>($"Monsters/{m.id}/{m.id}.monster.json", m.definition.text)));
             return Mythwake.Content.ContentVersion.Compute(files);
         }
+
+        public Texture2D Icon(string name) => icons.FirstOrDefault(i => i != null && i.name == name);
 
         public TownLayout Layout()
         {

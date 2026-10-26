@@ -13,6 +13,11 @@ namespace Mythwake.Core.Progression
         public int Stars = 1;
         /// <summary>Flat stats from equipment (HP, ATK, DEF, crit rate), added before percentage bonuses.</summary>
         public Stats Flat;
+        /// <summary>Personal percentage bonuses (Core Fragment), permille.</summary>
+        public int AttackPermille;
+        public int HpPermille;
+        /// <summary>Extra passive components (Aspect and Echo Fragments).</summary>
+        public List<PassiveDefinition> Passives = new List<PassiveDefinition>();
     }
 
     /// <summary>Account-wide combat bonuses from outside the formation (village buildings, later relics and guild buffs), permille.</summary>
@@ -97,8 +102,8 @@ namespace Mythwake.Core.Progression
                     continue;
                 var stats = StatsOf(h);
                 var synergy = FactionBonus(factions[h.Hero.Faction]) + (races[h.Hero.Race] >= 2 ? RaceSynergyPermille : 0);
-                var atk = synergy + (bonus?.Attack ?? 0);
-                var hp = synergy + (bonus?.Hp ?? 0);
+                var atk = synergy + (bonus?.Attack ?? 0) + h.AttackPermille;
+                var hp = synergy + (bonus?.Hp ?? 0) + h.HpPermille;
                 stats.HealPower += bonus?.HealPower ?? 0;
                 if (aura != null)
                 {
@@ -108,7 +113,7 @@ namespace Mythwake.Core.Progression
                 }
                 stats.Attack = stats.Attack * (Permille.One + atk) / Permille.One;
                 stats.Hp = stats.Hp * (Permille.One + hp) / Permille.One;
-                result.Add(new UnitSetup { Hero = h.Hero, Level = h.Level, Slot = slot, Stats = stats });
+                result.Add(new UnitSetup { Hero = h.Hero, Level = h.Level, Slot = slot, Stats = stats, Passives = new List<PassiveDefinition>(h.Passives) });
             }
             return result;
         }

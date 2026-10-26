@@ -26,6 +26,8 @@ namespace Mythwake.Core.Meta
         public List<AfkRate> FirstClearRewards = new List<AfkRate>();
         /// <summary>Gear piece on first clear of every N-th level (0 = none).</summary>
         public int GearEveryLevels;
+        /// <summary>Fragment on first clear of every N-th level (0 = none).</summary>
+        public int FragmentEveryLevels;
     }
 
     public sealed class DungeonConfig
@@ -46,6 +48,7 @@ namespace Mythwake.Core.Meta
         public BattleOutcome Outcome;
         public List<Amount> Rewards = new List<Amount>();
         public List<GearItem> Gear = new List<GearItem>();
+        public List<FragmentItem> Fragments = new List<FragmentItem>();
         public bool FirstClear;
     }
 
@@ -97,7 +100,7 @@ namespace Mythwake.Core.Meta
         {
             var list = new List<Amount>();
             foreach (var r in table)
-                list.Add(new Amount(r.Id, r.Base + r.PerStage * level));
+                list.Add(new Amount(r.Id, r.At(level)));
             return list;
         }
 
@@ -190,6 +193,8 @@ namespace Mythwake.Core.Meta
                 result.Rewards.AddRange(Dungeons.Rewards(d.FirstClearRewards, pending.Floor));
                 if (d.GearEveryLevels > 0 && pending.Floor % d.GearEveryLevels == 0)
                     result.Gear.Add(Gear.Drop(ctx));
+                if (d.FragmentEveryLevels > 0 && pending.Floor % d.FragmentEveryLevels == 0)
+                    result.Fragments.Add(Fragments.Drop(ctx));
             }
             ctx.Grant(result.Rewards);
             Quests.Track(ctx, Stat.BattleWon);

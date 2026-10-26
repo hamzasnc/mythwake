@@ -148,6 +148,10 @@ namespace Mythwake.Core.Content
         /// <summary>Applies Effect to Target once at battle start.</summary>
         BattleStart,
         /// <summary>Hero Leader: team-wide stat bonus.</summary>
-        LeaderAura
+        LeaderAura,
+        /// <summary>+Value permille damage dealt by ultimates.</summary>
+        UltimateDamage,
+        /// <summary>+Value permille damage against enemies of VsGroup.</summary>
+        DamageVsGroup
     }
 }

@@ -325,6 +325,19 @@
       ]
     },
     {
+      "id": "fragment_shrine",
+      "text": "Baue den Fragment Shrine wieder auf",
+      "condition": "buildingLevel",
+      "value": 1,
+      "target": "fragmentShrine",
+      "rewards": [
+        {
+          "id": "fragmentDust",
+          "value": 400
+        }
+      ]
+    },
+    {
       "id": "chapter1",
       "text": "Schließe Kapitel 1 ab",
       "condition": "stageCleared",
@@ -378,6 +391,23 @@
         {
           "id": "summonScroll",
           "value": 1
+        }
+      ]
+    },
+    {
+      "id": "portal_chamber_3",
+      "text": "Baue die Portal Chamber auf Lv. 3 aus",
+      "condition": "buildingLevel",
+      "value": 3,
+      "target": "portalChamber",
+      "rewards": [
+        {
+          "id": "gems",
+          "value": 150
+        },
+        {
+          "id": "fragmentDust",
+          "value": 600
         }
       ]
     },

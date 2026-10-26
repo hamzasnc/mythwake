@@ -88,6 +88,51 @@
         }
       ],
       "gearEveryLevels": 5
+    },
+    {
+      "id": "fragment",
+      "name": "Fragment Dungeon",
+      "description": "Fragment Dust und Fragmente. Sonderregel: Gegner machen 30 % mehr Schaden.",
+      "portalLevel": 3,
+      "boss": "fragment_devourer",
+      "escort": [
+        "fragment_construct",
+        "riftborn_stalker"
+      ],
+      "escorts": 2,
+      "maxLevel": 100,
+      "enemyLevelBase": 22,
+      "enemyLevelPerFloor": 2,
+      "attemptsPerDay": 3,
+      "rules": {
+        "enemyDamageModifier": 300,
+        "maxDurationMs": 90000
+      },
+      "clearRewards": [
+        {
+          "id": "fragmentDust",
+          "base": 150,
+          "perStage": 15
+        },
+        {
+          "id": "gold",
+          "base": 4000,
+          "perStage": 600
+        }
+      ],
+      "firstClearRewards": [
+        {
+          "id": "fragmentDust",
+          "base": 300,
+          "perStage": 30
+        },
+        {
+          "id": "gems",
+          "base": 20,
+          "perStage": 0
+        }
+      ],
+      "fragmentEveryLevels": 5
     }
   ]
 }

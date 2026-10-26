@@ -9,7 +9,7 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
@@ -28,7 +28,8 @@ namespace Mythwake.Content
                 Quests = ContentJson.Parse<QuestConfig>(readData("quests")),
                 Hunts = ContentJson.Parse<HuntConfig>(readData("hunts")),
                 Arena = ContentJson.Parse<ArenaConfig>(readData("arena")),
-                Dungeons = ContentJson.Parse<DungeonConfig>(readData("dungeons"))
+                Dungeons = ContentJson.Parse<DungeonConfig>(readData("dungeons")),
+                Fragments = ContentJson.Parse<FragmentConfig>(readData("fragments"))
             };
             foreach (var json in heroJsons)
             {
@@ -57,6 +58,26 @@ namespace Mythwake.Content
                 foreach (var id in d.Escort)
                     if (!content.Monsters.ContainsKey(id))
                         errors.Add($"dungeons.json/{d.Id}: unknown escort '{id}'");
+            }
+            var effectIds = new HashSet<string>();
+            foreach (var e in content.Fragments.Effects)
+            {
+                if (!effectIds.Add(e.Id ?? ""))
+                    errors.Add($"fragments.json: duplicate effect '{e.Id}'");
+                if (e.Slot == FragmentSlot.Core)
+                    errors.Add($"fragments.json/{e.Id}: Core Fragments have no effect");
+                if (e.Slot == FragmentSlot.Aspect && e.Aspect == null)
+                    errors.Add($"fragments.json/{e.Id}: Aspect effect needs an aspect");
+                if (e.Components.Count == 0)
+                    errors.Add($"fragments.json/{e.Id}: no components");
+            }
+            if (content.Fragments.Grades.Count > 0)
+            {
+                foreach (Aspect a in System.Enum.GetValues(typeof(Aspect)))
+                    if (!content.Fragments.Effects.Any(e => e.Slot == FragmentSlot.Aspect && e.Aspect == a))
+                        errors.Add($"fragments.json: no Aspect Fragment effect for {a}");
+                if (!content.Fragments.Effects.Any(e => e.Slot == FragmentSlot.Echo))
+                    errors.Add("fragments.json: no Echo Fragment effect");
             }
             foreach (var c in content.Campaign.Chapters)
             {

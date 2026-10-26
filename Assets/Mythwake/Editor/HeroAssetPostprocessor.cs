@@ -12,9 +12,22 @@ namespace Mythwake.Editor
         public const string HeroesRoot = "Assets/Mythwake/Content/Heroes/";
         public const string MonstersRoot = "Assets/Mythwake/Content/Monsters/";
         public const string TownRoot = "Assets/Mythwake/Content/Town/";
+        public const string IconsRoot = "Assets/Mythwake/Content/Icons/";
 
         private void OnPreprocessTexture()
         {
+            if (assetPath.StartsWith(IconsRoot))
+            {
+                var icon = (TextureImporter)assetImporter;
+                icon.textureType = TextureImporterType.Default;
+                icon.alphaIsTransparency = true;
+                icon.mipmapEnabled = false;
+                icon.wrapMode = TextureWrapMode.Clamp;
+                icon.npotScale = TextureImporterNPOTScale.None;
+                icon.maxTextureSize = 512;
+                icon.textureCompression = TextureImporterCompression.CompressedHQ;
+                return;
+            }
             if (assetPath.StartsWith(TownRoot))
             {
                 // hub pictures and building cut-outs are UI images

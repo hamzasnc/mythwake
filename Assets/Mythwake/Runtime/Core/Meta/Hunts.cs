@@ -161,7 +161,7 @@ namespace Mythwake.Core.Meta
             var heroBonus = hut == null ? 0 : Village.TotalBonus(state, content, hut) - hut.EffectPerLevel * hutLevel;
             var scale = Permille.One + c.TierRewardPermille * (tier - 1) + c.RewardPerLevelPermille * (hutLevel - 1) + heroBonus;
             foreach (var r in mission.Rewards)
-                offer.Rewards.Add(new Amount(r.Id, (r.Base + r.PerStage * stage) * scale / Permille.One));
+                offer.Rewards.Add(new Amount(r.Id, r.At(stage) * scale / Permille.One));
             var tokens = weekly ? c.WeeklyTokens : c.TokensPerTier[System.Math.Min(tier, c.TokensPerTier.Length) - 1];
             offer.Rewards.Add(new Amount(Tokens, tokens * scale / Permille.One));
             return offer;

@@ -136,6 +136,8 @@ namespace Mythwake.Core.Meta
         public List<Amount> Rewards = new List<Amount>();
         /// <summary>Gear dropped by a boss stage.</summary>
         public List<GearItem> Gear = new List<GearItem>();
+        /// <summary>Fragments dropped by a boss stage (once the Fragment Shrine stands).</summary>
+        public List<FragmentItem> Fragments = new List<FragmentItem>();
         public int UnlockedSlots;
     }
 
@@ -173,6 +175,8 @@ namespace Mythwake.Core.Meta
                 Quests.Track(ctx, Stat.StageCleared);
                 if (Campaign.IsBoss(ctx.Content, pending.Stage) && g.Grades.Count > 0)
                     result.Gear.Add(Mythwake.Core.Meta.Gear.Drop(ctx));
+                if (Campaign.IsBoss(ctx.Content, pending.Stage))
+                    Mythwake.Core.Meta.Fragments.BossReward(ctx, pending.Stage, result.Rewards, result.Fragments);
                 state.Campaign.HighestCleared = pending.Stage;
             }
             result.UnlockedSlots = Formations.UnlockedSlots(state, ctx.Content);

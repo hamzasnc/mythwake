@@ -78,10 +78,13 @@ namespace Mythwake.Core.Meta
         public static HeroProgress Progress(PlayerState state, GameContent content, OwnedHero owned)
         {
             var gear = Gear.StatsFor(state, content, owned.HeroId);
+            var hero = content.Hero(owned.HeroId);
+            var fragments = Fragments.BonusFor(state, content, owned.HeroId, hero.Aspect);
             return new HeroProgress
             {
-                Hero = content.Hero(owned.HeroId), Level = owned.Level, Stars = owned.Stars,
-                Flat = new Stats { Hp = gear.Hp, Attack = gear.Attack, Defense = gear.Defense, CritRate = gear.CritRate }
+                Hero = hero, Level = owned.Level, Stars = owned.Stars,
+                Flat = new Stats { Hp = gear.Hp, Attack = gear.Attack, Defense = gear.Defense, CritRate = gear.CritRate },
+                AttackPermille = fragments.AttackPermille, HpPermille = fragments.HpPermille, Passives = fragments.Passives
             };
         }
     }
@@ -250,7 +253,7 @@ namespace Mythwake.Core.Meta
         {
             var list = new List<Amount>();
             foreach (var r in content.Campaign.ClearRewards)
-                list.Add(new Amount(r.Id, r.Base + r.PerStage * stage));
+                list.Add(new Amount(r.Id, r.At(stage)));
             if (IsBoss(content, stage))
                 foreach (var r in content.Campaign.BossRewards)
                     list.Add(new Amount(r.Id, r.Value));
@@ -275,7 +278,7 @@ namespace Mythwake.Core.Meta
             var list = new List<Amount>();
             foreach (var r in content.Afk.Rates)
             {
-                var perHour = r.Base + r.PerStage * stage;
+                var perHour = r.At(stage);
                 var value = perHour * elapsed / HourMs;
                 if (value > 0)
                     list.Add(new Amount(r.Id, value));

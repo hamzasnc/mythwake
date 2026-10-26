@@ -8,6 +8,8 @@ namespace Mythwake.Core.Meta
     /// <summary>What a building does once built (doc: Building System).</summary>
     public enum BuildingEffect
     {
+        /// <summary>Fragment Shrine: Fragment slots, stabilizing, upgrades (docs/systems/FRAGMENTS.md).</summary>
+        Shrine,
         /// <summary>The building's system is not in the game yet; shown as a ruin to rebuild later.</summary>
         None,
         /// <summary>Produces resources over time (Survivor Camp).</summary>

@@ -29,6 +29,8 @@ namespace Mythwake.Core.Content
         /// <summary>Permille: stat change; damage per second as permille of the source's attack (Burn/Poison);
         /// heal per second as permille of max HP (Regen); number of dodged hits (Evade).</summary>
         public int Value;
+
+        public StatusDefinition Clone() => (StatusDefinition)MemberwiseClone();
     }
 
     public sealed class EffectDefinition
@@ -51,6 +53,13 @@ namespace Mythwake.Core.Content
         /// <summary>Bonus damage that scales with the caster's missing HP, reaching this permille at 0 HP.</summary>
         public int MissingHpBonus;
         public int ShieldDurationMs = 6000;
+
+        public EffectDefinition Clone()
+        {
+            var e = (EffectDefinition)MemberwiseClone();
+            e.Status = Status?.Clone();
+            return e;
+        }
     }
 
     public sealed class TriggerDefinition
@@ -91,6 +100,15 @@ namespace Mythwake.Core.Content
         public int AttackBonus;
         public int HpBonus;
         public int HealBonus;
+        /// <summary>DamageVsGroup: the enemy group that takes the extra damage (Hollowed also matches the Hollowed race and faction).</summary>
+        public EnemyGroup VsGroup;
+
+        public PassiveDefinition Clone()
+        {
+            var p = (PassiveDefinition)MemberwiseClone();
+            p.Effect = Effect?.Clone();
+            return p;
+        }
     }
 
     public sealed class SkillDefinition
