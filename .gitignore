@@ -56,3 +56,8 @@ desktop.ini
 *.mobileprovision
 .env
 .env.*
+
+# local server data (database cluster, secrets, logs)
+/server/.local/
+/server/rules/bin/
+/server/rules/obj/

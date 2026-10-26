@@ -131,6 +131,7 @@ namespace Mythwake.Core.Meta
         public GearConfig Gear = new GearConfig();
         public QuestConfig Quests = new QuestConfig();
         public HuntConfig Hunts = new HuntConfig();
+        public ArenaConfig Arena = new ArenaConfig();
 
         public HeroDefinition Hero(string id) =>
             Heroes.TryGetValue(id, out var h) ? h : throw new RuleViolation("unknown_hero", id);

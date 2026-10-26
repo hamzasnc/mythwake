@@ -9,7 +9,7 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
@@ -25,7 +25,8 @@ namespace Mythwake.Content
                 Village = ContentJson.Parse<VillageConfig>(readData("buildings")),
                 Gear = ContentJson.Parse<GearConfig>(readData("gear")),
                 Quests = ContentJson.Parse<QuestConfig>(readData("quests")),
-                Hunts = ContentJson.Parse<HuntConfig>(readData("hunts"))
+                Hunts = ContentJson.Parse<HuntConfig>(readData("hunts")),
+                Arena = ContentJson.Parse<ArenaConfig>(readData("arena"))
             };
             foreach (var json in heroJsons)
             {

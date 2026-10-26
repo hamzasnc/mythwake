@@ -1,0 +1,144 @@
+{
+  "startRating": 1000,
+  "eloK": 32,
+  "freeFightsPerDay": 5,
+  "unlockStage": 15,
+  "seasonDays": 14,
+  "ranks": [
+    {
+      "name": "Bronze",
+      "minRating": 0
+    },
+    {
+      "name": "Silver",
+      "minRating": 1100
+    },
+    {
+      "name": "Gold",
+      "minRating": 1250
+    },
+    {
+      "name": "Platinum",
+      "minRating": 1400
+    },
+    {
+      "name": "Mythic",
+      "minRating": 1600
+    },
+    {
+      "name": "Guardian",
+      "minRating": 1800
+    },
+    {
+      "name": "Shattered King",
+      "minRating": 2000
+    }
+  ],
+  "winRewards": [
+    {
+      "id": "arenaCoins",
+      "value": 30
+    },
+    {
+      "id": "gold",
+      "value": 3000
+    }
+  ],
+  "lossRewards": [
+    {
+      "id": "arenaCoins",
+      "value": 10
+    }
+  ],
+  "seasonRewards": {
+    "Bronze": [
+      {
+        "id": "gems",
+        "value": 100
+      },
+      {
+        "id": "arenaCoins",
+        "value": 200
+      }
+    ],
+    "Silver": [
+      {
+        "id": "gems",
+        "value": 200
+      },
+      {
+        "id": "arenaCoins",
+        "value": 400
+      }
+    ],
+    "Gold": [
+      {
+        "id": "gems",
+        "value": 350
+      },
+      {
+        "id": "arenaCoins",
+        "value": 700
+      }
+    ],
+    "Platinum": [
+      {
+        "id": "gems",
+        "value": 500
+      },
+      {
+        "id": "arenaCoins",
+        "value": 1000
+      },
+      {
+        "id": "summonScroll",
+        "value": 2
+      }
+    ],
+    "Mythic": [
+      {
+        "id": "gems",
+        "value": 800
+      },
+      {
+        "id": "arenaCoins",
+        "value": 1500
+      },
+      {
+        "id": "summonScroll",
+        "value": 4
+      }
+    ],
+    "Guardian": [
+      {
+        "id": "gems",
+        "value": 1200
+      },
+      {
+        "id": "arenaCoins",
+        "value": 2200
+      },
+      {
+        "id": "summonScroll",
+        "value": 6
+      }
+    ],
+    "Shattered King": [
+      {
+        "id": "gems",
+        "value": 2000
+      },
+      {
+        "id": "arenaCoins",
+        "value": 3500
+      },
+      {
+        "id": "summonScroll",
+        "value": 10
+      }
+    ]
+  },
+  "rules": {
+    "maxDurationMs": 90000
+  }
+}

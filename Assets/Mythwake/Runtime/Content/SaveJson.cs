@@ -19,6 +19,21 @@ namespace Mythwake.Content
 
         public static string Write(PlayerState state) => JsonConvert.SerializeObject(state, Settings);
 
+        /// <summary>SHA-256 (hex) of the save JSON. Client and server compare it to detect diverged predictions.</summary>
+        public static string Hash(PlayerState state) => HashOf(Write(state));
+
+        public static string HashOf(string json)
+        {
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            {
+                var bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(json));
+                var sb = new System.Text.StringBuilder(bytes.Length * 2);
+                foreach (var b in bytes)
+                    sb.Append(b.ToString("x2"));
+                return sb.ToString();
+            }
+        }
+
         public static PlayerState Read(string json)
         {
             var state = JsonConvert.DeserializeObject<PlayerState>(json, Settings);

@@ -13,6 +13,7 @@ namespace Mythwake.Core.Meta
         public const string GuardianSigil = "guardianSigil";
         public const string GearMaterials = "gearMaterials";
         public const string HuntTokens = "huntTokens";
+        public const string ArenaCoins = "arenaCoins";
 
         /// <summary>Hero shards are per hero: "shards.&lt;heroId&gt;".</summary>
         public static string Shards(string heroId) => "shards." + heroId;

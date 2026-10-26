@@ -1,0 +1,31 @@
+# Alternative to dev.ps1 / dev.sh when Docker is available:  docker compose -f server/docker-compose.yml up --build
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: mythwake
+      POSTGRES_PASSWORD: mythwake
+      POSTGRES_DB: mythwake
+    ports: ["55432:5432"]
+    volumes: [pgdata:/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mythwake"]
+      interval: 2s
+      retries: 30
+  rules:
+    build:
+      context: ..
+      dockerfile: server/rules/Dockerfile
+  api:
+    build: ./api
+    depends_on:
+      db: { condition: service_healthy }
+      rules: { condition: service_started }
+    environment:
+      MYTHWAKE_ADDR: 0.0.0.0:8080
+      MYTHWAKE_DATABASE_URL: postgres://mythwake:mythwake@db:5432/mythwake?sslmode=disable
+      MYTHWAKE_RULES_URL: http://rules:5081
+      MYTHWAKE_JWT_SECRET: ${MYTHWAKE_JWT_SECRET:-local-development-secret-change-me-0123456789}
+    ports: ["8080:8080"]
+volumes:
+  pgdata:
