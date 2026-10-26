@@ -10,6 +10,16 @@
       "id": "heroExp",
       "base": 600,
       "perStage": 60
+    },
+    {
+      "id": "wood",
+      "base": 60,
+      "perStage": 6
+    },
+    {
+      "id": "stone",
+      "base": 60,
+      "perStage": 6
     }
   ]
 }

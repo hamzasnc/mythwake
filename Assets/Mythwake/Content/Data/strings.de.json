@@ -7,11 +7,9 @@
   "currency.wood": "Wood",
   "currency.stone": "Stone",
   "currency.guardianSigil": "Guardian Sigils",
-
   "nav.campaign": "Kampagne",
   "nav.heroes": "Helden",
   "nav.summon": "Beschwörung",
-
   "home.chapter": "Kapitel {0}",
   "home.stage": "Stage {0}-{1}",
   "home.boss": "Boss",
@@ -23,7 +21,6 @@
   "afk.time": "{0} / {1} h",
   "afk.claim": "Einsammeln",
   "afk.empty": "Noch nichts gesammelt",
-
   "formation.title": "Formation",
   "formation.front": "Vorne",
   "formation.back": "Hinten",
@@ -33,7 +30,6 @@
   "formation.leader": "Hero Leader",
   "formation.synergy": "Synergien",
   "formation.empty": "Stelle mindestens einen Helden auf.",
-
   "battle.speed": "x{0}",
   "battle.auto": "Auto",
   "battle.manual": "Manuell",
@@ -45,7 +41,6 @@
   "battle.rewards": "Belohnungen",
   "battle.tip.defeat": "Level deine Helden mit Hero EXP auf oder stelle die Formation um.",
   "battle.slotUnlocked": "Neuer Formationsplatz frei!",
-
   "heroes.title": "Helden",
   "heroes.level": "Lv. {0}",
   "heroes.power": "Macht {0}",
@@ -64,7 +59,6 @@
   "slot.special2": "Special Skill",
   "slot.passive": "Passive",
   "slot.ultimate": "Ultimate",
-
   "summon.title": "Beschwörung",
   "summon.pull1": "1x",
   "summon.pull10": "10x",
@@ -72,26 +66,22 @@
   "summon.new": "NEU",
   "summon.shards": "+{0} Shards",
   "summon.rates": "Common {0} · Rare {1} · Epic {2} · Legendary {3}",
-
   "grade.common": "Common",
   "grade.rare": "Rare",
   "grade.epic": "Epic",
   "grade.legendary": "Legendary",
   "grade.transcendent": "Transcendent",
-
   "role.dps": "DPS",
   "role.tank": "Tank",
   "role.support": "Support",
   "role.debuffer": "Debuffer",
   "role.heroLeader": "Hero Leader",
-
   "faction.orderOfTheVeil": "Order of the Veil",
   "faction.tribeOfTheCrimsonFang": "Tribe of the Crimson Fang",
   "faction.empireOfTheShatteredSky": "Empire of the Shattered Sky",
   "faction.guildsOfTheHunt": "Guilds of the Hunt",
   "faction.circleOfAether": "Circle of Aether",
   "faction.theHollowed": "The Hollowed",
-
   "race.human": "Human",
   "race.veyr": "Veyr",
   "race.drakari": "Drakari",
@@ -99,13 +89,11 @@
   "race.stoneborn": "Stoneborn",
   "race.hollowed": "Hollowed",
   "race.aetherial": "Aetherial",
-
   "aspect.ravak": "Ravak",
   "aspect.gorath": "Gorath",
   "aspect.somnara": "Somnara",
   "aspect.veloria": "Veloria",
   "aspect.envyra": "Envyra",
-
   "error.not_enough:gold": "Nicht genug Gold.",
   "error.not_enough:heroExp": "Nicht genug Hero EXP.",
   "error.not_enough:gems": "Nicht genug Gems.",
@@ -115,5 +103,31 @@
   "error.formation_empty": "Stelle mindestens einen Helden auf.",
   "error.slots_locked": "Dieser Formationsplatz ist noch gesperrt.",
   "error.campaign_complete": "Alle Stages geschafft.",
-  "error.generic": "Das geht gerade nicht."
+  "error.generic": "Das geht gerade nicht.",
+  "nav.village": "Dawnhollow",
+  "village.storage": "Lager",
+  "village.collect": "Einsammeln",
+  "village.rate": "Pro Stunde: {0}",
+  "village.level": "Lv. {0}/{1}",
+  "village.built": "Errichtet",
+  "village.ruin": "Ruine",
+  "village.planned": "Kommt mit einem späteren Update.",
+  "village.lockedStage": "Wiederaufbau ab Stage {0}",
+  "village.build": "Wiederaufbauen",
+  "village.upgrade": "Ausbauen",
+  "village.effect.production": "Produktion pro Stunde: {0}",
+  "village.effect.healing": "+{0} % Heilkraft für alle Helden",
+  "village.effect.summon": "Helden-Beschwörung freigeschaltet",
+  "village.slotLevel": "Ab Lv. {0}",
+  "village.pickHint": "Helden im Dorf kämpfen weiterhin in der Formation.",
+  "village.remove": "Entfernen",
+  "village.close": "Schließen",
+  "summon.locked": "Baue das Summoning Gate in Dawnhollow wieder auf, um Helden zu beschwören.",
+  "error.building_locked": "Dieses Gebäude kann erst später wieder aufgebaut werden.",
+  "error.building_max_level": "Maximale Stufe erreicht.",
+  "error.building_planned": "Dieses Gebäude kommt mit einem späteren Update.",
+  "error.summon_locked": "Baue zuerst das Summoning Gate wieder auf.",
+  "error.slot_locked": "Dieser Platz ist noch gesperrt.",
+  "error.not_enough:wood": "Nicht genug Wood.",
+  "error.not_enough:stone": "Nicht genug Stone."
 }

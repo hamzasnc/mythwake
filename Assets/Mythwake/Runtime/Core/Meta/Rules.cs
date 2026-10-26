@@ -184,7 +184,7 @@ namespace Mythwake.Core.Meta
             return new BattleSetup
             {
                 Seed = pending.Seed,
-                Allies = TeamBuilder.Build(Formations.ToProgress(state, content, pending.Formation), leaderProgress),
+                Allies = TeamBuilder.Build(Formations.ToProgress(state, content, pending.Formation), leaderProgress, Village.CombatBonus(state, content)),
                 Enemies = Enemies(content, pending.Stage)
             };
         }

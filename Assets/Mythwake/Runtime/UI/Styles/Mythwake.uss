@@ -159,7 +159,7 @@
     background-color: transparent;
     border-width: 0;
     color: var(--muted);
-    font-size: 30px;
+    font-size: 27px;
     padding: 18px 0;
     -unity-text-align: middle-center;
 }
@@ -575,3 +575,57 @@
     font-size: 20px;
     -unity-font-style: bold;
 }
+
+/* ---------------------------------------------------------------- village */
+
+.icon--wood { background-color: #b07a45; }
+.icon--stone { background-color: #9aa3ad; }
+
+.building--ruin { border-color: rgba(255, 255, 255, 0.12); }
+.building--planned { opacity: 0.55; }
+
+.building__name {
+    font-size: 38px;
+    -unity-font-style: bold;
+    color: var(--gold);
+}
+
+.building__level {
+    font-size: 28px;
+    color: var(--muted);
+}
+
+.building__slots {
+    margin: 12px 0;
+}
+
+.slot--small {
+    width: 128px;
+    height: 166px;
+    margin: 0 10px 0 0;
+}
+
+.slot__plus {
+    font-size: 64px;
+    color: var(--muted);
+}
+
+.slot__bonus {
+    position: absolute;
+    bottom: 34px; left: 0; right: 0;
+    -unity-text-align: middle-center;
+    font-size: 22px;
+    color: var(--good);
+    -unity-font-style: bold;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: black;
+}
+
+.cost {
+    background-color: rgba(0, 0, 0, 0.45);
+    border-radius: 14px;
+    padding: 6px 14px 6px 6px;
+    margin-right: 8px;
+}
+
+.cost__value { color: var(--text); }

@@ -17,6 +17,8 @@ namespace Mythwake.UI
         private Button _scroll10;
         private Button _gems1;
         private Button _gems10;
+        private VisualElement _locked;
+        private VisualElement _pulls;
 
         protected override void Build(VisualElement root)
         {
@@ -40,10 +42,14 @@ namespace Mythwake.UI
             UiKit.Text(Loc.T("summon.rates", Pct(r[0]), Pct(r[1]), Pct(r[2]), Pct(r[3])), "label--small").Into(info);
             _pity = UiKit.Text("", "subtitle").Into(info);
 
-            var scrolls = UiKit.Box("row", "center").Into(safe);
+            _locked = UiKit.Box("panel").Into(safe);
+            UiKit.Text(Loc.T("summon.locked"), "subtitle").Into(_locked).style.whiteSpace = WhiteSpace.Normal;
+            UiKit.Btn("Dawnhollow", () => Ui.Router.Reset(new VillageScreen())).Into(_locked);
+            _pulls = UiKit.Box().Into(safe);
+            var scrolls = UiKit.Box("row", "center").Into(_pulls);
             _scroll1 = UiKit.Btn("", () => Pull(1, false), "btn--secondary").Into(scrolls);
             _scroll10 = UiKit.Btn("", () => Pull(10, false), "btn--big").Into(scrolls);
-            var gems = UiKit.Box("row", "center").Into(safe);
+            var gems = UiKit.Box("row", "center").Into(_pulls);
             _gems1 = UiKit.Btn("", () => Pull(1, true), "btn--secondary").Into(gems);
             _gems10 = UiKit.Btn("", () => Pull(10, true), "btn--secondary").Into(gems);
             UiKit.Box("spacer").Into(safe);
@@ -57,6 +63,9 @@ namespace Mythwake.UI
             var state = Ui.State;
             var banner = Ui.Content.Banner(BannerId);
             _currencies.Refresh(state);
+            var unlocked = Village.SummonUnlocked(state, Ui.Content);
+            _locked.style.display = unlocked ? DisplayStyle.None : DisplayStyle.Flex;
+            _pulls.style.display = unlocked ? DisplayStyle.Flex : DisplayStyle.None;
             state.Summon.PullsSinceLegendary.TryGetValue(BannerId, out var since);
             _pity.text = Loc.T("summon.pity", banner.LegendaryPity - since);
             Label(_scroll1, banner.Cost, 1);

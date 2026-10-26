@@ -52,6 +52,7 @@ namespace Mythwake.Core.Meta
         public CampaignState Campaign = new CampaignState();
         public AfkState Afk = new AfkState();
         public SummonState Summon = new SummonState();
+        public VillageState Village = new VillageState();
         public PendingBattle Battle;
         /// <summary>Server-side randomness (summons, battle seeds): seed + how many draws were made.</summary>
         public ulong RngSeed;

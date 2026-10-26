@@ -53,6 +53,17 @@ namespace Mythwake.UI
             }
             yield return Shot("result", 0.6f);
 
+            // second stage straight through the rules (no playback), then rebuild the Summoning Gate
+            ui.Authority.Execute(new BeginStageBattle());
+            ui.Authority.Execute(new FinishStageBattle());
+            ui.Router.Reset(new SummonScreen());
+            yield return Shot("summon_locked", 0.6f);
+            ui.Router.Reset(new VillageScreen());
+            yield return Shot("village", 0.8f);
+            ui.Authority.Execute(new UpgradeBuilding { BuildingId = "summoningGate" });
+            ui.Authority.Execute(new AssignVillageHero { BuildingId = "survivorCamp", Slot = 0, HeroId = ui.State.Heroes[0].HeroId });
+            yield return Shot("village_built", 0.8f);
+
             ui.Router.Reset(new HeroesScreen());
             yield return Shot("heroes", 0.6f);
             ui.Router.Push(new HeroDetailScreen(ui.State.Heroes[0].HeroId));

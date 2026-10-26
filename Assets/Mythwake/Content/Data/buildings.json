@@ -1,0 +1,136 @@
+{
+  "storageHours": 12,
+  "buildings": [
+    {
+      "id": "survivorCamp",
+      "name": "Survivor Camp",
+      "description": "Produziert Grundressourcen für den Wiederaufbau: Gold, Wood und Stone.",
+      "effect": "production",
+      "unlockStage": 0,
+      "startLevel": 1,
+      "maxLevel": 20,
+      "baseCost": [
+        {
+          "id": "gold",
+          "value": 400
+        },
+        {
+          "id": "wood",
+          "value": 150
+        },
+        {
+          "id": "stone",
+          "value": 150
+        }
+      ],
+      "costGrowthPermille": 1450,
+      "productionPerLevel": [
+        {
+          "id": "gold",
+          "value": 80
+        },
+        {
+          "id": "wood",
+          "value": 40
+        },
+        {
+          "id": "stone",
+          "value": 40
+        }
+      ],
+      "slotLevels": [
+        1,
+        5,
+        10
+      ],
+      "heroBonus": 50
+    },
+    {
+      "id": "summoningGate",
+      "name": "Summoning Gate",
+      "description": "Schaltet die Helden-Beschwörung frei.",
+      "effect": "unlockSummon",
+      "unlockStage": 2,
+      "maxLevel": 1,
+      "baseCost": [
+        {
+          "id": "gold",
+          "value": 500
+        },
+        {
+          "id": "wood",
+          "value": 200
+        },
+        {
+          "id": "stone",
+          "value": 200
+        }
+      ]
+    },
+    {
+      "id": "healersTent",
+      "name": "Healer's Tent",
+      "description": "Verbessert Heilung und Erholung: mehr Heilkraft für alle Helden.",
+      "effect": "healing",
+      "unlockStage": 5,
+      "maxLevel": 20,
+      "baseCost": [
+        {
+          "id": "gold",
+          "value": 600
+        },
+        {
+          "id": "wood",
+          "value": 300
+        },
+        {
+          "id": "stone",
+          "value": 200
+        }
+      ],
+      "costGrowthPermille": 1450,
+      "effectPerLevel": 15,
+      "slotLevels": [
+        1,
+        8
+      ],
+      "heroBonus": 40
+    },
+    {
+      "id": "brokenForge",
+      "name": "Broken Forge",
+      "description": "Schaltet Gear-Crafting und Upgrades frei.",
+      "effect": "none"
+    },
+    {
+      "id": "huntersHut",
+      "name": "Hunter's Hut",
+      "description": "Schaltet tägliche Missionen und Monsterjagden frei.",
+      "effect": "none"
+    },
+    {
+      "id": "watchtower",
+      "name": "Watchtower",
+      "description": "Schaltet Verteidigungsmissionen für das Dorf frei.",
+      "effect": "none"
+    },
+    {
+      "id": "fragmentShrine",
+      "name": "Fragment Shrine",
+      "description": "Schaltet Fragment-Upgrades, Stabilisierung und Relics frei.",
+      "effect": "none"
+    },
+    {
+      "id": "guardianShrine",
+      "name": "Guardian Shrine",
+      "description": "Schaltet Awakening-Systeme frei.",
+      "effect": "none"
+    },
+    {
+      "id": "portalChamber",
+      "name": "Portal Chamber",
+      "description": "Schaltet Dungeons, Events und den Zugang zu den Shattered Realms frei.",
+      "effect": "none"
+    }
+  ]
+}

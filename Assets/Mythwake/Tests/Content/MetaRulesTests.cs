@@ -17,6 +17,14 @@ namespace Mythwake.Content.Tests
             return ctx;
         }
 
+        /// <summary>New player who already rebuilt the Summoning Gate.</summary>
+        private static CommandContext Summoner(ulong seed)
+        {
+            var ctx = NewPlayer(seed);
+            ctx.State.Village.Buildings["summoningGate"] = new BuildingState { Level = 1 };
+            return ctx;
+        }
+
         [Test]
         public void NewPlayerGetsStarterHeroesInFormation()
         {
@@ -56,7 +64,9 @@ namespace Mythwake.Content.Tests
             var log = new System.Text.StringBuilder();
             while (ctx.State.Campaign.HighestCleared < 20 && hours < 200)
             {
-                while (ctx.State.Get(Ids.SummonScroll) >= 10)
+                if (!Village.SummonUnlocked(ctx.State, ctx.Content))
+                    TryRun(ctx, new UpgradeBuilding { BuildingId = "summoningGate" });
+                while (Village.SummonUnlocked(ctx.State, ctx.Content) && ctx.State.Get(Ids.SummonScroll) >= 10)
                     new SummonHeroes { BannerId = "normal", Count = 10 }.Apply(ctx);
                 SpendOnLevels(ctx);
                 Formations.AutoFill(ctx.State, ctx.Content);
@@ -75,6 +85,12 @@ namespace Mythwake.Content.Tests
             TestContext.WriteLine(log.ToString());
             Assert.That(ctx.State.Campaign.HighestCleared, Is.EqualTo(20), log.ToString());
             Assert.That(hours, Is.InRange(1, 24), "chapter 1 should take a few hours of idle time, not minutes and not days\n" + log);
+        }
+
+        private static void TryRun<T>(CommandContext ctx, ICommand<T> command)
+        {
+            try { command.Apply(ctx); }
+            catch (RuleViolation) { }
         }
 
         private static void SpendOnLevels(CommandContext ctx)
@@ -171,7 +187,7 @@ namespace Mythwake.Content.Tests
         [Test]
         public void SummonPityGuaranteesALegendary()
         {
-            var ctx = NewPlayer(seed: 12345);
+            var ctx = Summoner(12345);
             ctx.State.Add(Ids.SummonScroll, 1000);
             var banner = ctx.Content.Banner("normal");
             var sinceLegendary = 0;
@@ -191,7 +207,7 @@ namespace Mythwake.Content.Tests
         [Test]
         public void EveryTenPullsContainAnEpicOrBetter()
         {
-            var ctx = NewPlayer(seed: 99);
+            var ctx = Summoner(99);
             ctx.State.Add(Ids.SummonScroll, 1000);
             for (var i = 0; i < 20; i++)
             {
@@ -203,7 +219,7 @@ namespace Mythwake.Content.Tests
         [Test]
         public void DuplicatesBecomeShardsThatBuyStars()
         {
-            var ctx = NewPlayer(seed: 3);
+            var ctx = Summoner(3);
             ctx.State.Add(Ids.SummonScroll, 1000);
             for (var i = 0; i < 10; i++)
                 new SummonHeroes { BannerId = "normal", Count = 10 }.Apply(ctx);
@@ -217,7 +233,7 @@ namespace Mythwake.Content.Tests
         {
             string[] Pull(ulong seed)
             {
-                var ctx = NewPlayer(seed);
+                var ctx = Summoner(seed);
                 return new SummonHeroes { BannerId = "normal", Count = 10 }.Apply(ctx).Select(r => r.HeroId).ToArray();
             }
             Assert.That(Pull(5), Is.EqualTo(Pull(5)));
@@ -237,7 +253,7 @@ namespace Mythwake.Content.Tests
         [Test]
         public void SaveRoundTripKeepsEverything()
         {
-            var ctx = NewPlayer();
+            var ctx = Summoner(7);
             new BeginStageBattle().Apply(ctx);
             new FinishStageBattle().Apply(ctx);
             new SummonHeroes { BannerId = "normal", Count = 10 }.Apply(ctx);

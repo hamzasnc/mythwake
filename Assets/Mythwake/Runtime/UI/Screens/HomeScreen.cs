@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 namespace Mythwake.UI
 {
-    public enum Tab { Campaign, Heroes, Summon }
+    public enum Tab { Campaign, Village, Heroes, Summon }
 
     /// <summary>Bottom navigation shared by the main screens.</summary>
     public static class MainNav
@@ -15,6 +15,7 @@ namespace Mythwake.UI
         {
             var nav = UiKit.Box("nav");
             Item(nav, ui, Tab.Campaign, "nav.campaign", active, () => new HomeScreen());
+            Item(nav, ui, Tab.Village, "nav.village", active, () => new VillageScreen());
             Item(nav, ui, Tab.Heroes, "nav.heroes", active, () => new HeroesScreen());
             Item(nav, ui, Tab.Summon, "nav.summon", active, () => new SummonScreen());
             return nav;

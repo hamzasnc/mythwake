@@ -59,6 +59,7 @@ namespace Mythwake.Core.Meta
             var start = ctx.Content.Start;
             var state = new PlayerState { CreatedMs = ctx.NowMs, RngSeed = Seed };
             state.Afk.LastClaimMs = ctx.NowMs;
+            state.Village.LastSettleMs = ctx.NowMs;
             foreach (var c in start.Currencies)
                 state.Add(c.Id, c.Value);
             for (var i = 0; i < start.Heroes.Count; i++)
@@ -244,6 +245,7 @@ namespace Mythwake.Core.Meta
         public List<SummonResult> Apply(CommandContext ctx)
         {
             ctx.Require(Count == 1 || Count == 10, "bad_count");
+            ctx.Require(Village.SummonUnlocked(ctx.State, ctx.Content), "summon_locked");
             var banner = ctx.Content.Banner(BannerId);
             var unit = UseAltCost ? banner.AltCost : banner.Cost;
             ctx.Require(unit != null, "no_such_cost");

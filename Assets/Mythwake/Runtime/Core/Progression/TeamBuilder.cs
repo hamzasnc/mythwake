@@ -13,6 +13,14 @@ namespace Mythwake.Core.Progression
         public int Stars = 1;
     }
 
+    /// <summary>Account-wide combat bonuses from outside the formation (village buildings, later relics and guild buffs), permille.</summary>
+    public sealed class TeamBonus
+    {
+        public int Attack;
+        public int Hp;
+        public int HealPower;
+    }
+
     /// <summary>Turns owned heroes + a formation into battle-ready <see cref="UnitSetup"/>s (level, stars, synergies, Hero Leader).</summary>
     public static class TeamBuilder
     {
@@ -39,7 +47,8 @@ namespace Mythwake.Core.Progression
 
         /// <param name="formation">Slot index (0,1 front; 2..4 back) → hero, null for empty slots.</param>
         /// <param name="leader">Optional Hero Leader: never fights, grants its aura to the whole team.</param>
-        public static List<UnitSetup> Build(IReadOnlyList<HeroProgress> formation, HeroProgress leader = null)
+        /// <param name="bonus">Optional account-wide bonuses (village).</param>
+        public static List<UnitSetup> Build(IReadOnlyList<HeroProgress> formation, HeroProgress leader = null, TeamBonus bonus = null)
         {
             var factions = new Dictionary<Faction, int>();
             var races = new Dictionary<Race, int>();
@@ -71,9 +80,10 @@ namespace Mythwake.Core.Progression
                 if (h == null)
                     continue;
                 var stats = StatsAt(h.Hero, h.Level, h.Stars);
-                var bonus = FactionBonus(factions[h.Hero.Faction]) + (races[h.Hero.Race] >= 2 ? RaceSynergyPermille : 0);
-                var atk = bonus;
-                var hp = bonus;
+                var synergy = FactionBonus(factions[h.Hero.Faction]) + (races[h.Hero.Race] >= 2 ? RaceSynergyPermille : 0);
+                var atk = synergy + (bonus?.Attack ?? 0);
+                var hp = synergy + (bonus?.Hp ?? 0);
+                stats.HealPower += bonus?.HealPower ?? 0;
                 if (aura != null)
                 {
                     atk += aura.AttackBonus * leaderScale / Permille.One;
