@@ -156,8 +156,25 @@
     {
       "id": "watchtower",
       "name": "Watchtower",
-      "description": "Schaltet Verteidigungsmissionen für das Dorf frei.",
-      "effect": "none"
+      "description": "Schaltet die Verteidigung des Dorfes frei: Wellen von Monstern greifen Dawnhollow an. Höhere Stufen geben mehr Belohnungen.",
+      "effect": "defense",
+      "unlockStage": 35,
+      "maxLevel": 5,
+      "baseCost": [
+        {
+          "id": "gold",
+          "value": 8000
+        },
+        {
+          "id": "wood",
+          "value": 3000
+        },
+        {
+          "id": "stone",
+          "value": 3000
+        }
+      ],
+      "costGrowthPermille": 1800
     },
     {
       "id": "fragmentShrine",

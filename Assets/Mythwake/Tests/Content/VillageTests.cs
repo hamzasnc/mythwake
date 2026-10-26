@@ -76,7 +76,10 @@ namespace Mythwake.Content.Tests
         {
             var ctx = NewPlayer();
             ctx.State.Campaign.HighestCleared = 999;
-            Assert.That(Assert.Throws<RuleViolation>(() => new UpgradeBuilding { BuildingId = "watchtower" }.Apply(ctx)).Code, Is.EqualTo("building_planned"));
+            // all nine doc buildings have their system now; any future planned one stays a ruin
+            Assert.That(ctx.Content.Village.Buildings.Count(b => b.Effect != BuildingEffect.None), Is.EqualTo(9));
+            foreach (var b in ctx.Content.Village.Buildings.Where(b => b.Effect == BuildingEffect.None))
+                Assert.That(Assert.Throws<RuleViolation>(() => new UpgradeBuilding { BuildingId = b.Id }.Apply(ctx)).Code, Is.EqualTo("building_planned"));
         }
 
         [Test]

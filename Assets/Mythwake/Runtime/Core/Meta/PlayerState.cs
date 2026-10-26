@@ -46,6 +46,8 @@ namespace Mythwake.Core.Meta
         public string RealmId;
         /// <summary>Set when the battle is a Boss Fragment refight (Floor = dungeon level).</summary>
         public string BossFragmentId;
+        /// <summary>Set when the battle is a Watchtower defense wave (Floor = wave).</summary>
+        public bool DefenseWave;
         public int Floor;
         public ulong Seed;
         public string[] Formation;
@@ -76,6 +78,7 @@ namespace Mythwake.Core.Meta
         public TrialState Trials = new TrialState();
         public RealmState Realms = new RealmState();
         public BossFragmentState BossFragments = new BossFragmentState();
+        public DefenseState Defense = new DefenseState();
         public int GearUidCounter;
         public List<FragmentItem> Fragments = new List<FragmentItem>();
         public int FragmentUidCounter;

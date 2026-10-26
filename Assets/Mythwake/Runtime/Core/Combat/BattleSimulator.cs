@@ -55,6 +55,9 @@ namespace Mythwake.Core.Combat
             SpawnLeader();
             DistributePassives();
             Emit(BattleEventType.BattleStart, -1, -1, SkillSlot.Normal, 0);
+            foreach (var u in _units)
+                if (u.Energy > 0)
+                    Emit(BattleEventType.EnergyChanged, u.Index, u.Index, SkillSlot.Ultimate, u.Energy);
             ApplyBattleStartPassives();
 
             var maxMs = _setup.Rules.MaxDurationMs;
@@ -85,7 +88,7 @@ namespace Mythwake.Core.Combat
                 _result.Units.Add(new UnitSummary
                 {
                     Index = u.Index, Side = u.Side, Slot = u.Slot, HeroId = u.Hero.Id, MaxHp = u.MaxHp,
-                    FinalHp = u.Hp, DamageDealt = u.DamageDealt, DamageTaken = u.DamageTaken, Healing = u.Healing
+                    FinalHp = u.Hp, DamageDealt = u.DamageDealt, DamageTaken = u.DamageTaken, Healing = u.Healing, FinalEnergy = u.Energy
                 });
             }
             return _result;
@@ -102,6 +105,9 @@ namespace Mythwake.Core.Combat
                     Index = _units.Count, Side = side, Slot = s.Slot, Hero = s.Hero, Stats = s.Stats.Clone()
                 };
                 u.MaxHp = u.Hp = System.Math.Max(1, u.Stats.Hp);
+                if (s.StartHp > 0)
+                    u.Hp = System.Math.Min(u.MaxHp, s.StartHp);
+                u.Energy = Permille.Clamp(s.StartEnergy, 0, MaxEnergy);
                 u.Passives.AddRange(s.Hero.PassiveComponents());
                 if (s.Passives != null)
                     u.Passives.AddRange(s.Passives);

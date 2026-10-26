@@ -87,6 +87,11 @@ namespace Mythwake.Presentation
             AddShadow();
             Play(Idle, true);
             BuildBars();
+            if (setup.StartHp > 0)
+            {
+                SetHp(setup.StartHp);
+                _hpShown = _hpTarget;
+            }
         }
 
         private void AddShadow()

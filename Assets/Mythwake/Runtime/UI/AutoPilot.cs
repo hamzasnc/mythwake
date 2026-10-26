@@ -156,6 +156,30 @@ namespace Mythwake.UI
             ui.Router.Reset(new BossFragmentScreen());
             yield return Shot("boss_fragments", 0.8f);
 
+            // Watchtower defense: rebuild, start a run, fight wave 1
+            ui.State.Campaign.HighestCleared = System.Math.Max(ui.State.Campaign.HighestCleared, 35);
+            ui.State.Add(Ids.Gold, 200_000);
+            ui.State.Add(Ids.Wood, 200_000);
+            ui.State.Add(Ids.Stone, 200_000);
+            ui.Authority.Execute(new UpgradeBuilding { BuildingId = "watchtower" });
+            ui.Authority.Execute(new StartDefense());
+            ui.Router.Reset(new DefenseScreen());
+            yield return Shot("defense", 0.6f);
+            var waveSetup = ui.Authority.Execute(new BeginDefenseWave()).Value;
+            if (waveSetup != null)
+            {
+                ui.Router.Push(new BattleScreen(waveSetup, new DefenseBattle(1)));
+                ui.Battle.Speed = 2f;
+                yield return Shot("defense_battle", 2.0f);
+                timeout = 120f;
+                while (ui.Battle.Running && timeout > 0f)
+                {
+                    timeout -= Time.deltaTime;
+                    yield return null;
+                }
+                yield return Shot("defense_result", 0.6f);
+            }
+
             // Fragment Shrine: rebuild to level 5, stabilize one Fragment per slot, equip them on the first hero
             ui.State.Add(Ids.FragmentDust, 20_000);
             ui.State.Add(Ids.Gold, 200_000);

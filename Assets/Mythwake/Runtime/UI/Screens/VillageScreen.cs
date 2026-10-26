@@ -223,6 +223,8 @@ namespace Mythwake.UI
                 card.Add(Shrine());
             if (level > 0 && def.Effect == BuildingEffect.Awakening)
                 card.Add(AwakeningList());
+            if (level > 0 && def.Effect == BuildingEffect.Defense)
+                UiKit.Btn(Loc.T("defense.button"), () => _ui.Router.Push(new DefenseScreen())).Into(card);
             if (level > 0 && def.Effect == BuildingEffect.Hunting)
                 UiKit.Btn("Hunt Board", () => _ui.Router.Push(new HuntScreen())).Into(card);
             if (level > 0 && def.Effect == BuildingEffect.Portal)
@@ -289,6 +291,8 @@ namespace Mythwake.UI
                     return Loc.T("village.effect.summon");
                 case BuildingEffect.Portal:
                     return Loc.T("village.effect.portal", _ui.Content.Dungeons.Dungeons.Count(d => d.PortalLevel <= level));
+                case BuildingEffect.Defense:
+                    return Loc.T("village.effect.defense", _ui.Content.Defense.RewardPerLevelPermille * (level - 1) / 10);
                 case BuildingEffect.Awakening:
                     return Loc.T("village.effect.awakening");
                 case BuildingEffect.Shrine:

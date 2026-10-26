@@ -9,7 +9,7 @@ namespace Mythwake.Content
     public static class GameContentLoader
     {
         /// <summary>Data files under Content/Data, without extension.</summary>
-        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials", "realms", "awakenings", "bossFragments" };
+        public static readonly string[] DataFiles = { "progression", "afk", "campaign", "banners", "start", "buildings", "gear", "quests", "hunts", "arena", "dungeons", "fragments", "relics", "trials", "realms", "awakenings", "bossFragments", "defense" };
 
         /// <param name="readData">Returns the text of a data file by name (see <see cref="DataFiles"/>).</param>
         /// <param name="heroJsons">Texts of all *.hero.json files.</param>
@@ -34,7 +34,8 @@ namespace Mythwake.Content
                 Trials = ContentJson.Parse<TrialConfig>(readData("trials")),
                 Realms = ContentJson.Parse<RealmConfig>(readData("realms")),
                 Awakening = ContentJson.Parse<AwakeningConfig>(readData("awakenings")),
-                BossFragments = ContentJson.Parse<BossFragmentConfig>(readData("bossFragments"))
+                BossFragments = ContentJson.Parse<BossFragmentConfig>(readData("bossFragments")),
+                Defense = ContentJson.Parse<DefenseConfig>(readData("defense"))
             };
             foreach (var json in heroJsons)
             {

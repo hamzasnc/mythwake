@@ -1,0 +1,33 @@
+{
+  "runsPerDay": 2,
+  "maxWaves": 30,
+  "enemyLevelFromStagePermille": 900,
+  "enemyLevelPerWave": 2,
+  "bossEvery": 5,
+  "recoverPermille": 100,
+  "waveRewards": [
+    {
+      "id": "gold",
+      "base": 3000,
+      "perStage": 600
+    },
+    {
+      "id": "wood",
+      "base": 400,
+      "perStage": 60
+    },
+    {
+      "id": "stone",
+      "base": 400,
+      "perStage": 60
+    }
+  ],
+  "milestoneEvery": 10,
+  "milestoneRewards": [
+    {
+      "id": "gems",
+      "value": 100
+    }
+  ],
+  "rewardPerLevelPermille": 100
+}

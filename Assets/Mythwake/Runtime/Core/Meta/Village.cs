@@ -12,6 +12,8 @@ namespace Mythwake.Core.Meta
         Shrine,
         /// <summary>Guardian Shrine: Guardian Awakening (docs/systems/AWAKENING.md).</summary>
         Awakening,
+        /// <summary>Watchtower: village defense waves (docs/systems/WATCHTOWER.md).</summary>
+        Defense,
         /// <summary>The building's system is not in the game yet; shown as a ruin to rebuild later.</summary>
         None,
         /// <summary>Produces resources over time (Survivor Camp).</summary>

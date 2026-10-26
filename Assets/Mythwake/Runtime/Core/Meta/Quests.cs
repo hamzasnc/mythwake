@@ -25,6 +25,7 @@ namespace Mythwake.Core.Meta
         public const string TrialCleared = "trialCleared";
         public const string RealmCleared = "realmCleared";
         public const string BossRefight = "bossRefight";
+        public const string DefenseWave = "defenseWave";
     }
 
     public sealed class TaskDefinition

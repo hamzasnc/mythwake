@@ -17,6 +17,9 @@ namespace Mythwake.Core.Combat
         public Stats Stats;
         /// <summary>Visual only (e.g. corrupted enemy tint), ignored by the rules.</summary>
         public string Variant;
+        /// <summary>HP at battle start (0 = full), e.g. carried over between defense waves.</summary>
+        public long StartHp;
+        public int StartEnergy;
         /// <summary>Passive components from outside the hero's kit (Fragments), on top of its own passive.</summary>
         public List<PassiveDefinition> Passives = new List<PassiveDefinition>();
     }
@@ -122,6 +125,7 @@ namespace Mythwake.Core.Combat
         public long DamageDealt;
         public long DamageTaken;
         public long Healing;
+        public int FinalEnergy;
     }
 
     public sealed class BattleResult
