@@ -7,11 +7,18 @@ using UnityEngine.UIElements;
 
 namespace Mythwake.UI
 {
-    /// <summary>Normal Summon banner with 1x / 10x pulls (Summon Scrolls or Gems) and pity counter.</summary>
+    /// <summary>Summon banners (Normal, Faction, Fragment) with 1x / 10x pulls (Summon Scrolls or Gems), focus picker and pity.</summary>
     public sealed class SummonScreen : UiScreen
     {
-        private const string BannerId = "normal";
+        private string BannerId = "normal";
+        private string _focus;
         private CurrencyBar _currencies;
+        private VisualElement _tabs;
+        private VisualElement _focusRow;
+        private Label _focusLabel;
+        private Label _bannerName;
+        private Label _rates;
+        private Label _gateLocked;
         private Label _pity;
         private Button _scroll1;
         private Button _scroll10;
@@ -27,6 +34,7 @@ namespace Mythwake.UI
             _currencies = new CurrencyBar(Ids.Gems, Ids.SummonScroll).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             UiKit.Text(Loc.T("summon.title"), "title").Into(safe);
+            _tabs = UiKit.Box("tabs").Into(safe);
 
             var card = UiKit.Box("banner").Into(safe);
             var art = UiKit.Box("banner__art").Into(card);
@@ -37,10 +45,12 @@ namespace Mythwake.UI
             if (image != null)
                 art.style.backgroundImage = new StyleBackground(image);
             var info = UiKit.Box("banner__info").Into(card);
-            UiKit.Text(banner.Name, "title").Into(info);
-            var r = banner.GradeRates;
-            UiKit.Text(Loc.T("summon.rates", Pct(r[0]), Pct(r[1]), Pct(r[2]), Pct(r[3])), "label--small").Into(info);
+            _bannerName = UiKit.Text(banner.Name, "title").Into(info);
+            _rates = UiKit.Text("", "label--small").Into(info);
             _pity = UiKit.Text("", "subtitle").Into(info);
+            _focusLabel = UiKit.Text("", "label--small").Into(safe);
+            _focusRow = UiKit.Box("row", "focus-row").Into(safe);
+            _gateLocked = UiKit.Text("", "subtitle").Into(safe);
 
             _locked = UiKit.Box("panel").Into(safe);
             UiKit.Text(Loc.T("summon.locked"), "subtitle").Into(_locked).style.whiteSpace = WhiteSpace.Normal;
@@ -64,14 +74,65 @@ namespace Mythwake.UI
             var banner = Ui.Content.Banner(BannerId);
             _currencies.Refresh(state);
             var unlocked = Village.SummonUnlocked(state, Ui.Content);
+            var gateOk = Summoning.GateLevel(state, Ui.Content) >= banner.GateLevel;
             _locked.style.display = unlocked ? DisplayStyle.None : DisplayStyle.Flex;
-            _pulls.style.display = unlocked ? DisplayStyle.Flex : DisplayStyle.None;
+            _pulls.style.display = unlocked && gateOk ? DisplayStyle.Flex : DisplayStyle.None;
+            _gateLocked.style.display = unlocked && !gateOk ? DisplayStyle.Flex : DisplayStyle.None;
+            _gateLocked.text = Loc.T("summon.locked.gate", banner.GateLevel);
+            _bannerName.text = banner.Name;
+            var r = banner.GradeRates;
+            _rates.text = Loc.T("summon.rates", Pct(r[0]), Pct(r[1]), Pct(r[2]), Pct(r[3]));
+            RefreshTabs();
+            RefreshFocus(banner, unlocked && gateOk);
             state.Summon.PullsSinceLegendary.TryGetValue(BannerId, out var since);
             _pity.text = Loc.T("summon.pity", banner.LegendaryPity - since);
             Label(_scroll1, banner.Cost, 1);
             Label(_scroll10, banner.Cost, 10);
             Label(_gems1, banner.AltCost, 1);
             Label(_gems10, banner.AltCost, 10);
+        }
+
+        private void RefreshTabs()
+        {
+            _tabs.Clear();
+            foreach (var b in Ui.Content.Banners)
+            {
+                var id = b.Id;
+                var tab = UiKit.Btn(b.Name, () =>
+                {
+                    BannerId = id;
+                    _focus = null;
+                    Refresh();
+                }, "tab").Into(_tabs);
+                tab.RemoveFromClassList("btn");
+                tab.EnableInClassList("tab--active", id == BannerId);
+            }
+        }
+
+        private void RefreshFocus(BannerDefinition banner, bool open)
+        {
+            _focusRow.Clear();
+            var show = open && banner.Focus != BannerFocus.None;
+            _focusRow.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+            _focusLabel.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!show)
+                return;
+            var options = banner.Focus == BannerFocus.Faction
+                ? System.Enum.GetValues(typeof(Faction)).Cast<object>().Select(v => (id: UiKit.Lower(v), name: Loc.T("faction." + UiKit.Lower(v))))
+                : System.Enum.GetValues(typeof(Aspect)).Cast<object>().Select(v => (id: UiKit.Lower(v), name: v.ToString()));
+            var list = options.ToList();
+            if (_focus == null || list.All(o => o.id != _focus))
+                _focus = list[0].id;
+            _focusLabel.text = Loc.T("summon.focus", list.First(o => o.id == _focus).name);
+            foreach (var (id, name) in list)
+            {
+                var chip = UiKit.Btn(name, () =>
+                {
+                    _focus = id;
+                    Refresh();
+                }, "btn--secondary", "btn--small", "focus-chip").Into(_focusRow);
+                chip.EnableInClassList("focus-chip--active", id == _focus);
+            }
         }
 
         private void Label(Button b, Amount unit, int count)
@@ -90,9 +151,16 @@ namespace Mythwake.UI
 
         internal void PullForAutoPilot(int count) => Pull(count, false);
 
+        internal void SelectForAutoPilot(string bannerId)
+        {
+            BannerId = bannerId;
+            _focus = null;
+            Refresh();
+        }
+
         private void Pull(int count, bool gems)
         {
-            if (!Ui.Try(new SummonHeroes { BannerId = BannerId, Count = count, UseAltCost = gems }, out var results))
+            if (!Ui.Try(new SummonHeroes { BannerId = BannerId, Count = count, UseAltCost = gems, Focus = _focus }, out var results))
                 return;
             Refresh();
             ShowResults(results);

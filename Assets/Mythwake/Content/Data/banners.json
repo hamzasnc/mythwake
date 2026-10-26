@@ -2,11 +2,73 @@
   {
     "id": "normal",
     "name": "Normal Summon",
-    "cost": { "id": "summonScroll", "value": 1 },
-    "altCost": { "id": "gems", "value": 300 },
-    "gradeRates": [500, 380, 105, 15, 0],
+    "cost": {
+      "id": "summonScroll",
+      "value": 1
+    },
+    "altCost": {
+      "id": "gems",
+      "value": 300
+    },
+    "gradeRates": [
+      500,
+      380,
+      105,
+      15,
+      0
+    ],
     "legendaryPity": 50,
     "epicPity": 10,
     "pool": []
+  },
+  {
+    "id": "faction",
+    "name": "Faction Summon",
+    "cost": {
+      "id": "summonScroll",
+      "value": 2
+    },
+    "altCost": {
+      "id": "gems",
+      "value": 500
+    },
+    "gradeRates": [
+      500,
+      380,
+      105,
+      15,
+      0
+    ],
+    "legendaryPity": 50,
+    "epicPity": 10,
+    "pool": [],
+    "gateLevel": 2,
+    "focus": "faction",
+    "focusPermille": 700
+  },
+  {
+    "id": "fragment",
+    "name": "Fragment Summon",
+    "cost": {
+      "id": "summonScroll",
+      "value": 2
+    },
+    "altCost": {
+      "id": "gems",
+      "value": 500
+    },
+    "gradeRates": [
+      500,
+      380,
+      105,
+      15,
+      0
+    ],
+    "legendaryPity": 50,
+    "epicPity": 10,
+    "pool": [],
+    "gateLevel": 3,
+    "focus": "aspect",
+    "focusPermille": 700
   }
 ]

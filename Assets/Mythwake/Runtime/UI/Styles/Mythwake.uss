@@ -1014,3 +1014,9 @@
 .icon--realmKey { background-color: #9b6bff; }
 .icon--guardianSigil { background-color: #7ad7ff; }
 .realm { border-color: rgba(155, 107, 255, 0.55); }
+
+/* ---------------------------------------------------------------- summon focus */
+
+.focus-row { flex-wrap: wrap; margin-bottom: 10px; }
+.focus-chip { font-size: 22px; padding: 8px 14px; margin: 4px; }
+.focus-chip--active { background-color: var(--gold); color: #2a1d05; }

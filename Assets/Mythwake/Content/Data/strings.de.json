@@ -317,5 +317,11 @@
   "error.realm_no_entries": "Keine Eintritte mehr. Morgen gibt es zwei neue, oder nutze einen Shattered Realm Key.",
   "error.realm_level_locked": "Schließe zuerst die vorherige Stufe ab.",
   "error.realm_nothing_to_sweep": "Noch keine Stufe abgeschlossen.",
-  "error.unknown_realm": "Unbekannte Realm."
+  "error.unknown_realm": "Unbekannte Realm.",
+  "summon.locked.gate": "Summoning Gate Lv. {0}",
+  "summon.focus": "Fokus: {0} (70 % der Beschwörungen)",
+  "summon.pickFaction": "Wähle eine Fraktion",
+  "summon.pickAspect": "Wähle einen Aspekt",
+  "error.banner_locked": "Baue das Summoning Gate weiter aus.",
+  "error.bad_focus": "Wähle zuerst eine Fraktion oder einen Aspekt."
 }

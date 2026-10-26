@@ -325,7 +325,27 @@ namespace Mythwake.Core.Meta
 
     public static class Summoning
     {
-        public static List<SummonResult> Pull(CommandContext ctx, BannerDefinition banner, int count)
+        public static int GateLevel(PlayerState state, GameContent content)
+        {
+            foreach (var b in content.Village.Buildings)
+                if (b.Effect == BuildingEffect.UnlockSummon)
+                    return Village.Level(state, b);
+            return 0;
+        }
+
+        /// <summary>A hero filter for a focused banner, or null when the focus is missing or unknown.</summary>
+        public static System.Func<HeroDefinition, bool> ParseFocus(BannerDefinition banner, string focus)
+        {
+            if (banner.Focus == BannerFocus.None || string.IsNullOrEmpty(focus))
+                return null;
+            if (banner.Focus == BannerFocus.Faction && System.Enum.TryParse<Faction>(focus, true, out var faction) && System.Enum.IsDefined(typeof(Faction), faction))
+                return h => h.Faction == faction;
+            if (banner.Focus == BannerFocus.Aspect && System.Enum.TryParse<Aspect>(focus, true, out var aspect) && System.Enum.IsDefined(typeof(Aspect), aspect))
+                return h => h.Aspect == aspect;
+            return null;
+        }
+
+        public static List<SummonResult> Pull(CommandContext ctx, BannerDefinition banner, int count, System.Func<HeroDefinition, bool> focus = null)
         {
             var state = ctx.State;
             var summon = state.Summon;
@@ -348,7 +368,9 @@ namespace Mythwake.Core.Meta
                 if (grade >= Grade.Epic)
                     sinceEpic = 0;
 
-                var hero = PickHero(ctx.Content, banner, grade, rng);
+                // focused banners: most pulls come from the chosen faction / Aspect (only these draw an extra number)
+                var focused = focus != null && rng.Range(Permille.One) < banner.FocusPermille;
+                var hero = PickHero(ctx.Content, banner, grade, rng, focused ? focus : null);
                 var owned = state.FindHero(hero);
                 var r = new SummonResult { HeroId = hero, IsNew = owned == null };
                 if (owned == null)
@@ -384,8 +406,20 @@ namespace Mythwake.Core.Meta
             return Grade.Common;
         }
 
-        private static string PickHero(GameContent content, BannerDefinition banner, Grade grade, Pcg32 rng)
+        private static string PickHero(GameContent content, BannerDefinition banner, Grade grade, Pcg32 rng, System.Func<HeroDefinition, bool> focus)
         {
+            if (focus != null)
+                for (var g = (int)grade; g >= 0; g--)
+                {
+                    var focusPool = new List<string>();
+                    foreach (var h in content.Heroes.Values)
+                        if ((int)h.Grade == g && focus(h) && (banner.Pool.Count == 0 || banner.Pool.Contains(h.Id)))
+                            focusPool.Add(h.Id);
+                    if (focusPool.Count == 0)
+                        continue;
+                    focusPool.Sort(string.CompareOrdinal);
+                    return focusPool[rng.Range(focusPool.Count)];
+                }
             // fall back to lower grades if the pool has no hero of the rolled grade
             for (var g = (int)grade; g >= 0; g--)
             {

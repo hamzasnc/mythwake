@@ -48,10 +48,10 @@
     {
       "id": "summoningGate",
       "name": "Summoning Gate",
-      "description": "Schaltet die Helden-Beschwörung frei.",
+      "description": "Schaltet die Helden-Beschwörung frei. Stufe 2: Faction Summon (höhere Chance auf eine gewählte Fraktion), Stufe 3: Fragment Summon (höhere Chance auf einen gewählten Aspekt).",
       "effect": "unlockSummon",
       "unlockStage": 2,
-      "maxLevel": 1,
+      "maxLevel": 3,
       "baseCost": [
         {
           "id": "gold",
@@ -65,7 +65,8 @@
           "id": "stone",
           "value": 200
         }
-      ]
+      ],
+      "costGrowthPermille": 10000
     },
     {
       "id": "healersTent",

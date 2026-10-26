@@ -63,6 +63,11 @@ namespace Mythwake.Content.Tests
             ctx.State.Campaign.HighestCleared = 2;
             new UpgradeBuilding { BuildingId = "summoningGate" }.Apply(ctx);
             Assert.That(Village.SummonUnlocked(ctx.State, ctx.Content), Is.True);
+            // later levels open Faction and Fragment Summon, then the gate is complete
+            foreach (var id in new[] { Ids.Gold, Ids.Wood, Ids.Stone })
+                ctx.State.Add(id, 10_000_000);
+            new UpgradeBuilding { BuildingId = "summoningGate" }.Apply(ctx);
+            new UpgradeBuilding { BuildingId = "summoningGate" }.Apply(ctx);
             Assert.That(Assert.Throws<RuleViolation>(() => new UpgradeBuilding { BuildingId = "summoningGate" }.Apply(ctx)).Code, Is.EqualTo("building_max_level"));
         }
 

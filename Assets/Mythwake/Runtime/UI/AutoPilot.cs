@@ -220,6 +220,11 @@ namespace Mythwake.UI
             var summon = (SummonScreen)ui.Router.Current;
             summon.PullForAutoPilot(10);
             yield return Shot("summon_result", 2.0f);
+            for (var i = 0; i < 2; i++)
+                ui.Authority.Execute(new UpgradeBuilding { BuildingId = "summoningGate" });
+            ui.Router.Reset(new SummonScreen());
+            ((SummonScreen)ui.Router.Current).SelectForAutoPilot("fragment");
+            yield return Shot("summon_fragment", 0.6f);
 
             Debug.Log("[AutoPilot] done");
             Application.Quit();

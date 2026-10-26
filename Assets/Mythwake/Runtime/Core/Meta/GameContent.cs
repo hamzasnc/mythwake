@@ -105,6 +105,9 @@ namespace Mythwake.Core.Meta
         public int Stage;
     }
 
+    /// <summary>What a banner lets the player focus on (doc: Faction Summon, Fragment Summon).</summary>
+    public enum BannerFocus { None, Faction, Aspect }
+
     public sealed class BannerDefinition
     {
         public string Id;
@@ -119,6 +122,11 @@ namespace Mythwake.Core.Meta
         public int EpicPity = 10;
         /// <summary>Empty = every hero of the rolled grade.</summary>
         public List<string> Pool = new List<string>();
+        /// <summary>Summoning Gate level that opens the banner (doc: later upgrades expand recruitment).</summary>
+        public int GateLevel = 1;
+        public BannerFocus Focus;
+        /// <summary>Chance that a pull comes from the chosen faction / Aspect (doc: "higher chance").</summary>
+        public int FocusPermille;
     }
 
     public sealed class StartingState

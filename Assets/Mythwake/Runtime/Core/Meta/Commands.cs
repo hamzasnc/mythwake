@@ -266,12 +266,17 @@ namespace Mythwake.Core.Meta
         public int Count = 1;
         /// <summary>Pay with the alternative cost (gems) instead of Summon Scrolls.</summary>
         public bool UseAltCost;
+        /// <summary>Faction or Aspect name for focused banners (e.g. "guildsOfTheHunt", "ravak").</summary>
+        public string Focus;
 
         public List<SummonResult> Apply(CommandContext ctx)
         {
             ctx.Require(Count == 1 || Count == 10, "bad_count");
             ctx.Require(Village.SummonUnlocked(ctx.State, ctx.Content), "summon_locked");
             var banner = ctx.Content.Banner(BannerId);
+            ctx.Require(Summoning.GateLevel(ctx.State, ctx.Content) >= banner.GateLevel, "banner_locked");
+            var focus = Summoning.ParseFocus(banner, Focus);
+            ctx.Require(banner.Focus == BannerFocus.None || focus != null, "bad_focus");
             var unit = UseAltCost ? banner.AltCost : banner.Cost;
             ctx.Require(unit != null, "no_such_cost");
             // ten pulls with gems get a 10 % discount
@@ -281,7 +286,7 @@ namespace Mythwake.Core.Meta
             var cost = new[] { new Amount(unit.Id, total) };
             ctx.RequireFunds(cost);
             ctx.Pay(cost);
-            var results = Summoning.Pull(ctx, banner, Count);
+            var results = Summoning.Pull(ctx, banner, Count, focus);
             Quests.Track(ctx, Stat.Summons, Count);
             return results;
         }
