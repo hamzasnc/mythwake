@@ -52,7 +52,7 @@ namespace Mythwake.UI
         private Label _levelCost;
         private Button _starUp;
         private Label _shards;
-        private Label _stars;
+        private VisualElement _stars;
         private VisualElement _gear;
         private Label _setBonus;
         private VisualElement _fragments;
@@ -101,7 +101,7 @@ namespace Mythwake.UI
             UiKit.Box("spacer").Into(levelRow);
             _level = UiKit.Text("", "hero-stats__level").Into(levelRow);
             UiKit.Box("spacer").Into(levelRow);
-            _stars = UiKit.Text("", "hero-stats__stars").Into(levelRow);
+            _stars = UiKit.StarRow(0, "hero-stats__stars").Into(levelRow);
             _stats = UiKit.Box("row", "hero-stats__row").Into(progress);
             _levelCost = UiKit.Text("", "hero-stats__cost").Into(progress);
             var buttons = UiKit.Box("row", "center").Into(progress);
@@ -144,7 +144,7 @@ namespace Mythwake.UI
 
             var cap = Progression.LevelCap(content, owned);
             _level.text = $"{Loc.T("heroes.level", owned.Level)} / {cap}";
-            _stars.text = UiKit.Stars(owned.Stars);
+            UiKit.SetStars(_stars, owned.Stars);
             var stats = TeamBuilder.StatsOf(Formations.Progress(Ui.State, content, owned));
             _power.text = UiKit.Short(TeamBuilder.Power(stats));
             _stats.Clear();
@@ -262,7 +262,12 @@ namespace Mythwake.UI
                 return;
             }
             var content = Ui.Content;
-            void Req(bool ok, string text) => UiKit.Text((ok ? "✓ " : "✗ ") + text, ok ? "label--good" : "label--bad").Into(_awakening);
+            void Req(bool ok, string text)
+            {
+                var line = UiKit.Box("row").Into(_awakening);
+                UiKit.Icon(ok ? "check" : "close", "requirement__icon").Into(line);
+                UiKit.Text(text, ok ? "label--good" : "label--bad").Into(line);
+            }
             Req(Awakening.ShrineLevel(Ui.State, content) > 0, Loc.T("awaken.req.shrine"));
             Req(Ui.State.Campaign.HighestCleared >= content.Awakening.MinStage, Loc.T("awaken.req.stage", content.Awakening.MinStage));
             var stars = Progression.MaxStars(content, content.Hero(_heroId).Grade);

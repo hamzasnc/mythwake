@@ -86,7 +86,23 @@ namespace Mythwake.UI
 
         public static string GradeClass(Grade g) => Lower(g);
 
-        public static string Stars(int stars) => new string('★', Mathf.Clamp(stars, 0, 9));
+        /// <summary>Row of painted star icons (the UI font has no star glyph).</summary>
+        public static VisualElement StarRow(int stars, params string[] classes)
+        {
+            var row = Box("star-row");
+            foreach (var c in classes)
+                row.AddToClassList(c);
+            row.pickingMode = PickingMode.Ignore;
+            SetStars(row, stars);
+            return row;
+        }
+
+        public static void SetStars(VisualElement row, int stars)
+        {
+            row.Clear();
+            for (var i = 0; i < Mathf.Clamp(stars, 0, 9); i++)
+                Icon("star", "star-row__star").Into(row);
+        }
 
         /// <summary>Card with portrait, stars, aspect dot, name and level. Used by lists, formation and summon results.</summary>
         public static VisualElement HeroCard(ContentCatalog catalog, HeroDefinition hero, OwnedHero owned)
@@ -98,7 +114,7 @@ namespace Mythwake.UI
                 Box("hero-card__portrait").Into(card).style.backgroundImage = new StyleBackground(art);
             else
                 Text(hero.Name.Substring(0, 1), "hero-card__initial").Into(card);
-            Text(Stars(owned?.Stars ?? 1), "hero-card__stars").Into(card);
+            StarRow(owned?.Stars ?? 1, "hero-card__stars").Into(card);
             Box("aspect-dot", "aspect--" + Lower(hero.Aspect)).Into(card);
             // grade frame painted over the portrait (Content/UI/Chrome/card<Grade>.png)
             Box("hero-card__frame").Into(card).pickingMode = PickingMode.Ignore;

@@ -150,7 +150,7 @@ namespace Mythwake.UI
                 UiKit.Text($"+{t.Points} {Loc.T("quests.points")}", "label--small").Into(texts);
                 if (claimed)
                 {
-                    UiKit.Text("✓", "quest__done").Into(line);
+                    UiKit.Icon("check", "quest__done").Into(line);
                 }
                 else
                 {

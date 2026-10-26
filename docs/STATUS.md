@@ -52,7 +52,7 @@ The client connects to `http://127.0.0.1:8080` and falls back to offline play wh
 Unity 6000.4.5f1: open the folder, scene `Assets/Mythwake/Scenes/Main.unity`, Play.
 Menu **Mythwake** ▸ Setup Project / Rebuild Content Catalog / Render Hero Portraits / Build.
 
-Smoke run of a build (walks through all screens, writes screenshots, quits):
+Smoke run of a build (walks through all screens, writes screenshots, quits). `Tools/autopilot.ps1 <dir>` runs it off-screen without taking focus, so the PC stays usable:
 
 ```bash
 Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscreen 0 -autopilot Logs/autopilot
@@ -90,7 +90,7 @@ Builds/Windows/Mythwake.exe -screen-width 540 -screen-height 960 -screen-fullscr
   boss sleep immunity, rank-gated skills).
 - Balance is a first pass everywhere (`Content/Data/*.json`, numbers in `docs/systems/*.md`); pacing tests pin the
   early game.
-- Missing: a licensed UI font (the default font is still used), sound.
+- Missing: sound. UI fonts: Baloo 2 (body) and Lilita One (titles, buttons, numbers), Google Fonts, SIL OFL (`Content/UI/Fonts`).
 - Village buildings upgrade instantly (no build timers).
 - Server for production: TLS, platform logins (Google/Apple), Redis rate limits for several API instances, guild
   moderation (kick, reports), cross-guild ranking.

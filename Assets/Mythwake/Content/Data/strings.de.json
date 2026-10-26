@@ -463,5 +463,6 @@
   "tutorial.gate_plot": "Tippe auf das Summoning Gate und baue es wieder auf.",
   "tutorial.summon": "Das Summoning Gate ruft vergessene Helden. Probier es aus!",
   "tutorial.level_up": "Mit Hero EXP werden deine Helden stärker. Öffne die Helden.",
-  "error.unknown_tutorial": "Unbekannter Tutorial-Schritt."
+  "error.unknown_tutorial": "Unbekannter Tutorial-Schritt.",
+  "guild.donatedYes": "ja"
 }

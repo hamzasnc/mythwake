@@ -234,8 +234,11 @@ namespace Mythwake.UI
                 var row = UiKit.Box("panel", "row", "ranking__row").Into(page);
                 UiKit.Text(place + ".", "ranking__place").Into(row);
                 var texts = UiKit.Box("grow").Into(row);
-                UiKit.Text(m.Value<string>("name") + (m.Value<string>("role") == "leader" ? "  ★" : ""), "quest__title").Into(texts);
-                UiKit.Text(Loc.T("guild.memberLine", UiKit.Short(m.Value<long>("raidDamage")), m.Value<bool>("donated") ? "✓" : "–"), "label--small").Into(texts);
+                var nameRow = UiKit.Box("row").Into(texts);
+                UiKit.Text(m.Value<string>("name"), "quest__title").Into(nameRow);
+                if (m.Value<string>("role") == "leader")
+                    UiKit.StarRow(1, "guild__leader").Into(nameRow);
+                UiKit.Text(Loc.T("guild.memberLine", UiKit.Short(m.Value<long>("raidDamage")), m.Value<bool>("donated") ? Loc.T("guild.donatedYes") : "–"), "label--small").Into(texts);
             }
             UiKit.Btn(Loc.T("guild.leave"), () => Ui.Runner.StartCoroutine(Leave()), "btn--secondary").Into(page);
         }

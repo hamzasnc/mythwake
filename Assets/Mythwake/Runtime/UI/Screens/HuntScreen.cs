@@ -84,7 +84,7 @@ namespace Mythwake.UI
             var head = UiKit.Box("row").Into(card);
             UiKit.Text(offer.Mission.Name, "quest__title").Into(head);
             UiKit.Box("spacer").Into(head);
-            UiKit.Text(new string('★', offer.Tier), "hunt__stars").Into(head);
+            UiKit.StarRow(offer.Tier, "hunt__stars").Into(head);
 
             var enemy = Hunts.Enemies(Ui.State, Ui.Content, offer).Sum(u => TeamBuilder.Power(u.Stats));
             var power = UiKit.Text(Loc.T("hunt.power", UiKit.Short(enemy), UiKit.Short(teamPower)), "label--small").Into(card);

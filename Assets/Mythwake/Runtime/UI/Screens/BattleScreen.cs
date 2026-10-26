@@ -262,7 +262,7 @@ namespace Mythwake.UI
             {
                 FloatingTextKind.Miss => Loc.T("battle.miss"),
                 FloatingTextKind.Heal => "+" + UiKit.Short(value),
-                FloatingTextKind.Shield => "◈" + UiKit.Short(value),
+                FloatingTextKind.Shield => "+" + UiKit.Short(value),
                 _ => UiKit.Short(value)
             };
             var label = UiKit.Text(text, "floating", "floating--" + UiKit.Lower(kind)).Into(_floatLayer);
