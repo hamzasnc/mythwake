@@ -1,0 +1,144 @@
+{
+  "id": "tobias",
+  "name": "Tobias",
+  "title": "Tintenfeder",
+  "faction": "orderOfTheVeil",
+  "race": "human",
+  "aspect": "somnara",
+  "role": "dps",
+  "row": "back",
+  "grade": "common",
+  "body": "small",
+  "spineId": "tobias",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 850,
+    "attack": 85,
+    "defense": 42,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "tobias.normal",
+    "name": "Tintenpfeil",
+    "description": "Schaden an einem Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 600
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "tobias.special",
+    "name": "Runenschrift",
+    "description": "Schaden am Gegner mit den wenigsten HP.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1100
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "tobias.special2",
+    "name": "Klecks",
+    "description": "Verlangsamt ein Ziel 2 s (–20 % Angriffstempo).",
+    "slot": "special2",
+    "trigger": {
+      "kind": "chanceOnAttack",
+      "chancePermille": 250
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 600
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "slow",
+          "durationMs": 2000,
+          "value": 200
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "tobias.passive",
+    "name": "Schwere Tinte",
+    "description": "Treffer verzögern die Abklingzeiten des Ziels um 0,5 s.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "effect": {
+          "kind": "delayAction",
+          "multiplier": 500
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "tobias.ultimate",
+    "name": "Verbotene Seite",
+    "description": "Großer Runensatz explodiert auf allen Gegnern.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 2500
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      1300
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

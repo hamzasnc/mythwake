@@ -1,0 +1,172 @@
+{
+  "id": "grom",
+  "name": "Grom",
+  "title": "Bergfaust",
+  "faction": "tribeOfTheCrimsonFang",
+  "race": "stoneborn",
+  "aspect": "ravak",
+  "role": "tank",
+  "row": "front",
+  "grade": "epic",
+  "body": "monster",
+  "spineId": "grom",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1955,
+    "attack": 80,
+    "defense": 103,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "grom.normal",
+    "name": "Faustschlag",
+    "description": "Schwerer Schlag auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      230
+    ],
+    "durationMs": 900,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "grom.special",
+    "name": "Bergbeben",
+    "description": "Schaden an der vorderen Reihe und 3 s Verlangsamung.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1260
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "slow",
+          "durationMs": 3000,
+          "value": 200
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1300,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "grom.special2",
+    "name": "Steinhaut",
+    "description": "Schild auf sich über 20 % Max-HP.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "selfBelowHp",
+      "hpThresholdPermille": 600,
+      "cooldownMs": 15000,
+      "oncePerBattle": false
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 200,
+        "shieldDurationMs": 6000,
+        "scaling": "casterMaxHp"
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1300,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "grom.passive",
+    "name": "Glühender Fels",
+    "description": "Unter 50 % HP: +25 % Schaden und –15 % erlittener Schaden; Treffer setzen 2 s Brand.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageBonus",
+        "value": 250,
+        "belowHp": 500
+      },
+      {
+        "kind": "damageReduction",
+        "value": 150,
+        "belowHp": 500
+      },
+      {
+        "kind": "onHit",
+        "belowHp": 500,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "burn",
+            "durationMs": 2000,
+            "value": 150
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "grom.ultimate",
+    "name": "Lawine",
+    "description": "Felsen begraben alle Gegner: Schaden und 1 s Betäubung.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3850
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 1000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      1050,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

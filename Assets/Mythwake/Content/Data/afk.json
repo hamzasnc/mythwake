@@ -1,0 +1,15 @@
+{
+  "maxHours": 12,
+  "rates": [
+    {
+      "id": "gold",
+      "base": 500,
+      "perStage": 50
+    },
+    {
+      "id": "heroExp",
+      "base": 600,
+      "perStage": 60
+    }
+  ]
+}

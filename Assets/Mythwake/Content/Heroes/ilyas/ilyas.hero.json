@@ -1,0 +1,155 @@
+{
+  "id": "ilyas",
+  "name": "Ilyas",
+  "title": "Falkenläufer",
+  "faction": "guildsOfTheHunt",
+  "race": "human",
+  "aspect": "somnara",
+  "role": "debuffer",
+  "row": "back",
+  "grade": "rare",
+  "body": "normal",
+  "spineId": "ilyas",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1050,
+    "attack": 90,
+    "defense": 55,
+    "attackIntervalMs": 1700,
+    "critRate": 120,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "ilyas.normal",
+    "name": "Pfeilschuss",
+    "description": "Pfeil auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "ilyas.special",
+    "name": "Betäubungspfeil",
+    "description": "Schläfert den Magier mit dem höchsten Schaden 2 s ein.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 980
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "sleep",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "ilyas.special2",
+    "name": "Falkenblick",
+    "description": "Markiert die hintere Reihe: +12 % erlittener Schaden für 6 s.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 14000
+    },
+    "target": "enemyBackRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "damageTakenUp",
+          "durationMs": 6000,
+          "value": 120
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "ilyas.passive",
+    "name": "Schlafpfeile",
+    "description": "Treffer verlangsamen 1 s (–15 % Angriffstempo).",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "slow",
+            "durationMs": 1000,
+            "value": 150
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "ilyas.ultimate",
+    "name": "Falkensturz",
+    "description": "Falke stürzt auf das Ziel, Pfeilhagel folgt.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 5600
+      }
+    ],
+    "hits": 4,
+    "hitTimesMs": [
+      1050,
+      1317,
+      1583,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

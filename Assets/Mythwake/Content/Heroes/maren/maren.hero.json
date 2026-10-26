@@ -1,0 +1,148 @@
+{
+  "id": "maren",
+  "name": "Schwester Maren",
+  "title": "Laternenträgerin",
+  "faction": "orderOfTheVeil",
+  "race": "human",
+  "aspect": "somnara",
+  "role": "support",
+  "row": "back",
+  "grade": "rare",
+  "body": "normal",
+  "spineId": "maren",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1150,
+    "attack": 85,
+    "defense": 60,
+    "attackIntervalMs": 1700,
+    "critRate": 100,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "'in ihrer Naehe' ist als ganzes Team abgebildet."
+  ],
+  "normal": {
+    "id": "maren.normal",
+    "name": "Lichtfunke",
+    "description": "Schaden an einem Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "maren.special",
+    "name": "Laternenschein",
+    "description": "Heilt die zwei Verbündeten mit den wenigsten HP um je 140 % ATK.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "allyLowestHp",
+    "targetCount": 2,
+    "effects": [
+      {
+        "kind": "heal",
+        "multiplier": 1400
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "maren.special2",
+    "name": "Schlummerlicht",
+    "description": "Schläfert den stärksten Gegner 1,5 s ein.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 15000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "sleep",
+          "durationMs": 1500,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "maren.passive",
+    "name": "Ruhiges Licht",
+    "description": "Wer einen Verbündeten in ihrer Nähe angreift, wird 2 s verlangsamt (–15 % Angriffstempo).",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHitTaken",
+        "team": true,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "slow",
+            "durationMs": 2000,
+            "value": 150
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "maren.ultimate",
+    "name": "Wacht des Schreins",
+    "description": "Goldene Kuppel über dem Team: Schild über 300 % ATK für 6 s.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "allyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 3000,
+        "shieldDurationMs": 6000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      1300
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

@@ -1,0 +1,172 @@
+{
+  "id": "kara",
+  "name": "Kara",
+  "title": "Ascheaxt",
+  "faction": "tribeOfTheCrimsonFang",
+  "race": "human",
+  "aspect": "gorath",
+  "role": "dps",
+  "row": "front",
+  "grade": "rare",
+  "body": "large",
+  "spineId": "kara",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1000,
+    "attack": 100,
+    "defense": 50,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "Ultimate 'jeder Normal Skill trifft dreifach' ist als +40 % Angriffstempo und +40 % Angriff fuer 5 s abgebildet."
+  ],
+  "normal": {
+    "id": "kara.normal",
+    "name": "Doppelaxt-Hieb",
+    "description": "Zwei Axthiebe auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      230,
+      430
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "kara.special",
+    "name": "Axtwurf",
+    "description": "Wirft eine Axt durch die hintere Reihe.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "enemyBackRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 980
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "kara.special2",
+    "name": "Kriegsschrei",
+    "description": "2 s unverwundbar und +20 % Angriff für 6 s.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "selfBelowHp",
+      "hpThresholdPermille": 400,
+      "cooldownMs": 0,
+      "oncePerBattle": true
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "immune",
+          "durationMs": 2000,
+          "value": 0
+        }
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "attackUp",
+          "durationMs": 6000,
+          "value": 200
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "kara.passive",
+    "name": "Raserei",
+    "description": "Jeder Treffer gibt +3 % Angriffstempo (bis 10-mal); dazu 0,5 % Regeneration pro Stapel und s.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "stackingAttackSpeed",
+        "value": 30,
+        "cap": 10,
+        "stackRegen": 5
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "kara.ultimate",
+    "name": "Aschewut",
+    "description": "5 s Raserei: +40 % Angriffstempo, jeder Normal Skill trifft dreifach.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 2800
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "attackSpeedUp",
+          "durationMs": 5000,
+          "value": 400
+        },
+        "target": "self"
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "attackUp",
+          "durationMs": 5000,
+          "value": 400
+        },
+        "target": "self"
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1050,
+      1450,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "id": "pim",
+  "name": "Pim",
+  "title": "Zahnradzwick",
+  "faction": "empireOfTheShatteredSky",
+  "race": "stoneborn",
+  "aspect": "envyra",
+  "role": "debuffer",
+  "row": "back",
+  "grade": "epic",
+  "body": "small",
+  "spineId": "pim",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1208,
+    "attack": 103,
+    "defense": 63,
+    "attackIntervalMs": 1700,
+    "critRate": 120,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "'Reverse Engineering' kopiert nicht, sondern stiehlt den Buff."
+  ],
+  "normal": {
+    "id": "pim.normal",
+    "name": "Kanonenschuss",
+    "description": "Schuss auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "pim.special",
+    "name": "Störsender",
+    "description": "Entfernt einen Buff vom stärksten Gegner und stiehlt ihn.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 900
+      },
+      {
+        "kind": "stealBuff",
+        "multiplier": 1
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "pim.special2",
+    "name": "Granatwerfer",
+    "description": "Trifft die hintere Reihe.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "chanceOnAttack",
+      "chancePermille": 300
+    },
+    "target": "enemyBackRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 833
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "pim.passive",
+    "name": "Reverse Engineering",
+    "description": "Kopiert alle 15 s den letzten Buff eines Gegners auf sich.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "periodic",
+        "intervalMs": 15000,
+        "target": "enemyHighestAttack",
+        "effect": {
+          "kind": "stealBuff",
+          "multiplier": 1
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "pim.ultimate",
+    "name": "Überladung",
+    "description": "Dauerfeuer aus dem Rucksack-Geschütz: 5 Salven auf alle Gegner.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3850
+      }
+    ],
+    "hits": 5,
+    "hitTimesMs": [
+      1050,
+      1250,
+      1450,
+      1650,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

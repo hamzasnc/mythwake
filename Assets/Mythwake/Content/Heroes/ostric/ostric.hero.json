@@ -1,0 +1,171 @@
+{
+  "id": "ostric",
+  "name": "Bruder Ostric",
+  "title": "der Schweigende Fels",
+  "faction": "orderOfTheVeil",
+  "race": "stoneborn",
+  "aspect": "somnara",
+  "role": "tank",
+  "row": "front",
+  "grade": "rare",
+  "body": "monster",
+  "spineId": "ostric",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1700,
+    "attack": 70,
+    "defense": 90,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "ostric.normal",
+    "name": "Glockenstoß",
+    "description": "Schildstoß gegen ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      230
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "ostric.special",
+    "name": "Klang der Ruhe",
+    "description": "Provoziert die vordere Gegnerreihe 3 s und gibt sich 25 % Schadensreduktion.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 500
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "provoke",
+          "durationMs": 3000,
+          "value": 0
+        }
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "damageTakenDown",
+          "durationMs": 3000,
+          "value": 250
+        },
+        "target": "self"
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "ostric.special2",
+    "name": "Steinmeditation",
+    "description": "Regeneriert 4 s lang je 6 % Max-HP pro Sekunde.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "selfBelowHp",
+      "hpThresholdPermille": 500,
+      "cooldownMs": 0,
+      "oncePerBattle": true
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "regen",
+          "durationMs": 4000,
+          "value": 60
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "ostric.passive",
+    "name": "Stille Haut",
+    "description": "Erlittene Treffer verlangsamen den Angreifer 2 s (–20 % Angriffstempo).",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHitTaken",
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "slow",
+            "durationMs": 2000,
+            "value": 200
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "ostric.ultimate",
+    "name": "Glocke des Schlafs",
+    "description": "Schockwelle: Schaden an allen Gegnern und 1,5 s Schlaf.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3100
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "sleep",
+          "durationMs": 1500,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      1300
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

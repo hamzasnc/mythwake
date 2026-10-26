@@ -1,0 +1,124 @@
+{
+  "id": "dorn",
+  "name": "Dorn",
+  "title": "Fang-Rekrut",
+  "faction": "tribeOfTheCrimsonFang",
+  "race": "human",
+  "aspect": "ravak",
+  "role": "dps",
+  "row": "front",
+  "grade": "common",
+  "body": "small",
+  "spineId": "dorn",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 850,
+    "attack": 85,
+    "defense": 42,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "'Mutiger Sprung' (Platzwechsel nach vorne) fehlt: Platzwechsel im Kampf ist noch nicht gebaut."
+  ],
+  "normal": {
+    "id": "dorn.normal",
+    "name": "Schwerthieb",
+    "description": "Hieb auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 600
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      230
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "dorn.special",
+    "name": "Schildstoß",
+    "description": "Unterbricht das Ziel (bricht laufenden Special Skill ab).",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1100
+      },
+      {
+        "kind": "interrupt"
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      600
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "dorn.passive",
+    "name": "Trotz des Rekruten",
+    "description": "Unter 50 % HP: +20 % Schaden.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageBonus",
+        "value": 200,
+        "belowHp": 500
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "dorn.ultimate",
+    "name": "Für Dawnhollow!",
+    "description": "Starker Schlag und Team +10 % Angriff für 5 s.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 4500
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "attackUp",
+          "durationMs": 5000,
+          "value": 100
+        },
+        "target": "allyAll"
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      1300
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

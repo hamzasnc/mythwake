@@ -1,0 +1,151 @@
+{
+  "id": "thalindra",
+  "name": "Thalindra",
+  "title": "Mondbogen",
+  "faction": "guildsOfTheHunt",
+  "race": "veyr",
+  "aspect": "veloria",
+  "role": "dps",
+  "row": "back",
+  "grade": "legendary",
+  "body": "normal",
+  "spineId": "thalindra",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1300,
+    "attack": 130,
+    "defense": 65,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "'gegnerischer Assassine' zielt auf die hintere Reihe (Rollen-Zielwahl kommt spaeter)."
+  ],
+  "normal": {
+    "id": "thalindra.normal",
+    "name": "Mondpfeil",
+    "description": "Pfeil auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "thalindra.special",
+    "name": "Doppelpfeil",
+    "description": "Trifft die zwei schwächsten Gegner.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 6000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 2,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 2300
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "thalindra.special2",
+    "name": "Mondfessel",
+    "description": "Fesselt den gegnerischen Assassinen 2 s.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 15000
+    },
+    "target": "enemyBack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "thalindra.passive",
+    "name": "Mondtrug",
+    "description": "Treffer verwirren das Ziel mit 15 % Chance 1 s (es greift ein falsches Ziel an).",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "chance": 150,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "confuse",
+            "durationMs": 1000,
+            "value": 0
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "thalindra.ultimate",
+    "name": "Mondfall-Salve",
+    "description": "Regen aus leuchtenden Pfeilen, 5 Wellen.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 4950
+      }
+    ],
+    "hits": 5,
+    "hitTimesMs": [
+      1050,
+      1250,
+      1450,
+      1650,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "id": "nerissa",
+  "name": "Nerissa",
+  "title": "Flutwall",
+  "faction": "circleOfAether",
+  "race": "thalassari",
+  "aspect": "envyra",
+  "role": "tank",
+  "row": "front",
+  "grade": "rare",
+  "body": "normal",
+  "spineId": "nerissa",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1700,
+    "attack": 70,
+    "defense": 90,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "nerissa.normal",
+    "name": "Wasserstoß",
+    "description": "Wasserstoß auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      230
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "nerissa.special",
+    "name": "Flutbarriere",
+    "description": "Schild auf sich über 25 % Max-HP.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 250,
+        "shieldDurationMs": 6000,
+        "scaling": "casterMaxHp"
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      550
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "nerissa.special2",
+    "name": "Gezeitenschlag",
+    "description": "Stößt die vordere Reihe zurück (1 s Verzögerung).",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 13000
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "delayAction",
+        "multiplier": 1000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      550
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "nerissa.passive",
+    "name": "Tiefsee-Spiegel",
+    "description": "Wird sie getroffen, stiehlt sie mit 20 % Chance einen Buff des Angreifers.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHitTaken",
+        "chance": 200,
+        "effect": {
+          "kind": "stealBuff",
+          "multiplier": 1
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "nerissa.ultimate",
+    "name": "Portalflut",
+    "description": "Flutwelle aus einem Portal: Schaden und 1 s Einfrieren.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3100
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 1000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      1300
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

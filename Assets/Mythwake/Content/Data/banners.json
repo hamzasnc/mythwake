@@ -1,0 +1,12 @@
+[
+  {
+    "id": "normal",
+    "name": "Normal Summon",
+    "cost": { "id": "summonScroll", "value": 1 },
+    "altCost": { "id": "gems", "value": 300 },
+    "gradeRates": [500, 380, 105, 15, 0],
+    "legendaryPity": 50,
+    "epicPity": 10,
+    "pool": []
+  }
+]

@@ -1,0 +1,138 @@
+{
+  "id": "durgan",
+  "name": "Durgan",
+  "title": "Glutbart",
+  "faction": "guildsOfTheHunt",
+  "race": "stoneborn",
+  "aspect": "gorath",
+  "role": "support",
+  "row": "back",
+  "grade": "common",
+  "body": "large",
+  "spineId": "durgan",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 978,
+    "attack": 72,
+    "defense": 51,
+    "attackIntervalMs": 1700,
+    "critRate": 100,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "durgan.normal",
+    "name": "Löffelhieb",
+    "description": "Schlag auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 600
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "durgan.special",
+    "name": "Herzhafter Eintopf",
+    "description": "Heilt den Verbündeten mit den wenigsten HP um 150 % ATK.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "allyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "heal",
+        "multiplier": 1500
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "durgan.special2",
+    "name": "Scharfe Würze",
+    "description": "Team +10 % Angriff für 6 s.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 14000
+    },
+    "target": "allyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "attackUp",
+          "durationMs": 6000,
+          "value": 100
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "durgan.passive",
+    "name": "Gute Küche",
+    "description": "Team regeneriert 0,8 % Max-HP pro s.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "regen",
+        "team": true,
+        "value": 8
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "durgan.ultimate",
+    "name": "Runde für alle",
+    "description": "Heilbier-Fontäne: heilt das Team um 220 % ATK.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "allyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "heal",
+        "multiplier": 2200
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      1300
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

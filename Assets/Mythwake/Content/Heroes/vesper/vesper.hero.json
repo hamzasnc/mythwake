@@ -1,0 +1,159 @@
+{
+  "id": "vesper",
+  "name": "Vesper",
+  "title": "die Sternenhexe",
+  "faction": "orderOfTheVeil",
+  "race": "veyr",
+  "aspect": "somnara",
+  "role": "dps",
+  "row": "back",
+  "grade": "epic",
+  "body": "normal",
+  "spineId": "vesper",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1150,
+    "attack": 115,
+    "defense": 57,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "Bosse: Verlangsamung statt Schlaf ist noch nicht abgebildet."
+  ],
+  "normal": {
+    "id": "vesper.normal",
+    "name": "Doppelter Sternbolzen",
+    "description": "Zwei Bolzen auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      340,
+      580
+    ],
+    "durationMs": 1150,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "vesper.special",
+    "name": "Sternbindung",
+    "description": "Schaden an der hinteren Gegnerreihe und 3 s Verlangsamung (–30 % Angriffstempo).",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyBackRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1260
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "slow",
+          "durationMs": 3000,
+          "value": 300
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      520
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "vesper.special2",
+    "name": "Pips Licht",
+    "description": "Schild über 150 % ATK auf diesen Verbündeten.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "allyBelowHp",
+      "hpThresholdPermille": 400,
+      "cooldownMs": 12000,
+      "oncePerBattle": false
+    },
+    "target": "allyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 1500,
+        "shieldDurationMs": 6000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      520
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "vesper.passive",
+    "name": "Mondgedächtnis",
+    "description": "Jeder 4. Normal Skill schläfert das Ziel 1 s ein (Bosse: Verlangsamung statt Schlaf).",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "everyN": 4,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "sleep",
+            "durationMs": 1000,
+            "value": 0
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "vesper.ultimate",
+    "name": "Sternenfall",
+    "description": "Drei Sterne stürzen auf die vordere Gegnerreihe und Umgebung, 3 Treffer. Schlafende Ziele erleiden +40 % Schaden.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 4900,
+        "bonusVsStatus": "sleep",
+        "bonusVsStatusPermille": 400
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      880,
+      1080,
+      1280
+    ],
+    "durationMs": 2400,
+    "animation": "ultimate"
+  }
+}

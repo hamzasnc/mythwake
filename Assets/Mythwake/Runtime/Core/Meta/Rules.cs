@@ -1,0 +1,340 @@
+using System.Collections.Generic;
+using Mythwake.Core.Combat;
+using Mythwake.Core.Content;
+using Mythwake.Core.Math;
+using Mythwake.Core.Progression;
+
+namespace Mythwake.Core.Meta
+{
+    public static class Formations
+    {
+        public static int Count(string[] formation)
+        {
+            var n = 0;
+            if (formation != null)
+                foreach (var id in formation)
+                    if (!string.IsNullOrEmpty(id))
+                        n++;
+            return n;
+        }
+
+        public static int UnlockedSlots(PlayerState state, GameContent content)
+        {
+            var slots = content.Start.FormationSlots;
+            foreach (var u in content.Campaign.SlotUnlocks)
+                if (state.Campaign.HighestCleared >= u.Stage && u.Slots > slots)
+                    slots = u.Slots;
+            return System.Math.Min(TeamBuilder.MaxSlots, slots);
+        }
+
+        /// <summary>Puts the strongest owned fighters into free slots, front-row heroes first. Used for new players and "auto" in the formation screen.</summary>
+        public static void AutoFill(PlayerState state, GameContent content)
+        {
+            var unlocked = UnlockedSlots(state, content);
+            var candidates = new List<OwnedHero>();
+            foreach (var h in state.Heroes)
+                if (content.Hero(h.HeroId).Role != Role.HeroLeader)
+                    candidates.Add(h);
+            candidates.Sort((a, b) =>
+            {
+                var pa = TeamBuilder.Power(TeamBuilder.StatsAt(content.Hero(a.HeroId), a.Level, a.Stars));
+                var pb = TeamBuilder.Power(TeamBuilder.StatsAt(content.Hero(b.HeroId), b.Level, b.Stars));
+                return pb != pa ? pb.CompareTo(pa) : string.CompareOrdinal(a.HeroId, b.HeroId);
+            });
+            if (candidates.Count > unlocked)
+                candidates.RemoveRange(unlocked, candidates.Count - unlocked);
+
+            var formation = new string[5];
+            var front = new List<OwnedHero>();
+            var back = new List<OwnedHero>();
+            foreach (var h in candidates)
+                (content.Hero(h.HeroId).Row == Row.Front ? front : back).Add(h);
+            // fill front slots with front-row heroes, then back slots, then spill over
+            var queue = new List<OwnedHero>(front);
+            queue.AddRange(back);
+            var order = new List<int> { 0, 1, 2, 3, 4 };
+            if (front.Count == 0)
+                order = new List<int> { 2, 3, 4, 0, 1 };
+            else if (front.Count == 1)
+                order = new List<int> { 0, 2, 3, 4, 1 };
+            for (var i = 0; i < queue.Count; i++)
+                formation[order[i]] = queue[i].HeroId;
+            state.Formation = formation;
+        }
+
+        public static List<HeroProgress> ToProgress(PlayerState state, GameContent content, string[] formation)
+        {
+            var list = new List<HeroProgress>();
+            for (var i = 0; i < 5; i++)
+            {
+                var id = formation != null && i < formation.Length ? formation[i] : null;
+                var owned = string.IsNullOrEmpty(id) ? null : state.FindHero(id);
+                list.Add(owned == null ? null : new HeroProgress { Hero = content.Hero(id), Level = owned.Level, Stars = owned.Stars });
+            }
+            return list;
+        }
+    }
+
+    public static class Campaign
+    {
+        public static bool IsBoss(GameContent content, int stage) => content.Campaign.BossEvery > 0 && stage % content.Campaign.BossEvery == 0;
+
+        /// <summary>Chapter and 1-based stage within it, e.g. stage 23 with 20-stage chapters → (chapter 2, 3).</summary>
+        public static (ChapterDefinition chapter, int index, int number) Locate(GameContent content, int stage)
+        {
+            var left = stage;
+            var number = 1;
+            foreach (var c in content.Campaign.Chapters)
+            {
+                if (left <= c.Stages)
+                    return (c, left, number);
+                left -= c.Stages;
+                number++;
+            }
+            return (null, left, number);
+        }
+
+        public static int EnemyLevel(GameContent content, int stage) =>
+            1 + (stage - 1) * content.Campaign.LevelPerStagePermille / Permille.One;
+
+        public static int EnemyCount(GameContent content, int stage)
+        {
+            var sizes = content.Campaign.TeamSizeFromStage;
+            var count = 1;
+            for (var i = 0; i < sizes.Length; i++)
+                if (stage >= sizes[i])
+                    count = i + 2;
+            return System.Math.Min(5, count);
+        }
+
+        /// <summary>The enemy team of a stage. Pure function of the stage number, so every player meets the same team.</summary>
+        public static List<UnitSetup> Enemies(GameContent content, int stage)
+        {
+            var fighters = new List<HeroDefinition>();
+            foreach (var h in content.Heroes.Values)
+                if (h.Role != Role.HeroLeader)
+                    fighters.Add(h);
+            fighters.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
+            // early stages draw from lower grades, so the first fights do not throw Legendaries at a new player
+            var maxGrade = Grade.Transcendent;
+            foreach (var gate in content.Campaign.EnemyGradeGates)
+                if (stage < gate.BelowStage)
+                {
+                    maxGrade = gate.MaxGrade;
+                    break;
+                }
+            fighters.RemoveAll(h => h.Grade > maxGrade);
+
+            var rng = new Pcg32((ulong)stage * 7919UL, 3);
+            var count = EnemyCount(content, stage);
+            var picked = new List<HeroDefinition>();
+            while (picked.Count < count && fighters.Count > 0)
+            {
+                var i = rng.Range(fighters.Count);
+                picked.Add(fighters[i]);
+                fighters.RemoveAt(i);
+            }
+
+            var level = EnemyLevel(content, stage);
+            var stars = 1 + (content.Campaign.EnemyStarsEveryStages > 0 ? (stage - 1) / content.Campaign.EnemyStarsEveryStages : 0);
+            var front = picked.FindAll(h => h.Row == Row.Front);
+            var back = picked.FindAll(h => h.Row == Row.Back);
+            var ordered = new List<HeroProgress>();
+            for (var slot = 0; slot < 5; slot++)
+                ordered.Add(null);
+            Place(ordered, front, new[] { 0, 1, 2, 3, 4 }, level, stars);
+            Place(ordered, back, new[] { 2, 3, 4, 0, 1 }, level, stars);
+
+            var team = TeamBuilder.Build(ordered);
+            var c = content.Campaign;
+            if (c.EarlyStatStages > 1 && stage < c.EarlyStatStages)
+            {
+                var scale = c.EarlyStatStartPermille + (Permille.One - c.EarlyStatStartPermille) * (stage - 1) / (c.EarlyStatStages - 1);
+                foreach (var u in team)
+                {
+                    u.Stats.Hp = System.Math.Max(1, u.Stats.Hp * scale / Permille.One);
+                    u.Stats.Attack = System.Math.Max(1, u.Stats.Attack * scale / Permille.One);
+                }
+            }
+            if (IsBoss(content, stage))
+                foreach (var u in team)
+                {
+                    u.Stats.Hp = u.Stats.Hp * (Permille.One + content.Campaign.BossStatBonusPermille) / Permille.One;
+                    u.Stats.Attack = u.Stats.Attack * (Permille.One + content.Campaign.BossStatBonusPermille) / Permille.One;
+                    u.Variant = "boss";
+                }
+            return team;
+        }
+
+        private static void Place(List<HeroProgress> slots, List<HeroDefinition> heroes, int[] order, int level, int stars)
+        {
+            foreach (var h in heroes)
+                foreach (var s in order)
+                    if (slots[s] == null)
+                    {
+                        slots[s] = new HeroProgress { Hero = h, Level = level, Stars = stars };
+                        break;
+                    }
+        }
+
+        public static BattleSetup BuildBattle(PlayerState state, GameContent content, PendingBattle pending)
+        {
+            var leader = string.IsNullOrEmpty(state.Leader) ? null : state.FindHero(state.Leader);
+            var leaderProgress = leader == null ? null : new HeroProgress { Hero = content.Hero(leader.HeroId), Level = leader.Level, Stars = leader.Stars };
+            return new BattleSetup
+            {
+                Seed = pending.Seed,
+                Allies = TeamBuilder.Build(Formations.ToProgress(state, content, pending.Formation), leaderProgress),
+                Enemies = Enemies(content, pending.Stage)
+            };
+        }
+
+        public static List<Amount> ClearRewards(GameContent content, int stage)
+        {
+            var list = new List<Amount>();
+            foreach (var r in content.Campaign.ClearRewards)
+                list.Add(new Amount(r.Id, r.Base + r.PerStage * stage));
+            if (IsBoss(content, stage))
+                foreach (var r in content.Campaign.BossRewards)
+                    list.Add(new Amount(r.Id, r.Value));
+            return list;
+        }
+    }
+
+    public static class Afk
+    {
+        public const long HourMs = 3_600_000;
+
+        public static long MaxMs(GameContent content) => content.Afk.MaxHours * HourMs;
+
+        public static long ElapsedMs(PlayerState state, GameContent content, long nowMs) =>
+            System.Math.Max(0, System.Math.Min(MaxMs(content), nowMs - state.Afk.LastClaimMs));
+
+        /// <summary>Rewards waiting in the idle chest. Rates follow the highest cleared stage (doc: scale with the current stage).</summary>
+        public static List<Amount> Pending(PlayerState state, GameContent content, long nowMs)
+        {
+            var elapsed = ElapsedMs(state, content, nowMs);
+            var stage = state.Campaign.HighestCleared;
+            var list = new List<Amount>();
+            foreach (var r in content.Afk.Rates)
+            {
+                var perHour = r.Base + r.PerStage * stage;
+                var value = perHour * elapsed / HourMs;
+                if (value > 0)
+                    list.Add(new Amount(r.Id, value));
+            }
+            return list;
+        }
+    }
+
+    public static class Progression
+    {
+        public static int LevelCap(GameContent content, OwnedHero hero) =>
+            content.Progression.LevelCapBase + content.Progression.LevelCapPerStar * (hero.Stars - 1);
+
+        public static int MaxStars(GameContent content, Grade grade)
+        {
+            var table = content.Progression.MaxStars;
+            return table[System.Math.Min((int)grade, table.Length - 1)];
+        }
+
+        public static List<Amount> LevelCost(GameContent content, int fromLevel, int levels)
+        {
+            var p = content.Progression;
+            long exp = 0, gold = 0;
+            for (var l = fromLevel; l < fromLevel + levels; l++)
+            {
+                long sq = (long)l * l;
+                exp += p.LevelExpBase + p.LevelExpPerLevel * l + p.LevelExpQuadratic * sq / 10;
+                gold += p.LevelGoldBase + p.LevelGoldPerLevel * l + p.LevelGoldQuadratic * sq / 10;
+            }
+            return new List<Amount> { new Amount(Ids.HeroExp, exp), new Amount(Ids.Gold, gold) };
+        }
+
+        public static Amount StarCost(GameContent content, int currentStars, string heroId)
+        {
+            var table = content.Progression.StarShardCost;
+            var cost = table[System.Math.Min(currentStars - 1, table.Length - 1)];
+            return new Amount(Ids.Shards(heroId), cost);
+        }
+    }
+
+    public static class Summoning
+    {
+        public static List<SummonResult> Pull(CommandContext ctx, BannerDefinition banner, int count)
+        {
+            var state = ctx.State;
+            var summon = state.Summon;
+            summon.PullsSinceLegendary.TryGetValue(banner.Id, out var sinceLegendary);
+            summon.PullsSinceEpic.TryGetValue(banner.Id, out var sinceEpic);
+            var rng = ctx.NextRng();
+            var results = new List<SummonResult>();
+
+            for (var i = 0; i < count; i++)
+            {
+                sinceLegendary++;
+                sinceEpic++;
+                var grade = RollGrade(rng, banner.GradeRates);
+                if (banner.LegendaryPity > 0 && sinceLegendary >= banner.LegendaryPity && grade < Grade.Legendary)
+                    grade = Grade.Legendary;
+                else if (banner.EpicPity > 0 && sinceEpic >= banner.EpicPity && grade < Grade.Epic)
+                    grade = Grade.Epic;
+                if (grade >= Grade.Legendary)
+                    sinceLegendary = 0;
+                if (grade >= Grade.Epic)
+                    sinceEpic = 0;
+
+                var hero = PickHero(ctx.Content, banner, grade, rng);
+                var owned = state.FindHero(hero);
+                var r = new SummonResult { HeroId = hero, IsNew = owned == null };
+                if (owned == null)
+                {
+                    state.Heroes.Add(new OwnedHero { HeroId = hero });
+                }
+                else
+                {
+                    r.Shards = ctx.Content.Progression.DuplicateShards;
+                    state.Add(Ids.Shards(hero), r.Shards);
+                }
+                results.Add(r);
+            }
+
+            summon.PullsSinceLegendary[banner.Id] = sinceLegendary;
+            summon.PullsSinceEpic[banner.Id] = sinceEpic;
+            summon.TotalPulls += count;
+            return results;
+        }
+
+        private static Grade RollGrade(Pcg32 rng, int[] rates)
+        {
+            var total = 0;
+            foreach (var r in rates)
+                total += r;
+            var roll = rng.Range(System.Math.Max(1, total));
+            for (var g = 0; g < rates.Length; g++)
+            {
+                if (roll < rates[g])
+                    return (Grade)g;
+                roll -= rates[g];
+            }
+            return Grade.Common;
+        }
+
+        private static string PickHero(GameContent content, BannerDefinition banner, Grade grade, Pcg32 rng)
+        {
+            // fall back to lower grades if the pool has no hero of the rolled grade
+            for (var g = (int)grade; g >= 0; g--)
+            {
+                var pool = new List<string>();
+                foreach (var h in content.Heroes.Values)
+                    if ((int)h.Grade == g && (banner.Pool.Count == 0 || banner.Pool.Contains(h.Id)))
+                        pool.Add(h.Id);
+                if (pool.Count == 0)
+                    continue;
+                pool.Sort(string.CompareOrdinal);
+                return pool[rng.Range(pool.Count)];
+            }
+            throw new RuleViolation("empty_banner", banner.Id);
+        }
+    }
+}

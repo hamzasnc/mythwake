@@ -1,0 +1,148 @@
+{
+  "id": "nyssa",
+  "name": "Nyssa",
+  "title": "Schattenblatt",
+  "faction": "guildsOfTheHunt",
+  "race": "veyr",
+  "aspect": "envyra",
+  "role": "dps",
+  "row": "back",
+  "grade": "epic",
+  "body": "normal",
+  "spineId": "nyssa",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1150,
+    "attack": 115,
+    "defense": 57,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "nyssa.normal",
+    "name": "Doppelschnitt",
+    "description": "Zwei Klingenschnitte auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      230,
+      430
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "nyssa.special",
+    "name": "Hinterhalt",
+    "description": "Springt in die hintere Reihe und trifft das schwächste Ziel 3-mal.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1800
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      600,
+      720,
+      840
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "nyssa.special2",
+    "name": "Giftfalle",
+    "description": "Lähmt ein Ziel 1,5 s.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 13000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 1500,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      600
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "nyssa.passive",
+    "name": "Diebische Klinge",
+    "description": "Treffer stehlen 5 Energie vom Ziel.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "effect": {
+          "kind": "drainEnergy",
+          "multiplier": 50
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "nyssa.ultimate",
+    "name": "Blattsturm",
+    "description": "Klingen- und Blätterwirbel um das schwächste Ziel, 6 Treffer.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyCircle",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 5250
+      }
+    ],
+    "hits": 6,
+    "hitTimesMs": [
+      1050,
+      1210,
+      1370,
+      1530,
+      1690,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

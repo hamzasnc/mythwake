@@ -1,0 +1,141 @@
+{
+  "id": "bombo",
+  "name": "Bombo",
+  "title": "Funkenschlag",
+  "faction": "guildsOfTheHunt",
+  "race": "stoneborn",
+  "aspect": "ravak",
+  "role": "dps",
+  "row": "back",
+  "grade": "rare",
+  "body": "small",
+  "spineId": "bombo",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1000,
+    "attack": 100,
+    "defense": 50,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "bombo.normal",
+    "name": "Bombenwurf",
+    "description": "Bombe auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "bombo.special",
+    "name": "Splitterbombe",
+    "description": "Trifft die hintere Reihe.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyBackRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 980
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      750
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "bombo.special2",
+    "name": "Rauchbombe",
+    "description": "Gegner verfehlen 4 s lang öfter (–20 % Genauigkeit).",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 14000
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "accuracyDown",
+          "durationMs": 4000,
+          "value": 200
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      750
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "bombo.passive",
+    "name": "Kurze Lunte",
+    "description": "Unter 50 % HP explodieren Bomben größer (+25 % Schaden).",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageBonus",
+        "value": 250,
+        "belowHp": 500
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "bombo.ultimate",
+    "name": "Großes Feuerwerk",
+    "description": "Bombenteppich auf alle Gegner, 4 Explosionen.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3100
+      }
+    ],
+    "hits": 4,
+    "hitTimesMs": [
+      1050,
+      1317,
+      1583,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

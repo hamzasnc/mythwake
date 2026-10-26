@@ -1,0 +1,104 @@
+{
+  "chapters": [
+    {
+      "id": "dawnhollow",
+      "name": "Dawnhollow",
+      "stages": 20
+    },
+    {
+      "id": "mossveil_woods",
+      "name": "Mossveil Woods",
+      "stages": 20
+    },
+    {
+      "id": "chapter_3",
+      "stages": 20
+    },
+    {
+      "id": "chapter_4",
+      "stages": 20
+    },
+    {
+      "id": "chapter_5",
+      "stages": 20
+    },
+    {
+      "id": "chapter_6",
+      "stages": 20
+    },
+    {
+      "id": "chapter_7",
+      "stages": 20
+    },
+    {
+      "id": "chapter_8",
+      "stages": 20
+    },
+    {
+      "id": "chapter_9",
+      "stages": 20
+    },
+    {
+      "id": "chapter_10",
+      "stages": 20
+    }
+  ],
+  "bossEvery": 10,
+  "levelPerStagePermille": 550,
+  "bossStatBonusPermille": 200,
+  "teamSizeFromStage": [
+    1,
+    3,
+    10,
+    30
+  ],
+  "enemyStarsEveryStages": 40,
+  "clearRewards": [
+    {
+      "id": "gold",
+      "base": 200,
+      "perStage": 50
+    },
+    {
+      "id": "heroExp",
+      "base": 150,
+      "perStage": 40
+    }
+  ],
+  "bossRewards": [
+    {
+      "id": "gems",
+      "value": 50
+    },
+    {
+      "id": "summonScroll",
+      "value": 1
+    }
+  ],
+  "slotUnlocks": [
+    {
+      "slots": 4,
+      "stage": 8
+    },
+    {
+      "slots": 5,
+      "stage": 25
+    }
+  ],
+  "earlyStatStartPermille": 600,
+  "earlyStatStages": 10,
+  "enemyGradeGates": [
+    {
+      "belowStage": 5,
+      "maxGrade": "common"
+    },
+    {
+      "belowStage": 10,
+      "maxGrade": "rare"
+    },
+    {
+      "belowStage": 30,
+      "maxGrade": "epic"
+    }
+  ]
+}

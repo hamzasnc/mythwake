@@ -1,0 +1,58 @@
+# ---------------------------------------------------------------- Unity (generated, per machine)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+/[Bb]uild/
+/[Bb]uilds/
+/[Aa]ssets/[Ss]treamingAssets/aa/
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+sysinfo.txt
+crashlytics-build.properties
+mono_crash.*
+
+# Unity regenerates these from the asmdefs on every open
+/*.csproj
+/*.sln
+/*.slnx
+
+# ---------------------------------------------------------------- build output
+*.apk
+*.aab
+*.ipa
+*.unitypackage
+*.pdb
+*.mdb
+/Tools/**/bin/
+/Tools/**/obj/
+/Tools/**/TestResults/
+
+# ---------------------------------------------------------------- IDEs and tools
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.pidb
+*.booproj
+*.opendb
+*.VC.db
+*.swp
+__pycache__/
+*.pyc
+
+# ---------------------------------------------------------------- OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------------------------------------------------------------- secrets (never commit keys or keystores)
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+.env
+.env.*

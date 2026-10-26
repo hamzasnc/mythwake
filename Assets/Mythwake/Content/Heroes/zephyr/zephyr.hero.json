@@ -1,0 +1,154 @@
+{
+  "id": "zephyr",
+  "name": "Zephyr",
+  "title": "Sturmrufer",
+  "faction": "circleOfAether",
+  "race": "drakari",
+  "aspect": "somnara",
+  "role": "dps",
+  "row": "back",
+  "grade": "epic",
+  "body": "small",
+  "spineId": "zephyr",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1150,
+    "attack": 115,
+    "defense": 57,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "Sturmschild: Rueckschlag auf Angreifer (20 % ATK) fehlt noch."
+  ],
+  "normal": {
+    "id": "zephyr.normal",
+    "name": "Blitzschlag",
+    "description": "Blitz auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "zephyr.special",
+    "name": "Kettenblitz",
+    "description": "Springt über drei Gegner.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "enemyRandom",
+    "targetCount": 3,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1350
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      750
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "zephyr.special2",
+    "name": "Sturmschild",
+    "description": "Schild über 140 % ATK, Angreifer werden geschockt (20 % ATK).",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 14000
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 1400,
+        "shieldDurationMs": 6000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      750
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "zephyr.passive",
+    "name": "Lähmende Ladung",
+    "description": "Treffer verzögern Abklingzeiten um 0,4 s; 10 % Chance auf 1 s Betäubung.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "effect": {
+          "kind": "delayAction",
+          "multiplier": 400
+        }
+      },
+      {
+        "kind": "onHit",
+        "chance": 100,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "stun",
+            "durationMs": 1000,
+            "value": 0
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "zephyr.ultimate",
+    "name": "Kettengewitter",
+    "description": "Blitze springen über alle Gegner, 4 Sprünge.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3850
+      }
+    ],
+    "hits": 4,
+    "hitTimesMs": [
+      1050,
+      1317,
+      1583,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

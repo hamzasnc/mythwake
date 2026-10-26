@@ -1,0 +1,14 @@
+{
+    "name": "Mythwake.Presentation",
+    "rootNamespace": "Mythwake.Presentation",
+    "references": ["Mythwake.Core", "Mythwake.Content", "Mythwake.Game", "spine-unity", "spine-csharp"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

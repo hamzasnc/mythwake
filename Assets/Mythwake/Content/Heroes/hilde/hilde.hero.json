@@ -1,0 +1,140 @@
+{
+  "id": "hilde",
+  "name": "Hilde",
+  "title": "Hellebardenmaid",
+  "faction": "empireOfTheShatteredSky",
+  "race": "human",
+  "aspect": "envyra",
+  "role": "dps",
+  "row": "front",
+  "grade": "rare",
+  "body": "large",
+  "spineId": "hilde",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1000,
+    "attack": 100,
+    "defense": 50,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "hilde.normal",
+    "name": "Hellebarden-Schwung",
+    "description": "Schwung auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      230
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "hilde.special",
+    "name": "Sichelschwung",
+    "description": "Trifft die ganze vordere Reihe.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 980
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "hilde.special2",
+    "name": "Hinrichtungsschlag",
+    "description": "+150 % Schaden auf dieses Ziel.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "enemyBelowHp",
+      "hpThresholdPermille": 300,
+      "cooldownMs": 10000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1750
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "hilde.passive",
+    "name": "Beuterecht",
+    "description": "Treffer stehlen mit 15 % Chance einen Buff des Ziels.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "chance": 150,
+        "effect": {
+          "kind": "stealBuff",
+          "multiplier": 1
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "hilde.ultimate",
+    "name": "Legionssturm",
+    "description": "Wirbelsturm-Schnitt mit Lichtsichel, 3 Treffer.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3900
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1050,
+      1450,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

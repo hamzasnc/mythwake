@@ -1,0 +1,140 @@
+{
+  "id": "pyra",
+  "name": "Pyra",
+  "title": "Flammenzunge",
+  "faction": "circleOfAether",
+  "race": "human",
+  "aspect": "ravak",
+  "role": "dps",
+  "row": "back",
+  "grade": "rare",
+  "body": "normal",
+  "spineId": "pyra",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1000,
+    "attack": 100,
+    "defense": 50,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "pyra.normal",
+    "name": "Feuerball",
+    "description": "Feuerball auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "pyra.special",
+    "name": "Flammenwand",
+    "description": "Schaden über Zeit an der vorderen Reihe (5 s).",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "burn",
+          "durationMs": 5000,
+          "value": 196
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      750
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "pyra.special2",
+    "name": "Funkenregen",
+    "description": "Trifft die hintere Reihe.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "chanceOnAttack",
+      "chancePermille": 300
+    },
+    "target": "enemyBackRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 686
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      750
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "pyra.passive",
+    "name": "Hitzkopf",
+    "description": "Unter 50 % HP: Feuerbälle +30 % größer und stärker.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageBonus",
+        "value": 300,
+        "belowHp": 500
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "pyra.ultimate",
+    "name": "Phönixsturm",
+    "description": "Flammenvogel rast durch alle Gegner, 3 Treffer.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3100
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1050,
+      1450,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

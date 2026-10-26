@@ -1,0 +1,165 @@
+{
+  "id": "kai",
+  "name": "Kai",
+  "title": "Gezeitenbrecher",
+  "faction": "guildsOfTheHunt",
+  "race": "thalassari",
+  "aspect": "somnara",
+  "role": "tank",
+  "row": "front",
+  "grade": "epic",
+  "body": "large",
+  "spineId": "kai",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1955,
+    "attack": 80,
+    "defense": 103,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "kai.normal",
+    "name": "Harpunenstoß",
+    "description": "Stoß auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      230
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "kai.special",
+    "name": "Netzwurf",
+    "description": "Fesselt die vordere Reihe 1,5 s.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 900
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 1500,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "kai.special2",
+    "name": "Flutwall",
+    "description": "Schild für sich und die hintere Reihe über 160 % ATK.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 15000
+    },
+    "target": "allyBackRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 1600,
+        "shieldDurationMs": 6000
+      },
+      {
+        "kind": "shield",
+        "multiplier": 1600,
+        "shieldDurationMs": 6000,
+        "target": "self"
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "kai.passive",
+    "name": "Ebbe",
+    "description": "Wer ihn angreift, wird 2 s verlangsamt (–15 % Angriffstempo).",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHitTaken",
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "slow",
+            "durationMs": 2000,
+            "value": 150
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "kai.ultimate",
+    "name": "Mahlstrom",
+    "description": "Strudel zieht Gegner zusammen: Schaden und 3 s Verlangsamung.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3850
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "slow",
+          "durationMs": 3000,
+          "value": 200
+        }
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1050,
+      1450,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

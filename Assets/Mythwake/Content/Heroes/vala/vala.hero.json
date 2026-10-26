@@ -1,0 +1,148 @@
+{
+  "id": "vala",
+  "name": "Vala",
+  "title": "Wolfsruferin",
+  "faction": "tribeOfTheCrimsonFang",
+  "race": "human",
+  "aspect": "gorath",
+  "role": "dps",
+  "row": "back",
+  "grade": "rare",
+  "body": "normal",
+  "spineId": "vala",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1000,
+    "attack": 100,
+    "defense": 50,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "Der Wolf ist Teil von Valas Angriffen, keine eigene Einheit."
+  ],
+  "normal": {
+    "id": "vala.normal",
+    "name": "Hornpfeil",
+    "description": "Pfeil auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "vala.special",
+    "name": "Wolfsbiss",
+    "description": "Ihr Wolf greift das schwächste Ziel an, 2 Bisse.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 6000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1400
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      800,
+      920
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "vala.special2",
+    "name": "Jagdsignal",
+    "description": "Markiert ein Ziel: es erleidet 6 s lang +15 % Schaden.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 14000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "damageTakenUp",
+          "durationMs": 6000,
+          "value": 150
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "vala.passive",
+    "name": "Rudelhunger",
+    "description": "Vala und ihr Wolf regenerieren 1,5 % Max-HP pro s und werden alle 10 s 5 % stärker.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "regen",
+        "value": 15
+      },
+      {
+        "kind": "damageBonus",
+        "growth": 50
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "vala.ultimate",
+    "name": "Rudelruf",
+    "description": "Geisterwölfe richten das schwächste Ziel hin: doppelter Schaden gegen Ziele unter 30 % HP.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 5600,
+        "executeBonus": 1000,
+        "executeBelowHp": 300
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1050,
+      1450,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "id": "mawrek",
+  "name": "Mawrek",
+  "title": "der Verschlinger",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "veloria",
+  "role": "tank",
+  "row": "front",
+  "grade": "rare",
+  "body": "monster",
+  "spineId": "mawrek",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1700,
+    "attack": 70,
+    "defense": 90,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "Kettenzug (nach vorne ziehen) ist als Provokation abgebildet.",
+    "Verschlingen (Schaden zu 30 % als Heilung) ist als -30 % erlittener Schaden abgebildet."
+  ],
+  "normal": {
+    "id": "mawrek.normal",
+    "name": "Kettenschlag",
+    "description": "Schlag auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      230
+    ],
+    "durationMs": 900,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "mawrek.special",
+    "name": "Kettenzug",
+    "description": "Zieht einen Gegner der hinteren Reihe nach vorne (2 s).",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "enemyBack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1000
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "provoke",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      600
+    ],
+    "durationMs": 1300,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "mawrek.special2",
+    "name": "Verschlingen",
+    "description": "Absorbiert 3 s lang erlittenen Schaden zu 30 % als Heilung.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 14000
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "damageTakenDown",
+          "durationMs": 3000,
+          "value": 300
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      600
+    ],
+    "durationMs": 1300,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "mawrek.passive",
+    "name": "Kettenbann",
+    "description": "Gegner, die er getroffen hat, greifen 3 s lang bevorzugt ihn an.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "provoke",
+            "durationMs": 3000,
+            "value": 0
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "mawrek.ultimate",
+    "name": "Großer Hunger",
+    "description": "Verschlingt die vordere Reihe und heilt sich um 50 % des Schadens.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3900
+      },
+      {
+        "kind": "lifesteal",
+        "multiplier": 500
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      1050,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

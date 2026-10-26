@@ -1,0 +1,154 @@
+{
+  "id": "ignara",
+  "name": "Ignara",
+  "title": "Drachenlanze",
+  "faction": "tribeOfTheCrimsonFang",
+  "race": "drakari",
+  "aspect": "ravak",
+  "role": "dps",
+  "row": "front",
+  "grade": "epic",
+  "body": "large",
+  "spineId": "ignara",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1150,
+    "attack": 115,
+    "defense": 57,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "'Ziel und Gegner dahinter' ist als die zwei vordersten Gegner abgebildet."
+  ],
+  "normal": {
+    "id": "ignara.normal",
+    "name": "Lanzenstoß",
+    "description": "Stich auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      230
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "ignara.special",
+    "name": "Durchbohren",
+    "description": "Trifft das Ziel und den Gegner dahinter.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyFront",
+    "targetCount": 2,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1260
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "ignara.special2",
+    "name": "Flügelschlag",
+    "description": "Stößt die vordere Reihe zurück (verzögert deren nächsten Angriff um 1 s).",
+    "slot": "special2",
+    "trigger": {
+      "kind": "chanceOnAttack",
+      "chancePermille": 300
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 600
+      },
+      {
+        "kind": "delayAction",
+        "multiplier": 1000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "ignara.passive",
+    "name": "Drachenzorn",
+    "description": "Unter 50 % HP: +20 % Krit-Rate und Treffer setzen Brand.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "critRate",
+        "value": 200,
+        "belowHp": 500
+      },
+      {
+        "kind": "onHit",
+        "belowHp": 500,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "burn",
+            "durationMs": 2000,
+            "value": 150
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "ignara.ultimate",
+    "name": "Drachenodem",
+    "description": "Feuerstoß in Drachenform über die ganze Linie, 3 Treffer.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 4900
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1050,
+      1450,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

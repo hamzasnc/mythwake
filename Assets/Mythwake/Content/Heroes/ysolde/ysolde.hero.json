@@ -1,0 +1,153 @@
+{
+  "id": "ysolde",
+  "name": "Ysolde",
+  "title": "Puppenspielerin",
+  "faction": "theHollowed",
+  "race": "aetherial",
+  "aspect": "veloria",
+  "role": "debuffer",
+  "row": "back",
+  "grade": "rare",
+  "body": "normal",
+  "spineId": "ysolde",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1050,
+    "attack": 90,
+    "defense": 55,
+    "attackIntervalMs": 1700,
+    "critRate": 120,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "ysolde.normal",
+    "name": "Puppenschlag",
+    "description": "Marionette schlägt ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "ysolde.special",
+    "name": "Tanz der Fäden",
+    "description": "Kontrolliert einen Gegner 2 s (er greift nicht an).",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 10000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 900
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "stun",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "ysolde.special2",
+    "name": "Puppenschild",
+    "description": "Marionette fängt den nächsten großen Treffer ab.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 14000
+    },
+    "target": "allyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "evade",
+          "durationMs": 6000,
+          "value": 1
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "ysolde.passive",
+    "name": "Fadenzug",
+    "description": "Getroffene Gegner wählen 2 s lang ein zufälliges Ziel.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "confuse",
+            "durationMs": 2000,
+            "value": 0
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "ysolde.ultimate",
+    "name": "Großes Finale",
+    "description": "Marionette wächst und schlägt alle Gegner, 2 Treffer.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3100
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      1050,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

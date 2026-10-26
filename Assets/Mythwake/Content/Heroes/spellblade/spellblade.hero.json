@@ -1,0 +1,153 @@
+{
+  "id": "spellblade",
+  "name": "Spellblade",
+  "title": "Glut der Sichel",
+  "faction": "guildsOfTheHunt",
+  "race": "human",
+  "aspect": "ravak",
+  "role": "dps",
+  "row": "front",
+  "grade": "epic",
+  "body": "normal",
+  "spineId": "spellblade",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1150,
+    "attack": 115,
+    "defense": 57,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "Rig hat noch keine skill/ultimate-Animation; Timing nutzt Standardwerte."
+  ],
+  "normal": {
+    "id": "spellblade.normal",
+    "name": "Klingenschlag",
+    "description": "Großschwert-Hieb auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      380
+    ],
+    "durationMs": 1000,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "spellblade.special",
+    "name": "Glutsprung",
+    "description": "Springt auf das schwächste Ziel, setzt 3 s Brand (12 % ATK pro s).",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1800
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "burn",
+          "durationMs": 3000,
+          "value": 120
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "spellblade.special2",
+    "name": "Klingenwirbel",
+    "description": "Trifft die vordere Reihe.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "chanceOnAttack",
+      "chancePermille": 300
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 833
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "spellblade.passive",
+    "name": "Glutklinge",
+    "description": "Unter 50 % HP setzen alle Treffer Brand.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "belowHp": 500,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "burn",
+            "durationMs": 2000,
+            "value": 120
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "spellblade.ultimate",
+    "name": "Glutsichel",
+    "description": "Lodernder Bogen über die ganze Linie, 3 Treffer.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 4900
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1300,
+      1420,
+      1540
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

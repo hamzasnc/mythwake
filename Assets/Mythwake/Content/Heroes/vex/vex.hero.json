@@ -1,0 +1,143 @@
+{
+  "id": "vex",
+  "name": "Vex",
+  "title": "Splitterklinge",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "gorath",
+  "role": "dps",
+  "row": "front",
+  "grade": "epic",
+  "body": "large",
+  "spineId": "vex",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1150,
+    "attack": 115,
+    "defense": 57,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "vex.normal",
+    "name": "Kristallhieb",
+    "description": "Schwerer Hieb auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      230
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "vex.special",
+    "name": "Splitterstoß",
+    "description": "Kristalle schießen in die vordere Reihe.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1260
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "vex.special2",
+    "name": "Verzweiflungsschlag",
+    "description": "Schaden steigt mit fehlenden HP (bis +100 %).",
+    "slot": "special2",
+    "trigger": {
+      "kind": "selfBelowHp",
+      "hpThresholdPermille": 500,
+      "cooldownMs": 10000,
+      "oncePerBattle": false
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1800,
+        "missingHpBonus": 1000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      480
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "vex.passive",
+    "name": "Zerbrochener Eid",
+    "description": "15 % Lebensraub; alle 10 s Kampfdauer +4 % Schaden (max. +24 %).",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "lifesteal",
+        "value": 150
+      },
+      {
+        "kind": "damageBonus",
+        "growth": 40,
+        "cap": 240
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "vex.ultimate",
+    "name": "Splitterbruch",
+    "description": "Kristalle explodieren aus dem Boden, 3 Treffer.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 4900
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1050,
+      1450,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

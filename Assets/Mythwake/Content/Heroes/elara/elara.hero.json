@@ -1,0 +1,147 @@
+{
+  "id": "elara",
+  "name": "Elara",
+  "title": "Hüterin der Gezeiten",
+  "faction": "orderOfTheVeil",
+  "race": "thalassari",
+  "aspect": "gorath",
+  "role": "support",
+  "row": "back",
+  "grade": "legendary",
+  "body": "normal",
+  "spineId": "elara",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1495,
+    "attack": 110,
+    "defense": 78,
+    "attackIntervalMs": 1700,
+    "critRate": 100,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "elara.normal",
+    "name": "Wassertropfen",
+    "description": "Schaden an einem Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "elara.special",
+    "name": "Gezeitenruhe",
+    "description": "Heilt den Verbündeten mit den wenigsten HP um 260 % ATK.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 6000
+    },
+    "target": "allyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "heal",
+        "multiplier": 2600
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "elara.special2",
+    "name": "Perlenschild",
+    "description": "Schild für die vordere Reihe über 180 % ATK, 6 s.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "battleStart",
+      "cooldownMs": 14000
+    },
+    "target": "allyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 1800,
+        "shieldDurationMs": 6000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "elara.passive",
+    "name": "Gorath-Gezeiten",
+    "description": "Jede Heilung von Elara wird pro 10 s Kampfdauer um 4 % stärker (max. +40 %).",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "healingBonus",
+        "growth": 40,
+        "cap": 400
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "elara.ultimate",
+    "name": "Ruf der Himmelsschildkröte",
+    "description": "Heilt das ganze Team um 420 % ATK, entfernt 2 Debuffs pro Verbündetem und gibt 4 s lang 20 % Schadensreduktion.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "allyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "heal",
+        "multiplier": 4200
+      },
+      {
+        "kind": "cleanse",
+        "multiplier": 2
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "damageTakenDown",
+          "durationMs": 4000,
+          "value": 200
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      1300
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

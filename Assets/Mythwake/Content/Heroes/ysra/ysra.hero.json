@@ -1,0 +1,153 @@
+{
+  "id": "ysra",
+  "name": "Ysra",
+  "title": "Blutsängerin",
+  "faction": "tribeOfTheCrimsonFang",
+  "race": "drakari",
+  "aspect": "ravak",
+  "role": "support",
+  "row": "back",
+  "grade": "epic",
+  "body": "normal",
+  "spineId": "ysra",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1322,
+    "attack": 98,
+    "defense": 69,
+    "attackIntervalMs": 1700,
+    "critRate": 100,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "ysra.normal",
+    "name": "Schallschlag",
+    "description": "Schallwelle auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "ysra.special",
+    "name": "Kriegstakt",
+    "description": "Vordere Reihe: +20 % Angriffstempo für 6 s.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "allyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "attackSpeedUp",
+          "durationMs": 6000,
+          "value": 200
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      550
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "ysra.special2",
+    "name": "Heilgesang",
+    "description": "Heilt den Verbündeten mit den wenigsten HP um 200 % ATK.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 12000
+    },
+    "target": "allyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "heal",
+        "multiplier": 2000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      550
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "ysra.passive",
+    "name": "Blutrausch-Takt",
+    "description": "Verbündete unter 50 % HP erhalten +15 % Angriff und +10 % Angriffstempo.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageBonus",
+        "team": true,
+        "value": 150,
+        "belowHp": 500
+      },
+      {
+        "kind": "attackSpeed",
+        "team": true,
+        "value": 100,
+        "belowHp": 500
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "ysra.ultimate",
+    "name": "Lied der Ahnen",
+    "description": "Team: +25 % Angriff für 8 s und Heilung um 250 % ATK.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "allyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "attackUp",
+          "durationMs": 8000,
+          "value": 250
+        }
+      },
+      {
+        "kind": "heal",
+        "multiplier": 2500
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      1300
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "id": "garrick",
+  "name": "Garrick",
+  "title": "Bolzensturm",
+  "faction": "empireOfTheShatteredSky",
+  "race": "human",
+  "aspect": "somnara",
+  "role": "dps",
+  "row": "back",
+  "grade": "common",
+  "body": "normal",
+  "spineId": "garrick",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 850,
+    "attack": 85,
+    "defense": 42,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "garrick.normal",
+    "name": "Bolzenschuss",
+    "description": "Bolzen auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 600
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "garrick.special",
+    "name": "Durchschlagsbolzen",
+    "description": "Trifft zwei Gegner in einer Reihe.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyFront",
+    "targetCount": 2,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 770
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      750
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "garrick.special2",
+    "name": "Fußfalle",
+    "description": "Verlangsamt die vordere Reihe 3 s.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 15000
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "slow",
+          "durationMs": 3000,
+          "value": 200
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      750
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "garrick.passive",
+    "name": "Schwere Bolzen",
+    "description": "Treffer verzögern die Abklingzeiten des Ziels um 0,5 s.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "effect": {
+          "kind": "delayAction",
+          "multiplier": 500
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "garrick.ultimate",
+    "name": "Bolzenhagel",
+    "description": "Salve auf alle Gegner.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 2500
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1050,
+      1450,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

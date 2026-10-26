@@ -1,0 +1,10 @@
+{
+  "currencies": [
+    { "id": "gold", "value": 1000 },
+    { "id": "heroExp", "value": 500 },
+    { "id": "gems", "value": 600 },
+    { "id": "summonScroll", "value": 10 }
+  ],
+  "heroes": ["dorn", "tobias", "maren"],
+  "formationSlots": 3
+}

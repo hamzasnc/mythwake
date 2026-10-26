@@ -1,0 +1,150 @@
+{
+  "id": "liriel",
+  "name": "Liriel",
+  "title": "Schleierweberin",
+  "faction": "orderOfTheVeil",
+  "race": "veyr",
+  "aspect": "veloria",
+  "role": "debuffer",
+  "row": "back",
+  "grade": "epic",
+  "body": "normal",
+  "spineId": "liriel",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1208,
+    "attack": 103,
+    "defense": 63,
+    "attackIntervalMs": 1700,
+    "critRate": 120,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "liriel.normal",
+    "name": "Spiegelstrahl",
+    "description": "Lichtstrahl auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "liriel.special",
+    "name": "Verführerischer Schleier",
+    "description": "Bezaubert den Gegner mit dem höchsten Schaden 2 s: er greift seine eigenen Verbündeten an.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 10000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 900
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "charm",
+          "durationMs": 2000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "liriel.special2",
+    "name": "Spiegelsplitter",
+    "description": "Schaden an der hinteren Reihe.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "chanceOnAttack",
+      "chancePermille": 300
+    },
+    "target": "enemyBackRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 833
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "liriel.passive",
+    "name": "Trugbild",
+    "description": "20 % Chance, einem Angriff durch ein Abbild auszuweichen; danach erscheint kurz ein Spiegelbild.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "dodge",
+        "value": 200
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "liriel.ultimate",
+    "name": "Saal der Spiegel",
+    "description": "Schaden an allen Gegnern und 3 s Verwirrung: Gegner greifen zufällige Ziele an, auch eigene Verbündete.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3850
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "confuse",
+          "durationMs": 3000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      1050,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

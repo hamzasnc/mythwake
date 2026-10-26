@@ -1,0 +1,147 @@
+{
+  "id": "aldric",
+  "name": "Aldric",
+  "title": "Ägis des Imperiums",
+  "faction": "empireOfTheShatteredSky",
+  "race": "human",
+  "aspect": "gorath",
+  "role": "tank",
+  "row": "front",
+  "grade": "epic",
+  "body": "large",
+  "spineId": "aldric",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1955,
+    "attack": 80,
+    "defense": 103,
+    "attackIntervalMs": 1500,
+    "critRate": 80,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "aldric.normal",
+    "name": "Schildstoß",
+    "description": "Stoß auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      230
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "aldric.special",
+    "name": "Phalanx",
+    "description": "Schild für die vordere Reihe über 180 % ATK, 6 s.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 9000
+    },
+    "target": "allyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 1800,
+        "shieldDurationMs": 6000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      550
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "aldric.special2",
+    "name": "Herausforderung",
+    "description": "Provoziert die zwei stärksten Gegner 3 s.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 14000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 2,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "provoke",
+          "durationMs": 3000,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      550
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "aldric.passive",
+    "name": "Unermüdliche Ägis",
+    "description": "Je 10 s Kampfdauer –3 % erlittener Schaden (max. –24 %) und 0,5 % Regeneration pro s.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageReduction",
+        "growth": 30,
+        "cap": 240
+      },
+      {
+        "kind": "regen",
+        "value": 5
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "aldric.ultimate",
+    "name": "Bollwerk des Imperiums",
+    "description": "Goldene Kuppel: Team erleidet 5 s lang –35 % Schaden.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "allyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "damageTakenDown",
+          "durationMs": 5000,
+          "value": 350
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      1300
+    ],
+    "durationMs": 1950,
+    "animation": "ultimate"
+  }
+}

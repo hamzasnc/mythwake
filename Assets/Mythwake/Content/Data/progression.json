@@ -1,0 +1,26 @@
+{
+  "levelExpBase": 40,
+  "levelExpPerLevel": 0,
+  "levelExpQuadratic": 60,
+  "levelGoldBase": 60,
+  "levelGoldPerLevel": 10,
+  "levelGoldQuadratic": 40,
+  "levelCapBase": 30,
+  "levelCapPerStar": 15,
+  "maxStars": [
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "starShardCost": [
+    10,
+    20,
+    40,
+    60,
+    100,
+    150
+  ],
+  "duplicateShards": 10
+}

@@ -1,0 +1,14 @@
+{
+    "name": "Mythwake.Editor",
+    "rootNamespace": "Mythwake.Editor",
+    "references": ["Mythwake.Core", "Mythwake.Content", "Mythwake.Game", "Mythwake.Presentation", "Mythwake.UI", "spine-unity", "spine-csharp", "spine-unity-editor", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

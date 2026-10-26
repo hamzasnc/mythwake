@@ -1,0 +1,42 @@
+{
+  "id": "seraphine",
+  "name": "Äbtissin Seraphine",
+  "title": "Stimme des Schleiers",
+  "faction": "orderOfTheVeil",
+  "race": "human",
+  "aspect": "veloria",
+  "role": "heroLeader",
+  "row": "back",
+  "grade": "epic",
+  "body": "normal",
+  "spineId": "seraphine",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1150,
+    "attack": 92,
+    "defense": 57,
+    "attackIntervalMs": 1700,
+    "critRate": 100,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "Hero Leader: kaempft nicht. Nur der Leader-Segen (+8 % Heilkraft) ist aktiv.",
+    "Debuff-Widerstand, 'Stimme der Wahrheit' und 'Schleiersegen' brauchen Leader-Faehigkeiten im Kampf (noch nicht gebaut)."
+  ],
+  "passive": {
+    "id": "seraphine.passive",
+    "name": "Leader-Segen",
+    "description": "Ganze Formation: +8 % Heilkraft und +8 % Debuff-Widerstand (steigt mit Level, Seltenheit und Ausrüstung).",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "leaderAura",
+        "healBonus": 80
+      }
+    ]
+  }
+}

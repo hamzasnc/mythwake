@@ -1,0 +1,154 @@
+{
+  "id": "veyl",
+  "name": "Veyl",
+  "title": "Erbe des Zerbrochenen Himmels",
+  "faction": "empireOfTheShatteredSky",
+  "race": "human",
+  "aspect": "veloria",
+  "role": "support",
+  "row": "back",
+  "grade": "legendary",
+  "body": "normal",
+  "spineId": "veyl",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1495,
+    "attack": 110,
+    "defense": 78,
+    "attackIntervalMs": 1700,
+    "critRate": 100,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "'Kaiserlicher Befehl' (Konstrukt, das Angriffe auf sich zieht) ist als -25 % erlittener Schaden fuers Team abgebildet."
+  ],
+  "normal": {
+    "id": "veyl.normal",
+    "name": "Konstrukt-Strahl",
+    "description": "Sein Konstrukt feuert auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "veyl.special",
+    "name": "Kaiserlicher Befehl",
+    "description": "6 s lang müssen Gegner zuerst das Konstrukt angreifen (Konstrukt hat 30 % von Veyls Max-HP).",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 10000
+    },
+    "target": "allyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "damageTakenDown",
+          "durationMs": 6000,
+          "value": 250
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      550
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "veyl.special2",
+    "name": "Kerntaktung",
+    "description": "Der Verbündete mit der höchsten Energie erhält +25 Energie.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 12000
+    },
+    "target": "allyHighestEnergy",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "gainEnergy",
+        "multiplier": 250
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      550
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "veyl.passive",
+    "name": "Kaiserliche Ordnung",
+    "description": "Kampfstart: vordere Reihe erhält Schild über 160 % ATK.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "battleStart",
+        "target": "allyFrontRow",
+        "effect": {
+          "kind": "shield",
+          "multiplier": 1600,
+          "shieldDurationMs": 6000
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "veyl.ultimate",
+    "name": "Erwachen des Wächters",
+    "description": "Großes Guardian-Konstrukt erscheint und zermalmt alle Gegner; Team +15 % Verteidigung für 8 s.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 4950
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "defenseUp",
+          "durationMs": 8000,
+          "value": 150
+        },
+        "target": "allyAll"
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      1050,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

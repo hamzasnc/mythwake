@@ -1,0 +1,160 @@
+{
+  "id": "kaelen",
+  "name": "Kaelen",
+  "title": "Flammenzorn",
+  "faction": "tribeOfTheCrimsonFang",
+  "race": "drakari",
+  "aspect": "ravak",
+  "role": "dps",
+  "row": "front",
+  "grade": "legendary",
+  "body": "normal",
+  "spineId": "kaelen",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1300,
+    "attack": 130,
+    "defense": 65,
+    "attackIntervalMs": 1500,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "kaelen.normal",
+    "name": "Doppelschnitt",
+    "description": "Zwei Säbelhiebe auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1000
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      230,
+      430
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "kaelen.special",
+    "name": "Fangsprung",
+    "description": "Springt auf den Gegner mit den wenigsten HP, 2 Treffer, setzt 3 s Brand (15 % ATK pro s).",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 2300
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "burn",
+          "durationMs": 3000,
+          "value": 150
+        }
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      600,
+      720
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "kaelen.special2",
+    "name": "Glutwirbel",
+    "description": "Flächenschaden um sich.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "everyNthAttack",
+      "everyN": 4
+    },
+    "target": "enemyCircle",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1050
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      600
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "kaelen.passive",
+    "name": "Brennender Zorn",
+    "description": "Unter 50 % HP: +30 % Schaden und +15 % Angriffstempo.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageBonus",
+        "value": 300,
+        "belowHp": 500
+      },
+      {
+        "kind": "attackSpeed",
+        "value": 150,
+        "belowHp": 500
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "kaelen.ultimate",
+    "name": "Inferno der Crimson Fang",
+    "description": "Flammendrache aus seinen Klingen verbrennt die vordere Reihe: 4 Treffer, dazu 4 s Brand.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyFrontRow",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 6300
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "burn",
+          "durationMs": 4000,
+          "value": 150
+        }
+      }
+    ],
+    "hits": 4,
+    "hitTimesMs": [
+      1050,
+      1317,
+      1583,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

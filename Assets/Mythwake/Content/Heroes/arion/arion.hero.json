@@ -1,0 +1,154 @@
+{
+  "id": "arion",
+  "name": "Arion",
+  "title": "der Zersplitterte",
+  "faction": "circleOfAether",
+  "race": "aetherial",
+  "aspect": "envyra",
+  "role": "dps",
+  "row": "back",
+  "grade": "legendary",
+  "body": "normal",
+  "spineId": "arion",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1300,
+    "attack": 130,
+    "defense": 65,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [
+    "Echo-Kopie ist als +60 % Angriffstempo fuer 6 s abgebildet.",
+    "Phasenverschiebung: Teleport fehlt, nur 1,5 s unverwundbar.",
+    "'Zersplitterter Geist' kopiert keinen Special Skill, sondern feuert alle 15 s 138 % ATK aufs schwaechste Ziel."
+  ],
+  "normal": {
+    "id": "arion.normal",
+    "name": "Aether-Splitter",
+    "description": "Splitter auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "arion.special",
+    "name": "Spiegelrealität",
+    "description": "Eine Echo-Kopie greift 6 s lang mit an (je 60 % seines Normal Skills).",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "attackSpeedUp",
+          "durationMs": 6000,
+          "value": 600
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "arion.special2",
+    "name": "Phasenverschiebung",
+    "description": "Teleportiert den Verbündeten in die hintere Reihe und macht ihn 1,5 s unverwundbar.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "allyBelowHp",
+      "hpThresholdPermille": 300,
+      "cooldownMs": 18000,
+      "oncePerBattle": false
+    },
+    "target": "allyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "immune",
+          "durationMs": 1500,
+          "value": 0
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "arion.passive",
+    "name": "Zersplitterter Geist",
+    "description": "Kopiert alle 15 s den letzten Special Skill eines Gegners (60 % Stärke).",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "periodic",
+        "intervalMs": 15000,
+        "target": "enemyLowestHp",
+        "effect": {
+          "kind": "damage",
+          "multiplier": 1380
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "arion.ultimate",
+    "name": "Konvergenz der Welten",
+    "description": "Alle Echos feuern gleichzeitig auf alle Gegner, 3 Wellen.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 4950
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1050,
+      1450,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

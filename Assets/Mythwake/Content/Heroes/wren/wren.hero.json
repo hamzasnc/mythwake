@@ -1,0 +1,145 @@
+{
+  "id": "wren",
+  "name": "Wren",
+  "title": "das Halbhohle Kind",
+  "faction": "theHollowed",
+  "race": "hollowed",
+  "aspect": "gorath",
+  "role": "dps",
+  "row": "back",
+  "grade": "common",
+  "body": "small",
+  "spineId": "wren",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 850,
+    "attack": 85,
+    "defense": 42,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "wren.normal",
+    "name": "Schleuderstein",
+    "description": "Stein auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 600
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      410
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "wren.special",
+    "name": "Kristallschuss",
+    "description": "Trifft den schwächsten Gegner.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 8000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1100
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "wren.special2",
+    "name": "Verstecken",
+    "description": "Weicht dem nächsten Angriff aus.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 15000
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "evade",
+          "durationMs": 15000,
+          "value": 1
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      800
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "wren.passive",
+    "name": "Wachsende Kristalle",
+    "description": "Alle 8 s +5 % Angriff (max. +30 %) und 0,5 % Regeneration pro s.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "damageBonus",
+        "growth": 50,
+        "growthIntervalMs": 8000,
+        "cap": 300
+      },
+      {
+        "kind": "regen",
+        "value": 5
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "wren.ultimate",
+    "name": "Fragmentausbruch",
+    "description": "Ihr Arm entlädt einen Kristallregen.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 2500
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      1050,
+      1450,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

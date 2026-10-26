@@ -1,0 +1,14 @@
+{
+    "name": "Mythwake.UI",
+    "rootNamespace": "Mythwake.UI",
+    "references": ["Mythwake.Core", "Mythwake.Content", "Mythwake.Game", "Mythwake.Presentation"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

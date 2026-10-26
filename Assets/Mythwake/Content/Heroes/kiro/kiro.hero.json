@@ -1,0 +1,151 @@
+{
+  "id": "kiro",
+  "name": "Kiro",
+  "title": "Riftschritt",
+  "faction": "circleOfAether",
+  "race": "aetherial",
+  "aspect": "veloria",
+  "role": "dps",
+  "row": "back",
+  "grade": "rare",
+  "body": "small",
+  "spineId": "kiro",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1000,
+    "attack": 100,
+    "defense": 50,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "kiro.normal",
+    "name": "Phasenstich",
+    "description": "Stich auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 700
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      230
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "kiro.special",
+    "name": "Riftsprung",
+    "description": "Teleportiert hinter den schwächsten Gegner, 2 Stiche.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1400
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      600,
+      720
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "kiro.special2",
+    "name": "Doppelgänger",
+    "description": "Ein Abbild lenkt 2 Angriffe ab.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 15000
+    },
+    "target": "self",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "evade",
+          "durationMs": 6000,
+          "value": 2
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      600
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "kiro.passive",
+    "name": "Verwirrung",
+    "description": "Treffer lassen Ziele mit 15 % Chance 1 s das falsche Ziel angreifen.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "chance": 150,
+        "effect": {
+          "kind": "applyStatus",
+          "status": {
+            "kind": "confuse",
+            "durationMs": 1000,
+            "value": 0
+          }
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "kiro.ultimate",
+    "name": "Tausend Türen",
+    "description": "Springt durch Portale und trifft alle Gegner, 6 Treffer.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyAll",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 3100
+      }
+    ],
+    "hits": 6,
+    "hitTimesMs": [
+      1050,
+      1210,
+      1370,
+      1530,
+      1690,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

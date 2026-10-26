@@ -1,0 +1,153 @@
+{
+  "id": "cassian",
+  "name": "Cassian",
+  "title": "der Inquisitor",
+  "faction": "empireOfTheShatteredSky",
+  "race": "human",
+  "aspect": "envyra",
+  "role": "dps",
+  "row": "back",
+  "grade": "epic",
+  "body": "normal",
+  "spineId": "cassian",
+  "growthPermille": 80,
+  "baseStats": {
+    "hp": 1150,
+    "attack": 115,
+    "defense": 57,
+    "attackIntervalMs": 1700,
+    "critRate": 150,
+    "critDamage": 500
+  },
+  "designNotes": [],
+  "normal": {
+    "id": "cassian.normal",
+    "name": "Doppelstich",
+    "description": "Zwei Dolchstiche auf ein Ziel.",
+    "slot": "normal",
+    "trigger": {
+      "kind": "attackInterval"
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      }
+    ],
+    "hits": 2,
+    "hitTimesMs": [
+      230,
+      430
+    ],
+    "durationMs": 950,
+    "animation": "attack"
+  },
+  "special": {
+    "id": "cassian.special",
+    "name": "Schattenschritt",
+    "description": "Springt zum Magier mit dem höchsten Schaden und sticht 3-mal.",
+    "slot": "special",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 7000
+    },
+    "target": "enemyHighestAttack",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 1800
+      }
+    ],
+    "hits": 3,
+    "hitTimesMs": [
+      600,
+      720,
+      840
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "cassian.special2",
+    "name": "Giftklinge",
+    "description": "Gift: 5 s lang 12 % ATK pro s.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "chanceOnAttack",
+      "chancePermille": 350
+    },
+    "target": "enemyFront",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 850
+      },
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "poison",
+          "durationMs": 5000,
+          "value": 120
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      600
+    ],
+    "durationMs": 1400,
+    "animation": "skill"
+  },
+  "passive": {
+    "id": "cassian.passive",
+    "name": "Verhör",
+    "description": "Kritische Treffer stehlen einen Buff des Ziels.",
+    "slot": "passive",
+    "trigger": {
+      "kind": "passive"
+    },
+    "target": "self",
+    "passives": [
+      {
+        "kind": "onHit",
+        "requireCrit": true,
+        "effect": {
+          "kind": "stealBuff",
+          "multiplier": 1
+        }
+      }
+    ]
+  },
+  "ultimate": {
+    "id": "cassian.ultimate",
+    "name": "Urteil des Imperiums",
+    "description": "Exekution des schwächsten Gegners: +100 % Schaden gegen Ziele unter 25 % HP.",
+    "slot": "ultimate",
+    "trigger": {
+      "kind": "energy"
+    },
+    "target": "enemyLowestHp",
+    "targetCount": 1,
+    "effects": [
+      {
+        "kind": "damage",
+        "multiplier": 7000,
+        "executeBonus": 1000,
+        "executeBelowHp": 250
+      }
+    ],
+    "hits": 4,
+    "hitTimesMs": [
+      1050,
+      1317,
+      1583,
+      1850
+    ],
+    "durationMs": 2500,
+    "animation": "ultimate"
+  }
+}

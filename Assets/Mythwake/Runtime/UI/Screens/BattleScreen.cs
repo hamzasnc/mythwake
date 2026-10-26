@@ -1,0 +1,254 @@
+using System.Collections.Generic;
+using System.Linq;
+using Mythwake.Core.Combat;
+using Mythwake.Core.Content;
+using Mythwake.Core.Meta;
+using Mythwake.Game;
+using Mythwake.Presentation;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace Mythwake.UI
+{
+    /// <summary>Battle HUD over the <see cref="BattleView"/>: ultimate portraits, Auto and speed toggles, floating numbers, cut-ins, result.</summary>
+    public sealed class BattleScreen : UiScreen
+    {
+        private const string AutoPref = "battle.auto";
+        private const string SpeedPref = "battle.speed";
+
+        private readonly BattleSetup _setup;
+        private readonly int _stage;
+        private readonly List<UltButton> _ults = new List<UltButton>();
+        private readonly List<Floating> _floating = new List<Floating>();
+        private VisualElement _floatLayer;
+        private VisualElement _cutIn;
+        private Button _auto;
+        private Button _speed;
+        private bool _done;
+
+        private sealed class UltButton
+        {
+            public int Slot;
+            public VisualElement Root;
+            public VisualElement Energy;
+            public VisualElement Hp;
+        }
+
+        private sealed class Floating
+        {
+            public Label Label;
+            public Vector3 World;
+            public float Age;
+            public float Life;
+            public float Drift;
+        }
+
+        public BattleScreen(BattleSetup setup, int stage)
+        {
+            _setup = setup;
+            _stage = stage;
+        }
+
+        private BattleView Battle => Ui.Battle;
+
+        protected override void Build(VisualElement root)
+        {
+            root.pickingMode = PickingMode.Ignore;
+            _floatLayer = UiKit.Box("screen").Into(root);
+            _floatLayer.pickingMode = PickingMode.Ignore;
+
+            var top = UiKit.Box("hud-top").Into(root);
+            var (_, index, number) = Campaign.Locate(Ui.Content, _stage);
+            UiKit.Text(Loc.T("home.stage", number, index), "title").Into(top);
+            var toggles = UiKit.Box("row").Into(top);
+            _speed = UiKit.Btn("", ToggleSpeed, "btn--secondary", "btn--small").Into(toggles);
+            _auto = UiKit.Btn("", ToggleAuto, "btn--secondary", "btn--small").Into(toggles);
+
+            UiKit.Box("hud-bottom").Into(root);
+        }
+
+        public override void OnShow()
+        {
+            var auto = PlayerPrefs.GetInt(AutoPref, 1) == 1;
+            Battle.Speed = PlayerPrefs.GetFloat(SpeedPref, 1f);
+            Battle.FloatingText += OnFloatingText;
+            Battle.UltimateCutIn += OnCutIn;
+            Battle.Finished += OnFinished;
+            Battle.Begin(Ui.Catalog, _setup, auto);
+            BuildUltButtons();
+            UpdateToggles();
+        }
+
+        public override void OnHide()
+        {
+            Battle.FloatingText -= OnFloatingText;
+            Battle.UltimateCutIn -= OnCutIn;
+            Battle.Finished -= OnFinished;
+            Battle.Clear();
+        }
+
+        private void BuildUltButtons()
+        {
+            var bottom = Root.Q(className: "hud-bottom");
+            bottom.Clear();
+            _ults.Clear();
+            foreach (var unit in _setup.Allies.OrderBy(u => u.Slot))
+            {
+                var b = new UltButton { Slot = unit.Slot };
+                b.Root = UiKit.HeroCard(Ui.Catalog, unit.Hero, Ui.State.FindHero(unit.Hero.Id)).With("ult-button");
+                b.Root.RemoveFromClassList("hero-card");
+                var hpBar = UiKit.Box("ult-button__hp").Into(b.Root);
+                b.Hp = UiKit.Box("ult-button__hp-fill").Into(hpBar);
+                var energyBar = UiKit.Box("ult-button__energy").Into(b.Root);
+                b.Energy = UiKit.Box("ult-button__energy-fill").Into(energyBar);
+                var slot = unit.Slot;
+                b.Root.RegisterCallback<ClickEvent>(_ => Battle.RequestUltimate(slot));
+                bottom.Add(b.Root);
+                _ults.Add(b);
+            }
+        }
+
+        private void UpdateToggles()
+        {
+            _auto.text = Battle.AutoUltimates ? Loc.T("battle.auto") : Loc.T("battle.manual");
+            _auto.EnableInClassList("btn--secondary", !Battle.AutoUltimates);
+            _speed.text = Loc.T("battle.speed", Battle.Speed.ToString("0"));
+        }
+
+        private void ToggleAuto()
+        {
+            Battle.SetAutoUltimates(!Battle.AutoUltimates);
+            PlayerPrefs.SetInt(AutoPref, Battle.AutoUltimates ? 1 : 0);
+            UpdateToggles();
+        }
+
+        private void ToggleSpeed()
+        {
+            Battle.Speed = Battle.Speed >= 2f ? 1f : 2f;
+            PlayerPrefs.SetFloat(SpeedPref, Battle.Speed);
+            UpdateToggles();
+        }
+
+        public override void Tick(float dt)
+        {
+            foreach (var b in _ults)
+            {
+                var unit = Battle.Units.FirstOrDefault(u => u != null && u.Side == Side.Allies && u.Slot == b.Slot);
+                if (unit == null)
+                    continue;
+                b.Energy.style.width = Length.Percent(100f * unit.Energy / BattleSimulator.MaxEnergy);
+                b.Hp.style.width = Length.Percent(100f * unit.Hp / unit.MaxHp);
+                b.Root.EnableInClassList("ult-button--ready", !unit.Dead && unit.Energy >= BattleSimulator.MaxEnergy);
+                b.Root.EnableInClassList("ult-button--dead", unit.Dead);
+            }
+
+            var cam = Camera.main;
+            for (var i = _floating.Count - 1; i >= 0; i--)
+            {
+                var f = _floating[i];
+                f.Age += dt;
+                var t = f.Age / f.Life;
+                if (t >= 1f || cam == null || Root.panel == null)
+                {
+                    f.Label.RemoveFromHierarchy();
+                    _floating.RemoveAt(i);
+                    continue;
+                }
+                var world = f.World + new Vector3(f.Drift * t, 0.9f * t, 0f);
+                var p = RuntimePanelUtils.CameraTransformWorldToPanel(Root.panel, world, cam);
+                f.Label.style.left = p.x;
+                f.Label.style.top = p.y;
+                f.Label.style.opacity = t < 0.7f ? 1f : 1f - (t - 0.7f) / 0.3f;
+                var pop = t < 0.12f ? 1f + (0.12f - t) * 3f : 1f;
+                f.Label.style.scale = new Scale(new Vector3(pop, pop, 1f));
+            }
+        }
+
+        private void OnFloatingText(UnitView unit, long value, FloatingTextKind kind)
+        {
+            var text = kind switch
+            {
+                FloatingTextKind.Miss => Loc.T("battle.miss"),
+                FloatingTextKind.Heal => "+" + UiKit.Short(value),
+                FloatingTextKind.Shield => "◈" + UiKit.Short(value),
+                _ => UiKit.Short(value)
+            };
+            var label = UiKit.Text(text, "floating", "floating--" + UiKit.Lower(kind)).Into(_floatLayer);
+            label.pickingMode = PickingMode.Ignore;
+            _floating.Add(new Floating
+            {
+                Label = label,
+                World = unit.HeadPosition + new Vector3(Random.Range(-0.25f, 0.25f), Random.Range(-0.1f, 0.2f), 0f),
+                Life = kind == FloatingTextKind.Crit ? 1.1f : 0.85f,
+                Drift = Random.Range(-0.3f, 0.3f)
+            });
+        }
+
+        private void OnCutIn(UnitView unit, string heroId)
+        {
+            _cutIn?.RemoveFromHierarchy();
+            var hero = Ui.Content.Hero(heroId);
+            _cutIn = UiKit.Box("cutin").Into(Root);
+            var assets = Ui.Catalog.Hero(heroId);
+            var art = assets?.cutIn != null ? assets.cutIn : assets?.portrait;
+            if (art != null)
+                UiKit.Box("cutin__image").Into(_cutIn).style.backgroundImage = new StyleBackground(art);
+            var text = UiKit.Box("cutin__text").Into(_cutIn);
+            UiKit.Text(hero.Name, "cutin__name").Into(text);
+            UiKit.Text(hero.Ultimate?.Name ?? "", "cutin__skill").Into(text);
+            _cutIn.style.translate = new Translate(Length.Percent(-100), 0);
+            var cut = _cutIn;
+            cut.schedule.Execute(() => cut.style.translate = new Translate(0, 0)).StartingIn(10);
+            cut.schedule.Execute(() =>
+            {
+                cut.style.translate = new Translate(Length.Percent(100), 0);
+                cut.style.opacity = 0f;
+            }).StartingIn(780);
+            cut.schedule.Execute(() => cut.RemoveFromHierarchy()).StartingIn(1000);
+        }
+
+        private void OnFinished(BattleResult result)
+        {
+            if (_done)
+                return;
+            _done = true;
+            var finish = new FinishStageBattle { AutoUltimates = Battle.AutoAtStart };
+            finish.AutoToggleTimesMs.AddRange(Battle.AutoToggles);
+            finish.UltimateRequests.AddRange(Battle.Requests);
+            var slotsBefore = Formations.UnlockedSlots(Ui.State, Ui.Content);
+            if (!Ui.Try(finish, out var stage))
+            {
+                Ui.Router.Reset(new HomeScreen());
+                return;
+            }
+            ShowResult(stage, stage.UnlockedSlots > slotsBefore);
+        }
+
+        private void ShowResult(StageResult stage, bool newSlot)
+        {
+            var victory = stage.Outcome == BattleOutcome.Victory;
+            var overlay = UiKit.Box("overlay").Into(Root);
+            var popup = UiKit.Box("panel", "popup").Into(overlay);
+            UiKit.Text(Loc.T(victory ? "battle.victory" : "battle.defeat"), "result-title", victory ? "result-title--victory" : "result-title--defeat").Into(popup);
+            if (victory)
+            {
+                UiKit.Text(Loc.T("battle.rewards"), "subtitle").Into(popup);
+                var rewards = UiKit.Box("row").Into(popup);
+                rewards.style.flexWrap = Wrap.Wrap;
+                rewards.style.justifyContent = Justify.Center;
+                foreach (var r in stage.Rewards)
+                    rewards.Add(UiKit.Amount(r.Id, r.Value));
+                if (newSlot)
+                    UiKit.Text(Loc.T("battle.slotUnlocked"), "label--good").Into(popup);
+            }
+            else
+            {
+                UiKit.Text(Loc.T("battle.tip.defeat"), "subtitle").Into(popup).style.whiteSpace = WhiteSpace.Normal;
+            }
+            var buttons = UiKit.Box("row").Into(popup);
+            if (!victory)
+                UiKit.Btn(Loc.T("nav.heroes"), () => Ui.Router.Reset(new HeroesScreen()), "btn--secondary").Into(buttons);
+            UiKit.Btn(Loc.T("battle.continue"), () => Ui.Router.Reset(new HomeScreen())).Into(buttons);
+        }
+    }
+}
