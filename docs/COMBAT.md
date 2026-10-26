@@ -131,3 +131,13 @@ Normal Skills), onHitTaken (effect on the attacker), onKill (effect on the victi
 - Kit mechanics that are approximated are listed per hero in `designNotes` (slot swap, summons, copying skills,
   boss sleep immunity, rank-gated skills).
 - Base stats per role and grade are a first pass (`Tools/ContentPipeline/migrate_kits.py`) and need balancing.
+
+## Melee, ranged and reach (presentation)
+
+Every unit has an attack range (`HeroDefinition.AttackRangeKind`): huge bodies hit from where they stand (reach), the
+front row fights in melee, the back row shoots; the data overrides it per hero (`"range": "melee"` for the back-row
+assassins Cassian, Kiro, Noxia, Nyssa, Durgan and the Corrupted Crow). The simulation does not know positions: the
+presentation (`BattleMotion`) reads ahead in the battle log, lets melee units run to the target of their next attack so
+they arrive just before its first hit and stay engaged there (AFK Arena style), spreads several attackers around one
+target, and gives ranged units one projectile per hit that lands exactly on the hit's time. Server results stay identical.
+

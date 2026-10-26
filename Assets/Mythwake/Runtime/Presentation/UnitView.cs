@@ -1,4 +1,5 @@
 using Mythwake.Core.Combat;
+using Mythwake.Core.Content;
 using Spine.Unity;
 using UnityEngine;
 
@@ -45,6 +46,20 @@ namespace Mythwake.Presentation
         public int Energy { get; private set; }
         public bool Dead { get; private set; }
         public float Height => _body.Height;
+        /// <summary>Melee units run to their target, ranged units shoot, huge ones hit from where they stand.</summary>
+        public AttackRange Range { get; private set; }
+        public Aspect Aspect { get; private set; }
+        public HeroDefinition Hero { get; private set; }
+        /// <summary>Formation spot (local to the battle view).</summary>
+        public Vector3 Home { get; private set; }
+        /// <summary>Where the unit is heading (its position when it stands).</summary>
+        public Vector3 Goal { get; private set; }
+        /// <summary>Half of the body width, for melee contact distance.</summary>
+        public float HalfWidth => Height * 0.28f;
+
+        private Vector3 _ground;
+        private float _speed;
+        private float _run;
 
         public Vector3 HeadPosition => transform.position + Vector3.up * Height * 0.95f;
         public Vector3 CenterPosition => transform.position + Vector3.up * Height * 0.5f;
@@ -83,6 +98,10 @@ namespace Mythwake.Presentation
             Side = side;
             Slot = setup.Slot;
             HeroId = setup.Hero.Id;
+            Hero = setup.Hero;
+            Range = setup.Hero.AttackRangeKind;
+            Aspect = setup.Hero.Aspect;
+            Home = Goal = _ground = transform.localPosition;
             MaxHp = Hp = System.Math.Max(1, setup.Stats.Hp);
             AddShadow();
             Play(Idle, true);
@@ -213,6 +232,38 @@ namespace Mythwake.Presentation
         private const float BarWidth = 0.9f;
 
         public void SetSortingOrder(int order) => _body.SetSortingOrder(order);
+
+        /// <summary>Starts running to a spot (local to the battle view); it arrives at <paramref name="speed"/> units per second.</summary>
+        public void MoveTo(Vector3 goal, float speed)
+        {
+            Goal = goal;
+            _speed = speed;
+        }
+
+        public bool Moving => (_ground - Goal).sqrMagnitude > 0.0001f;
+
+        /// <summary>Where the unit stands, without the running hop.</summary>
+        public Vector3 Ground => _ground;
+
+        /// <summary>Advances the run by battle time; a small hop shows the steps (no run animation in the rigs).</summary>
+        public void Step(float dt)
+        {
+            if (Dead || dt <= 0f)
+                return;
+            if (!Moving)
+            {
+                if (_run > 0f)
+                {
+                    _run = 0f;
+                    transform.localPosition = _ground;
+                }
+                return;
+            }
+            _ground = Vector3.MoveTowards(_ground, Goal, _speed * dt);
+            _run += dt * 13f;
+            transform.localPosition = _ground + Vector3.up * Mathf.Abs(Mathf.Sin(_run)) * 0.09f;
+            SetSortingOrder(Mathf.RoundToInt(-_ground.y * 100f));
+        }
     }
 
     /// <summary>Spine rig body: plays the rig's animations, falls back to "attack" for missing skill animations.</summary>

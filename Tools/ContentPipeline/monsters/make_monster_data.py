@@ -62,6 +62,7 @@ K = {
         special=S("Splitteransturm", cd(9), "enemyFrontRow", [dmg(120), status("slow", 2000, 200)]),
         passive=("Wucherndes Fleisch", [P("regen", value=15)])),
     "corrupted_crow": dict(
+        range="melee",
         normal=N("Schnabelhieb", 85, target="enemyBack"),
         special=S("Drittes Auge", cd(10), "enemyHighestAttack", [dmg(80), status("confuse", 2000)]),
         passive=("Flatterflug", [P("dodge", value=150)])),
@@ -215,6 +216,10 @@ def main():
             "designNotes": [],
             "normal": skill(mid, "normal", kit["normal"], "attack"),
         }
+        if "range" in kit:
+            # data["row"] decides the default; the kit overrides it (the crow swoops into the back row)
+            items = list(data.items())
+            data = dict(items[:items.index(("row", data["row"])) + 1] + [("range", kit["range"])] + items[items.index(("row", data["row"])) + 1:])
         for slot in ("special", "special2"):
             if slot in kit:
                 data[slot] = skill(mid, slot, kit[slot], "skill")

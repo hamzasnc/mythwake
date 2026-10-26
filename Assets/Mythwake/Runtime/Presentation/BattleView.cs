@@ -68,6 +68,7 @@ namespace Mythwake.Presentation
 
         private ContentCatalog _catalog;
         private SpriteRenderer _background;
+        private BattleMotion _motion;
 
         /// <summary>World height of the horizon in painted backgrounds (the back row stands just below it).</summary>
         private const float Horizon = 2.3f;
@@ -131,11 +132,15 @@ namespace Mythwake.Presentation
                 Spawn(u, index++, Side.Allies, Vector3.zero);
             foreach (var u in setup.Enemies)
                 Spawn(u, index++, Side.Enemies, Vector3.zero);
+            _motion = new BattleMotion(transform, _units);
+            _motion.Plan(_result.Events, 0f);
             Changed?.Invoke();
         }
 
         public void Clear()
         {
+            _motion?.Clear();
+            _motion = null;
             foreach (var u in _units)
                 if (u != null)
                     Destroy(u.gameObject);
@@ -231,6 +236,7 @@ namespace Mythwake.Presentation
         {
             var shown = _timeMs;
             Simulate();
+            _motion?.Plan(_result.Events, shown);
             // events up to the shown time are identical (determinism); continue after them
             _cursor = 0;
             while (_cursor < _result.Events.Count && _result.Events[_cursor].TimeMs <= (int)shown)
@@ -255,9 +261,11 @@ namespace Mythwake.Presentation
                 return;
             }
             SetUnitsTimeScale(Speed);
-            _timeMs += dt * 1000f * Speed;
+            var step = dt * 1000f * Speed;
+            _timeMs += step;
             while (_cursor < _result.Events.Count && _result.Events[_cursor].TimeMs <= _timeMs && _freeze <= 0f)
                 Apply(_result.Events[_cursor++]);
+            _motion?.Tick(_timeMs, step);
 
             if (_cursor >= _result.Events.Count)
             {
@@ -295,6 +303,7 @@ namespace Mythwake.Presentation
                         break;
                     }
                     source.Play(e.Animation ?? "attack");
+                    _motion?.Fire(_cursor - 1, _timeMs);
                     if (e.Skill == SkillSlot.Ultimate)
                     {
                         if (source.Side == Side.Allies)

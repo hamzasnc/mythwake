@@ -14,6 +14,9 @@ namespace Mythwake.Core.Content
 
     public enum Row { Front, Back }
 
+    /// <summary>How a unit reaches its target: runs to it, shoots, or is big enough to hit from where it stands.</summary>
+    public enum AttackRange { Melee, Ranged, Reach }
+
     public enum Grade { Common, Rare, Epic, Legendary, Transcendent }
 
     public enum SkillSlot { Normal, Special, Special2, Passive, Ultimate }

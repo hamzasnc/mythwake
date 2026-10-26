@@ -62,7 +62,10 @@ namespace Mythwake.UI
             var setup = ui.Authority.Execute(new BeginStageBattle()).Value;
             ui.Router.Push(new BattleScreen(setup, ui.State.Battle.Stage));
             ui.Battle.Speed = 1f;
-            yield return Shot("battle_start", 1.2f);
+            yield return Shot("battle_start", 0.5f);
+            // quick sequence: melee units running in, projectiles flying
+            for (var frame = 1; frame <= 4; frame++)
+                yield return Shot("motion_" + frame, 0.18f);
             yield return Shot("battle_mid", 2.5f);
             yield return Shot("battle_late", 3.5f);
             var timeout = 120f;

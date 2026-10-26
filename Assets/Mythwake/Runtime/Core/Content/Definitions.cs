@@ -144,6 +144,8 @@ namespace Mythwake.Core.Content
         public Aspect Aspect;
         public Role Role;
         public Row Row;
+        /// <summary>Melee / ranged / reach; unset = from body and row (see <see cref="AttackRangeKind"/>).</summary>
+        public AttackRange? Range;
         public Grade Grade;
         /// <summary>Base body size used by the presentation: "small", "normal", "large" or "monster".</summary>
         public string Body = "normal";
@@ -167,6 +169,9 @@ namespace Mythwake.Core.Content
         public int SizePermille = 1000;
         /// <summary>Design-only notes (where the data approximates a kit mechanic the rules do not model yet). Never shown in game.</summary>
         public List<string> DesignNotes = new List<string>();
+
+        /// <summary>Huge bodies hit from where they stand, the front row fights in melee, the back row shoots.</summary>
+        public AttackRange AttackRangeKind => Range ?? (Body == "huge" ? AttackRange.Reach : Row == Row.Front ? AttackRange.Melee : AttackRange.Ranged);
 
         public IEnumerable<SkillDefinition> Skills()
         {

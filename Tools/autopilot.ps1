@@ -14,6 +14,7 @@ public static class QuietLaunch {
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     static extern bool CreateProcess(string app, string cmd, IntPtr pa, IntPtr ta, bool inherit, int flags, IntPtr env, string dir, ref STARTUPINFO si, out PROCESS_INFORMATION pi);
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
     public static int Start(string exe, string cmd, string dir) {
         var si = new STARTUPINFO(); si.cb = Marshal.SizeOf(si);
@@ -36,7 +37,14 @@ $p = Get-Process -Id $id
 # move the window off-screen as soon as it exists: SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE
 for ($i = 0; $i -lt 200 -and $p.MainWindowHandle -eq 0 -and -not $p.HasExited; $i++) { Start-Sleep -Milliseconds 50; $p.Refresh() }
 if ($p.MainWindowHandle -ne 0) { [void][QuietLaunch]::SetWindowPos($p.MainWindowHandle, [IntPtr]::Zero, -4000, 0, 0, 0, 0x0001 -bor 0x0004 -bor 0x0010) }
-$stolen = [QuietLaunch]::GetForegroundWindow() -ne $before
-$p.WaitForExit()
-Write-Output ("focus kept: " + (-not $stolen))
+# the game must never be the active window; if Windows still activates it, hand focus back
+$stolen = 0
+while (-not $p.HasExited) {
+    if ($p.MainWindowHandle -ne 0 -and [QuietLaunch]::GetForegroundWindow() -eq $p.MainWindowHandle) {
+        $stolen++
+        [void][QuietLaunch]::SetForegroundWindow($before)
+    }
+    Start-Sleep -Milliseconds 250
+}
+Write-Output ("game window was active: " + ($stolen -gt 0))
 exit $p.ExitCode
