@@ -36,6 +36,16 @@ namespace Mythwake.UI
                 Debug.Log($"[AutoPilot] {step:00}_{name}");
             }
 
+            if (ui.Server == null)
+            {
+                // the intro a new player sees, first and last page (finished without marking it done)
+                ui.Router.Reset(new StoryScreen());
+                yield return Shot("story_1", 1.5f);
+                for (var page = 1; page < StoryScreen.Pages; page++)
+                    ((StoryScreen)ui.Router.Current).Next();
+                yield return Shot("story_5", 1.2f);
+                ui.Router.Reset(new HomeScreen());
+            }
             yield return Shot("home", 1.5f);
             if (ui.Server != null)
             {

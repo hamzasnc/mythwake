@@ -394,6 +394,8 @@ namespace Mythwake.UI
 
         public bool Replay => true;
 
+        public string Background(UiContext ui) => "raid";
+
         public string Title(UiContext ui) => $"Guardian Raid · {ui.Content.Hero(_fight.Value<string>("boss")).Name}";
 
         public BattleReport Finish(UiContext ui, BattleView battle)

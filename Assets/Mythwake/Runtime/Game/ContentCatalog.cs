@@ -47,6 +47,10 @@ namespace Mythwake.Game
         public TownAssets town = new TownAssets();
         /// <summary>Item icons (Content/Icons), looked up by file name.</summary>
         public Texture2D[] icons = new Texture2D[0];
+        /// <summary>Painted battle backgrounds (Content/Backgrounds), one per chapter and game mode, by file name.</summary>
+        public Sprite[] backgrounds = new Sprite[0];
+        /// <summary>Intro story pictures (Content/Story), by file name.</summary>
+        public Texture2D[] story = new Texture2D[0];
 
         private Dictionary<string, HeroAssets> _byId;
         private TownLayout _layout;
@@ -77,6 +81,10 @@ namespace Mythwake.Game
         }
 
         public Texture2D Icon(string name) => icons.FirstOrDefault(i => i != null && i.name == name);
+
+        public Sprite Background(string name) => name == null ? null : backgrounds.FirstOrDefault(b => b != null && b.name == name);
+
+        public Texture2D Story(string name) => story.FirstOrDefault(s => s != null && s.name == name);
 
         public TownLayout Layout()
         {

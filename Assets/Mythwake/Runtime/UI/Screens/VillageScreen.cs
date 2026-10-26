@@ -68,6 +68,7 @@ namespace Mythwake.UI
             var town = Ui.Catalog.town;
             var image = level > 0 ? town?.Building(def.Id) : town?.ruin;
             var view = UiKit.Box("town-building");
+            view.name = "coach-building-" + def.Id;
             view.EnableInClassList("town-building--ruin", level <= 0);
             var aspect = 1f;
             if (image != null)

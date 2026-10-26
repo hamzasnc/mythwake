@@ -30,6 +30,8 @@ namespace Mythwake.UI
         /// <summary>Sends the finished battle to the authority. Null when the rules rejected it.</summary>
         BattleReport Finish(UiContext ui, BattleView battle);
         UiScreen After();
+        /// <summary>Battle background (Content/Backgrounds/&lt;id&gt;.png); null = the default battlefield.</summary>
+        string Background(UiContext ui) => null;
     }
 
     public sealed class CampaignBattle : IBattleMode
@@ -61,6 +63,8 @@ namespace Mythwake.UI
         }
 
         public UiScreen After() => new HomeScreen();
+
+        public string Background(UiContext ui) => Campaign.Locate(ui.Content, _stage).chapter?.Id;
     }
 
     public sealed class HuntBattle : IBattleMode
@@ -84,6 +88,8 @@ namespace Mythwake.UI
         }
 
         public UiScreen After() => new HuntScreen();
+
+        public string Background(UiContext ui) => "mossveil_woods";
     }
 
     /// <summary>Battle HUD over the <see cref="BattleView"/>: ultimate portraits, Auto and speed toggles, floating numbers, cut-ins, result.</summary>
@@ -94,6 +100,8 @@ namespace Mythwake.UI
 
         private readonly BattleSetup _setup;
         private readonly IBattleMode _mode;
+
+        public IBattleMode Mode => _mode;
         private readonly List<UltButton> _ults = new List<UltButton>();
         private readonly List<Floating> _floating = new List<Floating>();
         private VisualElement _floatLayer;
@@ -141,7 +149,7 @@ namespace Mythwake.UI
             _speed = UiKit.Btn("", ToggleSpeed, "btn--secondary", "btn--small").Into(toggles);
             _auto = UiKit.Btn("", ToggleAuto, "btn--secondary", "btn--small").Into(toggles);
 
-            UiKit.Box("hud-bottom").Into(root);
+            UiKit.Box("hud-bottom").Into(root).name = "coach-ults";
         }
 
         public override void OnShow()
@@ -154,6 +162,7 @@ namespace Mythwake.UI
             Battle.LeaderAbility += OnLeaderAbility;
             Battle.BossFragmentAbility += OnBossFragment;
             Battle.Finished += OnFinished;
+            Battle.SetBackground(Ui.Catalog.Background(_mode.Background(Ui)));
             Battle.Begin(Ui.Catalog, _setup, auto);
             BuildUltButtons();
             UpdateToggles();

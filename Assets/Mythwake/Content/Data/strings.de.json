@@ -446,5 +446,22 @@
   "error.guild_donated": "Heute schon gespendet.",
   "error.no_guild": "Du bist in keiner Gilde.",
   "error.raid_no_attempts": "Keine Raid-Versuche mehr heute.",
-  "error.unknown_donation": "Unbekannte Spende."
+  "error.unknown_donation": "Unbekannte Spende.",
+  "story.1": "Atheris ist zerbrochen. Die alten Königreiche sind gefallen, die Guardians verschwunden, und die Fragments – uralte Überreste vergessener Macht – haben Narben in die Welt gerissen. Aus diesen Wunden bluten die Shattered Realms ins Land.",
+  "story.2": "Im stillen Grenzdorf Dawnhollow war das Leben immer einfach. Fern von den Kriegen der Imperien glaubten seine Bewohner, sie seien vor den alten Katastrophen der Welt sicher.\nSie irrten sich.",
+  "story.3": "Als der Boden unter dem Mossveil Shrine aufbricht, erwacht ein Rift im Wald. Tiere verdrehen sich zu Monstern, violettes Licht kriecht durch die Bäume, und Dawnhollow versinkt im Chaos.",
+  "story.4": "Mitten in der Katastrophe berührst du ein geheimnisvolles Fragment, das dich hätte töten sollen. Stattdessen wählt es dich. Es wird zum Mythwake Core – einer Macht, die Verderbnis stabilisiert, vergessene Helden erweckt und Echoes ruft.",
+  "story.5": "Im Morgengrauen liegt Dawnhollow in Trümmern. Der Rift pulsiert noch im Wald. Die Überlebenden sehen zu dir – nicht, weil du bereit bist, sondern weil der Core nur dich verschont hat.\nDein Dorf ist gefallen. Die Welt erinnert sich.",
+  "story.tap": "Tippen zum Fortfahren",
+  "story.skip": "Überspringen",
+  "tutorial.ok": "OK",
+  "tutorial.first_fight": "Der Rift ist noch offen und die verdrehten Tiere greifen an. Stell dich ihnen!",
+  "tutorial.formation_fight": "Deine Helden kämpfen von selbst. Vorne stehen Tanks und Nahkämpfer, hinten Magier, Heiler und Fernkämpfer.",
+  "tutorial.ultimate": "Ist die Energie eines Helden voll, tippe auf sein Porträt für das Ultimate – oder lass Auto entscheiden.",
+  "tutorial.afk_claim": "Deine Helden kämpfen weiter, auch wenn du offline bist. Hier sammelst du ihre Beute ein.",
+  "tutorial.rebuild_gate": "Die Überlebenden können das Summoning Gate wieder aufbauen. Öffne Dawnhollow.",
+  "tutorial.gate_plot": "Tippe auf das Summoning Gate und baue es wieder auf.",
+  "tutorial.summon": "Das Summoning Gate ruft vergessene Helden. Probier es aus!",
+  "tutorial.level_up": "Mit Hero EXP werden deine Helden stärker. Öffne die Helden.",
+  "error.unknown_tutorial": "Unbekannter Tutorial-Schritt."
 }

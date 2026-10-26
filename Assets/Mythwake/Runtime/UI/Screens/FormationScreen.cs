@@ -29,6 +29,9 @@ namespace Mythwake.UI
 
         public FormationScreen(IFormationMode mode) => _mode = mode;
 
+        /// <summary>The campaign formation (no special mode).</summary>
+        public bool IsCampaign => _mode == null;
+
         private readonly string[] _slots = new string[5];
         private string _leader;
         private VisualElement[] _slotViews;
@@ -81,7 +84,7 @@ namespace Mythwake.UI
 
             var buttons = UiKit.Box("row", "center").Into(safe);
             UiKit.Btn(Loc.T("formation.auto"), AutoFill, "btn--secondary").Into(buttons);
-            UiKit.Btn(Loc.T("formation.fight"), Fight, "btn--big").Into(buttons);
+            UiKit.Btn(Loc.T("formation.fight"), Fight, "btn--big").Into(buttons).name = "coach-formation-fight";
         }
 
         public override void OnShow()

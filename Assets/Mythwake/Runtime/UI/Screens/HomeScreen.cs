@@ -55,6 +55,7 @@ namespace Mythwake.UI
             _enemyPower = UiKit.Text("", "label--small").Into(powers);
             _fight = UiKit.Btn(Loc.T("home.fight"), () => Ui.Router.Push(new FormationScreen()), "btn--big").Into(card);
             _fight.style.marginTop = 20;
+            _fight.name = "coach-fight";
 
             var afk = UiKit.Box("panel").Into(safe);
             var head = UiKit.Box("row").Into(afk);
@@ -65,6 +66,7 @@ namespace Mythwake.UI
             _afkFill = UiKit.Box("afk-progress__fill").Into(progress);
             _afkRewards = UiKit.Box("afk-rewards").Into(afk);
             _claim = UiKit.Btn(Loc.T("afk.claim"), Claim).Into(afk);
+            _claim.name = "coach-afk";
 
             root.Add(MainNav.Build(Ui, Tab.Campaign));
         }
@@ -74,6 +76,8 @@ namespace Mythwake.UI
             base.OnShow();
             _ticker = Root.schedule.Execute(RefreshAfk).Every(1000);
             var state = Ui.State;
+            var next = System.Math.Min(state.Campaign.HighestCleared + 1, Ui.Content.TotalStages);
+            Ui.Battle.SetBackground(Ui.Catalog.Background(Campaign.Locate(Ui.Content, next).chapter?.Id));
             Ui.Battle.ShowIdle(Ui.Catalog, TeamBuilder.Build(Formations.ToProgress(state, Ui.Content, state.Formation)));
         }
 

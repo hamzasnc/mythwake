@@ -120,6 +120,7 @@ namespace Mythwake.UI
                 return;
             _layer.Add(s.Root);
             s.OnShow();
+            Coach.Update(_ui, s);
         }
 
         private void Hide(UiScreen s)

@@ -13,6 +13,8 @@ namespace Mythwake.Editor
         public const string MonstersRoot = "Assets/Mythwake/Content/Monsters/";
         public const string TownRoot = "Assets/Mythwake/Content/Town/";
         public const string IconsRoot = "Assets/Mythwake/Content/Icons/";
+        public const string BackgroundsRoot = "Assets/Mythwake/Content/Backgrounds/";
+        public const string StoryRoot = "Assets/Mythwake/Content/Story/";
 
         private void OnPreprocessTexture()
         {
@@ -26,6 +28,30 @@ namespace Mythwake.Editor
                 icon.npotScale = TextureImporterNPOTScale.None;
                 icon.maxTextureSize = 512;
                 icon.textureCompression = TextureImporterCompression.CompressedHQ;
+                return;
+            }
+            if (assetPath.StartsWith(BackgroundsRoot))
+            {
+                // battle backgrounds are world sprites behind the fight (BattleView scales them to the camera)
+                var bg = (TextureImporter)assetImporter;
+                bg.textureType = TextureImporterType.Sprite;
+                bg.spriteImportMode = SpriteImportMode.Single;
+                bg.spritePixelsPerUnit = 128;
+                bg.mipmapEnabled = false;
+                bg.wrapMode = TextureWrapMode.Clamp;
+                bg.maxTextureSize = 2048;
+                bg.textureCompression = TextureImporterCompression.CompressedHQ;
+                return;
+            }
+            if (assetPath.StartsWith(StoryRoot))
+            {
+                var story = (TextureImporter)assetImporter;
+                story.textureType = TextureImporterType.Default;
+                story.mipmapEnabled = false;
+                story.wrapMode = TextureWrapMode.Clamp;
+                story.npotScale = TextureImporterNPOTScale.None;
+                story.maxTextureSize = 2048;
+                story.textureCompression = TextureImporterCompression.CompressedHQ;
                 return;
             }
             if (assetPath.StartsWith(TownRoot))

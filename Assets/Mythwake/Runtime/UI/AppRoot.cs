@@ -83,8 +83,12 @@ namespace Mythwake.UI
             }
 
             _ui.Authority = authority;
-            authority.StateChanged += () => _ui.Router.Current?.Refresh();
-            _ui.Router.Reset(new HomeScreen());
+            authority.StateChanged += () =>
+            {
+                _ui.Router.Current?.Refresh();
+                Coach.Update(_ui, _ui.Router.Current);
+            };
+            _ui.Router.Reset(autoPilot == null && StoryScreen.Due(authority.State) ? new StoryScreen() : new HomeScreen());
             if (autoPilot != null)
                 StartCoroutine(AutoPilot.Run(_ui, autoPilot));
         }

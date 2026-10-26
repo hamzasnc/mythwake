@@ -118,6 +118,8 @@ namespace Mythwake.UI
 
         public bool Replay => false;
 
+        public string Background(UiContext ui) => "dungeon";
+
         public string Title(UiContext ui) => _name;
 
         public BattleReport Finish(UiContext ui, BattleView battle)

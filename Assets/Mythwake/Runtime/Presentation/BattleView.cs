@@ -67,6 +67,41 @@ namespace Mythwake.Presentation
         public event Action Changed;
 
         private ContentCatalog _catalog;
+        private SpriteRenderer _background;
+
+        /// <summary>World height of the horizon in painted backgrounds (the back row stands just below it).</summary>
+        private const float Horizon = 2.3f;
+        /// <summary>Painted backgrounds have their horizon this far down from the top edge.</summary>
+        private const float HorizonFromTop = 0.42f;
+
+        /// <summary>
+        /// Puts a painted background behind the fight (chapter or game mode); null keeps the default battlefield.
+        /// It is scaled so it covers the whole camera with its horizon at <see cref="Horizon"/>.
+        /// </summary>
+        public void SetBackground(Sprite sprite)
+        {
+            if (_background == null)
+            {
+                var go = new GameObject("Painted Background");
+                _background = go.AddComponent<SpriteRenderer>();
+                _background.sortingOrder = -9999;
+            }
+            _background.sprite = sprite;
+            _background.enabled = sprite != null;
+            if (sprite == null)
+                return;
+            FitCamera();
+            var size = sprite.bounds.size;
+            var camHeight = cam.orthographicSize * 2f;
+            var camBottom = _cameraHome.y - cam.orthographicSize;
+            var camTop = _cameraHome.y + cam.orthographicSize;
+            // a little margin so camera shake never shows the edge
+            var scale = 1.04f * Mathf.Max(camHeight * cam.aspect / size.x,
+                Mathf.Max((Horizon - camBottom) / ((1f - HorizonFromTop) * size.y), (camTop - Horizon) / (HorizonFromTop * size.y)));
+            _background.transform.localScale = new Vector3(scale, scale, 1f);
+            var top = Horizon + HorizonFromTop * size.y * scale;
+            _background.transform.position = new Vector3(_cameraHome.x, top - size.y * scale / 2f, 5f);
+        }
 
         /// <summary>Shows a team standing idle (home screen background). No simulation runs.</summary>
         public void ShowIdle(ContentCatalog catalog, IEnumerable<UnitSetup> team)

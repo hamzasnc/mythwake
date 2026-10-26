@@ -110,7 +110,7 @@ namespace Mythwake.UI
         private void Fight(DungeonDefinition r, int level)
         {
             if (Ui.Try(new BeginRealm { RealmId = r.Id, Level = level }, out var setup))
-                Ui.Router.Push(new BattleScreen(setup, new RealmBattle(r.Name, level)));
+                Ui.Router.Push(new BattleScreen(setup, new RealmBattle(r.Id, r.Name, level)));
         }
 
         private void Sweep(DungeonDefinition r)
@@ -124,16 +124,20 @@ namespace Mythwake.UI
 
     public sealed class RealmBattle : IBattleMode
     {
+        private readonly string _id;
         private readonly string _name;
         private readonly int _level;
 
-        public RealmBattle(string name, int level)
+        public RealmBattle(string id, string name, int level)
         {
+            _id = id;
             _name = name;
             _level = level;
         }
 
         public bool Replay => false;
+
+        public string Background(UiContext ui) => "realm_of_" + _id;
 
         public string Title(UiContext ui) => $"{_name} · {Loc.T("realm.level", _level)}";
 

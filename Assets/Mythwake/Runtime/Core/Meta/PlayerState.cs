@@ -92,6 +92,8 @@ namespace Mythwake.Core.Meta
         public List<RelicItem> Relics = new List<RelicItem>();
         public int RelicUidCounter;
         public PendingBattle Battle;
+        /// <summary>Intro and coach steps the player finished (<see cref="Tutorial"/>).</summary>
+        public List<string> TutorialDone = new List<string>();
         /// <summary>Server-side randomness (summons, battle seeds): seed + how many draws were made.</summary>
         public ulong RngSeed;
         public ulong RngCounter;

@@ -108,6 +108,8 @@ namespace Mythwake.UI
 
         public bool Replay => false;
 
+        public string Background(UiContext ui) => "watchtower";
+
         public string Title(UiContext ui) => $"Dawnhollow · {Loc.T("defense.wave", _wave)}";
 
         public BattleReport Finish(UiContext ui, BattleView battle)

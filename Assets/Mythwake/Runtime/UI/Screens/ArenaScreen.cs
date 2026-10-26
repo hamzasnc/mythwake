@@ -211,6 +211,8 @@ namespace Mythwake.UI
 
         public bool Replay => true;
 
+        public string Background(UiContext ui) => "arena";
+
         public string Title(UiContext ui) => "Arena · " + _fight.Value<string>("defenderName");
 
         public BattleReport Finish(UiContext ui, BattleView battle)

@@ -1095,3 +1095,109 @@
 .raid-hp { height: 26px; margin: 10px 0 4px 0; }
 .raid-hp__fill { background-color: #e5484d; }
 .icon--guildCoins { background-color: #c9a227; }
+
+/* ---------------------------------------------------------------- intro story */
+
+.story {
+    background-color: #05070d;
+}
+
+.story__picture {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.story__panel {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 48px 48px 64px 48px;
+    background-color: rgba(5, 7, 13, 0.82);
+    border-top-width: 2px;
+    border-color: var(--line);
+    align-items: center;
+}
+
+.story__text {
+    font-size: 34px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    opacity: 0;
+    translate: 0 16px;
+    transition-duration: 0.6s;
+    transition-property: opacity, translate;
+}
+
+.story__text--in {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.story__dots {
+    flex-direction: row;
+    margin-top: 28px;
+}
+
+.story__dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    margin: 0 8px;
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.story__dot--on { background-color: var(--gold); }
+
+.story__hint {
+    margin-top: 18px;
+    color: var(--muted);
+}
+
+.story__skip {
+    position: absolute;
+    top: 48px;
+    right: 32px;
+}
+
+/* ---------------------------------------------------------------- coach marks */
+
+.coach {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+.coach__ring {
+    position: absolute;
+    border-width: 6px;
+    border-color: var(--gold);
+    border-radius: 24px;
+    transition-duration: 0.6s;
+    transition-property: scale, opacity;
+    scale: 1 1;
+    opacity: 1;
+}
+
+.coach__ring--big {
+    scale: 1.08 1.08;
+    opacity: 0.55;
+}
+
+.coach__bubble {
+    position: absolute;
+    background-color: var(--panel-light);
+    border-width: 3px;
+    border-color: var(--gold);
+    border-radius: 20px;
+    padding: 20px 24px;
+    align-items: center;
+}
+
+.coach__text {
+    white-space: normal;
+    -unity-text-align: middle-center;
+    font-size: 30px;
+}
+
+.coach__bubble .btn {
+    margin-top: 14px;
+}

@@ -140,6 +140,8 @@ namespace Mythwake.UI
 
         public bool Replay => false;
 
+        public string Background(UiContext ui) => "trial";
+
         public string Title(UiContext ui) => $"{_name} · {Loc.T("trial.floor", _floor)}";
 
         public BattleReport Finish(UiContext ui, BattleView battle)

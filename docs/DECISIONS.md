@@ -17,6 +17,8 @@ Lore and names still come only from the doc; everything here is structure, balan
 | 2026-10-26 | Shattered Realms: two free entries per day shared by all realms, "Shattered Realm Key" for more (the doc's key), Portal Chamber level 5 (`docs/systems/SHATTERED_REALMS.md`). | Developer |
 | 2026-10-26 | Guardian Awakening for the doc's four examples first; awakened = Transcendent with a Trait (combat design §7); no one-per-formation limit yet (`docs/systems/AWAKENING.md`). | Developer |
 | 2026-10-26 | Open balancing and gameplay numbers are decided by the developer, documented in `docs/systems/*.md` and pinned by tests. | Lead |
+| 2026-10-26 | Intro story from the doc's lore sneak-peek (five pictures, German text with the doc's English terms) and progress-driven coach marks for the first steps; the player character is never shown from the front (`docs/systems/TUTORIAL.md`). | Developer |
+| 2026-10-26 | Painted battle backgrounds per campaign chapter and per game mode; chapters without a doc name are drawn as their boss's lair, without inventing place names. | Developer |
 
 ## Navigation (from 2026-10-26)
 
