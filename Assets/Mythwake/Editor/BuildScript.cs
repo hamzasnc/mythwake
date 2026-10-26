@@ -11,7 +11,18 @@ namespace Mythwake.Editor
         public static void Windows() => Build(BuildTarget.StandaloneWindows64, "Builds/Windows/Mythwake.exe");
 
         [MenuItem("Mythwake/Build/Android (dev)")]
-        public static void Android() => Build(BuildTarget.Android, "Builds/Android/Mythwake.apk");
+        public static void Android()
+        {
+            var android = UnityEditor.Build.NamedBuildTarget.Android;
+            PlayerSettings.SetApplicationIdentifier(android, "com.mythwake.game");
+            PlayerSettings.SetScriptingBackend(android, ScriptingImplementation.IL2CPP);
+            // phones are ARM64; emulators like MuMu run x86_64
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64 | AndroidArchitecture.X86_64;
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
+            // dev builds talk to the local server over plain HTTP; release builds must use HTTPS
+            PlayerSettings.insecureHttpOption = InsecureHttpOption.DevelopmentOnly;
+            Build(BuildTarget.Android, "Builds/Android/Mythwake.apk");
+        }
 
         public const string AppIconPath = "Assets/Mythwake/Content/UI/AppIcon.png";
 
