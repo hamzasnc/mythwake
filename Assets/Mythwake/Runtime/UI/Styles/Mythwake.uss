@@ -1020,3 +1020,26 @@
 .focus-row { flex-wrap: wrap; margin-bottom: 10px; }
 .focus-chip { font-size: 22px; padding: 8px 14px; margin: 4px; }
 .focus-chip--active { background-color: var(--gold); color: #2a1d05; }
+
+/* ---------------------------------------------------------------- leader abilities */
+
+.leader-banner {
+    position: absolute;
+    left: 24px; top: 22%;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(10, 13, 24, 0.88);
+    border-radius: 20px;
+    border-width: 2px;
+    border-color: var(--gold);
+    padding: 8px 22px 8px 8px;
+    transition-duration: 0.35s;
+    transition-property: opacity;
+}
+.leader-banner__portrait {
+    width: 84px; height: 105px;
+    border-radius: 12px;
+    margin-right: 14px;
+    -unity-background-scale-mode: scale-and-crop;
+}
+.leader-banner__text { font-size: 30px; -unity-font-style: bold; color: var(--gold); }

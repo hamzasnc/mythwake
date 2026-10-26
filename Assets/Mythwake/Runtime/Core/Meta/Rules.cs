@@ -232,6 +232,16 @@ namespace Mythwake.Core.Meta
             return TeamBuilder.Build(Formations.ToProgress(state, content, formation), leaderProgress, Village.CombatBonus(state, content));
         }
 
+        /// <summary>The Hero Leader as an off-field caster of its leader abilities, or null.</summary>
+        public static UnitSetup LeaderUnit(PlayerState state, GameContent content)
+        {
+            var leader = string.IsNullOrEmpty(state.Leader) ? null : state.FindHero(state.Leader);
+            if (leader == null)
+                return null;
+            var progress = Formations.Progress(state, content, leader);
+            return new UnitSetup { Hero = progress.Hero, Level = leader.Level, Slot = -1, Stats = TeamBuilder.StatsOf(progress) };
+        }
+
         private static void Place(List<HeroProgress> slots, List<HeroDefinition> heroes, int[] order, int level, int stars)
         {
             foreach (var h in heroes)
@@ -249,6 +259,7 @@ namespace Mythwake.Core.Meta
             {
                 Seed = pending.Seed,
                 Allies = Allies(state, content, pending.Formation),
+                Leader = LeaderUnit(state, content),
                 Enemies = Enemies(content, pending.Stage)
             };
         }

@@ -51,6 +51,9 @@ namespace Mythwake.Core.Combat
     {
         public List<UnitSetup> Allies = new List<UnitSetup>();
         public List<UnitSetup> Enemies = new List<UnitSetup>();
+        /// <summary>Hero Leader of the allies (doc: does not fight). Off the field: never targeted, casts only its leader
+        /// abilities (Special Skills). Its events use the index after the last enemy.</summary>
+        public UnitSetup Leader;
         public ulong Seed;
         public BattleRules Rules = new BattleRules();
         /// <summary>When true, allied ultimates fire automatically (the in-game "Auto" toggle) from the start.</summary>

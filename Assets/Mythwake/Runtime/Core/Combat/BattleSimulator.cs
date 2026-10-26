@@ -30,6 +30,7 @@ namespace Mythwake.Core.Combat
         }
 
         private readonly BattleSetup _setup;
+        private BattleUnit _leader;
         private readonly Pcg32 _rng;
         private readonly List<BattleUnit> _units = new List<BattleUnit>();
         private readonly List<ScheduledHit> _pending = new List<ScheduledHit>();
@@ -50,6 +51,7 @@ namespace Mythwake.Core.Combat
         {
             Spawn(_setup.Allies, Side.Allies);
             Spawn(_setup.Enemies, Side.Enemies);
+            SpawnLeader();
             DistributePassives();
             Emit(BattleEventType.BattleStart, -1, -1, SkillSlot.Normal, 0);
             ApplyBattleStartPassives();
@@ -64,6 +66,8 @@ namespace Mythwake.Core.Combat
                 foreach (var u in _units)
                     if (u.Alive)
                         TryAct(u);
+                if (_leader != null && AliveCount(Side.Allies) > 0)
+                    TryAct(_leader);
                 if (CheckEnd())
                     break;
             }
@@ -112,6 +116,23 @@ namespace Mythwake.Core.Combat
                 _units.Add(u);
                 if (side == Side.Allies)
                     _requestCursor.Add(0);
+            }
+        }
+
+        /// <summary>The Hero Leader stands off the field: not in the unit list (so never a target and never counted
+        /// for the battle's end), it only casts its leader abilities.</summary>
+        private void SpawnLeader()
+        {
+            var s = _setup.Leader;
+            if (s?.Hero == null || (s.Hero.Special == null && s.Hero.Special2 == null))
+                return;
+            _leader = new BattleUnit { Index = _units.Count, Side = Side.Allies, Slot = -1, Hero = s.Hero, Stats = s.Stats.Clone() };
+            _leader.MaxHp = _leader.Hp = System.Math.Max(1, _leader.Stats.Hp);
+            _leader.NextNormalMs = int.MaxValue;
+            foreach (var skill in Specials(_leader))
+            {
+                var t = skill.Trigger;
+                _leader.ReadyAtMs[skill.Slot] = t.Kind == TriggerKind.Cooldown ? (t.InitialDelayMs > 0 ? t.InitialDelayMs : t.CooldownMs / 2) : 0;
             }
         }
 

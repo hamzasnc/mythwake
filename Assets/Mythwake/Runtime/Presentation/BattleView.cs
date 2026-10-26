@@ -59,6 +59,8 @@ namespace Mythwake.Presentation
         public event Action<UnitView, long, FloatingTextKind> FloatingText;
         public event Action<UnitView, string> UltimateCutIn;
         public event Action<UnitView, StatusKind> StatusApplied;
+        /// <summary>The off-field Hero Leader used a leader ability (its skill slot).</summary>
+        public event Action<SkillSlot> LeaderAbility;
         public event Action<BattleResult> Finished;
         public event Action Changed;
 
@@ -248,7 +250,11 @@ namespace Mythwake.Presentation
             {
                 case BattleEventType.ActionStart:
                     if (source == null)
+                    {
+                        if (e.Source == _units.Count)
+                            LeaderAbility?.Invoke(e.Skill);
                         break;
+                    }
                     source.Play(e.Animation ?? "attack");
                     if (e.Skill == SkillSlot.Ultimate)
                     {

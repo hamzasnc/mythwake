@@ -323,5 +323,6 @@
   "summon.pickFaction": "Wähle eine Fraktion",
   "summon.pickAspect": "Wähle einen Aspekt",
   "error.banner_locked": "Baue das Summoning Gate weiter aus.",
-  "error.bad_focus": "Wähle zuerst eine Fraktion oder einen Aspekt."
+  "error.bad_focus": "Wähle zuerst eine Fraktion oder einen Aspekt.",
+  "battle.leader": "Leader: {0}"
 }

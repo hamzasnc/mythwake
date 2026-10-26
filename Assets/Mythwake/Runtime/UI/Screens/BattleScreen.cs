@@ -151,6 +151,7 @@ namespace Mythwake.UI
             Battle.Speed = PlayerPrefs.GetFloat(SpeedPref, 1f);
             Battle.FloatingText += OnFloatingText;
             Battle.UltimateCutIn += OnCutIn;
+            Battle.LeaderAbility += OnLeaderAbility;
             Battle.Finished += OnFinished;
             Battle.Begin(Ui.Catalog, _setup, auto);
             BuildUltButtons();
@@ -161,6 +162,7 @@ namespace Mythwake.UI
         {
             Battle.FloatingText -= OnFloatingText;
             Battle.UltimateCutIn -= OnCutIn;
+            Battle.LeaderAbility -= OnLeaderAbility;
             Battle.Finished -= OnFinished;
             Battle.Clear();
         }
@@ -261,6 +263,22 @@ namespace Mythwake.UI
                 Life = kind == FloatingTextKind.Crit ? 1.1f : 0.85f,
                 Drift = Random.Range(-0.3f, 0.3f)
             });
+        }
+
+        /// <summary>The off-field Hero Leader used a leader ability: a short banner with its portrait and the skill name.</summary>
+        private void OnLeaderAbility(SkillSlot slot)
+        {
+            var leader = _setup.Leader?.Hero;
+            if (leader == null)
+                return;
+            var skill = slot == SkillSlot.Special ? leader.Special : slot == SkillSlot.Special2 ? leader.Special2 : null;
+            var banner = UiKit.Box("leader-banner").Into(Root);
+            var assets = Ui.Catalog.Hero(leader.Id);
+            if (assets?.portrait != null)
+                UiKit.Box("leader-banner__portrait").Into(banner).style.backgroundImage = new StyleBackground(assets.portrait);
+            UiKit.Text(Loc.T("battle.leader", skill?.Name ?? leader.Name), "leader-banner__text").Into(banner);
+            banner.schedule.Execute(() => banner.style.opacity = 0f).StartingIn(1400);
+            banner.schedule.Execute(() => banner.RemoveFromHierarchy()).StartingIn(1800);
         }
 
         private void OnCutIn(UnitView unit, string heroId)

@@ -20,8 +20,8 @@
     "critDamage": 500
   },
   "designNotes": [
-    "Hero Leader: kaempft nicht. Nur der Leader-Segen (+8 % Heilkraft) ist aktiv.",
-    "Debuff-Widerstand, 'Stimme der Wahrheit' und 'Schleiersegen' brauchen Leader-Faehigkeiten im Kampf (noch nicht gebaut)."
+    "Hero Leader: kaempft nicht. Leader-Segen (+8 % Heilkraft) wirkt als Aura; Stimme der Wahrheit und Schleiersegen wirkt sie vom Rand aus (Leader-Faehigkeiten).",
+    "Debuff-Widerstand des Leader-Segens ist noch nicht modelliert; die Rang-Freischaltung (Rang 3) ebenfalls nicht."
   ],
   "passive": {
     "id": "seraphine.passive",
@@ -38,5 +38,58 @@
         "healBonus": 80
       }
     ]
+  },
+  "special": {
+    "id": "seraphine.special",
+    "name": "Schleiersegen",
+    "description": "Einmal pro Kampf: fällt ein Verbündeter unter 20 % HP, bekommt das Team einen Schild über 10 % Max-HP.",
+    "slot": "special",
+    "trigger": {
+      "kind": "allyBelowHp",
+      "hpThresholdPermille": 200,
+      "oncePerBattle": true
+    },
+    "target": "allyAll",
+    "effects": [
+      {
+        "kind": "shield",
+        "multiplier": 100,
+        "scaling": "targetMaxHp",
+        "shieldDurationMs": 8000
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      200
+    ],
+    "durationMs": 500,
+    "animation": "skill"
+  },
+  "special2": {
+    "id": "seraphine.special2",
+    "name": "Stimme der Wahrheit",
+    "description": "Leader-Fähigkeit (alle 25 s): Verwirrt die vordere Gegnerreihe 1,5 s.",
+    "slot": "special2",
+    "trigger": {
+      "kind": "cooldown",
+      "cooldownMs": 25000,
+      "initialDelayMs": 8000
+    },
+    "target": "enemyFrontRow",
+    "effects": [
+      {
+        "kind": "applyStatus",
+        "status": {
+          "kind": "confuse",
+          "durationMs": 1500
+        }
+      }
+    ],
+    "hits": 1,
+    "hitTimesMs": [
+      300
+    ],
+    "durationMs": 600,
+    "animation": "skill"
   }
 }

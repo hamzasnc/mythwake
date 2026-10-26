@@ -125,6 +125,7 @@ namespace Mythwake.Core.Meta
             {
                 Seed = pending.Seed,
                 Allies = Campaign.Allies(state, content, pending.Formation),
+                Leader = Campaign.LeaderUnit(state, content),
                 Enemies = Enemies(content, d, pending.Floor),
                 Rules = d.Rules ?? new BattleRules()
             };

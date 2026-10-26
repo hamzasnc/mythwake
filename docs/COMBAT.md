@@ -117,10 +117,12 @@ Normal Skills), onHitTaken (effect on the attacker), onKill (effect on the victi
 - Faction synergy (doc: 2 / 3 / 5 heroes): +5 % / +10 % / +15 % ATK and HP.
 - Race synergy: +3 % ATK and HP for 2+ heroes of the same race.
 - Hero Leader (doc: does not fight): its `leaderAura` applies to the whole team and grows with its level and stars.
+  Its Special Skills are **leader abilities**: the leader stands off the field (never targeted, not counted for the
+  battle's end) and casts them on their triggers; events use the index after the last enemy. Arena and the Trial of
+  Fragments fight without a leader.
 
 ## Open points
 
-- Leader abilities in battle (doc: war cry, stun): the data has room, the simulator does not cast them yet.
 - Kit mechanics that are approximated are listed per hero in `designNotes` (slot swap, summons, copying skills,
   boss sleep immunity, rank-gated skills).
 - Base stats per role and grade are a first pass (`Tools/ContentPipeline/migrate_kits.py`) and need balancing.
