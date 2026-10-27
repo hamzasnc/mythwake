@@ -20,8 +20,8 @@ namespace Mythwake.UI
             _currencies = new CurrencyBar(Ids.Gold, Ids.FragmentDust, Ids.Gems).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
-            UiKit.IconBtn("back", () => Ui.Router.Back(() => new AdventureScreen())).Into(head);
-            UiKit.Text(Loc.T("trial.title"), "title").Into(head);
+            UiKit.IconBtn("back", () => Ui.Router.Back(() => new AdventureScreen()), "back-btn").Into(root);
+            UiKit.Text(Loc.T("trial.title"), "title", "screen-title").Into(head);
             var scroll = new ScrollView(ScrollViewMode.Vertical).Into(safe);
             scroll.style.flexGrow = 1;
             _body = UiKit.Box().Into(scroll);

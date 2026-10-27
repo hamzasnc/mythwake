@@ -1690,3 +1690,95 @@
     text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85);
 }
 .panel .title, .popup .title, .hero-stats__power, .hero-stats__level, .stat-chip { text-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+
+
+/* ================================================================ UI v3: one AFK-style kit everywhere (docs/UI_STYLE.md) */
+
+/* top bar: the same on every screen */
+.currency-bar { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/topBar.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 40; -unity-slice-right: 40; -unity-slice-top: 26; -unity-slice-bottom: 26; -unity-slice-scale: 1.6px; flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: flex-start; height: 104px; padding: 0 16px 0 10px; }
+.top-avatar { width: 92px; height: 92px; margin-top: 8px; }
+.top-avatar__portrait { position: absolute; left: 12px; top: 12px; right: 12px; bottom: 12px; border-radius: 40px; background-color: #2a1a0d; -unity-background-scale-mode: scale-and-crop; }
+.top-avatar__ring { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/avatarFrame.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.top-power { flex-direction: row; align-items: center; margin-left: 10px; }
+.top-power__icon { width: 36px; height: 36px; margin-right: 4px; }
+.top-power__value { font-size: 28px; color: #ffd75e; -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.currency { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/pillCost.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 56; -unity-slice-right: 56; -unity-slice-top: 54; -unity-slice-bottom: 54; -unity-slice-scale: 0.4px; flex-direction: row; align-items: center; height: 54px; padding: 0 14px 0 6px; margin: 0 0 0 8px; }
+.currency__icon { width: 44px; height: 44px; margin-right: 6px; }
+.currency__value { font-size: 26px; color: #ffffff; }
+.currency__plus { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/plusButton.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-background-scale-mode: scale-to-fit; width: 40px; height: 40px; margin-left: 8px; margin-right: -6px; }
+
+/* bottom dock */
+.nav { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/dockBar.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 40; -unity-slice-right: 40; -unity-slice-top: 40; -unity-slice-bottom: 40; -unity-slice-scale: 1.4px; padding: 8px 6px 18px 6px; }
+.nav__item, .nav__item--main { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/navTile.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 70; -unity-slice-right: 70; -unity-slice-top: 70; -unity-slice-bottom: 70; -unity-slice-scale: 0.42px; flex-grow: 1; flex-basis: 0; height: auto; margin: 0 3px; padding-top: 100px; padding-bottom: 10px; color: #fff2d8; font-size: 23px; -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.nav__item--active, .nav__item--main.nav__item--active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/navTileActive.png"); color: #ffe7a8; }
+.nav__icon, .nav__item--main .nav__icon { top: 8px; width: 92px; height: 92px; }
+.nav__item--active .nav__icon { scale: 1.1 1.1; }
+
+/* back button: always bottom-left */
+.back-btn { position: absolute; left: 20px; bottom: 26px; width: 104px; height: 104px; margin: 0; background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/backButton.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon-btn--back { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/backButton.png"); }
+.screen > .safe { padding-bottom: 140px; }
+
+/* buttons: teal for the one main action, wood for the rest */
+.btn { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnTeal.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 70; -unity-slice-right: 70; -unity-slice-top: 58; -unity-slice-bottom: 58; -unity-slice-scale: 0.55px; color: #ffffff; padding: 18px 48px; -unity-text-outline-width: 1px; -unity-text-outline-color: #0b4a5c; text-shadow: 0 2px 0 rgba(6, 50, 64, 0.8); }
+.btn:active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnTealPressed.png"); }
+.btn:disabled { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnTealDisabled.png"); color: #e6eaee; -unity-text-outline-color: #3a4450; }
+.btn--secondary { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnWood.png"); color: #fff2d8; -unity-text-outline-color: #2c1606; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.btn--secondary:active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/btnWoodPressed.png"); }
+.btn--small { padding: 10px 30px; -unity-slice-scale: 0.42px; font-size: 26px; }
+.btn--big { padding: 24px 76px; -unity-slice-scale: 0.7px; font-size: 46px; }
+
+/* parchment panels and popups, title plates, section ribbons */
+.panel { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/popupParchment.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 64; -unity-slice-bottom: 64; -unity-slice-scale: 0.62px; padding: 28px 30px; color: #4a2e14; --text: #4a2e14; --muted: #7a5c3a; --gold: #7a3b0c; }
+.popup { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/popupParchment.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 64; -unity-slice-bottom: 64; -unity-slice-scale: 0.85px; padding: 46px 40px; }
+.panel .title, .popup .title { color: #5a2f0e; -unity-text-outline-width: 0; text-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+.screen-title { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/titlePlate.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 80; -unity-slice-right: 80; -unity-slice-top: 56; -unity-slice-bottom: 56; -unity-slice-scale: 0.7px; align-self: center; color: #ffeec8; font-size: 40px; padding: 10px 64px 16px 64px; margin: 4px 0 12px 0; -unity-text-align: middle-center; -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.panel .screen-title, .popup .screen-title { color: #ffeec8; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.section-title { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/sectionRibbon.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 70; -unity-slice-right: 70; -unity-slice-top: 34; -unity-slice-bottom: 34; -unity-slice-scale: 0.55px; color: #ffeec8; padding: 8px 70px 10px 70px; }
+
+/* tabs */
+.tab { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/tabInactive.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 66; -unity-slice-right: 66; -unity-slice-top: 60; -unity-slice-bottom: 34; -unity-slice-scale: 0.42px; color: #f0dcb4; margin: 0 3px; -unity-background-image-tint-color: rgb(255, 255, 255); -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.tab--active { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/tabActive.png"); color: #4a2e14; -unity-text-outline-width: 0; text-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+
+/* item slots, progress bars, stat band, round side buttons */
+.item-slot, .slot--small { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/slotDark.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 80; -unity-slice-right: 80; -unity-slice-top: 80; -unity-slice-bottom: 80; -unity-slice-scale: 0.3px; }
+.afk-progress { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/barFrame.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 40; -unity-slice-right: 40; -unity-slice-top: 30; -unity-slice-bottom: 30; -unity-slice-scale: 0.5px; }
+.afk-progress__fill { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/barFillTeal.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 28; -unity-slice-right: 28; -unity-slice-top: 24; -unity-slice-bottom: 24; -unity-slice-scale: 0.5px; }
+.side-btn__ring { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/sideButton.png"); -unity-background-scale-mode: scale-to-fit; width: 124px; height: 124px; align-items: center; justify-content: center; }
+.side-btn .side-btn__icon { width: 82px; height: 82px; background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; }
+.hero-stats { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/statBand.png"); background-color: rgba(0, 0, 0, 0); border-width: 0; border-radius: 0; -unity-slice-left: 64; -unity-slice-right: 64; -unity-slice-top: 40; -unity-slice-bottom: 40; -unity-slice-scale: 1px; }
+.badge { background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/badge.png"); }
+
+/* hero detail like the approved frame: stage, skill rings, arrows, stat band, actions, round jump buttons */
+.hero-stage { height: 1120px; background-image: url("project://database/Assets/Mythwake/Content/UI/Backgrounds/bg_hero_stage.png"); }
+.hero-stage__names { top: 24px; }
+.hero-stage__name { font-size: 64px; }
+.hero-stage__emblems { margin-top: 6px; }
+.hero-stage__emblem { width: 46px; height: 46px; margin: 0 4px; }
+.hero-stage .hero-art { left: 18%; right: 18%; top: 250px; bottom: 20px; }
+.hero-stage__skills { position: absolute; top: 330px; }
+.hero-stage__skills--left { left: 22px; }
+.hero-stage__skills--right { right: 22px; }
+.skill-ring { width: 128px; height: 140px; margin-bottom: 26px; align-items: center; justify-content: flex-start; padding-top: 14px; background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/skillRing.png"); -unity-background-scale-mode: scale-to-fit; }
+.skill-ring__icon { width: 86px; height: 86px; }
+.skill-ring__level { position: absolute; bottom: 2px; left: 0; right: 0; -unity-text-align: middle-center; font-size: 22px; color: #ffffff; -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.hero-stage__arrow { position: absolute; top: 720px; width: 64px; height: 96px; background-image: url("project://database/Assets/Mythwake/Content/UI/Chrome/backButton.png"); -unity-background-scale-mode: scale-to-fit; }
+.hero-stage__arrow--left { left: 14px; }
+.hero-stage__arrow--right { right: 14px; scale: -1 1; }
+.hero-stats { margin: -40px 0 0 0; padding: 18px 26px 22px 26px; }
+.hero-stats__power { font-size: 46px; color: #ffd75e; -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.hero-stats__stars { margin-left: 18px; }
+.stat-chip { color: #ffffff; font-size: 30px; -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.hero-actions { align-items: center; margin: 14px 0 22px 0; }
+.hero-actions__level { font-size: 28px; color: #ffeec8; -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.hero-actions__cost { font-size: 24px; color: #ffeec8; margin: 4px 0 6px 0; -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.hero-actions__shards { font-size: 22px; color: #e8d6b4; margin-top: 4px; -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; text-shadow: 0 2px 0 rgba(20, 10, 3, 0.85); }
+.hero-jumps { position: absolute; right: 16px; bottom: 26px; flex-direction: row; }
+.hero-jumps .side-btn { width: 120px; margin-left: 6px; }
+.hero-jumps .side-btn__ring { width: 104px; height: 104px; }
+.hero-jumps .side-btn__icon { width: 66px; height: 66px; }
+.hub__side { top: 140px; }
+.hero-stage__grade-text, .hero-stage__title { color: #fff4dc; -unity-text-outline-width: 1px; -unity-text-outline-color: #241307; text-shadow: 0 2px 2px rgba(20, 10, 3, 0.95); }
+.hero-stage__title { font-size: 28px; }
+.hero-jumps .side-btn { width: 132px; margin-left: 4px; }
+.hero-jumps .side-btn__label { font-size: 19px; white-space: nowrap; }

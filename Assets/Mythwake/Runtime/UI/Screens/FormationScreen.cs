@@ -45,8 +45,8 @@ namespace Mythwake.UI
             root.AddToClassList("screen--formation");
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
-            UiKit.IconBtn("back", () => Ui.Router.Pop()).Into(head);
-            UiKit.Text(_mode?.Title ?? Loc.T("formation.title"), "title").Into(head);
+            UiKit.IconBtn("back", () => Ui.Router.Pop(), "back-btn").Into(root);
+            UiKit.Text(_mode?.Title ?? Loc.T("formation.title"), "title", "screen-title").Into(head);
             if (_mode != null)
                 UiKit.Text(_mode.Hint, "label--small").Into(safe);
 

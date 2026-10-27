@@ -38,8 +38,10 @@ namespace Mythwake.UI
             var left = UiKit.Box("hub__side", "hub__side--left").Into(hub);
             var quest = UiKit.SideButton(left, "reliefQuests", Loc.T("quests.title"), () => Ui.Router.Push(new QuestScreen()));
             _questBadge = UiKit.Box("badge").Into(quest);
+            UiKit.SideButton(left, "reliefShop", Loc.T("shop.button"), () => Ui.Router.Push(new ShopScreen()));
             var right = UiKit.Box("hub__side", "hub__side--right").Into(hub);
             UiKit.SideButton(right, "reliefMap", Loc.T("nav.adventure"), () => Ui.Router.Reset(new AdventureScreen()));
+            UiKit.SideButton(right, "reliefGuild", Loc.T("guild.button"), () => Ui.Router.Push(new GuildScreen()));
 
             // current main quest as a slim strip under the stage name
             var strip = UiKit.Box("hub__quest").Into(hub);

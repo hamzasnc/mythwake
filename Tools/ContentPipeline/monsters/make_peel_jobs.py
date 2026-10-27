@@ -87,7 +87,7 @@ cd "$(dirname "$0")"
 run() {
   dir="$1"
   if [ -f "$dir/layers.json" ]; then echo "skip $dir"; return; fi
-  codex exec --skip-git-repo-check -m gpt-6-sol -C "$(cygpath -w "$PWD/$dir")" -i "$(cygpath -w "$PWD/$dir/master.png")" - < "$dir/run_peel_prompt.txt" > "$dir/codex_peel.log" 2>&1
+  codex exec --skip-git-repo-check -m gpt-6-luna -c 'model_reasoning_effort="high"' -c 'service_tier="default"' -C "$(cygpath -w "$PWD/$dir")" -i "$(cygpath -w "$PWD/$dir/master.png")" - < "$dir/run_peel_prompt.txt" > "$dir/codex_peel.log" 2>&1
   echo "done $dir rc=$? layers=$([ -f "$dir/layers.json" ] && echo yes || echo no)" >> _peel_batch.log
 }
 export -f run

@@ -238,8 +238,8 @@ namespace Mythwake.UI
             _currencies = new CurrencyBar(Ids.Gold, Ids.FragmentDust).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
-            UiKit.IconBtn("back", () => Ui.Router.Back(() => new VillageScreen())).Into(head);
-            UiKit.Text(Loc.T("fragment.title"), "title").Into(head);
+            UiKit.IconBtn("back", () => Ui.Router.Back(() => new VillageScreen()), "back-btn").Into(root);
+            UiKit.Text(Loc.T("fragment.title"), "title", "screen-title").Into(head);
             UiKit.Box("spacer").Into(head);
             UiKit.Btn(Loc.T("fragment.fuse"), ToggleFuse, "btn--secondary", "btn--small").Into(head);
             _tabs = UiKit.Box("tabs").Into(safe);

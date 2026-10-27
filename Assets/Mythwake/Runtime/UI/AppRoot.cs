@@ -35,6 +35,7 @@ namespace Mythwake.UI
             root.Add(layer);
             _ui = new UiContext { Catalog = catalog, Battle = battle, Root = root, Runner = this };
             _ui.Router = new Router(_ui, layer);
+            CurrencyBar.Context = _ui;
             StartCoroutine(Boot(layer));
         }
 

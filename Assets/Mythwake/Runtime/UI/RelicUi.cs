@@ -171,8 +171,8 @@ namespace Mythwake.UI
             _currencies = new CurrencyBar(Ids.Gold, Ids.RelicMaterials).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
-            UiKit.IconBtn("back", () => Ui.Router.Back(() => new VillageScreen())).Into(head);
-            UiKit.Text(Loc.T("relic.title"), "title").Into(head);
+            UiKit.IconBtn("back", () => Ui.Router.Back(() => new VillageScreen()), "back-btn").Into(root);
+            UiKit.Text(Loc.T("relic.title"), "title", "screen-title").Into(head);
             UiKit.Text(Loc.T("relic.hint"), "label--small").Into(safe);
             var scroll = new ScrollView(ScrollViewMode.Vertical).Into(safe);
             scroll.style.flexGrow = 1;

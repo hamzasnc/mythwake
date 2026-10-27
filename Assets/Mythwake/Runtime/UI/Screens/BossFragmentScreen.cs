@@ -20,8 +20,8 @@ namespace Mythwake.UI
             _currencies = new CurrencyBar(Ids.FragmentDust, Ids.Gold).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
-            UiKit.IconBtn("back", () => Ui.Router.Back(() => new DungeonScreen())).Into(head);
-            UiKit.Text(Loc.T("bossfrag.title"), "title").Into(head);
+            UiKit.IconBtn("back", () => Ui.Router.Back(() => new DungeonScreen()), "back-btn").Into(root);
+            UiKit.Text(Loc.T("bossfrag.title"), "title", "screen-title").Into(head);
             _entries = UiKit.Text("", "quest__points").Into(safe);
             UiKit.Text(Loc.T("bossfrag.hint"), "label--small").Into(safe).style.whiteSpace = WhiteSpace.Normal;
             var scroll = new ScrollView(ScrollViewMode.Vertical).Into(safe);

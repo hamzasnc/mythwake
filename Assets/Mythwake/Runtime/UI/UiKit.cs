@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using Mythwake.Core.Content;
@@ -140,7 +141,8 @@ namespace Mythwake.UI
         public static VisualElement SideButton(VisualElement column, string icon, string label, Action onClick)
         {
             var b = Box("side-btn").Into(column);
-            Icon(icon, "side-btn__icon").Into(b);
+            var ring = Box("side-btn__ring").Into(b);
+            Icon(icon, "side-btn__icon").Into(ring);
             Text(label, "side-btn__label").Into(b);
             b.RegisterCallback<ClickEvent>(_ => onClick());
             return b;
@@ -160,19 +162,39 @@ namespace Mythwake.UI
             id.StartsWith("shards.") ? "Hero Shards" : Loc.T("currency." + id);
     }
 
-    /// <summary>Gold / Hero EXP / Gems / Summon Scrolls along the top of most screens.</summary>
+    /// <summary>
+    /// The one top bar of every screen (AFK style, docs/UI_STYLE.md): the team leader's portrait with the team's power on
+    /// the left, up to three currency pills on the right, a "+" next to Gems that opens the shop.
+    /// </summary>
     public sealed class CurrencyBar : VisualElement
     {
+        /// <summary>Set once at boot; the bar reads the team and opens the shop through it.</summary>
+        public static UiContext Context;
+
         private readonly Dictionary<string, Label> _values = new Dictionary<string, Label>();
+        private readonly VisualElement _portrait;
+        private readonly Label _power;
 
         public CurrencyBar(params string[] currencies)
         {
             AddToClassList("currency-bar");
-            foreach (var id in currencies)
+            var avatar = UiKit.Box("top-avatar").Into(this);
+            _portrait = UiKit.Box("top-avatar__portrait").Into(avatar);
+            UiKit.Box("top-avatar__ring").Into(avatar);
+            var power = UiKit.Box("top-power").Into(this);
+            UiKit.Icon("power", "top-power__icon").Into(power);
+            _power = UiKit.Text("", "top-power__value").Into(power);
+            UiKit.Box("spacer").Into(this);
+            foreach (var id in currencies.Take(3))
             {
                 var chip = UiKit.Box("currency").Into(this);
                 UiKit.Box("currency__icon", "icon--" + id).Into(chip);
                 _values[id] = UiKit.Text("0", "currency__value").Into(chip);
+                if (id == Ids.Gems)
+                {
+                    var plus = UiKit.Box("currency__plus").Into(chip);
+                    plus.RegisterCallback<ClickEvent>(_ => Context?.Router.Push(new ShopScreen()));
+                }
             }
         }
 
@@ -180,6 +202,13 @@ namespace Mythwake.UI
         {
             foreach (var kv in _values)
                 kv.Value.text = UiKit.Short(state.Get(kv.Key));
+            if (Context?.Authority == null)
+                return;
+            var lead = state.Formation.FirstOrDefault(id => id != null);
+            var art = lead != null ? Context.Catalog.Hero(lead)?.portrait : null;
+            _portrait.style.backgroundImage = art != null ? new StyleBackground(art) : StyleKeyword.None;
+            var team = TeamBuilder.Build(Formations.ToProgress(state, Context.Content, state.Formation));
+            _power.text = UiKit.Short(team.Sum(u => TeamBuilder.Power(u.Stats)));
         }
     }
 }

@@ -22,8 +22,8 @@ namespace Mythwake.UI
             _currencies = new CurrencyBar(Ids.HuntTokens, Ids.Gold, Ids.GearMaterials).Into(root);
             var safe = UiKit.Box("safe").Into(root);
             var head = UiKit.Box("row").Into(safe);
-            UiKit.IconBtn("back", () => Ui.Router.Back(() => new AdventureScreen())).Into(head);
-            UiKit.Text("Hunt Board", "title").Into(head);
+            UiKit.IconBtn("back", () => Ui.Router.Back(() => new AdventureScreen()), "back-btn").Into(root);
+            UiKit.Text("Hunt Board", "title", "screen-title").Into(head);
             UiKit.Box("spacer").Into(head);
             _reset = UiKit.Text("", "label--small").Into(head);
             _tabs = UiKit.Box("tabs").Into(safe);

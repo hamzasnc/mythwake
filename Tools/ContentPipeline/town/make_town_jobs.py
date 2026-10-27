@@ -82,7 +82,7 @@ cd "$(dirname "$0")"
 run() {
   dir="$1"
   if [ -f "$dir/master.png" ]; then echo "skip $dir"; return; fi
-  codex exec --skip-git-repo-check -m gpt-6-sol -C "$(cygpath -w "$PWD/$dir")" -i style_reference.png - < "$dir/run_prompt.txt" > "$dir/codex.log" 2>&1
+  codex exec --skip-git-repo-check -m gpt-6-luna -c 'model_reasoning_effort="high"' -c 'service_tier="default"' -C "$(cygpath -w "$PWD/$dir")" -i style_reference.png - < "$dir/run_prompt.txt" > "$dir/codex.log" 2>&1
   echo "done $dir rc=$? master=$([ -f "$dir/master.png" ] && echo yes || echo no)" >> _batch.log
 }
 export -f run

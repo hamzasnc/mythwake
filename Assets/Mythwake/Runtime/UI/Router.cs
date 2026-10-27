@@ -51,6 +51,8 @@ namespace Mythwake.UI
             Ui = ui;
             Root = UiKit.Box("screen");
             Build(Root);
+            // the back button sits bottom-left above the screen's content (AFK style, docs/UI_STYLE.md)
+            Root.Query(className: "back-btn").ForEach(b => b.BringToFront());
         }
 
         protected abstract void Build(VisualElement root);

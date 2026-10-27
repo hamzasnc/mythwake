@@ -59,6 +59,9 @@ namespace Mythwake.UI
         private VisualElement _awakening;
         private VisualElement _targets;
         private VisualElement _skills;
+        private VisualElement[] _skillRings;
+        private VisualElement _gearPanel;
+        private VisualElement _skillsPanel;
 
         public HeroDetailScreen(string heroId) => _heroId = heroId;
 
@@ -74,7 +77,7 @@ namespace Mythwake.UI
 
             // the hero on a stage, AFK Arena style (docs/UI_STYLE.md); details further down
             var stage = UiKit.Box("hero-stage").Into(safe);
-            UiKit.IconBtn("back", () => Ui.Router.Pop(), "hero-stage__back").Into(stage);
+            UiKit.IconBtn("back", () => Ui.Router.Pop(), "back-btn").Into(root);
             var names = UiKit.Box("hero-stage__names").Into(stage);
             var gradeRow = UiKit.Box("row", "center").Into(names);
             UiKit.Icon("grade" + hero.Grade, "hero-stage__grade").Into(gradeRow);
@@ -86,31 +89,44 @@ namespace Mythwake.UI
             var image = assets?.full != null ? assets.full : assets?.portrait;
             if (image != null)
                 art.style.backgroundImage = new StyleBackground(image);
-            // Aspect, role, faction, race as emblems on both sides of the hero
-            var leftEmblems = UiKit.Box("hero-stage__emblems", "hero-stage__emblems--left").Into(stage);
-            Emblem(leftEmblems, "aspect" + hero.Aspect, Loc.T("aspect." + UiKit.Lower(hero.Aspect)));
-            Emblem(leftEmblems, "role" + hero.Role, Loc.T("role." + UiKit.Lower(hero.Role)));
-            var rightEmblems = UiKit.Box("hero-stage__emblems", "hero-stage__emblems--right").Into(stage);
-            Emblem(rightEmblems, "faction" + hero.Faction, Loc.T("faction." + UiKit.Lower(hero.Faction)));
-            Emblem(rightEmblems, "race" + hero.Race, Loc.T("race." + UiKit.Lower(hero.Race)));
+            // Aspect, role, faction, race as small emblems under the name
+            var emblems = UiKit.Box("row", "center", "hero-stage__emblems").Into(names);
+            foreach (var (icon, name) in new[]
+                     {
+                         ("aspect" + hero.Aspect, Loc.T("aspect." + UiKit.Lower(hero.Aspect))),
+                         ("role" + hero.Role, Loc.T("role." + UiKit.Lower(hero.Role))),
+                         ("faction" + hero.Faction, Loc.T("faction." + UiKit.Lower(hero.Faction))),
+                         ("race" + hero.Race, Loc.T("race." + UiKit.Lower(hero.Race))),
+                     })
+                UiKit.Icon(icon, "hero-stage__emblem").Into(emblems).tooltip = name;
+            // skills as rings left and right of the hero (AFK style); the full texts stay further down
+            _skillRings = new[]
+            {
+                UiKit.Box("hero-stage__skills", "hero-stage__skills--left").Into(stage),
+                UiKit.Box("hero-stage__skills", "hero-stage__skills--right").Into(stage)
+            };
+            // switch to the previous / next owned hero
+            UiKit.Box("hero-stage__arrow", "hero-stage__arrow--left").Into(stage).RegisterCallback<ClickEvent>(_ => Switch(-1));
+            UiKit.Box("hero-stage__arrow", "hero-stage__arrow--right").Into(stage).RegisterCallback<ClickEvent>(_ => Switch(1));
 
+            // power and stats on a dark band, then costs and the one teal action (AFK style)
             var progress = UiKit.Box("hero-stats").Into(safe);
-            var levelRow = UiKit.Box("row", "center").Into(progress);
-            UiKit.Icon("power", "hero-stats__power-icon").Into(levelRow);
-            _power = UiKit.Text("", "hero-stats__power").Into(levelRow);
-            UiKit.Box("spacer").Into(levelRow);
-            _level = UiKit.Text("", "hero-stats__level").Into(levelRow);
-            UiKit.Box("spacer").Into(levelRow);
-            _stars = UiKit.StarRow(0, "hero-stats__stars").Into(levelRow);
+            var powerRow = UiKit.Box("row", "center").Into(progress);
+            UiKit.Icon("power", "hero-stats__power-icon").Into(powerRow);
+            _power = UiKit.Text("", "hero-stats__power").Into(powerRow);
+            _stars = UiKit.StarRow(0, "hero-stats__stars").Into(powerRow);
             _stats = UiKit.Box("row", "hero-stats__row").Into(progress);
-            _levelCost = UiKit.Text("", "hero-stats__cost").Into(progress);
-            var buttons = UiKit.Box("row", "center").Into(progress);
+            var actions = UiKit.Box("hero-actions").Into(safe);
+            _level = UiKit.Text("", "hero-actions__level").Into(actions);
+            _levelCost = UiKit.Text("", "hero-actions__cost").Into(actions);
+            var buttons = UiKit.Box("row", "center").Into(actions);
             _levelUp5 = UiKit.Btn(Loc.T("hero.levelUp5"), () => LevelUp(5), "btn--secondary").Into(buttons);
             _levelUp = UiKit.Btn(Loc.T("hero.levelUp"), () => LevelUp(1), "btn--big").Into(buttons);
             _starUp = UiKit.Btn(Loc.T("hero.starUp"), StarUp, "btn--secondary").Into(buttons);
-            _shards = UiKit.Text("", "hero-stats__cost").Into(progress);
+            _shards = UiKit.Text("", "hero-actions__shards").Into(actions);
 
             var gear = UiKit.Box("panel").Into(safe);
+            _gearPanel = gear;
             var gearHead = UiKit.Box("row").Into(gear);
             UiKit.Text(Loc.T("gear.title"), "title").Into(gearHead);
             UiKit.Box("spacer").Into(gearHead);
@@ -129,6 +145,11 @@ namespace Mythwake.UI
             _awakening = UiKit.Box("panel", "awakening").Into(safe);
 
             var skills = UiKit.Box("panel").Into(safe);
+            _skillsPanel = skills;
+            // round shortcuts like AFK's hero screen: jump to equipment and skills
+            var jumps = UiKit.Box("hero-jumps").Into(root);
+            UiKit.SideButton(jumps, "slotWeapon", Loc.T("gear.title"), () => scroll.ScrollTo(_gearPanel));
+            UiKit.SideButton(jumps, "skillUltimate", Loc.T("hero.skills"), () => scroll.ScrollTo(_skillsPanel));
             UiKit.Text(Loc.T("hero.skills"), "title").Into(skills);
             _skills = UiKit.Box().Into(skills);
         }
@@ -184,11 +205,43 @@ namespace Mythwake.UI
         }
 
         /// <summary>Skills with their level; Normal, Special, Special II and Ultimate can be upgraded (docs/systems/SKILLS.md).</summary>
+        /// <summary>Opens the previous / next owned hero in place.</summary>
+        private void Switch(int step)
+        {
+            var owned = Ui.State.Heroes.Select(h => h.HeroId).ToList();
+            var i = owned.IndexOf(_heroId);
+            if (owned.Count < 2 || i < 0)
+                return;
+            var next = owned[(i + step + owned.Count) % owned.Count];
+            Ui.Router.Pop();
+            Ui.Router.Push(new HeroDetailScreen(next));
+        }
+
+        private static string SkillIcon(SkillSlot slot) => slot switch
+        {
+            SkillSlot.Normal => "skillNormal",
+            SkillSlot.Passive => "skillPassive",
+            SkillSlot.Ultimate => "skillUltimate",
+            _ => "skillSpecial"
+        };
+
         private void RefreshSkills(OwnedHero owned)
         {
             _skills.Clear();
             var content = Ui.Content;
             var hero = content.Hero(_heroId);
+            // the rings beside the hero: the first half left, the rest right
+            foreach (var column in _skillRings)
+                column.Clear();
+            var all = hero.Skills().ToList();
+            for (var i = 0; i < all.Count; i++)
+            {
+                var ring = UiKit.Box("skill-ring").Into(_skillRings[i < (all.Count + 1) / 2 ? 0 : 1]);
+                UiKit.Icon(SkillIcon(all[i].Slot), "skill-ring__icon").Into(ring);
+                UiKit.Text(Skills.Level(owned, all[i].Slot).ToString(), "skill-ring__level").Into(ring);
+                ring.tooltip = all[i].Name;
+                ring.RegisterCallback<ClickEvent>(_ => Root.Q<ScrollView>().ScrollTo(_skillsPanel));
+            }
             var max = Skills.MaxLevel(content, owned);
             foreach (var skill in hero.Skills())
             {
@@ -249,7 +302,7 @@ namespace Mythwake.UI
             if (def == null)
                 return;
             var head = UiKit.Box("row").Into(_awakening);
-            UiKit.Text(Loc.T("awaken.title"), "title").Into(head);
+            UiKit.Text(Loc.T("awaken.title"), "title", "screen-title").Into(head);
             UiKit.Box("spacer").Into(head);
             if (owned.Awakened)
                 UiKit.Text(Loc.T("grade.transcendent"), "tag", "grade--transcendent").Into(head);
