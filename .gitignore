@@ -20,6 +20,8 @@ mono_crash.*
 /*.slnx
 
 # ---------------------------------------------------------------- build output
+/.utmp/
+/artifacts/
 *.apk
 *.aab
 *.ipa
