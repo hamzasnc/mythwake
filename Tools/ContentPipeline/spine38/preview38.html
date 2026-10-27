@@ -1,0 +1,47 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Spine 3.8 check</title>
+<style>html,body{margin:0;background:#2a2e36;color:#ddd;font:12px sans-serif}canvas{display:block}</style>
+<!-- the official Spine 3.8 web runtime: proves the converted data loads and plays like it will in the 3.8 editor -->
+<script src="https://cdn.jsdelivr.net/gh/EsotericSoftware/spine-runtimes@3.8/spine-ts/build/spine-webgl.js"></script>
+</head><body><canvas id="c" width="1600" height="420"></canvas>
+<script>
+// #id=<rig>&anim=<name>&times=0,0.2,..&save=<file>.png ; files are served from ./<rig>/<rig>.json|.atlas
+const H = new URLSearchParams(location.hash.slice(1));
+const id = H.get('id'), anim = H.get('anim') || 'idle', times = (H.get('times') || '0').split(',').map(Number);
+window.__done = false; window.__error = null;
+const cv = document.getElementById('c');
+const gl = new spine.webgl.ManagedWebGLRenderingContext(cv, { alpha: false, preserveDrawingBuffer: true });
+const renderer = new spine.webgl.SceneRenderer(cv, gl);
+const assets = new spine.webgl.AssetManager(gl);
+assets.loadText(`${id}/${id}.json`);
+assets.loadTextureAtlas(`${id}/${id}.atlas`);
+function wait() {
+  if (assets.hasErrors()) { window.__error = JSON.stringify(assets.getErrors()); return; }
+  if (!assets.isLoadingComplete()) { setTimeout(wait, 50); return; }
+  try { draw(); } catch (e) { window.__error = String(e); }
+}
+function draw() {
+  const atlas = assets.get(`${id}/${id}.atlas`);
+  const json = new spine.SkeletonJson(new spine.AtlasAttachmentLoader(atlas));
+  const data = json.readSkeletonData(assets.get(`${id}/${id}.json`));
+  const sk = new spine.Skeleton(data);
+  const st = new spine.AnimationState(new spine.AnimationStateData(data));
+  const w = cv.width / times.length, h = cv.height;
+  gl.gl.clearColor(0.16, 0.18, 0.21, 1); gl.gl.clear(gl.gl.COLOR_BUFFER_BIT);
+  const scale = Math.min(w * 0.85 / data.width, h * 0.85 / data.height);
+  times.forEach((t, i) => {
+    sk.setToSetupPose(); st.clearTracks();
+    if (data.findAnimation(anim)) { st.setAnimation(0, anim, false); st.update(t); st.apply(sk); }
+    sk.scaleX = sk.scaleY = scale;
+    sk.x = w * i + w / 2; sk.y = h * 0.07;
+    sk.updateWorldTransform();
+    renderer.camera.position.x = cv.width / 2; renderer.camera.position.y = cv.height / 2;
+    renderer.camera.viewportWidth = cv.width; renderer.camera.viewportHeight = cv.height;
+    renderer.begin(); renderer.drawSkeleton(sk, false); renderer.end();
+  });
+  const name = H.get('save');
+  if (name) fetch('/save?name=' + name, { method: 'POST', body: cv.toDataURL('image/png') }).then(() => window.__done = true);
+  else window.__done = true;
+}
+wait();
+</script></body></html>

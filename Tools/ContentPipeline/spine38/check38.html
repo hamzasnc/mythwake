@@ -1,0 +1,36 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Spine 3.8 batch check</title>
+<script src="https://cdn.jsdelivr.net/gh/EsotericSoftware/spine-runtimes@3.8/spine-ts/build/spine-webgl.js"></script>
+</head><body><canvas id="c" width="64" height="64"></canvas>
+<script>
+// Loads every converted rig listed in ./index.json with the official Spine 3.8 runtime and plays every animation
+// through; window.__result lists each rig with its error (null = fine).
+window.__result = null;
+const gl = new spine.webgl.ManagedWebGLRenderingContext(document.getElementById('c'));
+(async () => {
+  const list = await (await fetch('index.json')).json();
+  const result = [];
+  for (const path of list) {
+    const id = path.split('/').pop();
+    const assets = new spine.webgl.AssetManager(gl, path + '/');
+    assets.loadText(id + '.json');
+    assets.loadTextureAtlas(id + '.atlas');
+    while (!assets.isLoadingComplete() && !assets.hasErrors()) await new Promise(r => setTimeout(r, 20));
+    try {
+      if (assets.hasErrors()) throw new Error(JSON.stringify(assets.getErrors()));
+      const json = new spine.SkeletonJson(new spine.AtlasAttachmentLoader(assets.get(id + '.atlas')));
+      const data = json.readSkeletonData(assets.get(id + '.json'));
+      const sk = new spine.Skeleton(data);
+      const st = new spine.AnimationState(new spine.AnimationStateData(data));
+      for (const a of data.animations) {
+        st.setAnimation(0, a.name, false);
+        for (let t = 0; t < a.duration; t += 0.1) { st.update(0.1); st.apply(sk); sk.updateWorldTransform(); }
+        for (const b of sk.bones) if (!isFinite(b.worldX) || !isFinite(b.worldY)) throw new Error('NaN bone ' + b.data.name + ' in ' + a.name);
+      }
+      result.push([path, null, data.animations.length, data.bones.length]);
+    } catch (e) { result.push([path, String(e).slice(0, 200)]); }
+    assets.dispose();
+  }
+  window.__result = result;
+})();
+</script></body></html>
