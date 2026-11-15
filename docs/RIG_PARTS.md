@@ -37,5 +37,10 @@ What we learned:
 - Its hidden areas are softer and sometimes wrong (grey smudges where the shield lay on the shield hand, washed-out
   far shoulder), and it runs at ~83 % of the master's resolution.
 - Joint check: Codex pilot 2 failing joints, combination 4. The combination was not used for the game rig.
-Next worth trying: take only head, face features, hair and props from See-through and keep the Codex parts for body
-and limbs.
+Then only head, hair and props from See-through on top of the Codex package (`--parts head,hair_back,hair_front,
+shield_near,weapon_far`): no gain either. The Codex head was already a clean bald head, See-through's kept the hair's
+shadow shapes on the forehead, put dark ghost shapes into the back hair and lost the claw ornaments of the headband;
+shield and sword came out the same.
+
+Decision: the pipeline for all heroes stays Codex peel + `make_part_jobs.py` / `merge_parts.py` + `part_check.py`.
+See-through's one extra is the split of eye white, iris and lashes (eyes that look around); our rig does not use that.

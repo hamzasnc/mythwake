@@ -1,6 +1,10 @@
 """Builds rig-ready hero parts from a See-through decomposition plus the hero's cut-out layers.
 
 usage: py -3 seethrough_parts.py <hero package> <see-through psd> <out package> [--fallback <package>]
+                                 [--parts head,hair_back,...]
+
+With --parts only those layers are rebuilt; every other layer of <hero package> is kept as it is (e.g. a Codex-repainted
+package for body and limbs, See-through only for head, hair and props).
 
 See-through (github.com/shitagaki-lab/see-through) paints hidden areas, but splits by clothing (topwear, handwear,
 objects, ...), not by bones, and at a lower resolution. The cut-out layers have the right bone split and full
@@ -104,6 +108,7 @@ def split_arm(limb, layers, side):
 def main():
     pkg, psd_path, out = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
     fallback = Path(sys.argv[sys.argv.index("--fallback") + 1]) if "--fallback" in sys.argv else None
+    todo = sys.argv[sys.argv.index("--parts") + 1].split(",") if "--parts" in sys.argv else BODY
     layers, alpha, rgba = load(pkg)
     master = np.asarray(Image.open(pkg / "master.png").convert("RGB"))
     h, w = master.shape[:2]
@@ -138,7 +143,7 @@ def main():
     owner_src = np.vectorize(lambda o: src_of.get(o, ""))(owner)
 
     report = []
-    for name in BODY:
+    for name in todo:
         if name not in alpha:
             continue
         a = alpha[name]
@@ -191,8 +196,9 @@ def main():
         total = max(1, int((result[..., 3] > 128).sum()))
         report.append(f"{name:15} master {from_master.sum() / total:5.0%}  see-through {(st_ok & ~from_master & ~used_fb).sum() / total:5.0%}"
                       f"  fallback {used_fb.sum() / total:5.0%}  (source {src_name or '-'})")
-    round_ends(out)
-    for name in BODY:
+    if "--parts" not in sys.argv:
+        round_ends(out)
+    for name in todo:
         path = out / "layers" / f"{name}.png"
         if path.exists():
             Image.fromarray(despeckle(np.asarray(Image.open(path).convert("RGBA")).copy())).save(path)
