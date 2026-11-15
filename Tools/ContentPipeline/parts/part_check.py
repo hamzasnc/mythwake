@@ -2,8 +2,8 @@
 
 usage: py -3 part_check.py <hero package dir> [--sheet out.png]
 
-For every joint of the standard hero skeleton (shoulder, elbow, wrist, hip, knee, ankle, waist, neck) both parts must be
-painted over a disk around the pivot (radius = 45 % of the thinner part's width, 14–55 px): then the child can rotate without
+For every joint of the standard hero skeleton (shoulder, elbow, wrist, hip, knee, ankle, waist, neck) the part drawn
+below must be painted over a disk around the pivot (with --both: both parts, the old rule) (radius = 45 % of the thinner part's width, 14–55 px): then the child can rotate without
 opening a gap. Body parts must also have no enclosed holes and no stray specks. A bend sheet rotates every child part
 ±35° around its pivot over its parent, so gaps are visible at a glance.
 Exit code 1 when a check fails.
@@ -86,9 +86,13 @@ def check(pkg):
         d = disk(alpha[child].shape, pivot, r)
         cov_child = float((alpha[child] & d).sum() / d.sum())
         cov_parent = float((alpha[parent] & d).sum() / d.sum())
-        good = cov_child >= MIN_COVER and cov_parent >= MIN_COVER
+        # the part drawn below must continue round under the joint; the part on top shows its real edge there
+        lower_is_child = layers[child].get("order", 0) < layers[parent].get("order", 0)
+        cov_lower = cov_child if lower_is_child else cov_parent
+        good = cov_lower >= MIN_COVER if "--both" not in sys.argv else (cov_child >= MIN_COVER and cov_parent >= MIN_COVER)
         ok &= good
-        rows.append((f"{parent}->{child}", f"r={r:.0f}px child {cov_child:.0%} parent {cov_parent:.0%}", good))
+        rows.append((f"{parent}->{child}", f"r={r:.0f}px child {cov_child:.0%} parent {cov_parent:.0%} "
+                     f"(below: {'child' if lower_is_child else 'parent'})", good))
     for name in BODY:
         if name not in alpha:
             continue

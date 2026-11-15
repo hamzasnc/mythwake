@@ -1,6 +1,6 @@
 """Puts the Codex-completed parts (make_part_jobs.py) back into a copy of the hero package.
 
-usage: py -3 merge_parts.py <hero package dir> <jobs dir> <out package dir>
+usage: py -3 merge_parts.py <hero package dir> <jobs dir> <out package dir> [--hidden-only]
 
 Per part: painted.png is scaled back to its crop, aligned to the part's known pixels (small shift search), cut out from
 its white background, and used ONLY where the part was missing (magenta in target.png). Every pixel the part already
@@ -142,6 +142,15 @@ def main():
     shutil.copy(pkg / "layers.json", out / "layers.json")
     shutil.copy(pkg / "master.png", out / "master.png")
     report = []
+    # --hidden-only: painted pixels only where a layer drawn above covers them in the rest pose, so the assembled
+    # hero looks exactly like the master (caps outside the silhouette or over a lower-drawn part would show)
+    hidden_only = "--hidden-only" in sys.argv
+    if hidden_only:
+        meta_all = json.loads((pkg / "layers.json").read_text(encoding="utf-8-sig"))
+        stack = [(l.get("order", -1), np.asarray(Image.open(pkg / "layers" / f"{l['name']}.png").convert("RGBA"))[..., 3] > 128)
+                 for l in meta_all["layers"] if l.get("order", -1) >= 0 and l.get("visible_default", True)
+                 and (pkg / "layers" / f"{l['name']}.png").exists()]
+        order_of = {l["name"]: l.get("order", -1) for l in meta_all["layers"]}
     for d in sorted(p for p in jobs.iterdir() if (p / "crop.json").exists()):
         meta = json.loads((d / "crop.json").read_text(encoding="utf-8"))
         name = meta["part"]
@@ -171,6 +180,12 @@ def main():
         layer = np.asarray(Image.open(layer_path).convert("RGBA")).copy()
         region = layer[y0:y1, x0:x1]
         grow = ndimage.binary_dilation(fill, iterations=2)
+        if hidden_only:
+            above = np.zeros(layer.shape[:2], bool)
+            for o, m in stack:
+                if o > order_of.get(name, -1):
+                    above |= m
+            grow &= ndimage.binary_erosion(above, iterations=2)[y0:y1, x0:x1] | (region[..., 3] > 128)
         region[grow] = cut[grow]
         layer[y0:y1, x0:x1] = region
         layer = despeckle(layer)

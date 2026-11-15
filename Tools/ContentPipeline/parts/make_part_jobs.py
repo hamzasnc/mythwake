@@ -1,6 +1,6 @@
 """Writes Codex jobs that turn a hero's cut-out body layers into complete, rig-ready parts.
 
-usage: py -3 make_part_jobs.py <hero package dir> <jobs dir> [part,part] [--props]
+usage: py -3 make_part_jobs.py <hero package dir> <jobs dir> [part,part] [--props] [--hero Name]
 
 Per body part a crop around it (scaled so its long side is 1024 px) with
   target.png       the part as it is; MAGENTA where it must be painted, white everywhere else
@@ -74,9 +74,12 @@ def part_joints(name, layers):
 def main():
     pkg, out = Path(sys.argv[1]), Path(sys.argv[2])
     only = set(sys.argv[3].split(",")) if len(sys.argv) > 3 and not sys.argv[3].startswith("--") else None
-    hero = pkg.name.split("_")[-1]
+    hero = (sys.argv[sys.argv.index("--hero") + 1] if "--hero" in sys.argv else pkg.name.split("_")[-1])
     layers, alpha, rgba = load(pkg)
-    master = np.asarray(Image.open(pkg / "master.png").convert("RGB"))
+    m_img = Image.open(pkg / "master.png").convert("RGBA")
+    white = Image.new("RGBA", m_img.size, (255, 255, 255, 255))
+    white.alpha_composite(m_img)
+    master = np.asarray(white.convert("RGB"))
     out.mkdir(parents=True, exist_ok=True)
     jobs = []
     for i, name in enumerate(BODY, start=1):
@@ -126,6 +129,11 @@ def main():
         jobs.append(d.name)
     (out / "_jobs.txt").write_text("\n".join(jobs) + "\n", encoding="utf-8", newline="\n")
     runner = RUNNER.replace("master.png", "painted.png").replace("-i style_reference.png", "-i target.png -i master_crop.png")
+    # Codex' Windows sandbox may be read-only: then take the session's newest generated image as painted.png
+    runner = runner.replace('  echo "done $dir', '''  sid=$(grep -m1 -o 'session id: [0-9a-f-]*' "$dir/codex.log" | cut -d' ' -f3)
+  img=$(ls -t "$HOME/.codex/generated_images/$sid/"*.png 2>/dev/null | head -1)
+  if [ ! -f "$dir/painted.png" ] && [ -n "$img" ]; then cp "$img" "$dir/painted.png"; fi
+  echo "done $dir''', 1)
     (out / "run_jobs.sh").write_text(runner.replace("xargs -P 5", "xargs -P 7"), encoding="utf-8", newline="\n")
     print(len(jobs), "jobs in", out)
 

@@ -44,3 +44,23 @@ shield and sword came out the same.
 
 Decision: the pipeline for all heroes stays Codex peel + `make_part_jobs.py` / `merge_parts.py` + `part_check.py`.
 See-through's one extra is the split of eye white, iris and lashes (eyes that look around); our rig does not use that.
+
+## Second pilot: A-pose master, parts built from it (Dorn, 15.11.2026)
+
+The real cause of the bad parts was the master's pose: shield and sword held against the body, arms in front of the
+torso, scarf over the shoulders – half of every part was hidden. New flow:
+
+1. `gen_prompts.py` – one prompt set (A-pose rig master, props, single parts, face) for Codex image generation and
+   the local model (`local_gen.py`, DirectML; ROCm for Windows was unreliable on the RX 9070 XT). Codex makes
+   transparent PNGs; its Windows sandbox is read-only now, so the runners copy the session's newest generated image.
+2. Codex generates the A-pose master (same design, arms away from the body, empty hands, straight legs).
+3. `segment_master.py job/cut` – Codex paints a flat colour per body part; the code cuts 24 layers from the master's
+   own pixels and puts the joint pivots on the shared borders. `points` adds root/end for apron, scarf and hair.
+4. `make_part_jobs.py` + `merge_parts.py --hidden-only` – Codex repaints hidden areas and joint caps, merged only
+   where a layer drawn above covers them, so the assembled hero equals the master.
+5. `assemble_props.py` – separately generated fist, sword and shield placed by code; `face_variants.py` – closed eyes
+   and open mouth from edits of the hero's own face.
+6. `part_check.py` now checks the part drawn below at each joint (the top part shows its real edge there).
+
+Result: 24 layers + props, all 7 animations play (Spine 3.8 runtime), blink and open mouth work, rest pose = master.
+Left: neck and waist caps are short, weapon variants B/C not made yet, hair rigid.
